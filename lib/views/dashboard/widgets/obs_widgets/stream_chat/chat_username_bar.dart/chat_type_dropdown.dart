@@ -2,13 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 
-import '../../../../../../models/enums/chat_engine.dart';
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
-import '../../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
-import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../chat_type_brand.dart';
 
@@ -54,30 +50,10 @@ class ChatTypeDropdown extends StatelessWidget {
                         Icon(chatType.icon, color: chatType.brandColor),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  chatType.text,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              if (chatType == ChatType.YouTube)
-                                Text(
-                                  '\u1d47\u1d49\u1d57\u1d43',
-                                  style: TextStyle(
-                                    fontSize: 10.0,
-                                    color:
-                                        (Theme.of(
-                                                  context,
-                                                ).extension<AppTextColors>() ??
-                                                AppTextColors.standard)
-                                            .textTertiary,
-                                  ),
-                                ),
-                            ],
+                          child: Text(
+                            chatType.text,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -85,46 +61,10 @@ class ChatTypeDropdown extends StatelessWidget {
                   ),
                 )
                 .toList(),
-            onChanged: (chatType) =>
-                chatType == ChatType.YouTube &&
-                    /// The beta warning covers the WebView embed — the
-                    /// native engine doesn't use it, so no warning there.
-                    this.settingsBox.get(
-                          SettingsKeys.SelectedChatEngine.name,
-                          defaultValue: ChatEngine.webView,
-                        ) !=
-                        ChatEngine.native &&
-                    !Hive.box(HiveKeys.Settings.name).get(
-                      SettingsKeys.DontShowYouTubeChatBetaWarning.name,
-                      defaultValue: false,
-                    )
-                ? ModalHandler.showBaseDialog(
-                    context: context,
-                    dialogWidget: ConfirmationDialog(
-                      title: 'YoutTube Chat Beta',
-                      body:
-                          'YouTube chat support is still in beta because YouTube is giving me a hard time to integrate it.\n\nUse it with that in mind and contact me if you experience strange behaviour.',
-                      enableDontShowAgainOption: true,
-                      noText: 'Cancel',
-                      okText: 'Ok',
-                      onOk: (checked) {
-                        if (checked) {
-                          this.settingsBox.put(
-                            SettingsKeys.DontShowYouTubeChatBetaWarning.name,
-                            checked,
-                          );
-                        }
-                        this.settingsBox.put(
-                          SettingsKeys.SelectedChatType.name,
-                          chatType,
-                        );
-                      },
-                    ),
-                  )
-                : this.settingsBox.put(
-                    SettingsKeys.SelectedChatType.name,
-                    chatType,
-                  ),
+            onChanged: (chatType) => this.settingsBox.put(
+              SettingsKeys.SelectedChatType.name,
+              chatType,
+            ),
           ),
         ),
       ),

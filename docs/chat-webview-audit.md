@@ -43,7 +43,8 @@ Extra “hack” layers:
   parent scroll view doesn’t steal gestures from the WebView
 - Username / stream URL stored in Hive (`TwitchUsernames`, `YouTubeUsernames`
   map of label→URL/id, `OwncastUsernames` map of label→base URL)
-- YouTube still marked **beta** in UI (`DontShowYouTubeChatBetaWarning`)
+- YouTube is no longer marked beta in the chat picker (the old
+  `DontShowYouTubeChatBetaWarning` flag is unused and kept for existing installs)
 
 Sending messages / emotes today = whatever the **embedded site** supports after
 the user somehow logs in **inside the WebView** (cookies). There is no native

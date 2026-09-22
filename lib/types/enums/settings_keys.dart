@@ -313,8 +313,8 @@ enum SettingsKeys {
   /// to remain the same) and doesn't want to see this warning again
   DontShowHidingSceneItemsWarning,
 
-  /// [bool]: If the user saw the warning regarding youtube chat support being in
-  /// beta and might cause trouble and doesn't want to see this warning again
+  /// [bool]: Legacy. The YouTube chat beta warning is no longer shown.
+  /// The key stays so existing installs keep a stable settings map.
   DontShowYouTubeChatBetaWarning,
 
   /// [bool]: If the user saw the warning regarding hiding scenes which could
