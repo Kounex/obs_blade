@@ -33,6 +33,7 @@ import 'stores/shared/tabs.dart';
 import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
+import 'stores/views/kick_chat.dart';
 import 'stores/views/logs.dart';
 import 'stores/views/statistics.dart';
 import 'stores/views/twitch_chat.dart';
@@ -116,6 +117,12 @@ void _initializeStores() {
     /// Fire-and-forget [init] — cold-start session pickup must not
     /// block store creation.
     () => YouTubeChatStore()..init(),
+    dispose: (store) => store.dispose(),
+  );
+  GetIt.instance.registerLazySingleton<KickChatStore>(
+    /// Fire-and-forget [init] — cold-start channel restore must not
+    /// block store creation.
+    () => KickChatStore()..init(),
     dispose: (store) => store.dispose(),
   );
 }

@@ -16,9 +16,10 @@ void main() {
       expect(ChatEngine.native.text, 'Native');
     });
 
-    test('native engine is available for Twitch and YouTube', () {
+    test('native engine is available for Twitch, YouTube and Kick', () {
       expect(nativeChatAvailableFor(ChatType.Twitch), isTrue);
       expect(nativeChatAvailableFor(ChatType.YouTube), isTrue);
+      expect(nativeChatAvailableFor(ChatType.Kick), isTrue);
       expect(nativeChatAvailableFor(ChatType.Owncast), isFalse);
     });
   });

@@ -18,6 +18,7 @@ import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/pro_store.dart';
+import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -38,6 +39,7 @@ import 'chat_emote_picker.dart';
 import 'native_chat_input.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
+import 'native_kick_chat_view.dart';
 import 'native_reply_strip.dart';
 import 'native_twitch_chat_view.dart';
 import 'native_youtube_chat_view.dart';
@@ -80,6 +82,22 @@ NativeChatConnectionStatus youTubeChatWindowStatus(
     YouTubeChatConnectionState.error => NativeChatConnectionStatus.failed,
     YouTubeChatConnectionState.idle => NativeChatConnectionStatus.offline,
     YouTubeChatConnectionState.offline => NativeChatConnectionStatus.offline,
+  };
+}
+
+/// Maps the Kick store's connection state onto the chat window's
+/// platform-agnostic status. Kick reads are anonymous (no account, no API
+/// key) — the only gates are the entitlement and a channel selection,
+/// both covered by `idle`.
+NativeChatConnectionStatus kickChatWindowStatus(KickChatConnectionState state) {
+  return switch (state) {
+    KickChatConnectionState.connected => NativeChatConnectionStatus.live,
+    KickChatConnectionState.connecting => NativeChatConnectionStatus.connecting,
+    KickChatConnectionState.reconnecting =>
+      NativeChatConnectionStatus.reconnecting,
+    KickChatConnectionState.error => NativeChatConnectionStatus.failed,
+    KickChatConnectionState.idle => NativeChatConnectionStatus.offline,
+    KickChatConnectionState.offline => NativeChatConnectionStatus.offline,
   };
 }
 
@@ -398,9 +416,75 @@ class _StreamChatState extends State<StreamChat>
   }
 
   /// The native engine slot (Pro-gated by the caller): per-platform
-  /// dispatch onto the Twitch / YouTube native chat windows. Verbatim the
-  /// behavior before the entitlement gate existed.
+  /// dispatch onto the Twitch / YouTube / Kick native chat windows.
+  /// Verbatim the behavior before the entitlement gate existed.
   Widget _buildNativeChatSlot(BuildContext context, ChatType chatType) {
+    /// Native Kick chat: fully anonymous reads (no account, no API key) —
+    /// the only prerequisite is a channel in the Kick list, so the
+    /// unselected state offers the add dialog directly. No input dock
+    /// this wave: reads only.
+    if (chatType == ChatType.Kick) {
+      void addKickChannel() =>
+          ModalHandler.showBaseDialog(
+            context: context,
+            dialogWidget: AddEditKickUsernameDialog(
+              settingsBox: Hive.box(HiveKeys.Settings.name),
+            ),
+          ).then((_) {
+            /// The dialog edited [SettingsKeys.KickUsernames] AND selected
+            /// the new slug ([SettingsKeys.SelectedKickUsername] is shared
+            /// with the native engine) — re-read, then follow the
+            /// dialog's selection when nothing is selected yet.
+            final store = GetIt.instance<KickChatStore>();
+            store.reloadChannels();
+            final selected = Hive.box(
+              HiveKeys.Settings.name,
+            ).get(SettingsKeys.SelectedKickUsername.name);
+            if (store.selectedChannelSlug == null && selected is String) {
+              store.selectChannel(selected);
+            }
+          });
+
+      return Observer(
+        builder: (_) {
+          final kickStore = GetIt.instance<KickChatStore>();
+          final hasChannel = kickStore.selectedChannelSlug != null;
+          final channelInfo = kickStore.channelInfo;
+
+          return NativeChatWindow(
+            chatType: chatType,
+            status: kickChatWindowStatus(kickStore.chatConnection),
+            statusDetail: kickStore.chatError,
+            connectedAt: kickStore.chatConnectedAt,
+            channelIsLive: channelInfo?.isLive ?? false,
+            channelViewerCount: (channelInfo?.isLive ?? false)
+                ? channelInfo?.viewerCount
+                : null,
+            onRetry: kickStore.connectChat,
+            onConnect: addKickChannel,
+            child: hasChannel
+                ? NativeKickChatView(
+                    /// Fresh scroll state per channel — avoids
+                    /// carrying a stuck/overscrolled controller
+                    /// across multi-chat switches.
+                    key: ValueKey(kickStore.selectedChannelSlug),
+                  )
+                : StaggeredEntrance(
+                    scaleFrom: 0.985,
+                    child: _ChatEmptyState(
+                      chatType: chatType,
+                      nativeConnectPrompt: true,
+                      promptBody:
+                          'Native Kick chat reads the channel\'s public chatroom — no account or API key needed. Add a Kick channel to see chat here.',
+                      connectLabel: 'Add Kick channel',
+                      onConnectTap: addKickChannel,
+                    ),
+                  ),
+          );
+        },
+      );
+    }
+
     /// Native YouTube chat: API-key gated reads (signed-out
     /// timelines work — the input docks a read-only strip with
     /// a sign-in affordance), device-flow sign-in for writes.

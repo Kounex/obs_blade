@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
@@ -70,5 +71,32 @@ void main() {
         NativeChatConnectionStatus.offline,
       );
     }
+  });
+
+  test('kickChatWindowStatus maps every connection state', () {
+    expect(
+      kickChatWindowStatus(KickChatConnectionState.connected),
+      NativeChatConnectionStatus.live,
+    );
+    expect(
+      kickChatWindowStatus(KickChatConnectionState.connecting),
+      NativeChatConnectionStatus.connecting,
+    );
+    expect(
+      kickChatWindowStatus(KickChatConnectionState.reconnecting),
+      NativeChatConnectionStatus.reconnecting,
+    );
+    expect(
+      kickChatWindowStatus(KickChatConnectionState.error),
+      NativeChatConnectionStatus.failed,
+    );
+    expect(
+      kickChatWindowStatus(KickChatConnectionState.offline),
+      NativeChatConnectionStatus.offline,
+    );
+    expect(
+      kickChatWindowStatus(KickChatConnectionState.idle),
+      NativeChatConnectionStatus.offline,
+    );
   });
 }

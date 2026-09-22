@@ -7,6 +7,7 @@ import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/pro_store.dart';
+import '../../../../../../stores/views/kick_chat.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../stores/views/youtube_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
@@ -15,6 +16,8 @@ import '../channel_mod_button.dart';
 import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
+import 'kick_chat_options_sheet.dart';
+import 'kick_native_channel_dropdown.dart';
 import 'native_channel_dropdown.dart';
 import 'twitch_account_control.dart';
 import 'username_action_row.dart';
@@ -30,11 +33,11 @@ import 'youtube_native_channel_dropdown.dart';
 /// WebView mode (default): username dropdown + add/edit/delete actions -
 /// the classic behavior, unchanged.
 ///
-/// Native mode (Twitch only, see [nativeChatAvailableFor]): the engine
+/// Native mode (see [nativeChatAvailableFor]): the engine
 /// switch plus the native controls (options sheet button + account
-/// control: login/logout, connected account) - never the username
-/// controls. While logged in, the multi-chat channel dropdown
-/// ([NativeChannelDropdown]) takes the username dropdown's slot.
+/// control where the platform has one) - never the username
+/// controls. While available, the multi-chat channel dropdown
+/// takes the username dropdown's slot.
 ///
 /// Native engines are a Pro entitlement: without [ProStore.isPro] the
 /// native cluster (channel dropdown, options, account control) stays
@@ -114,6 +117,10 @@ class ChatUsernameBar extends StatelessWidget {
                             ChatType.YouTube =>
                               GetIt.instance<YouTubeChatStore>().authState !=
                                   YouTubeAuthState.unconfigured,
+                            ChatType.Kick =>
+                              GetIt.instance<KickChatStore>()
+                                  .channels
+                                  .isNotEmpty,
                             _ => false,
                           };
 
@@ -126,7 +133,9 @@ class ChatUsernameBar extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const SizedBox(height: AppSpacing.sm),
-                                    if (chatType == ChatType.YouTube)
+                                    if (chatType == ChatType.Kick)
+                                      const KickNativeChannelDropdown()
+                                    else if (chatType == ChatType.YouTube)
                                       const YouTubeNativeChannelDropdown()
                                     else
                                       const NativeChannelDropdown(),
@@ -180,6 +189,9 @@ class ChatUsernameBar extends StatelessWidget {
 /// YouTube dispatches to its own minimal cluster (options + account) — no
 /// shield: YouTube has no cheap "am I a mod" lookup, so mod actions live on
 /// the per-message long-press only (plan §7).
+///
+/// Kick is options-only — reads are anonymous, so there is no account
+/// control (and no moderation) this wave.
 class _NativeRightCluster extends StatelessWidget {
   final ChatType chatType;
 
@@ -187,6 +199,13 @@ class _NativeRightCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (this.chatType == ChatType.Kick) {
+      return const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [KickChatOptionsButton()],
+      );
+    }
+
     if (this.chatType == ChatType.YouTube) {
       return const Row(
         mainAxisSize: MainAxisSize.min,

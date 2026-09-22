@@ -90,8 +90,8 @@ void main() {
     );
   });
 
-  testWidgets('Twitch and YouTube show both segments', (tester) async {
-    for (final chatType in [ChatType.Twitch, ChatType.YouTube]) {
+  testWidgets('Twitch, YouTube and Kick show both segments', (tester) async {
+    for (final chatType in [ChatType.Twitch, ChatType.YouTube, ChatType.Kick]) {
       await tester.pumpWidget(
         wrap(ChatEngineSwitch(settingsBox: settingsBox(), chatType: chatType)),
       );
