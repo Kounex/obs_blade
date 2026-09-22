@@ -65,6 +65,54 @@ void main() {
     }
   });
 
+  testWidgets('the expanded advanced section scrolls inside a short sheet', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 480);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Align(
+              alignment: Alignment.bottomCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.86,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    YouTubeSetupSheet(
+                      hostContext: context,
+                      chatService: chatService,
+                    ),
+                    SizedBox(height: MediaQuery.paddingOf(context).bottom),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('Advanced: sign-in (optional)'));
+    await tester.pump();
+    await tester.tap(find.text('Advanced: sign-in (optional)'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(SingleChildScrollView), findsWidgets);
+    await tester.ensureVisible(find.text('OAuth client secret'));
+    await tester.pump();
+    expect(find.text('OAuth client secret'), findsOneWidget);
+  });
+
   testWidgets('prefills the fields from settings', (tester) async {
     /// runAsync: awaited Hive writes never complete in the fake-async zone.
     await tester.runAsync(() async {
@@ -147,6 +195,8 @@ void main() {
       await tester.pump();
       expect(find.byKey(const Key('youtube-setup-key-valid')), findsNothing);
 
+      await tester.ensureVisible(find.byKey(const Key('youtube-setup-save')));
+      await tester.pump();
       await tester.tap(find.byKey(const Key('youtube-setup-save')));
       await tester.pump();
 
@@ -171,6 +221,8 @@ void main() {
       expect(find.text('stale-key'), findsOneWidget);
 
       await tester.enterText(find.byType(NativeChatTextField).first, '');
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('youtube-setup-save')));
       await tester.pump();
       await tester.tap(find.byKey(const Key('youtube-setup-save')));
       await tester.pump();
