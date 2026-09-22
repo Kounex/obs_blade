@@ -11,6 +11,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'dialogs/youtube_mod_action_sheet.dart';
+import 'dialogs/youtube_user_card_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 import 'youtube_chat_message_row.dart';
@@ -251,6 +252,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
                     final message = items[index];
+                    final channelId = message.authorChannelId;
                     return YouTubeChatMessageRow(
                       key: ValueKey(message.id),
                       message: message,
@@ -259,6 +261,14 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                       onMessageLongPress: message.isTombstoned || !canModerate
                           ? null
                           : () => this._openModActions(message.id),
+                      onAuthorTap: channelId == null
+                          ? null
+                          : () => showYouTubeUserCardSheet(
+                              context,
+                              channelId: channelId,
+                              fallbackName: message.authorName,
+                              fallbackAvatarUrl: message.authorProfileImageUrl,
+                            ),
                     );
                   },
                 ),

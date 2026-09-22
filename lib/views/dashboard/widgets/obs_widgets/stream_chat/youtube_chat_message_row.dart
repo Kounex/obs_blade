@@ -62,6 +62,10 @@ class YouTubeChatMessageRow extends StatelessWidget {
   /// only — gated by the caller, plan §7).
   final VoidCallback? onMessageLongPress;
 
+  /// Tap handler for badges + name → user card. The caller gates this
+  /// on `message.authorChannelId != null`.
+  final VoidCallback? onAuthorTap;
+
   /// Light gray wash while this row is the open mod-sheet target.
   final bool highlighted;
 
@@ -70,6 +74,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
     required this.message,
     required this.settingsBox,
     this.onMessageLongPress,
+    this.onAuthorTap,
     this.highlighted = false,
   });
 
@@ -128,13 +133,30 @@ class YouTubeChatMessageRow extends StatelessWidget {
       WidgetSpan(alignment: PlaceholderAlignment.middle, child: widget),
   ];
 
-  TextSpan _authorSpan(BuildContext context) => TextSpan(
-    text: this.message.authorName ?? 'Unknown',
-    style: TextStyle(
+  InlineSpan _authorSpan(BuildContext context) {
+    final authorStyle = TextStyle(
       fontWeight: FontWeight.w600,
       color: youTubeAuthorColor(context, this.message.authorChannelId),
-    ),
-  );
+    );
+    final name = this.message.authorName ?? 'Unknown';
+    if (this.onAuthorTap == null) {
+      return TextSpan(text: name, style: authorStyle);
+    }
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Pressable(
+        haptic: true,
+        onTap: this.onAuthorTap,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ...this._badgeWidgets(),
+            Text(name, style: authorStyle),
+          ],
+        ),
+      ),
+    );
+  }
 
   List<InlineSpan> _messageSpans(BuildContext context) => chatLinkTextSpans(
     context,
@@ -164,7 +186,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
           context,
         ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
         children: [
-          ...this._badgeSpans(),
+          if (this.onAuthorTap == null) ...this._badgeSpans(),
           this._authorSpan(context),
           const TextSpan(text: ': '),
           if (this.message.isTombstoned) ...[
@@ -200,7 +222,10 @@ class YouTubeChatMessageRow extends StatelessWidget {
               child: Text.rich(
                 TextSpan(
                   style: baseStyle,
-                  children: [...this._badgeSpans(), this._authorSpan(context)],
+                  children: [
+                    if (this.onAuthorTap == null) ...this._badgeSpans(),
+                    this._authorSpan(context),
+                  ],
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

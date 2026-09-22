@@ -123,6 +123,10 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   final List<String> unbanCalls = <String>[];
   Object? unbanThrows;
 
+  final List<String> fetchChannelCalls = <String>[];
+  YouTubeChannelInfo? fetchChannelResult;
+  Object? fetchChannelThrows;
+
   @override
   Future<String?> getActiveLiveChatId(
     String videoId, {
@@ -205,5 +209,15 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   }) async {
     this.unbanCalls.add(banId);
     if (this.unbanThrows != null) throw this.unbanThrows!;
+  }
+
+  @override
+  Future<YouTubeChannelInfo?> fetchChannel(
+    String channelId, {
+    String? apiKey,
+  }) async {
+    this.fetchChannelCalls.add(channelId);
+    if (this.fetchChannelThrows != null) throw this.fetchChannelThrows!;
+    return this.fetchChannelResult;
   }
 }

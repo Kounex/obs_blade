@@ -835,4 +835,68 @@ void main() {
       expect(store.chatConnection, YouTubeChatConnectionState.idle);
     });
   });
+
+  group('user card', () {
+    test('messagesForChatter filters by author and is newest-first', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        page([
+          ytMessage('m1', author: 'chan-7'),
+          ytMessage('m2', author: 'chan-8'),
+          ytMessage('m3', author: 'chan-7'),
+        ]),
+      );
+      await store.init();
+      await until(() => store.messages.length == 3);
+
+      final matches = store.messagesForChatter('chan-7');
+      expect(matches.map((m) => m.id).toList(), ['m3', 'm1']);
+      expect(store.messagesForChatter('missing'), isEmpty);
+    });
+
+    test('messagesForChatter caps at 20', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        page([
+          for (var i = 0; i < 25; i++) ytMessage('m$i', author: 'chan-7'),
+        ]),
+      );
+      await store.init();
+      await until(() => store.messages.length == 25);
+
+      final matches = store.messagesForChatter('chan-7');
+      expect(matches.length, 20);
+      expect(matches.first.id, 'm24');
+    });
+
+    test('fetchChannelInfo returns null when not configured', () async {
+      expect(await store.fetchChannelInfo('chan-7'), isNull);
+      expect(chatService.fetchChannelCalls, isEmpty);
+    });
+
+    test('fetchChannelInfo calls the service when configured '
+        '(no sign-in required)', () async {
+      configure();
+      chatService.fetchChannelResult = const YouTubeChannelInfo(
+        title: 'My Channel',
+        publishedAt: null,
+      );
+
+      final info = await store.fetchChannelInfo('chan-7');
+
+      expect(info!.title, 'My Channel');
+      expect(chatService.fetchChannelCalls, ['chan-7']);
+    });
+
+    test('fetchChannelInfo returns null on failure', () async {
+      configure();
+      chatService.fetchChannelThrows = const YouTubeApiException(
+        'Fetching the channel failed (500)',
+      );
+
+      expect(await store.fetchChannelInfo('chan-7'), isNull);
+    });
+  });
 }

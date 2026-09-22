@@ -351,4 +351,86 @@ void main() {
       );
     });
   });
+
+  group('fetchChannel', () {
+    test('parses the snippet: title, thumbnail, publishedAt', () async {
+      final client = MockClient((request) async {
+        expect(request.url.path, '/youtube/v3/channels');
+        expect(request.url.queryParameters['part'], 'snippet');
+        expect(request.url.queryParameters['id'], 'UC1');
+        expect(request.url.queryParameters['key'], 'api-key-1');
+        return http.Response(
+          json.encode({
+            'items': [
+              {
+                'id': 'UC1',
+                'snippet': {
+                  'title': 'My Channel',
+                  'publishedAt': '2015-03-04T00:00:00Z',
+                  'thumbnails': {
+                    'default': {'url': 'https://example.com/default.jpg'},
+                    'medium': {'url': 'https://example.com/medium.jpg'},
+                  },
+                },
+              },
+            ],
+          }),
+          200,
+        );
+      });
+
+      final info = await serviceWith(
+        client,
+      ).fetchChannel('UC1', apiKey: 'api-key-1');
+
+      expect(info!.title, 'My Channel');
+      expect(info.thumbnailUrl, 'https://example.com/medium.jpg');
+      expect(info.publishedAt, DateTime.utc(2015, 3, 4));
+    });
+
+    test('falls back to the default thumbnail when medium is absent', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          json.encode({
+            'items': [
+              {
+                'snippet': {
+                  'thumbnails': {
+                    'default': {'url': 'https://example.com/default.jpg'},
+                  },
+                },
+              },
+            ],
+          }),
+          200,
+        ),
+      );
+
+      final info = await serviceWith(
+        client,
+      ).fetchChannel('UC1', apiKey: 'api-key-1');
+
+      expect(info!.thumbnailUrl, 'https://example.com/default.jpg');
+    });
+
+    test('null when the channel id does not exist (empty items)', () async {
+      final client = MockClient(
+        (request) async => http.Response(json.encode({'items': []}), 200),
+      );
+
+      expect(
+        await serviceWith(client).fetchChannel('missing', apiKey: 'k'),
+        isNull,
+      );
+    });
+
+    test('non-200 surfaces as a typed error', () {
+      final client = MockClient((request) async => errorBody(403, 'forbidden'));
+
+      expect(
+        serviceWith(client).fetchChannel('UC1', apiKey: 'k'),
+        throwsA(isA<YouTubeForbiddenException>()),
+      );
+    });
+  });
 }

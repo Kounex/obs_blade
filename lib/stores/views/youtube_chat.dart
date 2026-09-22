@@ -214,6 +214,39 @@ abstract class _YouTubeChatStore with Store {
   String? get selfChannelTitle =>
       this._authBox.get(YouTubeAuth.kBoxKey)?.channelTitle;
 
+  /// Max recent lines shown on the native chat user card.
+  static const int kUserCardMessageCap = 20;
+
+  /// Messages from [channelId] in the current channel buffer, newest
+  /// first (capped at [kUserCardMessageCap]).
+  List<YouTubeChatMessage> messagesForChatter(String channelId) {
+    final matches = <YouTubeChatMessage>[
+      for (final message in this.messages)
+        if (message.authorChannelId == channelId) message,
+    ];
+    final start = matches.length > kUserCardMessageCap
+        ? matches.length - kUserCardMessageCap
+        : 0;
+    return matches.sublist(start).reversed.toList();
+  }
+
+  /// Public channel facts (creation date) for the user card —
+  /// 1 quota unit, on demand only, works without sign-in (plain API-key
+  /// read). Null on any failure so the card can hide the section
+  /// instead of erroring.
+  Future<YouTubeChannelInfo?> fetchChannelInfo(String channelId) async {
+    if (!this.isConfigured) return null;
+    try {
+      return await this._chatService.fetchChannel(
+        channelId,
+        apiKey: YouTubeLiveChatService.resolveApiKey(),
+      );
+    } catch (e) {
+      GeneralHelper.advLog('YouTube channel fetch failed — $e');
+      return null;
+    }
+  }
+
   /// Video id of the selected channel, if it still exists in settings.
   String? get _selectedVideoId {
     final label = this.selectedChannelLabel;

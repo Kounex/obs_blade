@@ -33,6 +33,16 @@ class YouTubeLiveChatPage {
   });
 }
 
+/// Public channel facts for the user card (`channels.list?part=snippet`,
+/// 1 quota unit) — a plain API-key read, no sign-in required.
+class YouTubeChannelInfo {
+  final String? title;
+  final String? thumbnailUrl;
+  final DateTime? publishedAt;
+
+  const YouTubeChannelInfo({this.title, this.thumbnailUrl, this.publishedAt});
+}
+
 /// Failure of a YouTube Data API call the UI can surface via [message].
 class YouTubeApiException implements Exception {
   final String message;
@@ -270,6 +280,43 @@ class YouTubeLiveChatService {
         (items.first as Map<String, dynamic>)['liveStreamingDetails'];
     if (details is! Map<String, dynamic>) return null;
     return details['activeLiveChatId'] as String?;
+  }
+
+  /// `channels.list?part=snippet` — public channel facts for the user
+  /// card (1 quota unit; a plain API-key read, no bearer token needed).
+  /// Null when the channel id doesn't resolve to anything.
+  Future<YouTubeChannelInfo?> fetchChannel(
+    String channelId, {
+    String? apiKey,
+  }) async {
+    final response = await this._client.get(
+      this._uri('channels', {
+        'part': 'snippet',
+        'id': channelId,
+      }, apiKey: apiKey),
+    );
+    if (response.statusCode != 200) {
+      throw YouTubeLiveChatService._errorFor(response, 'Fetching the channel');
+    }
+    final body = json.decode(response.body) as Map<String, dynamic>;
+    final items = body['items'];
+    if (items is! List || items.isEmpty) return null;
+    final snippet = (items.first as Map<String, dynamic>)['snippet'];
+    if (snippet is! Map<String, dynamic>) return null;
+    final publishedAt = snippet['publishedAt'] as String?;
+    final thumbnails = snippet['thumbnails'];
+    String? thumbnailUrl;
+    if (thumbnails is Map<String, dynamic>) {
+      final medium = thumbnails['medium'] ?? thumbnails['default'];
+      if (medium is Map<String, dynamic>) {
+        thumbnailUrl = medium['url'] as String?;
+      }
+    }
+    return YouTubeChannelInfo(
+      title: snippet['title'] as String?,
+      thumbnailUrl: thumbnailUrl,
+      publishedAt: publishedAt == null ? null : DateTime.parse(publishedAt),
+    );
   }
 
   /// Maps a failing response to a typed error. YouTube error bodies look

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -8,36 +9,54 @@ import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_youtube_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_youtube_services.dart';
 
-YouTubeChatMessage ytMessage(String id, {String author = 'chan-1'}) =>
-    YouTubeChatMessage(
-      id: id,
-      snippet: YouTubeChatMessageSnippet(
-        type: YouTubeChatMessageType.textMessage,
-        publishedAt: DateTime.utc(2026, 9, 3),
-        authorChannelId: author,
-        displayMessage: 'text $id',
-        textMessageDetails: YouTubeTextMessageDetails(messageText: 'text $id'),
-      ),
-      authorDetails: YouTubeChatAuthorDetails(
-        channelId: author,
-        displayName: 'User $author',
-      ),
-    );
+YouTubeChatMessage ytMessage(
+  String id, {
+  String author = 'chan-1',
+  bool isOwner = false,
+  bool isModerator = false,
+  bool isSponsor = false,
+  bool isVerified = false,
+  String? profileImageUrl,
+}) => YouTubeChatMessage(
+  id: id,
+  snippet: YouTubeChatMessageSnippet(
+    type: YouTubeChatMessageType.textMessage,
+    publishedAt: DateTime.utc(2026, 9, 3),
+    authorChannelId: author,
+    displayMessage: 'text $id',
+    textMessageDetails: YouTubeTextMessageDetails(messageText: 'text $id'),
+  ),
+  authorDetails: YouTubeChatAuthorDetails(
+    channelId: author,
+    displayName: 'User $author',
+    isChatOwner: isOwner,
+    isChatModerator: isModerator,
+    isChatSponsor: isSponsor,
+    isVerified: isVerified,
+    profileImageUrl: profileImageUrl,
+  ),
+);
 
 void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
+  late FakeYouTubeLiveChatService chatService;
   late YouTubeChatStore store;
 
   Box<YouTubeAuth> authBox() =>
       Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
+
+  Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
   Widget wrap() =>
       const MaterialApp(home: Scaffold(body: NativeYouTubeChatView()));
@@ -53,9 +72,10 @@ void main() {
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
     await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
+    chatService = FakeYouTubeLiveChatService();
     store = YouTubeChatStore(
       authService: FakeYouTubeAuthService(),
-      chatService: FakeYouTubeLiveChatService(),
+      chatService: chatService,
       sleep: (duration) async {},
     );
     GetIt.instance.registerSingleton<YouTubeChatStore>(store);
@@ -151,5 +171,62 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pump();
     expect(find.byType(ChatRowLongPressListener), findsOneWidget);
+  });
+
+  testWidgets(
+    'author tap opens the user card with role facts from the buffered '
+    'message — no API key needed',
+    (tester) async {
+      store.chatConnection = YouTubeChatConnectionState.connected;
+      store.messages.add(ytMessage('m1', isOwner: true));
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+
+      await tester.tap(find.text('User chan-1').first);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(YouTubeUserCardSheet), findsOneWidget);
+      expect(find.text('Channel owner'), findsOneWidget);
+      expect(chatService.fetchChannelCalls, isEmpty);
+    },
+  );
+
+  testWidgets('author tap fetches the channel creation date when an API key is '
+      'configured', (tester) async {
+    await tester.runAsync(
+      () => settingsBox().put(SettingsKeys.YouTubeApiKey.name, 'test-key'),
+    );
+    chatService.fetchChannelResult = YouTubeChannelInfo(
+      title: 'Chan One',
+      publishedAt: DateTime.utc(2015, 3, 4),
+    );
+    store.chatConnection = YouTubeChatConnectionState.connected;
+    store.messages.add(ytMessage('m1'));
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.tap(find.text('User chan-1').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(YouTubeUserCardSheet), findsOneWidget);
+    expect(chatService.fetchChannelCalls, ['chan-1']);
+    expect(find.textContaining('Channel created on'), findsOneWidget);
+  });
+
+  testWidgets('author tap with an avatar renders without a fallback icon', (
+    tester,
+  ) async {
+    store.chatConnection = YouTubeChatConnectionState.connected;
+    store.messages.add(
+      ytMessage('m1', profileImageUrl: 'https://example.com/avatar.png'),
+    );
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.tap(find.text('User chan-1').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(YouTubeUserCardSheet), findsOneWidget);
+    expect(find.byIcon(CupertinoIcons.person_fill), findsNothing);
   });
 }
