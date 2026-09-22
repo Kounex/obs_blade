@@ -9,15 +9,20 @@ import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 
-/// App-owned Kick OAuth client id. Empty for now — no app-owned Kick app
-/// exists yet, so the BYO client id ([SettingsKeys.KickOAuthClientId]) is
-/// the only working path. See docs/kick-chat-audit.md.
-const String kKickOAuthClientId = '';
+/// App-owned Kick OAuth client id. Compiled in from
+/// `--dart-define-from-file=docs/private/kick_oauth.json` (gitignored —
+/// the secret must not land in this public repo). Empty in a normal
+/// checkout, which keeps the setup sheet's bring-your-own fields.
+const String kKickOAuthClientId = String.fromEnvironment(
+  'KICK_OAUTH_CLIENT_ID',
+);
 
-/// App-owned Kick OAuth client secret paired with [kKickOAuthClientId] —
-/// empty until an app-owned client exists, BYO via
-/// [SettingsKeys.KickOAuthClientSecret].
-const String kKickOAuthClientSecret = '';
+/// App-owned Kick OAuth client secret paired with [kKickOAuthClientId].
+/// Same dart-define file. Kick's token endpoint requires it; it ships in
+/// the binary only, never in git.
+const String kKickOAuthClientSecret = String.fromEnvironment(
+  'KICK_OAUTH_CLIENT_SECRET',
+);
 
 /// OAuth scopes requested in the authorize URL — one bundle: identity
 /// read, chat send (incl. replies), ban + message-manage moderation.
@@ -28,11 +33,10 @@ const List<String> kKickChatScopes = <String>[
   'moderation:chat_message:manage',
 ];
 
-/// Redirect target the user registers on their (BYO) Kick app. The app
-/// has no deep-link infra and Kick has no device flow, so the flow is
-/// manual-paste: the browser lands on this (dead) URL after consent and
-/// the user copies the full `?code=…&state=…` URL back into the setup
-/// sheet.
+/// Redirect target registered on the Kick app (app-owned or bring-your-own).
+/// The app has no deep-link infra and Kick has no device flow, so the flow
+/// is manual-paste: the browser lands on this (dead) URL after consent and
+/// the user copies the full `?code=…&state=…` URL back into the setup sheet.
 const String kKickOAuthRedirectUri = 'https://localhost/kick-callback';
 
 const String _kAuthorizeUrl = 'https://id.kick.com/oauth/authorize';
@@ -123,21 +127,18 @@ class KickAuthService {
     return value is String && value.isNotEmpty ? value : null;
   }
 
-  /// OAuth client id resolution: the user's own client
-  /// ([SettingsKeys.KickOAuthClientId]) wins over the app-owned
-  /// [kKickOAuthClientId] constant.
-  String resolveClientId() =>
-      KickAuthService._settingsValue(SettingsKeys.KickOAuthClientId) ??
-      kKickOAuthClientId;
+  /// OAuth client id. A compiled-in app client
+  /// ([kKickOAuthClientId]) wins. Otherwise the bring-your-own setting.
+  String resolveClientId() {
+    if (kKickOAuthClientId.isNotEmpty) return kKickOAuthClientId;
+    return KickAuthService._settingsValue(SettingsKeys.KickOAuthClientId) ?? '';
+  }
 
-  /// OAuth client secret resolution — `null` when none is configured.
-  /// The user's own secret ([SettingsKeys.KickOAuthClientSecret]) wins
-  /// over the app-owned [kKickOAuthClientSecret] constant.
+  /// OAuth client secret — `null` when none is configured. Same
+  /// precedence as [resolveClientId].
   String? resolveClientSecret() {
-    final configured =
-        KickAuthService._settingsValue(SettingsKeys.KickOAuthClientSecret) ??
-        kKickOAuthClientSecret;
-    return configured.isNotEmpty ? configured : null;
+    if (kKickOAuthClientSecret.isNotEmpty) return kKickOAuthClientSecret;
+    return KickAuthService._settingsValue(SettingsKeys.KickOAuthClientSecret);
   }
 
   String _randomBase64Url(int byteCount) => base64Url

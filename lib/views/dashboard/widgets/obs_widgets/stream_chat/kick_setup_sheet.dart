@@ -34,11 +34,11 @@ Future<void> showKickSetupSheet(BuildContext context) =>
 
 /// Configuration + sign-in UX for the native Kick chat account. Reading
 /// chat is anonymous and needs nothing; sending and moderating need a
-/// Kick sign-in, and Kick has no device flow — so the user brings their
-/// own (free) Kick developer app (client id/secret, persisted to the
-/// Kick settings keys), opens the PKCE authorize URL in a browser and
-/// pastes the redirect URL back. The signed-in state shows the connected
-/// account and the sign-out action.
+/// Kick sign-in. Kick has no device flow, so the user opens the PKCE
+/// authorize URL in a browser and pastes the redirect URL back. When the
+/// build has no app-owned client ([kKickOAuthClientId] empty), the sheet
+/// also asks for a bring-your-own client id and secret. The signed-in
+/// state shows the connected account and the sign-out action.
 class KickSetupSheet extends StatefulWidget {
   /// Context of the sheet's opener — kept for parity with the YouTube
   /// sheet (its sign-in dialog needs a context that survives the sheet).
@@ -115,7 +115,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
   Future<void> _openLogin() async {
     final store = this._store;
     if (store == null || this._openingBrowser) return;
-    this._persist();
+    if (kKickOAuthClientId.isEmpty) this._persist();
     final uri = store.beginLogin();
     if (uri == null || !this.mounted) return;
     this.setState(() => this._openingBrowser = true);
@@ -320,45 +320,137 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                   if (store.isSignedInState) {
                     return this._signedInSection(context, store);
                   }
+                  final appClient = kKickOAuthClientId.isNotEmpty;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Reading Kick chat needs no account. Sending messages '
-                        'and moderating need a Kick sign-in — and Kick has no '
-                        'device login, so bring your own (free) Kick app:',
+                        appClient
+                            ? 'Reading Kick chat needs no account. Sending '
+                                  'messages and moderating sign you in with '
+                                  'OBS Blade\'s Kick app. Kick has no device '
+                                  'login, so the last step is pasting a URL.'
+                            : 'Reading Kick chat needs no account. Sending '
+                                  'messages and moderating need a Kick '
+                                  'sign-in — and Kick has no device login, '
+                                  'so bring your own (free) Kick app:',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      this._stepRow(
-                        context,
-                        '1',
-                        'Enable 2FA on your Kick account, then open kick.com/settings/developer and create an app',
-                      ),
-                      this._stepRow(
-                        context,
-                        '2',
-                        'Register this redirect URL on the app:',
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: AppSpacing.lg,
-                          bottom: AppSpacing.xs,
+                      if (appClient) ...[
+                        this._stepRow(
+                          context,
+                          '1',
+                          'Open the Kick login and approve OBS Blade',
                         ),
-                        child: Pressable(
+                        this._stepRow(
+                          context,
+                          '2',
+                          'Paste the URL your browser lands on (it won\'t load — that\'s expected)',
+                        ),
+                      ] else ...[
+                        this._stepRow(
+                          context,
+                          '1',
+                          'Enable 2FA on your Kick account, then open kick.com/settings/developer and create an app',
+                        ),
+                        this._stepRow(
+                          context,
+                          '2',
+                          'Register this redirect URL on the app:',
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: AppSpacing.lg,
+                            bottom: AppSpacing.xs,
+                          ),
+                          child: Pressable(
+                            haptic: true,
+                            onTap: () async {
+                              await Clipboard.setData(
+                                const ClipboardData(
+                                  text: kKickOAuthRedirectUri,
+                                ),
+                              );
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    kKickOAuthRedirectUri,
+                                    key: const Key('kick-setup-redirect-uri'),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color:
+                                              (Theme.of(context)
+                                                          .extension<
+                                                            AppTextColors
+                                                          >() ??
+                                                      AppTextColors.standard)
+                                                  .highlightText,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Icon(
+                                  CupertinoIcons.doc_on_doc,
+                                  size: 14.0,
+                                  color:
+                                      (Theme.of(
+                                                context,
+                                              ).extension<AppTextColors>() ??
+                                              AppTextColors.standard)
+                                          .highlightText,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        this._stepRow(
+                          context,
+                          '3',
+                          'Paste the app\'s client id and secret below',
+                        ),
+                        this._stepRow(
+                          context,
+                          '4',
+                          'Open the Kick login, approve, and paste the URL your browser lands on (it won\'t load — that\'s expected)',
+                        ),
+                        Pressable(
                           haptic: true,
                           onTap: () async {
-                            await Clipboard.setData(
-                              const ClipboardData(text: kKickOAuthRedirectUri),
+                            final uri = Uri.parse(
+                              'https://kick.com/settings/developer',
                             );
+                            if (await launcher.canLaunchUrl(uri)) {
+                              await launcher.launchUrl(
+                                uri,
+                                mode: launcher.LaunchMode.externalApplication,
+                              );
+                            }
                           },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  kKickOAuthRedirectUri,
-                                  key: const Key('kick-setup-redirect-uri'),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSpacing.xs,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.link,
+                                  size: 14.0,
+                                  color:
+                                      (Theme.of(
+                                                context,
+                                              ).extension<AppTextColors>() ??
+                                              AppTextColors.standard)
+                                          .highlightText,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  'Open kick.com/settings/developer',
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color:
@@ -371,93 +463,23 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                                         fontWeight: FontWeight.w600,
                                       ),
                                 ),
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              Icon(
-                                CupertinoIcons.doc_on_doc,
-                                size: 14.0,
-                                color:
-                                    (Theme.of(
-                                              context,
-                                            ).extension<AppTextColors>() ??
-                                            AppTextColors.standard)
-                                        .highlightText,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      this._stepRow(
-                        context,
-                        '3',
-                        'Paste the app\'s client id and secret below',
-                      ),
-                      this._stepRow(
-                        context,
-                        '4',
-                        'Open the Kick login, approve, and paste the URL your browser lands on (it won\'t load — that\'s expected)',
-                      ),
-                      Pressable(
-                        haptic: true,
-                        onTap: () async {
-                          final uri = Uri.parse(
-                            'https://kick.com/settings/developer',
-                          );
-                          if (await launcher.canLaunchUrl(uri)) {
-                            await launcher.launchUrl(
-                              uri,
-                              mode: launcher.LaunchMode.externalApplication,
-                            );
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: AppSpacing.xs,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                CupertinoIcons.link,
-                                size: 14.0,
-                                color:
-                                    (Theme.of(
-                                              context,
-                                            ).extension<AppTextColors>() ??
-                                            AppTextColors.standard)
-                                        .highlightText,
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              Text(
-                                'Open kick.com/settings/developer',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color:
-                                          (Theme.of(context)
-                                                      .extension<
-                                                        AppTextColors
-                                                      >() ??
-                                                  AppTextColors.standard)
-                                              .highlightText,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
-                          ),
+                        const SizedBox(height: AppSpacing.sm),
+                        NativeChatTextField(
+                          controller: this._clientIdController,
+                          hintText: 'OAuth client id',
+                          focusBorderColor: accent,
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      NativeChatTextField(
-                        controller: this._clientIdController,
-                        hintText: 'OAuth client id',
-                        focusBorderColor: accent,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      NativeChatTextField(
-                        controller: this._clientSecretController,
-                        hintText: 'OAuth client secret',
-                        focusBorderColor: accent,
-                      ),
+                        const SizedBox(height: AppSpacing.sm),
+                        NativeChatTextField(
+                          controller: this._clientSecretController,
+                          hintText: 'OAuth client secret',
+                          focusBorderColor: accent,
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.md),
                       this._pillButton(
                         context,

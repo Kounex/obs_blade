@@ -64,8 +64,12 @@ Chatterino forks, bots, overlays all ride it; tolerated ecosystem):
 `id.kick.com`. **No device flow** (probed: `/oauth/device/code` → 404) — so
 no Twitch-style scan-a-code login. Any user can register an app
 (2FA → kick.com/settings/developer), so the **BYO client id/secret**
-pattern from the YouTube setup sheet applies. Redirect handling is
-manual-paste (no deep-link infra) — see "open decisions" below.
+pattern from the YouTube setup sheet applies when the build has no
+app-owned client. The shipping path is one OBS Blade Kick app, compiled
+in from gitignored `docs/private/kick_oauth.json`
+(`--dart-define-from-file`); the secret stays out of this public repo.
+Redirect handling is manual-paste (no deep-link infra) — see "open
+decisions" below.
 Numeric rate limits are unpublished; handle 429.
 
 ## Twitch → Kick capability map
@@ -121,12 +125,12 @@ Numeric rate limits are unpublished; handle 429.
 
 ## Open decisions / risks
 
-- ~~W3 redirect handling~~ — **decided (W3):** manual code paste (zero
-  infra). The setup sheet shows the redirect URI to register
-  (`kKickOAuthRedirectUri`, a dead `https://localhost/kick-callback`
-  URL — the browser lands on a connection-refused page and the user
-  copies the address-bar URL back). Custom scheme / loopback stay
-  available as a later UX upgrade.
+- ~~W3 redirect handling~~ — **decided:** manual code paste (zero
+  infra). Redirect URI `https://localhost/kick-callback` — the browser
+  lands on a connection-refused page and the user copies the address-bar
+  URL back. An app-owned Kick client removes the "create a developer
+  app" step; the paste stays until a custom scheme exists. Custom scheme
+  / loopback stay available as a later UX upgrade.
 - Pusher key longevity (uncontractual) — single constant + fallback comment.
 - `api/v2/*` is Cloudflare-fronted. A browser User-Agent from dart:io is
   blocked by the security policy (home networks included); reads send

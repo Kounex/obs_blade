@@ -132,8 +132,11 @@ injectable connector). `KickChatStore` mirrors `YouTubeChatStore`
 (per-channel buffers, tombstone/ban reconcile, `/clear` notice, Pro-gated
 `connectChat`); rows render `badges_v2` artwork + `[emote:id:name]` inline
 images. Writes/mod ride the **official API** (`api.kick.com/public/v1`) behind
-an optional sign-in: **manual-paste PKCE OAuth** (Kick has no device flow; BYO
-client id/secret in the Kick setup sheet, scope bundle `user:read chat:write
+an optional sign-in: **manual-paste PKCE OAuth** (Kick has no device flow; the
+app-owned client is compiled in from gitignored
+`docs/private/kick_oauth.json` via `--dart-define-from-file`, and a build
+without it falls back to BYO client id/secret in the setup sheet, scope
+bundle `user:read chat:write
 moderation:ban moderation:chat_message:manage`, tokens in the `KickAuth` box,
 refresh rotates BOTH tokens — single-flight in `KickAuthService`).
 `KickApiService` sends/replies/deletes/bans/timeouts/unbans with typed

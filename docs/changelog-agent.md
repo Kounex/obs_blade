@@ -2,6 +2,14 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 — Kick sign-in can use an app-owned OAuth client
+
+Pro users should not register their own Kick developer app. The client id
+and secret compile in from gitignored `docs/private/kick_oauth.json`
+(`KICK_OAUTH_CLIENT_ID` / `KICK_OAUTH_CLIENT_SECRET`). A build without
+that file keeps the bring-your-own setup sheet. The browser paste step
+stays: Kick has no device flow.
+
 ## 2026-09-23 — Kick native read: don't spoof a browser User-Agent
 
 `GET kick.com/api/v2/channels/{slug}` from dart:io with a Safari/Chrome
