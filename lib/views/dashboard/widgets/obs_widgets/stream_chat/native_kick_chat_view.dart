@@ -16,6 +16,7 @@ import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 
 import 'dialogs/kick_mod_action_sheet.dart';
+import 'pinned_chat_banner.dart';
 
 /// Native Kick chat timeline, driven by [KickChatStore]'s message buffer
 /// (anonymous reads — channel resolution + history backfill over REST,
@@ -234,6 +235,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
         /// cheap mod lookup, so a non-mod's action 403s into the
         /// snackbar (same honest-403 model as YouTube).
         final canWrite = this._store.canWrite;
+        final pinned = this._store.pinnedMessage;
 
         /// Appearance toggles re-render in place (shared keys with the
         /// Twitch engine — the appearance options sheet is reused as-is).
@@ -246,7 +248,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
-            return Stack(
+            final timeline = Stack(
               children: [
                 ListView.separated(
                   controller: this._scrollController,
@@ -344,6 +346,17 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                       ),
                     ),
                   ),
+              ],
+            );
+            return Column(
+              children: [
+                if (pinned != null)
+                  PinnedChatBanner(
+                    messageId: pinned.id,
+                    senderName: pinned.authorName,
+                    text: pinned.content,
+                  ),
+                Expanded(child: timeline),
               ],
             );
           },

@@ -1,30 +1,36 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
-import '../../../../../stores/views/twitch_chat.dart';
-import '../../../../../types/classes/twitch/twitch_pinned_message.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
 
-/// Slim banner above the native Twitch chat timeline showing the channel's
-/// currently pinned message (Helix pins — at most one per channel). The
-/// store refetches on connect/switch and after local pin mutations (there
-/// is no EventSub for pins).
+/// Slim banner above a native chat timeline for the channel's single
+/// pinned message. Platform-neutral: the caller supplies the visible
+/// text and, when the user may unpin, [onUnpin].
 ///
 /// Collapsed the banner stays muted and exactly one line — a pin sits
 /// there passively and shouldn't draw focus. Tapping it anywhere toggles
 /// the expanded state (even for one-liners): full message, active colors
 /// (accent name, normal-contrast text). The ✕ unpin affordance only
-/// renders for users who may moderate the selected channel and confirms
-/// first — pinning affects the whole room; failures surface as a snackbar
-/// hosted by the chat view's context.
+/// renders when [onUnpin] is set and confirms first — pinning affects
+/// the whole room; a failed unpin surfaces as a snackbar.
 class PinnedChatBanner extends StatefulWidget {
-  final TwitchPinnedMessage pinned;
+  final String messageId;
+  final String senderName;
+  final String text;
 
-  const PinnedChatBanner({super.key, required this.pinned});
+  /// Confirmed unpin. Null hides the ✕ (the viewer cannot unpin).
+  final Future<bool> Function()? onUnpin;
+
+  const PinnedChatBanner({
+    super.key,
+    required this.messageId,
+    required this.senderName,
+    required this.text,
+    this.onUnpin,
+  });
 
   @override
   State<PinnedChatBanner> createState() => _PinnedChatBannerState();
@@ -38,12 +44,14 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
     super.didUpdateWidget(oldWidget);
 
     /// A different pinned message always starts collapsed.
-    if (oldWidget.pinned.messageId != this.widget.pinned.messageId) {
+    if (oldWidget.messageId != this.widget.messageId) {
       this._expanded = false;
     }
   }
 
   void _confirmUnpin(BuildContext context) {
+    final unpin = this.widget.onUnpin;
+    if (unpin == null) return;
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: ConfirmationDialog(
@@ -52,7 +60,7 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
         okText: 'Unpin',
         noText: 'Cancel',
         onOk: (_) async {
-          final ok = await GetIt.instance<TwitchChatStore>().unpinMessage();
+          final ok = await unpin();
           if (!ok && context.mounted) {
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
@@ -67,7 +75,6 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final store = GetIt.instance<TwitchChatStore>();
     final theme = Theme.of(context);
     final mutedColor = theme.textTheme.bodySmall?.color;
     final highlightText =
@@ -78,14 +85,14 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
       TextSpan(
         children: [
           TextSpan(
-            text: '${this.widget.pinned.senderUserName}: ',
+            text: '${this.widget.senderName}: ',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: expanded ? highlightText : mutedColor,
             ),
           ),
           TextSpan(
-            text: this.widget.pinned.message.text,
+            text: this.widget.text,
             style: TextStyle(
               color: expanded ? theme.textTheme.bodyMedium?.color : mutedColor,
             ),
@@ -154,7 +161,7 @@ class _PinnedChatBannerState extends State<PinnedChatBanner> {
               size: 12.0,
               color: mutedColor,
             ),
-            if (store.canModerateSelectedChannel) ...[
+            if (this.widget.onUnpin != null) ...[
               const SizedBox(width: AppSpacing.xs),
               Pressable(
                 haptic: true,

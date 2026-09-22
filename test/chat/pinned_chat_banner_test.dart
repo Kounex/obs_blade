@@ -39,11 +39,18 @@ void main() {
   late TwitchChatStore store;
 
   Future<void> pumpBanner(WidgetTester tester) async {
+    final pinned = FakeTwitchModerationService.pinnedSample;
+    final store = GetIt.instance<TwitchChatStore>();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: PinnedChatBanner(
-            pinned: FakeTwitchModerationService.pinnedSample,
+            messageId: pinned.messageId,
+            senderName: pinned.senderUserName,
+            text: pinned.message.text,
+            onUnpin: store.canModerateSelectedChannel
+                ? store.unpinMessage
+                : null,
           ),
         ),
       ),

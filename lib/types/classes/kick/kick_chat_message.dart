@@ -22,6 +22,23 @@ enum KickChatMessageType {
 /// backfill (`/api/v2/channels/{id}/messages`) nested objects like
 /// `metadata` may arrive as a JSON-encoded STRING, while live Pusher
 /// events carry them as objects. Accepts both (plus junk → null).
+/// A pin from history (`data.pinned_message`) or a live
+/// `PinnedMessageCreatedEvent`: `{message: <chat message>, ...}`.
+/// The nested message is the original chat line. Null when nothing is
+/// pinned or the payload is junk.
+KickChatMessage? kickPinnedMessage(Object? raw) {
+  final map = kickJsonObject(raw);
+  if (map == null) return null;
+  final nested = kickJsonObject(map['message']);
+  final source = nested ?? map;
+  if (source['id'] is! String) return null;
+  try {
+    return KickChatMessage.fromJson(source);
+  } catch (_) {
+    return null;
+  }
+}
+
 Map<String, Object?>? kickJsonObject(Object? raw) {
   if (raw is Map) return raw.cast<String, Object?>();
   if (raw is String) {

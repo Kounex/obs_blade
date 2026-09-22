@@ -320,6 +320,26 @@ void main() {
         KickChatroomEventKind.pinnedMessage,
       );
       expect(
+        const KickPusherEvent(
+          event: 'App\\Events\\PinnedMessageCreatedEvent',
+          data: <String, Object?>{
+            'message': <String, Object?>{
+              'id': 'pin-1',
+              'content': 'rules',
+              'sender': <String, Object?>{'username': 'Mod'},
+            },
+            'pinned_by': <String, Object?>{'username': 'Other'},
+          },
+        ).pinnedChatMessage?.authorName,
+        'Mod',
+      );
+      expect(
+        const KickPusherEvent(
+          event: 'App\\Events\\PinnedMessageDeletedEvent',
+        ).isPinDeleted,
+        isTrue,
+      );
+      expect(
         kindOf('App\\Events\\SomethingElse'),
         KickChatroomEventKind.unknown,
       );

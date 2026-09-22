@@ -197,6 +197,24 @@ mixin _$KickChatStore on _KickChatStore, Store {
     });
   }
 
+  late final _$pinnedMessageAtom = Atom(
+    name: '_KickChatStore.pinnedMessage',
+    context: context,
+  );
+
+  @override
+  KickChatMessage? get pinnedMessage {
+    _$pinnedMessageAtom.reportRead();
+    return super.pinnedMessage;
+  }
+
+  @override
+  set pinnedMessage(KickChatMessage? value) {
+    _$pinnedMessageAtom.reportWrite(value, super.pinnedMessage, () {
+      super.pinnedMessage = value;
+    });
+  }
+
   late final _$replyTargetAtom = Atom(
     name: '_KickChatStore.replyTarget',
     context: context,
@@ -414,6 +432,7 @@ sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 modActionError: ${modActionError},
 replyTarget: ${replyTarget},
+pinnedMessage: ${pinnedMessage},
 isSignedInState: ${isSignedInState}
     ''';
   }

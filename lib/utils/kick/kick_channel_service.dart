@@ -61,10 +61,11 @@ class KickChannelService {
 
   /// `GET /channels/{channel_id}/messages` — recent history (newest ~50),
   /// returned in arrival order (sorted by `created_at`; undated entries
-  /// sort oldest). Unparseable entries are skipped one by one. Note: this
-  /// endpoint encodes nested `metadata` as a JSON STRING — the DTOs
-  /// tolerate both shapes (see [kickJsonObject]).
-  Future<List<KickChatMessage>> backfillMessages(int channelId) async {
+  /// sort oldest), plus the channel's current pin (`data.pinned_message`,
+  /// null when nothing is pinned). Unparseable entries are skipped one by
+  /// one. Note: this endpoint encodes nested `metadata` as a JSON STRING —
+  /// the DTOs tolerate both shapes (see [kickJsonObject]).
+  Future<KickChatBackfill> backfillMessages(int channelId) async {
     final response = await this._client.get(
       Uri.parse('$_kApiBase/channels/$channelId/messages'),
       headers: this._headers,
@@ -83,7 +84,12 @@ class KickChannelService {
         : data is List
         ? data
         : null;
-    if (rawMessages is! List) return const [];
+    final pinned = data is Map
+        ? kickPinnedMessage(data['pinned_message'])
+        : null;
+    if (rawMessages is! List) {
+      return KickChatBackfill(messages: const [], pinnedMessage: pinned);
+    }
     final messages = <KickChatMessage>[];
     for (final raw in rawMessages) {
       final map = raw is Map ? raw.cast<String, Object?>() : null;
@@ -98,6 +104,14 @@ class KickChannelService {
       (a, b) => (a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
           .compareTo(b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)),
     );
-    return messages;
+    return KickChatBackfill(messages: messages, pinnedMessage: pinned);
   }
+}
+
+/// History backfill plus the pin that was active when it was fetched.
+class KickChatBackfill {
+  final List<KickChatMessage> messages;
+  final KickChatMessage? pinnedMessage;
+
+  const KickChatBackfill({required this.messages, this.pinnedMessage});
 }

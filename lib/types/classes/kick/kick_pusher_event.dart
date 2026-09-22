@@ -13,8 +13,8 @@ enum KickChatroomEventKind {
   chatroomClear,
   chatroomUpdated,
 
-  /// Pin create/delete — parsed but not surfaced this wave (no
-  /// ChatType-free pinned banner exists).
+  /// Pin create/delete. Create carries the chat message under `message`;
+  /// delete clears the channel's single pin.
   pinnedMessage,
   unknown,
 }
@@ -89,6 +89,12 @@ class KickPusherEvent {
     if (nested is String) return nested;
     return this.data['id'] as String?;
   }
+
+  bool get isPinDeleted => this.event.endsWith('PinnedMessageDeletedEvent');
+
+  /// The chat line inside a `PinnedMessageCreatedEvent` (`message` object,
+  /// or the payload itself when it is already a chat message).
+  KickChatMessage? get pinnedChatMessage => kickPinnedMessage(this.data);
 
   /// `UserBannedEvent` / `UserUnbannedEvent` — `{user: {id, ...}}`.
   int? get targetUserId {

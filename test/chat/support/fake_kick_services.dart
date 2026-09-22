@@ -28,8 +28,11 @@ class FakeKickChannelService extends KickChannelService {
     return this.channels[slug];
   }
 
+  /// Optional pin returned with [backfills] for [channelId].
+  final Map<int, KickChatMessage?> pinnedBackfills = <int, KickChatMessage?>{};
+
   @override
-  Future<List<KickChatMessage>> backfillMessages(int channelId) async {
+  Future<KickChatBackfill> backfillMessages(int channelId) async {
     this.backfillCalls++;
     if (this.backfillThrows != null) throw this.backfillThrows!;
     final messages = List<KickChatMessage>.of(
@@ -41,7 +44,10 @@ class FakeKickChannelService extends KickChannelService {
       (a, b) => (a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0))
           .compareTo(b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)),
     );
-    return messages;
+    return KickChatBackfill(
+      messages: messages,
+      pinnedMessage: this.pinnedBackfills[channelId],
+    );
   }
 }
 

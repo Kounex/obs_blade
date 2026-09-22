@@ -58,6 +58,7 @@ class KickChatStore = _KickChatStore with _$KickChatStore;
 class _ChannelBuffer {
   List<KickChatMessage> messages;
   KickChannelInfo? channelInfo;
+  KickChatMessage? pinnedMessage;
 
   _ChannelBuffer({List<KickChatMessage>? messages, this.channelInfo})
     : messages = messages ?? <KickChatMessage>[];
@@ -207,6 +208,12 @@ abstract class _KickChatStore with Store {
   /// YouTubeChatStore.moderationError.
   @observable
   String? modActionError;
+
+  /// The channel's current pin (history `pinned_message`, then live
+  /// create/delete events). One pin per channel; swapped with the buffer
+  /// on [selectChannel].
+  @observable
+  KickChatMessage? pinnedMessage;
 
   /// Reply target for the next sent message (long-press → Reply) — the
   /// full message, so the dock strip can show author + excerpt while the
@@ -535,7 +542,11 @@ abstract class _KickChatStore with Store {
       try {
         final history = await this._channelService.backfillMessages(info.id);
         if (superseded()) return;
-        runInAction(() => this._applyBackfill(history));
+        runInAction(() {
+          this._applyBackfill(history.messages);
+          this.pinnedMessage = history.pinnedMessage;
+          buffer.pinnedMessage = history.pinnedMessage;
+        });
       } catch (e) {
         if (superseded()) return;
 
@@ -615,6 +626,7 @@ abstract class _KickChatStore with Store {
           /// Unbans don't resurrect tombstoned rows.
           break;
         case KickChatroomEventKind.pinnedMessage:
+          this._applyPinned(slug, event);
         case KickChatroomEventKind.unknown:
           break;
       }
@@ -656,6 +668,20 @@ abstract class _KickChatStore with Store {
         this.messages[i] = message.copyWith(isTombstoned: true);
       }
     }
+  }
+
+  /// One pin per channel. Delete clears it; create replaces it with the
+  /// nested chat message. A junk create is ignored so a bad frame cannot
+  /// wipe a good pin.
+  void _applyPinned(String slug, KickPusherEvent event) {
+    if (event.isPinDeleted) {
+      this.pinnedMessage = null;
+    } else {
+      final message = event.pinnedChatMessage;
+      if (message == null) return;
+      this.pinnedMessage = message;
+    }
+    this._channelBuffers[slug]?.pinnedMessage = this.pinnedMessage;
   }
 
   /// `ChatroomClearEvent` — drop the buffer and leave a system notice row
@@ -904,6 +930,7 @@ abstract class _KickChatStore with Store {
         _ChannelBuffer.new,
       );
       previous.messages = List.of(this.messages);
+      previous.pinnedMessage = this.pinnedMessage;
     }
 
     this.selectedChannelSlug = slug;
@@ -921,6 +948,7 @@ abstract class _KickChatStore with Store {
     if (slug != null) {
       final buffer = this._channelBuffers.putIfAbsent(slug, _ChannelBuffer.new);
       this.messages.addAll(buffer.messages);
+      this.pinnedMessage = buffer.pinnedMessage;
       this.channelInfo = buffer.channelInfo;
       if (this._isProResolver()) {
         this.chatConnection = KickChatConnectionState.connecting;
@@ -934,6 +962,7 @@ abstract class _KickChatStore with Store {
       }
     } else {
       this.channelInfo = null;
+      this.pinnedMessage = null;
       this.chatConnection = KickChatConnectionState.idle;
     }
   }
@@ -961,6 +990,7 @@ abstract class _KickChatStore with Store {
       this.messages.clear();
       this.chatConnectedAt = null;
       this.channelInfo = null;
+      this.pinnedMessage = null;
       this.chatConnection = KickChatConnectionState.idle;
       this.chatError = null;
       this.replyTarget = null;

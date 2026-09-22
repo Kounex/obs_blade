@@ -410,6 +410,45 @@ void main() {
       );
     }
 
+    test(
+      'history pin is shown, a create replaces it, a delete clears it',
+      () async {
+        configure();
+        channelService.pinnedBackfills[101] = KickChatMessage(
+          id: 'from-history',
+          content: 'house rules',
+          sender: const KickChatSender(id: 7, username: 'Mod'),
+        );
+        await store.init();
+        await until(
+          () => store.chatConnection == KickChatConnectionState.connected,
+        );
+        expect(store.pinnedMessage?.content, 'house rules');
+
+        pusher().emitEvent(
+          KickPusherEvent(
+            event: 'App\\Events\\PinnedMessageCreatedEvent',
+            data: <String, Object?>{
+              'message': messageData(
+                'pin-1',
+                username: 'Mod',
+                content: 'new rules',
+              ),
+            },
+          ),
+        );
+        await until(() => store.pinnedMessage?.id == 'pin-1');
+        expect(store.pinnedMessage?.authorName, 'Mod');
+
+        pusher().emitEvent(
+          const KickPusherEvent(
+            event: 'App\\Events\\PinnedMessageDeletedEvent',
+          ),
+        );
+        await until(() => store.pinnedMessage == null);
+      },
+    );
+
     test('MessageDeletedEvent tombstones a buffered message; unknown ids '
         'are dropped', () async {
       await connect();
