@@ -199,15 +199,32 @@ void main() {
     expect(nameSpan(null).style?.color, AppTextColors.standard.highlightText);
     expect(bodySpan(null).style?.color, theme.textTheme.bodyMedium?.color);
 
-    /// The tap toggles which copy the crossfade shows (chevron mirrors it).
+    /// The chevron itself toggles expansion — not only the text to its left.
     expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
-    await tester.tap(find.textContaining('remember the giveaway').first);
+    await tester.tap(find.byIcon(CupertinoIcons.chevron_down));
     await tester.pump();
     expect(find.byIcon(CupertinoIcons.chevron_up), findsOneWidget);
 
-    await tester.tap(find.textContaining('remember the giveaway').first);
+    await tester.tap(find.byIcon(CupertinoIcons.chevron_up));
     await tester.pump();
     expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
+  });
+
+  testWidgets('the gap before the close button does not tuck the banner', (
+    tester,
+  ) async {
+    store.selectedChannelId = 'chan-other';
+    await pumpBanner(tester);
+
+    final chevron = tester.getRect(find.byIcon(CupertinoIcons.chevron_down));
+    final close = tester.getRect(find.byIcon(CupertinoIcons.xmark));
+    await tester.tapAt(
+      Offset((chevron.right + close.left) / 2, chevron.center.dy),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(CupertinoIcons.chevron_down), findsOneWidget);
+    expect(find.textContaining('remember the giveaway'), findsWidgets);
   });
 
   testWidgets('non-mods get no unpin button', (tester) async {
@@ -252,9 +269,10 @@ void main() {
     expect(find.textContaining('text m1'), findsOneWidget);
     expect(find.byIcon(CupertinoIcons.pin_fill), findsOneWidget);
 
+    final view = tester.getRect(find.byType(NativeTwitchChatView));
     final pin = tester.getCenter(find.byIcon(CupertinoIcons.pin_fill));
-    final message = tester.getCenter(find.textContaining('text m1'));
-    expect(pin.dx, greaterThan(message.dx));
+    expect(pin.dx, greaterThan(view.right - 72));
+    expect(pin.dy, lessThan(view.top + 72));
 
     await tester.tap(find.byIcon(CupertinoIcons.pin_fill));
     await tester.pumpAndSettle();

@@ -144,7 +144,7 @@ statusCode errors + 401→refresh-once→retry-once; no optimistic append (the
 Pusher echo renders own messages); the mod long-press shows for any signed-in
 user and 403s surface honestly (no "am I a mod" lookup exists). Pins
 show on the shared banner (history + live create/delete; no Kick unpin
-API). The banner's ✕ tucks it to a pin button on the right of the
+API). The banner's ✕ tucks it to a pin button at the top-right of the
 timeline; tapping the pin brings the banner back. No emote picker. The channel list
 shares `SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView
 path (slug == identity).
