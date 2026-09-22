@@ -340,9 +340,70 @@ void main() {
         isTrue,
       );
       expect(
+        kindOf('App\\Events\\SubscriptionEvent'),
+        KickChatroomEventKind.subscription,
+      );
+      expect(
+        kindOf('App\\Events\\GiftedSubscriptionsEvent'),
+        KickChatroomEventKind.giftedSubscriptions,
+      );
+      expect(
+        kindOf('App\\Events\\StreamHostEvent'),
+        KickChatroomEventKind.streamHost,
+      );
+      expect(
         kindOf('App\\Events\\SomethingElse'),
         KickChatroomEventKind.unknown,
       );
+    });
+
+    test('subscriberUsername / subscriptionMonths read the reverse-'
+        'engineered SubscriptionEvent shape', () {
+      const event = KickPusherEvent(
+        event: 'App\\Events\\SubscriptionEvent',
+        data: <String, Object?>{'username': 'Loyal', 'months': 6},
+      );
+      expect(event.subscriberUsername, 'Loyal');
+      expect(event.subscriptionMonths, 6);
+
+      const missingField = KickPusherEvent(
+        event: 'App\\Events\\SubscriptionEvent',
+        data: <String, Object?>{'username': 'Loyal'},
+      );
+      expect(missingField.subscriptionMonths, isNull);
+    });
+
+    test('gifterUsername / giftedUsernames read the reverse-engineered '
+        'GiftedSubscriptionsEvent shape', () {
+      const event = KickPusherEvent(
+        event: 'App\\Events\\GiftedSubscriptionsEvent',
+        data: <String, Object?>{
+          'gifter_username': 'BigSpender',
+          'gifted_usernames': <Object?>['Alice', 'Bob'],
+        },
+      );
+      expect(event.gifterUsername, 'BigSpender');
+      expect(event.giftedUsernames, ['Alice', 'Bob']);
+
+      const missing = KickPusherEvent(
+        event: 'App\\Events\\GiftedSubscriptionsEvent',
+      );
+      expect(missing.giftedUsernames, isEmpty);
+    });
+
+    test('hostUsername / hostViewerCount / hostMessage read the reverse-'
+        'engineered StreamHostEvent shape', () {
+      const event = KickPusherEvent(
+        event: 'App\\Events\\StreamHostEvent',
+        data: <String, Object?>{
+          'host_username': 'BigStreamer',
+          'number_viewers': 250,
+          'optional_message': 'good luck!',
+        },
+      );
+      expect(event.hostUsername, 'BigStreamer');
+      expect(event.hostViewerCount, 250);
+      expect(event.hostMessage, 'good luck!');
     });
 
     test('deletedMessageId prefers the nested message id, falls back to '

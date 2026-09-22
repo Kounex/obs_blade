@@ -16,6 +16,23 @@ enum KickChatroomEventKind {
   /// Pin create/delete. Create carries the chat message under `message`;
   /// delete clears the channel's single pin.
   pinnedMessage,
+
+  /// A viewer subscribed (`{chatroom_id, username, months}`) — field
+  /// names are reverse-engineered (Kick's public API has no Pusher
+  /// schema docs; see `docs/kick-chat-audit.md`), not confirmed against
+  /// a live capture. Parsing is defensive: a missing/renamed field
+  /// degrades to no notice rather than a garbled one.
+  subscription,
+
+  /// One user gifted N subs (`{chatroom_id, gifted_usernames,
+  /// gifter_username}`) — same reverse-engineered caveat as
+  /// [subscription].
+  giftedSubscriptions,
+
+  /// Another channel hosted this one (`{chatroom_id, optional_message,
+  /// number_viewers, host_username}`) — same reverse-engineered caveat
+  /// as [subscription].
+  streamHost,
   unknown,
 }
 
@@ -79,6 +96,19 @@ class KickPusherEvent {
     if (name.endsWith('ChatroomUpdatedEvent')) {
       return KickChatroomEventKind.chatroomUpdated;
     }
+
+    /// Check the longer/plural suffix first — disjoint from
+    /// `SubscriptionEvent` either way, but explicit ordering documents
+    /// the intent.
+    if (name.endsWith('GiftedSubscriptionsEvent')) {
+      return KickChatroomEventKind.giftedSubscriptions;
+    }
+    if (name.endsWith('SubscriptionEvent')) {
+      return KickChatroomEventKind.subscription;
+    }
+    if (name.endsWith('StreamHostEvent')) {
+      return KickChatroomEventKind.streamHost;
+    }
     return KickChatroomEventKind.unknown;
   }
 
@@ -101,4 +131,26 @@ class KickPusherEvent {
     final id = kickJsonObject(this.data['user'])?['id'];
     return id is int ? id : null;
   }
+
+  /// `SubscriptionEvent` — `{username, months}`. Null when either field
+  /// is missing (the reverse-engineered shape doesn't hold) — the store
+  /// skips the notice rather than showing a garbled one.
+  String? get subscriberUsername => this.data['username'] as String?;
+
+  int? get subscriptionMonths => (this.data['months'] as num?)?.toInt();
+
+  /// `GiftedSubscriptionsEvent` — `{gifter_username, gifted_usernames}`.
+  String? get gifterUsername => this.data['gifter_username'] as String?;
+
+  List<String> get giftedUsernames =>
+      (this.data['gifted_usernames'] as List?)?.whereType<String>().toList() ??
+      const <String>[];
+
+  /// `StreamHostEvent` — `{host_username, number_viewers,
+  /// optional_message}`.
+  String? get hostUsername => this.data['host_username'] as String?;
+
+  int? get hostViewerCount => (this.data['number_viewers'] as num?)?.toInt();
+
+  String? get hostMessage => this.data['optional_message'] as String?;
 }

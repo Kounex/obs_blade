@@ -210,18 +210,33 @@ class KickChatMessageRow extends StatelessWidget {
     );
   }
 
-  /// The `/clear` system line (synthetic — see the store).
+  /// A synthetic notice line — `/clear` plus the sub/gift/host notices
+  /// the store appends (see `_appendNotice` there). Icon is picked from
+  /// the message id's `system-<kind>-…` prefix; text is the message's
+  /// own [KickChatMessage.content] (falls back to the `/clear` copy for
+  /// any older/unrecognized synthetic row with no content set).
   Widget _systemRow(BuildContext context) {
     final accent =
         (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
             .textOrnament;
+    final id = this.message.id;
+    final icon = id.startsWith('system-sub-')
+        ? CupertinoIcons.star_fill
+        : id.startsWith('system-gift-')
+        ? CupertinoIcons.gift_fill
+        : id.startsWith('system-host-')
+        ? CupertinoIcons.person_2_fill
+        : JamIcons.shield_f;
+    final text = this.message.content.isNotEmpty
+        ? this.message.content
+        : 'Chat was cleared by a moderator';
     return Row(
       children: [
-        Icon(JamIcons.shield_f, size: 14.0, color: accent),
+        Icon(icon, size: 14.0, color: accent),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
-            'Chat was cleared by a moderator',
+            text,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),

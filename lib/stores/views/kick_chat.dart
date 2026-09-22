@@ -627,6 +627,12 @@ abstract class _KickChatStore with Store {
           break;
         case KickChatroomEventKind.pinnedMessage:
           this._applyPinned(slug, event);
+        case KickChatroomEventKind.subscription:
+          this._applySubscription(event);
+        case KickChatroomEventKind.giftedSubscriptions:
+          this._applyGiftedSubscriptions(event);
+        case KickChatroomEventKind.streamHost:
+          this._applyStreamHost(event);
         case KickChatroomEventKind.unknown:
           break;
       }
@@ -689,12 +695,66 @@ abstract class _KickChatStore with Store {
   void _applyChatroomClear() {
     if (this.messages.isEmpty) return;
     this.messages.clear();
+    this._appendNotice(
+      idPrefix: 'system-clear',
+      content: 'Chat was cleared by a moderator',
+    );
+  }
+
+  /// Appends a synthetic [KickChatMessageType.system] row — shared by
+  /// `/clear` and the sub/gift/host notices below. [idPrefix] both
+  /// dedupes the icon lookup in the row widget and keeps ids unique.
+  void _appendNotice({required String idPrefix, required String content}) {
     this.messages.add(
       KickChatMessage(
-        id: 'system-clear-${DateTime.now().microsecondsSinceEpoch}',
+        id: '$idPrefix-${DateTime.now().microsecondsSinceEpoch}',
         type: KickChatMessageType.system,
+        content: content,
         createdAt: DateTime.now(),
       ),
+    );
+    this._trimMessages();
+  }
+
+  /// `SubscriptionEvent` — reverse-engineered shape (see
+  /// [KickChatroomEventKind.subscription]); a missing field means the
+  /// shape didn't hold, so the event is dropped rather than showing a
+  /// garbled notice.
+  void _applySubscription(KickPusherEvent event) {
+    final username = event.subscriberUsername;
+    final months = event.subscriptionMonths;
+    if (username == null || months == null) return;
+    this._appendNotice(
+      idPrefix: 'system-sub',
+      content: months > 1
+          ? '$username subscribed — $months months'
+          : '$username subscribed',
+    );
+  }
+
+  /// `GiftedSubscriptionsEvent` — same caveat as [_applySubscription].
+  void _applyGiftedSubscriptions(KickPusherEvent event) {
+    final gifter = event.gifterUsername;
+    final recipients = event.giftedUsernames;
+    if (gifter == null || recipients.isEmpty) return;
+    this._appendNotice(
+      idPrefix: 'system-gift',
+      content: recipients.length == 1
+          ? '$gifter gifted a sub to ${recipients.first}'
+          : '$gifter gifted ${recipients.length} subs',
+    );
+  }
+
+  /// `StreamHostEvent` — same caveat as [_applySubscription].
+  void _applyStreamHost(KickPusherEvent event) {
+    final hostUsername = event.hostUsername;
+    if (hostUsername == null) return;
+    final viewers = event.hostViewerCount;
+    this._appendNotice(
+      idPrefix: 'system-host',
+      content: viewers != null
+          ? '$hostUsername is hosting you with $viewers viewers'
+          : '$hostUsername is hosting you',
     );
   }
 

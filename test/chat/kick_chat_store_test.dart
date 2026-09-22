@@ -516,6 +516,82 @@ void main() {
       expect(store.messages.single.type, KickChatMessageType.system);
     });
 
+    test('SubscriptionEvent appends a sub notice', () async {
+      await connect();
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\SubscriptionEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{'username': 'Loyal', 'months': 6},
+        ),
+      );
+      await until(() => store.messages.isNotEmpty);
+
+      final notice = store.messages.single;
+      expect(notice.type, KickChatMessageType.system);
+      expect(notice.content, contains('Loyal'));
+      expect(notice.content, contains('6 months'));
+    });
+
+    test('SubscriptionEvent with a missing field is dropped, not '
+        'garbled', () async {
+      await connect();
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\SubscriptionEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{'username': 'Loyal'},
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(store.messages, isEmpty);
+    });
+
+    test('GiftedSubscriptionsEvent appends a gift notice', () async {
+      await connect();
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\GiftedSubscriptionsEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{
+            'gifter_username': 'BigSpender',
+            'gifted_usernames': <Object?>['Alice', 'Bob'],
+          },
+        ),
+      );
+      await until(() => store.messages.isNotEmpty);
+
+      final notice = store.messages.single;
+      expect(notice.type, KickChatMessageType.system);
+      expect(notice.content, contains('BigSpender'));
+      expect(notice.content, contains('2 subs'));
+    });
+
+    test('StreamHostEvent appends a host notice', () async {
+      await connect();
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\StreamHostEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{
+            'host_username': 'BigStreamer',
+            'number_viewers': 250,
+          },
+        ),
+      );
+      await until(() => store.messages.isNotEmpty);
+
+      final notice = store.messages.single;
+      expect(notice.type, KickChatMessageType.system);
+      expect(notice.content, contains('BigStreamer'));
+      expect(notice.content, contains('250 viewers'));
+    });
+
     test('ChatroomUpdatedEvent refreshes the cached chatroom modes', () async {
       await connect();
       expect(store.channelInfo?.chatroom.slowMode, isFalse);
