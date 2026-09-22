@@ -41,8 +41,10 @@ abstract class KickChannelInfo with _$KickChannelInfo {
   int? get viewerCount => this.livestream?.viewerCount;
 }
 
-/// Chatroom descriptor — the moderation modes ride
-/// `ChatroomUpdatedEvent` payloads in the same shape.
+/// Chatroom descriptor — this flat-boolean shape is what the
+/// channel-resolve REST call returns. The live `ChatroomUpdatedEvent`
+/// Pusher payload nests each mode instead (see
+/// [kickNormalizeChatroomUpdate]); run that first when parsing one.
 @Freezed(fromJson: true, toJson: false)
 abstract class KickChatroom with _$KickChatroom {
   const factory KickChatroom({
@@ -59,6 +61,46 @@ abstract class KickChatroom with _$KickChatroom {
 
   factory KickChatroom.fromJson(Map<String, Object?> json) =>
       _$KickChatroomFromJson(json);
+}
+
+/// `ChatroomUpdatedEvent`'s live Pusher payload nests each mode's toggle
+/// under `{enabled: bool, ...}` (`slow_mode.message_interval`,
+/// `followers_mode.min_duration`) instead of the flat booleans/ints
+/// [KickChatroom.fromJson] expects — the shape reverse-engineered from a
+/// community TS gist (Kick has no public schema docs for this event;
+/// single-sourced, so treated as best-effort, not gospel). Flattens any
+/// nested mode keys in place; already-flat values (the REST shape) pass
+/// through untouched, so this is a safe no-op there too.
+Map<String, Object?> kickNormalizeChatroomUpdate(Map<String, Object?> raw) {
+  final result = Map<String, Object?>.of(raw);
+  void flatten(
+    String key, {
+    String? flatIntervalKey,
+    String? nestedIntervalKey,
+  }) {
+    final nested = result[key];
+    if (nested is! Map) return;
+    final map = nested.cast<String, Object?>();
+    result[key] = map['enabled'] == true;
+    final interval = nestedIntervalKey != null ? map[nestedIntervalKey] : null;
+    if (flatIntervalKey != null && interval != null) {
+      result[flatIntervalKey] = interval;
+    }
+  }
+
+  flatten(
+    'slow_mode',
+    flatIntervalKey: 'message_interval',
+    nestedIntervalKey: 'message_interval',
+  );
+  flatten('subscribers_mode');
+  flatten(
+    'followers_mode',
+    flatIntervalKey: 'following_min_duration',
+    nestedIntervalKey: 'min_duration',
+  );
+  flatten('emotes_mode');
+  return result;
 }
 
 /// Per-tenure subscriber badge artwork (months → image), resolved at the

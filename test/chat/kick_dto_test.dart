@@ -247,6 +247,47 @@ void main() {
     });
   });
 
+  group('kickNormalizeChatroomUpdate', () {
+    test('flattens the live nested {enabled, ...} shape', () {
+      final flat = kickNormalizeChatroomUpdate(<String, Object?>{
+        'id': 42,
+        'slow_mode': <String, Object?>{'enabled': true, 'message_interval': 5},
+        'subscribers_mode': <String, Object?>{'enabled': false},
+        'followers_mode': <String, Object?>{
+          'enabled': true,
+          'min_duration': 10,
+        },
+        'emotes_mode': <String, Object?>{'enabled': true},
+      });
+
+      expect(flat['slow_mode'], isTrue);
+      expect(flat['message_interval'], 5);
+      expect(flat['subscribers_mode'], isFalse);
+      expect(flat['followers_mode'], isTrue);
+      expect(flat['following_min_duration'], 10);
+      expect(flat['emotes_mode'], isTrue);
+      expect(flat['id'], 42);
+    });
+
+    test('passes an already-flat (REST) shape through untouched', () {
+      final flat = kickNormalizeChatroomUpdate(<String, Object?>{
+        'slow_mode': true,
+        'message_interval': 3,
+      });
+
+      expect(flat['slow_mode'], isTrue);
+      expect(flat['message_interval'], 3);
+    });
+
+    test('a missing enabled key degrades to false rather than crashing', () {
+      final flat = kickNormalizeChatroomUpdate(<String, Object?>{
+        'slow_mode': <String, Object?>{'message_interval': 5},
+      });
+
+      expect(flat['slow_mode'], isFalse);
+    });
+  });
+
   group('KickPusherEvent', () {
     test('parses the pusher envelope, decoding the data string', () {
       final event = KickPusherEvent.parse(

@@ -609,6 +609,40 @@ void main() {
       expect(store.channelInfo?.chatroomId, 42);
     });
 
+    test('ChatroomUpdatedEvent applies the live nested {enabled: bool} '
+        'shape too', () async {
+      await connect();
+      expect(store.channelInfo?.chatroom.slowMode, isFalse);
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\ChatroomUpdatedEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{
+            'slow_mode': <String, Object?>{
+              'enabled': true,
+              'message_interval': 5,
+            },
+            'subscribers_mode': <String, Object?>{'enabled': true},
+            'followers_mode': <String, Object?>{
+              'enabled': true,
+              'min_duration': 10,
+            },
+            'emotes_mode': <String, Object?>{'enabled': false},
+          },
+        ),
+      );
+      await until(() => store.channelInfo?.chatroom.slowMode ?? false);
+
+      final chatroom = store.channelInfo!.chatroom;
+      expect(chatroom.slowMode, isTrue);
+      expect(chatroom.messageInterval, 5);
+      expect(chatroom.subscribersMode, isTrue);
+      expect(chatroom.followersMode, isTrue);
+      expect(chatroom.followingMinDuration, 10);
+      expect(chatroom.emotesMode, isFalse);
+    });
+
     test('a malformed event never breaks the feed', () async {
       await connect();
       pusher().emitEvent(

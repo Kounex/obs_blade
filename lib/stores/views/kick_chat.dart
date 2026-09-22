@@ -767,7 +767,7 @@ abstract class _KickChatStore with Store {
     try {
       final chatroom = KickChatroom.fromJson(<String, Object?>{
         'id': info.chatroomId,
-        ...event.data,
+        ...kickNormalizeChatroomUpdate(event.data),
       });
       final updated = info.copyWith(chatroom: chatroom);
       this.channelInfo = updated;
