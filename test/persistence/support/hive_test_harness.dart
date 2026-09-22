@@ -12,6 +12,7 @@ import 'package:obs_blade/models/enums/scene_item_type.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
 import 'package:obs_blade/models/hidden_scene_item.dart';
 import 'package:obs_blade/models/hotkey.dart';
+import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/models/purchased_tip.dart';
@@ -77,6 +78,9 @@ class HiveTestHarness {
     if (!Hive.isAdapterRegistered(TypeIDs.YouTubeAuth)) {
       Hive.registerAdapter<YouTubeAuth>(YouTubeAuthAdapter());
     }
+    if (!Hive.isAdapterRegistered(TypeIDs.KickAuth)) {
+      Hive.registerAdapter<KickAuth>(KickAuthAdapter());
+    }
   }
 
   Future<void> init() async {
@@ -104,6 +108,7 @@ class HiveTestHarness {
     await Hive.openBox(HiveKeys.Settings.name);
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
     await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
+    await Hive.openBox<KickAuth>(HiveKeys.KickAuth.name);
   }
 
   /// Writes [data] into the production box names (clears existing entries).

@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/kick/kick_auth_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_mod_action_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/kick_chat_message_row.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_kick_chat_view.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -46,11 +50,30 @@ void main() {
       .map((rich) => rich.text.toPlainText())
       .join('\n');
 
+  /// Awaited Hive writes never complete in a [testWidgets] fake-async zone.
+  Future<void> signIn(WidgetTester tester) async {
+    await tester.runAsync(() async {
+      await Hive.box<KickAuth>(HiveKeys.KickAuth.name).put(
+        KickAuth.kBoxKey,
+        KickAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: kKickChatScopes,
+          userId: 9001,
+          username: 'kicker',
+        ),
+      );
+    });
+    store.authState = KickAuthState.signedIn;
+  }
+
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('kick_view_test');
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
+    await Hive.openBox<KickAuth>(HiveKeys.KickAuth.name);
     store = KickChatStore(
       channelService: FakeKickChannelService(),
       pusherFactory: ({required onEvent, required onStateChanged}) =>
@@ -155,5 +178,78 @@ void main() {
     /// errorBuilder keeps the emote name visible.
     expect(renderedRichText(tester), contains('[UWU]'));
     expect(find.byType(KickChatMessageRow), findsOneWidget);
+  });
+
+  testWidgets('signed out: long-press opens no mod sheet', (tester) async {
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.add(kickMessage('m1'));
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.longPress(find.textContaining('text m1'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KickModActionSheet), findsNothing);
+  });
+
+  testWidgets('signed in: long-press opens the reply/mod sheet', (
+    tester,
+  ) async {
+    await signIn(tester);
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.add(kickMessage('m1', username: 'Viewer1'));
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.longPress(find.textContaining('text m1'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KickModActionSheet), findsOneWidget);
+    expect(find.text('Moderate Viewer1'), findsOneWidget);
+    expect(find.text('Reply'), findsOneWidget);
+    expect(find.text('Delete message'), findsOneWidget);
+    expect(find.text('Timeout…'), findsOneWidget);
+    expect(find.text('Ban'), findsOneWidget);
+  });
+
+  testWidgets('signed in: Reply sets the store reply target', (tester) async {
+    await signIn(tester);
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.add(kickMessage('m1', username: 'Viewer1'));
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.longPress(find.textContaining('text m1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reply'));
+    await tester.pumpAndSettle();
+
+    expect(store.replyTarget?.id, 'm1');
+    expect(find.byType(KickModActionSheet), findsNothing);
+  });
+
+  testWidgets('the Kick read-only dock strip offers sign-in', (tester) async {
+    /// The exact locked-state wiring stream_chat docks for a signed-out
+    /// Kick session.
+    var reloginTapped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NativeChatInput(
+            canSend: false,
+            inFlight: false,
+            accentColor: const Color(0xFF53FC18),
+            onSend: (_) async => false,
+            onRelogin: () => reloginTapped = true,
+            lockedHintText: 'Chat is read-only',
+            lockedActionText: 'Sign in to chat',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Chat is read-only'), findsOneWidget);
+    await tester.tap(find.text('Sign in to chat'));
+    expect(reloginTapped, isTrue);
   });
 }

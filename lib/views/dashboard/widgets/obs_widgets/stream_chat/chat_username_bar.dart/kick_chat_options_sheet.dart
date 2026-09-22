@@ -8,9 +8,10 @@ import '../../../../../../utils/styling_helper.dart';
 import '../native_chat_options_sheet.dart';
 
 /// Entry point in the native-mode chat bar for Kick: opens the shared
-/// [NativeChatOptionsSheet] (Appearance only — Kick reads are anonymous,
-/// so there are no account/setup/mod rows this wave). Styled like
-/// [YouTubeChatOptionsButton] — same container idiom, 44pt touch target.
+/// [NativeChatOptionsSheet] (Appearance only — Kick's account and mod
+/// surface lives on the account control + per-message long-press).
+/// Styled like [YouTubeChatOptionsButton] — same container idiom, 44pt
+/// touch target.
 class KickChatOptionsButton extends StatelessWidget {
   const KickChatOptionsButton({super.key});
 

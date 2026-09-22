@@ -105,6 +105,18 @@ enum SettingsKeys {
   /// kick chat
   SelectedKickUsername,
 
+  /// [String]: The user's own Kick OAuth client id for the native Kick
+  /// chat sign-in (manual-paste PKCE flow - Kick has no device flow) -
+  /// falls back to the app-owned `kKickOAuthClientId` constant (empty
+  /// until an app-owned client exists)
+  KickOAuthClientId,
+
+  /// [String]: The user's own Kick OAuth client secret paired with
+  /// [KickOAuthClientId] - falls back to the app-owned
+  /// `kKickOAuthClientSecret` constant (empty until an app-owned client
+  /// exists)
+  KickOAuthClientSecret,
+
   /// [bool]: Show the broadcaster badge in the native Twitch chat.
   /// Active by default
   TwitchChatBadgeBroadcaster,
@@ -362,6 +374,8 @@ enum SettingsKeys {
     SettingsKeys.SelectedOwncastUsername: 'selected-owncast-username',
     SettingsKeys.KickUsernames: 'kick-usernames',
     SettingsKeys.SelectedKickUsername: 'selected-kick-username',
+    SettingsKeys.KickOAuthClientId: 'kick-oauth-client-id',
+    SettingsKeys.KickOAuthClientSecret: 'kick-oauth-client-secret',
     SettingsKeys.TwitchChatBadgeBroadcaster: 'twitch-chat-badge-broadcaster',
     SettingsKeys.TwitchChatBadgeModerator: 'twitch-chat-badge-moderator',
     SettingsKeys.TwitchChatBadgeVip: 'twitch-chat-badge-vip',

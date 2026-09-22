@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
@@ -14,14 +15,21 @@ import 'kick_chat_message_row.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 
+import 'dialogs/kick_mod_action_sheet.dart';
+
 /// Native Kick chat timeline, driven by [KickChatStore]'s message buffer
 /// (anonymous reads — channel resolution + history backfill over REST,
 /// live events over Kick's public Pusher socket). Mirrors
-/// [NativeYouTubeChatView]'s scroll/pin logic and pause chip; no mod
-/// long-press — reads are anonymous this wave, so there are no mod
-/// actions to gate.
+/// [NativeYouTubeChatView]'s scroll/pin logic, pause chip and mod
+/// long-press: signed-in users get the reply/mod action sheet (Kick has
+/// no "am I a mod" lookup — a non-mod's action 403s honestly into the
+/// snackbar, docs/kick-chat-audit.md).
 class NativeKickChatView extends StatefulWidget {
-  const NativeKickChatView({super.key});
+  /// Fired after the mod sheet's Reply sets the target — the host docks
+  /// the input and refocuses its field.
+  final VoidCallback? onReplyTargetSet;
+
+  const NativeKickChatView({super.key, this.onReplyTargetSet});
 
   @override
   State<NativeKickChatView> createState() => _NativeKickChatViewState();
@@ -35,7 +43,33 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
   bool _unreadWhileScrolledUp = false;
   int _lastRenderedCount = 0;
 
+  /// Message targeted by the open mod sheet (gray wash while sheet is up).
+  String? _modTargetMessageId;
+
   KickChatStore get _store => GetIt.instance<KickChatStore>();
+
+  Future<void> _openModActions(String messageId) async {
+    final index = this._store.messages.indexWhere(
+      (message) => message.id == messageId,
+    );
+    if (index < 0) return;
+    final message = this._store.messages[index];
+    this.setState(() => this._modTargetMessageId = messageId);
+    try {
+      await showKickModActionSheet(
+        this.context,
+        message,
+        onReply: () {
+          this._store.setReplyTarget(message);
+          this.widget.onReplyTargetSet?.call();
+        },
+      );
+    } finally {
+      if (this.mounted) {
+        this.setState(() => this._modTargetMessageId = null);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -196,6 +230,11 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
         }
         this._lastRenderedCount = items.length;
 
+        /// Signed-in users get the reply/mod long-press — Kick has no
+        /// cheap mod lookup, so a non-mod's action 403s into the
+        /// snackbar (same honest-403 model as YouTube).
+        final canWrite = this._store.canWrite;
+
         /// Appearance toggles re-render in place (shared keys with the
         /// Twitch engine — the appearance options sheet is reused as-is).
         return HiveBuilder<dynamic>(
@@ -231,6 +270,13 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                       key: ValueKey(message.id),
                       message: message,
                       settingsBox: settingsBox,
+                      highlighted: this._modTargetMessageId == message.id,
+                      onMessageLongPress:
+                          message.isTombstoned ||
+                              !canWrite ||
+                              message.type == KickChatMessageType.system
+                          ? null
+                          : () => this._openModActions(message.id),
                     );
                   },
                 ),

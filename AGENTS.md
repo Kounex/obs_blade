@@ -123,18 +123,26 @@ them. Channel entries are **per-video** (a new stream = new video id =
 re-edit). Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
 quota question before any default-on rollout.
 
-**Kick chat:** a native **READ** engine ships next to the WebView embed
-(`nativeChatAvailableFor` covers `ChatType.Kick`). Reads are **anonymous**
+**Kick chat:** a native engine (read + write/mod) ships next to the WebView
+embed (`nativeChatAvailableFor` covers `ChatType.Kick`). Reads are **anonymous**
 (no auth, no API key): `KickChannelService` resolves slugs +
 backfills history via `kick.com/api/v2`, `KickPusherService` rides Kick's
 public Pusher socket (`chatrooms.{id}.v2`, scraped-but-stable app key,
 injectable connector). `KickChatStore` mirrors `YouTubeChatStore`
 (per-channel buffers, tombstone/ban reconcile, `/clear` notice, Pro-gated
 `connectChat`); rows render `badges_v2` artwork + `[emote:id:name]` inline
-images. No writes/mod/login/emote picker this wave; pins are skipped (the
-pinned banner is Twitch-bound). The channel list shares
-`SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView path
-(slug == identity).
+images. Writes/mod ride the **official API** (`api.kick.com/public/v1`) behind
+an optional sign-in: **manual-paste PKCE OAuth** (Kick has no device flow; BYO
+client id/secret in the Kick setup sheet, scope bundle `user:read chat:write
+moderation:ban moderation:chat_message:manage`, tokens in the `KickAuth` box,
+refresh rotates BOTH tokens — single-flight in `KickAuthService`).
+`KickApiService` sends/replies/deletes/bans/timeouts/unbans with typed
+statusCode errors + 401→refresh-once→retry-once; no optimistic append (the
+Pusher echo renders own messages); the mod long-press shows for any signed-in
+user and 403s surface honestly (no "am I a mod" lookup exists). Pins are
+skipped (the pinned banner is Twitch-bound); no emote picker. The channel list
+shares `SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView
+path (slug == identity).
 
 **Monetization (Pro):** native chat engines are gated behind the **Pro
 entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only

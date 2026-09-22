@@ -36,10 +36,19 @@ class KickChatMessageRow extends StatelessWidget {
   /// defaults.
   final Box settingsBox;
 
+  /// Long-press handler for reply/mod actions on a live message
+  /// (signed-in only — gated by the caller).
+  final VoidCallback? onMessageLongPress;
+
+  /// Light gray wash while this row is the open mod-sheet target.
+  final bool highlighted;
+
   const KickChatMessageRow({
     super.key,
     required this.message,
     required this.settingsBox,
+    this.onMessageLongPress,
+    this.highlighted = false,
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
@@ -265,7 +274,7 @@ class KickChatMessageRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final padded = Padding(
       padding: EdgeInsets.symmetric(vertical: this._spacing),
       child: this.message.type == KickChatMessageType.system
           ? this._systemRow(context)
@@ -275,5 +284,20 @@ class KickChatMessageRow extends StatelessWidget {
               children: [?this._replyHeader(context), this._textRow(context)],
             ),
     );
+
+    if (this.onMessageLongPress != null && !this.message.isTombstoned) {
+      return ChatRowLongPressListener(
+        highlighted: this.highlighted,
+        onLongPress: this.onMessageLongPress!,
+        child: padded,
+      );
+    }
+    if (this.highlighted) {
+      return ColoredBox(
+        color: TwitchChatMessageRow.holdHighlightColor(context),
+        child: padded,
+      );
+    }
+    return padded;
   }
 }

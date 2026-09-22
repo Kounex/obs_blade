@@ -1,0 +1,312 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:http/http.dart' as http;
+import 'package:obs_blade/types/classes/kick/kick_token.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
+
+/// App-owned Kick OAuth client id. Empty for now — no app-owned Kick app
+/// exists yet, so the BYO client id ([SettingsKeys.KickOAuthClientId]) is
+/// the only working path. See docs/kick-chat-audit.md.
+const String kKickOAuthClientId = '';
+
+/// App-owned Kick OAuth client secret paired with [kKickOAuthClientId] —
+/// empty until an app-owned client exists, BYO via
+/// [SettingsKeys.KickOAuthClientSecret].
+const String kKickOAuthClientSecret = '';
+
+/// OAuth scopes requested in the authorize URL — one bundle: identity
+/// read, chat send (incl. replies), ban + message-manage moderation.
+const List<String> kKickChatScopes = <String>[
+  'user:read',
+  'chat:write',
+  'moderation:ban',
+  'moderation:chat_message:manage',
+];
+
+/// Redirect target the user registers on their (BYO) Kick app. The app
+/// has no deep-link infra and Kick has no device flow, so the flow is
+/// manual-paste: the browser lands on this (dead) URL after consent and
+/// the user copies the full `?code=…&state=…` URL back into the setup
+/// sheet.
+const String kKickOAuthRedirectUri = 'https://localhost/kick-callback';
+
+const String _kAuthorizeUrl = 'https://id.kick.com/oauth/authorize';
+const String _kTokenUrl = 'https://id.kick.com/oauth/token';
+const String _kRevokeUrl = 'https://id.kick.com/oauth/revoke';
+const String _kUsersUrl = 'https://api.kick.com/public/v1/users';
+
+/// Terminal auth-flow failure the UI can surface via [message].
+class KickAuthException implements Exception {
+  final String message;
+  final Object? cause;
+
+  /// HTTP status of the failing response, when the failure came from an
+  /// HTTP call — `null` for local/pre-flight failures (bad paste, state
+  /// mismatch). Lets callers tell a definitive 400/401/403 (dead
+  /// credentials) from a transient 5xx.
+  final int? statusCode;
+
+  const KickAuthException(this.message, {this.cause, this.statusCode});
+
+  @override
+  String toString() =>
+      'KickAuthException: $message${this.cause != null ? ' (${this.cause})' : ''}';
+}
+
+/// A pending PKCE login — the verifier/state pair the pasted redirect URL
+/// is validated against. Held by the caller between "open browser" and
+/// "paste redirect URL"; never persisted.
+class KickPkceSession {
+  /// RFC 7636 code verifier (43–128 url-safe chars; 64 random bytes).
+  final String verifier;
+
+  /// Anti-CSRF state echoed back on the redirect.
+  final String state;
+
+  /// `base64url(sha256(verifier))` without padding.
+  final String codeChallenge;
+
+  const KickPkceSession({
+    required this.verifier,
+    required this.state,
+    required this.codeChallenge,
+  });
+}
+
+/// Identity of the token's Kick account (`GET /public/v1/users`, no
+/// params = own user). [userId] doubles as the echo-dedup marker: own
+/// messages come back over Pusher with `sender.id == userId`.
+class KickUserIdentity {
+  final int userId;
+  final String? name;
+  final String? profilePicture;
+
+  const KickUserIdentity({
+    required this.userId,
+    this.name,
+    this.profilePicture,
+  });
+}
+
+/// Kick OAuth 2.1 authorization-code flow with PKCE (S256 mandatory) at
+/// `id.kick.com` + token lifecycle. Mirrors [YouTubeAuthService]'s shape,
+/// but the flow differs: Kick has no device flow, so the user opens the
+/// authorize URL in a browser and pastes the redirect URL back (see
+/// [parseRedirectCode]).
+///
+/// [client] and [random] are injectable for tests — no real HTTP and
+/// deterministic PKCE material in unit tests.
+class KickAuthService {
+  final http.Client _client;
+  final Random _random;
+
+  /// Single-flight guard for token refresh: Kick rotates BOTH tokens on
+  /// refresh, so two concurrent refreshes with the same refresh token
+  /// would kill each other — concurrent callers share one in-flight
+  /// refresh instead.
+  Future<KickToken>? _refreshInFlight;
+
+  KickAuthService({http.Client? client, Random? random})
+    : _client = client ?? http.Client(),
+      _random = random ?? Random.secure();
+
+  /// Reads a non-empty String setting; `null` when the settings box isn't
+  /// open (unit tests without Hive) or the key is missing/empty.
+  static String? _settingsValue(SettingsKeys key) {
+    if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return null;
+    final value = Hive.box(HiveKeys.Settings.name).get(key.name);
+    return value is String && value.isNotEmpty ? value : null;
+  }
+
+  /// OAuth client id resolution: the user's own client
+  /// ([SettingsKeys.KickOAuthClientId]) wins over the app-owned
+  /// [kKickOAuthClientId] constant.
+  String resolveClientId() =>
+      KickAuthService._settingsValue(SettingsKeys.KickOAuthClientId) ??
+      kKickOAuthClientId;
+
+  /// OAuth client secret resolution — `null` when none is configured.
+  /// The user's own secret ([SettingsKeys.KickOAuthClientSecret]) wins
+  /// over the app-owned [kKickOAuthClientSecret] constant.
+  String? resolveClientSecret() {
+    final configured =
+        KickAuthService._settingsValue(SettingsKeys.KickOAuthClientSecret) ??
+        kKickOAuthClientSecret;
+    return configured.isNotEmpty ? configured : null;
+  }
+
+  String _randomBase64Url(int byteCount) => base64Url
+      .encode(List<int>.generate(byteCount, (_) => this._random.nextInt(256)))
+      .replaceAll('=', '');
+
+  /// Step 1 of the login: a fresh PKCE session (verifier, state, S256
+  /// challenge).
+  KickPkceSession beginSession() {
+    final verifier = this._randomBase64Url(64);
+    final challenge = base64Url
+        .encode(sha256.convert(ascii.encode(verifier)).bytes)
+        .replaceAll('=', '');
+    return KickPkceSession(
+      verifier: verifier,
+      state: this._randomBase64Url(32),
+      codeChallenge: challenge,
+    );
+  }
+
+  /// The authorize URL the user opens in the browser (url_launcher) —
+  /// carries the PKCE challenge and anti-CSRF state of [session].
+  Uri authorizeUrl(KickPkceSession session) =>
+      Uri.parse(_kAuthorizeUrl).replace(
+        queryParameters: <String, String>{
+          'response_type': 'code',
+          'client_id': this.resolveClientId(),
+          'redirect_uri': kKickOAuthRedirectUri,
+          'state': session.state,
+          'scope': kKickChatScopes.join(' '),
+          'code_challenge': session.codeChallenge,
+          'code_challenge_method': 'S256',
+        },
+      );
+
+  /// Step 2: parse the pasted redirect URL into the authorization code.
+  /// Rejects (throws [KickAuthException]) on an unparsable URL, a
+  /// `?error=` denial, a state mismatch (CSRF / stale paste) or a missing
+  /// code.
+  String parseRedirectCode(String pastedUrl, {required String expectedState}) {
+    final uri = Uri.tryParse(pastedUrl.trim());
+    if (uri == null || !uri.hasScheme) {
+      throw const KickAuthException(
+        'Not a valid URL — paste the full address from the browser',
+      );
+    }
+    final error = uri.queryParameters['error'];
+    if (error != null) {
+      throw KickAuthException('Kick denied the authorization ($error)');
+    }
+    final state = uri.queryParameters['state'];
+    if (state == null || state != expectedState) {
+      throw const KickAuthException(
+        'State mismatch — paste the URL of the login you just started',
+      );
+    }
+    final code = uri.queryParameters['code'];
+    if (code == null || code.isEmpty) {
+      throw const KickAuthException('No authorization code in this URL');
+    }
+    return code;
+  }
+
+  /// `authorization_code` exchange at the token endpoint.
+  Future<KickToken> exchangeCode({
+    required String code,
+    required KickPkceSession session,
+  }) async {
+    final response = await this._client.post(
+      Uri.parse(_kTokenUrl),
+      body: <String, String>{
+        'grant_type': 'authorization_code',
+        'code': code,
+        'client_id': this.resolveClientId(),
+        'client_secret': ?this.resolveClientSecret(),
+        'redirect_uri': kKickOAuthRedirectUri,
+        'code_verifier': session.verifier,
+      },
+    );
+    if (response.statusCode != 200) {
+      throw KickAuthException(
+        'Token exchange failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    return KickToken.fromJson(
+      (json.decode(response.body) as Map).cast<String, Object?>(),
+    );
+  }
+
+  /// Exchange a refresh token for a new token pair. Kick rotates BOTH
+  /// tokens on refresh — callers must persist both. Single-flight: a
+  /// concurrent refresh shares the in-flight one (see [_refreshInFlight]).
+  Future<KickToken> refreshToken(String refreshToken) {
+    final inFlight = this._refreshInFlight;
+    if (inFlight != null) return inFlight;
+    final future = this._refresh(refreshToken);
+    this._refreshInFlight = future;
+    return future.whenComplete(() {
+      if (identical(this._refreshInFlight, future)) {
+        this._refreshInFlight = null;
+      }
+    });
+  }
+
+  Future<KickToken> _refresh(String refreshToken) async {
+    final response = await this._client.post(
+      Uri.parse(_kTokenUrl),
+      body: <String, String>{
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+        'client_id': this.resolveClientId(),
+        'client_secret': ?this.resolveClientSecret(),
+      },
+    );
+    if (response.statusCode != 200) {
+      throw KickAuthException(
+        'Token refresh failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    return KickToken.fromJson(
+      (json.decode(response.body) as Map).cast<String, Object?>(),
+    );
+  }
+
+  /// Identity of the token's account (display + echo-dedup marker).
+  /// Mirrors [YouTubeAuthService.fetchOwnChannelTitle].
+  Future<KickUserIdentity?> fetchOwnUser(String accessToken) async {
+    final response = await this._client.get(
+      Uri.parse(_kUsersUrl),
+      headers: <String, String>{
+        'Authorization': 'Bearer $accessToken',
+        'Accept': 'application/json',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw KickAuthException(
+        'Fetching the Kick user failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
+    if (data is! List || data.isEmpty) return null;
+    final user = data.first;
+    if (user is! Map<String, dynamic>) return null;
+    final userId = user['user_id'];
+    if (userId is! int) return null;
+    return KickUserIdentity(
+      userId: userId,
+      name: user['name'] as String?,
+      profilePicture: user['profile_picture'] as String?,
+    );
+  }
+
+  /// Revoke a token (logout hygiene). Best effort — must never block a
+  /// local logout because the network is down.
+  Future<void> revoke(String token, {String tokenHint = 'access_token'}) async {
+    try {
+      await this._client.post(
+        Uri.parse(
+          '$_kRevokeUrl?token=${Uri.encodeQueryComponent(token)}&token_hint_type=$tokenHint',
+        ),
+      );
+    } catch (_) {
+      // best effort
+    }
+  }
+}

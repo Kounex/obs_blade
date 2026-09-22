@@ -14,6 +14,7 @@ import 'package:obs_blade/models/enums/scene_item_type.dart';
 import 'package:obs_blade/models/hidden_scene.dart';
 import 'package:obs_blade/models/hidden_scene_item.dart';
 import 'package:obs_blade/models/hotkey.dart';
+import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/models/purchased_tip.dart';
@@ -31,6 +32,7 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(HiddenSceneAdapter());
     registerAdapter(HiddenSceneItemAdapter());
     registerAdapter(HotkeyAdapter());
+    registerAdapter(KickAuthAdapter());
     registerAdapter(LogLevelAdapter());
     registerAdapter(PastRecordDataAdapter());
     registerAdapter(PastStreamDataAdapter());
@@ -52,6 +54,7 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(HiddenSceneAdapter());
     registerAdapter(HiddenSceneItemAdapter());
     registerAdapter(HotkeyAdapter());
+    registerAdapter(KickAuthAdapter());
     registerAdapter(LogLevelAdapter());
     registerAdapter(PastRecordDataAdapter());
     registerAdapter(PastStreamDataAdapter());

@@ -64,8 +64,8 @@ Chatterino forks, bots, overlays all ride it; tolerated ecosystem):
 `id.kick.com`. **No device flow** (probed: `/oauth/device/code` → 404) — so
 no Twitch-style scan-a-code login. Any user can register an app
 (2FA → kick.com/settings/developer), so the **BYO client id/secret**
-pattern from the YouTube setup sheet applies. Redirect handling needs a
-custom scheme / loopback — see "open decisions" below.
+pattern from the YouTube setup sheet applies. Redirect handling is
+manual-paste (no deep-link infra) — see "open decisions" below.
 Numeric rate limits are unpublished; handle 429.
 
 ## Twitch → Kick capability map
@@ -95,21 +95,38 @@ Numeric rate limits are unpublished; handle 429.
 
 - **W1 (landed, 5974b63c):** `ChatType.Kick` + WebView popout path, username
   management (slug extractor + dialog), all switch seams.
-- **W2:** native read — Pusher client, backfill, buffers, tombstones / ban
-  reconcile / clear banner, badges_v2 + emote inline rendering, Pro gate via
-  the shared seams. No auth.
-- **W3:** native write/mod — BYO OAuth (PKCE) setup sheet section, send +
-  reply, delete/timeout/ban on long-press for modded channels. No "am I a
-  mod" lookup exists — surface API 403s honestly (YouTube-minimal idiom).
+- **W2 (landed, bc29c40f):** native read — Pusher client, backfill,
+  buffers, tombstones / ban reconcile / clear banner, badges_v2 + emote
+  inline rendering, Pro gate via the shared seams. No auth.
+- **W3 (landed):** native write/mod — BYO OAuth (manual-paste PKCE;
+  **no device flow exists** and the app has no deep-link infra, so the
+  setup sheet opens the authorize URL via url_launcher and the user
+  pastes the redirect URL back; state mismatch rejects). Single scope
+  bundle `user:read chat:write moderation:ban
+  moderation:chat_message:manage`; refresh rotates BOTH tokens
+  (single-flight in `KickAuthService`). `KickApiService` (typed
+  `KickApiException` with statusCode; 401 → refresh once → retry once)
+  covers send (`POST /chat`, `reply_to_message_id` for replies), delete,
+  ban/timeout (minutes 1..10080), unban (DELETE **with JSON body**).
+  `broadcaster_user_id` comes from `KickChannelInfo.userId`. No
+  optimistic append — the Pusher echo renders own messages (sent-id
+  bookkeeping + id-dedup backstop). Mod long-press shows for **any
+  signed-in user** (no "am I a mod" lookup exists) — 403s surface
+  honestly via snackbar (`modActionError`). Unban ships as a store
+  wrapper only (no UI row — tombstoned-by-ban context doesn't carry the
+  data to offer it meaningfully).
 - **Not planned (vapor):** warn/announce/AutoMod/unban-requests (no API),
   room-mode writes (no API), polls/predictions UI (read-only events), BTTV
   bridge (no Kick namespace), global emote picker (no list endpoint).
 
 ## Open decisions / risks
 
-- W3 redirect handling: custom URL scheme `obsblade://` (needs iOS/Android
-  manifest entries + app_links handling) vs loopback server (Kick docs flag a
-  127.0.0.1 bug) vs manual code paste (zero infra, clunky). Decide at W3.
+- ~~W3 redirect handling~~ — **decided (W3):** manual code paste (zero
+  infra). The setup sheet shows the redirect URI to register
+  (`kKickOAuthRedirectUri`, a dead `https://localhost/kick-callback`
+  URL — the browser lands on a connection-refused page and the user
+  copies the address-bar URL back). Custom scheme / loopback stay
+  available as a later UX upgrade.
 - Pusher key longevity (uncontractual) — single constant + fallback comment.
 - `api/v2/*` is Cloudflare-fronted; datacenter IPs can 403 — fine on device.
 - Kick Developer Terms are gated behind app creation — review before store

@@ -36,6 +36,8 @@ import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'chat_emote_picker.dart';
+import 'kick_reply_strip.dart';
+import 'kick_setup_sheet.dart';
 import 'native_chat_input.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
@@ -419,10 +421,11 @@ class _StreamChatState extends State<StreamChat>
   /// dispatch onto the Twitch / YouTube / Kick native chat windows.
   /// Verbatim the behavior before the entitlement gate existed.
   Widget _buildNativeChatSlot(BuildContext context, ChatType chatType) {
-    /// Native Kick chat: fully anonymous reads (no account, no API key) —
-    /// the only prerequisite is a channel in the Kick list, so the
-    /// unselected state offers the add dialog directly. No input dock
-    /// this wave: reads only.
+    /// Native Kick chat: anonymous reads (no account, no API key) — the
+    /// only prerequisite is a channel in the Kick list, so the
+    /// unselected state offers the add dialog directly. The optional
+    /// Kick sign-in (setup sheet) unlocks the input dock; signed out,
+    /// the dock is a read-only strip with a sign-in affordance.
     if (chatType == ChatType.Kick) {
       void addKickChannel() =>
           ModalHandler.showBaseDialog(
@@ -468,6 +471,8 @@ class _StreamChatState extends State<StreamChat>
                     /// carrying a stuck/overscrolled controller
                     /// across multi-chat switches.
                     key: ValueKey(kickStore.selectedChannelSlug),
+                    onReplyTargetSet: () =>
+                        this._chatInputFocusNode.requestFocus(),
                   )
                 : StaggeredEntrance(
                     scaleFrom: 0.985,
@@ -480,6 +485,27 @@ class _StreamChatState extends State<StreamChat>
                       onConnectTap: addKickChannel,
                     ),
                   ),
+            input: hasChannel
+                ? NativeChatInput(
+                    controller: this._chatInputController,
+                    focusNode: this._chatInputFocusNode,
+                    canSend: kickStore.isSignedInState && kickStore.canWrite,
+                    inFlight: kickStore.sendingChat,
+                    errorText: kickStore.sendChatError,
+                    contextStrip: KickReplyStrip(
+                      accentColor:
+                          chatType.brandColor ??
+                          Theme.of(context).colorScheme.secondary,
+                    ),
+                    accentColor:
+                        chatType.brandColor ??
+                        Theme.of(context).colorScheme.secondary,
+                    onSend: kickStore.sendChatMessage,
+                    onRelogin: () => showKickSetupSheet(context),
+                    lockedHintText: 'Chat is read-only',
+                    lockedActionText: 'Sign in to chat',
+                  )
+                : null,
           );
         },
       );

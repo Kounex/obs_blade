@@ -23,6 +23,7 @@ import 'models/enums/log_level.dart';
 import 'models/enums/scene_item_type.dart';
 import 'models/hidden_scene.dart';
 import 'models/hidden_scene_item.dart';
+import 'models/kick_auth.dart';
 import 'models/past_stream_data.dart';
 import 'models/purchased_tip.dart';
 import 'models/twitch_auth.dart';
@@ -142,6 +143,7 @@ Future<void> _initializeHive() async {
   Hive.registerAdapter(HotkeyAdapter());
   Hive.registerAdapter(TwitchAuthAdapter());
   Hive.registerAdapter(YouTubeAuthAdapter());
+  Hive.registerAdapter(KickAuthAdapter());
 
   /// Enums which can also be persisted as part of the models
   Hive.registerAdapter(ChatTypeAdapter());
@@ -193,6 +195,10 @@ Future<void> _initializeHive() async {
   );
   await Hive.openBox<YouTubeAuth>(
     HiveKeys.YouTubeAuth.name,
+    compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
+  );
+  await Hive.openBox<KickAuth>(
+    HiveKeys.KickAuth.name,
     compactionStrategy: (entries, deletedEntries) => deletedEntries > 50,
   );
 

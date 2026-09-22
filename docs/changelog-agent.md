@@ -2,6 +2,18 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 — Native Kick chat write/mod (W3)
+
+Follows the read engine (`bc29c40f`). Optional sign-in is manual-paste
+PKCE (Kick has no device flow; BYO client id/secret in the Kick setup
+sheet). Tokens live in a new `KickAuth` Hive box (`TypeIDs.KickAuth` =
+16). Send, reply, delete, timeout, and ban go through `api.kick.com`;
+refresh rotates both tokens (single-flight). The mod long-press is
+offered to any signed-in user — a non-mod's action 403s into a snackbar.
+Unban is a store method only (no row). Widget tests that persist a
+session use `tester.runAsync` so the Hive write doesn't hang the
+fake-async zone.
+
 ## 2026-09-22 — WebView chat URL hardening (Twitch darkpopout, YouTube popout form)
 
 Audit of the legacy WebView chat path (verdict + probes in

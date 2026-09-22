@@ -9,6 +9,7 @@ import '../../../models/enums/log_level.dart';
 import '../../../models/hidden_scene.dart';
 import '../../../models/hidden_scene_item.dart';
 import '../../../models/hotkey.dart';
+import '../../../models/kick_auth.dart';
 import '../../../models/past_record_data.dart';
 import '../../../models/past_stream_data.dart';
 import '../../../models/purchased_tip.dart';
@@ -41,6 +42,7 @@ Future<void> deleteAllUserDataPreservingEntitlements() async {
   await Hive.box<AppLog>(HiveKeys.AppLog.name).clear();
   await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).clear();
   await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).clear();
+  await Hive.box<KickAuth>(HiveKeys.KickAuth.name).clear();
   await Hive.box<Hotkey>(HiveKeys.Hotkey.name).clear();
   await Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).clear();
 

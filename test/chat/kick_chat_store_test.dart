@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
 
@@ -100,17 +102,23 @@ void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
   late FakeKickChannelService channelService;
+  late FakeKickAuthService authService;
+  late FakeKickApiService apiService;
   late List<FakeKickPusherService> pushers;
   late bool isPro;
   late KickChatStore store;
 
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
+  Box<KickAuth> authBox() => Hive.box<KickAuth>(HiveKeys.KickAuth.name);
+
   /// The most recently created socket (a channel switch swaps it).
   FakeKickPusherService pusher() => pushers.last;
 
   KickChatStore newStore() => KickChatStore(
     channelService: channelService,
+    authService: authService,
+    apiService: apiService,
     pusherFactory: ({required onEvent, required onStateChanged}) {
       final created = FakeKickPusherService(
         onEvent: onEvent,
@@ -120,6 +128,18 @@ void main() {
       return created;
     },
     isProResolver: () => isPro,
+  );
+
+  /// A valid, unexpired, fully-scoped stored session (user id 9001
+  /// matches [FakeKickAuthService]'s scripted identity).
+  KickAuth validAuth() => KickAuth(
+    accessToken: 'access-1',
+    refreshToken: 'refresh-1',
+    expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+    scopes: kKickChatScopes,
+    userId: 9001,
+    username: 'kicker',
+    profilePicture: 'https://pic.example/k.png',
   );
 
   /// Two channels: 'aaa' → chatroom 42, 'bbb' → chatroom 43.
@@ -137,12 +157,25 @@ void main() {
     );
   }
 
+  /// Connected to 'aaa' with a signed-in session.
+  Future<void> connectSignedIn() async {
+    configure();
+    await authBox().put(KickAuth.kBoxKey, validAuth());
+    await store.init();
+    await until(
+      () => store.chatConnection == KickChatConnectionState.connected,
+    );
+  }
+
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('kick_store_test');
     harness = HiveTestHarness(tempDir);
     await harness.init();
     await Hive.openBox(HiveKeys.Settings.name);
+    await Hive.openBox<KickAuth>(HiveKeys.KickAuth.name);
     channelService = FakeKickChannelService();
+    authService = FakeKickAuthService();
+    apiService = FakeKickApiService();
     pushers = <FakeKickPusherService>[];
     isPro = true;
     store = newStore();
@@ -564,5 +597,360 @@ void main() {
         expect(store.messages, isEmpty);
       },
     );
+  });
+
+  group('auth', () {
+    test('init without a stored session stays signed out', () async {
+      configure();
+
+      await store.init();
+
+      expect(store.authState, KickAuthState.signedOut);
+      expect(store.isSignedIn, isFalse);
+      expect(store.canWrite, isFalse);
+    });
+
+    test('init restores a valid stored session', () async {
+      configure();
+      await authBox().put(KickAuth.kBoxKey, validAuth());
+
+      await store.init();
+
+      expect(store.authState, KickAuthState.signedIn);
+      expect(store.isSignedInState, isTrue);
+      expect(store.canWrite, isTrue);
+      expect(store.selfUserId, 9001);
+      expect(store.selfUsername, 'kicker');
+      expect(authService.refreshCalls, 0, reason: 'token is not due');
+    });
+
+    test('init refreshes an expired session and persists the rotated '
+        'pair', () async {
+      configure();
+      final expired = validAuth()
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000;
+      await authBox().put(KickAuth.kBoxKey, expired);
+
+      await store.init();
+
+      expect(store.authState, KickAuthState.signedIn);
+      expect(authService.refreshCalls, 1);
+      expect(authService.lastRefreshToken, 'refresh-1');
+      final stored = authBox().get(KickAuth.kBoxKey);
+      expect(stored?.accessToken, 'access-new');
+      expect(stored?.refreshToken, 'refresh-new');
+    });
+
+    test('init wipes the session on a definitive refresh failure', () async {
+      configure();
+      final expired = validAuth()
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000;
+      await authBox().put(KickAuth.kBoxKey, expired);
+      authService.refreshThrows = const KickAuthException(
+        'Token refresh failed (400)',
+        statusCode: 400,
+      );
+
+      await store.init();
+
+      expect(store.authState, KickAuthState.signedOut);
+      expect(store.authError, isNotNull);
+      expect(authBox().get(KickAuth.kBoxKey), isNull);
+    });
+
+    test('init keeps the session on a transient refresh failure', () async {
+      configure();
+      final expired = validAuth()
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000;
+      await authBox().put(KickAuth.kBoxKey, expired);
+      authService.refreshThrows = const KickAuthException(
+        'Token refresh failed (503)',
+        statusCode: 503,
+      );
+
+      await store.init();
+
+      expect(store.authState, KickAuthState.signedOut);
+      expect(authBox().get(KickAuth.kBoxKey), isNotNull);
+    });
+
+    test('beginLogin without a client id surfaces authError', () async {
+      final uri = store.beginLogin();
+
+      expect(uri, isNull);
+      expect(store.authState, KickAuthState.error);
+      expect(store.authError, isNotNull);
+      expect(authService.beginSessionCalls, 0);
+    });
+
+    test(
+      'beginLogin + completeLogin sign in and persist the identity',
+      () async {
+        settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
+
+        final uri = store.beginLogin();
+        expect(uri, isNotNull);
+        expect(store.authState, KickAuthState.awaitingRedirect);
+        expect(authService.beginSessionCalls, 1);
+
+        final ok = await store.completeLogin(
+          'https://localhost/kick-callback?code=code-1&state=test-state',
+        );
+
+        expect(ok, isTrue);
+        expect(store.authState, KickAuthState.signedIn);
+        expect(authService.lastExchangeCode, 'code-1');
+        expect(authService.lastExchangeVerifier, 'test-verifier');
+        expect(authService.fetchUserCalls, 1);
+        final stored = authBox().get(KickAuth.kBoxKey);
+        expect(stored?.accessToken, 'access-1');
+        expect(stored?.userId, 9001);
+        expect(stored?.username, 'kicker');
+        expect(stored?.scopes, kKickChatScopes);
+      },
+    );
+
+    test(
+      'completeLogin rejects a state mismatch and persists nothing',
+      () async {
+        settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
+        store.beginLogin();
+
+        final ok = await store.completeLogin(
+          'https://localhost/kick-callback?code=code-1&state=wrong',
+        );
+
+        expect(ok, isFalse);
+        expect(store.authState, KickAuthState.error);
+        expect(store.authError, contains('State mismatch'));
+        expect(authBox().get(KickAuth.kBoxKey), isNull);
+        expect(authService.lastExchangeCode, isNull);
+      },
+    );
+
+    test('completeLogin surfaces an exchange failure', () async {
+      settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
+      store.beginLogin();
+      authService.exchangeThrows = const KickAuthException(
+        'Token exchange failed (400)',
+        statusCode: 400,
+      );
+
+      final ok = await store.completeLogin(
+        'https://localhost/kick-callback?code=dead&state=test-state',
+      );
+
+      expect(ok, isFalse);
+      expect(store.authState, KickAuthState.error);
+      expect(store.authError, contains('Token exchange failed'));
+      expect(authBox().get(KickAuth.kBoxKey), isNull);
+    });
+
+    test('logout wipes the box, revokes best-effort and keeps the '
+        'read connection alive', () async {
+      await connectSignedIn();
+      expect(store.chatConnection, KickChatConnectionState.connected);
+
+      await store.logout();
+
+      expect(store.authState, KickAuthState.signedOut);
+      expect(store.canWrite, isFalse);
+      expect(authBox().get(KickAuth.kBoxKey), isNull);
+      expect(authService.revokedTokens, ['access-1']);
+
+      /// Reads are anonymous — the socket stays up.
+      expect(store.chatConnection, KickChatConnectionState.connected);
+    });
+
+    test(
+      'an external box wipe (data management) resets the auth state',
+      () async {
+        await connectSignedIn();
+        expect(store.authState, KickAuthState.signedIn);
+
+        await authBox().delete(KickAuth.kBoxKey);
+        await until(() => store.authState == KickAuthState.signedOut);
+
+        expect(store.canWrite, isFalse);
+      },
+    );
+  });
+
+  group('send', () {
+    test('refuses when signed out', () async {
+      configure();
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+
+      expect(await store.sendChatMessage('hi'), isFalse);
+      expect(apiService.sendCalls, isEmpty);
+    });
+
+    test('refuses while not connected', () async {
+      await authBox().put(KickAuth.kBoxKey, validAuth());
+      await store.init();
+
+      expect(store.chatConnection, KickChatConnectionState.idle);
+      expect(await store.sendChatMessage('hi'), isFalse);
+      expect(apiService.sendCalls, isEmpty);
+    });
+
+    test('sends to the channel owner id and renders via the Pusher echo '
+        'exactly once', () async {
+      await connectSignedIn();
+
+      final sent = await store.sendChatMessage('  hello kick  ');
+
+      expect(sent, isTrue);
+      expect(apiService.sendCalls.single.content, 'hello kick');
+      expect(
+        apiService.sendCalls.single.broadcasterUserId,
+        store.channelInfo!.userId,
+      );
+      expect(apiService.sendCalls.single.replyToMessageId, isNull);
+
+      /// No optimistic append — the echo is the render.
+      expect(store.messages, isEmpty);
+      pusher().emitEvent(messageEvent('sent-1', senderId: 9001));
+      await until(() => store.messages.isNotEmpty);
+      expect(store.messages.map((m) => m.id), ['sent-1']);
+
+      /// A replayed echo is dropped by the id-dedup backstop.
+      pusher().emitEvent(messageEvent('sent-1', senderId: 9001));
+      await Future<void>.delayed(Duration.zero);
+      expect(store.messages.length, 1);
+    });
+
+    test('a send failure surfaces sendChatError and keeps the reply '
+        'target', () async {
+      await connectSignedIn();
+      final target = KickChatMessage.fromJson(messageData('m0'));
+      store.setReplyTarget(target);
+      apiService.sendThrows = const KickApiException(
+        'Could not send the message — Kick rate limit hit, wait a moment',
+        statusCode: 429,
+      );
+
+      final sent = await store.sendChatMessage('spam');
+
+      expect(sent, isFalse);
+      expect(store.sendChatError, contains('rate limit'));
+      expect(store.replyTarget, same(target));
+      expect(store.sendingChat, isFalse);
+    });
+  });
+
+  group('reply', () {
+    test(
+      'sends reply_to_message_id and clears the target on success',
+      () async {
+        await connectSignedIn();
+        final target = KickChatMessage.fromJson(messageData('m0'));
+        store.setReplyTarget(target);
+
+        final sent = await store.sendChatMessage('answer');
+
+        expect(sent, isTrue);
+        expect(apiService.sendCalls.single.replyToMessageId, 'm0');
+        expect(store.replyTarget, isNull);
+      },
+    );
+
+    test('clearReplyTarget drops the pending reply', () async {
+      await connectSignedIn();
+      store.setReplyTarget(KickChatMessage.fromJson(messageData('m0')));
+
+      store.clearReplyTarget();
+
+      expect(store.replyTarget, isNull);
+    });
+
+    test('selectChannel drops the pending reply', () async {
+      await connectSignedIn();
+      store.setReplyTarget(KickChatMessage.fromJson(messageData('m0')));
+
+      await store.selectChannel('bbb');
+
+      expect(store.replyTarget, isNull);
+    });
+  });
+
+  group('moderation', () {
+    test('wrappers refuse when signed out', () async {
+      configure();
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+
+      expect(await store.deleteChatMessage('m1'), isFalse);
+      expect(await store.timeoutUser(7, 5), isFalse);
+      expect(await store.banUser(7), isFalse);
+      expect(await store.unbanUser(7), isFalse);
+      expect(apiService.deleteCalls, isEmpty);
+      expect(apiService.banCalls, isEmpty);
+      expect(apiService.unbanCalls, isEmpty);
+    });
+
+    test('deleteChatMessage calls the API; a 403 surfaces honestly', () async {
+      await connectSignedIn();
+
+      expect(await store.deleteChatMessage('m1'), isTrue);
+      expect(apiService.deleteCalls, ['m1']);
+
+      apiService.deleteThrows = const KickApiException(
+        'Could not delete the message — no permission (moderator status or a chat mode restriction)',
+        statusCode: 403,
+      );
+      expect(await store.deleteChatMessage('m2'), isFalse);
+      expect(store.modActionError, contains('no permission'));
+    });
+
+    test('timeoutUser/banUser target the channel owner + user', () async {
+      await connectSignedIn();
+
+      expect(await store.timeoutUser(7, 10), isTrue);
+      expect(apiService.banCalls.single.userId, 7);
+      expect(apiService.banCalls.single.durationMinutes, 10);
+      expect(
+        apiService.banCalls.single.broadcasterUserId,
+        store.channelInfo!.userId,
+      );
+
+      expect(await store.banUser(8), isTrue);
+      expect(apiService.banCalls.last.userId, 8);
+      expect(apiService.banCalls.last.durationMinutes, isNull);
+    });
+
+    test(
+      'unbanUser lifts via the API; failures surface modActionError',
+      () async {
+        await connectSignedIn();
+
+        expect(await store.unbanUser(7), isTrue);
+        expect(apiService.unbanCalls.single.userId, 7);
+
+        apiService.unbanThrows = const KickApiException(
+          'Could not lift the ban — no permission (moderator status or a chat mode restriction)',
+          statusCode: 403,
+        );
+        expect(await store.unbanUser(7), isFalse);
+        expect(store.modActionError, contains('no permission'));
+      },
+    );
+
+    test('the UserBannedEvent echo reconciles after a local ban', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageEvent('m1', senderId: 7, username: 'user-7'));
+      await until(() => store.messages.isNotEmpty);
+
+      expect(await store.banUser(7), isTrue);
+      pusher().emitEvent(bannedEvent(7));
+      await until(() => store.messages.single.isTombstoned);
+
+      expect(store.messages.single.id, 'm1');
+    });
   });
 }

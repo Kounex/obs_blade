@@ -16,6 +16,7 @@ import '../channel_mod_button.dart';
 import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
+import 'kick_account_control.dart';
 import 'kick_chat_options_sheet.dart';
 import 'kick_native_channel_dropdown.dart';
 import 'native_channel_dropdown.dart';
@@ -190,8 +191,9 @@ class ChatUsernameBar extends StatelessWidget {
 /// shield: YouTube has no cheap "am I a mod" lookup, so mod actions live on
 /// the per-message long-press only (plan §7).
 ///
-/// Kick is options-only — reads are anonymous, so there is no account
-/// control (and no moderation) this wave.
+/// Kick mirrors YouTube's minimal cluster (options + account) — no
+/// shield: Kick has no "am I a mod" lookup, so mod actions live on the
+/// per-message long-press and 403s surface honestly.
 class _NativeRightCluster extends StatelessWidget {
   final ChatType chatType;
 
@@ -202,7 +204,11 @@ class _NativeRightCluster extends StatelessWidget {
     if (this.chatType == ChatType.Kick) {
       return const Row(
         mainAxisSize: MainAxisSize.min,
-        children: [KickChatOptionsButton()],
+        children: [
+          KickChatOptionsButton(),
+          SizedBox(width: AppSpacing.sm),
+          Flexible(child: KickAccountControl()),
+        ],
       );
     }
 
