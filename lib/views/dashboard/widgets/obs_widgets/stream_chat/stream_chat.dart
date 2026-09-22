@@ -282,8 +282,11 @@ class _StreamChatState extends State<StreamChat>
       /// YouTube's own popout-chat form: chat-only chrome, and carrying
       /// embed_domain keeps the embed check satisfied if YouTube ever
       /// enforces it on top-level WebView loads (docs require it for
-      /// iframe embeds; the value is unverifiable without a parent frame)
-      return 'https://www.youtube.com/live_chat?is_popout=1&v=$videoId&embed_domain=localhost';
+      /// iframe embeds; the value is unverifiable without a parent frame).
+      /// dark_theme is undocumented but long-standing (same shape as
+      /// Twitch's darkpopout above) - without it the embed renders light
+      /// inside the dark app.
+      return 'https://www.youtube.com/live_chat?is_popout=1&v=$videoId&embed_domain=localhost&dark_theme=1';
     }
     if (chatType == ChatType.Owncast &&
         (settingsBox.get(SettingsKeys.SelectedOwncastUsername.name)) != null) {
