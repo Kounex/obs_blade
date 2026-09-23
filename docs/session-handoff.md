@@ -2,9 +2,11 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-23** (native chat
-gap audit — Twitch-parity + general enhancements — shipped and pushed, 17
-commits. Details: `changelog-agent.md` 2026-09-23 "Native chat gap audit").
+Read this first after `AGENTS.md`. Last reset: **2026-09-23** (five-item
+polish batch — connect-mode crossfade fix, scene preview aspect-ratio fix,
+release-build Pro test unlock, Pro benefit copy rewrite, em dash sweep —
+shipped and pushed, 5 commits. Details: `changelog-agent.md` 2026-09-23
+"Five-item polish batch").
 
 ## Handoff hygiene (read before editing this file)
 
@@ -55,32 +57,43 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Just closed: native chat gap audit.** User asked to audit Twitch's
-native chat (most advanced engine) against Kick/YouTube and generally
-enhance all 3 — approved the whole report ("everything", tier S) via
-`AskQuestion`. All 17 items shipped, gated, committed, and pushed
-(`3104eceb..22085b0f`); full writeup: `changelog-agent.md` 2026-09-23
-"Native chat gap audit". `AGENTS.md`'s Chat/Kick chat/General native chat
-paragraphs were updated to match (a couple of earlier commits in this same
-wave — Kick emote picker, pin banner — had shipped without the doc update;
-caught and fixed this pass). **Dogfood-installed**: workstation pulled to
-`573ac4eb`, release build (`flutter build ios --release` +
-`devicectl install`/`launch`, in-place upgrade — data preserved) is live on
-the physical `Kounex iOS` wireless device. No open thread here; next
-session picks a new priority (see below) or continues chat work if the
-user re-opens it (wave 4 / entitlement gate still pending per
-`chat-native-roadmap.md`).
+**Just closed: a 5-item user-requested polish batch** (NAS session,
+process tier S throughout). All 5 shipped, gated (analyze + targeted
+tests each), committed individually, and pushed
+(`09ce1e53..ddb96d4e`); full writeup: `changelog-agent.md` 2026-09-23
+"Five-item polish batch". Workstation pulled to `ddb96d4e` — **not yet
+built/installed** (no release build was made this session; the two
+UI fixes and the new Pro copy are worth seeing on-device before further
+work in these areas).
 
-Both clones verified in sync with `origin/master` and with each other
-(`docs/private/` checksums match) as of this handoff — safe to start fresh
-anywhere. Minor pre-existing housekeeping noise on the workstation (not
-from this session, not fixed): `android/.settings/org.eclipse.buildship.core.prefs`
-and `android/app/.classpath` carry local machine-specific paths (temp
-Gradle init scripts, JDK home) that Buildship/Eclipse keeps regenerating as
-tracked-file diffs; `android/app/.settings/org.eclipse.jdt.core.prefs` is
-untracked. Harmless (doesn't block builds/pulls — verified no incoming
-commit touches those files), but worth a deliberate decision at some point:
-gitignore them or stop letting an IDE resync them.
+1. **Connect-box crossfade** — fixed a real `AnimatedSwitcher` key-reuse
+   bug (rapid re-entry into the same mode rendered two panes on top of
+   each other). New regression test: `test/home/connect_box_crossfade_test.dart`.
+2. **Scene preview sizing** — pinned to a fixed `AspectRatio(16:9)` instead
+   of sizing from the fetched screenshot's own decoded dimensions. Two
+   direct repro attempts for a literal "overshoot" didn't reproduce one
+   (smooth monotonic growth instead) — the fix removes the resize
+   regardless. New test: `test/dashboard/scene_preview_aspect_ratio_test.dart`.
+   **Worth a real look on-device** to confirm this actually matches what
+   was seen, since the exact reported symptom wasn't reproduced in a
+   widget test.
+3. **Release-build Pro test unlock** — `--dart-define=PRO_RELEASE_TEST_UNLOCK=true`
+   extends the paywall long-press override to a release build (store
+   products aren't purchasable yet). Untested on a real release build this
+   session (compile-time constant, can't be exercised from a normal
+   `flutter test` run) — worth a release build + long-press check before
+   relying on it.
+4. **Pro benefit copy** — rewritten to cover Kick chat, multi-chat, wave-3
+   mod tooling, emotes/badges, search/highlight/mute (6 cards, up from 4).
+5. **Em dash sweep** — every user-facing string literal in `lib/` (UI text,
+   notices, in-app Logs messages) had its em dash replaced with a regular
+   hyphen. Comments/generated files untouched (out of scope - not app
+   text).
+
+**Confirmed pre-existing, unrelated:** the 4 `mod_action_sheet_test.dart`
+hit-test-offset flakes (already documented in the audit-wave entry below
+this one in `changelog-agent.md`) — reproduced identically on the commit
+before this batch, so not a regression from this session's work.
 
 **Longer-running goal: 4.0 is shipped from `master`.** The 4.0 UI rework
 (full-app polish wave + custom-theme cleanup + dogfood-fix batches) merged
@@ -104,10 +117,11 @@ discard Play internal-track draft `3.3.0 (2026090701)`.
 
 **Immediate next threads:**
 
-1. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
-2. **Dogfood the Pro gate** via debug override (long-press paywall hero):
-   gate flip mid-session, legacy persisted `SelectedChatEngine=native`
-   boot path, settings row states.
+1. **Dogfood this batch** — build + install on the workstation (release,
+   and once with `--dart-define=PRO_RELEASE_TEST_UNLOCK=true` to check the
+   paywall long-press unlock) to confirm items 2 and 3 above land as
+   intended.
+2. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
 3. **Android runtime smoke** (emulator/device) — toolchain builds since
    2026-09-07; confirm release AABs sign with the upload key
    (`android/key.properties` → `android-release.jks`, A6:24:44).
@@ -124,14 +138,18 @@ discard Play internal-track draft `3.3.0 (2026090701)`.
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
 anyway). Default process tier **S**. Test gotchas are in
 `changelog-agent.md` — incl. the known pre-existing
-`test/websocket/state_ordering_test.dart` flake (intermittent, passes on
-re-run; don't chase it as a regression). `test/pro/` is the
+`test/websocket/state_ordering_test.dart` flake and the 4
+`mod_action_sheet_test.dart` hit-test-offset flakes (both intermittent/
+pre-existing, don't chase as regressions). `test/pro/` is the
 purchase/entitlement suite home.
 Machine note (this box): **`/tmp` is a 3.8G tmpfs** — if it fills with
 `flutter_tools.*` dirs, `flutter test` hangs silently in the kernel
 compiler ("Free up space"); `rm -rf /tmp/flutter_tools.*` and re-run.
-Always `flutter test -j 1` here; `flutter pub get` if a restored
-`pubspec.lock` makes the tool re-resolve.
+Also watch for **stale `flutter_tester` processes** lingering across
+separate `flutter test` invocations in the same session (kill by pid,
+`ps aux | grep flutter_tester`) — they starve a fresh run the same way a
+full tmpfs does. Always `flutter test -j 1` here; `flutter pub get` if a
+restored `pubspec.lock` makes the tool re-resolve.
 
 ## Verify quickly
 

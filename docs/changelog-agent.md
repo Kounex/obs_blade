@@ -2,6 +2,57 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 - Five-item polish batch (crossfade fix, scene preview sizing, release Pro-test unlock, benefit copy, em dash sweep)
+
+User-reported/requested batch, 5 independently committed units:
+
+- **Home** connect-mode crossfade dedupe (`09ce1e53`): `AnimatedSwitcher`
+  only compares an incoming child's key against the current entry, not the
+  whole outgoing list, so revisiting a mode (e.g. Autodiscover) while its
+  own previous pane was still fading out rendered two panes on top of each
+  other instead of a clean crossfade - reproduced and verified via a
+  widget test driving rapid mode switches, not by eyeballing it. Fix: a
+  `connectModeSwitchGeneration` counter folded into the pane/title keys so
+  every switch is unique regardless of mode reuse.
+- **Dashboard** scene preview fixed-aspect fix (`2768c54a`): the preview
+  sized itself via `IntrinsicHeight` around the fetched screenshot's own
+  decoded dimensions, so opening the pane visibly grew from the "fetching"
+  placeholder's arbitrary 150px up to the real image's natural size once
+  it decoded. Two direct repro attempts (image swap mid-crossfade; stale
+  cached image on re-open) showed a smooth monotonic climb, not a literal
+  overshoot-then-correct - the fix (pin to `AspectRatio(16:9)`, matching
+  the already-16:9 `ScenePreviewMock`) removes the resize regardless of
+  the precise mechanism. Also null-guards the inner `Observer`'s
+  `Image.memory` read against a same-frame race with the outer
+  `_imageAvailable` gate.
+- **Pro** release-build test unlock (`c7eb2979`): store products aren't
+  purchasable yet (ASC review pending), so there was no way to exercise
+  Pro-gated paths on a release/TestFlight build. Extended the existing
+  `kDebugMode`-only paywall long-press override to also work when compiled
+  with `--dart-define=PRO_RELEASE_TEST_UNLOCK=true`
+  (`kProReleaseTestUnlock` in `pro_ids.dart`) - defaults false, ordinary
+  release builds unaffected.
+- **Pro** benefit copy rewrite (`0967b065`): the 4 benefit cards predated
+  the native chat gap-audit wave and never mentioned Kick chat, multi-chat,
+  the wave-3 mod tooling, emotes/badges, or search/highlight/mute. Now 6
+  cards (platform card consolidated to cover Twitch+Kick+YouTube, plus
+  Multi-Chat, Full Moderation Toolkit, Emotes & Badges, Smarter Chat,
+  What's Next); the tablet grid builds rows from the list length instead
+  of 4 hardcoded indices; the in-chat locked-pane upsell skips the
+  (redundant, given its own headline) platform card.
+- **Style** em dash sweep (`ddb96d4e`): every string literal in `lib/`
+  that reaches the user (UI text, chat notices, dialog copy, in-app Logs
+  viewer messages) had its em dash replaced with a regular hyphen; doc/
+  line comments and generated files are untouched. Updated the chat tests
+  asserting the exact (now-changed) marker/notice strings.
+
+Full gate at wrap-up: `dart analyze lib/ test/` 0 errors (388 pre-existing
+baseline infos across the whole project); `flutter test test/chat/
+test/websocket/ test/persistence/` 1000/1004 - only the 4 known
+pre-existing `mod_action_sheet_test.dart` hit-test-offset flakes (already
+documented in the entry below, confirmed via stash/standalone re-run to
+predate and be unrelated to this batch).
+
 ## 2026-09-23 — Native chat gap audit: Twitch-parity + general enhancements (17 commits)
 
 User asked for an audit of Twitch's native chat (the most advanced engine)
