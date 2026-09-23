@@ -102,4 +102,48 @@ void main() {
       lessThan(2),
     );
   });
+
+  testWidgets(
+    'dragging back up mid-gesture grows the sheet back, not just shrinks it',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: Builder(builder: scrollingSheet)),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      final before = tester.getTopLeft(find.text('sheet row').first);
+      final gesture = await tester.startGesture(before + const Offset(40, 12));
+
+      /// Pull the sheet down (shrinking it) in a few steps.
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump();
+      await gesture.moveBy(const Offset(0, 40));
+      await tester.pump();
+      await gesture.moveBy(const Offset(0, 40));
+      await tester.pump();
+      final shrunk = tester.getTopLeft(find.text('sheet row').first).dy;
+      expect(
+        shrunk,
+        greaterThan(before.dy + 60),
+        reason: 'sanity check: the pull-down actually shrank the sheet',
+      );
+
+      /// Reverse direction without releasing - the sheet should follow the
+      /// finger back up (grow again), not stay pinned at the shrunk size.
+      await gesture.moveBy(const Offset(0, -80));
+      await tester.pump();
+      final grownBack = tester.getTopLeft(find.text('sheet row').first).dy;
+      expect(
+        grownBack,
+        lessThan(shrunk - 40),
+        reason: 'reversing the drag mid-gesture must grow the sheet back up',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    },
+  );
 }

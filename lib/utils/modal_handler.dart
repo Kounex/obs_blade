@@ -332,6 +332,33 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
     controller.value = (controller.value - pixels / height).clamp(0.0, 1.0);
   }
 
+  /// A reversed drag (finger moving back toward the boundary) doesn't
+  /// generate more [OverscrollNotification]s - the scroll view considers it
+  /// a normal, valid scroll away from the boundary (pixels moving off 0) and
+  /// reports a plain [ScrollUpdateNotification] instead. Redirect that
+  /// motion into growing the sheet back and snap the scroll position back to
+  /// the boundary so the list itself doesn't visibly scroll - the whole
+  /// gesture should read as dragging the sheet, not the list underneath it.
+  void _trackRecovery(
+    BuildContext context,
+    ScrollUpdateNotification notification,
+  ) {
+    if (!this._pulled) return;
+    final controller = this._sheetController(context);
+    if (controller == null) return;
+    final height = this._sheetHeight(notification.metrics);
+    if (height <= 0) return;
+
+    final delta = notification.dragDetails?.primaryDelta;
+    if (delta == null || delta >= 0) return;
+
+    controller.stop();
+    controller.value = (controller.value - delta / height).clamp(0.0, 1.0);
+
+    final position = Scrollable.maybeOf(notification.context!)?.position;
+    position?.jumpTo(notification.metrics.minScrollExtent);
+  }
+
   void _settle(BuildContext context, double velocity) {
     if (this._settled || !this._pulled) return;
     final controller = this._sheetController(context);
@@ -389,6 +416,10 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
             notification.overscroll < 0 &&
             atTop) {
           this._track(context, notification);
+          return false;
+        }
+        if (notification is ScrollUpdateNotification && this._pulled) {
+          this._trackRecovery(context, notification);
           return false;
         }
         if (notification is ScrollEndNotification) {
