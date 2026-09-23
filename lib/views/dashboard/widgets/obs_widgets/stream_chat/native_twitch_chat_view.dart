@@ -12,6 +12,8 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/chat_highlight_helper.dart';
+import 'package:obs_blade/utils/chat_mute_helper.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'chat_notice_chrome.dart';
@@ -309,6 +311,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.TwitchChatMessageSeparators,
             SettingsKeys.ChatHighlightSelfMention,
             SettingsKeys.ChatHighlightKeywords,
+            SettingsKeys.ChatMuteWords,
             SettingsKeys.TwitchChatNoticeSubs,
             SettingsKeys.TwitchChatNoticeStreaks,
             SettingsKeys.TwitchChatNoticeRaids,
@@ -334,6 +337,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     item.event.message!.text.trim().isNotEmpty)
                   item.event.messageId,
             };
+            final muteWords = parseChatHighlightKeywords(
+              settingsBox.get(
+                SettingsKeys.ChatMuteWords.name,
+                defaultValue: '',
+              ),
+            );
             final visibleItems = items.where((item) {
               if (item is ChatNotificationNotice) {
                 return isChatNoticeTypeVisible(
@@ -341,9 +350,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   item.event.noticeType,
                 );
               }
-              if (item is ChatMessageEvent &&
-                  announceBodyIds.contains(item.messageId)) {
-                return false;
+              if (item is ChatMessageEvent) {
+                if (announceBodyIds.contains(item.messageId)) return false;
+                if (chatContentIsMuted(item.message.text, muteWords)) {
+                  return false;
+                }
               }
               return true;
             }).toList();

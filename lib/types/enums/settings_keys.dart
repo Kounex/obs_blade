@@ -377,7 +377,13 @@ enum SettingsKeys {
   /// shared across all three native engines — see
   /// [parseChatHighlightKeywords]. Empty by default (feature is
   /// self-mention-only until the user adds something)
-  ChatHighlightKeywords;
+  ChatHighlightKeywords,
+
+  /// [String]: Raw newline/comma-separated mute words, shared across all
+  /// three native engines — see [chatContentIsMuted]. A match drops the
+  /// row from the timeline entirely (filtered at the message-list level,
+  /// not per-row). Empty by default (no-op until the user adds something)
+  ChatMuteWords;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -472,5 +478,6 @@ enum SettingsKeys {
     SettingsKeys.KickChatBadges: 'kick-chat-badges',
     SettingsKeys.ChatHighlightSelfMention: 'chat-highlight-self-mention',
     SettingsKeys.ChatHighlightKeywords: 'chat-highlight-keywords',
+    SettingsKeys.ChatMuteWords: 'chat-mute-words',
   }[this]!;
 }

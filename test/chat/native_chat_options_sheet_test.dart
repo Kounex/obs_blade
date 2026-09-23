@@ -62,6 +62,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Highlights'), findsOneWidget);
+    expect(find.text('Mute words'), findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Badges'), findsOneWidget);
     expect(find.text('Event messages'), findsOneWidget);
@@ -372,6 +373,32 @@ void main() {
       settingsBox().get(SettingsKeys.ChatHighlightKeywords.name),
       'giveaway, raffle',
     );
+
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('Mute words page writes ChatMuteWords and resets it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
+    );
+
+    await tester.tap(find.text('Mute words'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('chat-mute-words-field')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('chat-mute-words-field')),
+      'giveaway',
+    );
+    await tester.pump();
+    expect(settingsBox().get(SettingsKeys.ChatMuteWords.name), 'giveaway');
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(settingsBox().get(SettingsKeys.ChatMuteWords.name), '');
 
     await closeHiveInZone(tester);
   });

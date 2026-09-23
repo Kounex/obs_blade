@@ -772,6 +772,26 @@ void main() {
       expect(find.textContaining('Hello Kappa'), findsOneWidget);
     });
 
+    testWidgets('a mute-word match drops the row from the timeline', (
+      tester,
+    ) async {
+      await tester.runAsync(
+        () => Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.ChatMuteWords.name, 'giveaway'),
+      );
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.messages.add(textEvent('1', 'Viewer32', 'Hi chat'));
+      store.messages.add(textEvent('2', 'Spammer', 'check my GIVEAWAY'));
+
+      await tester.pumpWidget(wrap(const NativeTwitchChatView()));
+      await tester.pump();
+
+      expect(find.text('Viewer32'), findsOneWidget);
+      expect(find.text('Spammer'), findsNothing);
+      expect(find.textContaining('GIVEAWAY'), findsNothing);
+    });
+
     testWidgets('announce-only buffer leaves the waiting empty state', (
       tester,
     ) async {

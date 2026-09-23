@@ -138,6 +138,40 @@ void main() {
     expect(renderedRichText(tester), contains('text m2'));
   });
 
+  testWidgets('a mute-word match drops the row from the timeline', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => settingsBox().put(SettingsKeys.ChatMuteWords.name, 'giveaway'),
+    );
+    store.chatConnection = YouTubeChatConnectionState.connected;
+    store.messages.addAll([
+      ytMessage('m1'),
+      YouTubeChatMessage(
+        id: 'm2',
+        snippet: YouTubeChatMessageSnippet(
+          type: YouTubeChatMessageType.textMessage,
+          publishedAt: DateTime.utc(2026, 9, 3),
+          authorChannelId: 'chan-2',
+          displayMessage: 'check my GIVEAWAY',
+          textMessageDetails: YouTubeTextMessageDetails(
+            messageText: 'check my GIVEAWAY',
+          ),
+        ),
+        authorDetails: YouTubeChatAuthorDetails(
+          channelId: 'chan-2',
+          displayName: 'Spammer',
+        ),
+      ),
+    ]);
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(renderedRichText(tester), contains('text m1'));
+    expect(renderedRichText(tester), isNot(contains('GIVEAWAY')));
+    expect(find.text('Spammer'), findsNothing);
+  });
+
   testWidgets('mod long-press chrome is absent when signed out', (
     tester,
   ) async {

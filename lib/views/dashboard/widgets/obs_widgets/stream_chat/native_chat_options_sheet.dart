@@ -112,16 +112,18 @@ enum _OptionsPage {
   badges,
   eventMessages,
   highlights,
+  muteWords,
   debugSamples,
 }
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Appearance +
-/// Highlights (self-mention/keyword row wash) are common to every engine;
-/// Twitch additionally gets Emotes + per-category Badges + Event
-/// messages; Kick additionally gets Emotes + a single-toggle Badges page
-/// (`badge_type` values are unverified free-strings, so there is no
-/// stable catalog to build per-category rows from) + Event messages.
+/// Highlights (self-mention/keyword row wash) + Mute words (drops
+/// matching rows entirely) are common to every engine; Twitch
+/// additionally gets Emotes + per-category Badges + Event messages; Kick
+/// additionally gets Emotes + a single-toggle Badges page (`badge_type`
+/// values are unverified free-strings, so there is no stable catalog to
+/// build per-category rows from) + Event messages.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
@@ -234,6 +236,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                     : NativeChatOptionsSheet.twitchNoticeRows,
               ),
               _OptionsPage.highlights => _HighlightsPage(onBack: this._back),
+              _OptionsPage.muteWords => _MuteWordsPage(onBack: this._back),
               _OptionsPage.debugSamples => _DebugSamplesPage(
                 onBack: this._back,
               ),
@@ -264,6 +267,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           label: 'Highlights',
           subtitle: 'Highlight your name and keywords in chat',
           onTap: () => this._open(_OptionsPage.highlights),
+        ),
+        this._navRow(
+          context,
+          label: 'Mute words',
+          subtitle: 'Hide messages containing certain words',
+          onTap: () => this._open(_OptionsPage.muteWords),
         ),
         if (this._isTwitch) ...[
           this._navRow(
@@ -865,6 +874,72 @@ class _HighlightsPageState extends State<_HighlightsPage> {
           ],
         );
       },
+    );
+  }
+}
+
+/// Mute-word filtering — a free-text word list, shared by every native
+/// engine. Unlike [_HighlightsPage] (which washes a matching row), a
+/// match here drops the row from the timeline entirely — filtered at the
+/// message-list level in each `native_*_chat_view.dart`, not per-row.
+class _MuteWordsPage extends StatefulWidget {
+  final VoidCallback onBack;
+
+  const _MuteWordsPage({required this.onBack});
+
+  @override
+  State<_MuteWordsPage> createState() => _MuteWordsPageState();
+}
+
+class _MuteWordsPageState extends State<_MuteWordsPage> {
+  late final TextEditingController _wordsController;
+
+  @override
+  void initState() {
+    super.initState();
+    var initial = '';
+    if (Hive.isBoxOpen(HiveKeys.Settings.name)) {
+      final value = Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.ChatMuteWords.name);
+      if (value is String) initial = value;
+    }
+    this._wordsController = TextEditingController(text: initial);
+  }
+
+  @override
+  void dispose() {
+    this._wordsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.ChatMuteWords],
+      builder: (context, settingsBox, child) => _PageScaffold(
+        title: 'Mute words',
+        description:
+            'Messages containing any of these words are hidden from the '
+            'timeline entirely.',
+        onBack: this.widget.onBack,
+        onReset: () {
+          settingsBox.put(SettingsKeys.ChatMuteWords.name, '');
+          this._wordsController.text = '';
+        },
+        children: [
+          NativeChatTextField(
+            key: const Key('chat-mute-words-field'),
+            controller: this._wordsController,
+            hintText: 'One per line, or comma-separated',
+            minLines: 2,
+            maxLines: 4,
+            onChanged: (value) =>
+                settingsBox.put(SettingsKeys.ChatMuteWords.name, value),
+          ),
+        ],
+      ),
     );
   }
 }

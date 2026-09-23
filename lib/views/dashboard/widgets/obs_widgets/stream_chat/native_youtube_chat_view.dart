@@ -8,6 +8,8 @@ import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/chat_highlight_helper.dart';
+import 'package:obs_blade/utils/chat_mute_helper.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'dialogs/youtube_mod_action_sheet.dart';
@@ -243,9 +245,26 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
             SettingsKeys.TwitchChatMessageSeparators,
             SettingsKeys.ChatHighlightSelfMention,
             SettingsKeys.ChatHighlightKeywords,
+            SettingsKeys.ChatMuteWords,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
+            final muteWords = parseChatHighlightKeywords(
+              settingsBox.get(
+                SettingsKeys.ChatMuteWords.name,
+                defaultValue: '',
+              ),
+            );
+            final visibleItems = items
+                .where(
+                  (message) => !chatContentIsMuted(
+                    message.snippet.textMessageDetails?.messageText ??
+                        message.displayText ??
+                        '',
+                    muteWords,
+                  ),
+                )
+                .toList();
             return Stack(
               children: [
                 ListView.separated(
@@ -254,7 +273,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     horizontal: AppSpacing.sm,
                     vertical: AppSpacing.xs,
                   ),
-                  itemCount: items.length,
+                  itemCount: visibleItems.length,
                   separatorBuilder: (context, index) => separators
                       ? Divider(
                           height: 1.0,
@@ -265,7 +284,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                         )
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
-                    final message = items[index];
+                    final message = visibleItems[index];
                     final channelId = message.authorChannelId;
                     return YouTubeChatMessageRow(
                       key: ValueKey(message.id),

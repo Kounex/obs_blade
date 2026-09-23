@@ -158,6 +158,50 @@ void main() {
     expect(renderedRichText(tester), contains('text m2'));
   });
 
+  testWidgets('a mute-word match drops the row from the timeline', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.ChatMuteWords.name, 'giveaway'),
+    );
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.addAll([
+      kickMessage('m1', content: 'hi chat'),
+      kickMessage('m2', content: 'check my GIVEAWAY'),
+    ]);
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(renderedRichText(tester), contains('hi chat'));
+    expect(renderedRichText(tester), isNot(contains('GIVEAWAY')));
+  });
+
+  testWidgets(
+    'a mute-word match never hides system rows (/clear, sub notices)',
+    (tester) async {
+      await tester.runAsync(
+        () => Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.ChatMuteWords.name, 'subscribed'),
+      );
+      store.chatConnection = KickChatConnectionState.connected;
+      store.messages.add(
+        KickChatMessage(
+          id: 'system-sub-1',
+          type: KickChatMessageType.system,
+          content: 'Loyal subscribed — 6 months',
+          createdAt: DateTime.utc(2026, 9, 22, 12),
+        ),
+      );
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+
+      expect(find.text('Loyal subscribed — 6 months'), findsOneWidget);
+    },
+  );
+
   testWidgets('tombstoned rows render the dimmed marker', (tester) async {
     store.chatConnection = KickChatConnectionState.connected;
     store.messages.add(kickMessage('m1', tombstoned: true));
