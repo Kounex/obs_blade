@@ -2,11 +2,12 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-23** (second
-polish batch — chat search alignment, sheet drag-back-to-grow fix, more
-haptic feedback, paywall vortex mark + badge, refresh icon fade timing —
-shipped and pushed, 5 commits. Details: `changelog-agent.md` 2026-09-23
-"Second polish batch").
+Read this first after `AGENTS.md`. Last reset: **2026-09-24** (Pro revert
+gesture + the sheet drag-back saga — three real bugs found and fixed in
+sequence, each caught by dogfooding the previous fix on the physical
+device — + connect-box sequential crossfade + refresh-icon tuning,
+shipped and pushed, 10 commits. Details: `changelog-agent.md` 2026-09-24
+"Pro revert gesture + the sheet drag-back saga...").
 
 ## Handoff hygiene (read before editing this file)
 
@@ -57,41 +58,43 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Just closed: a second user-requested polish batch** (NAS session,
-process tier S throughout), following up on dogfood feedback from the
-first batch. All 5 shipped, gated (analyze + targeted tests each),
-committed individually, and pushed (`1bb5e6df..6dc5e40c`); full writeup:
-`changelog-agent.md` 2026-09-23 "Second polish batch". Workstation pulled
-to `6dc5e40c` — **not yet built/installed** this session; all 5 items are
-worth a real on-device look, especially the two below flagged explicitly.
+**Just closed: dogfood-driven follow-up to the second polish batch** (NAS
+session, process tier S throughout, every round built + installed to the
+physical device and re-tested before the next). All 10 commits pushed
+(`faa1b87b..499c37af`); full writeup: `changelog-agent.md` 2026-09-24
+"Pro revert gesture + the sheet drag-back saga...". Workstation is on
+`499c37af` too (built/installed/launched this session).
 
-1. **Chat search alignment** — results were centering instead of
-   left-aligning like the live feed; a `Column` cross-axis fix.
-2. **Sheet drag-to-dismiss can grow back mid-gesture** — a real, verified
-   bug (a reversed drag couldn't grow the sheet back before release,
-   only shrink it). Fixed in the shared `_SheetOverscroll`
-   (`lib/utils/modal_handler.dart`), affects every `enableDrag: true`
-   sheet app-wide. **Worth deliberately testing**: open any draggable
-   sheet (e.g. chat search), pull down partway, then drag back up
-   *without releasing* - it should now visibly grow back following your
-   finger.
-3. **More haptic feedback** — dialog confirm/cancel app-wide, stream/
-   record start-stop, record pause/resume, replay buffer start-stop/
-   save, studio-mode Transition, hotkey trigger.
-4. **Pro paywall vortex mark + badge** — real OBS Blade icon glyph
-   (extracted from the app's own icon asset) replaces the generic bolt,
-   with a stacked "PRO" badge. Only verified via an offscreen widget-test
-   screenshot, not a real device - **worth a look** to confirm the badge
-   position/size reads well at real scale and against the live theme
-   accent (test used a placeholder red, not the app's real default).
-5. **Refresh icon fade timing** — now fully visible by 80% of the pull
-   threshold instead of ~85%, and shows up much earlier in the pull.
+**Confirmed working by the user, live on device, this session:**
+- Sheet drag-to-dismiss: grows back on a mid-gesture reversal (not just
+  shrinks), the drag no longer dies after the first reversal step, and
+  fling-to-dismiss now works from *inside* a sheet's scrollable content
+  (previously only worked from a handle area outside it). Three separate
+  root causes found and fixed in `lib/utils/modal_handler.dart`'s
+  `_SheetOverscroll` - see the changelog entry for the blow-by-blow, worth
+  reading before touching that class again.
+- Home connect-mode crossfade: sequential fade (full fade-out, then full
+  fade-in) instead of a simultaneous cross-dissolve.
+- Home refresh icon: fades in starting at 25% of the pull threshold, full
+  by 80%.
+
+**Shipped but not explicitly re-confirmed by the user this session**
+(implementation verified via tests, not called out again in feedback):
+- Pro paywall vortex mark + stacked "PRO" badge (from the prior batch) -
+  still only verified via an offscreen widget-test screenshot with a
+  placeholder accent color, never confirmed against the real theme/device.
+- The new revert gesture on `ProUnlockedView` (long-press the result icon
+  to undo the debug/test unlock) - shipped this session, not tried live.
+Worth a deliberate look at both next session if they haven't come up.
 
 **Confirmed pre-existing, unrelated:** the 4 `mod_action_sheet_test.dart`
-hit-test-offset flakes plus one instance of the `state_ordering_test.dart`
-flake (both already documented in the audit-wave entry below this one in
-`changelog-agent.md`) — same failures reproduce on the commit before this
-batch, so not a regression from this session's work.
+hit-test-offset flakes (documented in the audit-wave entry further below
+in `changelog-agent.md`) - reproduce identically on commits before this
+session's changes, so not a regression from this work. Also saw one
+`test/chat/automod_queue_sheet_test.dart` "loading" WebSocketException
+this session - passed cleanly in isolation immediately after, looked like
+the same infra-level flake class as the documented ones, not a real
+failure.
 
 **Longer-running goal: 4.0 is shipped from `master`.** The 4.0 UI rework
 (full-app polish wave + custom-theme cleanup + dogfood-fix batches) merged
@@ -115,9 +118,9 @@ discard Play internal-track draft `3.3.0 (2026090701)`.
 
 **Immediate next threads:**
 
-1. **Dogfood this batch** — build + install on the workstation, focused on
-   items 2 (sheet drag-back) and 4 (vortex mark + badge) above since
-   neither was verified on a real device or with the real theme.
+1. **Confirm the two not-yet-re-checked items** above (Pro paywall vortex
+   mark/badge, the unlocked-page revert gesture) if they come up - both
+   already installed on the workstation's dogfood device.
 2. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
 3. **Android runtime smoke** (emulator/device) — toolchain builds since
    2026-09-07; confirm release AABs sign with the upload key
@@ -138,7 +141,13 @@ anyway). Default process tier **S**. Test gotchas are in
 `test/websocket/state_ordering_test.dart` flake and the 4
 `mod_action_sheet_test.dart` hit-test-offset flakes (both intermittent/
 pre-existing, don't chase as regressions). `test/pro/` is the
-purchase/entitlement suite home.
+purchase/entitlement suite home. New pattern noticed this session on full
+multi-directory runs: occasionally exactly one file fails at the
+"loading" step with `WebSocketException: Invalid WebSocket upgrade
+request` - a different, random file each run, always passes cleanly on
+its own immediately after. Looks like the same infra-level class as the
+above two, not a real regression signal - re-run the specific file before
+trusting a "loading" failure.
 Machine note (this box): **`/tmp` is a 3.8G tmpfs** — if it fills with
 `flutter_tools.*` dirs, `flutter test` hangs silently in the kernel
 compiler ("Free up space"); `rm -rf /tmp/flutter_tools.*` and re-run.

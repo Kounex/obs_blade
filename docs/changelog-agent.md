@@ -2,6 +2,75 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-24 - Pro revert gesture + the sheet drag-back saga (3 debugging rounds) + connect-box sequential crossfade
+
+Follow-on dogfood feedback from the second polish batch, all on `master`,
+each round installed to the physical device and re-tested before the next:
+
+- **Pro** revert gesture (`faa1b87b`): the paywall's long-press could only
+  turn the debug/test unlock *on* (from the sales view) - once `isPro`
+  flipped true there was no way back short of reinstalling. Added the
+  mirror long-press on `ProUnlockedView`'s result icon, wired to
+  `setDebugOverride(false)`, same `kDebugMode`/`kProReleaseTestUnlock` gate.
+- **Sheet drag-back - three real, distinct bugs found in sequence,
+  each only surfacing after the previous fix shipped and got tested on a
+  real sheet:**
+  1. (`943b37e3`) The recovery-tracking only handled a reversal that
+     produces a `ScrollUpdateNotification` (scrollable content moving off
+     the boundary). A sheet whose content fits without scrolling at all
+     (min == max extent, e.g. the YouTube chat setup sheet's short form)
+     has no valid scroll direction either way, so its reversal is *still*
+     an `OverscrollNotification` - just positive instead of negative,
+     which nothing handled. This is the one the user could actually
+     reproduce; the generic scrollable-list test case in the prior
+     session's fix had passed but didn't match the real sheet's shape.
+  2. (`6e6ecf41`) Fixing (1) surfaced a worse bug on real hardware: the
+     recovery path called `ScrollPosition.jumpTo()` to stop the
+     underlying list from visibly scrolling during recovery.
+     `jumpTo()` replaces whatever activity owns that position - including
+     the drag activity the user's own still-down finger was actively
+     driving. Result: the first reversal step snapped the sheet straight
+     back to full size, and the same touch produced zero further
+     notifications until lifted and restarted. Dropped the `jumpTo` call
+     entirely; the list may drift a few pixels during recovery now, a
+     minor cosmetic tradeoff for a drag that actually works.
+  3. (`499c37af`) Fling-to-dismiss still felt unreachable, and lowering
+     the velocity threshold three times (300 → 150 → 100, `a75aceef`/
+     `3debe865`) never fixed it. Root cause, found by reading Flutter's
+     own `bottom_sheet.dart`: dragging from a handle area outside any
+     `Scrollable` goes through the framework's *own* native drag-to-
+     dismiss, which reads **raw pointer velocity** - that's why it "just
+     worked" there. Dragging from inside a sheet's content went through
+     this app's custom overscroll tracking instead, which read velocity
+     from `ScrollEndNotification.dragDetails.primaryVelocity` - the
+     scroll view's own *physics-filtered* number, reading far lower for
+     the same physical flick. Fixed by tracking raw pointer velocity with
+     a `VelocityTracker` (fed from `Listener.onPointerDown`/
+     `onPointerMove`) and adopting Flutter's own threshold (700,
+     `_kMinFlingVelocity`) instead of continuing to guess against the
+     wrong signal.
+  Each round added/extended a widget test in
+  `test/utils/modal_handler_bottom_sheet_test.dart` that failed against
+  the previous state and passes now - six sheet-drag tests there in total.
+- **Home** connect-mode crossfade made sequential (`9c96b5ce`): was a
+  simultaneous cross-dissolve (outgoing 1→0 and incoming 0→1 over the same
+  window); wanted a full fade-out then a full fade-in instead. Both
+  AnimatedSwitchers' fade curve is now `Interval(0.5, 1.0)` - applied to a
+  forward (incoming) animation it stays at 0 until the midpoint then ramps
+  to 1; applied to the same switch's own reverse (outgoing) run it ramps 1
+  to 0 by the midpoint then stays at 0. Same curve object, no direction
+  branching needed. Pane sizing keeps its own full-duration curve so
+  content below the card doesn't jump.
+- **Home** refresh icon fade-in start tuned twice more (`a88fff81` →
+  `58bfd455` → `de21d285`): 10% → 20% → 25% before the icon starts
+  appearing (full opacity still lands at 80% of the arm threshold).
+
+Full gate at wrap-up: `dart analyze lib/ test/` 0 errors (388 pre-existing
+baseline infos, same count as every prior wave); `flutter test test/chat/
+test/websocket/ test/persistence/` 996/1000 - only the 4 known
+`mod_action_sheet_test.dart` hit-test-offset flakes (documented below,
+unrelated to this wave).
+
 ## 2026-09-23 - Second polish batch (chat search alignment, sheet drag-back, haptics, paywall vortex mark, refresh icon timing)
 
 User feedback on the first batch (dogfooded), 5 more independently
