@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -90,7 +91,15 @@ class _ScenePreviewState extends State<ScenePreview> {
               _handleImageTap();
             }
           : null,
-      child: IntrinsicHeight(
+      child: AspectRatio(
+        /// Fixed 16:9 frame (matches the [ScenePreviewMock] stand-in shown
+        /// in dashboard customisation) instead of sizing from the fetched
+        /// image's own intrinsic height - that made the pane grow from the
+        /// "fetching" placeholder's arbitrary 150px up to the real image's
+        /// natural size once decoded, visibly ballooning open before
+        /// settling. A stable aspect keeps the expand animation's target
+        /// size constant from the first frame
+        aspectRatio: 16.0 / 9.0,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -102,8 +111,18 @@ class _ScenePreviewState extends State<ScenePreview> {
                       tag: kScenePreviewHeroTag,
                       child: Observer(
                         builder: (context) {
+                          /// This Observer reacts to the same field as the
+                          /// [_imageAvailable] reaction that gates this
+                          /// branch, so a re-request nulling the bytes can
+                          /// be observed here a frame before that reaction's
+                          /// setState swaps the branch away - null-safe
+                          /// instead of force-unwrapping
+                          final Uint8List? bytes =
+                              dashboardStore.scenePreviewImageBytes;
+                          if (bytes == null) return const SizedBox.shrink();
+
                           return Image.memory(
-                            dashboardStore.scenePreviewImageBytes!,
+                            bytes,
 
                             /// Might reduce the memory used and therefore
                             /// the performance of the frequently changing
@@ -117,9 +136,8 @@ class _ScenePreviewState extends State<ScenePreview> {
                         },
                       ),
                     )
-                  : SizedBox(
+                  : Center(
                       key: const ValueKey('fetching-preview'),
-                      height: 150.0,
                       child: BaseProgressIndicator(text: 'Fetching preview...'),
                     ),
             ),
