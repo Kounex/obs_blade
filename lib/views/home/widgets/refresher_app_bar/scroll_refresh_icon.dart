@@ -52,13 +52,16 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     super.didUpdateWidget(oldWidget);
   }
 
-  /// Fully faded in by 80% of the arm threshold (barStretchOffset) instead
-  /// of hugging the threshold itself, so the icon shows up well before the
-  /// last stretch where the haptic + scale pulse (arming) happens.
+  /// Invisible for the first 10% of the pull (not from the very first
+  /// pixel), then a plain linear ramp to fully visible by 80% of the arm
+  /// threshold (not hugging the threshold itself) - deliberately no easing
+  /// curve here, since `Curves.easeOut`'s steep initial rise was exactly
+  /// what made the icon appear almost immediately on the first attempt.
   double _getRefreshOpacity(double barStretchOffset, double currentBarHeight) {
     final double pulled = currentBarHeight - this.widget.expandedBarHeight;
-    final double fraction = (pulled / (barStretchOffset * 0.8)).clamp(0.0, 1.0);
-    return Curves.easeOut.transform(fraction);
+    final double start = barStretchOffset * 0.1;
+    final double end = barStretchOffset * 0.8;
+    return ((pulled - start) / (end - start)).clamp(0.0, 1.0);
   }
 
   @override
