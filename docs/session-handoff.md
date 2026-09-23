@@ -63,9 +63,24 @@ enhance all 3 — approved the whole report ("everything", tier S) via
 "Native chat gap audit". `AGENTS.md`'s Chat/Kick chat/General native chat
 paragraphs were updated to match (a couple of earlier commits in this same
 wave — Kick emote picker, pin banner — had shipped without the doc update;
-caught and fixed this pass). No open thread here; next session picks a new
-priority (see below) or continues chat work if the user re-opens it (wave
-4 / entitlement gate still pending per `chat-native-roadmap.md`).
+caught and fixed this pass). **Dogfood-installed**: workstation pulled to
+`573ac4eb`, release build (`flutter build ios --release` +
+`devicectl install`/`launch`, in-place upgrade — data preserved) is live on
+the physical `Kounex iOS` wireless device. No open thread here; next
+session picks a new priority (see below) or continues chat work if the
+user re-opens it (wave 4 / entitlement gate still pending per
+`chat-native-roadmap.md`).
+
+Both clones verified in sync with `origin/master` and with each other
+(`docs/private/` checksums match) as of this handoff — safe to start fresh
+anywhere. Minor pre-existing housekeeping noise on the workstation (not
+from this session, not fixed): `android/.settings/org.eclipse.buildship.core.prefs`
+and `android/app/.classpath` carry local machine-specific paths (temp
+Gradle init scripts, JDK home) that Buildship/Eclipse keeps regenerating as
+tracked-file diffs; `android/app/.settings/org.eclipse.jdt.core.prefs` is
+untracked. Harmless (doesn't block builds/pulls — verified no incoming
+commit touches those files), but worth a deliberate decision at some point:
+gitignore them or stop letting an IDE resync them.
 
 **Longer-running goal: 4.0 is shipped from `master`.** The 4.0 UI rework
 (full-app polish wave + custom-theme cleanup + dogfood-fix batches) merged
