@@ -111,6 +111,7 @@ enum _OptionsPage {
   appearance,
   emotes,
   badges,
+  history,
   eventMessages,
   highlights,
   muteWords,
@@ -232,6 +233,16 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                             'subscriber, and similar) appear next to names.',
                       )
                     : _BadgesPage(onBack: this._back),
+              _OptionsPage.history => _SingleTogglePage(
+                onBack: this._back,
+                title: 'Chat history',
+                settingsKey: SettingsKeys.TwitchChatLoadHistory,
+                rowLabel: 'Load recent messages on join',
+                description:
+                    'Show the last messages sent before you joined a '
+                    'channel (dimmed), from the community '
+                    'recent-messages service Chatterino uses.',
+              ),
               _OptionsPage.eventMessages => _EventMessagesPage(
                 onBack: this._back,
                 rows: this._isKick
@@ -304,6 +315,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             label: 'Event messages',
             subtitle: 'Subs, raids, streaks, and similar system lines',
             onTap: () => this._open(_OptionsPage.eventMessages),
+          ),
+          this._navRow(
+            context,
+            label: 'Chat history',
+            subtitle: 'Recent messages from before you joined',
+            onTap: () => this._open(_OptionsPage.history),
           ),
           if (kDebugMode && GetIt.instance.isRegistered<TwitchChatStore>())
             this._navRow(

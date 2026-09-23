@@ -43,6 +43,12 @@ abstract class ChatMessageEvent with _$ChatMessageEvent {
     @JsonKey(includeFromJson: false, includeToJson: false)
     @Default(false)
     bool isFirstMessage,
+
+    /// Backfilled from the recent-messages history service on join (not
+    /// received live) — rendered dimmed, like Chatterino's history rows.
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(false)
+    bool isHistorical,
   }) = _ChatMessageEvent;
 
   factory ChatMessageEvent.fromJson(Map<String, Object?> json) =>

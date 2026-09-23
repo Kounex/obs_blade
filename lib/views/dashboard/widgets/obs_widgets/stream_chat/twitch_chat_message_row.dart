@@ -21,6 +21,9 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_n
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
+/// Opacity of backfilled history rows ([ChatMessageEvent.isHistorical]).
+const double kChatHistoryOpacity = 0.6;
+
 /// Formats [ChatMessageEvent.receivedAt] for the user-card message list
 /// (Twitch-style `12:29 PM`).
 String formatChatMessageTime(DateTime time) =>
@@ -402,6 +405,10 @@ class TwitchChatMessageRow extends StatelessWidget {
         : Observer(builder: this._richText);
     if (this.isDeleted) {
       line = ChatTombstoneFade(child: line);
+    } else if (this.event.isHistorical) {
+      /// Backfilled history (sent before this session joined) reads a
+      /// step quieter than live chat — Chatterino's history-row idiom.
+      line = Opacity(opacity: kChatHistoryOpacity, child: line);
     }
     final bool revealable = this.isDeleted && this.deletedActor != null;
     final reply = this.event.reply;

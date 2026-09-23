@@ -31,6 +31,7 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_eventsub_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
+import 'package:obs_blade/utils/twitch/twitch_recent_messages_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_message_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_moderation_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tombstone.dart';
@@ -120,6 +121,15 @@ abstract class _TwitchChatStore with Store {
   final TwitchMessageService _messageService;
   final TwitchChannelService _channelService;
   final TwitchModerationService _moderationService;
+  final TwitchRecentMessagesService _recentMessagesService;
+
+  /// Broadcaster ids whose history was already backfilled this session —
+  /// history loads once per channel, switch-backs restore the buffer.
+  final Set<String> _backfilledBroadcasters = <String>{};
+
+  /// Max history rows merged on join (Chatterino defaults to ~800; a
+  /// phone screen is served well by far fewer).
+  static const int kHistoryLimit = 100;
 
   /// Pro entitlement read (test seam, same pattern as the store
   /// resolvers above) - native chat "just doesn't work" without Pro:
@@ -169,6 +179,7 @@ abstract class _TwitchChatStore with Store {
     TwitchMessageService? messageService,
     TwitchChannelService? channelService,
     TwitchModerationService? moderationService,
+    TwitchRecentMessagesService? recentMessagesService,
     bool Function()? isProResolver,
   }) : _authService = authService ?? TwitchAuthService(),
        _eventSubFactory =
@@ -209,6 +220,8 @@ abstract class _TwitchChatStore with Store {
        _messageService = messageService ?? TwitchMessageService(),
        _channelService = channelService ?? TwitchChannelService(),
        _moderationService = moderationService ?? TwitchModerationService(),
+       _recentMessagesService =
+           recentMessagesService ?? TwitchRecentMessagesService(),
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro);
 
@@ -729,6 +742,7 @@ abstract class _TwitchChatStore with Store {
 
       await this._connectIrcSidecar(token);
 
+      unawaited(this._backfillHistory());
       this._refetchCatalogs(token, this.effectiveBroadcasterId);
       unawaited(this.refreshPinnedMessage());
 
@@ -1116,6 +1130,7 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Twitch token refresh on switch failed - $e');
     }
+    unawaited(this._backfillHistory());
     unawaited(this.refreshSelectedChannelLive());
     unawaited(this.refreshPinnedMessage());
   }
@@ -1844,6 +1859,82 @@ abstract class _TwitchChatStore with Store {
     }
   }
 
+  /// Merge the effective channel's recent history (once per channel per
+  /// session) ahead of whatever arrived live meanwhile. Best-effort and
+  /// anonymous: any failure just leaves the live-only timeline.
+  ///
+  /// History rows are prepended without touching [_arrivalSeq], so every
+  /// live row keeps its seq (base = seq - length shifts down with the
+  /// prepend) and banner placement stays put.
+  Future<void> _backfillHistory() async {
+    if (this.user == null) return;
+    final broadcasterId = this.effectiveBroadcasterId;
+    final login = this.effectiveBroadcasterLogin;
+    if (this._backfilledBroadcasters.contains(broadcasterId)) return;
+    /// Settings box may be closed in isolated store tests — no history.
+    if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return;
+    final enabled = Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.TwitchChatLoadHistory.name, defaultValue: true);
+    if (enabled != true) return;
+    this._backfilledBroadcasters.add(broadcasterId);
+
+    List<ChatMessageEvent> history;
+    try {
+      history = await this._recentMessagesService.fetch(
+        login,
+        limit: kHistoryLimit,
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Twitch chat history backfill failed - $e');
+      this._backfilledBroadcasters.remove(broadcasterId);
+      return;
+    }
+    if (history.isEmpty) return;
+
+    runInAction(() {
+      final visible =
+          !this._channelSwitchInProgress &&
+          this.effectiveBroadcasterIdSafe == broadcasterId;
+      final List<ChatMessageEvent> destination;
+      if (visible) {
+        destination = this.messages;
+      } else {
+        final buffer = this._channelBuffers[broadcasterId];
+        if (buffer == null) return;
+        destination = buffer.messages;
+      }
+
+      final known = {for (final m in destination) m.messageId};
+
+      /// Only rows older than the first live row — a history entry that
+      /// also arrived live is already on screen.
+      final fresh = [
+        for (final m in history)
+          if (!known.contains(m.messageId) &&
+              m.broadcasterUserId == broadcasterId)
+            m,
+      ];
+      final room = kMaxMessages - destination.length;
+      if (fresh.isEmpty || room <= 0) return;
+      final merged = fresh.length > room
+          ? fresh.sublist(fresh.length - room)
+          : fresh;
+      destination.insertAll(0, merged);
+      if (visible) {
+        for (final message in merged) {
+          final color = message.color;
+          if (color != null &&
+              color.isNotEmpty &&
+              !this._chatterColors.containsKey(message.chatterUserId)) {
+            this._chatterColors[message.chatterUserId] = color;
+          }
+        }
+        this.lifecycleVersion++;
+      }
+    });
+  }
+
   /// IRC sidecar reported `first-msg=1` for [messageId].
   @action
   void applyIrcFirstMessage(String messageId) {
@@ -2227,6 +2318,7 @@ abstract class _TwitchChatStore with Store {
   /// in the settings box for the next login).
   void _resetMultiChatState() {
     this._channelBuffers.clear();
+    this._backfilledBroadcasters.clear();
     this.moderatedChannelIds.clear();
     this._appliedModerationKeys.clear();
     this._appliedModerationOrder.clear();

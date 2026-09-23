@@ -203,6 +203,11 @@ enum SettingsKeys {
   /// Off by default.
   TwitchChatMessageSeparators,
 
+  /// [bool]: Backfill recent chat history (recent-messages.robotty.de)
+  /// when the native Twitch chat joins a channel.
+  /// Active by default
+  TwitchChatLoadHistory,
+
   /// [List<dynamic>]: json maps ([TwitchChannelRef.toJson]) of the
   /// channels the user added to the native multi-chat. The user's own
   /// channel is never stored here — it is derived from the Twitch auth.
@@ -424,6 +429,7 @@ enum SettingsKeys {
     SettingsKeys.TwitchChatEmoteSize: 'twitch-chat-emote-size',
     SettingsKeys.TwitchChatMessageSpacing: 'twitch-chat-message-spacing',
     SettingsKeys.TwitchChatMessageSeparators: 'twitch-chat-message-separators',
+    SettingsKeys.TwitchChatLoadHistory: 'twitch-chat-load-history',
     SettingsKeys.TwitchChatNoticeSubs: 'twitch-chat-notice-subs',
     SettingsKeys.TwitchChatNoticeStreaks: 'twitch-chat-notice-streaks',
     SettingsKeys.TwitchChatNoticeRaids: 'twitch-chat-notice-raids',

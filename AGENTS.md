@@ -97,7 +97,12 @@ tombstones (dimmed content + ` —Deleted` marker) + `/clear` banner,
 best-effort subs; a `channel.moderate` v2 sub (gated on the
 `kTwitchModerationScopes` 8-scope bundle, pre-upgrade tokens skip it)
 supplies the deleting mod for the tap reveal) and scrolled-up chat shows a
-pause chip. Mod tooling (wave 3): Warn… compose in the mod action sheet,
+pause chip. On join, recent history backfills (dimmed, once per channel per
+session) from the community `recent-messages.robotty.de` service
+Chatterino uses (`TwitchRecentMessagesService` parses the IRC lines into
+`ChatMessageEvent`s; toggle `TwitchChatLoadHistory` → options "Chat
+history"; `test/flutter_test_config.dart` mocks its default client
+suite-wide). Mod tooling (wave 3): Warn… compose in the mod action sheet,
 unban-request Approve/Deny in the ban inbox, and a live AutoMod queue sheet
 (`automod.message.hold/.update` v2 → `TwitchChatStore.autoModQueue`) behind
 the channel mod sheet — one `kTwitchManageModToolingScopes` scope-upgrade
