@@ -5,6 +5,7 @@ import 'package:mobx/mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
@@ -131,6 +132,11 @@ abstract class _KickChatStore with Store {
   /// `isKick` param).
   final ThirdPartyEmoteStore Function() _emoteStoreResolver;
 
+  /// First-party (channel + Global + Emojis) emote catalog fetch for the
+  /// compose-time picker — Kick-only store, no scope gate (anonymous
+  /// read; see [KickEmoteService.fetchChannelEmotes]).
+  final KickEmoteStore Function() _kickEmoteStoreResolver;
+
   _KickChatStore({
     KickChannelService? channelService,
     KickPusherFactory? pusherFactory,
@@ -138,6 +144,7 @@ abstract class _KickChatStore with Store {
     KickApiService? apiService,
     bool Function()? isProResolver,
     ThirdPartyEmoteStore Function()? emoteStoreResolver,
+    KickEmoteStore Function()? kickEmoteStoreResolver,
   }) : _channelService = channelService ?? KickChannelService(),
        _pusherFactory =
            pusherFactory ??
@@ -149,8 +156,9 @@ abstract class _KickChatStore with Store {
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
        _emoteStoreResolver =
-           emoteStoreResolver ??
-           (() => GetIt.instance<ThirdPartyEmoteStore>()) {
+           emoteStoreResolver ?? (() => GetIt.instance<ThirdPartyEmoteStore>()),
+       _kickEmoteStoreResolver =
+           kickEmoteStoreResolver ?? (() => GetIt.instance<KickEmoteStore>()) {
     /// The default API service rides this store's token lifecycle
     /// (refresh + persist); tests inject a fake instead.
     this._apiService =
@@ -549,6 +557,7 @@ abstract class _KickChatStore with Store {
     }
     runInAction(() => this.channelInfo = info);
     this._refetchThirdPartyEmotes(info.userId);
+    this._refetchChannelEmotes(slug);
 
     if (buffer.messages.isEmpty) {
       try {
@@ -685,6 +694,21 @@ abstract class _KickChatStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog('Kick third-party emote fetch could not start — $e');
+    }
+  }
+
+  /// Fire-and-forget first-party (channel + Global + Emojis) catalog
+  /// refetch for the picker — no scope gate (anonymous read), so this
+  /// always runs on a successful connect, unlike [_refetchThirdPartyEmotes].
+  void _refetchChannelEmotes(String slug) {
+    try {
+      unawaited(
+        this._kickEmoteStoreResolver().fetch(slug).catchError((Object e) {
+          GeneralHelper.advLog('Kick channel emote fetch failed — $e');
+        }),
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Kick channel emote fetch could not start — $e');
     }
   }
 

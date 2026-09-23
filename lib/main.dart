@@ -35,6 +35,7 @@ import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
 import 'stores/views/kick_chat.dart';
+import 'stores/views/kick_emotes.dart';
 import 'stores/views/logs.dart';
 import 'stores/views/statistics.dart';
 import 'stores/views/twitch_chat.dart';
@@ -108,6 +109,7 @@ void _initializeStores() {
   GetIt.instance.registerLazySingleton<TwitchEmoteStore>(
     () => TwitchEmoteStore(),
   );
+  GetIt.instance.registerLazySingleton<KickEmoteStore>(() => KickEmoteStore());
   GetIt.instance.registerLazySingleton<TwitchChatStore>(
     /// Fire-and-forget [init] — cold-start token validation must not
     /// block store creation.

@@ -4,44 +4,34 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
+import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
-import 'package:obs_blade/stores/views/twitch_chat.dart';
-import 'package:obs_blade/stores/views/twitch_emotes.dart';
-import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/kick/kick_chat_message.dart'
+    show kickEmoteUrl;
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart'
-    show chatImageFadeIn;
 
-/// Dock toggle for [ChatEmotePickerSheet] — styled like the chat bar's
-/// control containers, 44pt touch target. Refocuses the dock's field when
-/// the sheet closed after Done (compose continuation), not on a bare
-/// dismiss.
-class ChatEmotePickerButton extends StatelessWidget {
+import 'chat_emote_picker.dart' show ChatEmoteCell;
+import 'native_chat_chrome.dart';
+import 'native_chat_input.dart';
+
+/// Dock toggle for [KickEmotePickerSheet] — same chrome/tap contract as
+/// Twitch's [ChatEmotePickerButton], minus any scope gate: Kick's first-
+/// and third-party emote catalogs are both anonymous reads, so there is
+/// no "log in again" state to carry.
+class KickEmotePickerButton extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
-
-  /// Whether the persisted token carries the read-emotes scope — the sheet
-  /// shows a re-login CTA instead of first-party sections when false.
-  final bool canReadEmotes;
-
-  /// Brand accent (Done pill fill), same value the dock gets.
   final Color accentColor;
 
-  /// Starts the re-login flow from the sheet's pre-upgrade CTA.
-  final VoidCallback onRelogin;
-
-  const ChatEmotePickerButton({
+  const KickEmotePickerButton({
     super.key,
     required this.controller,
     required this.focusNode,
-    required this.canReadEmotes,
     required this.accentColor,
-    required this.onRelogin,
   });
 
   @override
@@ -51,21 +41,15 @@ class ChatEmotePickerButton extends StatelessWidget {
       child: Pressable(
         haptic: true,
         onTap: () async {
-          /// Drop the dock's keyboard first — the sheet rides above an
-          /// open keyboard (ModalHandler viewInsets padding), and on
-          /// small phones sheet + keyboard would overflow vertically.
-          /// After Done the field is refocused below.
           this.focusNode.unfocus();
           final applied = await ModalHandler.showBaseBottomSheet<bool>(
             context: context,
             barrierDismissible: true,
             enableDrag: true,
             maxHeightFraction: 0.85,
-            builder: (context) => ChatEmotePickerSheet(
+            builder: (context) => KickEmotePickerSheet(
               controller: this.controller,
-              canReadEmotes: this.canReadEmotes,
               accentColor: this.accentColor,
-              onRelogin: this.onRelogin,
             ),
           );
           if ((applied ?? false) && this.focusNode.canRequestFocus) {
@@ -77,10 +61,6 @@ class ChatEmotePickerButton extends StatelessWidget {
             minWidth: kMinInteractiveDimensionCupertino,
             minHeight: kMinInteractiveDimensionCupertino,
           ),
-
-          /// Bottom-align with the growing text field / send control — the
-          /// 44pt box is the hit target; chrome matches
-          /// [kNativeChatDockControlSize].
           alignment: Alignment.bottomCenter,
           child: Container(
             width: kNativeChatDockControlSize,
@@ -104,32 +84,26 @@ class ChatEmotePickerButton extends StatelessWidget {
   }
 }
 
-/// Emote picker sheet: first-party sections (Channel / Global) from
-/// [TwitchEmoteStore] plus the combined third-party section from
-/// [ThirdPartyEmoteStore] (only when the third-party toggle is on).
-/// Emote taps append into a local draft; [Done] writes it back to
-/// [controller] and pops with `true` so the caller can refocus the dock.
-class ChatEmotePickerSheet extends StatefulWidget {
+/// Emote picker sheet for native Kick chat: `Channel` / `Global` /
+/// `Emojis` sections from [KickEmoteStore] (`GET /emotes/{slug}`, no
+/// auth) plus the `Third-party (7TV)` section from [ThirdPartyEmoteStore]
+/// (only when that toggle is on). Same tap-to-append-into-a-draft / Done
+/// mechanics as Twitch's picker, no first-party scope gate.
+class KickEmotePickerSheet extends StatefulWidget {
   final TextEditingController controller;
-  final bool canReadEmotes;
   final Color accentColor;
 
-  /// Starts the re-login flow — invoked after the sheet pops itself.
-  final VoidCallback onRelogin;
-
-  const ChatEmotePickerSheet({
+  const KickEmotePickerSheet({
     super.key,
     required this.controller,
-    required this.canReadEmotes,
     required this.accentColor,
-    required this.onRelogin,
   });
 
   @override
-  State<ChatEmotePickerSheet> createState() => _ChatEmotePickerSheetState();
+  State<KickEmotePickerSheet> createState() => _KickEmotePickerSheetState();
 }
 
-class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
+class _KickEmotePickerSheetState extends State<KickEmotePickerSheet> {
   String _query = '';
   late final TextEditingController _draft;
   late final FocusNode _draftFocus;
@@ -220,12 +194,11 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
             height: 280.0,
             child: Observer(
               builder: (context) {
-                final emoteStore = GetIt.instance<TwitchEmoteStore>();
+                final emoteStore = GetIt.instance<KickEmoteStore>();
                 final thirdPartyStore = GetIt.instance<ThirdPartyEmoteStore>();
-                final chatStore = GetIt.instance<TwitchChatStore>();
-                final broadcasterId = chatStore.user == null
-                    ? ''
-                    : chatStore.effectiveBroadcasterId;
+                final chatStore = GetIt.instance<KickChatStore>();
+                final broadcasterId =
+                    chatStore.channelInfo?.userId?.toString() ?? '';
 
                 /// Tracked so catalogs landing while the sheet is open
                 /// pop in once.
@@ -235,13 +208,13 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
 
                 return HiveBuilder<dynamic>(
                   hiveKey: HiveKeys.Settings,
-                  rebuildKeys: const [SettingsKeys.TwitchChatThirdPartyEmotes],
+                  rebuildKeys: const [SettingsKeys.KickChatThirdPartyEmotes],
                   builder: (context, settingsBox, child) {
                     final query = this._query.trim().toLowerCase();
 
                     final thirdPartyEntries =
                         (settingsBox.get(
-                              SettingsKeys.TwitchChatThirdPartyEmotes.name,
+                              SettingsKeys.KickChatThirdPartyEmotes.name,
                               defaultValue: true,
                             )
                             as bool)
@@ -257,72 +230,20 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                         : const <(String, String)>[];
 
                     final sections = <(String, List<(String, String)>)>[
-                      if (this.widget.canReadEmotes) ...[
+                      for (final section in emoteStore.sections)
                         (
-                          'Channel',
+                          section.label,
                           this._filtered([
-                            for (final emote in emoteStore.channelEmotes)
-                              (emote.name, twitchEmoteUrl(emote.id)),
+                            for (final emote in section.emotes)
+                              (emote.name, kickEmoteUrl(emote.id)),
                           ], query),
                         ),
-                        (
-                          'Global',
-                          this._filtered([
-                            for (final emote in emoteStore.globalEmotes)
-                              (emote.name, twitchEmoteUrl(emote.id)),
-                          ], query),
-                        ),
-                      ],
-                      ('Third-party (7TV/BTTV)', thirdPartyEntries),
+                      ('Third-party (7TV)', thirdPartyEntries),
                     ].where((section) => section.$2.isNotEmpty).toList();
 
                     return ListView(
                       children: [
-                        if (!this.widget.canReadEmotes) ...[
-                          Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.lock_fill,
-                                size: 14.0,
-                                color: textColors.highlightText,
-                              ),
-                              const SizedBox(width: AppSpacing.xs),
-                              Expanded(
-                                child: Text(
-                                  'Log in again to load your Twitch emotes',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ),
-                              Pressable(
-                                haptic: true,
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  this.widget.onRelogin();
-                                },
-                                child: Container(
-                                  constraints: const BoxConstraints(
-                                    minHeight:
-                                        kMinInteractiveDimensionCupertino,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    'Re-login',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: textColors.highlightText,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                        ],
-                        if (this.widget.canReadEmotes &&
-                            emoteStore.isLoading &&
-                            emoteStore.channelEmotes.isEmpty &&
-                            emoteStore.globalEmotes.isEmpty)
+                        if (emoteStore.isLoading && emoteStore.sections.isEmpty)
                           Padding(
                             padding: const EdgeInsets.all(AppSpacing.xl),
                             child: Center(
@@ -413,7 +334,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
               children: [
                 Expanded(
                   child: NativeChatTextField(
-                    fieldKey: const Key('emote-draft-field'),
+                    fieldKey: const Key('kick-emote-draft-field'),
                     controller: this._draft,
                     focusNode: this._draftFocus,
                     minLines: 1,
@@ -429,7 +350,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                   haptic: true,
                   onTap: this._done,
                   child: Container(
-                    key: const Key('emote-done-button'),
+                    key: const Key('kick-emote-done-button'),
                     alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md,
@@ -455,48 +376,6 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// One selectable emote in an emote picker sheet — 2x image with the code
-/// as tooltip and as fallback text when the image fails (same policy as
-/// the message rows). Shared by [ChatEmotePickerSheet] (Twitch) and the
-/// Kick engine's own picker sheet.
-class ChatEmoteCell extends StatelessWidget {
-  final String code;
-  final String imageUrl;
-  final VoidCallback onTap;
-
-  const ChatEmoteCell({
-    super.key,
-    required this.code,
-    required this.imageUrl,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: this.code,
-      child: Pressable(
-        haptic: true,
-        onTap: this.onTap,
-        child: Center(
-          child: Image.network(
-            this.imageUrl,
-            height: 32.0,
-            width: 32.0,
-            fit: BoxFit.contain,
-            frameBuilder: chatImageFadeIn,
-            errorBuilder: (_, _, _) => Text(
-              this.code,
-              style: Theme.of(context).textTheme.bodySmall,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
       ),
     );
   }

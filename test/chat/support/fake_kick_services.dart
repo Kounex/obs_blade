@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/classes/kick/kick_emote.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
 import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/utils/kick/kick_api_service.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
+import 'package:obs_blade/utils/kick/kick_emote_service.dart';
 import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
 
 class FakeKickChannelService extends KickChannelService {
@@ -289,5 +293,25 @@ class FakeKickApiService extends KickApiService {
     this.fetchUserCalls.add(userId);
     if (this.fetchUserThrows != null) throw this.fetchUserThrows!;
     return this.fetchUserResult;
+  }
+}
+
+class FakeKickEmoteService extends KickEmoteService {
+  /// slug → scripted sections; a missing key resolves to an empty list.
+  final Map<String, List<KickEmoteSection>> sections =
+      <String, List<KickEmoteSection>>{};
+  final List<String> fetchCalls = <String>[];
+  Object? fetchThrows;
+
+  /// Parks [fetchChannelEmotes] instead of returning immediately — lets a
+  /// test resolve the fetch at a chosen moment (stale-fetch tests).
+  Completer<List<KickEmoteSection>>? fetchGate;
+
+  @override
+  Future<List<KickEmoteSection>> fetchChannelEmotes(String slug) async {
+    this.fetchCalls.add(slug);
+    if (this.fetchThrows != null) throw this.fetchThrows!;
+    if (this.fetchGate != null) return this.fetchGate!.future;
+    return this.sections[slug] ?? const [];
   }
 }

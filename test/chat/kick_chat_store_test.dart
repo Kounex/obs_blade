@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
@@ -110,6 +111,8 @@ void main() {
   late bool isPro;
   late FakeThirdPartyEmoteService emoteService;
   late ThirdPartyEmoteStore emoteStore;
+  late FakeKickEmoteService kickEmoteService;
+  late KickEmoteStore kickEmoteStore;
   late KickChatStore store;
 
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
@@ -133,6 +136,7 @@ void main() {
     },
     isProResolver: () => isPro,
     emoteStoreResolver: () => emoteStore,
+    kickEmoteStoreResolver: () => kickEmoteStore,
   );
 
   /// A valid, unexpired, fully-scoped stored session (user id 9001
@@ -185,6 +189,8 @@ void main() {
     isPro = true;
     emoteService = FakeThirdPartyEmoteService();
     emoteStore = ThirdPartyEmoteStore(service: emoteService);
+    kickEmoteService = FakeKickEmoteService();
+    kickEmoteStore = KickEmoteStore(service: kickEmoteService);
     store = newStore();
   });
 
@@ -442,6 +448,38 @@ void main() {
       () async {
         configure();
         emoteService.sevenTvGlobalThrows = Exception('boom');
+        await store.init();
+        await until(
+          () => store.chatConnection == KickChatConnectionState.connected,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(store.chatConnection, KickChatConnectionState.connected);
+        expect(store.chatError, isNull);
+      },
+    );
+  });
+
+  group('channel emotes (picker)', () {
+    test(
+      'connecting refetches the picker catalog for the channel slug',
+      () async {
+        configure();
+        await store.init();
+        await until(
+          () => store.chatConnection == KickChatConnectionState.connected,
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(kickEmoteService.fetchCalls, ['aaa']);
+      },
+    );
+
+    test(
+      'a fetch failure never blocks or errors the chat connection',
+      () async {
+        configure();
+        kickEmoteService.fetchThrows = Exception('boom');
         await store.init();
         await until(
           () => store.chatConnection == KickChatConnectionState.connected,
