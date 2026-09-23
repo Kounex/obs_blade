@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -276,13 +277,18 @@ class _SheetOverscroll extends StatefulWidget {
 }
 
 class _SheetOverscrollState extends State<_SheetOverscroll> {
-  /// Points per second. A flick at least this fast dismisses regardless of
-  /// how far the sheet travelled. From the usual UIKit interactive-dismiss
-  /// split (fast flick, or past halfway without flicking back). Both 300
-  /// and 150 were still too high to reach with an ordinary thumb flick in
-  /// practice - the only reliable way to dismiss was the distance-based
-  /// half-shrink path.
-  static const double _flickVelocity = 100.0;
+  /// Points per second, matching Flutter's own `BottomSheet` drag-to-
+  /// dismiss threshold (`_kMinFlingVelocity` in the framework's
+  /// bottom_sheet.dart). 300, 150 and 100 were all tuned against
+  /// `ScrollEndNotification.dragDetails.primaryVelocity`, which is the
+  /// scroll view's *physics-filtered* velocity - a real flick that started
+  /// inside scrollable content read as a much smaller number through that
+  /// pipeline than the same flick starting outside it (where the
+  /// framework's own drag handling, reading raw pointer velocity, made the
+  /// fling threshold easy to hit). Tracking raw pointer velocity ourselves
+  /// (below) and comparing against the framework's own number fixes that
+  /// mismatch instead of keeps chasing the wrong signal.
+  static const double _flickVelocity = 700.0;
 
   static const double _distanceThreshold = 0.5;
 
@@ -295,6 +301,19 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
 
   bool _pulled = false;
   bool _settled = true;
+
+  /// Raw pointer velocity for the current touch - reset on every pointer
+  /// down, fed on every move, read at release. Deliberately not sourced
+  /// from `ScrollEndNotification` (see `_flickVelocity` above).
+  VelocityTracker? _velocityTracker;
+
+  void _onPointerDown(PointerDownEvent event) {
+    this._velocityTracker = VelocityTracker.withKind(event.kind);
+    this._velocityTracker!.addPosition(event.timeStamp, event.position);
+  }
+
+  double _trackedVelocity() =>
+      this._velocityTracker?.getVelocity().pixelsPerSecond.dy ?? 0.0;
 
   /// The route controller is what the sheet's offset tracks. [ModalRoute.animation]
   /// is the curved proxy, which stays near 1.0 until the controller has
@@ -447,13 +466,15 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
           return false;
         }
         if (notification is ScrollEndNotification) {
-          final velocity = notification.dragDetails?.primaryVelocity ?? 0.0;
-          this._settle(context, velocity);
+          this._settle(context, this._trackedVelocity());
         }
         return false;
       },
       child: Listener(
-        onPointerUp: (_) => this._settle(context, 0.0),
+        onPointerDown: this._onPointerDown,
+        onPointerMove: (event) =>
+            this._velocityTracker?.addPosition(event.timeStamp, event.position),
+        onPointerUp: (_) => this._settle(context, this._trackedVelocity()),
         onPointerCancel: (_) => this._settle(context, 0.0),
         child: this.widget.child,
       ),

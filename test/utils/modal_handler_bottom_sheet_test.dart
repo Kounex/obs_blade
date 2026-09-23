@@ -73,6 +73,26 @@ void main() {
     expect(find.text('sheet row'), findsNothing);
   });
 
+  testWidgets('an ordinary-speed fling starting inside the scrollable content '
+      'dismisses too (not just an extreme one)', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: Builder(builder: scrollingSheet)),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('sheet row'), findsWidgets);
+
+    /// Just above the fling-velocity threshold (matches Flutter's own
+    /// BottomSheet _kMinFlingVelocity) - not the extreme 2000 above,
+    /// which would pass even against a much higher/wrong threshold and
+    /// wouldn't actually prove the threshold is reachable.
+    await tester.fling(find.text('sheet row').first, const Offset(0, 300), 800);
+    await tester.pumpAndSettle();
+    expect(find.text('sheet row'), findsNothing);
+  });
+
   testWidgets('a short overscroll springs any scrolling sheet back', (
     tester,
   ) async {
