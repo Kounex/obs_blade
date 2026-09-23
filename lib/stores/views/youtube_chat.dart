@@ -13,7 +13,8 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
-import 'package:obs_blade/utils/youtube_video_id.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 
 part 'youtube_chat.g.dart';
 
@@ -42,14 +43,48 @@ enum YouTubeChatConnectionState {
 
 class YouTubeChatStore = _YouTubeChatStore with _$YouTubeChatStore;
 
+/// Channel entries re-check for a (new) live stream on this escalating
+/// schedule while nothing is live; the last step repeats. The check is
+/// free (page scrape, a few KB) — only a found watch id spends the
+/// 1-unit `videos.list`.
+const List<Duration> kYouTubeLiveRecheckSchedule = [
+  Duration(seconds: 20),
+  Duration(seconds: 30),
+  Duration(seconds: 60),
+  Duration(seconds: 90),
+];
+
+/// How one resolve-and-poll pass of the read transport ended.
+enum _PassOutcome {
+  /// Nothing live (or the chat ended before any page arrived).
+  offline,
+
+  /// A chat connected and has since ended — resets the recheck backoff.
+  attached,
+
+  /// Terminal (error / quota / superseded) — the loop exits.
+  stopped,
+}
+
 /// One entry of the native YouTube channel list — derived from the
-/// [SettingsKeys.YouTubeUsernames] map (label → raw value; [videoId] is
-/// parsed out of the raw value via [extractYouTubeVideoId]).
+/// [SettingsKeys.YouTubeUsernames] map (label → raw value; [target] is
+/// parsed out of the raw value via [parseYouTubeTarget]). A channel target
+/// resolves its current live stream at connect time and rolls over to the
+/// next stream on its own; a video target is pinned to that one video.
 class YouTubeChatChannel {
   final String label;
-  final String videoId;
+  final YouTubeTarget target;
 
-  const YouTubeChatChannel({required this.label, required this.videoId});
+  const YouTubeChatChannel({required this.label, required this.target});
+
+  /// The pinned video id — null for channel entries (their video is
+  /// resolved per stream).
+  String? get videoId => switch (this.target) {
+    YouTubeVideoTarget(:final videoId) => videoId,
+    YouTubeChannelTarget() => null,
+  };
+
+  bool get isChannel => this.target is YouTubeChannelTarget;
 }
 
 /// In-memory per-channel chat snapshot — swapped in/out of the live
@@ -61,6 +96,15 @@ class _ChannelBuffer {
   List<YouTubeChatMessage> messages;
   String? liveChatId;
   String? nextPageToken;
+
+  /// Video the current [liveChatId] belongs to (resolved per stream for
+  /// channel entries).
+  String? videoId;
+
+  /// Last video whose chat ended — a channel's `/live` page can keep
+  /// pointing at the finished stream for a while, so re-resolving to it
+  /// counts as "not live yet" without spending a `videos.list` unit.
+  String? endedVideoId;
 
   /// Snapshot taken when [liveChatId] was resolved — not re-polled
   /// afterward (see [YouTubeLiveStreamingDetails]).
@@ -87,6 +131,7 @@ abstract class _YouTubeChatStore with Store {
 
   final YouTubeAuthService _authService;
   final YouTubeLiveChatService _chatService;
+  final YouTubeLiveResolver _liveResolver;
 
   /// Injectable delay for the poll loop — unit tests pass an instant
   /// sleeper (and record the durations) instead of really waiting.
@@ -116,10 +161,12 @@ abstract class _YouTubeChatStore with Store {
   _YouTubeChatStore({
     YouTubeAuthService? authService,
     YouTubeLiveChatService? chatService,
+    YouTubeLiveResolver? liveResolver,
     Future<void> Function(Duration)? sleep,
     bool Function()? isProResolver,
   }) : _authService = authService ?? YouTubeAuthService(),
        _chatService = chatService ?? YouTubeLiveChatService(),
+       _liveResolver = liveResolver ?? YouTubeLiveResolver(),
        _sleep = sleep ?? Future.delayed,
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro);
@@ -151,6 +198,17 @@ abstract class _YouTubeChatStore with Store {
   @observable
   String? chatError;
 
+  /// A channel entry is between streams — [chatConnection] is `offline`
+  /// and the store keeps re-checking for the next live stream on
+  /// [kYouTubeLiveRecheckSchedule] (see [recheckLiveNow] to skip the wait).
+  @observable
+  bool awaitingLiveStream = false;
+
+  /// Video the selected entry's chat is attached to right now (the pinned
+  /// id for video entries, the resolved stream for channel entries).
+  @observable
+  String? selectedLiveVideoId;
+
   /// True after a [YouTubeQuotaExceededException] stopped the poll loop —
   /// polling resumes on the midnight-PT quota reset or a manual retry.
   @observable
@@ -172,8 +230,8 @@ abstract class _YouTubeChatStore with Store {
   String? moderationError;
 
   /// Native YouTube channels derived from [SettingsKeys.YouTubeUsernames]
-  /// (label → raw value; entries whose value doesn't parse to a video id
-  /// via [extractYouTubeVideoId] are skipped).
+  /// (label → raw value; entries whose value parses to neither a channel
+  /// nor a video via [parseYouTubeTarget] are skipped).
   final ObservableList<YouTubeChatChannel> channels =
       ObservableList<YouTubeChatChannel>();
 
@@ -258,12 +316,22 @@ abstract class _YouTubeChatStore with Store {
     }
   }
 
-  /// Video id of the selected channel, if it still exists in settings.
-  String? get _selectedVideoId {
+  /// Target of the selected entry, if it still exists in settings.
+  YouTubeTarget? get _selectedTarget {
     final label = this.selectedChannelLabel;
     if (label == null) return null;
     for (final channel in this.channels) {
-      if (channel.label == label) return channel.videoId;
+      if (channel.label == label) return channel.target;
+    }
+    return null;
+  }
+
+  /// The selected entry, if it still exists in settings.
+  YouTubeChatChannel? get selectedChannel {
+    final label = this.selectedChannelLabel;
+    if (label == null) return null;
+    for (final channel in this.channels) {
+      if (channel.label == label) return channel;
     }
     return null;
   }
@@ -454,6 +522,7 @@ abstract class _YouTubeChatStore with Store {
     if (label == null) return;
     final flow = ++this._pollFlow;
     this.chatConnection = YouTubeChatConnectionState.connecting;
+    this.awaitingLiveStream = false;
     this.chatError = null;
     this.chatQuotaExhausted = false;
     unawaited(this._pollLoop(label, flow));
@@ -463,6 +532,7 @@ abstract class _YouTubeChatStore with Store {
     this._pollFlow++;
     runInAction(() {
       this.chatConnection = YouTubeChatConnectionState.idle;
+      this.awaitingLiveStream = false;
       this.chatError = null;
       this.chatQuotaExhausted = false;
       this.sendChatError = null;
@@ -470,13 +540,12 @@ abstract class _YouTubeChatStore with Store {
     });
   }
 
-  /// The read transport: resolve the selected video's `activeLiveChatId`
-  /// (cached in the channel buffer), then poll `liveChatMessages.list`,
-  /// honoring each page's `pollingIntervalMillis` (net of the elapsed
-  /// request duration) and threading the page token. Ends on: chat ended/offlineAt (→ offline, no error), project
-  /// quota exhaustion (→ error + [chatQuotaExhausted]), other API errors
-  /// (→ error); transient rate limiting backs off and retries. A bumped
-  /// [_pollFlow] (selectChannel / logout / dispose) cancels the loop.
+  /// The read transport. One pass of [_attachAndPoll] resolves the entry's
+  /// live chat and polls it until it ends or fails. Video entries stop
+  /// there (terminal `offline`); channel entries wait on
+  /// [kYouTubeLiveRecheckSchedule] and re-resolve, so the chat reattaches to the
+  /// channel's next stream on its own. A bumped [_pollFlow] (selectChannel
+  /// / logout / dispose / [recheckLiveNow]) cancels the loop.
   Future<void> _pollLoop(String label, int flow) async {
     final buffer = this._channelBuffers.putIfAbsent(label, _ChannelBuffer.new);
     final apiKey = YouTubeLiveChatService.resolveApiKey();
@@ -484,59 +553,178 @@ abstract class _YouTubeChatStore with Store {
     bool superseded() =>
         flow != this._pollFlow || label != this.selectedChannelLabel;
 
+    var recheck = 0;
+    while (!superseded()) {
+      final outcome = await this._attachAndPoll(
+        label,
+        buffer,
+        apiKey,
+        superseded,
+      );
+      if (superseded()) return;
+      if (outcome == _PassOutcome.attached) recheck = 0;
+      if (outcome == _PassOutcome.stopped) return;
+      if (this._selectedTarget is! YouTubeChannelTarget) {
+        runInAction(() {
+          this.chatConnection = YouTubeChatConnectionState.offline;
+        });
+        return;
+      }
+      runInAction(() {
+        this.chatConnection = YouTubeChatConnectionState.offline;
+        this.awaitingLiveStream = true;
+      });
+      const schedule = kYouTubeLiveRecheckSchedule;
+      await this._sleep(
+        schedule[recheck < schedule.length ? recheck : schedule.length - 1],
+      );
+      recheck++;
+    }
+  }
+
+  /// Skip the remaining wait of a channel entry that's between streams
+  /// (UI "Check now") — restarts the loop, which re-resolves immediately.
+  @action
+  void recheckLiveNow() {
+    if (!this.awaitingLiveStream) return;
+    this.connectChat();
+  }
+
+  /// Resolve the selected entry's `activeLiveChatId` (cached in [buffer])
+  /// and poll `liveChatMessages.list`, honoring each page's
+  /// `pollingIntervalMillis` (net of the elapsed request duration) and
+  /// threading the page token.
+  ///
+  /// Returns [_PassOutcome.offline] when nothing is live,
+  /// [_PassOutcome.attached] when a chat connected and has since ended
+  /// (the caller decides whether to wait for the next stream either way),
+  /// and [_PassOutcome.stopped] for terminal states (quota exhausted, API /
+  /// channel-not-found errors — [chatConnection] already `error` — or a
+  /// superseded loop). Transient rate limiting backs off and retries in
+  /// place.
+  Future<_PassOutcome> _attachAndPoll(
+    String label,
+    _ChannelBuffer buffer,
+    String apiKey,
+    bool Function() superseded,
+  ) async {
+    void quotaExhausted() {
+      runInAction(() {
+        this.chatConnection = YouTubeChatConnectionState.error;
+        this.awaitingLiveStream = false;
+        this.chatQuotaExhausted = true;
+        this.chatError =
+            'YouTube API quota exhausted - chat resumes after the daily reset';
+      });
+    }
+
+    void failed(String message) {
+      runInAction(() {
+        this.chatConnection = YouTubeChatConnectionState.error;
+        this.awaitingLiveStream = false;
+        this.chatError = message;
+      });
+    }
+
     if (buffer.liveChatId == null) {
-      final videoId = this._selectedVideoId;
-      if (videoId == null) {
+      final target = this._selectedTarget;
+      if (target == null) {
         /// Channel vanished from settings mid-flight — treat as no
         /// selection.
         if (!superseded()) {
           runInAction(() {
             this.chatConnection = YouTubeChatConnectionState.idle;
+            this.awaitingLiveStream = false;
           });
         }
-        return;
+        return _PassOutcome.stopped;
+      }
+
+      switch (target) {
+        case YouTubeVideoTarget(:final videoId):
+          buffer.videoId = videoId;
+        case YouTubeChannelTarget():
+          final String? liveVideoId;
+          try {
+            liveVideoId = await this._liveResolver.resolveLiveVideoId(target);
+          } on YouTubeLiveResolveException catch (e) {
+            if (superseded()) return _PassOutcome.stopped;
+            GeneralHelper.advLog('YouTube live lookup failed - $e');
+            if (e.statusCode == 404) {
+              failed(e.message);
+              return _PassOutcome.stopped;
+            }
+
+            /// Network hiccup / consent wall / layout drift — not
+            /// "offline" for sure, but retrying on the recheck schedule
+            /// is still the right move. The reason stays visible.
+            runInAction(() => this.chatError = e.message);
+            return _PassOutcome.offline;
+          }
+          if (superseded()) return _PassOutcome.stopped;
+          runInAction(() => this.chatError = null);
+          if (liveVideoId == null || liveVideoId == buffer.endedVideoId) {
+            return _PassOutcome.offline;
+          }
+          if (buffer.videoId != null && buffer.videoId != liveVideoId) {
+            /// A new stream on the same channel: the old chat's cursor is
+            /// meaningless there. Buffered rows stay as history.
+            buffer.nextPageToken = null;
+          }
+          buffer.videoId = liveVideoId;
       }
       try {
         final resolved = await this._chatService.resolveLiveStreamingDetails(
-          videoId,
+          buffer.videoId!,
           apiKey: apiKey,
         );
         buffer.liveChatId = resolved.liveChatId;
         buffer.viewerCount = resolved.concurrentViewers;
       } on YouTubeQuotaExceededException {
-        if (superseded()) return;
-        runInAction(() {
-          this.chatConnection = YouTubeChatConnectionState.error;
-          this.chatQuotaExhausted = true;
-          this.chatError =
-              'YouTube API quota exhausted - chat resumes after the daily reset';
-        });
-        return;
+        if (superseded()) return _PassOutcome.stopped;
+        quotaExhausted();
+        return _PassOutcome.stopped;
       } catch (e) {
-        if (superseded()) return;
+        if (superseded()) return _PassOutcome.stopped;
         GeneralHelper.advLog('YouTube live chat resolve failed - $e');
-        runInAction(() {
-          this.chatConnection = YouTubeChatConnectionState.error;
-          this.chatError = 'Could not resolve the live chat';
-        });
-        return;
+        failed('Could not resolve the live chat');
+        return _PassOutcome.stopped;
       }
-      if (superseded()) return;
+      if (superseded()) return _PassOutcome.stopped;
       if (buffer.liveChatId == null) {
         /// Video is not live (or has chat disabled) — a normal state,
         /// not an error. Also clears any stale viewer count.
         runInAction(() {
           this.selectedChannelViewerCount = null;
-          this.chatConnection = YouTubeChatConnectionState.offline;
+          this.selectedLiveVideoId = null;
         });
-        return;
+        return _PassOutcome.offline;
       }
-      runInAction(() => this.selectedChannelViewerCount = buffer.viewerCount);
+      runInAction(() {
+        this.selectedChannelViewerCount = buffer.viewerCount;
+        this.selectedLiveVideoId = buffer.videoId;
+      });
     }
 
     int lastIntervalMillis = 5000;
     int backoffMillis = 0;
+    var attached = false;
     final callStopwatch = Stopwatch();
+
+    /// The chat is over: remember which video so a channel's lagging
+    /// `/live` page doesn't re-attach to it, and drop the dead cursor.
+    _PassOutcome ended() {
+      buffer.endedVideoId = buffer.videoId;
+      buffer.liveChatId = null;
+      buffer.nextPageToken = null;
+      buffer.viewerCount = null;
+      runInAction(() {
+        this.selectedChannelViewerCount = null;
+        this.selectedLiveVideoId = null;
+      });
+      return attached ? _PassOutcome.attached : _PassOutcome.offline;
+    }
+
     while (!superseded()) {
       YouTubeLiveChatPage page;
       callStopwatch.reset();
@@ -548,7 +736,7 @@ abstract class _YouTubeChatStore with Store {
           apiKey: apiKey,
         );
       } on YouTubeRateLimitedException {
-        if (superseded()) return;
+        if (superseded()) return _PassOutcome.stopped;
         backoffMillis = backoffMillis == 0
             ? lastIntervalMillis * 2
             : backoffMillis * 2;
@@ -561,36 +749,28 @@ abstract class _YouTubeChatStore with Store {
         await this._sleep(Duration(milliseconds: backoffMillis));
         continue;
       } on YouTubeQuotaExceededException {
-        if (superseded()) return;
-        runInAction(() {
-          this.chatConnection = YouTubeChatConnectionState.error;
-          this.chatQuotaExhausted = true;
-          this.chatError =
-              'YouTube API quota exhausted - chat resumes after the daily reset';
-        });
-        return;
+        if (superseded()) return _PassOutcome.stopped;
+        quotaExhausted();
+        return _PassOutcome.stopped;
       } on YouTubeChatEndedException {
-        if (superseded()) return;
-        runInAction(() {
-          this.chatConnection = YouTubeChatConnectionState.offline;
-        });
-        return;
+        if (superseded()) return _PassOutcome.stopped;
+        return ended();
       } catch (e) {
-        if (superseded()) return;
+        if (superseded()) return _PassOutcome.stopped;
         GeneralHelper.advLog('YouTube chat poll failed - $e');
-        runInAction(() {
-          this.chatConnection = YouTubeChatConnectionState.error;
-          this.chatError = 'Lost connection to YouTube chat';
-        });
-        return;
+        failed('Lost connection to YouTube chat');
+        return _PassOutcome.stopped;
       }
-      if (superseded()) return;
+      if (superseded()) return _PassOutcome.stopped;
 
       backoffMillis = 0;
       lastIntervalMillis = page.pollingIntervalMillis;
       buffer.nextPageToken = page.nextPageToken;
+      attached = true;
       runInAction(() {
         this.chatConnection = YouTubeChatConnectionState.connected;
+        this.awaitingLiveStream = false;
+        this.chatError = null;
         this._applyPageMessages(label, page.messages);
       });
 
@@ -598,10 +778,7 @@ abstract class _YouTubeChatStore with Store {
           page.messages.any(
             (m) => m.type == YouTubeChatMessageType.chatEnded,
           )) {
-        runInAction(() {
-          this.chatConnection = YouTubeChatConnectionState.offline;
-        });
-        return;
+        return ended();
       }
 
       // Net-of-call pacing: the server interval spans response to next
@@ -612,6 +789,7 @@ abstract class _YouTubeChatStore with Store {
         Duration(milliseconds: waitMillis > 0 ? waitMillis : 0),
       );
     }
+    return _PassOutcome.stopped;
   }
 
   /// Route one poll page: lifecycle events (tombstone / userBanned) mutate
@@ -715,6 +893,10 @@ abstract class _YouTubeChatStore with Store {
       );
       this.messages.addAll(buffer.messages);
       this.selectedChannelViewerCount = buffer.viewerCount;
+      this.selectedLiveVideoId = buffer.liveChatId != null
+          ? buffer.videoId
+          : null;
+      this.awaitingLiveStream = false;
       if (this._isProResolver()) {
         this.chatConnection = YouTubeChatConnectionState.connecting;
         this.chatError = null;
@@ -728,23 +910,26 @@ abstract class _YouTubeChatStore with Store {
       }
     } else {
       this.selectedChannelViewerCount = null;
+      this.selectedLiveVideoId = null;
+      this.awaitingLiveStream = false;
       this.chatConnection = YouTubeChatConnectionState.idle;
     }
   }
 
   /// Re-read the channel list from settings (after the user edited
-  /// [SettingsKeys.YouTubeUsernames] outside this store). A label whose video
-  /// changed is a new conversation: retire its cursor, liveChatId and messages.
-  /// A vanished selection falls back to none.
+  /// [SettingsKeys.YouTubeUsernames] outside this store). A label whose
+  /// target (video or channel) changed is a new conversation: retire its
+  /// cursor, liveChatId and messages. A vanished selection falls back to
+  /// none.
   @action
   void reloadChannels() {
     final parsed = this._readChannelsFromSettings();
     final videos = {
-      for (final channel in parsed) channel.label: channel.videoId,
+      for (final channel in parsed) channel.label: channel.target.key,
     };
     final retired = {
       for (final channel in this.channels)
-        if (videos[channel.label] != channel.videoId) channel.label,
+        if (videos[channel.label] != channel.target.key) channel.label,
     };
     final selected = this.selectedChannelLabel;
     final retireSelection =
@@ -807,9 +992,9 @@ abstract class _YouTubeChatStore with Store {
       if (raw is Map) {
         raw.forEach((key, value) {
           if (key is String && value is String) {
-            final videoId = extractYouTubeVideoId(value);
-            if (videoId != null) {
-              parsed.add(YouTubeChatChannel(label: key, videoId: videoId));
+            final target = parseYouTubeTarget(value);
+            if (target != null) {
+              parsed.add(YouTubeChatChannel(label: key, target: target));
             }
           }
         });
@@ -852,11 +1037,11 @@ abstract class _YouTubeChatStore with Store {
     final label = this.selectedChannelLabel;
     final buffer = this._channelBuffers[label];
     final liveChatId = buffer?.liveChatId;
-    final videoId = this._selectedVideoId;
+    final targetKey = this._selectedTarget?.key;
     if (label == null ||
         buffer == null ||
         liveChatId == null ||
-        videoId == null) {
+        targetKey == null) {
       return false;
     }
     final loginFlow = this._loginFlow;
@@ -864,7 +1049,8 @@ abstract class _YouTubeChatStore with Store {
         loginFlow == this._loginFlow &&
         identical(buffer, this._channelBuffers[label]) &&
         this.channels.any(
-          (channel) => channel.label == label && channel.videoId == videoId,
+          (channel) =>
+              channel.label == label && channel.target.key == targetKey,
         );
     bool sameChannel() =>
         ownsDestination() && this.selectedChannelLabel == label;

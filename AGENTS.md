@@ -119,8 +119,13 @@ default key until the `streamList` spike says otherwise); writes/mod
 id/secret in the setup sheet's advanced section). `YouTubeChatStore`
 mirrors `TwitchChatStore` (per-video buffers, tombstone/ban reconcile, echo
 dedup). No badge artwork/pins/AutoMod/emotes — the API doesn't expose
-them. Channel entries are **per-video** (a new stream = new video id =
-re-edit). Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
+them. Entries are a **channel** (`@handle` / `UC…` / channel URL —
+`parseYouTubeTarget` in `lib/utils/youtube_target.dart`) or a pinned
+video; channel entries resolve their current stream via
+`YouTubeLiveResolver` (quota-free `/live` page scrape → 1-unit
+`videos.list`) and **auto-roll over** to the next stream
+(`kYouTubeLiveRecheckSchedule`); the WebView follows via
+`YouTubeWebLiveTracker`. Design: `docs/chatterino-comparison.md` § YouTube. Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
 quota question before any default-on rollout.
 
 **Kick chat:** a native engine (read + write/mod) ships next to the WebView

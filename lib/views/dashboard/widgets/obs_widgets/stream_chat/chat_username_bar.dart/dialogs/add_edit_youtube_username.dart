@@ -5,7 +5,7 @@ import 'package:hive_ce/hive.dart';
 import '../../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../../../types/enums/settings_keys.dart';
-import '../../../../../../../utils/youtube_video_id.dart';
+import '../../../../../../../utils/youtube_target.dart';
 
 class AddEditYouTubeUsernameDialog extends StatefulWidget {
   final Box settingsBox;
@@ -63,18 +63,20 @@ class _AddEditYouTubeUsernameDialogState
 
   String? _youtubeLinkValidation(String? link) {
     if (link == null || link.isEmpty) {
-      return 'Livestream video ID or link is required!';
+      return 'A channel or livestream is required!';
     }
-    if (extractYouTubeVideoId(link) == null) {
-      return 'Could not find a YouTube video ID in that value';
+    if (parseYouTubeTarget(link) == null) {
+      return 'Could not find a YouTube channel or video in that value';
     }
     return null;
   }
 
   void _handleUsername() {
     String username = _usernameController.text.trim();
-    // Persist a bare video id when possible so older/brittle consumers stay safe.
-    final videoId = extractYouTubeVideoId(_youtubeLinkController.text)!;
+
+    /// Persist the normalized form: `@handle` / `UC…` for channels, a bare
+    /// video id for single streams (what older builds stored).
+    final value = parseYouTubeTarget(_youtubeLinkController.text)!.storageValue;
 
     Map<String, String> youtubeUsernames = Map<String, String>.from(
       (this.widget.settingsBox.get(
@@ -85,7 +87,7 @@ class _AddEditYouTubeUsernameDialogState
     if (this.widget.username != null) {
       youtubeUsernames.remove(this.widget.username);
     }
-    youtubeUsernames.putIfAbsent(username, () => videoId);
+    youtubeUsernames.putIfAbsent(username, () => value);
 
     this.widget.settingsBox.put(
       SettingsKeys.YouTubeUsernames.name,
@@ -114,12 +116,14 @@ class _AddEditYouTubeUsernameDialogState
           ),
           const SizedBox(height: 8.0),
           const Text(
-            'Paste the video ID or any stream link - watch, live, share or pop-out chat links all work. Example ID:\n\nm-i_0DcfF1s',
+            'Enter the channel (@handle or channel link) to always follow its '
+            'current livestream - the chat switches to the next stream on its '
+            'own. A video ID or stream link pins one specific stream instead.',
           ),
           const SizedBox(height: 12.0),
           BaseAdaptiveTextField(
             controller: _youtubeLinkController,
-            placeholder: 'Video ID or YouTube link',
+            placeholder: '@handle, channel or stream link',
           ),
         ],
       ),

@@ -429,10 +429,10 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Heads up: chat entries are tied to a single video. When a '
-                  'streamer starts their next stream, its video id changes - '
-                  'update the entry (channel list → Add chat…, or edit the '
-                  'YouTube username) to reconnect.',
+                  'Tip: add a channel (@handle or channel link) instead of a '
+                  'video - the chat then follows the channel\'s current '
+                  'stream and switches to the next one on its own. A pasted '
+                  'video id stays tied to that one stream.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: AppSpacing.md),

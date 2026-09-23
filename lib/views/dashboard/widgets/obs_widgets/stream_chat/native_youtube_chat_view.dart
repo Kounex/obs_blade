@@ -11,6 +11,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/chat_highlight_helper.dart';
 import 'package:obs_blade/utils/chat_mute_helper.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 
 import 'dialogs/mod_action_sheet.dart';
 import 'dialogs/youtube_mod_action_sheet.dart';
@@ -33,6 +34,20 @@ class NativeYouTubeChatView extends StatefulWidget {
 
 class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
   final ScrollController _scrollController = ScrollController();
+
+  /// Empty-timeline copy for a channel entry between streams — a lookup
+  /// failure (network / consent wall) stays visible in [chatError].
+  String _awaitingStreamCopy() {
+    final channel = this._store.selectedChannel?.target;
+    final name = channel is YouTubeChannelTarget
+        ? channel.displayName
+        : 'This channel';
+    final lookupError = this._store.chatError;
+    return lookupError != null
+        ? '$lookupError - retrying shortly.'
+        : '$name isn\'t live right now. The chat connects on its own as soon '
+              'as the next stream starts.';
+  }
 
   /// Pinned to the newest message until the user scrolls up
   bool _pinnedToBottom = true;
@@ -212,18 +227,31 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
           );
         }
 
+        final awaitingStream = this._store.awaitingLiveStream;
         if (timelineEmpty) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
-              child: Text(
-                /// `offline` = the video has no active live chat (not live
-                /// / chat disabled) — a normal state, not an error.
-                connection == YouTubeChatConnectionState.offline
-                    ? 'No active live chat - the stream is offline or chat is disabled.'
-                    : 'Connected - waiting for messages…',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    /// `offline` = no active live chat (not live / chat
+                    /// disabled) — a normal state, not an error. Channel
+                    /// entries keep watching for the next stream.
+                    awaitingStream
+                        ? this._awaitingStreamCopy()
+                        : connection == YouTubeChatConnectionState.offline
+                        ? 'No active live chat - the stream is offline or chat is disabled.'
+                        : 'Connected - waiting for messages…',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (awaitingStream) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    _CheckNowButton(onTap: this._store.recheckLiveNow),
+                  ],
+                ],
               ),
             ),
           );
@@ -336,6 +364,17 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     );
                   },
                 ),
+                if (awaitingStream)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: AppSpacing.sm,
+                    child: Center(
+                      child: _BetweenStreamsPill(
+                        onTap: this._store.recheckLiveNow,
+                      ),
+                    ),
+                  ),
                 if (!this._pinnedToBottom)
                   Positioned(
                     left: 0,
@@ -354,6 +393,69 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
           },
         );
       },
+    );
+  }
+}
+
+/// Glass pill over a timeline whose stream ended — the store is watching
+/// the channel for its next stream; tap skips the wait.
+class _BetweenStreamsPill extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _BetweenStreamsPill({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      haptic: true,
+      onTap: this.onTap,
+      child: ClipRRect(
+        borderRadius: AppRadius.pill,
+        child: GlassBar(
+          contentEdge: GlassBarEdge.bottom,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.xs,
+            ),
+            child: Text(
+              'Stream ended - waiting for the next one · Check now',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckNowButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CheckNowButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Pressable(
+      haptic: true,
+      onTap: this.onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.secondary,
+          borderRadius: AppRadius.pill,
+        ),
+        child: Text(
+          'Check now',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -6,6 +6,8 @@ import 'package:obs_blade/types/classes/youtube/youtube_device_code.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 
 class FakeYouTubeAuthService extends YouTubeAuthService {
   String clientId = 'client-id';
@@ -236,5 +238,30 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
     this.fetchChannelCalls.add(channelId);
     if (this.fetchChannelThrows != null) throw this.fetchChannelThrows!;
     return this.fetchChannelResult;
+  }
+}
+
+/// Scripted `channel → live video id` answers for [YouTubeLiveResolver].
+/// Each call pops the next scripted answer (a video id, `null` for "not
+/// live", or an [Exception] to throw); once the script is exhausted the
+/// last answer repeats.
+class FakeYouTubeLiveResolver extends YouTubeLiveResolver {
+  final List<Object?> answers;
+  final List<String> calls = <String>[];
+  int _next = 0;
+
+  FakeYouTubeLiveResolver([List<Object?>? answers])
+    : answers = answers ?? <Object?>[null];
+
+  @override
+  Future<String?> resolveLiveVideoId(YouTubeChannelTarget channel) async {
+    this.calls.add(channel.path);
+    final answer =
+        this.answers[this._next < this.answers.length
+            ? this._next
+            : this.answers.length - 1];
+    this._next++;
+    if (answer is Exception) throw answer;
+    return answer as String?;
   }
 }

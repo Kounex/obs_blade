@@ -18,7 +18,7 @@ import 'dialogs/add_edit_youtube_username.dart';
 /// [SettingsKeys.YouTubeUsernames] map). No LIVE/Mod chips: the store only
 /// polls the selected channel, so per-channel live status doesn't exist.
 /// "Add chat…" opens the existing YouTube username dialog (entries are
-/// per-video — the setup sheet explains the staleness caveat). Long-press
+/// per-entry — channel entries follow their current stream). Long-press
 /// removes an entry. Disabled while a switch is in flight.
 class YouTubeNativeChannelDropdown extends StatelessWidget {
   /// "Add chat…" is an action sentinel (never a selection).

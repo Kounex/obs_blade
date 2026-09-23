@@ -125,7 +125,18 @@ EU consent interstitial): `@LofiGirl/live`, `@NASA/live` → canonical
    re-resolves on a backoff (30 s → 2 min cap) while the store is active,
    and the chat reattaches to the next stream. Video entries keep today's
    terminal `offline`.
-4. **WebView** uses the same resolver (the embed needs a `v=`).
+4. **WebView** uses the same resolver via `YouTubeWebLiveTracker` (the
+   embed needs a `v=`): 45 s rechecks while offline, 2 min while live.
+
+Implementation notes (verified live 2026-09-24 via `dart run` against
+@NASA / @LofiGirl / @mkbhd / `c/LofiGirl` / a nonexistent handle): Dart's
+`http` client gets the **desktop** variant (~1.2 MB) regardless of the
+mobile UA, the canonical tag moves between ~30 KB and ~700 KB deep with
+`Accept-Language`, and **offline channel pages emit it after `</head>`** —
+so the resolver streams the body with a sliding window (no head cutoff,
+3 MB cap) and stops at the tag. Unknown handles 404 (terminal error, no
+retries). A live-but-chat-disabled stream costs 1 unit per recheck (≤ 40
+units/h at the 90 s tail) — accepted.
 
 Risk: the `/live` scrape is unofficial (layout churn, consent walls). It's
 isolated in one function with a manual video-id override always available;

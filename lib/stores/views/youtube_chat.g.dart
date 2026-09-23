@@ -151,6 +151,42 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     });
   }
 
+  late final _$awaitingLiveStreamAtom = Atom(
+    name: '_YouTubeChatStore.awaitingLiveStream',
+    context: context,
+  );
+
+  @override
+  bool get awaitingLiveStream {
+    _$awaitingLiveStreamAtom.reportRead();
+    return super.awaitingLiveStream;
+  }
+
+  @override
+  set awaitingLiveStream(bool value) {
+    _$awaitingLiveStreamAtom.reportWrite(value, super.awaitingLiveStream, () {
+      super.awaitingLiveStream = value;
+    });
+  }
+
+  late final _$selectedLiveVideoIdAtom = Atom(
+    name: '_YouTubeChatStore.selectedLiveVideoId',
+    context: context,
+  );
+
+  @override
+  String? get selectedLiveVideoId {
+    _$selectedLiveVideoIdAtom.reportRead();
+    return super.selectedLiveVideoId;
+  }
+
+  @override
+  set selectedLiveVideoId(String? value) {
+    _$selectedLiveVideoIdAtom.reportWrite(value, super.selectedLiveVideoId, () {
+      super.selectedLiveVideoId = value;
+    });
+  }
+
   late final _$chatQuotaExhaustedAtom = Atom(
     name: '_YouTubeChatStore.chatQuotaExhausted',
     context: context,
@@ -357,6 +393,18 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   }
 
   @override
+  void recheckLiveNow() {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.recheckLiveNow',
+    );
+    try {
+      return super.recheckLiveNow();
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _applyTombstone(String label, YouTubeChatMessage tombstone) {
     final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
       name: '_YouTubeChatStore._applyTombstone',
@@ -402,6 +450,8 @@ pendingVerificationUrl: ${pendingVerificationUrl},
 chatConnection: ${chatConnection},
 selectedChannelViewerCount: ${selectedChannelViewerCount},
 chatError: ${chatError},
+awaitingLiveStream: ${awaitingLiveStream},
+selectedLiveVideoId: ${selectedLiveVideoId},
 chatQuotaExhausted: ${chatQuotaExhausted},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},

@@ -82,9 +82,11 @@ scalable read path but its quota cost is undocumented — the spike tool
   3. server-side fan-out relay (backend decision — out of scope here),
   4. quota extension form (sized for server analytics, not per-user polling).
 - Stream binding: `videos.list?part=liveStreamingDetails&id=…` →
-  `liveStreamingDetails.activeLiveChatId` (1 unit). OBS Blade already stores
-  bare video ids (`lib/utils/youtube_video_id.dart`), so binding is one cheap
-  call per session.
+  `liveStreamingDetails.activeLiveChatId` (1 unit). Entries are channels or
+  pinned videos (`lib/utils/youtube_target.dart`); a channel's current
+  video id comes from the quota-free `/live` page scrape
+  (`YouTubeLiveResolver`, 2026-09-24), so binding stays one cheap call per
+  stream — see [`chatterino-comparison.md`](chatterino-comparison.md).
 
 ## Feature parity vs the Twitch native engine
 

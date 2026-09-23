@@ -6,7 +6,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/general/custom_expansion_tile.dart';
-import 'package:obs_blade/utils/youtube_video_id.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../models/app_log.dart';
@@ -50,6 +50,7 @@ import 'native_youtube_chat_view.dart';
 import 'twitch_device_code_dialog.dart';
 import 'youtube_device_code_dialog.dart';
 import 'youtube_setup_sheet.dart';
+import 'youtube_web_live_tracker.dart';
 
 /// Maps the Twitch store's connection state (+ login) onto the chat
 /// window's platform-agnostic status.
@@ -153,6 +154,20 @@ class _StreamChatState extends State<StreamChat>
   /// refocus after its sheet closes.
   final TextEditingController _chatInputController = TextEditingController();
   final FocusNode _chatInputFocusNode = FocusNode();
+
+  /// Follows a YouTube *channel* entry's current stream for the WebView
+  /// (the popout chat URL only takes a video id).
+  final YouTubeWebLiveTracker _youTubeLiveTracker = YouTubeWebLiveTracker();
+
+  @override
+  void initState() {
+    super.initState();
+    this._youTubeLiveTracker.addListener(this._onYouTubeLiveChanged);
+  }
+
+  void _onYouTubeLiveChanged() {
+    if (this.mounted) setState(() {});
+  }
 
   static const _mobileSafariUserAgent =
       'Mozilla/5.0 (iPhone; CPU iPhone OS 15_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Mobile/15E148 Safari/604.1';
@@ -259,6 +274,9 @@ class _StreamChatState extends State<StreamChat>
   void dispose() {
     this._chatInputController.dispose();
     this._chatInputFocusNode.dispose();
+    this._youTubeLiveTracker
+      ..removeListener(this._onYouTubeLiveChanged)
+      ..dispose();
     _loadingFallback?.cancel();
     super.dispose();
   }
@@ -283,10 +301,15 @@ class _StreamChatState extends State<StreamChat>
     }
     if (chatType == ChatType.YouTube &&
         (settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)) != null) {
-      final stored = settingsBox.get(
-        SettingsKeys.YouTubeUsernames.name,
-      )[settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name)];
-      final videoId = extractYouTubeVideoId(stored is String ? stored : null);
+      final String? videoId = switch (this._selectedYouTubeTarget(
+        settingsBox,
+      )) {
+        YouTubeVideoTarget(:final videoId) => videoId,
+
+        /// Channel entry: whatever stream the tracker last resolved
+        YouTubeChannelTarget() => this._youTubeLiveTracker.videoId,
+        null => null,
+      };
       if (videoId == null) return 'about:blank';
 
       /// YouTube's own popout-chat form: chat-only chrome, and carrying
@@ -316,6 +339,26 @@ class _StreamChatState extends State<StreamChat>
       return 'https://kick.com/popout/${settingsBox.get(SettingsKeys.SelectedKickUsername.name)}/chat';
     }
     return 'about:blank';
+  }
+
+  YouTubeTarget? _selectedYouTubeTarget(Box<dynamic> settingsBox) {
+    final selected = settingsBox.get(SettingsKeys.SelectedYouTubeUsername.name);
+    final entries = settingsBox.get(SettingsKeys.YouTubeUsernames.name);
+    if (selected == null || entries is! Map) return null;
+    final stored = entries[selected];
+    return parseYouTubeTarget(stored is String ? stored : null);
+  }
+
+  /// The WebView YouTube channel entry to follow right now — null whenever
+  /// the WebView isn't showing a YouTube channel entry (stops the tracker).
+  YouTubeChannelTarget? _webYouTubeChannel(
+    ChatType chatType,
+    Box<dynamic> settingsBox,
+    bool webViewShowing,
+  ) {
+    if (!webViewShowing || chatType != ChatType.YouTube) return null;
+    final target = this._selectedYouTubeTarget(settingsBox);
+    return target is YouTubeChannelTarget ? target : null;
   }
 
   bool anyChatActive(ChatType chatType, Box<dynamic> settingsBox) {
@@ -390,6 +433,16 @@ class _StreamChatState extends State<StreamChat>
                       ) ==
                       ChatEngine.native;
 
+              /// Resolve before the URL is built below; tracking stops
+              /// (timer cancelled) whenever no YouTube channel entry is
+              /// on screen in the WebView.
+              final youTubeChannel = this._webYouTubeChannel(
+                chatType,
+                settingsBox,
+                chatActive && !nativeEngine,
+              );
+              this._youTubeLiveTracker.track(youTubeChannel);
+
               /// No WebView warm-up while the native engine owns the slot
               if (chatActive && !nativeEngine) {
                 _syncWebController(
@@ -428,6 +481,7 @@ class _StreamChatState extends State<StreamChat>
                 settingsBox,
                 chatType,
                 chatActive,
+                youTubeChannel,
               );
             },
           ),
@@ -728,7 +782,12 @@ class _StreamChatState extends State<StreamChat>
     Box<dynamic> settingsBox,
     ChatType chatType,
     bool chatActive,
+    YouTubeChannelTarget? youTubeChannel,
   ) {
+    /// A channel entry with no resolved stream yet: the WebView sits on
+    /// about:blank underneath, this panel explains why.
+    final youTubeWaiting =
+        youTubeChannel != null && this._youTubeLiveTracker.videoId == null;
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -785,6 +844,13 @@ class _StreamChatState extends State<StreamChat>
               ),
             ),
           ),
+          if (youTubeWaiting)
+            Positioned.fill(
+              child: _YouTubeChannelWaitingState(
+                channel: youTubeChannel,
+                tracker: this._youTubeLiveTracker,
+              ),
+            ),
         ],
         if (!chatActive)
           StaggeredEntrance(
@@ -1057,6 +1123,74 @@ class _ChatProUpsell extends StatelessWidget {
 
 /// Opaque branded surface crossfading out once the embedded chat page has
 /// loaded - masks the reload flash of the keyed [WebView]
+/// WebView YouTube channel entry between streams (or still resolving):
+/// what the tracker is doing + a "Check now" to skip the wait.
+class _YouTubeChannelWaitingState extends StatelessWidget {
+  final YouTubeChannelTarget channel;
+  final YouTubeWebLiveTracker tracker;
+
+  const _YouTubeChannelWaitingState({
+    required this.channel,
+    required this.tracker,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color brandColor =
+        ChatType.YouTube.brandColor ?? Theme.of(context).colorScheme.secondary;
+    final resolving = this.tracker.state == YouTubeWebLiveState.resolving;
+    final String body = switch (this.tracker.state) {
+      YouTubeWebLiveState.resolving =>
+        'Looking for ${this.channel.displayName}\'s livestream…',
+      YouTubeWebLiveState.error =>
+        this.tracker.error ?? 'Could not reach YouTube',
+      _ =>
+        '${this.channel.displayName} isn\'t live right now. The chat opens '
+            'on its own as soon as the next stream starts.',
+    };
+
+    return Container(
+      color: Theme.of(context).cardColor,
+      alignment: Alignment.topCenter,
+      padding: const EdgeInsets.only(
+        top: AppSpacing.xl,
+        left: AppSpacing.xl,
+        right: AppSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ChatBrandIcon(chatType: ChatType.YouTube, color: brandColor),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          if (resolving)
+            StylingHelper.isApple(context)
+                ? const CupertinoActivityIndicator(radius: 10.0)
+                : SizedBox(
+                    height: 18.0,
+                    width: 18.0,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: brandColor,
+                    ),
+                  )
+          else
+            BaseButton(
+              text: 'Check now',
+              secondary: true,
+              onPressed: this.tracker.recheck,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ChatLoadingState extends StatelessWidget {
   final ChatType chatType;
 
