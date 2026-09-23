@@ -23,6 +23,13 @@ YouTubeEntryNamer namer({int status = 200}) => YouTubeEntryNamer(
         200,
       );
     }
+    if (request.url.path == '/@LofiGirl' || request.url.path == '/c/LofiGirl') {
+      return http.Response(
+        '<html><head>${'x' * 9000}'
+        '<meta property="og:title" content="Lofi Girl &amp; Co">',
+        200,
+      );
+    }
     if (request.url.path == '/oembed') {
       return http.Response(
         '{"title":"Live ISS","author_name":"NASA &amp; Friends"}',
@@ -35,11 +42,22 @@ YouTubeEntryNamer namer({int status = 200}) => YouTubeEntryNamer(
 
 void main() {
   group('YouTubeEntryNamer', () {
-    test('@handle names itself without network', () async {
+    test('@handle and c/ resolve to the channel title, no @', () async {
+      expect(
+        await namer().nameFor(parseYouTubeTarget('@LofiGirl')!),
+        'Lofi Girl & Co',
+      );
+      expect(
+        await namer().nameFor(parseYouTubeTarget('youtube.com/c/LofiGirl')!),
+        'Lofi Girl & Co',
+      );
+    });
+
+    test('an offline lookup falls back to the handle without @', () async {
       final n = YouTubeEntryNamer(
         client: MockClient((_) async => throw StateError('no network')),
       );
-      expect(await n.nameFor(parseYouTubeTarget('@LofiGirl')!), '@LofiGirl');
+      expect(await n.nameFor(parseYouTubeTarget('@LofiGirl')!), 'LofiGirl');
     });
 
     test('channel id → RSS feed title', () async {
