@@ -343,9 +343,15 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
   ///   a short setup form): *every* direction is out of range, so the
   ///   reversal still reports as [OverscrollNotification] - just with a
   ///   positive `overscroll` instead of negative.
-  /// Either way, redirect that motion into growing the sheet back instead
-  /// of letting the list itself move - the whole gesture should read as
-  /// dragging the sheet, not the list underneath it.
+  /// Either way, redirect that motion into growing the sheet back. The
+  /// list may itself scroll a few pixels away from the boundary as part of
+  /// this in the scrollable-content case (nothing forces its position back)
+  /// - an earlier version called `position.jumpTo()` to suppress that, but
+  /// jumping a ScrollPosition while its own drag activity is still driving
+  /// it replaces that activity, which silently ended the gesture: the
+  /// sheet would snap instead of following the finger, and the same touch
+  /// stopped producing any further notifications at all until lifted and
+  /// restarted. A little list drift reads far better than a broken drag.
   void _trackRecovery(BuildContext context, ScrollNotification notification) {
     if (!this._pulled) return;
     final controller = this._sheetController(context);
@@ -363,11 +369,6 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
 
     controller.stop();
     controller.value = (controller.value - delta / height).clamp(0.0, 1.0);
-
-    /// Only meaningful for the scrollable-content case - a no-op when the
-    /// position never left the boundary in the first place.
-    final position = Scrollable.maybeOf(notification.context!)?.position;
-    position?.jumpTo(notification.metrics.minScrollExtent);
   }
 
   void _settle(BuildContext context, double velocity) {

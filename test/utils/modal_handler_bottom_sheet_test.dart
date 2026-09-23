@@ -147,6 +147,62 @@ void main() {
     },
   );
 
+  testWidgets('reversal follows the finger gradually (no snap-to-full) and the '
+      'drag stays live for further moves afterward', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: Builder(builder: scrollingSheet)),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final before = tester.getTopLeft(find.text('sheet row').first);
+    final gesture = await tester.startGesture(before + const Offset(40, 12));
+
+    await gesture.moveBy(const Offset(0, 20));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 40));
+    await tester.pump();
+    await gesture.moveBy(const Offset(0, 40));
+    await tester.pump();
+    final shrunk = tester.getTopLeft(find.text('sheet row').first).dy;
+
+    /// Reverse in small steps - each one should move the sheet a little,
+    /// not snap it all the way back on the very first step (a
+    /// `ScrollPosition.jumpTo` mid-drag was found to do exactly that, by
+    /// replacing the position's own active drag activity).
+    await gesture.moveBy(const Offset(0, -10));
+    await tester.pump();
+    final afterStep1 = tester.getTopLeft(find.text('sheet row').first).dy;
+    expect(
+      afterStep1,
+      lessThan(shrunk),
+      reason: 'the first reversal step should grow the sheet a little',
+    );
+    expect(
+      afterStep1,
+      greaterThan(before.dy + 20),
+      reason: 'a single small reversal step must not snap all the way back',
+    );
+
+    /// The same touch, still down, must still be driving the sheet - not
+    /// dead until a lift-and-restart.
+    await gesture.moveBy(const Offset(0, -10));
+    await tester.pump();
+    final afterStep2 = tester.getTopLeft(find.text('sheet row').first).dy;
+    expect(
+      afterStep2,
+      lessThan(afterStep1),
+      reason:
+          'a second reversal step in the same unlifted gesture must '
+          'keep growing the sheet',
+    );
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
+
   /// Content that fits without scrolling at all (maxScrollExtent == 0, e.g.
   /// a short setup form) - both pull directions are "out of range", so a
   /// reversal reports as another OverscrollNotification (positive this
