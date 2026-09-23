@@ -219,9 +219,13 @@ void main() {
       await until(
         () => store.chatConnection == KickChatConnectionState.connected,
       );
+      // 1 resolve to connect 'aaa', plus 2 more from the live-preview poll
+      // (every added channel, including the selected one) started at the
+      // end of init.
+      await until(() => channelService.resolveCalls >= 3);
 
       expect(store.selectedChannelSlug, 'aaa');
-      expect(channelService.resolveCalls, 1);
+      expect(channelService.resolveCalls, 3);
       expect(pusher().connectCalls, [42]);
       expect(store.channelInfo?.slug, 'aaa');
     });
@@ -411,6 +415,91 @@ void main() {
       await until(
         () => store.chatConnection == KickChatConnectionState.connected,
       );
+    });
+  });
+
+  group('live preview (dropdown)', () {
+    test(
+      'init resolves every added channel, not just the selected one',
+      () async {
+        configure();
+
+        await store.init();
+        await until(() => store.channelLivePreview.length == 2);
+
+        expect(store.isChannelLive('aaa'), isTrue);
+        expect(store.viewerCountForChannel('aaa'), 1234);
+        expect(store.isChannelLive('bbb'), isTrue);
+        expect(store.viewerCountForChannel('bbb'), 1234);
+      },
+    );
+
+    test(
+      'an unresolved slug reports not-live with a null viewer count',
+      () async {
+        expect(store.isChannelLive('never-added'), isFalse);
+        expect(store.viewerCountForChannel('never-added'), isNull);
+      },
+    );
+
+    test('an offline channel reports not-live', () async {
+      settingsBox().put(SettingsKeys.KickUsernames.name, <String>['aaa']);
+      channelService.channels['aaa'] = channelInfo(
+        'aaa',
+        isLive: false,
+        viewerCount: null,
+      );
+
+      await store.init();
+      await until(() => store.channelLivePreview.containsKey('aaa'));
+
+      expect(store.isChannelLive('aaa'), isFalse);
+      expect(store.viewerCountForChannel('aaa'), isNull);
+    });
+
+    test('a resolve failure leaves the preview empty, never throws', () async {
+      configure();
+      channelService.resolveThrows = const KickApiException(
+        'Resolving the Kick channel failed (500)',
+        statusCode: 500,
+      );
+
+      await store.init();
+      await until(() => store.chatConnection == KickChatConnectionState.error);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(store.channelLivePreview, isEmpty);
+    });
+
+    test(
+      'gated behind Pro — no resolve calls without the entitlement',
+      () async {
+        configure();
+        isPro = false;
+
+        await store.init();
+        await Future<void>.delayed(Duration.zero);
+
+        expect(channelService.resolveCalls, 0);
+        expect(store.channelLivePreview, isEmpty);
+      },
+    );
+
+    test('reloadChannels drops preview entries for retired slugs', () async {
+      configure();
+      await store.init();
+      await until(() => store.channelLivePreview.length == 2);
+
+      await settingsBox().put(SettingsKeys.KickUsernames.name, <String>['aaa']);
+      store.reloadChannels();
+      await until(
+        () =>
+            !store.channelLivePreview.containsKey('bbb') &&
+            store.channelLivePreview.containsKey('aaa'),
+      );
+
+      expect(store.channelLivePreview.containsKey('bbb'), isFalse);
+      expect(store.channelLivePreview.containsKey('aaa'), isTrue);
     });
   });
 
@@ -774,6 +863,11 @@ void main() {
       expect(pusher().connectCalls, [43]);
       expect(store.messages.map((m) => m.id), ['b1']);
       expect(settingsBox().get(SettingsKeys.SelectedKickUsername.name), 'bbb');
+
+      // Let init's one-shot live-preview poll (both channels) settle
+      // before snapshotting — otherwise it can land mid-test and make
+      // the "unchanged" assertion below flaky.
+      await until(() => store.channelLivePreview.length == 2);
 
       // Back to 'aaa': buffered history restored without re-resolving or
       // re-backfilling.

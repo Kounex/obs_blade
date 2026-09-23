@@ -191,6 +191,17 @@ abstract class _KickChatStore with Store {
   /// WebView list doubles as the native channel list; slug == identity).
   final ObservableList<String> channels = ObservableList<String>();
 
+  /// Best-effort live/viewer preview for every added channel (dropdown
+  /// LIVE chips), refreshed on a timer. Kick has no Helix-style batch
+  /// endpoint — unlike Twitch's single multi-id poll, this resolves each
+  /// slug individually, so a failure for one channel never clears
+  /// another's entry. Absent from the map just means the preview hasn't
+  /// resolved yet, not that the channel is offline.
+  final ObservableMap<String, KickChannelInfo> channelLivePreview =
+      ObservableMap<String, KickChannelInfo>();
+
+  Timer? _livePreviewTimer;
+
   /// Currently viewed channel slug, persisted as
   /// [SettingsKeys.SelectedKickUsername] (shared with the WebView path).
   /// Null = no selection.
@@ -311,7 +322,70 @@ abstract class _KickChatStore with Store {
     } else if (this.selectedChannelSlug != null) {
       this.connectChat();
     }
+    this._startLivePreviewPoll();
   }
+
+  /// Refreshes [channelLivePreview] for every added channel, then starts a
+  /// minute-interval timer that repeats it — reads are anonymous, so this
+  /// runs regardless of sign-in state, unlike Twitch's auth-gated poll.
+  void _startLivePreviewPoll() {
+    this._livePreviewTimer?.cancel();
+    this._livePreviewTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      unawaited(this.refreshChannelLivePreviews());
+    });
+    unawaited(this.refreshChannelLivePreviews());
+  }
+
+  void _stopLivePreviewPoll() {
+    this._livePreviewTimer?.cancel();
+    this._livePreviewTimer = null;
+  }
+
+  /// Resolves every added channel's slug to get fresh live/viewer data
+  /// for the dropdown. Each slug is independent: a 404/error for one
+  /// leaves the others' entries (and that slug's own stale entry, if
+  /// any) untouched. Entries for channels no longer tracked are dropped.
+  /// Gated on the same Pro entitlement as [connectChat] — this preview
+  /// only feeds a dropdown inside the native Kick pane, which doesn't
+  /// render at all without Pro, so it shouldn't make network calls either.
+  @action
+  Future<void> refreshChannelLivePreviews() async {
+    if (!this._isProResolver()) return;
+    final slugs = List<String>.from(this.channels);
+    if (slugs.isEmpty) {
+      runInAction(() => this.channelLivePreview.clear());
+      return;
+    }
+    await Future.wait([
+      for (final slug in slugs)
+        this._channelService
+            .resolveChannel(slug)
+            .then((info) {
+              if (info == null) return;
+              runInAction(() => this.channelLivePreview[slug] = info);
+            })
+            .catchError((Object e) {
+              GeneralHelper.advLog(
+                'Kick live preview refresh failed for $slug — $e',
+              );
+            }),
+    ]);
+    runInAction(() {
+      this.channelLivePreview.removeWhere(
+        (slug, _) => !this.channels.contains(slug),
+      );
+    });
+  }
+
+  /// Dropdown LIVE chip — true once [channelLivePreview] has resolved
+  /// [slug] as live. False (not unknown) while unresolved: the dropdown
+  /// simply omits the chip rather than showing a loading state.
+  bool isChannelLive(String slug) =>
+      this.channelLivePreview[slug]?.isLive ?? false;
+
+  /// Viewer count when [isChannelLive]; null when offline/unresolved.
+  int? viewerCountForChannel(String slug) =>
+      this.channelLivePreview[slug]?.viewerCount;
 
   /// Pick up a stored session: refresh when due; wipe only on a
   /// definitive auth failure (a 400/401/403 on refresh means the refresh
@@ -1157,10 +1231,14 @@ abstract class _KickChatStore with Store {
     this._channelBuffers.removeWhere(
       (slug, _) => retired.contains(slug) || !parsed.contains(slug),
     );
+    this.channelLivePreview.removeWhere(
+      (slug, _) => retired.contains(slug) || !parsed.contains(slug),
+    );
     if (retireSelection) {
       this.selectedChannelSlug = null;
       this._persistSelectedChannel();
     }
+    unawaited(this.refreshChannelLivePreviews());
   }
 
   /// Idempotent settings load (init): restores [channels] and
@@ -1220,6 +1298,7 @@ abstract class _KickChatStore with Store {
 
   Future<void> dispose() async {
     this._connectFlow++;
+    this._stopLivePreviewPoll();
     await this._authBoxSub?.cancel();
     final pusher = this._pusher;
     this._pusher = null;
