@@ -48,8 +48,22 @@ class SwitcherCard extends StatelessWidget {
       topPadding: AppSpacing.xxl,
       titleWidget: AnimatedSwitcher(
         duration: AppMotion.medium,
-        transitionBuilder: (child, animation) =>
-            FadeTransition(opacity: animation, child: child),
+
+        /// Sequential, not simultaneous (user-ratified): the outgoing
+        /// title fully fades out over the first half, then the incoming
+        /// one fades in over the second half - no cross-dissolve overlap.
+        /// Interval(0.5, 1.0) alone achieves this regardless of direction:
+        /// applied to a forward (incoming) animation it clamps to 0 until
+        /// the midpoint then ramps to 1; applied to the same entry's own
+        /// reverse (outgoing) run it ramps 1 to 0 by the midpoint then
+        /// clamps at 0.
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: const Interval(0.5, 1.0),
+          ),
+          child: child,
+        ),
         child: Align(
           key: ValueKey((
             homeStore.connectMode,
@@ -94,13 +108,17 @@ class SwitcherCard extends StatelessWidget {
           AnimatedSwitcher(
             duration: AppMotion.medium,
 
-            /// Pane switches (user-ratified 2026-09-22): clean crossfade
-            /// only - no translate. The size reveal stays so content
-            /// below the card doesn't jump; reduced motion = fade-only
+            /// Pane switches (user-ratified): sequential fade, not a
+            /// cross-dissolve - the outgoing pane fully fades out over the
+            /// first half, then the incoming one fades in over the second
+            /// half (same Interval(0.5, 1.0) trick as the title switcher
+            /// above). The size reveal stays on its own emphasized curve
+            /// across the full duration so content below the card doesn't
+            /// jump; reduced motion = fade-only.
             transitionBuilder: (child, animation) {
               final CurvedAnimation curved = CurvedAnimation(
                 parent: animation,
-                curve: AppMotion.emphasized,
+                curve: const Interval(0.5, 1.0),
               );
               Widget current = FadeTransition(opacity: curved, child: child);
               if (!AppMotion.reduce(context)) {

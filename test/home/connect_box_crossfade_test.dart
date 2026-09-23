@@ -101,4 +101,58 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'pane/title crossfade is sequential (outgoing fully fades out before '
+    'the incoming one fades in) instead of a simultaneous cross-dissolve',
+    (tester) async {
+      await tester.pumpWidget(wrap());
+      await tester.pump(const Duration(seconds: 1));
+
+      final HomeStore homeStore = GetIt.instance<HomeStore>();
+      homeStore.setConnectMode(ConnectMode.Manual);
+
+      /// FadeTransitions whose direct child carries a connect-mode key -
+      /// scopes past unrelated fades elsewhere in the tree (e.g. the
+      /// autodiscover spinner's own Fader) the same way the key-collision
+      /// test above scopes its KeyedSubtree/Align search.
+      List<double> fadesOfType(Type childType) => tester
+          .widgetList<FadeTransition>(find.byType(FadeTransition))
+          .where(
+            (f) =>
+                f.child.runtimeType == childType &&
+                (f.child as dynamic).key.toString().contains('ConnectMode'),
+          )
+          .map((f) => f.opacity.value)
+          .toList();
+
+      bool atMostOneVisible(List<double> opacities) =>
+          opacities.where((o) => o > 0.05).length <= 1;
+
+      // AppMotion.medium is 250ms; sample every 16ms through the whole
+      // transition.
+      var elapsedMs = 0;
+      for (var i = 0; i < 16; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        elapsedMs += 16;
+        final paneFades = fadesOfType(KeyedSubtree);
+        final titleFades = fadesOfType(Align);
+        expect(
+          atMostOneVisible(paneFades),
+          isTrue,
+          reason:
+              't=${elapsedMs}ms: both connect-mode panes visible at once: $paneFades',
+        );
+        expect(
+          atMostOneVisible(titleFades),
+          isTrue,
+          reason:
+              't=${elapsedMs}ms: both connect-mode titles visible at once: $titleFades',
+        );
+      }
+
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
