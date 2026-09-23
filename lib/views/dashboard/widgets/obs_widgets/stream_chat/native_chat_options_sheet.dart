@@ -566,7 +566,7 @@ class _AppearancePage extends StatelessWidget {
         return _PageScaffold(
           title: 'Appearance',
           description:
-              'Adjust how chat lines look — size, spacing, and dividers.',
+              'Adjust how chat lines look - size, spacing, and dividers.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
@@ -1023,7 +1023,7 @@ class _EventMessagesPage extends StatelessWidget {
           title: 'Event messages',
           description:
               'Choose which system chat lines appear in the feed. '
-              'These are in-chat only — not device notifications.',
+              'These are in-chat only - not device notifications.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [

@@ -64,7 +64,7 @@ class _AccountChip extends StatelessWidget {
 
         return Tooltip(
           message:
-              'Connected as ${this.displayName ?? 'YouTube'} — tap to disconnect',
+              'Connected as ${this.displayName ?? 'YouTube'} - tap to disconnect',
           child: Pressable(
             haptic: true,
             onTap: () => ModalHandler.showBaseDialog(

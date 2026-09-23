@@ -129,7 +129,7 @@ void main() {
 
     expect(
       find.text(
-        'No chat for this channel — the slug may be wrong or the channel is unavailable.',
+        'No chat for this channel - the slug may be wrong or the channel is unavailable.',
       ),
       findsOneWidget,
     );
@@ -191,14 +191,14 @@ void main() {
         KickChatMessage(
           id: 'system-sub-1',
           type: KickChatMessageType.system,
-          content: 'Loyal subscribed — 6 months',
+          content: 'Loyal subscribed - 6 months',
           createdAt: DateTime.utc(2026, 9, 22, 12),
         ),
       );
       await tester.pumpWidget(wrap());
       await tester.pump();
 
-      expect(find.text('Loyal subscribed — 6 months'), findsOneWidget);
+      expect(find.text('Loyal subscribed - 6 months'), findsOneWidget);
     },
   );
 
@@ -208,7 +208,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pump();
 
-    expect(renderedRichText(tester), contains(' —Deleted'));
+    expect(renderedRichText(tester), contains(' -Deleted'));
   });
 
   testWidgets('the /clear system row renders its notice', (tester) async {
@@ -232,14 +232,14 @@ void main() {
       KickChatMessage(
         id: 'system-sub-1',
         type: KickChatMessageType.system,
-        content: 'Loyal subscribed — 6 months',
+        content: 'Loyal subscribed - 6 months',
         createdAt: DateTime.utc(2026, 9, 22, 12),
       ),
     );
     await tester.pumpWidget(wrap());
     await tester.pump();
 
-    expect(find.text('Loyal subscribed — 6 months'), findsOneWidget);
+    expect(find.text('Loyal subscribed - 6 months'), findsOneWidget);
   });
 
   testWidgets('a third-party (7TV) emote token in plain text renders inline', (

@@ -366,7 +366,7 @@ abstract class _KickChatStore with Store {
             })
             .catchError((Object e) {
               GeneralHelper.advLog(
-                'Kick live preview refresh failed for $slug — $e',
+                'Kick live preview refresh failed for $slug - $e',
               );
             }),
     ]);
@@ -404,10 +404,10 @@ abstract class _KickChatStore with Store {
           e.statusCode == 401 ||
           e.statusCode == 403) {
         await this._handleInvalidAuth(
-          'Kick session expired — please sign in again',
+          'Kick session expired - please sign in again',
         );
       } else {
-        GeneralHelper.advLog('Kick token refresh on init failed — $e');
+        GeneralHelper.advLog('Kick token refresh on init failed - $e');
         this.authState = KickAuthState.signedOut;
       }
       return;
@@ -498,7 +498,7 @@ abstract class _KickChatStore with Store {
       this.authError = e.message;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('Kick login failed unexpectedly — $e');
+      GeneralHelper.advLog('Kick login failed unexpectedly - $e');
       this.authState = KickAuthState.error;
       this.authError = 'Unexpected login error';
       return false;
@@ -514,7 +514,7 @@ abstract class _KickChatStore with Store {
     try {
       identity = await this._authService.fetchOwnUser(token.accessToken);
     } catch (e) {
-      GeneralHelper.advLog('Kick user fetch failed — $e');
+      GeneralHelper.advLog('Kick user fetch failed - $e');
     }
     await this._authBox.put(
       KickAuth.kBoxKey,
@@ -611,7 +611,7 @@ abstract class _KickChatStore with Store {
         info = await this._channelService.resolveChannel(slug);
       } catch (e) {
         if (superseded()) return;
-        GeneralHelper.advLog('Kick channel resolve failed — $e');
+        GeneralHelper.advLog('Kick channel resolve failed - $e');
         runInAction(() {
           this.chatConnection = KickChatConnectionState.error;
           this.chatError = 'Could not resolve the Kick channel';
@@ -646,7 +646,7 @@ abstract class _KickChatStore with Store {
         if (superseded()) return;
 
         /// History is a nicety — a failure must not block the live feed.
-        GeneralHelper.advLog('Kick chat backfill failed — $e');
+        GeneralHelper.advLog('Kick chat backfill failed - $e');
       }
     }
     if (superseded()) return;
@@ -733,7 +733,7 @@ abstract class _KickChatStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog(
-        'Kick chat event handling failed (${event.event}) — $e',
+        'Kick chat event handling failed (${event.event}) - $e',
       );
     }
   }
@@ -761,13 +761,13 @@ abstract class _KickChatStore with Store {
               .fetch(broadcasterId: kickUserId.toString(), isKick: true)
               .catchError((Object e) {
                 GeneralHelper.advLog(
-                  'Kick third-party emote fetch failed — $e',
+                  'Kick third-party emote fetch failed - $e',
                 );
               }),
         );
       }
     } catch (e) {
-      GeneralHelper.advLog('Kick third-party emote fetch could not start — $e');
+      GeneralHelper.advLog('Kick third-party emote fetch could not start - $e');
     }
   }
 
@@ -778,11 +778,11 @@ abstract class _KickChatStore with Store {
     try {
       unawaited(
         this._kickEmoteStoreResolver().fetch(slug).catchError((Object e) {
-          GeneralHelper.advLog('Kick channel emote fetch failed — $e');
+          GeneralHelper.advLog('Kick channel emote fetch failed - $e');
         }),
       );
     } catch (e) {
-      GeneralHelper.advLog('Kick channel emote fetch could not start — $e');
+      GeneralHelper.advLog('Kick channel emote fetch could not start - $e');
     }
   }
 
@@ -864,7 +864,7 @@ abstract class _KickChatStore with Store {
     this._appendNotice(
       idPrefix: 'system-sub',
       content: months > 1
-          ? '$username subscribed — $months months'
+          ? '$username subscribed - $months months'
           : '$username subscribed',
     );
   }
@@ -910,7 +910,7 @@ abstract class _KickChatStore with Store {
       this.channelInfo = updated;
       this._channelBuffers[slug]?.channelInfo = updated;
     } catch (e) {
-      GeneralHelper.advLog('Kick chatroom update parse failed — $e');
+      GeneralHelper.advLog('Kick chatroom update parse failed - $e');
     }
   }
 
@@ -958,16 +958,16 @@ abstract class _KickChatStore with Store {
       }
       return true;
     } on KickApiException catch (e) {
-      GeneralHelper.advLog('Kick chat send failed — $e');
+      GeneralHelper.advLog('Kick chat send failed - $e');
       this.sendChatError = e.message;
       return false;
     } on KickAuthException catch (e) {
-      GeneralHelper.advLog('Kick chat send failed — $e');
+      GeneralHelper.advLog('Kick chat send failed - $e');
       this.sendChatError = e.message;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('Kick chat send failed — $e');
-      this.sendChatError = 'Could not send — try again';
+      GeneralHelper.advLog('Kick chat send failed - $e');
+      this.sendChatError = 'Could not send - try again';
       return false;
     } finally {
       this.sendingChat = false;
@@ -994,15 +994,15 @@ abstract class _KickChatStore with Store {
       await this._apiService.deleteMessage(messageId: messageId);
       return true;
     } on KickApiException catch (e) {
-      GeneralHelper.advLog('Kick message delete failed — $e');
+      GeneralHelper.advLog('Kick message delete failed - $e');
       this.modActionError = e.message;
       return false;
     } on KickAuthException catch (e) {
-      GeneralHelper.advLog('Kick message delete failed — $e');
+      GeneralHelper.advLog('Kick message delete failed - $e');
       this.modActionError = e.message;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('Kick message delete failed — $e');
+      GeneralHelper.advLog('Kick message delete failed - $e');
       this.modActionError = 'Could not delete the message';
       return false;
     }
@@ -1032,15 +1032,15 @@ abstract class _KickChatStore with Store {
       );
       return true;
     } on KickApiException catch (e) {
-      GeneralHelper.advLog('Kick ban/timeout failed — $e');
+      GeneralHelper.advLog('Kick ban/timeout failed - $e');
       this.modActionError = e.message;
       return false;
     } on KickAuthException catch (e) {
-      GeneralHelper.advLog('Kick ban/timeout failed — $e');
+      GeneralHelper.advLog('Kick ban/timeout failed - $e');
       this.modActionError = e.message;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('Kick ban/timeout failed — $e');
+      GeneralHelper.advLog('Kick ban/timeout failed - $e');
       this.modActionError = 'Could not ban the user';
       return false;
     }
@@ -1060,15 +1060,15 @@ abstract class _KickChatStore with Store {
       );
       return true;
     } on KickApiException catch (e) {
-      GeneralHelper.advLog('Kick unban failed — $e');
+      GeneralHelper.advLog('Kick unban failed - $e');
       this.modActionError = e.message;
       return false;
     } on KickAuthException catch (e) {
-      GeneralHelper.advLog('Kick unban failed — $e');
+      GeneralHelper.advLog('Kick unban failed - $e');
       this.modActionError = e.message;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('Kick unban failed — $e');
+      GeneralHelper.advLog('Kick unban failed - $e');
       this.modActionError = 'Could not lift the ban';
       return false;
     }
@@ -1100,7 +1100,7 @@ abstract class _KickChatStore with Store {
     try {
       return await this._apiService.fetchUser(userId);
     } catch (e) {
-      GeneralHelper.advLog('Kick user fetch failed — $e');
+      GeneralHelper.advLog('Kick user fetch failed - $e');
       return null;
     }
   }
@@ -1257,7 +1257,7 @@ abstract class _KickChatStore with Store {
         this.selectedChannelSlug = selected;
       }
     } catch (e) {
-      GeneralHelper.advLog('Kick chat selection load failed — $e');
+      GeneralHelper.advLog('Kick chat selection load failed - $e');
     }
   }
 
@@ -1275,7 +1275,7 @@ abstract class _KickChatStore with Store {
         }
       }
     } catch (e) {
-      GeneralHelper.advLog('Kick chat channels load failed — $e');
+      GeneralHelper.advLog('Kick chat channels load failed - $e');
     }
     return parsed;
   }
@@ -1292,7 +1292,7 @@ abstract class _KickChatStore with Store {
         );
       }
     } catch (e) {
-      GeneralHelper.advLog('Kick chat selection persist failed — $e');
+      GeneralHelper.advLog('Kick chat selection persist failed - $e');
     }
   }
 

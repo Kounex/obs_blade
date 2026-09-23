@@ -79,7 +79,7 @@ class KickPusherService {
         ),
       );
     } catch (e) {
-      GeneralHelper.advLog('Kick pusher connect failed — $e');
+      GeneralHelper.advLog('Kick pusher connect failed - $e');
       this._scheduleReconnect();
       return;
     }
@@ -87,7 +87,7 @@ class KickPusherService {
     this._socketSub = channel.stream.listen(
       this._onData,
       onError: (Object error) {
-        GeneralHelper.advLog('Kick pusher socket error — $error');
+        GeneralHelper.advLog('Kick pusher socket error - $error');
         this._onSocketClosed();
       },
       onDone: this._onSocketClosed,
@@ -130,7 +130,7 @@ class KickPusherService {
     try {
       this._channel?.sink.add(json.encode(payload));
     } catch (e) {
-      GeneralHelper.advLog('Kick pusher send failed — $e');
+      GeneralHelper.advLog('Kick pusher send failed - $e');
     }
   }
 

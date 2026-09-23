@@ -274,7 +274,7 @@ void main() {
     final expectedDate = DateFormat.yMMMMd().format(
       FakeTwitchModerationService.warningSample.warnedAt!.toLocal(),
     );
-    expect(find.text('Warned $expectedDate — spoiling movies'), findsOneWidget);
+    expect(find.text('Warned $expectedDate - spoiling movies'), findsOneWidget);
   });
 
   testWidgets('the self card hides the warnings section', (tester) async {

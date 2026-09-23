@@ -414,7 +414,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
           context,
           icon: CupertinoIcons.star_fill,
           label:
-              '${this._tierLabel(sub.tier)} — Subscribed for ${this._monthsLabel(sub.months)}',
+              '${this._tierLabel(sub.tier)} - Subscribed for ${this._monthsLabel(sub.months)}',
         ),
       );
     }
@@ -433,7 +433,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             label:
                 'Warned'
                 '${when != null ? ' ${this._formatFactDate(when)}' : ''}'
-                '${warning.reason.isNotEmpty ? ' — ${warning.reason}' : ''}',
+                '${warning.reason.isNotEmpty ? ' - ${warning.reason}' : ''}',
           ),
         );
       }
@@ -565,7 +565,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
         if (connection.status == NativeChatConnectionStatus.offline) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Not connected — connect your ${connection.chatType.text} account to see chat natively.',
+            'Not connected - connect your ${connection.chatType.text} account to see chat natively.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: AppSpacing.md),

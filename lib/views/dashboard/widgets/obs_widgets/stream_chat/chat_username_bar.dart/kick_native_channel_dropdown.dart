@@ -64,7 +64,7 @@ class KickNativeChannelDropdown extends StatelessWidget {
       dialogWidget: ConfirmationDialog(
         title: 'Remove chat?',
         body:
-            '"$slug" is removed from your Kick list — its chat '
+            '"$slug" is removed from your Kick list - its chat '
             'history in this session is dropped.',
         okText: 'Remove',
         isYesDestructive: true,

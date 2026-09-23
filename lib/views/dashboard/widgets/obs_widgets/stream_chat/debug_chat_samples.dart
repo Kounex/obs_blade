@@ -60,7 +60,7 @@ debugChatSamples() {
     ),
     (
       label: 'Gigantified emote',
-      description: 'Power-up message — emote renders at 3x',
+      description: 'Power-up message - emote renders at 3x',
       event: base(
         id: 'gigantified',
         messageType: 'power_ups_gigantified_emote',

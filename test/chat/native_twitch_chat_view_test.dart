@@ -329,13 +329,13 @@ void main() {
       final richText = tester.widget<RichText>(find.byType(RichText));
 
       /// Content stays (emote included) — only the marker is appended.
-      expect(richText.text.toPlainText(), 'Emoter: Hello \u{FFFC} —Deleted');
+      expect(richText.text.toPlainText(), 'Emoter: Hello \u{FFFC} -Deleted');
 
       /// Twitch mod view: content non-italic and dimmed harder than the
       /// (italic) marker; the emote dims via a matching Opacity. The text
       /// fragment is split for third-party emote tokenization, so the
       /// first token carries the dimmed style.
-      final marker = findTextSpan(richText.text, ' —Deleted');
+      final marker = findTextSpan(richText.text, ' -Deleted');
       expect(marker.style?.fontStyle, FontStyle.italic);
       final content = findTextSpan(richText.text, 'Hello');
       expect(content.style?.fontStyle, isNull);
@@ -818,7 +818,7 @@ void main() {
       await tester.pumpWidget(wrap(const NativeTwitchChatView()));
       await tester.pump();
 
-      expect(find.text('Connected — waiting for messages…'), findsNothing);
+      expect(find.text('Connected - waiting for messages…'), findsNothing);
       expect(find.text('Announcement'), findsOneWidget);
       expect(find.textContaining('orange hello'), findsOneWidget);
     });
@@ -994,11 +994,11 @@ void main() {
 
       expect(find.text('Chat was cleared by a moderator'), findsOneWidget);
       expect(
-        find.textContaining('Hi chat —Deleted', findRichText: true),
+        find.textContaining('Hi chat -Deleted', findRichText: true),
         findsOneWidget,
       );
       expect(
-        find.textContaining('Hello Kappa —Deleted', findRichText: true),
+        find.textContaining('Hello Kappa -Deleted', findRichText: true),
         findsOneWidget,
       );
 
@@ -1140,7 +1140,7 @@ void main() {
 
       expect(find.text('Viewer32'), findsOneWidget);
       expect(
-        find.textContaining('Hi chat —Deleted', findRichText: true),
+        find.textContaining('Hi chat -Deleted', findRichText: true),
         findsOneWidget,
       );
 

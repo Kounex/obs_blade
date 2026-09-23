@@ -137,7 +137,7 @@ void main() {
     await tester.pump();
 
     expect(renderedRichText(tester), contains('gone soon'));
-    expect(renderedRichText(tester), contains('—Deleted'));
+    expect(renderedRichText(tester), contains('-Deleted'));
   });
 
   testWidgets('super chat renders a tier card with amount and comment', (
@@ -505,7 +505,7 @@ void main() {
       await tester.pump();
 
       final semantics = tester.getSemantics(find.byType(YouTubeChatMessageRow));
-      expect(semantics.label, 'Viewer: hello —Deleted');
+      expect(semantics.label, 'Viewer: hello -Deleted');
       handle.dispose();
     });
 

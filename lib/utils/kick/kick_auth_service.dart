@@ -263,7 +263,7 @@ class KickAuthService {
     final uri = Uri.tryParse(pastedUrl.trim());
     if (uri == null || !uri.hasScheme) {
       throw const KickAuthException(
-        'Not a valid URL — paste the full address from the browser',
+        'Not a valid URL - paste the full address from the browser',
       );
     }
     final error = uri.queryParameters['error'];
@@ -273,7 +273,7 @@ class KickAuthService {
     final state = uri.queryParameters['state'];
     if (state == null || state != expectedState) {
       throw const KickAuthException(
-        'State mismatch — paste the URL of the login you just started',
+        'State mismatch - paste the URL of the login you just started',
       );
     }
     final code = uri.queryParameters['code'];

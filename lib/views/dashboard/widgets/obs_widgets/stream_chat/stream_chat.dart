@@ -501,7 +501,7 @@ class _StreamChatState extends State<StreamChat>
                       chatType: chatType,
                       nativeConnectPrompt: true,
                       promptBody:
-                          'Native Kick chat reads the channel\'s public chatroom — no account or API key needed. Add a Kick channel to see chat here.',
+                          'Native Kick chat reads the channel\'s public chatroom - no account or API key needed. Add a Kick channel to see chat here.',
                       connectLabel: 'Add Kick channel',
                       onConnectTap: addKickChannel,
                     ),
@@ -608,7 +608,7 @@ class _StreamChatState extends State<StreamChat>
                       chatType: chatType,
                       nativeConnectPrompt: true,
                       promptBody:
-                          'Native YouTube chat reads through the official YouTube Data API and needs a free Google Cloud API key — set it up to see chat here.',
+                          'Native YouTube chat reads through the official YouTube Data API and needs a free Google Cloud API key - set it up to see chat here.',
                       connectLabel: 'Set up YouTube chat',
                       onConnectTap: () => showYouTubeSetupSheet(context),
                     ),
@@ -1008,7 +1008,7 @@ class _ChatProUpsell extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Native chat is locked — unlock it with OBS Blade Pro.',
+              'Native chat is locked - unlock it with OBS Blade Pro.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),

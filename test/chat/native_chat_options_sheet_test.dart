@@ -87,7 +87,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Adjust how chat lines look — size, spacing, and dividers.'),
+      find.text('Adjust how chat lines look - size, spacing, and dividers.'),
       findsOneWidget,
     );
     expect(find.byKey(const Key('appearance-preview')), findsOneWidget);
@@ -194,7 +194,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining('in-chat only — not device notifications'),
+      find.textContaining('in-chat only - not device notifications'),
       findsOneWidget,
     );
     expect(find.text('Subs & gifts'), findsOneWidget);

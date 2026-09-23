@@ -69,7 +69,7 @@ abstract class _KickEmoteStore with Store {
     try {
       return await this._service.fetchChannelEmotes(slug);
     } catch (e) {
-      GeneralHelper.advLog('Kick emote fetch failed — $e');
+      GeneralHelper.advLog('Kick emote fetch failed - $e');
       return null;
     }
   }

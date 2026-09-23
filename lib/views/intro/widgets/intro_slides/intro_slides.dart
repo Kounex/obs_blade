@@ -125,7 +125,7 @@ class _IntroSlidesState extends State<IntroSlides> {
           textSpans: const [
             TextSpan(
               text:
-                  'Home is your connection hub.\n\nAdd your OBS host (IP or hostname), port, and password, then connect. Saved connections stay one tap away next time — on phone or tablet.',
+                  'Home is your connection hub.\n\nAdd your OBS host (IP or hostname), port, and password, then connect. Saved connections stay one tap away next time - on phone or tablet.',
             ),
           ],
           textAlign: TextAlign.center,

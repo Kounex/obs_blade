@@ -413,7 +413,7 @@ class _NativeChatConnectionSheet extends StatelessWidget {
           ],
           if (this.status == NativeChatConnectionStatus.offline) ...[
             Text(
-              'Not connected — connect your ${this.chatType.text} account to see chat natively.',
+              'Not connected - connect your ${this.chatType.text} account to see chat natively.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: AppSpacing.md),

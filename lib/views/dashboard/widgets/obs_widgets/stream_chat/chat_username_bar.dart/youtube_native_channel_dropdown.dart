@@ -53,7 +53,7 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
       dialogWidget: ConfirmationDialog(
         title: 'Remove chat?',
         body:
-            '"$label" is removed from your YouTube list — its chat '
+            '"$label" is removed from your YouTube list - its chat '
             'history in this session is dropped.',
         okText: 'Remove',
         isYesDestructive: true,

@@ -247,8 +247,8 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                 /// `offline` = the slug does not resolve — a normal state,
                 /// not an error.
                 connection == KickChatConnectionState.offline
-                    ? 'No chat for this channel — the slug may be wrong or the channel is unavailable.'
-                    : 'Connected — waiting for messages…',
+                    ? 'No chat for this channel - the slug may be wrong or the channel is unavailable.'
+                    : 'Connected - waiting for messages…',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

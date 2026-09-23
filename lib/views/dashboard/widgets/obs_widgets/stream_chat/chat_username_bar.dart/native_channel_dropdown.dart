@@ -37,7 +37,7 @@ class NativeChannelDropdown extends StatelessWidget {
       dialogWidget: ConfirmationDialog(
         title: 'Remove chat?',
         body:
-            'The channel is removed from your list — its chat history '
+            'The channel is removed from your list - its chat history '
             'in this session is dropped.',
         okText: 'Remove',
         isYesDestructive: true,

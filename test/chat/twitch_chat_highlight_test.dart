@@ -194,7 +194,7 @@ void main() {
       await tester.pump();
 
       final semantics = tester.getSemantics(find.byType(TwitchChatMessageRow));
-      expect(semantics.label, 'Viewer: hello —Deleted');
+      expect(semantics.label, 'Viewer: hello -Deleted');
       handle.dispose();
     });
   });

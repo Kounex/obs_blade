@@ -26,19 +26,19 @@ const List<ProBenefit> kProBenefits = [
     icon: CupertinoIcons.chat_bubble_text_fill,
     title: 'Native Chat, Every Platform',
     body:
-        'Read and write Twitch, Kick and YouTube chat right from your phone — fast and smooth, no browser embed.',
+        'Read and write Twitch, Kick and YouTube chat right from your phone - fast and smooth, no browser embed.',
   ),
   ProBenefit(
     icon: CupertinoIcons.rectangle_stack_fill,
     title: 'Multi-Chat',
     body:
-        'Add every channel you mod or follow and switch between them from the chat bar — each keeps its own history.',
+        'Add every channel you mod or follow and switch between them from the chat bar - each keeps its own history.',
   ),
   ProBenefit(
     icon: CupertinoIcons.shield_fill,
     title: 'Full Moderation Toolkit',
     body:
-        'Delete, timeout, ban, warn and clear a room with a tap — plus a live AutoMod queue and an unban-request inbox.',
+        'Delete, timeout, ban, warn and clear a room with a tap - plus a live AutoMod queue and an unban-request inbox.',
   ),
   ProBenefit(
     icon: CupertinoIcons.smiley_fill,
@@ -56,7 +56,7 @@ const List<ProBenefit> kProBenefits = [
     icon: CupertinoIcons.sparkles,
     title: 'What\'s Next',
     body:
-        'Pro keeps growing — think stream health alerts and deeper platform tools. No dates promised, but the bench is full.',
+        'Pro keeps growing - think stream health alerts and deeper platform tools. No dates promised, but the bench is full.',
   ),
 ];
 

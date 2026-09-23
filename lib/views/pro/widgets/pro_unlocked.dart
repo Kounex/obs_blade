@@ -92,7 +92,7 @@ class ProUnlockedView extends StatelessWidget {
                     index: 2,
                     scaleFrom: 0.985,
                     child: Text(
-                      'Thanks for supporting OBS Blade — native chat and '
+                      'Thanks for supporting OBS Blade - native chat and '
                       'moderation are unlocked. And everything you already '
                       'used stays free, forever.',
                       textAlign: TextAlign.center,
@@ -113,7 +113,7 @@ class ProUnlockedView extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          'Manage or cancel anytime in your store account — '
+                          'Manage or cancel anytime in your store account - '
                           'no hoops, no dark patterns.',
                           textAlign: TextAlign.center,
 

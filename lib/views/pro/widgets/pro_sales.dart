@@ -72,8 +72,8 @@ class ProSalesView extends StatelessWidget {
                 index: 1,
                 scaleFrom: 0.985,
                 child: Text(
-                  'Everything you already use — OBS control, stats, '
-                  'WebView chat — stays free. Forever.',
+                  'Everything you already use - OBS control, stats, '
+                  'WebView chat - stays free. Forever.',
                   textAlign: TextAlign.center,
 
                   /// Conversion-critical copy earns the AA level

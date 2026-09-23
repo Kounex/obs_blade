@@ -59,10 +59,10 @@ class KickApiService {
   KickApiException _error(String action, http.Response response) {
     final status = response.statusCode;
     final message = switch (status) {
-      401 => '$action — the Kick session expired, sign in again',
+      401 => '$action - the Kick session expired, sign in again',
       403 =>
-        '$action — no permission (moderator status or a chat mode restriction)',
-      429 => '$action — Kick rate limit hit, wait a moment',
+        '$action - no permission (moderator status or a chat mode restriction)',
+      429 => '$action - Kick rate limit hit, wait a moment',
       _ => '$action ($status)',
     };
     return KickApiException(message, cause: response.body, statusCode: status);

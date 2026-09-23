@@ -109,7 +109,7 @@ void main() {
 
     expect(
       find.text(
-        'No active live chat — the stream is offline or chat is disabled.',
+        'No active live chat - the stream is offline or chat is disabled.',
       ),
       findsOneWidget,
     );
@@ -224,7 +224,7 @@ void main() {
 
   testWidgets(
     'author tap opens the user card with role facts from the buffered '
-    'message — no API key needed',
+    'message - no API key needed',
     (tester) async {
       store.chatConnection = YouTubeChatConnectionState.connected;
       store.messages.add(ytMessage('m1', isOwner: true));

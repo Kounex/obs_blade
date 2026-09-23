@@ -94,7 +94,7 @@ class FAQView extends StatelessWidget {
                           'In most cases you should be able to connect to OBS if it\'s listed in autodiscover. If you try to connect to OBS manually because it\'s not listed in autodiscover, there is usually an underlying problem (check the list above). Additionally check that:',
                       entries: [
                         'Tools → WebSocket Server Settings → Enable WebSocket Server is checked',
-                        'The correct password is used (copy it from Show Connect Info — OBS generates one by default)',
+                        'The correct password is used (copy it from Show Connect Info - OBS generates one by default)',
                         'You are using OBS Studio 28+ (built-in WebSocket v5). Legacy 4.x plugins are not supported',
                         'On Windows: set the PC network to Private and allow OBS through the firewall (port 4455 by default)',
                         'Nothing else is bound to the WebSocket port (some camera plugins also use 4455)',

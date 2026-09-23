@@ -760,7 +760,7 @@ void main() {
       );
 
       expect(await store.sendChatMessage('hi'), isFalse);
-      expect(store.sendChatError, 'Could not send — try again');
+      expect(store.sendChatError, 'Could not send - try again');
       expect(store.sendingChat, isFalse);
     });
 
@@ -1176,7 +1176,7 @@ void main() {
       },
     );
 
-    test('message_delete first, moderate later — actor lands with a bump', () {
+    test('message_delete first, moderate later - actor lands with a bump', () {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.applyMessageDelete(
         const ChatMessageDeleteEvent(messageId: 'm1', targetUserId: 'u1'),
@@ -1192,7 +1192,7 @@ void main() {
     });
 
     test(
-      'moderate first, message_delete later — idempotent single tombstone',
+      'moderate first, message_delete later - idempotent single tombstone',
       () {
         store.appendChatMessageForTest(chatMessage('m1', 'u1'));
         store.applyModerationDelete('m1', 'Cool_Mod');
@@ -1681,7 +1681,7 @@ void main() {
     });
 
     test(
-      'gating — own / moderated / other channel with manage scopes',
+      'gating - own / moderated / other channel with manage scopes',
       () async {
         await login(
           scopes: const [
@@ -1704,7 +1704,7 @@ void main() {
       },
     );
 
-    test('gating — pre-upgrade token cannot moderate anywhere', () async {
+    test('gating - pre-upgrade token cannot moderate anywhere', () async {
       await login(
         scopes: const ['user:read:chat', 'user:read:moderated_channels'],
       );

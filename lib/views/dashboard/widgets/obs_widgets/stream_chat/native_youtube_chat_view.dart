@@ -220,8 +220,8 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                 /// `offline` = the video has no active live chat (not live
                 /// / chat disabled) — a normal state, not an error.
                 connection == YouTubeChatConnectionState.offline
-                    ? 'No active live chat — the stream is offline or chat is disabled.'
-                    : 'Connected — waiting for messages…',
+                    ? 'No active live chat - the stream is offline or chat is disabled.'
+                    : 'Connected - waiting for messages…',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

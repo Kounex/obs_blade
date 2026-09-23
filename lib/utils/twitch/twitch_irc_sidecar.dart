@@ -100,7 +100,7 @@ class TwitchIrcSidecar {
       }
       channel.sink.add('JOIN #$login\r\n');
     } catch (e) {
-      GeneralHelper.advLog('Twitch IRC switchChannel failed — $e');
+      GeneralHelper.advLog('Twitch IRC switchChannel failed - $e');
       await this._open();
     }
   }
@@ -124,7 +124,7 @@ class TwitchIrcSidecar {
       this._socketSub = channel.stream.listen(
         this._onData,
         onError: (Object e) {
-          GeneralHelper.advLog('Twitch IRC socket error — $e');
+          GeneralHelper.advLog('Twitch IRC socket error - $e');
           unawaited(this._scheduleReconnect());
         },
         onDone: () {
@@ -139,7 +139,7 @@ class TwitchIrcSidecar {
       channel.sink.add('JOIN #$room\r\n');
       this._reconnectAttempts = 0;
     } catch (e) {
-      GeneralHelper.advLog('Twitch IRC connect failed — $e');
+      GeneralHelper.advLog('Twitch IRC connect failed - $e');
       await this._scheduleReconnect();
     }
   }

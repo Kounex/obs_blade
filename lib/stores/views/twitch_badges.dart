@@ -95,7 +95,7 @@ abstract class _TwitchBadgeStore with Store {
     try {
       return await future;
     } catch (e) {
-      GeneralHelper.advLog('Twitch badge fetch ($label) failed — $e');
+      GeneralHelper.advLog('Twitch badge fetch ($label) failed - $e');
       return null;
     }
   }

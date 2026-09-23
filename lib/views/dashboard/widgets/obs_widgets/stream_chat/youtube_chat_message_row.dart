@@ -155,7 +155,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
       case YouTubeChatMessageType.unknown:
         final text = this.message.copyText;
         return this.message.isTombstoned
-            ? '$author: $text —Deleted'
+            ? '$author: $text -Deleted'
             : '$author: $text';
     }
   }
@@ -267,7 +267,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
       dimmedChatContentSpans(context, this._messageSpans(context));
 
   TextSpan _deletedMarkerSpan(BuildContext context) => TextSpan(
-    text: ' —Deleted',
+    text: ' -Deleted',
     style: TextStyle(
       fontStyle: FontStyle.italic,
       color: Theme.of(context).textTheme.bodySmall?.color,

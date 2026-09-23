@@ -252,7 +252,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: Text(
-                'Connected — waiting for messages…',
+                'Connected - waiting for messages…',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -478,7 +478,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       settingsBox: settingsBox,
                       isDeleted: deleted,
                       deletedMarker: tombstone == null
-                          ? ' —Deleted'
+                          ? ' -Deleted'
                           : chatTombstoneMarker(tombstone),
                       deletedActor: actor,
                       isDeletedExpanded: this._expandedDeletedIds.contains(

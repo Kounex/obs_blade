@@ -17,14 +17,14 @@ void main() {
     test('labels each kind', () {
       expect(
         chatTombstoneMarker(const ChatTombstoneInfo.deleted()),
-        ' —Deleted',
+        ' -Deleted',
       );
-      expect(chatTombstoneMarker(const ChatTombstoneInfo.banned()), ' —Banned');
+      expect(chatTombstoneMarker(const ChatTombstoneInfo.banned()), ' -Banned');
       expect(
         chatTombstoneMarker(
           const ChatTombstoneInfo.timedOut(Duration(seconds: 600)),
         ),
-        ' —Timed out (10m)',
+        ' -Timed out (10m)',
       );
     });
   });

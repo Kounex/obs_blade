@@ -63,7 +63,7 @@ class _AccountChip extends StatelessWidget {
 
         return Tooltip(
           message:
-              'Connected as ${this.displayName ?? 'Kick'} — manage sign-in',
+              'Connected as ${this.displayName ?? 'Kick'} - manage sign-in',
           child: Pressable(
             haptic: true,
             onTap: () => showKickSetupSheet(context),

@@ -34,10 +34,10 @@ String formatChatTimeoutDuration(Duration duration) {
 
 /// Italic marker appended to a dimmed tombstone body.
 String chatTombstoneMarker(ChatTombstoneInfo info) => switch (info.kind) {
-  ChatTombstoneKind.deleted => ' —Deleted',
-  ChatTombstoneKind.banned => ' —Banned',
+  ChatTombstoneKind.deleted => ' -Deleted',
+  ChatTombstoneKind.banned => ' -Banned',
   ChatTombstoneKind.timedOut =>
-    ' —Timed out (${formatChatTimeoutDuration(info.timeoutDuration ?? Duration.zero)})',
+    ' -Timed out (${formatChatTimeoutDuration(info.timeoutDuration ?? Duration.zero)})',
 };
 
 /// Duration implied by a `channel.moderate` timeout `expires_at`.

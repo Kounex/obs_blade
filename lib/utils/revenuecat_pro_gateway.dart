@@ -58,7 +58,7 @@ class RevenueCatProGateway implements ProPurchaseBackend {
       this._configured = true;
     } catch (e) {
       GeneralHelper.advLog(
-        'RevenueCat configure failed — $e',
+        'RevenueCat configure failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );

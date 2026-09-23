@@ -107,7 +107,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.badgeStore,
     this.emoteStore,
     this.isDeleted = false,
-    this.deletedMarker = ' —Deleted',
+    this.deletedMarker = ' -Deleted',
     this.deletedActor,
     this.isDeletedExpanded = false,
     this.onDeletedTap,

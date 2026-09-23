@@ -307,7 +307,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
             dialogWidget: ConfirmationDialog(
               title: 'Disconnect Kick?',
               body:
-                  'Connected as ${username ?? 'your Kick account'}. You will be signed out of your Kick account — reading chat keeps working without an account.',
+                  'Connected as ${username ?? 'your Kick account'}. You will be signed out of your Kick account - reading chat keeps working without an account.',
               okText: 'Disconnect',
               isYesDestructive: true,
               onOk: (_) => store.logout(),
@@ -358,7 +358,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                                   'OBS Blade\'s Kick app.'
                             : 'Reading Kick chat needs no account. Sending '
                                   'messages and moderating need a Kick '
-                                  'sign-in — and Kick has no device login, '
+                                  'sign-in - and Kick has no device login, '
                                   'so bring your own (free) Kick app:',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
@@ -450,7 +450,7 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
                         this._stepRow(
                           context,
                           '4',
-                          'Open the Kick login, approve, and paste the URL your browser lands on (it won\'t load — that\'s expected)',
+                          'Open the Kick login, approve, and paste the URL your browser lands on (it won\'t load - that\'s expected)',
                         ),
                         Pressable(
                           haptic: true,

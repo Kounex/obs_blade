@@ -77,7 +77,7 @@ class ProHero extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'Native chat, moderation and more — built for your pocket.',
+          'Native chat, moderation and more - built for your pocket.',
           textAlign: TextAlign.center,
 
           /// The value line is the pitch headline (token-delta §5):

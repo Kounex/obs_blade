@@ -43,7 +43,7 @@ class ProPricing extends StatelessWidget {
     _ProOffer(
       productId: kProLifetimeId,
       title: 'Lifetime',
-      cadence: 'once — yours forever',
+      cadence: 'once - yours forever',
       badge: 'ONE-TIME',
     ),
   ];
@@ -55,7 +55,7 @@ class ProPricing extends StatelessWidget {
         ..showSnackBar(
           const SnackBar(
             content: Text(
-              'Pro isn\'t live in the store yet — once it launches, the '
+              'Pro isn\'t live in the store yet - once it launches, the '
               'price shows right here and nothing is charged before you '
               'confirm.',
             ),
@@ -107,7 +107,7 @@ class ProPricing extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: Text(
-                  'Can\'t reach the store right now — pricing appears once '
+                  'Can\'t reach the store right now - pricing appears once '
                   'your connection is back.',
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: Theme.of(

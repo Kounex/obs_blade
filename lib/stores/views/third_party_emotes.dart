@@ -120,7 +120,7 @@ abstract class _ThirdPartyEmoteStore with Store {
     try {
       return await future;
     } catch (e) {
-      GeneralHelper.advLog('Third-party emote fetch ($label) failed — $e');
+      GeneralHelper.advLog('Third-party emote fetch ($label) failed - $e');
       return null;
     }
   }

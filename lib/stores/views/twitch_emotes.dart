@@ -101,7 +101,7 @@ abstract class _TwitchEmoteStore with Store {
     try {
       return await future;
     } catch (e) {
-      GeneralHelper.advLog('Twitch user emote fetch failed — $e');
+      GeneralHelper.advLog('Twitch user emote fetch failed - $e');
       return null;
     }
   }

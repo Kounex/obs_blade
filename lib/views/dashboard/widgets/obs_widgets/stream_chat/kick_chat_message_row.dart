@@ -110,7 +110,7 @@ class KickChatMessageRow extends StatelessWidget {
     buffer.write(': ');
     buffer.write(this.message.content);
     if (this.message.isTombstoned) {
-      buffer.write(' —Deleted');
+      buffer.write(' -Deleted');
     }
     return buffer.toString();
   }
@@ -283,7 +283,7 @@ class KickChatMessageRow extends StatelessWidget {
       dimmedChatContentSpans(context, this._messageSpans(context));
 
   TextSpan _deletedMarkerSpan(BuildContext context) => TextSpan(
-    text: ' —Deleted',
+    text: ' -Deleted',
     style: TextStyle(
       fontStyle: FontStyle.italic,
       color: Theme.of(context).textTheme.bodySmall?.color,

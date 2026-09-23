@@ -134,7 +134,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
       if (!this.mounted) return;
       this.setState(() {
         this._keyValid = false;
-        this._keyError = 'Could not reach YouTube — check your connection';
+        this._keyError = 'Could not reach YouTube - check your connection';
       });
     } finally {
       if (this.mounted) this.setState(() => this._testing = false);
@@ -237,7 +237,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
           ),
           const SizedBox(width: AppSpacing.xs / 2),
           Text(
-            'Key works — save it to enable native chat',
+            'Key works - save it to enable native chat',
             key: const Key('youtube-setup-key-valid'),
             style: Theme.of(
               context,
@@ -430,7 +430,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Heads up: chat entries are tied to a single video. When a '
-                  'streamer starts their next stream, its video id changes — '
+                  'streamer starts their next stream, its video id changes - '
                   'update the entry (channel list → Add chat…, or edit the '
                   'YouTube username) to reconnect.',
                   style: Theme.of(context).textTheme.bodySmall,
@@ -478,7 +478,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                       Text(
                         'Reading chat works with the API key alone. Sending '
                         'messages and moderating need a Google OAuth "TVs and '
-                        'Limited Input" client — create one in the same console '
+                        'Limited Input" client - create one in the same console '
                         '(Credentials → Create credentials → OAuth client ID) '
                         'and paste its credentials here.',
                         style: Theme.of(context).textTheme.bodySmall,

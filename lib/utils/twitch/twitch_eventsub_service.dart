@@ -209,7 +209,7 @@ class TwitchEventSubService {
     try {
       decoded = json.decode(raw as String) as Map<String, dynamic>;
     } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: undecodable message — $e');
+      GeneralHelper.advLog('Twitch EventSub: undecodable message - $e');
       return;
     }
 
@@ -338,7 +338,7 @@ class TwitchEventSubService {
           }
       }
     } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: could not parse $type event — $e');
+      GeneralHelper.advLog('Twitch EventSub: could not parse $type event - $e');
     }
   }
 
@@ -383,7 +383,7 @@ class TwitchEventSubService {
     try {
       decoded = json.decode(raw as String) as Map<String, dynamic>;
     } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: undecodable reconnect — $e');
+      GeneralHelper.advLog('Twitch EventSub: undecodable reconnect - $e');
       return;
     }
 
@@ -457,7 +457,7 @@ class TwitchEventSubService {
     } else {
       GeneralHelper.advLog(
         'Twitch EventSub: lifecycle subscription $type revoked '
-        '(${subscription['status']}) — tombstones degraded this session',
+        '(${subscription['status']}) - tombstones degraded this session',
       );
     }
   }
@@ -521,19 +521,19 @@ class TwitchEventSubService {
         } else {
           GeneralHelper.advLog(
             'Twitch EventSub: lifecycle subscription $type failed '
-            '(${response.statusCode}) — tombstones degraded this session',
+            '(${response.statusCode}) - tombstones degraded this session',
           );
         }
       } catch (e) {
         if (mandatory) {
           GeneralHelper.advLog(
-            'Twitch EventSub: subscription POST failed — $e',
+            'Twitch EventSub: subscription POST failed - $e',
           );
           this.onRevoked('subscription_failed:$e');
           return false;
         }
         GeneralHelper.advLog(
-          'Twitch EventSub: lifecycle subscription $type failed — $e',
+          'Twitch EventSub: lifecycle subscription $type failed - $e',
         );
       }
     }
@@ -589,12 +589,12 @@ class TwitchEventSubService {
         } else {
           GeneralHelper.advLog(
             'Twitch EventSub: automod subscription $type failed '
-            '(${response.statusCode}) — queue degraded this session',
+            '(${response.statusCode}) - queue degraded this session',
           );
         }
       } catch (e) {
         GeneralHelper.advLog(
-          'Twitch EventSub: automod subscription $type failed — $e',
+          'Twitch EventSub: automod subscription $type failed - $e',
         );
       }
     }
@@ -635,12 +635,12 @@ class TwitchEventSubService {
       } else {
         GeneralHelper.advLog(
           'Twitch EventSub: lifecycle subscription $_kModerateType failed '
-          '(${response.statusCode}) — tombstones degraded this session',
+          '(${response.statusCode}) - tombstones degraded this session',
         );
       }
     } catch (e) {
       GeneralHelper.advLog(
-        'Twitch EventSub: lifecycle subscription $_kModerateType failed — $e',
+        'Twitch EventSub: lifecycle subscription $_kModerateType failed - $e',
       );
     }
   }

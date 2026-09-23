@@ -307,7 +307,7 @@ void main() {
       await tester.pump();
 
       final semantics = tester.getSemantics(find.byType(KickChatMessageRow));
-      expect(semantics.label, 'Viewer1: hello —Deleted');
+      expect(semantics.label, 'Viewer1: hello -Deleted');
       handle.dispose();
     });
   });

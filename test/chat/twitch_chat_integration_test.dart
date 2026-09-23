@@ -580,7 +580,7 @@ void main() {
 
       expect(find.byType(NativeTwitchChatView), findsNothing);
       expect(
-        find.text('Native chat is locked — unlock it with OBS Blade Pro.'),
+        find.text('Native chat is locked - unlock it with OBS Blade Pro.'),
         findsOneWidget,
       );
       expect(find.text('Explore Pro'), findsOneWidget);

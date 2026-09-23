@@ -134,7 +134,7 @@ abstract class _ProStore with Store {
       );
     } catch (e) {
       GeneralHelper.advLog(
-        'RevenueCat pro init failed — $e',
+        'RevenueCat pro init failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
@@ -152,7 +152,7 @@ abstract class _ProStore with Store {
       /// Offline before RC's cache warmed, SDK error mid-session — keep
       /// the last mirrored state, the next update retries.
       GeneralHelper.advLog(
-        'RevenueCat entitlement fetch failed — $e',
+        'RevenueCat entitlement fetch failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
@@ -188,7 +188,7 @@ abstract class _ProStore with Store {
       await settingsBox.put(SettingsKeys.ProColdStartRestoreDone.name, true);
     } catch (e) {
       GeneralHelper.advLog(
-        'Pro cold-start restore failed — $e',
+        'Pro cold-start restore failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
@@ -209,7 +209,7 @@ abstract class _ProStore with Store {
         ..addAll(await this._service.queryProProducts());
     } catch (e) {
       GeneralHelper.advLog(
-        'Pro product query failed — $e',
+        'Pro product query failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
@@ -238,7 +238,7 @@ abstract class _ProStore with Store {
       return bought;
     } catch (e) {
       GeneralHelper.advLog(
-        'Pro purchase failed — $e',
+        'Pro purchase failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
@@ -282,7 +282,7 @@ abstract class _ProStore with Store {
           await this._service.restoreLegacyPurchases();
         } catch (e) {
           GeneralHelper.advLog(
-            'Legacy IAP restore failed — $e',
+            'Legacy IAP restore failed - $e',
             includeInLogs: true,
             level: LogLevel.Error,
           );
@@ -296,7 +296,7 @@ abstract class _ProStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog(
-        'Pro restore failed — $e',
+        'Pro restore failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
