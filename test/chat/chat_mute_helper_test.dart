@@ -26,4 +26,28 @@ void main() {
       expect(chatContentIsMuted('anything at all', const []), isFalse);
     });
   });
+
+  group('censorChatContent', () {
+    test('replaces every match case-insensitively', () {
+      expect(
+        censorChatContent('Spoiler: the SPOILER ends', ['spoiler']),
+        '***: the *** ends',
+      );
+    });
+
+    test('regex entries censor their match only', () {
+      expect(
+        censorChatContent('boss dies at 3:00', [r'/\d+:\d+/']),
+        'boss dies at ***',
+      );
+    });
+
+    test('regex metacharacters in plain words are literal', () {
+      expect(censorChatContent('a.b axb', ['a.b']), '*** axb');
+    });
+
+    test('no words, no change', () {
+      expect(censorChatContent('hello', const []), 'hello');
+    });
+  });
 }

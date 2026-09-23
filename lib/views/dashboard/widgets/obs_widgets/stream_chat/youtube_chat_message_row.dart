@@ -160,22 +160,26 @@ class YouTubeChatMessageRow extends StatelessWidget {
     }
   }
 
-  bool get _isHighlightMatch => chatContentIsHighlighted(
-    this.message.snippet.textMessageDetails?.messageText ??
-        this.message.displayText ??
-        '',
-    selfMentionEnabled: this.settingsBox.get(
-      SettingsKeys.ChatHighlightSelfMention.name,
-      defaultValue: true,
-    ),
-    selfNames: this.selfDisplayNames,
-    keywords: parseChatHighlightKeywords(
-      this.settingsBox.get(
-        SettingsKeys.ChatHighlightKeywords.name,
-        defaultValue: '',
-      ),
-    ),
-  );
+  bool get _isHighlightMatch =>
+      chatAuthorInList(ChatFilterSettings.of(this.settingsBox).highlightUsers, [
+        this.message.authorName,
+      ]) ||
+      chatContentIsHighlighted(
+        this.message.snippet.textMessageDetails?.messageText ??
+            this.message.displayText ??
+            '',
+        selfMentionEnabled: this.settingsBox.get(
+          SettingsKeys.ChatHighlightSelfMention.name,
+          defaultValue: true,
+        ),
+        selfNames: this.selfDisplayNames,
+        keywords: parseChatHighlightKeywords(
+          this.settingsBox.get(
+            SettingsKeys.ChatHighlightKeywords.name,
+            defaultValue: '',
+          ),
+        ),
+      );
 
   /// Role badge glyph size — matches the Twitch row's badge artwork.
   static const double _badgeSize = 16.0;
@@ -261,9 +265,11 @@ class YouTubeChatMessageRow extends StatelessWidget {
 
   List<InlineSpan> _messageSpans(BuildContext context) => chatLinkTextSpans(
     context,
-    this.message.snippet.textMessageDetails?.messageText ??
-        this.message.displayText ??
-        '',
+    ChatFilterSettings.of(this.settingsBox).display(
+      this.message.snippet.textMessageDetails?.messageText ??
+          this.message.displayText ??
+          '',
+    ),
   );
 
   /// Tombstone treatment — the content stays visible but dims (same UX

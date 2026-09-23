@@ -10,6 +10,7 @@ import '../../../../../../utils/icons/jam_icons.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../native_chat_chrome.dart';
 import 'mod_action_sheet.dart';
+import 'chat_user_list_actions.dart';
 
 /// Opens the Kick mod action sheet for [message] — shown on long-press
 /// when signed in. Kick has no "am I a mod" lookup, so the actions are
@@ -37,6 +38,7 @@ Future<void> showKickModActionSheet(
   builder: (_) => KickModActionSheet(
     message: message,
     onReply: onReply,
+    hostContext: context,
     onCopy: () => copyMessageTextAndNotify(context, message.content),
     onFailure: (message) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -78,12 +80,17 @@ class KickModActionSheet extends StatefulWidget {
   /// — offered to any signed-in user, same as the moderation rows.
   final VoidCallback onCopy;
 
+  /// Chat view context — when set, "Highlight / Ignore user" rows appear
+  /// under Copy (their snackbar is hosted here).
+  final BuildContext? hostContext;
+
   const KickModActionSheet({
     super.key,
     required this.message,
     required this.onFailure,
     required this.onCopy,
     this.onReply,
+    this.hostContext,
   });
 
   @override
@@ -220,6 +227,8 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
             },
           ),
         ),
+        if (this.widget.hostContext case final host?)
+          ChatUserListActions(userName: name, hostContext: host),
         if (this.widget.onReply != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),

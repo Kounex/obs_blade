@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/chat_highlight_helper.dart';
+import 'package:obs_blade/utils/chat_mute_helper.dart';
 
 /// Defaults / ranges for native chat appearance (spec
 /// `2026-08-09-native-chat-appearance-design`).
@@ -166,3 +168,57 @@ Widget chatAlternateRow(BuildContext context, bool tinted, Widget child) =>
     tinted
     ? ColoredBox(color: chatAlternateRowColor(context), child: child)
     : child;
+
+/// Filter / highlight settings shared by every native engine, parsed once
+/// per timeline build (views) or row build (rows).
+class ChatFilterSettings {
+  final List<String> muteWords;
+
+  /// Mute-word matches are censored to `***` instead of hiding the row.
+  final bool muteReplace;
+  final Set<String> highlightUsers;
+  final Set<String> ignoredUsers;
+
+  const ChatFilterSettings({
+    required this.muteWords,
+    required this.muteReplace,
+    required this.highlightUsers,
+    required this.ignoredUsers,
+  });
+
+  factory ChatFilterSettings.of(Box settings) => ChatFilterSettings(
+    muteWords: parseChatHighlightKeywords(
+      settings.get(SettingsKeys.ChatMuteWords.name, defaultValue: '') as String,
+    ),
+    muteReplace:
+        settings.get(SettingsKeys.ChatMuteReplace.name, defaultValue: false) ==
+        true,
+    highlightUsers: parseChatUserList(
+      settings.get(SettingsKeys.ChatHighlightUsers.name, defaultValue: '')
+          as String,
+    ),
+    ignoredUsers: parseChatUserList(
+      settings.get(SettingsKeys.ChatIgnoredUsers.name, defaultValue: '')
+          as String,
+    ),
+  );
+
+  /// Settings keys a timeline must rebuild on.
+  static const List<SettingsKeys> keys = [
+    SettingsKeys.ChatMuteWords,
+    SettingsKeys.ChatMuteReplace,
+    SettingsKeys.ChatHighlightUsers,
+    SettingsKeys.ChatIgnoredUsers,
+  ];
+
+  /// Whether a message by [authorNames] with [content] is dropped from the
+  /// timeline: an ignored author always, a mute-word match unless
+  /// [muteReplace] censors it in place instead.
+  bool hides(List<String?> authorNames, String content) =>
+      chatAuthorInList(this.ignoredUsers, authorNames) ||
+      (!this.muteReplace && chatContentIsMuted(content, this.muteWords));
+
+  /// Text as rendered: censored when [muteReplace] is on.
+  String display(String text) =>
+      this.muteReplace ? censorChatContent(text, this.muteWords) : text;
+}

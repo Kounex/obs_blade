@@ -10,8 +10,6 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/chat_highlight_helper.dart';
-import 'package:obs_blade/utils/chat_mute_helper.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'kick_chat_message_row.dart';
@@ -304,22 +302,20 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
             SettingsKeys.KickChatBadges,
             SettingsKeys.ChatHighlightSelfMention,
             SettingsKeys.ChatHighlightKeywords,
-            SettingsKeys.ChatMuteWords,
+            ...ChatFilterSettings.keys,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
-            final muteWords = parseChatHighlightKeywords(
-              settingsBox.get(
-                SettingsKeys.ChatMuteWords.name,
-                defaultValue: '',
-              ),
-            );
+            final filters = ChatFilterSettings.of(settingsBox);
             final visibleItems = items.where((message) {
               if (!isKickChatNoticeVisible(settingsBox, message.id)) {
                 return false;
               }
               if (message.type != KickChatMessageType.system &&
-                  chatContentIsMuted(message.content, muteWords)) {
+                  filters.hides([
+                    message.sender?.username,
+                    message.sender?.slug,
+                  ], message.content)) {
                 return false;
               }
               return true;

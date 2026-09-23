@@ -15,6 +15,7 @@ import '../chat_type_brand.dart';
 import '../native_chat_chrome.dart';
 import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
+import 'chat_user_list_actions.dart';
 
 /// Opens the mod action sheet for [event] (multi-chat) — shown when a live
 /// message is tapped in a channel the user moderates
@@ -58,6 +59,7 @@ Future<void> showMessageActionSheet(
   required String authorName,
   required String messageText,
   VoidCallback? onReply,
+  String? userListName,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
   barrierDismissible: true,
@@ -66,6 +68,8 @@ Future<void> showMessageActionSheet(
   builder: (_) => MessageActionSheet(
     authorName: authorName,
     onReply: onReply,
+    userListName: userListName ?? authorName,
+    hostContext: context,
     onCopy: () => copyMessageTextAndNotify(context, messageText),
   ),
 );
@@ -607,11 +611,21 @@ class MessageActionSheet extends StatelessWidget {
   /// when the account can't write chat — the Reply row is dropped then.
   final VoidCallback? onReply;
 
+  /// Name for the highlight / ignore lists (e.g. the Twitch login) —
+  /// defaults to [authorName].
+  final String? userListName;
+
+  /// Chat view context — when set, "Highlight / Ignore user" rows appear
+  /// under Copy (their snackbar is hosted here).
+  final BuildContext? hostContext;
+
   const MessageActionSheet({
     super.key,
     required this.authorName,
     required this.onCopy,
     this.onReply,
+    this.userListName,
+    this.hostContext,
   });
 
   @override
@@ -647,6 +661,14 @@ class MessageActionSheet extends StatelessWidget {
               },
             ),
           ),
+          if (this.hostContext case final host?)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
+              child: ChatUserListActions(
+                userName: this.userListName ?? this.authorName,
+                hostContext: host,
+              ),
+            ),
           if (this.onReply != null)
             chatActionRowCard(
               context,

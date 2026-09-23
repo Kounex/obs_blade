@@ -12,8 +12,6 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
-import 'package:obs_blade/utils/chat_highlight_helper.dart';
-import 'package:obs_blade/utils/chat_mute_helper.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
 import 'chat_notice_chrome.dart';
@@ -90,6 +88,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         this.context,
         authorName: event.chatterUserName,
         messageText: event.message.text,
+        userListName: event.chatterUserLogin,
         onReply: this._store.canWriteChat ? () => this._replyTo(event) : null,
       );
     } finally {
@@ -317,7 +316,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.ChatReadableNameColors,
             SettingsKeys.ChatHighlightSelfMention,
             SettingsKeys.ChatHighlightKeywords,
-            SettingsKeys.ChatMuteWords,
+            ...ChatFilterSettings.keys,
             SettingsKeys.TwitchChatNoticeSubs,
             SettingsKeys.TwitchChatNoticeStreaks,
             SettingsKeys.TwitchChatNoticeRaids,
@@ -343,12 +342,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     item.event.message!.text.trim().isNotEmpty)
                   item.event.messageId,
             };
-            final muteWords = parseChatHighlightKeywords(
-              settingsBox.get(
-                SettingsKeys.ChatMuteWords.name,
-                defaultValue: '',
-              ),
-            );
+            final filters = ChatFilterSettings.of(settingsBox);
             final visibleItems = items.where((item) {
               if (item is ChatNotificationNotice) {
                 return isChatNoticeTypeVisible(
@@ -358,7 +352,10 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
               }
               if (item is ChatMessageEvent) {
                 if (announceBodyIds.contains(item.messageId)) return false;
-                if (chatContentIsMuted(item.message.text, muteWords)) {
+                if (filters.hides([
+                  item.chatterUserLogin,
+                  item.chatterUserName,
+                ], item.message.text)) {
                   return false;
                 }
               }

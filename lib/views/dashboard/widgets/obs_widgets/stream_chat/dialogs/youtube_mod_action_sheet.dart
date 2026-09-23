@@ -10,6 +10,7 @@ import '../../../../../../utils/icons/jam_icons.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../native_chat_chrome.dart';
 import 'mod_action_sheet.dart';
+import 'chat_user_list_actions.dart';
 
 /// Opens the YouTube mod action sheet for [message] — shown on long-press
 /// when signed in (YouTube has no cheap "am I a mod" lookup; a 403 from a
@@ -30,6 +31,7 @@ Future<void> showYouTubeModActionSheet(
   maxHeightFraction: 0.72,
   builder: (_) => YouTubeModActionSheet(
     message: message,
+    hostContext: context,
     onCopy: () => copyMessageTextAndNotify(context, message.copyText),
     onFailure: (message) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -62,11 +64,14 @@ class YouTubeModActionSheet extends StatefulWidget {
   /// — offered to any signed-in user, same as the moderation rows.
   final VoidCallback onCopy;
 
+  final BuildContext? hostContext;
+
   const YouTubeModActionSheet({
     super.key,
     required this.message,
     required this.onFailure,
     required this.onCopy,
+    this.hostContext,
   });
 
   @override
@@ -201,6 +206,12 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
                 this.widget.onCopy();
               },
             ),
+          ),
+        if (this.widget.hostContext case final host?
+            when this.widget.message.authorName != null)
+          ChatUserListActions(
+            userName: this.widget.message.authorName!,
+            hostContext: host,
           ),
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.xs),

@@ -279,13 +279,13 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
         this._navRow(
           context,
           label: 'Highlights',
-          subtitle: 'Highlight your name and keywords in chat',
+          subtitle: 'Highlight your name, keywords and users',
           onTap: () => this._open(_OptionsPage.highlights),
         ),
         this._navRow(
           context,
           label: 'Mute words',
-          subtitle: 'Hide messages containing certain words',
+          subtitle: 'Hide or censor words, ignore users',
           onTap: () => this._open(_OptionsPage.muteWords),
         ),
         this._navRow(
@@ -870,31 +870,26 @@ class _HighlightsPage extends StatefulWidget {
 }
 
 class _HighlightsPageState extends State<_HighlightsPage> {
-  late final TextEditingController _keywordsController;
-
-  @override
-  void initState() {
-    super.initState();
-    var initial = '';
-    if (Hive.isBoxOpen(HiveKeys.Settings.name)) {
-      final value = Hive.box(
-        HiveKeys.Settings.name,
-      ).get(SettingsKeys.ChatHighlightKeywords.name);
-      if (value is String) initial = value;
-    }
-    this._keywordsController = TextEditingController(text: initial);
-  }
+  late final TextEditingController _keywordsController = TextEditingController(
+    text: _settingText(SettingsKeys.ChatHighlightKeywords),
+  );
+  late final TextEditingController _usersController = TextEditingController(
+    text: _settingText(SettingsKeys.ChatHighlightUsers),
+  );
 
   @override
   void dispose() {
     this._keywordsController.dispose();
+    this._usersController.dispose();
     super.dispose();
   }
 
   void _reset(Box settingsBox) {
     settingsBox.put(SettingsKeys.ChatHighlightSelfMention.name, true);
     settingsBox.put(SettingsKeys.ChatHighlightKeywords.name, '');
+    settingsBox.put(SettingsKeys.ChatHighlightUsers.name, '');
     this._keywordsController.text = '';
+    this._usersController.text = '';
   }
 
   @override
@@ -904,6 +899,7 @@ class _HighlightsPageState extends State<_HighlightsPage> {
       rebuildKeys: const [
         SettingsKeys.ChatHighlightSelfMention,
         SettingsKeys.ChatHighlightKeywords,
+        SettingsKeys.ChatHighlightUsers,
       ],
       builder: (context, settingsBox, child) {
         final selfMention = settingsBox.get(
@@ -913,8 +909,8 @@ class _HighlightsPageState extends State<_HighlightsPage> {
         return _PageScaffold(
           title: 'Highlights',
           description:
-              'Wash a message row when it mentions your name or a '
-              'keyword you\'re watching for.',
+              'Wash a message row when it mentions your name, a keyword '
+              'you\'re watching for, or comes from a highlighted user.',
           onBack: this.widget.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
@@ -946,6 +942,23 @@ class _HighlightsPageState extends State<_HighlightsPage> {
                 value,
               ),
             ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Wrap an entry in slashes for a regex, e.g. /^!drop/',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text('Users', style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: AppSpacing.xs),
+            NativeChatTextField(
+              key: const Key('chat-highlight-users-field'),
+              controller: this._usersController,
+              hintText: 'Usernames, one per line (or long-press a message)',
+              minLines: 2,
+              maxLines: 4,
+              onChanged: (value) =>
+                  settingsBox.put(SettingsKeys.ChatHighlightUsers.name, value),
+            ),
           ],
         );
       },
@@ -968,6 +981,9 @@ class _MuteWordsPage extends StatefulWidget {
 
 class _MuteWordsPageState extends State<_MuteWordsPage> {
   late final TextEditingController _wordsController;
+  late final TextEditingController _usersController = TextEditingController(
+    text: _settingText(SettingsKeys.ChatIgnoredUsers),
+  );
 
   @override
   void initState() {
@@ -985,6 +1001,7 @@ class _MuteWordsPageState extends State<_MuteWordsPage> {
   @override
   void dispose() {
     this._wordsController.dispose();
+    this._usersController.dispose();
     super.dispose();
   }
 
@@ -992,29 +1009,76 @@ class _MuteWordsPageState extends State<_MuteWordsPage> {
   Widget build(BuildContext context) {
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [SettingsKeys.ChatMuteWords],
-      builder: (context, settingsBox, child) => _PageScaffold(
-        title: 'Mute words',
-        description:
-            'Messages containing any of these words are hidden from the '
-            'timeline entirely.',
-        onBack: this.widget.onBack,
-        onReset: () {
-          settingsBox.put(SettingsKeys.ChatMuteWords.name, '');
-          this._wordsController.text = '';
-        },
-        children: [
-          NativeChatTextField(
-            key: const Key('chat-mute-words-field'),
-            controller: this._wordsController,
-            hintText: 'One per line, or comma-separated',
-            minLines: 2,
-            maxLines: 4,
-            onChanged: (value) =>
-                settingsBox.put(SettingsKeys.ChatMuteWords.name, value),
-          ),
-        ],
-      ),
+      rebuildKeys: const [
+        SettingsKeys.ChatMuteWords,
+        SettingsKeys.ChatMuteReplace,
+        SettingsKeys.ChatIgnoredUsers,
+      ],
+      builder: (context, settingsBox, child) {
+        final replace =
+            settingsBox.get(
+              SettingsKeys.ChatMuteReplace.name,
+              defaultValue: false,
+            ) ==
+            true;
+        return _PageScaffold(
+          title: 'Mute words',
+          description: replace
+              ? 'Matching words are replaced with *** - the rest of the '
+                    'message stays visible.'
+              : 'Messages containing any of these words are hidden from '
+                    'the timeline entirely.',
+          onBack: this.widget.onBack,
+          onReset: () {
+            settingsBox.put(SettingsKeys.ChatMuteWords.name, '');
+            settingsBox.put(SettingsKeys.ChatMuteReplace.name, false);
+            settingsBox.put(SettingsKeys.ChatIgnoredUsers.name, '');
+            this._wordsController.text = '';
+            this._usersController.text = '';
+          },
+          children: [
+            NativeChatTextField(
+              key: const Key('chat-mute-words-field'),
+              controller: this._wordsController,
+              hintText: 'One per line, or comma-separated',
+              minLines: 2,
+              maxLines: 4,
+              onChanged: (value) =>
+                  settingsBox.put(SettingsKeys.ChatMuteWords.name, value),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Wrap an entry in slashes for a regex, e.g. /spoil(er|s)/',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Replace instead of hide'),
+              subtitle: const Text('Show the message with the words as ***'),
+              trailing: BaseAdaptiveSwitch(
+                value: replace,
+                onChanged: (value) =>
+                    settingsBox.put(SettingsKeys.ChatMuteReplace.name, value),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Ignored users',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            NativeChatTextField(
+              key: const Key('chat-ignored-users-field'),
+              controller: this._usersController,
+              hintText: 'Usernames, one per line (or long-press a message)',
+              minLines: 2,
+              maxLines: 4,
+              onChanged: (value) =>
+                  settingsBox.put(SettingsKeys.ChatIgnoredUsers.name, value),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1148,4 +1212,12 @@ class _DebugSamplesPage extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Current raw text of a free-text settings list (empty when unset or the
+/// box isn't open, e.g. isolated widget tests).
+String _settingText(SettingsKeys key) {
+  if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return '';
+  final value = Hive.box(HiveKeys.Settings.name).get(key.name);
+  return value is String ? value : '';
 }

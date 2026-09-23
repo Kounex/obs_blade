@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/utils/chat_highlight_helper.dart';
 
 void main() {
+  _regexAndUserListTests();
+
   group('parseChatHighlightKeywords', () {
     test('splits on newlines and commas, trims whitespace', () {
       expect(parseChatHighlightKeywords('  foo\nbar , baz\n\nqux  '), [
@@ -112,6 +114,61 @@ void main() {
         ),
         isFalse,
       );
+    });
+  });
+}
+
+void _regexAndUserListTests() {
+  group('regex entries', () {
+    test('/pattern/ matches as a case-insensitive regex', () {
+      expect(chatKeywordMatches('/^!drop/', '!DROP now', '!drop now'), isTrue);
+      expect(chatKeywordMatches('/^!drop/', 'no !drop', 'no !drop'), isFalse);
+    });
+
+    test('an invalid pattern never matches and never throws', () {
+      expect(
+        chatKeywordMatches('/(unclosed/', '(unclosed', '(unclosed'),
+        isFalse,
+      );
+    });
+
+    test('plain entries stay substrings', () {
+      expect(chatKeywordMatches('/', 'a/b', 'a/b'), isTrue);
+    });
+
+    test('highlight keywords accept regex', () {
+      expect(
+        chatContentIsHighlighted(
+          'Giveaway starts',
+          selfMentionEnabled: false,
+          selfNames: const [],
+          keywords: const ['/give(away|aways)/'],
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  group('user lists', () {
+    test('parse normalizes case and @', () {
+      expect(parseChatUserList('@Alice, bob\n  CAROL '), {
+        'alice',
+        'bob',
+        'carol',
+      });
+    });
+
+    test('chatAuthorInList checks every name', () {
+      final users = parseChatUserList('tanaka_1');
+      expect(chatAuthorInList(users, ['田中', 'tanaka_1']), isTrue);
+      expect(chatAuthorInList(users, [null, 'someone']), isFalse);
+    });
+
+    test('toggle adds, then removes, keeping other entries', () {
+      final added = toggleChatUserListEntry('alice\nbob', 'Carol');
+      expect(parseChatUserList(added), {'alice', 'bob', 'carol'});
+      final removed = toggleChatUserListEntry(added, '@BOB');
+      expect(removed, 'alice\nCarol');
     });
   });
 }

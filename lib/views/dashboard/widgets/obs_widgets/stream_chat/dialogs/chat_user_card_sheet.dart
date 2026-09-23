@@ -22,6 +22,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
+import 'chat_user_list_actions.dart';
 
 /// Connection footer params for the merged self user card.
 class ChatUserCardConnection {
@@ -65,6 +66,7 @@ void showChatUserCardSheet(
   builder: (_) => ChatUserCardSheet(
     userId: userId,
     connection: connection,
+    hostContext: context,
     userService:
         userService ??
         (GetIt.instance.isRegistered<TwitchUserService>()
@@ -79,11 +81,16 @@ class ChatUserCardSheet extends StatefulWidget {
   final ChatUserCardConnection? connection;
   final TwitchUserService userService;
 
+  /// Chat view context — when set, "Highlight / Ignore user" rows appear
+  /// under the facts (their snackbar is hosted here).
+  final BuildContext? hostContext;
+
   const ChatUserCardSheet({
     super.key,
     required this.userId,
     this.connection,
     required this.userService,
+    this.hostContext,
   });
 
   @override
@@ -253,6 +260,19 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             this._header(context, newest),
             const SizedBox(height: AppSpacing.lg),
             this._factsBlock(context),
+            if (this.widget.hostContext case final host?
+                when !this._isSelf &&
+                    (this._helixUser?.login ??
+                            this._newestBuffered?.chatterUserLogin) !=
+                        null) ...[
+              const SizedBox(height: AppSpacing.md),
+              ChatUserListActions(
+                userName:
+                    this._helixUser?.login ??
+                    this._newestBuffered!.chatterUserLogin,
+                hostContext: host,
+              ),
+            ],
             const SizedBox(height: AppSpacing.lg),
             this._liveDivider(context),
             const SizedBox(height: AppSpacing.sm),

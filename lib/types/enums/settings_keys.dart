@@ -400,7 +400,19 @@ enum SettingsKeys {
   /// three native engines — see [chatContentIsMuted]. A match drops the
   /// row from the timeline entirely (filtered at the message-list level,
   /// not per-row). Empty by default (no-op until the user adds something)
-  ChatMuteWords;
+  ChatMuteWords,
+
+  /// [bool]: Mute-word matches are replaced with `***` instead of hiding
+  /// the whole row (Chatterino's ignore "replace" mode). Off by default
+  ChatMuteReplace,
+
+  /// [String]: Raw newline/comma-separated usernames whose messages get
+  /// the highlight wash (all engines) — see [parseChatUserList]
+  ChatHighlightUsers,
+
+  /// [String]: Raw newline/comma-separated usernames whose messages are
+  /// hidden from the timeline (all engines) — see [parseChatUserList]
+  ChatIgnoredUsers;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -500,5 +512,8 @@ enum SettingsKeys {
     SettingsKeys.ChatHighlightSelfMention: 'chat-highlight-self-mention',
     SettingsKeys.ChatHighlightKeywords: 'chat-highlight-keywords',
     SettingsKeys.ChatMuteWords: 'chat-mute-words',
+    SettingsKeys.ChatMuteReplace: 'chat-mute-replace',
+    SettingsKeys.ChatHighlightUsers: 'chat-highlight-users',
+    SettingsKeys.ChatIgnoredUsers: 'chat-ignored-users',
   }[this]!;
 }

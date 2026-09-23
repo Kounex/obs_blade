@@ -116,20 +116,25 @@ class KickChatMessageRow extends StatelessWidget {
     return buffer.toString();
   }
 
-  bool get _isHighlightMatch => chatContentIsHighlighted(
-    this.message.content,
-    selfMentionEnabled: this.settingsBox.get(
-      SettingsKeys.ChatHighlightSelfMention.name,
-      defaultValue: true,
-    ),
-    selfNames: this.selfDisplayNames,
-    keywords: parseChatHighlightKeywords(
-      this.settingsBox.get(
-        SettingsKeys.ChatHighlightKeywords.name,
-        defaultValue: '',
-      ),
-    ),
-  );
+  bool get _isHighlightMatch =>
+      chatAuthorInList(ChatFilterSettings.of(this.settingsBox).highlightUsers, [
+        this.message.sender?.username,
+        this.message.sender?.slug,
+      ]) ||
+      chatContentIsHighlighted(
+        this.message.content,
+        selfMentionEnabled: this.settingsBox.get(
+          SettingsKeys.ChatHighlightSelfMention.name,
+          defaultValue: true,
+        ),
+        selfNames: this.selfDisplayNames,
+        keywords: parseChatHighlightKeywords(
+          this.settingsBox.get(
+            SettingsKeys.ChatHighlightKeywords.name,
+            defaultValue: '',
+          ),
+        ),
+      );
 
   /// Badge artwork size — matches the Twitch row's badge artwork.
   static const double _badgeSize = 16.0;
@@ -236,7 +241,12 @@ class KickChatMessageRow extends StatelessWidget {
           ),
         );
       } else {
-        spans.addAll(this._thirdPartyTextSpans(context, fragment.text));
+        spans.addAll(
+          this._thirdPartyTextSpans(
+            context,
+            ChatFilterSettings.of(this.settingsBox).display(fragment.text),
+          ),
+        );
       }
     }
     return spans;

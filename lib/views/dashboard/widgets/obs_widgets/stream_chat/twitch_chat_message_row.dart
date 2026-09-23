@@ -169,20 +169,25 @@ class TwitchChatMessageRow extends StatelessWidget {
     return buffer.toString();
   }
 
-  bool get _isHighlightMatch => chatContentIsHighlighted(
-    this.event.message.text,
-    selfMentionEnabled: this.settingsBox.get(
-      SettingsKeys.ChatHighlightSelfMention.name,
-      defaultValue: true,
-    ),
-    selfNames: this.selfDisplayNames,
-    keywords: parseChatHighlightKeywords(
-      this.settingsBox.get(
-        SettingsKeys.ChatHighlightKeywords.name,
-        defaultValue: '',
-      ),
-    ),
-  );
+  bool get _isHighlightMatch =>
+      chatAuthorInList(ChatFilterSettings.of(this.settingsBox).highlightUsers, [
+        this.event.chatterUserLogin,
+        this.event.chatterUserName,
+      ]) ||
+      chatContentIsHighlighted(
+        this.event.message.text,
+        selfMentionEnabled: this.settingsBox.get(
+          SettingsKeys.ChatHighlightSelfMention.name,
+          defaultValue: true,
+        ),
+        selfNames: this.selfDisplayNames,
+        keywords: parseChatHighlightKeywords(
+          this.settingsBox.get(
+            SettingsKeys.ChatHighlightKeywords.name,
+            defaultValue: '',
+          ),
+        ),
+      );
 
   /// Shared-chat origin channel name when this message was broadcast from
   /// a partner channel — never for same-channel messages (Twitch leaves
@@ -287,7 +292,12 @@ class TwitchChatMessageRow extends StatelessWidget {
       if (this.event.reply != null && this.event.message.fragments.isNotEmpty) {
         return const [];
       }
-      return chatLinkTextSpans(context, this.event.message.text);
+      return chatLinkTextSpans(
+        context,
+        ChatFilterSettings.of(
+          this.settingsBox,
+        ).display(this.event.message.text),
+      );
     }
 
     /// Power-up messages: `power_ups_gigantified_emote` blows the emote up
@@ -324,7 +334,10 @@ class TwitchChatMessageRow extends StatelessWidget {
             ),
           )
         else
-          ...this._textSpans(context, fragment.text),
+          ...this._textSpans(
+            context,
+            ChatFilterSettings.of(this.settingsBox).display(fragment.text),
+          ),
     ];
   }
 
