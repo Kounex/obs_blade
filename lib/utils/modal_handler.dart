@@ -278,10 +278,11 @@ class _SheetOverscroll extends StatefulWidget {
 class _SheetOverscrollState extends State<_SheetOverscroll> {
   /// Points per second. A flick at least this fast dismisses regardless of
   /// how far the sheet travelled. From the usual UIKit interactive-dismiss
-  /// split (fast flick, or past halfway without flicking back). 300 was
-  /// too high to reach with an ordinary thumb flick in practice - the only
-  /// reliable way to dismiss was the distance-based half-shrink path.
-  static const double _flickVelocity = 150.0;
+  /// split (fast flick, or past halfway without flicking back). Both 300
+  /// and 150 were still too high to reach with an ordinary thumb flick in
+  /// practice - the only reliable way to dismiss was the distance-based
+  /// half-shrink path.
+  static const double _flickVelocity = 100.0;
 
   static const double _distanceThreshold = 0.5;
 
