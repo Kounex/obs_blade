@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
@@ -32,6 +33,7 @@ class ReplayBufferControls extends StatelessWidget {
             Expanded(
               child: BaseButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   if (dashboardStore.isReplayBufferActive) {
                     OverlayHandler.showStatusOverlay(
                       showDuration: const Duration(seconds: 10),
@@ -62,10 +64,13 @@ class ReplayBufferControls extends StatelessWidget {
             Expanded(
               child: BaseButton(
                 onPressed: dashboardStore.isReplayBufferActive
-                    ? () => dashboardStore.sendMutation(
-                        RequestType.SaveReplayBuffer,
-                        label: 'Save replay buffer',
-                      )
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        dashboardStore.sendMutation(
+                          RequestType.SaveReplayBuffer,
+                          label: 'Save replay buffer',
+                        );
+                      }
                     : null,
                 icon: const Icon(CupertinoIcons.arrow_down_doc_fill),
 

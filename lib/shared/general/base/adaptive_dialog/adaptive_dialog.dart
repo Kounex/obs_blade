@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/adaptive_dialog/adaptive_dialog_action.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
@@ -130,6 +131,11 @@ class _BaseAdaptiveDialogState extends State<BaseAdaptiveDialog> {
             ?.map(
               (config) => AdaptiveDialogAction(
                 onPressed: () {
+                  /// One tap, every dialog in the app - heavier for a
+                  /// destructive confirm (delete/ban/disconnect/etc.)
+                  config.isDestructiveAction
+                      ? HapticFeedback.mediumImpact()
+                      : HapticFeedback.lightImpact();
                   if (config.popOnAction) {
                     Navigator.of(context).pop();
                   }

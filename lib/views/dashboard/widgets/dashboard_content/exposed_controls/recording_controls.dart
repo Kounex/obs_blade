@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
@@ -59,10 +60,13 @@ class RecordingControls extends StatelessWidget {
             Expanded(
               child: BaseButton(
                 onPressed: dashboardStore.isRecording
-                    ? () => dashboardStore.sendMutation(
-                        RequestType.ToggleRecordPause,
-                        label: 'Recording pause/resume',
-                      )
+                    ? () {
+                        HapticFeedback.lightImpact();
+                        dashboardStore.sendMutation(
+                          RequestType.ToggleRecordPause,
+                          label: 'Recording pause/resume',
+                        );
+                      }
                     : null,
                 icon: Icon(
                   dashboardStore.isRecordingPaused

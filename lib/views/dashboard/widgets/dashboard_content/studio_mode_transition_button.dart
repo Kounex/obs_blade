@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
@@ -59,6 +60,7 @@ class StudioModeTransitionButton extends StatelessWidget {
                           text: 'Transition',
                           secondary: true,
                           onPressed: () {
+                            HapticFeedback.mediumImpact();
                             dashboardStore.setActiveSceneName(
                               dashboardStore.studioModePreviewSceneName!,
                             );

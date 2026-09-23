@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
@@ -45,6 +46,7 @@ class HotkeyEntry extends StatelessWidget {
           const SizedBox(width: 18.0),
           BaseIconButton(
             onTap: () {
+              HapticFeedback.lightImpact();
               Navigator.of(context).pop();
               Future.delayed(const Duration(milliseconds: 500), () {
                 GetIt.instance<DashboardStore>().sendMutation(

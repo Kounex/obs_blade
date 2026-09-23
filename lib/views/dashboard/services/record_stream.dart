@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../stores/views/dashboard.dart';
@@ -14,6 +15,7 @@ class RecordStreamService {
     bool checkedDontShowRecordStart,
     bool checkedDontShowRecordStop,
   ) {
+    HapticFeedback.mediumImpact();
     (isRecording && !checkedDontShowRecordStop) ||
             (!isRecording && !checkedDontShowRecordStart)
         ? ModalHandler.showBaseDialog(
@@ -39,6 +41,7 @@ class RecordStreamService {
     bool checkedDontShowStreamStart,
     bool checkedDontShowStreamStop,
   ) {
+    HapticFeedback.mediumImpact();
     (isLive && !checkedDontShowStreamStop) ||
             (!isLive && !checkedDontShowStreamStart)
         ? ModalHandler.showBaseDialog(
