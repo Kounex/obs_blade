@@ -123,7 +123,7 @@ void main() {
     await pumpPaywall(tester, newStore()..init());
 
     /// Benefits browser (first carousel page is built eagerly)
-    expect(find.text('Native Twitch Chat'), findsOneWidget);
+    expect(find.text('Native Chat, Every Platform'), findsOneWidget);
     expect(find.byType(SmoothPageIndicator), findsOneWidget);
 
     /// The honest free-core line
@@ -319,9 +319,11 @@ void main() {
     await pumpPaywall(tester, newStore()..init(), width: 900.0);
 
     expect(find.byType(SmoothPageIndicator), findsNothing);
-    expect(find.text('Native Twitch Chat'), findsOneWidget);
-    expect(find.text('Native YouTube Chat'), findsOneWidget);
-    expect(find.text('Phone-Native Moderation'), findsOneWidget);
+    expect(find.text('Native Chat, Every Platform'), findsOneWidget);
+    expect(find.text('Multi-Chat'), findsOneWidget);
+    expect(find.text('Full Moderation Toolkit'), findsOneWidget);
+    expect(find.text('Emotes & Badges'), findsOneWidget);
+    expect(find.text('Smarter Chat'), findsOneWidget);
     expect(find.text('What\'s Next'), findsOneWidget);
   });
 }

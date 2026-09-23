@@ -24,21 +24,33 @@ class ProBenefit {
 const List<ProBenefit> kProBenefits = [
   ProBenefit(
     icon: CupertinoIcons.chat_bubble_text_fill,
-    title: 'Native Twitch Chat',
+    title: 'Native Chat, Every Platform',
     body:
-        'Read and write chat right from your phone — fast, smooth and without a browser embed.',
+        'Read and write Twitch, Kick and YouTube chat right from your phone — fast and smooth, no browser embed.',
   ),
   ProBenefit(
-    icon: CupertinoIcons.play_rectangle_fill,
-    title: 'Native YouTube Chat',
+    icon: CupertinoIcons.rectangle_stack_fill,
+    title: 'Multi-Chat',
     body:
-        'A real YouTube chat experience, including Super Chat rendering, straight in your dashboard.',
+        'Add every channel you mod or follow and switch between them from the chat bar — each keeps its own history.',
   ),
   ProBenefit(
     icon: CupertinoIcons.shield_fill,
-    title: 'Phone-Native Moderation',
+    title: 'Full Moderation Toolkit',
     body:
-        'Delete, timeout or ban with a tap — mod tools designed for one hand, not a desk.',
+        'Delete, timeout, ban, warn and clear a room with a tap — plus a live AutoMod queue and an unban-request inbox.',
+  ),
+  ProBenefit(
+    icon: CupertinoIcons.smiley_fill,
+    title: 'Emotes & Badges',
+    body:
+        'First-party and 7TV/BTTV emotes render inline, with a full picker and role badges across every chat.',
+  ),
+  ProBenefit(
+    icon: CupertinoIcons.search_circle_fill,
+    title: 'Smarter Chat',
+    body:
+        'Highlight mentions and keywords, mute what you don\'t want to see, and search your chat history.',
   ),
   ProBenefit(
     icon: CupertinoIcons.sparkles,
@@ -110,25 +122,25 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
           ),
         ],
       ),
+
+      /// Two-per-row grid built from however many benefits exist - a
+      /// trailing odd card takes the row alone instead of hardcoding four
       tabletWidget: Column(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: ProBenefitCard(benefit: kProBenefits[0])),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(child: ProBenefitCard(benefit: kProBenefits[1])),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: ProBenefitCard(benefit: kProBenefits[2])),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(child: ProBenefitCard(benefit: kProBenefits[3])),
-            ],
-          ),
+          for (int i = 0; i < kProBenefits.length; i += 2) ...[
+            if (i > 0) const SizedBox(height: AppSpacing.lg),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: ProBenefitCard(benefit: kProBenefits[i])),
+                if (i + 1 < kProBenefits.length) ...[
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(child: ProBenefitCard(benefit: kProBenefits[i + 1])),
+                ] else
+                  const Spacer(),
+              ],
+            ),
+          ],
         ],
       ),
     );
