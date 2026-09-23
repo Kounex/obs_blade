@@ -21,7 +21,7 @@ Code anchors: `lib/views/dashboard/widgets/obs_widgets/stream_chat/`,
 - **YouTube:** resolve **channel → current live video** at connect time and
   re-resolve on stream end (auto-rollover), instead of storing per-stream
   video ids. Build order and design below.
-- **Cheap, high-value Chatterino ports** (build now): @user/emote
+- **Cheap, high-value Chatterino ports** (shipped 2026-09-24): @user/emote
   autocomplete, readability (timeline timestamps, alternating rows, name
   contrast), FFZ + zero-width emotes, highlight/ignore upgrades, Twitch
   recent-messages backfill.
@@ -144,7 +144,18 @@ chat traffic itself stays official. Follow-ups: OAuth own-channel path
 (**c**) for signed-in streamers, OBS `StreamStateChanged` → immediate
 re-resolve.
 
+### Status (2026-09-24, end of session)
+
+Shipped: channel entries + auto-rollover (native + WebView), optional
+entry name auto-derived from the channel (display name, no `@`). Open:
+OAuth own-channel path (`liveBroadcasts.list`), OBS `StreamStateChanged`
+→ immediate re-resolve.
+
 ## Build order
+
+Items 1–6 **shipped 2026-09-24** (see `changelog-agent.md`), plus the
+platform-colored "New messages" divider after history on every engine.
+Next up: the "Medium" rows of the verdict table.
 
 1. YouTube channel resolver + auto-rollover (+ WebView).
 2. Twitch recent-messages backfill.

@@ -130,7 +130,9 @@ video; channel entries resolve their current stream via
 `YouTubeLiveResolver` (quota-free `/live` page scrape → 1-unit
 `videos.list`) and **auto-roll over** to the next stream
 (`kYouTubeLiveRecheckSchedule`); the WebView follows via
-`YouTubeWebLiveTracker`. Design: `docs/chatterino-comparison.md` § YouTube. Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
+`YouTubeWebLiveTracker`. The entry name is optional — left empty, it's
+the channel's display name (`YouTubeEntryNamer`, never an `@handle`).
+Design: `docs/chatterino-comparison.md` § YouTube. Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
 quota question before any default-on rollout.
 
 **Kick chat:** a native engine (read + write/mod) ships next to the WebView
@@ -177,7 +179,9 @@ chat search/filter over each engine's buffered history
 (`ChatSearchSheet`), Chatterino-style extras (`docs/chatterino-comparison.md`:
 `@user`/emote autocomplete strip, timestamps / zebra rows / readable name
 colors, FFZ + zero-width emotes, highlighted/ignored users, `/regex/`
-entries, censor mode via `ChatFilterSettings`), and a "Copy message"
+entries, censor mode via `ChatFilterSettings`; backfilled history is
+dimmed with a platform-colored "New messages" divider on all engines),
+and a "Copy message"
 long-press action available even
 to fully read-only viewers (`MessageActionSheet`, generalized from
 Twitch's non-mod sheet) all ship uniformly. Message rows carry

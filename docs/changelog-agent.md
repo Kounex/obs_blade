@@ -2,6 +2,39 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-24 (later) - Dogfood follow-ups: pinned sheet headers, "New messages" divider, optional YouTube entry name
+
+Same session, after the first dogfood install of the Chatterino wave
+(release build + Pro test-unlock define, "Kounex iOS"):
+
+- **Pinned sheet headers** (`40d3e3ff`): scrolling the native chat
+  options sheet (e.g. Appearance) scrolled the handle / back chevron /
+  title away. New `NativeChatSheetScaffold` (`native_chat_chrome.dart`)
+  pins handle + header and scrolls only the body; used by the options
+  sheet (root + every sub-page), Kick setup sheet and all three user
+  cards. The other chat sheets already kept headers outside the scroll.
+  **Rule going forward:** sheets with a handle / title / back chevron
+  never put those inside the scroll view. Guarded by
+  `test/chat/sheet_pinned_header_test.dart` (verified red on the old
+  sheet: header moved 160 px).
+- **"── New messages ──" divider** (`6ec38e0d`): between the last
+  backfilled history row and the first live one, lines in the platform
+  brand color (label contrast-nudged), vertical padding, only once a
+  live row exists. `isHistorical` now exists on all three engines:
+  Twitch recent-messages, Kick join backfill, YouTube's first poll page
+  (no page token yet) — all dimmed.
+- **YouTube entry name optional** (`51346da1`, `7f61c351`): the dialog
+  leads with channel / stream; an empty name is derived on save by
+  `YouTubeEntryNamer` — always the channel's display name, never an
+  `@handle` (user correction): `@handle`/`c/`/`user/` → channel page
+  `og:title` (streamed), `UC…` → RSS feed title, video → oEmbed
+  `author_name`; 4 s timeouts, offline fallback = handle without `@`,
+  collisions → `Name (2)`. Live-verified (Lofi Girl, NASA, Marques
+  Brownlee, nonexistent handle).
+
+Gates: `test/chat/` 1009 pass / 4 known `mod_action_sheet_test` flakes;
+analyze at baseline. Deployed to Kounex iOS after each change.
+
 ## 2026-09-24 - Chatterino comparison + YouTube channel-follow + six Chatterino ports
 
 Research session (Chatterino2 / Chatterino7 source + multi-platform

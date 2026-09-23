@@ -2,10 +2,11 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-24** (Chatterino
-comparison research + YouTube channel-follow + six Chatterino ports into
-native chat, 7 commits, pushed. Details: `changelog-agent.md` 2026-09-24
-"Chatterino comparison + YouTube channel-follow...").
+Read this first after `AGENTS.md`. Last reset: **2026-09-24** (end of
+the Chatterino-wave session: research + YouTube channel-follow + six
+Chatterino ports, then dogfood follow-ups — pinned sheet headers, "New
+messages" divider, optional YouTube entry name. 12 commits, pushed,
+deployed to Kounex iOS. Details: `changelog-agent.md` 2026-09-24 entries).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -56,25 +57,31 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Just closed: Chatterino-inspired chat wave** (NAS session, tier S). All
-7 commits pushed (`12fa6d86..7fb905fb` + this handoff). Research +
-verdicts: [`chatterino-comparison.md`](chatterino-comparison.md).
+**Just closed: the chat session** (NAS, tier S, `12fa6d86..7f61c351`, all
+pushed; the workstation is on `7f61c351` and "Kounex iOS" runs that
+release build with `PRO_RELEASE_TEST_UNLOCK` + the Kick OAuth defines —
+recipe in `docs/private/maintainer-workflow.md` § Dogfood release).
+Research + verdict table: [`chatterino-comparison.md`](chatterino-comparison.md).
 
-**Shipped, verified by tests + live network smokes, NOT yet on a device:**
-- YouTube **channel entries** (`@handle` / `UC…` / channel URL) follow the
-  current stream and auto-roll over to the next; WebView follows too.
-  Worth a dogfood pass: add `@LofiGirl` (always live) and an offline
-  channel, check the "isn't live right now · Check now" states.
-- Twitch recent-message **history backfill** on join (dimmed rows).
-- **Autocomplete** strip (`@user`, `:emote`, bare word) above the input.
-- Appearance: **timestamps**, **alternating rows**, **readable name
-  colors** (default on — eyeball a dark-blue chatter on dark theme).
-- **FFZ emotes** + **zero-width** overlay emotes.
-- Highlighted / **ignored users**, `/regex/` entries, censor mode.
+**On the device, user-approved so far:** the wave overall ("very good"),
+pinned sheet headers + "New messages" divider (requested and shipped),
+optional YouTube name (shipped after a correction: auto-names never carry
+an `@`). **Not explicitly confirmed yet:** YouTube channel auto-rollover
+across a real stream end, Twitch history backfill, autocomplete strip,
+readability toggles, FFZ / zero-width emotes, highlighted/ignored users +
+censor mode. Ask for feedback on these first.
 
-**Still not re-confirmed from the previous session:** Pro paywall vortex
-mark/badge and the unlocked-page revert gesture (both on the
-workstation's dogfood device).
+**Chat conventions established this session (keep them):**
+- Sheets: handle + title + back chevron pinned, only the body scrolls —
+  build new sheets on `NativeChatSheetScaffold`.
+- History rows: `isHistorical` on every engine's message model, dimmed
+  via `kChatHistoryOpacity`, `ChatHistoryDivider` in the platform color.
+- Shared filter reads go through `ChatFilterSettings`; appearance reads
+  through `NativeChatAppearance`.
+- Network-facing helpers get a live smoke as a throwaway `flutter test`
+  file with an explicit `http.Client()` (plain `dart run` can't compile
+  anything importing the freezed chat models) — the YouTube resolver's
+  first two versions passed unit tests and failed live.
 
 **Store/Pro state:** products exist on both stores with locked regionalized
 pricing **$4.99/mo, $49.99/yr, $99.99 lifetime** (ASC 175/175 territories,
@@ -90,13 +97,17 @@ discard Play internal-track draft `3.3.0 (2026090701)`.
 
 **Immediate next threads:**
 
-1. **Dogfood the chat wave** on the workstation device (list above).
-2. **Chatterino "medium" items** (doc § verdict table): configurable mod
-   buttons / timeout lengths, custom commands with OBS variables, search
-   operators (`from:`, `has:link`…), OBS-driven streamer mode, live dots
-   in the channel dropdowns. Strategic after that: merged multi-platform
-   timeline, 7TV cosmetics. YouTube follow-ups: OAuth own-channel path
-   (`liveBroadcasts`), OBS `StreamStateChanged` → immediate re-resolve.
+1. **Dogfood feedback** on the not-yet-confirmed chat items above.
+2. **Chat: Chatterino "medium" items** (`chatterino-comparison.md`
+   verdict table): configurable mod buttons / timeout lengths, custom
+   commands with OBS variables (scene, stream time), search operators
+   (`from:`, `has:link`, `is:first-msg`), OBS-driven streamer mode, live
+   dots in the channel dropdowns (Helix `streams` batch / Kick
+   `livestream`). Then strategic: merged Twitch+YouTube+Kick timeline,
+   7TV cosmetics (paints, personal emotes via EventAPI), live emote-set
+   updates. YouTube follow-ups: OAuth own-channel path
+   (`liveBroadcasts.list`), OBS `StreamStateChanged` → immediate
+   re-resolve; watch Kick's Pusher → Centrifugo migration risk.
 3. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
 4. **Android runtime smoke** + release mechanics (version/changelog,
    `fastlane/metadata`, visual-QA pass).
