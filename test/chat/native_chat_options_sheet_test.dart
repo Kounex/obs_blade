@@ -63,6 +63,7 @@ void main() {
     );
     expect(find.text('Highlights'), findsOneWidget);
     expect(find.text('Mute words'), findsOneWidget);
+    expect(find.text('Search chat'), findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Badges'), findsOneWidget);
     expect(find.text('Event messages'), findsOneWidget);
@@ -402,6 +403,22 @@ void main() {
 
     await closeHiveInZone(tester);
   });
+
+  testWidgets(
+    'Search chat closes the options sheet and opens the search sheet',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
+      );
+
+      await tester.tap(find.text('Search chat'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Native chat options'), findsNothing);
+      expect(find.text('Search chat'), findsOneWidget);
+      expect(find.byKey(const Key('chat-search-field')), findsOneWidget);
+    },
+  );
 
   testWidgets('the button opens the sheet', (tester) async {
     await tester.pumpWidget(

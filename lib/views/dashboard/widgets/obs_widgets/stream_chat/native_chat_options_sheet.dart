@@ -14,6 +14,7 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import 'chat_search_sheet.dart';
 import 'debug_chat_samples.dart';
 import 'dialogs/channel_mod_sheet.dart';
 import 'native_chat_appearance.dart';
@@ -117,13 +118,15 @@ enum _OptionsPage {
 }
 
 /// Options for the native chat engines. Root lists short groups; each
-/// drills into a sub-page (page-swap, no nested Navigator). Appearance +
-/// Highlights (self-mention/keyword row wash) + Mute words (drops
-/// matching rows entirely) are common to every engine; Twitch
-/// additionally gets Emotes + per-category Badges + Event messages; Kick
-/// additionally gets Emotes + a single-toggle Badges page (`badge_type`
-/// values are unverified free-strings, so there is no stable catalog to
-/// build per-category rows from) + Event messages.
+/// drills into a sub-page (page-swap, no nested Navigator) — except
+/// "Search chat", which closes this sheet and opens the dedicated
+/// [ChatSearchSheet] instead (an action, not a settings page). Appearance
+/// + Highlights (self-mention/keyword row wash) + Mute words (drops
+/// matching rows entirely) + Search chat are common to every engine;
+/// Twitch additionally gets Emotes + per-category Badges + Event
+/// messages; Kick additionally gets Emotes + a single-toggle Badges page
+/// (`badge_type` values are unverified free-strings, so there is no
+/// stable catalog to build per-category rows from) + Event messages.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
@@ -273,6 +276,15 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           label: 'Mute words',
           subtitle: 'Hide messages containing certain words',
           onTap: () => this._open(_OptionsPage.muteWords),
+        ),
+        this._navRow(
+          context,
+          label: 'Search chat',
+          subtitle: 'Find messages or names in the buffered history',
+          onTap: () {
+            Navigator.of(context).pop();
+            showChatSearchSheet(context, chatType: this.widget.chatType);
+          },
         ),
         if (this._isTwitch) ...[
           this._navRow(
