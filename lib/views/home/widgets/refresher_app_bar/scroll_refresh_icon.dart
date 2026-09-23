@@ -72,7 +72,7 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
   @override
   Widget build(BuildContext context) {
     HomeStore homeStore = GetIt.instance<HomeStore>();
-    double barStretchOffset = MediaQuery.sizeOf(context).height / 15;
+    double barStretchOffset = MediaQuery.sizeOf(context).height / 8;
 
     /// Themed indicator (was hardcoded white/black which clashed with
     /// custom themes): highlight-colored pill with a contrast-aware arrow

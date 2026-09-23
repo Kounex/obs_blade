@@ -19,6 +19,7 @@ import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
+import '../../utils/styling_helper.dart';
 import 'widgets/dialogs/save_edit_connection.dart';
 import 'widgets/command_failure_toast.dart';
 import 'widgets/reconnect_toast.dart';
@@ -169,7 +170,7 @@ class _DashboardViewState extends State<DashboardView> {
                       defaultValue: false,
                     )
                     ? const NeverScrollableScrollPhysics()
-                    : const ClampingScrollPhysics(),
+                    : StylingHelper.platformAwareScrollPhysics,
                 controller:
                     ModalRoute.of(context)!.settings.arguments
                         as ScrollController,
