@@ -12,6 +12,7 @@ import 'package:obs_blade/utils/chat_highlight_helper.dart';
 import 'package:obs_blade/utils/chat_mute_helper.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 
+import 'dialogs/mod_action_sheet.dart';
 import 'dialogs/youtube_mod_action_sheet.dart';
 import 'dialogs/youtube_user_card_sheet.dart';
 import 'native_chat_appearance.dart';
@@ -57,6 +58,28 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
     this.setState(() => this._modTargetMessageId = messageId);
     try {
       await showYouTubeModActionSheet(this.context, message);
+    } finally {
+      if (this.mounted) {
+        this.setState(() => this._modTargetMessageId = null);
+      }
+    }
+  }
+
+  /// Read-only long-press (not a moderator/signed out): Copy only — there
+  /// is nothing to reply with here (YouTube reads work signed-out).
+  Future<void> _openReadOnlyActions(String messageId) async {
+    final index = this._store.messages.indexWhere(
+      (message) => message.id == messageId,
+    );
+    if (index < 0) return;
+    final message = this._store.messages[index];
+    this.setState(() => this._modTargetMessageId = messageId);
+    try {
+      await showMessageActionSheet(
+        this.context,
+        authorName: message.authorName ?? 'this user',
+        messageText: message.copyText,
+      );
     } finally {
       if (this.mounted) {
         this.setState(() => this._modTargetMessageId = null);
@@ -232,7 +255,8 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
 
         /// Signed-in users get the mod long-press — YouTube has no cheap
         /// mod lookup, so a non-mod's action 403s into the snackbar
-        /// (plan §7).
+        /// (plan §7). Signed-out/read-only viewers still get a
+        /// Copy-only long-press via [_openReadOnlyActions].
         final canModerate = this._store.canWrite;
 
         /// Appearance toggles re-render in place (shared keys with the
@@ -292,9 +316,15 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                       settingsBox: settingsBox,
                       selfDisplayNames: [this._store.selfChannelTitle],
                       highlighted: this._modTargetMessageId == message.id,
-                      onMessageLongPress: message.isTombstoned || !canModerate
+                      onMessageLongPress: message.isTombstoned
                           ? null
-                          : () => this._openModActions(message.id),
+                          : (canModerate
+                                ? () => this._openModActions(message.id)
+                                : (message.copyText.isNotEmpty
+                                      ? () => this._openReadOnlyActions(
+                                          message.id,
+                                        )
+                                      : null)),
                       onAuthorTap: channelId == null
                           ? null
                           : () => showYouTubeUserCardSheet(

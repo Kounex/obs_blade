@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
@@ -7,6 +8,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/classes/twitch/eventsub/channel_chat_message.dart';
+import '../../../../../../utils/icons/jam_icons.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../chat_type_brand.dart';
@@ -38,26 +40,47 @@ Future<void> showModActionSheet(
   builder: (_) => ModActionSheet(
     event: event,
     onReply: onReply,
+    onCopy: () => copyMessageTextAndNotify(context, event.message.text),
     onFailure: (message) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message))),
   ),
 );
 
-/// Opens the lightweight message sheet for non-moderators: just the Reply
-/// action (mod users get [showModActionSheet] instead). [onReply] runs
-/// after the sheet pops.
+/// Opens the lightweight message sheet for non-moderators: Copy always,
+/// plus Reply when the account may write chat (mod users get
+/// [showModActionSheet] instead, which offers Copy too). [onReply] runs
+/// after the sheet pops; a null [onReply] (fully read-only viewers, incl.
+/// signed-out) just drops the Reply row — Copy still works for everyone.
+/// Engine-agnostic — reused by Twitch, Kick and YouTube's read-only path.
 Future<void> showMessageActionSheet(
   BuildContext context, {
   required String authorName,
-  required VoidCallback onReply,
+  required String messageText,
+  VoidCallback? onReply,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
   barrierDismissible: true,
   enableDrag: true,
   maxHeightFraction: 0.72,
-  builder: (_) => MessageActionSheet(authorName: authorName, onReply: onReply),
+  builder: (_) => MessageActionSheet(
+    authorName: authorName,
+    onReply: onReply,
+    onCopy: () => copyMessageTextAndNotify(context, messageText),
+  ),
 );
+
+/// Copies [text] to the clipboard and shows a brief confirmation snackbar
+/// hosted by [context] — shared by every engine's mod/message sheet. The
+/// snackbar has to be hosted by the caller's context (the chat view's,
+/// not the sheet's own) since the sheet route is already popped by the
+/// time this runs — same idiom as `onFailure`.
+void copyMessageTextAndNotify(BuildContext context, String text) {
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(const SnackBar(content: Text('Message copied')));
+}
 
 /// Timeout presets (label → seconds). Twitch caps at 2 weeks; these cover
 /// the common moderator ladder including a 1-minute quick hit.
@@ -93,10 +116,15 @@ class ModActionSheet extends StatefulWidget {
   /// actions. Runs after the sheet pops.
   final VoidCallback? onReply;
 
+  /// Copies the message text and confirms via snackbar. Always available
+  /// — copying never needs any capability.
+  final VoidCallback onCopy;
+
   const ModActionSheet({
     super.key,
     required this.event,
     required this.onFailure,
+    required this.onCopy,
     this.onReply,
   });
 
@@ -248,6 +276,18 @@ class _ModActionSheetState extends State<ModActionSheet> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: chatActionRowCard(
+            context,
+            icon: JamIcons.clipboard,
+            label: 'Copy message',
+            onTap: () {
+              Navigator.of(context).pop();
+              this.widget.onCopy();
+            },
+          ),
+        ),
         if (this.widget.onReply != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),
@@ -552,19 +592,26 @@ Widget chatActionRowCard(
   );
 }
 
-/// Lightweight message sheet for non-moderators — just the Reply action
-/// (mod users get [ModActionSheet] with Reply on top instead). Same card
-/// idiom via [chatActionRowCard].
+/// Lightweight message sheet for non-moderators — Copy always, plus
+/// Reply when [onReply] is set (mod users get [ModActionSheet] with both
+/// on top instead). A null [onReply] (fully read-only viewers, incl.
+/// signed-out) just drops that row — Copy still works for everyone. Same
+/// card idiom via [chatActionRowCard].
 class MessageActionSheet extends StatelessWidget {
   final String authorName;
 
-  /// Runs after the sheet pops (set reply target + focus the input).
-  final VoidCallback onReply;
+  /// Copies the message text and confirms via snackbar. Always available.
+  final VoidCallback onCopy;
+
+  /// Runs after the sheet pops (set reply target + focus the input). Null
+  /// when the account can't write chat — the Reply row is dropped then.
+  final VoidCallback? onReply;
 
   const MessageActionSheet({
     super.key,
     required this.authorName,
-    required this.onReply,
+    required this.onCopy,
+    this.onReply,
   });
 
   @override
@@ -586,15 +633,30 @@ class MessageActionSheet extends StatelessWidget {
             style: nativeChatSheetTitleStyle(context),
           ),
           const SizedBox(height: AppSpacing.sm),
-          chatActionRowCard(
-            context,
-            icon: CupertinoIcons.reply,
-            label: 'Reply',
-            onTap: () {
-              Navigator.of(context).pop();
-              this.onReply();
-            },
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: this.onReply == null ? 0.0 : AppSpacing.xs,
+            ),
+            child: chatActionRowCard(
+              context,
+              icon: JamIcons.clipboard,
+              label: 'Copy message',
+              onTap: () {
+                Navigator.of(context).pop();
+                this.onCopy();
+              },
+            ),
           ),
+          if (this.onReply != null)
+            chatActionRowCard(
+              context,
+              icon: CupertinoIcons.reply,
+              label: 'Reply',
+              onTap: () {
+                Navigator.of(context).pop();
+                this.onReply!();
+              },
+            ),
         ],
       ),
     );

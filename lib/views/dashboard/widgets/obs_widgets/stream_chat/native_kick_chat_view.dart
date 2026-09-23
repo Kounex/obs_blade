@@ -21,6 +21,7 @@ import 'native_chat_chrome.dart';
 
 import 'dialogs/kick_mod_action_sheet.dart';
 import 'dialogs/kick_user_card_sheet.dart';
+import 'dialogs/mod_action_sheet.dart';
 import 'pinned_chat_banner.dart';
 
 /// Native Kick chat timeline, driven by [KickChatStore]'s message buffer
@@ -29,7 +30,8 @@ import 'pinned_chat_banner.dart';
 /// [NativeYouTubeChatView]'s scroll/pin logic, pause chip and mod
 /// long-press: signed-in users get the reply/mod action sheet (Kick has
 /// no "am I a mod" lookup — a non-mod's action 403s honestly into the
-/// snackbar, docs/kick-chat-audit.md).
+/// snackbar, docs/kick-chat-audit.md); signed-out/anonymous viewers still
+/// get a Copy-only long-press sheet.
 class NativeKickChatView extends StatefulWidget {
   /// Fired after the mod sheet's Reply sets the target — the host docks
   /// the input and refocuses its field.
@@ -74,6 +76,28 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
           this._store.setReplyTarget(message);
           this.widget.onReplyTargetSet?.call();
         },
+      );
+    } finally {
+      if (this.mounted) {
+        this.setState(() => this._modTargetMessageId = null);
+      }
+    }
+  }
+
+  /// Read-only long-press (not signed in): Copy only — there's nothing to
+  /// reply/moderate with here (Kick reads are anonymous).
+  Future<void> _openReadOnlyActions(String messageId) async {
+    final index = this._store.messages.indexWhere(
+      (message) => message.id == messageId,
+    );
+    if (index < 0) return;
+    final message = this._store.messages[index];
+    this.setState(() => this._modTargetMessageId = messageId);
+    try {
+      await showMessageActionSheet(
+        this.context,
+        authorName: message.authorName,
+        messageText: message.content,
       );
     } finally {
       if (this.mounted) {
@@ -327,10 +351,11 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                       highlighted: this._modTargetMessageId == message.id,
                       onMessageLongPress:
                           message.isTombstoned ||
-                              !canWrite ||
                               message.type == KickChatMessageType.system
                           ? null
-                          : () => this._openModActions(message.id),
+                          : (canWrite
+                                ? () => this._openModActions(message.id)
+                                : () => this._openReadOnlyActions(message.id)),
                       onAuthorTap:
                           authorId == null ||
                               message.type == KickChatMessageType.system

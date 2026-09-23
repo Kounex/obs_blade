@@ -74,6 +74,13 @@ abstract class YouTubeChatMessage with _$YouTubeChatMessage {
   bool get isModerator => this.authorDetails?.isChatModerator ?? false;
   bool get isSponsor => this.authorDetails?.isChatSponsor ?? false;
   bool get isVerified => this.authorDetails?.isVerified ?? false;
+
+  /// Plain text worth copying to the clipboard — the same fallback chain
+  /// already used for search/highlight/mute matching. Empty for message
+  /// types with no meaningful text of their own (tier cards, member/poll
+  /// notices) — callers gate the Copy row on this being non-empty.
+  String get copyText =>
+      this.snippet.textMessageDetails?.messageText ?? this.displayText ?? '';
 }
 
 @Freezed(fromJson: true, toJson: false)

@@ -155,6 +155,26 @@ void main() {
     expect(find.byType(ModActionSheet), findsNothing);
   });
 
+  testWidgets('Copy message copies the text, closes the sheet and confirms', (
+    tester,
+  ) async {
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+
+    await openSheet(tester, event);
+    expect(find.text('Copy message'), findsOneWidget);
+
+    await tester.tap(find.text('Copy message'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ModActionSheet), findsNothing);
+    expect(find.text('Message copied'), findsOneWidget);
+
+    /// Drain the snackbar's dismiss timer so no timer outlives the test.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('Timeout… reveals presets; a preset times out with exact '
       'seconds', (tester) async {
     final event = chatMessage('m1', 'u1');
@@ -309,6 +329,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Message from @Useru1'), findsOneWidget);
+    expect(find.text('Copy message'), findsOneWidget);
     expect(find.text('Reply'), findsOneWidget);
     expect(find.text('Delete message'), findsNothing);
 
@@ -319,44 +340,55 @@ void main() {
     expect(find.byType(MessageActionSheet), findsNothing);
   });
 
-  testWidgets('read-only non-mod gets no sheet; tombstones stay inert', (
-    tester,
-  ) async {
-    /// Drop the write scope from the persisted auth — `canWriteChat` reads
-    /// the box live, nothing actionable for a non-mod then. No save():
-    /// the box serves this same in-memory instance on get(), and a Hive
-    /// write (real I/O) would never complete inside testWidgets' fake
-    /// async zone.
-    final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
-    final auth = authBox.get(TwitchAuth.kBoxKey)!;
-    auth.scopes = auth.scopes
-        .where((scope) => scope != 'user:write:chat')
-        .toList();
+  testWidgets(
+    'read-only non-mod gets a Copy-only sheet; tombstones stay inert',
+    (tester) async {
+      /// Drop the write scope from the persisted auth — `canWriteChat` reads
+      /// the box live, nothing actionable for a non-mod then. No save():
+      /// the box serves this same in-memory instance on get(), and a Hive
+      /// write (real I/O) would never complete inside testWidgets' fake
+      /// async zone.
+      final authBox = Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
+      final auth = authBox.get(TwitchAuth.kBoxKey)!;
+      auth.scopes = auth.scopes
+          .where((scope) => scope != 'user:write:chat')
+          .toList();
 
-    store.appendChatMessageForTest(chatMessage('m1', 'u1'));
-    store.selectedChannelId = 'chan-other';
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.selectedChannelId = 'chan-other';
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.longPress(find.textContaining('text m1'));
-    await tester.pumpAndSettle();
-    expect(find.text('Reply'), findsNothing);
-    expect(find.text('Delete message'), findsNothing);
+      await tester.longPress(find.textContaining('text m1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy message'), findsOneWidget);
+      expect(find.text('Reply'), findsNothing);
+      expect(find.text('Delete message'), findsNothing);
 
-    /// Back in a moderated channel but tombstoned — the tap keeps its
-    /// actor-reveal meaning instead of opening the sheet.
-    store.selectedChannelId = null;
-    store.applyModerationDelete('m1', 'Cool_Mod');
-    await tester.pump();
+      await tester.tap(find.text('Copy message'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MessageActionSheet), findsNothing);
+      expect(find.text('Message copied'), findsOneWidget);
 
-    await tester.tap(find.textContaining('text m1'));
-    await tester.pumpAndSettle();
-    expect(find.text('Delete message'), findsNothing);
-    expect(find.text("Cool_Mod deleted Useru1's message"), findsOneWidget);
-  });
+      /// Drain the snackbar's dismiss timer before continuing.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      /// Back in a moderated channel but tombstoned — the tap keeps its
+      /// actor-reveal meaning instead of opening the sheet.
+      store.selectedChannelId = null;
+      store.applyModerationDelete('m1', 'Cool_Mod');
+      await tester.pump();
+
+      await tester.tap(find.textContaining('text m1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete message'), findsNothing);
+      expect(find.text("Cool_Mod deleted Useru1's message"), findsOneWidget);
+    },
+  );
 
   testWidgets('Pin message asks before pinning when nothing is pinned yet', (
     tester,

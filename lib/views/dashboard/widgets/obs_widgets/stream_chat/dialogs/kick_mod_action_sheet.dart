@@ -6,6 +6,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/kick_chat.dart';
 import '../../../../../../types/classes/kick/kick_chat_message.dart';
+import '../../../../../../utils/icons/jam_icons.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../native_chat_chrome.dart';
 import 'mod_action_sheet.dart';
@@ -36,6 +37,7 @@ Future<void> showKickModActionSheet(
   builder: (_) => KickModActionSheet(
     message: message,
     onReply: onReply,
+    onCopy: () => copyMessageTextAndNotify(context, message.content),
     onFailure: (message) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message))),
@@ -72,10 +74,15 @@ class KickModActionSheet extends StatefulWidget {
   /// actions. Runs after the sheet pops.
   final VoidCallback? onReply;
 
+  /// Copies the message text and confirms via snackbar. Always available
+  /// — offered to any signed-in user, same as the moderation rows.
+  final VoidCallback onCopy;
+
   const KickModActionSheet({
     super.key,
     required this.message,
     required this.onFailure,
+    required this.onCopy,
     this.onReply,
   });
 
@@ -201,6 +208,18 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+          child: chatActionRowCard(
+            context,
+            icon: JamIcons.clipboard,
+            label: 'Copy message',
+            onTap: () {
+              Navigator.of(context).pop();
+              this.widget.onCopy();
+            },
+          ),
+        ),
         if (this.widget.onReply != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.xs),

@@ -80,14 +80,16 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
     }
   }
 
-  /// Non-mod long-press: a lightweight sheet with just the Reply action.
+  /// Non-mod long-press: Copy always, plus Reply when the account may
+  /// write chat (fully read-only viewers just get Copy).
   Future<void> _openReplyActions(ChatMessageEvent event) async {
     this.setState(() => this._modTargetMessageId = event.messageId);
     try {
       await showMessageActionSheet(
         this.context,
         authorName: event.chatterUserName,
-        onReply: () => this._replyTo(event),
+        messageText: event.message.text,
+        onReply: this._store.canWriteChat ? () => this._replyTo(event) : null,
       );
     } finally {
       if (this.mounted) {
@@ -508,9 +510,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                           ? null
                           : (this._store.canModerateSelectedChannel
                                 ? () => this._openModActions(event)
-                                : (this._store.canWriteChat
-                                      ? () => this._openReplyActions(event)
-                                      : null)),
+                                : () => this._openReplyActions(event)),
                     );
                   },
                 ),

@@ -315,17 +315,22 @@ void main() {
     expect(find.byType(KickChatMessageRow), findsOneWidget);
   });
 
-  testWidgets('signed out: long-press opens no mod sheet', (tester) async {
-    store.chatConnection = KickChatConnectionState.connected;
-    store.messages.add(kickMessage('m1'));
-    await tester.pumpWidget(wrap());
-    await tester.pump();
+  testWidgets(
+    'signed out: long-press opens a Copy-only sheet, not the mod sheet',
+    (tester) async {
+      store.chatConnection = KickChatConnectionState.connected;
+      store.messages.add(kickMessage('m1'));
+      await tester.pumpWidget(wrap());
+      await tester.pump();
 
-    await tester.longPress(find.textContaining('text m1'));
-    await tester.pumpAndSettle();
+      await tester.longPress(find.textContaining('text m1'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(KickModActionSheet), findsNothing);
-  });
+      expect(find.byType(KickModActionSheet), findsNothing);
+      expect(find.text('Copy message'), findsOneWidget);
+      expect(find.text('Reply'), findsNothing);
+    },
+  );
 
   testWidgets('signed in: long-press opens the reply/mod sheet', (
     tester,
@@ -341,6 +346,7 @@ void main() {
 
     expect(find.byType(KickModActionSheet), findsOneWidget);
     expect(find.text('Moderate Viewer1'), findsOneWidget);
+    expect(find.text('Copy message'), findsOneWidget);
     expect(find.text('Reply'), findsOneWidget);
     expect(find.text('Delete message'), findsOneWidget);
     expect(find.text('Timeout…'), findsOneWidget);

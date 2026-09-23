@@ -6,6 +6,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/youtube_chat.dart';
 import '../../../../../../types/classes/youtube/youtube_chat_message.dart';
+import '../../../../../../utils/icons/jam_icons.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../native_chat_chrome.dart';
 import 'mod_action_sheet.dart';
@@ -29,6 +30,7 @@ Future<void> showYouTubeModActionSheet(
   maxHeightFraction: 0.72,
   builder: (_) => YouTubeModActionSheet(
     message: message,
+    onCopy: () => copyMessageTextAndNotify(context, message.copyText),
     onFailure: (message) => ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message))),
@@ -56,10 +58,15 @@ class YouTubeModActionSheet extends StatefulWidget {
   /// [showYouTubeModActionSheet]).
   final void Function(String message) onFailure;
 
+  /// Copies the message text and confirms via snackbar. Always available
+  /// — offered to any signed-in user, same as the moderation rows.
+  final VoidCallback onCopy;
+
   const YouTubeModActionSheet({
     super.key,
     required this.message,
     required this.onFailure,
+    required this.onCopy,
   });
 
   @override
@@ -182,6 +189,19 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (this.widget.message.copyText.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: chatActionRowCard(
+              context,
+              icon: JamIcons.clipboard,
+              label: 'Copy message',
+              onTap: () {
+                Navigator.of(context).pop();
+                this.widget.onCopy();
+              },
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.xs),
           child: this._actionRow(

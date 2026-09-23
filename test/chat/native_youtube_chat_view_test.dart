@@ -172,17 +172,26 @@ void main() {
     expect(find.text('Spammer'), findsNothing);
   });
 
-  testWidgets('mod long-press chrome is absent when signed out', (
-    tester,
-  ) async {
-    store.chatConnection = YouTubeChatConnectionState.connected;
-    store.messages.add(ytMessage('m1'));
+  testWidgets(
+    'signed out: long-press opens a Copy-only sheet, not mod actions',
+    (tester) async {
+      store.chatConnection = YouTubeChatConnectionState.connected;
+      store.messages.add(ytMessage('m1'));
 
-    /// Signed out (reads work via the API key) — no mod chrome.
-    await tester.pumpWidget(wrap());
-    await tester.pump();
-    expect(find.byType(ChatRowLongPressListener), findsNothing);
-  });
+      /// Signed out (reads work via the API key) — long-press chrome is
+      /// still there (Copy always works), but it's the lightweight
+      /// message sheet, not the mod action sheet.
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+      expect(find.byType(ChatRowLongPressListener), findsOneWidget);
+
+      await tester.longPress(find.textContaining('text m1'));
+      await tester.pumpAndSettle();
+      expect(find.text('Copy message'), findsOneWidget);
+      expect(find.text('Delete message'), findsNothing);
+      expect(find.text('Ban'), findsNothing);
+    },
+  );
 
   testWidgets('mod long-press chrome appears when signed in', (tester) async {
     /// runAsync: the Hive write must not land in the fake-async zone (a
@@ -205,6 +214,12 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pump();
     expect(find.byType(ChatRowLongPressListener), findsOneWidget);
+
+    await tester.longPress(find.textContaining('text m1'));
+    await tester.pumpAndSettle();
+    expect(find.text('Copy message'), findsOneWidget);
+    expect(find.text('Delete message'), findsOneWidget);
+    expect(find.text('Ban'), findsOneWidget);
   });
 
   testWidgets(
