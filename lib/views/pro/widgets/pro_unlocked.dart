@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/button.dart';
 import '../../../shared/general/base/constrained_box.dart';
+import '../../../stores/pro_store.dart';
+import '../../../utils/pro_ids.dart';
 import '../../../utils/styling_helper.dart';
 
 /// Manage-subscription page of the platform the purchase ran through
@@ -21,10 +23,30 @@ Uri get _manageSubscriptionUri => Uri.parse(
 /// The already-Pro side of the paywall: thank-you + manage subscription.
 /// Doubles as the purchase-success state — the confetti controller plays
 /// on the not-Pro -> Pro edge (see pro_paywall.dart).
+///
+/// Hidden debug toggle: long-press the result icon to revert
+/// [ProStore.setDebugOverride] to false - lets a debug build (or a release
+/// build compiled with [kProReleaseTestUnlock]) undo the fake unlock
+/// without leaving this screen. A no-op if `isPro` is actually true via a
+/// real purchase (`boughtPro`), same as the paywall's own long-press.
 class ProUnlockedView extends StatelessWidget {
+  final ProStore store;
   final ConfettiController confettiController;
 
-  const ProUnlockedView({super.key, required this.confettiController});
+  const ProUnlockedView({
+    super.key,
+    required this.store,
+    required this.confettiController,
+  });
+
+  void _revertDebugOverride(BuildContext context) {
+    this.store.setDebugOverride(false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('Debug Pro override disabled')),
+      );
+  }
 
   Future<void> _manageSubscription(BuildContext context) async {
     try {
@@ -72,10 +94,16 @@ class ProUnlockedView extends StatelessWidget {
                   StaggeredEntrance(
                     index: 0,
                     scaleFrom: 0.985,
-                    child: AnimatedResultIcon(
-                      type: AnimatedResultType.positive,
-                      size: 96.0,
-                      color: accent,
+                    child: GestureDetector(
+                      key: const Key('pro-unlocked-debug-revert'),
+                      onLongPress: kDebugMode || kProReleaseTestUnlock
+                          ? () => this._revertDebugOverride(context)
+                          : null,
+                      child: AnimatedResultIcon(
+                        type: AnimatedResultType.positive,
+                        size: 96.0,
+                        color: accent,
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),

@@ -286,6 +286,28 @@ void main() {
     expect(find.text('Restore purchases'), findsNothing);
   });
 
+  testWidgets('long-press on the result icon reverts the debug override '
+      '(kDebugMode or kProReleaseTestUnlock only)', (tester) async {
+    final ProStore store = newNoIoDebugStore()..init();
+    store.setDebugOverride(true);
+    await pumpPaywall(tester, store);
+
+    expect(find.text('Welcome to Pro'), findsOneWidget);
+
+    await tester.longPress(find.byKey(const Key('pro-unlocked-debug-revert')));
+    await tester.pump();
+
+    expect(store.debugOverride, isFalse);
+    expect(find.byType(SnackBar), findsOneWidget);
+
+    /// The override flips the paywall back to the not-Pro state
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(store.isPro, isFalse);
+    expect(find.text('Welcome to Pro'), findsNothing);
+
+    await flushSnackBar(tester);
+  });
+
   testWidgets('long-press on the hero logo toggles the debug override '
       '(kDebugMode or kProReleaseTestUnlock only - the gesture is not '
       'attached in an ordinary release build)', (tester) async {
