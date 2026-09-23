@@ -236,4 +236,158 @@ void main() {
       );
     });
   });
+
+  group('zero-width flags', () {
+    test('7TV flags & 1 marks zero-width', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          json.encode({
+            'emotes': [
+              {
+                'name': 'RainTime',
+                'flags': 1,
+                'data': {
+                  'host': {'url': '//cdn.7tv.app/emote/a'},
+                },
+              },
+              {
+                'name': 'Plain',
+                'flags': 0,
+                'data': {
+                  'host': {'url': '//cdn.7tv.app/emote/b'},
+                },
+              },
+            ],
+          }),
+          200,
+        ),
+      );
+      final emotes = await ThirdPartyEmoteService(
+        client: client,
+      ).fetchSevenTvGlobal();
+      expect(emotes['RainTime']!.zeroWidth, isTrue);
+      expect(emotes['Plain']!.zeroWidth, isFalse);
+    });
+
+    test('BTTV overlays come from the fixed list', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          json.encode([
+            {'id': '1', 'code': 'SantaHat'},
+            {'id': '2', 'code': 'FeelsGoodMan'},
+          ]),
+          200,
+        ),
+      );
+      final emotes = await ThirdPartyEmoteService(
+        client: client,
+      ).fetchBttvGlobal();
+      expect(emotes['SantaHat']!.zeroWidth, isTrue);
+      expect(emotes['FeelsGoodMan']!.zeroWidth, isFalse);
+    });
+  });
+
+  group('FrankerFaceZ', () {
+    /// Shape of the live `/v1/set/global` payload (2026-09-24), trimmed.
+    final globalBody = {
+      'default_sets': [3],
+      'sets': {
+        '3': {
+          'emoticons': [
+            {
+              'name': 'ZrehplaR',
+              'modifier': false,
+              'modifier_flags': 0,
+              'urls': {
+                '1': 'https://cdn.frankerfacez.com/emote/9/1',
+                '2': 'https://cdn.frankerfacez.com/emote/9/2',
+              },
+            },
+            {
+              'name': 'ffzHyper',
+              'modifier': true,
+              'modifier_flags': 2048,
+              'urls': {'1': 'https://cdn.frankerfacez.com/emote/h/1'},
+            },
+            {
+              'name': 'ffzHat',
+              'modifier': true,
+              'modifier_flags': 0,
+              'urls': {'1': '//cdn.frankerfacez.com/emote/hat/1'},
+            },
+            {
+              'name': 'Wiggle',
+              'urls': {'1': 'https://cdn.frankerfacez.com/emote/w/1'},
+              'animated': {
+                '1': 'https://cdn.frankerfacez.com/emote/w/animated/1.webp',
+              },
+            },
+          ],
+        },
+        '999': {
+          'emoticons': [
+            {
+              'name': 'OptIn',
+              'urls': {'1': 'https://cdn.frankerfacez.com/emote/o/1'},
+            },
+          ],
+        },
+      },
+    };
+
+    test('global: default sets only, 2x, animated, modifiers', () async {
+      final client = MockClient((request) async {
+        expect(
+          request.url.toString(),
+          'https://api.frankerfacez.com/v1/set/global',
+        );
+        return http.Response(json.encode(globalBody), 200);
+      });
+      final emotes = await ThirdPartyEmoteService(
+        client: client,
+      ).fetchFfzGlobal();
+
+      expect(emotes.keys, unorderedEquals(['ZrehplaR', 'ffzHat', 'Wiggle']));
+      expect(
+        emotes['ZrehplaR']!.imageUrl,
+        'https://cdn.frankerfacez.com/emote/9/2',
+      );
+      expect(emotes['ffzHat']!.zeroWidth, isTrue);
+      expect(
+        emotes['ffzHat']!.imageUrl,
+        'https://cdn.frankerfacez.com/emote/hat/1',
+      );
+      expect(
+        emotes['Wiggle']!.imageUrl,
+        'https://cdn.frankerfacez.com/emote/w/animated/1.webp',
+      );
+    });
+
+    test('channel: the room set; 404 means no FFZ presence', () async {
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/404')) {
+          return http.Response('{}', 404);
+        }
+        return http.Response(
+          json.encode({
+            'room': {'set': 7},
+            'sets': {
+              '7': {
+                'emoticons': [
+                  {
+                    'name': 'ChanEmote',
+                    'urls': {'1': 'https://cdn.frankerfacez.com/emote/c/1'},
+                  },
+                ],
+              },
+            },
+          }),
+          200,
+        );
+      });
+      final service = ThirdPartyEmoteService(client: client);
+      expect((await service.fetchFfzChannel('71092938')).keys, ['ChanEmote']);
+      expect(await service.fetchFfzChannel('404'), isEmpty);
+    });
+  });
 }

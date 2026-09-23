@@ -146,8 +146,8 @@ enum SettingsKeys {
   /// Active by default
   TwitchChatBadgeOther,
 
-  /// [bool]: Render 7TV/BTTV emotes inline in the native Twitch chat
-  /// (fetches the public 7TV/BTTV catalogs on chat connect).
+  /// [bool]: Render 7TV/BTTV/FFZ emotes inline in the native Twitch chat
+  /// (fetches the public 7TV/BTTV/FFZ catalogs on chat connect).
   /// Active by default
   TwitchChatThirdPartyEmotes,
 

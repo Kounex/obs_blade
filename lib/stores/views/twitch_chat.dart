@@ -862,7 +862,7 @@ abstract class _TwitchChatStore with Store {
       GeneralHelper.advLog('Twitch badge fetch could not start - $e');
     }
 
-    /// Third-party emote catalogs (7TV/BTTV) — skipped entirely when the
+    /// Third-party emote catalogs (7TV/BTTV/FFZ) — skipped entirely when the
     /// user disabled them (no third-party contact at all). The whole block
     /// is guarded: a missing Settings box or store lookup must never break
     /// the chat connect.
@@ -1871,6 +1871,7 @@ abstract class _TwitchChatStore with Store {
     final broadcasterId = this.effectiveBroadcasterId;
     final login = this.effectiveBroadcasterLogin;
     if (this._backfilledBroadcasters.contains(broadcasterId)) return;
+
     /// Settings box may be closed in isolated store tests — no history.
     if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return;
     final enabled = Hive.box(

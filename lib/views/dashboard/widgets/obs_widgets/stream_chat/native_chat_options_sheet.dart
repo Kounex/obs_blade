@@ -215,10 +215,10 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                     : SettingsKeys.TwitchChatThirdPartyEmotes,
                 rowLabel: this._isKick
                     ? 'Third-party emotes (7TV)'
-                    : 'Third-party emotes (7TV/BTTV)',
+                    : 'Third-party emotes (7TV/BTTV/FFZ)',
                 description: this._isKick
                     ? 'Choose whether 7TV emotes render inline in chat.'
-                    : 'Choose whether 7TV and BTTV emotes render inline in '
+                    : 'Choose whether 7TV, BTTV and FFZ emotes render inline in '
                           'chat.',
               ),
               _OptionsPage.badges =>

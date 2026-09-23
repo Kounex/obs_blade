@@ -367,6 +367,21 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
     if (this.bttvChannelThrows != null) throw this.bttvChannelThrows!;
     return this.bttvChannel;
   }
+
+  Map<String, ThirdPartyEmote> ffzGlobal = const {};
+  Map<String, ThirdPartyEmote> ffzChannel = const {};
+  int ffzChannelCalls = 0;
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchFfzGlobal() async => this.ffzGlobal;
+
+  @override
+  Future<Map<String, ThirdPartyEmote>> fetchFfzChannel(
+    String broadcasterId,
+  ) async {
+    this.ffzChannelCalls++;
+    return this.ffzChannel;
+  }
 }
 
 class FakeTwitchEmoteService extends TwitchEmoteService {

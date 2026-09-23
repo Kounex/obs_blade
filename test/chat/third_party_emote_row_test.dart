@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
@@ -116,6 +117,47 @@ void main() {
 
     expect(richText.text.toPlainText(), 'Viewer: peepoHappy!');
     expect(collectWidgetSpans(richText.text), isEmpty);
+  });
+
+  testWidgets('a zero-width emote stacks on the preceding emote', (
+    tester,
+  ) async {
+    emoteStore.globalEmotes['peepoHappy'] = FakeThirdPartyEmoteService.peepo;
+    emoteStore.globalEmotes['RainTime'] = const ThirdPartyEmote(
+      name: 'RainTime',
+      imageUrl: 'https://cdn.7tv.app/emote/rain/2x.webp',
+      zeroWidth: true,
+    );
+
+    final richText = await pumpRow(tester, 'peepoHappy RainTime lol');
+
+    expect(richText.text.toPlainText(), 'Viewer: \u{FFFC} lol');
+    final stack = collectWidgetSpans(richText.text).single.child as Stack;
+    expect(
+      [
+        for (final layer in stack.children)
+          ((layer as Image).image as NetworkImage).url,
+      ],
+      [
+        FakeThirdPartyEmoteService.peepo.imageUrl,
+        'https://cdn.7tv.app/emote/rain/2x.webp',
+      ],
+    );
+  });
+
+  testWidgets('a zero-width emote with nothing under it renders inline', (
+    tester,
+  ) async {
+    emoteStore.globalEmotes['RainTime'] = const ThirdPartyEmote(
+      name: 'RainTime',
+      imageUrl: 'https://cdn.7tv.app/emote/rain/2x.webp',
+      zeroWidth: true,
+    );
+
+    final richText = await pumpRow(tester, 'wow RainTime');
+
+    expect(richText.text.toPlainText(), 'Viewer: wow \u{FFFC}');
+    expect(collectWidgetSpans(richText.text).single.child, isA<Image>());
   });
 
   testWidgets('spacing is preserved exactly', (tester) async {

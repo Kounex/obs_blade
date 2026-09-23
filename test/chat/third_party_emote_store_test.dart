@@ -208,4 +208,37 @@ void main() {
     expect(store.emoteImageUrl('peepoHappyy', broadcasterId: 'user-1'), isNull);
     expect(store.emoteImageUrl('', broadcasterId: 'user-1'), isNull);
   });
+
+  test(
+    'FFZ ranks below BTTV and 7TV on name ties; Kick skips FFZ channel',
+    () async {
+      service.ffzGlobal = {
+        'monkaS': const ThirdPartyEmote(
+          name: 'monkaS',
+          imageUrl: 'https://cdn.frankerfacez.com/emote/monka/2',
+        ),
+        'OnlyFfz': const ThirdPartyEmote(
+          name: 'OnlyFfz',
+          imageUrl: 'https://cdn.frankerfacez.com/emote/only/2',
+        ),
+      };
+      service.bttvGlobal = {
+        FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
+      };
+
+      await store.fetch(broadcasterId: 'user-1');
+      expect(
+        store.emoteImageUrl('monkaS', broadcasterId: 'user-1'),
+        FakeThirdPartyEmoteService.monka.imageUrl,
+      );
+      expect(
+        store.emoteImageUrl('OnlyFfz', broadcasterId: 'user-1'),
+        'https://cdn.frankerfacez.com/emote/only/2',
+      );
+      expect(service.ffzChannelCalls, 1);
+
+      await store.fetch(broadcasterId: '676', isKick: true);
+      expect(service.ffzChannelCalls, 1);
+    },
+  );
 }

@@ -11,6 +11,7 @@ import 'package:obs_blade/utils/icons/jam_icons.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/third_party_emote_spans.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 /// Kick sends a per-chatter chat color in `identity.color` (`#RRGGBB`).
@@ -255,29 +256,13 @@ class KickChatMessageRow extends StatelessWidget {
         )) {
       return chatLinkTextSpans(context, text);
     }
-    final emoteStore =
-        this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>();
-    final tokens = text.split(' ');
-    return [
-      for (var i = 0; i < tokens.length; i++) ...[
-        if (i > 0) const TextSpan(text: ' '),
-        if (emoteStore.emoteImageUrl(tokens[i], broadcasterId: broadcasterId)
-            case final imageUrl?)
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Image.network(
-              imageUrl,
-              height: this._emoteSize,
-              width: this._emoteSize,
-              fit: BoxFit.contain,
-              frameBuilder: chatImageFadeIn,
-              errorBuilder: (_, _, _) => Text(tokens[i]),
-            ),
-          )
-        else
-          ...chatLinkTextSpans(context, tokens[i]),
-      ],
-    ];
+    return thirdPartyEmoteTextSpans(
+      context,
+      text,
+      store: this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>(),
+      broadcasterId: broadcasterId,
+      emoteSize: this._emoteSize,
+    );
   }
 
   /// Tombstone treatment — the content stays visible but dims (same UX

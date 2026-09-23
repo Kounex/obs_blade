@@ -20,6 +20,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_n
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/third_party_emote_spans.dart';
 
 /// Opacity of backfilled history rows ([ChatMessageEvent.isHistorical]).
 const double kChatHistoryOpacity = 0.6;
@@ -30,7 +31,7 @@ String formatChatMessageTime(DateTime time) =>
     DateFormat.jm().format(time.toLocal());
 
 /// One chat line: role badges + colored author name + message text with
-/// inline emotes (first-party fragments and third-party 7TV/BTTV tokens),
+/// inline emotes (first-party fragments and third-party 7TV/BTTV/FFZ tokens),
 /// @mentions, reply previews, and first-message / notice accent chrome.
 class TwitchChatMessageRow extends StatelessWidget {
   final ChatMessageEvent event;
@@ -359,9 +360,9 @@ class TwitchChatMessageRow extends StatelessWidget {
   List<InlineSpan> _dimmedMessageSpans(BuildContext context) =>
       dimmedChatContentSpans(context, this._messageSpans(context));
 
-  /// Third-party emotes (7TV/BTTV) arrive as plain text — split on
-  /// spaces and swap known tokens for inline images, preserving spacing
-  /// exactly. Unknown tokens (and the toggle-off case) stay text / links.
+  /// Third-party emotes (7TV/BTTV/FFZ) arrive as plain text — see
+  /// [thirdPartyEmoteTextSpans]. Unknown tokens (and the toggle-off case)
+  /// stay text / links.
   List<InlineSpan> _textSpans(BuildContext context, String text) {
     if (!this.settingsBox.get(
       SettingsKeys.TwitchChatThirdPartyEmotes.name,
@@ -369,32 +370,13 @@ class TwitchChatMessageRow extends StatelessWidget {
     )) {
       return chatLinkTextSpans(context, text);
     }
-    final emoteStore =
-        this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>();
-    final tokens = text.split(' ');
-    return [
-      for (var i = 0; i < tokens.length; i++) ...[
-        if (i > 0) const TextSpan(text: ' '),
-        if (emoteStore.emoteImageUrl(
-              tokens[i],
-              broadcasterId: this.event.broadcasterUserId,
-            )
-            case final imageUrl?)
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Image.network(
-              imageUrl,
-              height: _emoteSize,
-              width: _emoteSize,
-              fit: BoxFit.contain,
-              frameBuilder: chatImageFadeIn,
-              errorBuilder: (_, _, _) => Text(tokens[i]),
-            ),
-          )
-        else
-          ...chatLinkTextSpans(context, tokens[i]),
-      ],
-    ];
+    return thirdPartyEmoteTextSpans(
+      context,
+      text,
+      store: this.emoteStore ?? GetIt.instance<ThirdPartyEmoteStore>(),
+      broadcasterId: this.event.broadcasterUserId,
+      emoteSize: _emoteSize,
+    );
   }
 
   /// Badge-less rows never change — an Observer that tracks nothing

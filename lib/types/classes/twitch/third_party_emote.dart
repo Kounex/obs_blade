@@ -1,4 +1,4 @@
-/// One third-party chat emote (7TV / BTTV): the token chatters type and
+/// One third-party chat emote (7TV / BTTV / FFZ): the token chatters type and
 /// the image to render in its place. Shared shape — each provider's
 /// payload is parsed into this by [ThirdPartyEmoteService] and the rest
 /// of the payload is dropped (plain class, no freezed: two fields, two
@@ -10,5 +10,14 @@ class ThirdPartyEmote {
   /// Mid-size image URL (animated where the provider has one).
   final String imageUrl;
 
-  const ThirdPartyEmote({required this.name, required this.imageUrl});
+  /// Overlay emote (7TV zero-width flag, BTTV's fixed overlay set, FFZ
+  /// image modifiers): drawn on top of the preceding emote instead of
+  /// next to it.
+  final bool zeroWidth;
+
+  const ThirdPartyEmote({
+    required this.name,
+    required this.imageUrl,
+    this.zeroWidth = false,
+  });
 }

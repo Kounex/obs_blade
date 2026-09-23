@@ -89,7 +89,7 @@ void main() {
 
     expect(find.text('CHANNEL'), findsOneWidget);
     expect(find.text('GLOBAL'), findsOneWidget);
-    expect(find.text('THIRD-PARTY (7TV/BTTV)'), findsOneWidget);
+    expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsOneWidget);
     expect(
       cellUrls(tester),
       unorderedEquals([
@@ -112,7 +112,7 @@ void main() {
     expect(cellUrls(tester), [kappaUrl]);
     expect(find.text('CHANNEL'), findsOneWidget);
     expect(find.text('GLOBAL'), findsNothing);
-    expect(find.text('THIRD-PARTY (7TV/BTTV)'), findsNothing);
+    expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsNothing);
   });
 
   testWidgets(
@@ -180,7 +180,7 @@ void main() {
       );
       expect(find.text('CHANNEL'), findsNothing);
       expect(find.text('GLOBAL'), findsNothing);
-      expect(find.text('THIRD-PARTY (7TV/BTTV)'), findsOneWidget);
+      expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsOneWidget);
 
       await tester.tap(find.text('Re-login'));
       await tester.pump();
@@ -203,7 +203,7 @@ void main() {
 
     await tester.pumpWidget(wrap(buildSheet()));
 
-    expect(find.text('THIRD-PARTY (7TV/BTTV)'), findsNothing);
+    expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsNothing);
     expect(find.text('CHANNEL'), findsOneWidget);
   });
 

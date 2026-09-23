@@ -7,7 +7,8 @@ part 'third_party_emotes.g.dart';
 
 class ThirdPartyEmoteStore = _ThirdPartyEmoteStore with _$ThirdPartyEmoteStore;
 
-/// Session-scoped cache of the third-party emote catalogs (7TV + BTTV):
+/// Session-scoped cache of the third-party emote catalogs (7TV + BTTV +
+/// FFZ):
 /// the shared global catalogs plus per-broadcaster channel catalogs
 /// (keyed by broadcaster for multi-chat). Refetched on every chat
 /// connect / channel switch, in-memory only — catalog failures degrade to
@@ -22,8 +23,8 @@ abstract class _ThirdPartyEmoteStore with Store {
   _ThirdPartyEmoteStore({ThirdPartyEmoteService? service})
     : _service = service ?? ThirdPartyEmoteService();
 
-  /// Merged global catalogs (emote name -> emote): BTTV applied first,
-  /// 7TV wins same-name ties.
+  /// Merged global catalogs (emote name -> emote): FFZ applied first,
+  /// then BTTV, 7TV wins same-name ties.
   final ObservableMap<String, ThirdPartyEmote> globalEmotes = ObservableMap();
 
   /// Per-broadcaster merged channel catalogs:
@@ -42,8 +43,12 @@ abstract class _ThirdPartyEmoteStore with Store {
   /// falls back to global cleanly; null when unknown (the message row
   /// renders the token as text then).
   String? emoteImageUrl(String token, {required String broadcasterId}) =>
-      this.channelEmotes[broadcasterId]?[token]?.imageUrl ??
-      this.globalEmotes[token]?.imageUrl;
+      this.emote(token, broadcasterId: broadcasterId)?.imageUrl;
+
+  /// Same lookup as [emoteImageUrl], returning the whole emote (the
+  /// message rows need [ThirdPartyEmote.zeroWidth]).
+  ThirdPartyEmote? emote(String token, {required String broadcasterId}) =>
+      this.channelEmotes[broadcasterId]?[token] ?? this.globalEmotes[token];
 
   /// Merged picker view for [broadcasterId] — its channel emotes win over
   /// the shared globals on name ties.
@@ -79,6 +84,15 @@ abstract class _ThirdPartyEmoteStore with Store {
             : this._service.fetchSevenTvChannel(broadcasterId),
         isKick ? '7tv-kick-channel' : '7tv-channel',
       ),
+
+      /// FFZ is Twitch-only for channels; its global set is shared.
+      this._tryFetch(this._service.fetchFfzGlobal(), 'ffz-global'),
+      isKick
+          ? Future.value(const <String, ThirdPartyEmote>{})
+          : this._tryFetch(
+              this._service.fetchFfzChannel(broadcasterId),
+              'ffz-channel',
+            ),
     ]);
 
     /// A newer fetch superseded this one — it owns the catalog (and
@@ -86,18 +100,26 @@ abstract class _ThirdPartyEmoteStore with Store {
     if (generation != this._fetchGeneration) return;
 
     /// Merge order decides precedence on name ties — later wins:
-    /// BTTV -> 7TV within each scope; the channel scope wins at lookup.
+    /// FFZ -> BTTV -> 7TV within each scope; the channel scope wins at
+    /// lookup.
+    final (bttvGlobal, sevenTvGlobal, bttvChannel, sevenTvChannel) = (
+      results[0],
+      results[1],
+      results[2],
+      results[3],
+    );
+    final (ffzGlobal, ffzChannel) = (results[4], results[5]);
     this.globalEmotes
       ..clear()
       ..addEntries([
-        for (final result in results.sublist(0, 2))
+        for (final result in [ffzGlobal, bttvGlobal, sevenTvGlobal])
           if (result != null) ...result.entries,
       ]);
 
     /// Only the fetched broadcaster's slot is replaced — other channels'
     /// catalogs (multi-chat) survive the refetch.
     this.channelEmotes[broadcasterId] = Map.fromEntries([
-      for (final result in results.sublist(2))
+      for (final result in [ffzChannel, bttvChannel, sevenTvChannel])
         if (result != null) ...result.entries,
     ]);
     this.catalogVersion++;

@@ -273,7 +273,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                           ], query),
                         ),
                       ],
-                      ('Third-party (7TV/BTTV)', thirdPartyEntries),
+                      ('Third-party (7TV/BTTV/FFZ)', thirdPartyEntries),
                     ].where((section) => section.$2.isNotEmpty).toList();
 
                     return ListView(

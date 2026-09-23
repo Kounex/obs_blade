@@ -71,7 +71,7 @@ void main() {
       find.text('Subs, raids, streaks, and similar system lines'),
       findsOneWidget,
     );
-    expect(find.text('Third-party emotes (7TV/BTTV)'), findsNothing);
+    expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsNothing);
     expect(find.text('Broadcaster'), findsNothing);
     expect(find.text('Subs & gifts'), findsNothing);
   });
@@ -151,10 +151,10 @@ void main() {
 
     await tester.tap(find.text('Emotes'));
     await tester.pumpAndSettle();
-    expect(find.text('Third-party emotes (7TV/BTTV)'), findsOneWidget);
+    expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsOneWidget);
 
     final emoteSwitch = find.descendant(
-      of: find.widgetWithText(ListTile, 'Third-party emotes (7TV/BTTV)'),
+      of: find.widgetWithText(ListTile, 'Third-party emotes (7TV/BTTV/FFZ)'),
       matching: find.byType(BaseAdaptiveSwitch),
     );
     await tester.tap(emoteSwitch);
@@ -266,7 +266,7 @@ void main() {
     await tester.tap(find.text('Emotes'));
     await tester.pumpAndSettle();
     expect(find.text('Third-party emotes (7TV)'), findsOneWidget);
-    expect(find.text('Third-party emotes (7TV/BTTV)'), findsNothing);
+    expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsNothing);
 
     final emoteSwitch = find.descendant(
       of: find.widgetWithText(ListTile, 'Third-party emotes (7TV)'),

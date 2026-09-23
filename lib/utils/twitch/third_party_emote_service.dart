@@ -17,8 +17,24 @@ class ThirdPartyEmoteException implements Exception {
       '${this.statusCode != null ? ' (status ${this.statusCode})' : ''}';
 }
 
-/// 7TV (v3) and BTTV (v3) emote catalogs — the global sets plus a
-/// channel's set. Both APIs are public, no auth.
+/// BTTV's overlay emotes — BTTV has no zero-width flag in its API, the
+/// set is fixed (same list Chatterino hardcodes in `BttvEmotes.cpp`).
+const Set<String> kBttvZeroWidthEmotes = {
+  'SoSnowy',
+  'IceCold',
+  'SantaHat',
+  'TopHat',
+  'ReinDeer',
+  'CandyCane',
+  'cvMask',
+  'cvHazmat',
+};
+
+/// 7TV active-emote flag bit for zero-width (`flags & 1`).
+const int kSevenTvZeroWidthFlag = 1;
+
+/// 7TV (v3), BTTV (v3) and FrankerFaceZ (v1) emote catalogs — the global
+/// sets plus a channel's set. All three APIs are public, no auth.
 ///
 /// [client] is injectable for tests — no real HTTP in unit tests.
 class ThirdPartyEmoteService {
@@ -90,6 +106,70 @@ class ThirdPartyEmoteService {
     };
   }
 
+  /// FrankerFaceZ global emotes — the sets listed in `default_sets` (the
+  /// response also carries opt-in sets that aren't global).
+  Future<Map<String, ThirdPartyEmote>> fetchFfzGlobal() async {
+    final body = await this._get(
+      Uri.parse('https://api.frankerfacez.com/v1/set/global'),
+    );
+    if (body is! Map<String, Object?>) return const {};
+    final defaults = body['default_sets'];
+    final sets = body['sets'];
+    if (defaults is! List || sets is! Map<String, Object?>) return const {};
+    return {for (final id in defaults) ...this._parseFfzSet(sets['$id'])};
+  }
+
+  /// FrankerFaceZ emotes of the Twitch channel with [broadcasterId] (its
+  /// room set). FFZ is Twitch-only — there is no Kick counterpart.
+  Future<Map<String, ThirdPartyEmote>> fetchFfzChannel(
+    String broadcasterId,
+  ) async {
+    final body = await this._get(
+      Uri.parse('https://api.frankerfacez.com/v1/room/id/$broadcasterId'),
+    );
+    if (body is! Map<String, Object?>) return const {};
+    final room = body['room'];
+    final sets = body['sets'];
+    if (room is! Map<String, Object?> || sets is! Map<String, Object?>) {
+      return const {};
+    }
+    return this._parseFfzSet(sets['${room['set']}']);
+  }
+
+  /// FFZ shape: `{ emoticons: [{ name, urls: {1,2,4}, animated?: {…},
+  /// modifier, modifier_flags }] }`. Animated emotes prefer the animated
+  /// URL map (WebP). Effect modifiers (`modifier_flags != 0`, e.g.
+  /// ffzHyper/ffzRainbow) transform the previous emote — not reproducible
+  /// here, so they're skipped (stay text); image modifiers overlay.
+  Map<String, ThirdPartyEmote> _parseFfzSet(Object? set) {
+    if (set is! Map<String, Object?>) return const {};
+    final emotes = set['emoticons'];
+    if (emotes is! List) return const {};
+    final parsed = <String, ThirdPartyEmote>{};
+    for (final emote in emotes) {
+      if (emote is! Map<String, Object?>) continue;
+      final name = emote['name'];
+      if (name is! String || name.isEmpty) continue;
+      final modifier = emote['modifier'] == true;
+      final modifierFlags = emote['modifier_flags'];
+      if (modifier && modifierFlags is num && modifierFlags != 0) continue;
+      String? pick(Object? urls) {
+        if (urls is! Map<String, Object?>) return null;
+        final url = urls['2'] ?? urls['1'];
+        return url is String && url.isNotEmpty ? url : null;
+      }
+
+      final url = pick(emote['animated']) ?? pick(emote['urls']);
+      if (url == null) continue;
+      parsed[name] = ThirdPartyEmote(
+        name: name,
+        imageUrl: url.startsWith('//') ? 'https:$url' : url,
+        zeroWidth: modifier,
+      );
+    }
+    return parsed;
+  }
+
   /// BTTV shape: flat `{ id, code }` entries; the CDN serves the animated
   /// variant when the emote has one.
   Map<String, ThirdPartyEmote> _parseBttvEmotes(Object? emotes) {
@@ -105,6 +185,7 @@ class ThirdPartyEmoteService {
       parsed[code] = ThirdPartyEmote(
         name: code,
         imageUrl: 'https://cdn.betterttv.net/emote/$id/2x',
+        zeroWidth: kBttvZeroWidthEmotes.contains(code),
       );
     }
     return parsed;
@@ -142,9 +223,11 @@ class ThirdPartyEmoteService {
       if (host is! Map<String, Object?>) continue;
       final url = host['url'];
       if (url is! String || url.isEmpty) continue;
+      final flags = emote['flags'];
       parsed[name] = ThirdPartyEmote(
         name: name,
         imageUrl: 'https:$url/2x.webp',
+        zeroWidth: flags is num && (flags.toInt() & kSevenTvZeroWidthFlag) != 0,
       );
     }
     return parsed;
