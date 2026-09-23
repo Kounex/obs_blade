@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/design/design.dart';
 import '../../../stores/pro_store.dart';
+import '../../../utils/pro_ids.dart';
 
 /// Paywall hero: the Pro bolt-in-squircle on the scene-tile color idiom
 /// (token-delta §2.2) - full-strength accent ring, weak accent tint fill,
@@ -12,7 +13,9 @@ import '../../../stores/pro_store.dart';
 ///
 /// Hidden debug toggle: long-press the logo to flip
 /// [ProStore.setDebugOverride] (grants the entitlement locally).
-/// `kDebugMode` only - the gesture isn't even attached in release builds.
+/// `kDebugMode` only, or a release build compiled with
+/// [kProReleaseTestUnlock] - the gesture isn't attached in an ordinary
+/// release build.
 class ProHero extends StatelessWidget {
   final ProStore store;
 
@@ -44,7 +47,7 @@ class ProHero extends StatelessWidget {
     return Column(
       children: [
         GestureDetector(
-          onLongPress: kDebugMode
+          onLongPress: kDebugMode || kProReleaseTestUnlock
               ? () => this._toggleDebugOverride(context)
               : null,
           child: Container(

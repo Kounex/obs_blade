@@ -174,7 +174,10 @@ as the two exposed actions.
 
 **Monetization (Pro):** native chat engines are gated behind the **Pro
 entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only
-override via long-press on the paywall hero). Product ids
+override via long-press on the paywall hero, also reachable in a release
+build compiled with `--dart-define=PRO_RELEASE_TEST_UNLOCK=true` —
+`kProReleaseTestUnlock` in `pro_ids.dart` — for dogfooding Pro-gated paths
+before the store products are purchasable). Product ids
 (`lib/utils/pro_ids.dart`): `pro_yearly` / `pro_monthly` (subs) +
 `pro_lifetime` (non-consumable) — **created + priced store-side**
 (2026-09, via `tool/provisioning/`; ASC submitted for review, Play

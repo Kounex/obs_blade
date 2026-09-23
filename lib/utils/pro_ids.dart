@@ -14,3 +14,14 @@ const Set<String> kProProductIds = {
 };
 
 bool isProProductId(String productId) => kProProductIds.contains(productId);
+
+/// Release-build testing escape hatch
+/// (`--dart-define=PRO_RELEASE_TEST_UNLOCK=true`): extends the hidden
+/// paywall long-press override ([ProStore.debugOverride]) — normally
+/// `kDebugMode`-only — to a release build too, so Pro-gated paths can be
+/// dogfooded on a release/TestFlight build before the store products are
+/// purchasable. Defaults false: a build without the define behaves exactly
+/// like today. Never pass this define for a build that reaches real users.
+const bool kProReleaseTestUnlock = bool.fromEnvironment(
+  'PRO_RELEASE_TEST_UNLOCK',
+);

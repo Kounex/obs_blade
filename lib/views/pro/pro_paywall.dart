@@ -21,7 +21,8 @@ import 'widgets/pro_unlocked.dart';
 ///   plays once on the not-Pro -> Pro edge
 ///
 /// Hidden debug toggle: long-press the hero logo (see pro_hero.dart) to
-/// flip [ProStore.setDebugOverride] - `kDebugMode` only.
+/// flip [ProStore.setDebugOverride] - `kDebugMode` only, or a release
+/// build compiled with `kProReleaseTestUnlock` (pro_ids.dart).
 class ProPaywallView extends StatefulWidget {
   /// Test seam - production uses the GetIt singleton
   final ProStore? store;

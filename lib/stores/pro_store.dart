@@ -9,6 +9,7 @@ import '../purchase_base.dart';
 import '../types/enums/hive_keys.dart';
 import '../types/enums/settings_keys.dart';
 import '../utils/general_helper.dart';
+import '../utils/pro_ids.dart';
 import '../utils/pro_product.dart';
 import '../utils/pro_purchase_service.dart';
 
@@ -49,13 +50,18 @@ abstract class _ProStore with Store {
   @observable
   bool boughtPro = false;
 
-  /// Debug-only unlock (settings key `ProDebugOverride`) — consumed ONLY
-  /// under `kDebugMode` so it can never grant the entitlement in release.
+  /// Debug-only unlock (settings key `ProDebugOverride`) — consumed under
+  /// `kDebugMode`, or a release build compiled with [kProReleaseTestUnlock]
+  /// for dogfooding Pro-gated paths before the store products are
+  /// purchasable. A release build without that define can never grant the
+  /// entitlement this way.
   @observable
   bool debugOverride = false;
 
   @computed
-  bool get isPro => this.boughtPro || (kDebugMode && this.debugOverride);
+  bool get isPro =>
+      this.boughtPro ||
+      ((kDebugMode || kProReleaseTestUnlock) && this.debugOverride);
 
   /// Live store products for the paywall — empty while the products don't
   /// exist store-side (graceful placeholder state), loaded lazily via
@@ -303,11 +309,11 @@ abstract class _ProStore with Store {
     }
   }
 
-  /// Hidden debug toggle (paywall long-press / settings) — no-op in
-  /// release builds.
+  /// Hidden debug toggle (paywall long-press / settings) — no-op in a
+  /// release build unless compiled with [kProReleaseTestUnlock].
   @action
   void setDebugOverride(bool value) {
-    if (!kDebugMode) return;
+    if (!kDebugMode && !kProReleaseTestUnlock) return;
     Hive.box<dynamic>(
       HiveKeys.Settings.name,
     ).put(SettingsKeys.ProDebugOverride.name, value);

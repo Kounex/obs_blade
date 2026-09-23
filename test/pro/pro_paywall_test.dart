@@ -287,9 +287,8 @@ void main() {
   });
 
   testWidgets('long-press on the hero logo toggles the debug override '
-      '(kDebugMode only - the gesture is not attached in release builds)', (
-    tester,
-  ) async {
+      '(kDebugMode or kProReleaseTestUnlock only - the gesture is not '
+      'attached in an ordinary release build)', (tester) async {
     final ProStore store = newNoIoDebugStore()..init();
     await pumpPaywall(tester, store);
 
