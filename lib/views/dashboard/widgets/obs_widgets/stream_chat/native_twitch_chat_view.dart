@@ -19,6 +19,8 @@ import 'chat_notice_visibility.dart';
 import 'chat_tombstone.dart';
 import 'dialogs/chat_user_card_sheet.dart';
 import 'dialogs/mod_action_sheet.dart';
+import '../../../../../models/enums/chat_type.dart';
+import 'chat_type_brand.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 import 'pinned_chat_banner.dart';
@@ -365,6 +367,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
               for (final item in visibleItems)
                 if (item is ChatMessageEvent) item.messageId,
             };
+            final historyDivider = chatHistoryDividerIndex([
+              for (final item in visibleItems)
+                item is ChatMessageEvent && item.isHistorical,
+            ]);
+            final brand = ChatType.Twitch.brandColor!;
             final alternate = NativeChatAppearance.alternateRows(settingsBox);
             final tinted = alternate
                 ? this._rowParity.assign([
@@ -520,9 +527,19 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                                 ? () => this._openModActions(event)
                                 : () => this._openReplyActions(event)),
                     );
-                    return tinted == null
+                    final withTint = tinted == null
                         ? row
                         : chatAlternateRow(context, tinted[index], row);
+                    return index == historyDivider
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ChatHistoryDivider(color: brand),
+                              withTint,
+                            ],
+                          )
+                        : withTint;
                   },
                 ),
                 if (!this._pinnedToBottom)

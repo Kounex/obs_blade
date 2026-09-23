@@ -57,6 +57,13 @@ abstract class YouTubeChatMessage with _$YouTubeChatMessage {
     @JsonKey(includeFromJson: false, includeToJson: false)
     @Default(false)
     bool isTombstoned,
+
+    /// Part of the first poll page after connecting (recent history the
+    /// API returns up front) — rendered dimmed, with the "New messages"
+    /// divider after the last one.
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(false)
+    bool isHistorical,
   }) = _YouTubeChatMessage;
 
   factory YouTubeChatMessage.fromJson(Map<String, Object?> json) =>

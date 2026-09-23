@@ -21,7 +21,9 @@ mixin _$KickChatMessage {
 /// `MessageDeletedEvent` / `UserBannedEvent` arrives for this message
 /// (dim + marker, same UX as Twitch/YouTube); never part of the
 /// wire JSON.
-@JsonKey(includeFromJson: false, includeToJson: false) bool get isTombstoned;
+@JsonKey(includeFromJson: false, includeToJson: false) bool get isTombstoned;/// Loaded by the join backfill (sent before this session joined) —
+/// rendered dimmed, with the "New messages" divider after the last one.
+@JsonKey(includeFromJson: false, includeToJson: false) bool get isHistorical;
 /// Create a copy of KickChatMessage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -32,16 +34,16 @@ $KickChatMessageCopyWith<KickChatMessage> get copyWith => _$KickChatMessageCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is KickChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.chatroomId, chatroomId) || other.chatroomId == chatroomId)&&(identical(other.content, content) || other.content == content)&&(identical(other.type, type) || other.type == type)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sender, sender) || other.sender == sender)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is KickChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.chatroomId, chatroomId) || other.chatroomId == chatroomId)&&(identical(other.content, content) || other.content == content)&&(identical(other.type, type) || other.type == type)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sender, sender) || other.sender == sender)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned)&&(identical(other.isHistorical, isHistorical) || other.isHistorical == isHistorical));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,chatroomId,content,type,createdAt,sender,metadata,isTombstoned);
+int get hashCode => Object.hash(runtimeType,id,chatroomId,content,type,createdAt,sender,metadata,isTombstoned,isHistorical);
 
 @override
 String toString() {
-  return 'KickChatMessage(id: $id, chatroomId: $chatroomId, content: $content, type: $type, createdAt: $createdAt, sender: $sender, metadata: $metadata, isTombstoned: $isTombstoned)';
+  return 'KickChatMessage(id: $id, chatroomId: $chatroomId, content: $content, type: $type, createdAt: $createdAt, sender: $sender, metadata: $metadata, isTombstoned: $isTombstoned, isHistorical: $isHistorical)';
 }
 
 
@@ -52,7 +54,7 @@ abstract mixin class $KickChatMessageCopyWith<$Res>  {
   factory $KickChatMessageCopyWith(KickChatMessage value, $Res Function(KickChatMessage) _then) = _$KickChatMessageCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'chatroom_id') int? chatroomId, String content,@JsonKey(fromJson: KickChatMessageType.parse) KickChatMessageType type,@JsonKey(name: 'created_at') DateTime? createdAt, KickChatSender? sender,@JsonKey(fromJson: KickChatMessageMetadata.parse) KickChatMessageMetadata? metadata,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned
+ String id,@JsonKey(name: 'chatroom_id') int? chatroomId, String content,@JsonKey(fromJson: KickChatMessageType.parse) KickChatMessageType type,@JsonKey(name: 'created_at') DateTime? createdAt, KickChatSender? sender,@JsonKey(fromJson: KickChatMessageMetadata.parse) KickChatMessageMetadata? metadata,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned,@JsonKey(includeFromJson: false, includeToJson: false) bool isHistorical
 });
 
 
@@ -69,7 +71,7 @@ class _$KickChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of KickChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? chatroomId = freezed,Object? content = null,Object? type = null,Object? createdAt = freezed,Object? sender = freezed,Object? metadata = freezed,Object? isTombstoned = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? chatroomId = freezed,Object? content = null,Object? type = null,Object? createdAt = freezed,Object? sender = freezed,Object? metadata = freezed,Object? isTombstoned = null,Object? isHistorical = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,chatroomId: freezed == chatroomId ? _self.chatroomId : chatroomId // ignore: cast_nullable_to_non_nullable
@@ -79,6 +81,7 @@ as KickChatMessageType,createdAt: freezed == createdAt ? _self.createdAt : creat
 as DateTime?,sender: freezed == sender ? _self.sender : sender // ignore: cast_nullable_to_non_nullable
 as KickChatSender?,metadata: freezed == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
 as KickChatMessageMetadata?,isTombstoned: null == isTombstoned ? _self.isTombstoned : isTombstoned // ignore: cast_nullable_to_non_nullable
+as bool,isHistorical: null == isHistorical ? _self.isHistorical : isHistorical // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -176,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'chatroom_id')  int? chatroomId,  String content, @JsonKey(fromJson: KickChatMessageType.parse)  KickChatMessageType type, @JsonKey(name: 'created_at')  DateTime? createdAt,  KickChatSender? sender, @JsonKey(fromJson: KickChatMessageMetadata.parse)  KickChatMessageMetadata? metadata, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'chatroom_id')  int? chatroomId,  String content, @JsonKey(fromJson: KickChatMessageType.parse)  KickChatMessageType type, @JsonKey(name: 'created_at')  DateTime? createdAt,  KickChatSender? sender, @JsonKey(fromJson: KickChatMessageMetadata.parse)  KickChatMessageMetadata? metadata, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned, @JsonKey(includeFromJson: false, includeToJson: false)  bool isHistorical)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _KickChatMessage() when $default != null:
-return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.createdAt,_that.sender,_that.metadata,_that.isTombstoned);case _:
+return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.createdAt,_that.sender,_that.metadata,_that.isTombstoned,_that.isHistorical);case _:
   return orElse();
 
 }
@@ -197,10 +200,10 @@ return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.created
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'chatroom_id')  int? chatroomId,  String content, @JsonKey(fromJson: KickChatMessageType.parse)  KickChatMessageType type, @JsonKey(name: 'created_at')  DateTime? createdAt,  KickChatSender? sender, @JsonKey(fromJson: KickChatMessageMetadata.parse)  KickChatMessageMetadata? metadata, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'chatroom_id')  int? chatroomId,  String content, @JsonKey(fromJson: KickChatMessageType.parse)  KickChatMessageType type, @JsonKey(name: 'created_at')  DateTime? createdAt,  KickChatSender? sender, @JsonKey(fromJson: KickChatMessageMetadata.parse)  KickChatMessageMetadata? metadata, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned, @JsonKey(includeFromJson: false, includeToJson: false)  bool isHistorical)  $default,) {final _that = this;
 switch (_that) {
 case _KickChatMessage():
-return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.createdAt,_that.sender,_that.metadata,_that.isTombstoned);case _:
+return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.createdAt,_that.sender,_that.metadata,_that.isTombstoned,_that.isHistorical);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -217,10 +220,10 @@ return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.created
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'chatroom_id')  int? chatroomId,  String content, @JsonKey(fromJson: KickChatMessageType.parse)  KickChatMessageType type, @JsonKey(name: 'created_at')  DateTime? createdAt,  KickChatSender? sender, @JsonKey(fromJson: KickChatMessageMetadata.parse)  KickChatMessageMetadata? metadata, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'chatroom_id')  int? chatroomId,  String content, @JsonKey(fromJson: KickChatMessageType.parse)  KickChatMessageType type, @JsonKey(name: 'created_at')  DateTime? createdAt,  KickChatSender? sender, @JsonKey(fromJson: KickChatMessageMetadata.parse)  KickChatMessageMetadata? metadata, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned, @JsonKey(includeFromJson: false, includeToJson: false)  bool isHistorical)?  $default,) {final _that = this;
 switch (_that) {
 case _KickChatMessage() when $default != null:
-return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.createdAt,_that.sender,_that.metadata,_that.isTombstoned);case _:
+return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.createdAt,_that.sender,_that.metadata,_that.isTombstoned,_that.isHistorical);case _:
   return null;
 
 }
@@ -232,7 +235,7 @@ return $default(_that.id,_that.chatroomId,_that.content,_that.type,_that.created
 @JsonSerializable(createToJson: false)
 
 class _KickChatMessage extends KickChatMessage {
-  const _KickChatMessage({required this.id, @JsonKey(name: 'chatroom_id') this.chatroomId, this.content = '', @JsonKey(fromJson: KickChatMessageType.parse) this.type = KickChatMessageType.message, @JsonKey(name: 'created_at') this.createdAt, this.sender, @JsonKey(fromJson: KickChatMessageMetadata.parse) this.metadata, @JsonKey(includeFromJson: false, includeToJson: false) this.isTombstoned = false}): super._();
+  const _KickChatMessage({required this.id, @JsonKey(name: 'chatroom_id') this.chatroomId, this.content = '', @JsonKey(fromJson: KickChatMessageType.parse) this.type = KickChatMessageType.message, @JsonKey(name: 'created_at') this.createdAt, this.sender, @JsonKey(fromJson: KickChatMessageMetadata.parse) this.metadata, @JsonKey(includeFromJson: false, includeToJson: false) this.isTombstoned = false, @JsonKey(includeFromJson: false, includeToJson: false) this.isHistorical = false}): super._();
   factory _KickChatMessage.fromJson(Map<String, dynamic> json) => _$KickChatMessageFromJson(json);
 
 @override final  String id;
@@ -249,6 +252,9 @@ class _KickChatMessage extends KickChatMessage {
 /// (dim + marker, same UX as Twitch/YouTube); never part of the
 /// wire JSON.
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isTombstoned;
+/// Loaded by the join backfill (sent before this session joined) —
+/// rendered dimmed, with the "New messages" divider after the last one.
+@override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isHistorical;
 
 /// Create a copy of KickChatMessage
 /// with the given fields replaced by the non-null parameter values.
@@ -260,16 +266,16 @@ _$KickChatMessageCopyWith<_KickChatMessage> get copyWith => __$KickChatMessageCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _KickChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.chatroomId, chatroomId) || other.chatroomId == chatroomId)&&(identical(other.content, content) || other.content == content)&&(identical(other.type, type) || other.type == type)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sender, sender) || other.sender == sender)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _KickChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.chatroomId, chatroomId) || other.chatroomId == chatroomId)&&(identical(other.content, content) || other.content == content)&&(identical(other.type, type) || other.type == type)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sender, sender) || other.sender == sender)&&(identical(other.metadata, metadata) || other.metadata == metadata)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned)&&(identical(other.isHistorical, isHistorical) || other.isHistorical == isHistorical));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,chatroomId,content,type,createdAt,sender,metadata,isTombstoned);
+int get hashCode => Object.hash(runtimeType,id,chatroomId,content,type,createdAt,sender,metadata,isTombstoned,isHistorical);
 
 @override
 String toString() {
-  return 'KickChatMessage(id: $id, chatroomId: $chatroomId, content: $content, type: $type, createdAt: $createdAt, sender: $sender, metadata: $metadata, isTombstoned: $isTombstoned)';
+  return 'KickChatMessage(id: $id, chatroomId: $chatroomId, content: $content, type: $type, createdAt: $createdAt, sender: $sender, metadata: $metadata, isTombstoned: $isTombstoned, isHistorical: $isHistorical)';
 }
 
 
@@ -280,7 +286,7 @@ abstract mixin class _$KickChatMessageCopyWith<$Res> implements $KickChatMessage
   factory _$KickChatMessageCopyWith(_KickChatMessage value, $Res Function(_KickChatMessage) _then) = __$KickChatMessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'chatroom_id') int? chatroomId, String content,@JsonKey(fromJson: KickChatMessageType.parse) KickChatMessageType type,@JsonKey(name: 'created_at') DateTime? createdAt, KickChatSender? sender,@JsonKey(fromJson: KickChatMessageMetadata.parse) KickChatMessageMetadata? metadata,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned
+ String id,@JsonKey(name: 'chatroom_id') int? chatroomId, String content,@JsonKey(fromJson: KickChatMessageType.parse) KickChatMessageType type,@JsonKey(name: 'created_at') DateTime? createdAt, KickChatSender? sender,@JsonKey(fromJson: KickChatMessageMetadata.parse) KickChatMessageMetadata? metadata,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned,@JsonKey(includeFromJson: false, includeToJson: false) bool isHistorical
 });
 
 
@@ -297,7 +303,7 @@ class __$KickChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of KickChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? chatroomId = freezed,Object? content = null,Object? type = null,Object? createdAt = freezed,Object? sender = freezed,Object? metadata = freezed,Object? isTombstoned = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? chatroomId = freezed,Object? content = null,Object? type = null,Object? createdAt = freezed,Object? sender = freezed,Object? metadata = freezed,Object? isTombstoned = null,Object? isHistorical = null,}) {
   return _then(_KickChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,chatroomId: freezed == chatroomId ? _self.chatroomId : chatroomId // ignore: cast_nullable_to_non_nullable
@@ -307,6 +313,7 @@ as KickChatMessageType,createdAt: freezed == createdAt ? _self.createdAt : creat
 as DateTime?,sender: freezed == sender ? _self.sender : sender // ignore: cast_nullable_to_non_nullable
 as KickChatSender?,metadata: freezed == metadata ? _self.metadata : metadata // ignore: cast_nullable_to_non_nullable
 as KickChatMessageMetadata?,isTombstoned: null == isTombstoned ? _self.isTombstoned : isTombstoned // ignore: cast_nullable_to_non_nullable
+as bool,isHistorical: null == isHistorical ? _self.isHistorical : isHistorical // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

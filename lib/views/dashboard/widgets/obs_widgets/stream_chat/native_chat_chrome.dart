@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../utils/styling_helper.dart';
+import 'native_chat_appearance.dart' show readableNameColor;
 
 /// Compact LIVE / Mod chip used in the add-chat picker and the native
 /// chat header — same visual language in both places.
@@ -325,4 +326,52 @@ class NativeChatSheetScaffold extends StatelessWidget {
       ],
     );
   }
+}
+
+/// "── New messages ──" marker between backfilled history and the first
+/// message that arrived live (Kick's own WebView chat does the same).
+/// Lines take the platform [color]; the label sits in the same tint.
+class ChatHistoryDivider extends StatelessWidget {
+  final Color color;
+
+  const ChatHistoryDivider({super.key, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final line = Expanded(
+      child: Container(height: 1.0, color: this.color.withValues(alpha: 0.7)),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+      child: Row(
+        children: [
+          line,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            child: Text(
+              'New messages',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: readableNameColor(
+                  this.color,
+                  Theme.of(context).cardColor,
+                ),
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          line,
+        ],
+      ),
+    );
+  }
+}
+
+/// Index in a timeline where the [ChatHistoryDivider] goes: right after
+/// the last history row, but only once a live row follows it (no divider
+/// while history is all there is). -1 = no divider.
+int chatHistoryDividerIndex(List<bool> isHistorical) {
+  final last = isHistorical.lastIndexOf(true);
+  if (last < 0 || last == isHistorical.length - 1) return -1;
+  return last + 1;
 }

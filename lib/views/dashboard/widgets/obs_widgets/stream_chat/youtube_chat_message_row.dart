@@ -306,7 +306,13 @@ class YouTubeChatMessageRow extends StatelessWidget {
         ],
       ),
     );
-    return this.message.isTombstoned ? ChatTombstoneFade(child: row) : row;
+    if (this.message.isTombstoned) return ChatTombstoneFade(child: row);
+
+    /// Backfilled history reads a step quieter than live chat (same as
+    /// the Twitch row).
+    return this.message.isHistorical
+        ? Opacity(opacity: kChatHistoryOpacity, child: row)
+        : row;
   }
 
   /// Tier-colored money card (Super Chat with comment / Super Sticker).

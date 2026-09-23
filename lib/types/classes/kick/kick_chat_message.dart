@@ -81,6 +81,12 @@ abstract class KickChatMessage with _$KickChatMessage {
     @JsonKey(includeFromJson: false, includeToJson: false)
     @Default(false)
     bool isTombstoned,
+
+    /// Loaded by the join backfill (sent before this session joined) —
+    /// rendered dimmed, with the "New messages" divider after the last one.
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(false)
+    bool isHistorical,
   }) = _KickChatMessage;
 
   factory KickChatMessage.fromJson(Map<String, Object?> json) =>

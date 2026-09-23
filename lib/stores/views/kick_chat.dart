@@ -684,7 +684,7 @@ abstract class _KickChatStore with Store {
       if (this.messages.any((existing) => existing.id == message.id)) {
         continue;
       }
-      this.messages.add(message);
+      this.messages.add(message.copyWith(isHistorical: true));
     }
     this._trimMessages();
   }

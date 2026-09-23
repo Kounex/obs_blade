@@ -14,6 +14,8 @@ import 'package:obs_blade/utils/youtube_target.dart';
 import 'dialogs/mod_action_sheet.dart';
 import 'dialogs/youtube_mod_action_sheet.dart';
 import 'dialogs/youtube_user_card_sheet.dart';
+import '../../../../../models/enums/chat_type.dart';
+import 'chat_type_brand.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 import 'youtube_chat_message_row.dart';
@@ -314,6 +316,10 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                   ),
                 )
                 .toList();
+            final historyDivider = chatHistoryDividerIndex([
+              for (final message in visibleItems) message.isHistorical,
+            ]);
+            final brand = ChatType.YouTube.brandColor!;
             final tinted = NativeChatAppearance.alternateRows(settingsBox)
                 ? this._rowParity.assign([
                     for (final message in visibleItems) message.id,
@@ -364,9 +370,19 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                               fallbackAvatarUrl: message.authorProfileImageUrl,
                             ),
                     );
-                    return tinted == null
+                    final withTint = tinted == null
                         ? row
                         : chatAlternateRow(context, tinted[index], row);
+                    return index == historyDivider
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ChatHistoryDivider(color: brand),
+                              withTint,
+                            ],
+                          )
+                        : withTint;
                   },
                 ),
                 if (awaitingStream)

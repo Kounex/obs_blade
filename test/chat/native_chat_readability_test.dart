@@ -8,6 +8,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 
@@ -137,5 +138,38 @@ void main() {
       final opacity = tester.widget<Opacity>(find.byType(Opacity).first);
       expect(opacity.opacity, kChatHistoryOpacity);
     });
+  });
+
+  group('chatHistoryDividerIndex', () {
+    test('after the last history row, once a live row follows', () {
+      expect(chatHistoryDividerIndex([true, true, false, false]), 2);
+    });
+
+    test('no divider with only history, only live, or nothing', () {
+      expect(chatHistoryDividerIndex([true, true]), -1);
+      expect(chatHistoryDividerIndex([false, false]), -1);
+      expect(chatHistoryDividerIndex([]), -1);
+    });
+  });
+
+  testWidgets('ChatHistoryDivider draws platform-colored lines', (
+    tester,
+  ) async {
+    const brand = Color(0xFF53FC18);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: ChatHistoryDivider(color: brand)),
+      ),
+    );
+    expect(find.text('New messages'), findsOneWidget);
+    final lines = tester
+        .widgetList<Container>(find.byType(Container))
+        .where((c) => c.color != null)
+        .toList();
+    expect(lines, hasLength(2));
+    expect(
+      lines.first.color!.toARGB32() & 0xFFFFFF,
+      brand.toARGB32() & 0xFFFFFF,
+    );
   });
 }

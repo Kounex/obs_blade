@@ -18,7 +18,10 @@ mixin _$YouTubeChatMessage {
  String get id; YouTubeChatMessageSnippet get snippet; YouTubeChatAuthorDetails? get authorDetails;/// Local lifecycle flag — set by the chat store when a `tombstone`
 /// arrives for this message (dim + marker, same UX as Twitch);
 /// never part of the API JSON.
-@JsonKey(includeFromJson: false, includeToJson: false) bool get isTombstoned;
+@JsonKey(includeFromJson: false, includeToJson: false) bool get isTombstoned;/// Part of the first poll page after connecting (recent history the
+/// API returns up front) — rendered dimmed, with the "New messages"
+/// divider after the last one.
+@JsonKey(includeFromJson: false, includeToJson: false) bool get isHistorical;
 /// Create a copy of YouTubeChatMessage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +32,16 @@ $YouTubeChatMessageCopyWith<YouTubeChatMessage> get copyWith => _$YouTubeChatMes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is YouTubeChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.snippet, snippet) || other.snippet == snippet)&&(identical(other.authorDetails, authorDetails) || other.authorDetails == authorDetails)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is YouTubeChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.snippet, snippet) || other.snippet == snippet)&&(identical(other.authorDetails, authorDetails) || other.authorDetails == authorDetails)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned)&&(identical(other.isHistorical, isHistorical) || other.isHistorical == isHistorical));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,snippet,authorDetails,isTombstoned);
+int get hashCode => Object.hash(runtimeType,id,snippet,authorDetails,isTombstoned,isHistorical);
 
 @override
 String toString() {
-  return 'YouTubeChatMessage(id: $id, snippet: $snippet, authorDetails: $authorDetails, isTombstoned: $isTombstoned)';
+  return 'YouTubeChatMessage(id: $id, snippet: $snippet, authorDetails: $authorDetails, isTombstoned: $isTombstoned, isHistorical: $isHistorical)';
 }
 
 
@@ -49,7 +52,7 @@ abstract mixin class $YouTubeChatMessageCopyWith<$Res>  {
   factory $YouTubeChatMessageCopyWith(YouTubeChatMessage value, $Res Function(YouTubeChatMessage) _then) = _$YouTubeChatMessageCopyWithImpl;
 @useResult
 $Res call({
- String id, YouTubeChatMessageSnippet snippet, YouTubeChatAuthorDetails? authorDetails,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned
+ String id, YouTubeChatMessageSnippet snippet, YouTubeChatAuthorDetails? authorDetails,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned,@JsonKey(includeFromJson: false, includeToJson: false) bool isHistorical
 });
 
 
@@ -66,12 +69,13 @@ class _$YouTubeChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of YouTubeChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? snippet = null,Object? authorDetails = freezed,Object? isTombstoned = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? snippet = null,Object? authorDetails = freezed,Object? isTombstoned = null,Object? isHistorical = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,snippet: null == snippet ? _self.snippet : snippet // ignore: cast_nullable_to_non_nullable
 as YouTubeChatMessageSnippet,authorDetails: freezed == authorDetails ? _self.authorDetails : authorDetails // ignore: cast_nullable_to_non_nullable
 as YouTubeChatAuthorDetails?,isTombstoned: null == isTombstoned ? _self.isTombstoned : isTombstoned // ignore: cast_nullable_to_non_nullable
+as bool,isHistorical: null == isHistorical ? _self.isHistorical : isHistorical // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -178,10 +182,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  YouTubeChatMessageSnippet snippet,  YouTubeChatAuthorDetails? authorDetails, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  YouTubeChatMessageSnippet snippet,  YouTubeChatAuthorDetails? authorDetails, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned, @JsonKey(includeFromJson: false, includeToJson: false)  bool isHistorical)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _YouTubeChatMessage() when $default != null:
-return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned);case _:
+return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned,_that.isHistorical);case _:
   return orElse();
 
 }
@@ -199,10 +203,10 @@ return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  YouTubeChatMessageSnippet snippet,  YouTubeChatAuthorDetails? authorDetails, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  YouTubeChatMessageSnippet snippet,  YouTubeChatAuthorDetails? authorDetails, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned, @JsonKey(includeFromJson: false, includeToJson: false)  bool isHistorical)  $default,) {final _that = this;
 switch (_that) {
 case _YouTubeChatMessage():
-return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned);case _:
+return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned,_that.isHistorical);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -219,10 +223,10 @@ return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned);c
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  YouTubeChatMessageSnippet snippet,  YouTubeChatAuthorDetails? authorDetails, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  YouTubeChatMessageSnippet snippet,  YouTubeChatAuthorDetails? authorDetails, @JsonKey(includeFromJson: false, includeToJson: false)  bool isTombstoned, @JsonKey(includeFromJson: false, includeToJson: false)  bool isHistorical)?  $default,) {final _that = this;
 switch (_that) {
 case _YouTubeChatMessage() when $default != null:
-return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned);case _:
+return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned,_that.isHistorical);case _:
   return null;
 
 }
@@ -234,7 +238,7 @@ return $default(_that.id,_that.snippet,_that.authorDetails,_that.isTombstoned);c
 @JsonSerializable(createToJson: false)
 
 class _YouTubeChatMessage extends YouTubeChatMessage {
-  const _YouTubeChatMessage({required this.id, required this.snippet, this.authorDetails, @JsonKey(includeFromJson: false, includeToJson: false) this.isTombstoned = false}): super._();
+  const _YouTubeChatMessage({required this.id, required this.snippet, this.authorDetails, @JsonKey(includeFromJson: false, includeToJson: false) this.isTombstoned = false, @JsonKey(includeFromJson: false, includeToJson: false) this.isHistorical = false}): super._();
   factory _YouTubeChatMessage.fromJson(Map<String, dynamic> json) => _$YouTubeChatMessageFromJson(json);
 
 @override final  String id;
@@ -244,6 +248,10 @@ class _YouTubeChatMessage extends YouTubeChatMessage {
 /// arrives for this message (dim + marker, same UX as Twitch);
 /// never part of the API JSON.
 @override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isTombstoned;
+/// Part of the first poll page after connecting (recent history the
+/// API returns up front) — rendered dimmed, with the "New messages"
+/// divider after the last one.
+@override@JsonKey(includeFromJson: false, includeToJson: false) final  bool isHistorical;
 
 /// Create a copy of YouTubeChatMessage
 /// with the given fields replaced by the non-null parameter values.
@@ -255,16 +263,16 @@ _$YouTubeChatMessageCopyWith<_YouTubeChatMessage> get copyWith => __$YouTubeChat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YouTubeChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.snippet, snippet) || other.snippet == snippet)&&(identical(other.authorDetails, authorDetails) || other.authorDetails == authorDetails)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _YouTubeChatMessage&&(identical(other.id, id) || other.id == id)&&(identical(other.snippet, snippet) || other.snippet == snippet)&&(identical(other.authorDetails, authorDetails) || other.authorDetails == authorDetails)&&(identical(other.isTombstoned, isTombstoned) || other.isTombstoned == isTombstoned)&&(identical(other.isHistorical, isHistorical) || other.isHistorical == isHistorical));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,snippet,authorDetails,isTombstoned);
+int get hashCode => Object.hash(runtimeType,id,snippet,authorDetails,isTombstoned,isHistorical);
 
 @override
 String toString() {
-  return 'YouTubeChatMessage(id: $id, snippet: $snippet, authorDetails: $authorDetails, isTombstoned: $isTombstoned)';
+  return 'YouTubeChatMessage(id: $id, snippet: $snippet, authorDetails: $authorDetails, isTombstoned: $isTombstoned, isHistorical: $isHistorical)';
 }
 
 
@@ -275,7 +283,7 @@ abstract mixin class _$YouTubeChatMessageCopyWith<$Res> implements $YouTubeChatM
   factory _$YouTubeChatMessageCopyWith(_YouTubeChatMessage value, $Res Function(_YouTubeChatMessage) _then) = __$YouTubeChatMessageCopyWithImpl;
 @override @useResult
 $Res call({
- String id, YouTubeChatMessageSnippet snippet, YouTubeChatAuthorDetails? authorDetails,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned
+ String id, YouTubeChatMessageSnippet snippet, YouTubeChatAuthorDetails? authorDetails,@JsonKey(includeFromJson: false, includeToJson: false) bool isTombstoned,@JsonKey(includeFromJson: false, includeToJson: false) bool isHistorical
 });
 
 
@@ -292,12 +300,13 @@ class __$YouTubeChatMessageCopyWithImpl<$Res>
 
 /// Create a copy of YouTubeChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? snippet = null,Object? authorDetails = freezed,Object? isTombstoned = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? snippet = null,Object? authorDetails = freezed,Object? isTombstoned = null,Object? isHistorical = null,}) {
   return _then(_YouTubeChatMessage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,snippet: null == snippet ? _self.snippet : snippet // ignore: cast_nullable_to_non_nullable
 as YouTubeChatMessageSnippet,authorDetails: freezed == authorDetails ? _self.authorDetails : authorDetails // ignore: cast_nullable_to_non_nullable
 as YouTubeChatAuthorDetails?,isTombstoned: null == isTombstoned ? _self.isTombstoned : isTombstoned // ignore: cast_nullable_to_non_nullable
+as bool,isHistorical: null == isHistorical ? _self.isHistorical : isHistorical // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

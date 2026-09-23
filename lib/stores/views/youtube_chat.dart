@@ -765,13 +765,23 @@ abstract class _YouTubeChatStore with Store {
 
       backoffMillis = 0;
       lastIntervalMillis = page.pollingIntervalMillis;
+
+      /// No cursor yet = this is the chat's first page, which YouTube
+      /// fills with recent history — mark it historical (dimmed + the
+      /// "New messages" divider after it).
+      final historyPage = buffer.nextPageToken == null;
       buffer.nextPageToken = page.nextPageToken;
       attached = true;
       runInAction(() {
         this.chatConnection = YouTubeChatConnectionState.connected;
         this.awaitingLiveStream = false;
         this.chatError = null;
-        this._applyPageMessages(label, page.messages);
+        this._applyPageMessages(
+          label,
+          historyPage
+              ? [for (final m in page.messages) m.copyWith(isHistorical: true)]
+              : page.messages,
+        );
       });
 
       if (page.offlineAt != null ||
