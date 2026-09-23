@@ -171,7 +171,15 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
       );
     }
 
-    return Column(mainAxisSize: MainAxisSize.min, children: rows);
+    /// Message rows assume the full row width they get from `ListView` in
+    /// the live feed (left-aligned content, self-mention wash spanning
+    /// edge to edge) - a plain Column's default center cross-axis would
+    /// instead shrink-wrap and center each row.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
   }
 
   List<Widget> _twitchResults(Box settingsBox) {
