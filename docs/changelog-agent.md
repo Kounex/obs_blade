@@ -2,6 +2,59 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 - Second polish batch (chat search alignment, sheet drag-back, haptics, paywall vortex mark, refresh icon timing)
+
+User feedback on the first batch (dogfooded), 5 more independently
+committed units:
+
+- **Chat** search results left-aligned (`1bb5e6df`): the results `Column`
+  relied on default center cross-axis alignment, so a message row with no
+  flex child (no reply line) shrink-wrapped to its own text width and
+  centered instead of spanning the sheet like the live feed. `stretch`
+  fixes it.
+- **Sheets** drag-to-dismiss can grow back mid-gesture (`750435a9`): the
+  overscroll tracker only listened for `OverscrollNotification` (pulling
+  further), but a reversed drag doesn't produce more overscroll - the
+  scroll view reports a normal `ScrollUpdateNotification` once pixels
+  move off the boundary, which the tracker never handled, so a sheet
+  could shrink but never grow back before release. Fixed by redirecting
+  that notification into growing the sheet and snapping the scroll
+  position back to the boundary. Root-caused via print-instrumenting the
+  actual notification stream during a reversal (an initial pointer-event-
+  based rewrite was tried and reverted - it depended on pointer/frame
+  interleaving that doesn't hold up against batched test gestures, and
+  likely not against real fast drags either). Regression test drives a
+  drag-then-reverse without releasing.
+- **Haptics** extended to more state-changing actions (`5ef02599`): every
+  dialog confirm/cancel app-wide (one fix in `BaseAdaptiveDialog`),
+  stream/record start-stop, record pause/resume, replay buffer
+  start-stop/save, studio-mode Transition, hotkey trigger. Audited via a
+  subagent survey of existing `HapticFeedback`/`Pressable(haptic:)` call
+  sites first to match the established vocabulary (light = state toggle,
+  medium = a heavier/destructive action).
+- **Pro paywall** vortex mark + badge (`f103e44c`): swapped the generic
+  bolt icon for the actual OBS Blade vortex glyph (extracted from the
+  app's own icon asset via luminance-based alpha keying against its solid
+  navy backdrop - no separate transparent source existed) tinted to the
+  theme accent, with a stacked gradient "PRO" badge at the bottom-right
+  corner. Verified via a throwaway `RenderRepaintBoundary.toImage()`
+  screenshot test (not a real device) - caught two real layout bugs this
+  way: the image needs `precacheImage`/`runAsync` in tests to actually
+  decode before capture, and `Positioned` (not `Align`) must anchor the
+  badge or it inflates the whole Stack's size.
+- **Home** pull-to-refresh icon fades in earlier (`6dc5e40c`): the old
+  exponential opacity curve didn't fully show until ~85% of the (now
+  longer, /8) arm threshold. Replaced with a directly-tunable eased ramp
+  that's fully visible by 80%, leaving the last 20% as the pre-existing
+  haptic+scale arm window.
+
+Full gate at wrap-up: `dart analyze lib/ test/` 0 errors (388 pre-existing
+baseline infos, same count as before this batch); `flutter test test/chat/
+test/websocket/ test/persistence/` 994/999 - the 4 known
+`mod_action_sheet_test.dart` flakes plus one instance of the known
+`state_ordering_test.dart` flake (both already documented below, confirmed
+unrelated).
+
 ## 2026-09-23 - Five-item polish batch (crossfade fix, scene preview sizing, release Pro-test unlock, benefit copy, em dash sweep)
 
 User-reported/requested batch, 5 independently committed units:

@@ -2,11 +2,11 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-23** (five-item
-polish batch — connect-mode crossfade fix, scene preview aspect-ratio fix,
-release-build Pro test unlock, Pro benefit copy rewrite, em dash sweep —
+Read this first after `AGENTS.md`. Last reset: **2026-09-23** (second
+polish batch — chat search alignment, sheet drag-back-to-grow fix, more
+haptic feedback, paywall vortex mark + badge, refresh icon fade timing —
 shipped and pushed, 5 commits. Details: `changelog-agent.md` 2026-09-23
-"Five-item polish batch").
+"Second polish batch").
 
 ## Handoff hygiene (read before editing this file)
 
@@ -57,43 +57,41 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Just closed: a 5-item user-requested polish batch** (NAS session,
-process tier S throughout). All 5 shipped, gated (analyze + targeted
-tests each), committed individually, and pushed
-(`09ce1e53..ddb96d4e`); full writeup: `changelog-agent.md` 2026-09-23
-"Five-item polish batch". Workstation pulled to `ddb96d4e` — **not yet
-built/installed** (no release build was made this session; the two
-UI fixes and the new Pro copy are worth seeing on-device before further
-work in these areas).
+**Just closed: a second user-requested polish batch** (NAS session,
+process tier S throughout), following up on dogfood feedback from the
+first batch. All 5 shipped, gated (analyze + targeted tests each),
+committed individually, and pushed (`1bb5e6df..6dc5e40c`); full writeup:
+`changelog-agent.md` 2026-09-23 "Second polish batch". Workstation pulled
+to `6dc5e40c` — **not yet built/installed** this session; all 5 items are
+worth a real on-device look, especially the two below flagged explicitly.
 
-1. **Connect-box crossfade** — fixed a real `AnimatedSwitcher` key-reuse
-   bug (rapid re-entry into the same mode rendered two panes on top of
-   each other). New regression test: `test/home/connect_box_crossfade_test.dart`.
-2. **Scene preview sizing** — pinned to a fixed `AspectRatio(16:9)` instead
-   of sizing from the fetched screenshot's own decoded dimensions. Two
-   direct repro attempts for a literal "overshoot" didn't reproduce one
-   (smooth monotonic growth instead) — the fix removes the resize
-   regardless. New test: `test/dashboard/scene_preview_aspect_ratio_test.dart`.
-   **Worth a real look on-device** to confirm this actually matches what
-   was seen, since the exact reported symptom wasn't reproduced in a
-   widget test.
-3. **Release-build Pro test unlock** — `--dart-define=PRO_RELEASE_TEST_UNLOCK=true`
-   extends the paywall long-press override to a release build (store
-   products aren't purchasable yet). Untested on a real release build this
-   session (compile-time constant, can't be exercised from a normal
-   `flutter test` run) — worth a release build + long-press check before
-   relying on it.
-4. **Pro benefit copy** — rewritten to cover Kick chat, multi-chat, wave-3
-   mod tooling, emotes/badges, search/highlight/mute (6 cards, up from 4).
-5. **Em dash sweep** — every user-facing string literal in `lib/` (UI text,
-   notices, in-app Logs messages) had its em dash replaced with a regular
-   hyphen. Comments/generated files untouched (out of scope - not app
-   text).
+1. **Chat search alignment** — results were centering instead of
+   left-aligning like the live feed; a `Column` cross-axis fix.
+2. **Sheet drag-to-dismiss can grow back mid-gesture** — a real, verified
+   bug (a reversed drag couldn't grow the sheet back before release,
+   only shrink it). Fixed in the shared `_SheetOverscroll`
+   (`lib/utils/modal_handler.dart`), affects every `enableDrag: true`
+   sheet app-wide. **Worth deliberately testing**: open any draggable
+   sheet (e.g. chat search), pull down partway, then drag back up
+   *without releasing* - it should now visibly grow back following your
+   finger.
+3. **More haptic feedback** — dialog confirm/cancel app-wide, stream/
+   record start-stop, record pause/resume, replay buffer start-stop/
+   save, studio-mode Transition, hotkey trigger.
+4. **Pro paywall vortex mark + badge** — real OBS Blade icon glyph
+   (extracted from the app's own icon asset) replaces the generic bolt,
+   with a stacked "PRO" badge. Only verified via an offscreen widget-test
+   screenshot, not a real device - **worth a look** to confirm the badge
+   position/size reads well at real scale and against the live theme
+   accent (test used a placeholder red, not the app's real default).
+5. **Refresh icon fade timing** — now fully visible by 80% of the pull
+   threshold instead of ~85%, and shows up much earlier in the pull.
 
 **Confirmed pre-existing, unrelated:** the 4 `mod_action_sheet_test.dart`
-hit-test-offset flakes (already documented in the audit-wave entry below
-this one in `changelog-agent.md`) — reproduced identically on the commit
-before this batch, so not a regression from this session's work.
+hit-test-offset flakes plus one instance of the `state_ordering_test.dart`
+flake (both already documented in the audit-wave entry below this one in
+`changelog-agent.md`) — same failures reproduce on the commit before this
+batch, so not a regression from this session's work.
 
 **Longer-running goal: 4.0 is shipped from `master`.** The 4.0 UI rework
 (full-app polish wave + custom-theme cleanup + dogfood-fix batches) merged
@@ -117,10 +115,9 @@ discard Play internal-track draft `3.3.0 (2026090701)`.
 
 **Immediate next threads:**
 
-1. **Dogfood this batch** — build + install on the workstation (release,
-   and once with `--dart-define=PRO_RELEASE_TEST_UNLOCK=true` to check the
-   paywall long-press unlock) to confirm items 2 and 3 above land as
-   intended.
+1. **Dogfood this batch** — build + install on the workstation, focused on
+   items 2 (sheet drag-back) and 4 (vortex mark + badge) above since
+   neither was verified on a real device or with the real theme.
 2. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
 3. **Android runtime smoke** (emulator/device) — toolchain builds since
    2026-09-07; confirm release AABs sign with the upload key
