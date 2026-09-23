@@ -174,7 +174,11 @@ path (slug == identity).
 highlighting (`ChatHighlightSelfMention` + `ChatHighlightKeywords`, shared
 matcher in `chat_highlight_helper.dart`), a client-side mute-word filter,
 chat search/filter over each engine's buffered history
-(`ChatSearchSheet`), and a "Copy message" long-press action available even
+(`ChatSearchSheet`), Chatterino-style extras (`docs/chatterino-comparison.md`:
+`@user`/emote autocomplete strip, timestamps / zebra rows / readable name
+colors, FFZ + zero-width emotes, highlighted/ignored users, `/regex/`
+entries, censor mode via `ChatFilterSettings`), and a "Copy message"
+long-press action available even
 to fully read-only viewers (`MessageActionSheet`, generalized from
 Twitch's non-mod sheet) all ship uniformly. Message rows carry
 screen-reader semantics — each row collapses into one

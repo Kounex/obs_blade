@@ -2,6 +2,52 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-24 - Chatterino comparison + YouTube channel-follow + six Chatterino ports
+
+Research session (Chatterino2 / Chatterino7 source + multi-platform
+YouTube tools) → `docs/chatterino-comparison.md`, then the YouTube fix and
+every "cheap, high-value" port from that doc, all on `master`, tier S:
+
+- **YouTube channel entries** (`1db0701c`): entries may be `@handle` /
+  `UC…` / channel URL (`lib/utils/youtube_target.dart`) instead of a
+  per-stream video id. `YouTubeLiveResolver` scrapes the channel's `/live`
+  page canonical (quota-free) → existing 1-unit `videos.list`; the store
+  re-checks on `kYouTubeLiveRecheckSchedule` after a stream ends and
+  reattaches to the next one (rows of the old stream stay as history).
+  WebView follows via `YouTubeWebLiveTracker`. **Live-verified gotchas:**
+  Dart's `http` gets the ~1.2 MB desktop page regardless of UA, the
+  canonical moves ~30 KB → ~700 KB deep with `Accept-Language`, and
+  offline channel pages emit it *after* `</head>` — hence the streaming
+  sliding-window scan with no head cutoff (the first two versions failed
+  the live smoke, unit tests alone didn't catch it). Unknown handle → 404
+  → terminal error. No Hive shape change.
+- **Twitch history backfill** (`5d6f8bbf`): `recent-messages.robotty.de`
+  (Chatterino's service) on join, IRC lines parsed into
+  `ChatMessageEvent` (`isHistorical`, dimmed), once per channel per
+  session, toggle `TwitchChatLoadHistory`. `test/flutter_test_config.dart`
+  now mocks that service's default client suite-wide. Live smoke: 180
+  real messages parsed, 0 fragment/text mismatches.
+- **Autocomplete** (`6ede3edf`): `@user` / `:emote` / bare-word chip strip
+  over `NativeChatInput` (`completionSource` seam, per-engine feeds in
+  `chat_completion_sources.dart`).
+- **Readability** (`895148bd`): timeline timestamps, stable zebra rows
+  (`ChatRowParity` — index parity strobes on eviction), readable name
+  colors (HSL lightness nudge to 3:1 contrast, default on).
+- **Emotes** (`8b4c9e73`): FFZ global + Twitch room sets (lowest tie
+  precedence), zero-width overlays (7TV `flags & 1`, BTTV fixed list, FFZ
+  image modifiers) stacked on the preceding emote.
+- **Highlights / ignores** (`7fb905fb`): highlighted + ignored user lists
+  (options sheet + long-press rows + Twitch user card), `/regex/` entries,
+  censor-to-`***` mute mode (`ChatFilterSettings`). The Twitch *mod*
+  sheet deliberately doesn't get the rows — adding them pushed its
+  existing rows off the 600px test viewport.
+
+Gates: `test/chat/` 1005 pass / 4 fail (the known pre-existing
+`mod_action_sheet_test.dart` hit-test flakes — reproduced identically on a
+stash of the pre-change tree); websocket/persistence/utils/pro pass (the
+known `state_ordering_test.dart` flake hit once, passed on rerun);
+`dart analyze lib` at the 143-info baseline. Not run on a device/sim.
+
 ## 2026-09-24 - Pro revert gesture + the sheet drag-back saga (3 debugging rounds) + connect-box sequential crossfade
 
 Follow-on dogfood feedback from the second polish batch, all on `master`,

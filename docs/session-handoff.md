@@ -2,12 +2,10 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-24** (Pro revert
-gesture + the sheet drag-back saga — three real bugs found and fixed in
-sequence, each caught by dogfooding the previous fix on the physical
-device — + connect-box sequential crossfade + refresh-icon tuning,
-shipped and pushed, 10 commits. Details: `changelog-agent.md` 2026-09-24
-"Pro revert gesture + the sheet drag-back saga...").
+Read this first after `AGENTS.md`. Last reset: **2026-09-24** (Chatterino
+comparison research + YouTube channel-follow + six Chatterino ports into
+native chat, 7 commits, pushed. Details: `changelog-agent.md` 2026-09-24
+"Chatterino comparison + YouTube channel-follow...").
 
 ## Handoff hygiene (read before editing this file)
 
@@ -58,51 +56,25 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Just closed: dogfood-driven follow-up to the second polish batch** (NAS
-session, process tier S throughout, every round built + installed to the
-physical device and re-tested before the next). All 10 commits pushed
-(`faa1b87b..499c37af`); full writeup: `changelog-agent.md` 2026-09-24
-"Pro revert gesture + the sheet drag-back saga...". Workstation is on
-`499c37af` too (built/installed/launched this session).
+**Just closed: Chatterino-inspired chat wave** (NAS session, tier S). All
+7 commits pushed (`12fa6d86..7fb905fb` + this handoff). Research +
+verdicts: [`chatterino-comparison.md`](chatterino-comparison.md).
 
-**Confirmed working by the user, live on device, this session:**
-- Sheet drag-to-dismiss: grows back on a mid-gesture reversal (not just
-  shrinks), the drag no longer dies after the first reversal step, and
-  fling-to-dismiss now works from *inside* a sheet's scrollable content
-  (previously only worked from a handle area outside it). Three separate
-  root causes found and fixed in `lib/utils/modal_handler.dart`'s
-  `_SheetOverscroll` - see the changelog entry for the blow-by-blow, worth
-  reading before touching that class again.
-- Home connect-mode crossfade: sequential fade (full fade-out, then full
-  fade-in) instead of a simultaneous cross-dissolve.
-- Home refresh icon: fades in starting at 25% of the pull threshold, full
-  by 80%.
+**Shipped, verified by tests + live network smokes, NOT yet on a device:**
+- YouTube **channel entries** (`@handle` / `UC…` / channel URL) follow the
+  current stream and auto-roll over to the next; WebView follows too.
+  Worth a dogfood pass: add `@LofiGirl` (always live) and an offline
+  channel, check the "isn't live right now · Check now" states.
+- Twitch recent-message **history backfill** on join (dimmed rows).
+- **Autocomplete** strip (`@user`, `:emote`, bare word) above the input.
+- Appearance: **timestamps**, **alternating rows**, **readable name
+  colors** (default on — eyeball a dark-blue chatter on dark theme).
+- **FFZ emotes** + **zero-width** overlay emotes.
+- Highlighted / **ignored users**, `/regex/` entries, censor mode.
 
-**Shipped but not explicitly re-confirmed by the user this session**
-(implementation verified via tests, not called out again in feedback):
-- Pro paywall vortex mark + stacked "PRO" badge (from the prior batch) -
-  still only verified via an offscreen widget-test screenshot with a
-  placeholder accent color, never confirmed against the real theme/device.
-- The new revert gesture on `ProUnlockedView` (long-press the result icon
-  to undo the debug/test unlock) - shipped this session, not tried live.
-Worth a deliberate look at both next session if they haven't come up.
-
-**Confirmed pre-existing, unrelated:** the 4 `mod_action_sheet_test.dart`
-hit-test-offset flakes (documented in the audit-wave entry further below
-in `changelog-agent.md`) - reproduce identically on commits before this
-session's changes, so not a regression from this work. Also saw one
-`test/chat/automod_queue_sheet_test.dart` "loading" WebSocketException
-this session - passed cleanly in isolation immediately after, looked like
-the same infra-level flake class as the documented ones, not a real
-failure.
-
-**Longer-running goal: 4.0 is shipped from `master`.** The 4.0 UI rework
-(full-app polish wave + custom-theme cleanup + dogfood-fix batches) merged
-and is dogfood-approved. Cold-start briefing on the ratified grammar + what
-shipped:
-[`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md);
-findings→fixes map + known leftovers:
-[`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md).
+**Still not re-confirmed from the previous session:** Pro paywall vortex
+mark/badge and the unlocked-page revert gesture (both on the
+workstation's dogfood device).
 
 **Store/Pro state:** products exist on both stores with locked regionalized
 pricing **$4.99/mo, $49.99/yr, $99.99 lifetime** (ASC 175/175 territories,
@@ -118,44 +90,41 @@ discard Play internal-track draft `3.3.0 (2026090701)`.
 
 **Immediate next threads:**
 
-1. **Confirm the two not-yet-re-checked items** above (Pro paywall vortex
-   mark/badge, the unlocked-page revert gesture) if they come up - both
-   already installed on the workstation's dogfood device.
-2. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
-3. **Android runtime smoke** (emulator/device) — toolchain builds since
-   2026-09-07; confirm release AABs sign with the upload key
-   (`android/key.properties` → `android-release.jks`, A6:24:44).
-4. Release mechanics: version/changelog, store metadata
-   (`fastlane/metadata`), visual-QA pass
-   (`tool/visual_qa/capture_screenshots.sh`).
-5. YouTube (post-4.0 ok): run the spike (`tool/youtube_spike/`, ≥30 min
-   busy chat) with the GCP key; the `private/backend-architecture.md`
-   OAuth note stays deferred — **sync private docs first**.
-6. Astra open follow-ups (post-4.0 ok): conversation-owned drafts wave;
-   optional live-session strip; syncOffset gating. inspect-vs-command/Take
-   bar will NOT be ported (Studio Mode covers it).
+1. **Dogfood the chat wave** on the workstation device (list above).
+2. **Chatterino "medium" items** (doc § verdict table): configurable mod
+   buttons / timeout lengths, custom commands with OBS variables, search
+   operators (`from:`, `has:link`…), OBS-driven streamer mode, live dots
+   in the channel dropdowns. Strategic after that: merged multi-platform
+   timeline, 7TV cosmetics. YouTube follow-ups: OAuth own-channel path
+   (`liveBroadcasts`), OBS `StreamStateChanged` → immediate re-resolve.
+3. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
+4. **Android runtime smoke** + release mechanics (version/changelog,
+   `fastlane/metadata`, visual-QA pass).
+5. YouTube quota spike (`tool/youtube_spike/`) — still pending.
+6. Astra follow-ups (post-4.0 ok): conversation-owned drafts wave;
+   optional live-session strip; syncOffset gating.
 
 Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
-anyway). Default process tier **S**. Test gotchas are in
-`changelog-agent.md` — incl. the known pre-existing
-`test/websocket/state_ordering_test.dart` flake and the 4
-`mod_action_sheet_test.dart` hit-test-offset flakes (both intermittent/
-pre-existing, don't chase as regressions). `test/pro/` is the
-purchase/entitlement suite home. New pattern noticed this session on full
-multi-directory runs: occasionally exactly one file fails at the
-"loading" step with `WebSocketException: Invalid WebSocket upgrade
-request` - a different, random file each run, always passes cleanly on
-its own immediately after. Looks like the same infra-level class as the
-above two, not a real regression signal - re-run the specific file before
-trusting a "loading" failure.
+anyway). Default process tier **S**. Known flakes (don't chase): 4
+`mod_action_sheet_test.dart` hit-test-offset failures (reproduce on the
+pre-change tree too), `test/websocket/state_ordering_test.dart`
+(intermittent), and random single-file "loading" `WebSocketException`s on
+long multi-directory runs (rerun the file). **New gotchas this session:**
+plain `dart run` can't compile anything importing the freezed chat models
+(pulls in Flutter) — do live network smokes as a throwaway
+`flutter test` file with an explicit `http.Client()`;
+`test/flutter_test_config.dart` now exists (suite-wide network mocks —
+extend it rather than adding per-file hacks). `pkill -f` patterns matching
+`flutter` can kill your own shell — kill by pid.
 Machine note (this box): **`/tmp` is a 3.8G tmpfs** — if it fills with
 `flutter_tools.*` dirs, `flutter test` hangs silently in the kernel
 compiler ("Free up space"); `rm -rf /tmp/flutter_tools.*` and re-run.
 Also watch for **stale `flutter_tester` processes** lingering across
 separate `flutter test` invocations in the same session (kill by pid,
-`ps aux | grep flutter_tester`) — they starve a fresh run the same way a
-full tmpfs does. Always `flutter test -j 1` here; `flutter pub get` if a
-restored `pubspec.lock` makes the tool re-resolve.
+`ps aux | grep flutter_tester`). Always `flutter test -j 1` here; running
+`build_runner` here re-resolves `pubspec.lock` down to the older local SDK
+and regenerates unrelated `.g.dart` files — `git checkout` those before
+committing.
 
 ## Verify quickly
 
@@ -176,6 +145,7 @@ in `docs/private/maintainer-workflow.md`.
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
 | [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md) | 4.0 cold-start briefing (read first) |
 | [`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, leftovers |
+| [`chatterino-comparison.md`](chatterino-comparison.md) | Chatterino feature verdicts + YouTube channel→live design (2026-09-24 wave) |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
 | [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 |
