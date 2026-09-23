@@ -107,6 +107,15 @@ class NativeChatStatusChip extends StatelessWidget {
   }
 }
 
+/// Self-mention / keyword highlight wash — a warm, low-alpha tint distinct
+/// from [TwitchChatMessageRow.holdHighlightColor]'s neutral gray (that one
+/// means "selected for a mod action right now"; this one is passive, so it
+/// borrows the app's warning hue rather than a stronger accent).
+Color chatMentionHighlightColor(BuildContext context) =>
+    (Theme.of(context).extension<AppStatusColors>() ?? AppStatusColors.standard)
+        .warning
+        .withValues(alpha: 0.12);
+
 /// Compact viewer count for LIVE chips: `999`, `1.2k`, `3.4M`.
 String formatChatViewerCount(int count) {
   if (count >= 1000000) {

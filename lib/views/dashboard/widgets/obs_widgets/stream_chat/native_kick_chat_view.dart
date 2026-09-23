@@ -272,6 +272,8 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
             SettingsKeys.KickChatNoticeHosts,
             SettingsKeys.KickChatThirdPartyEmotes,
             SettingsKeys.KickChatBadges,
+            SettingsKeys.ChatHighlightSelfMention,
+            SettingsKeys.ChatHighlightKeywords,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
@@ -307,6 +309,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                       settingsBox: settingsBox,
                       broadcasterId: this._store.channelInfo?.userId
                           ?.toString(),
+                      selfDisplayNames: [this._store.selfUsername],
                       highlighted: this._modTargetMessageId == message.id,
                       onMessageLongPress:
                           message.isTombstoned ||

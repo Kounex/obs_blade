@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/chat_highlight_helper.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 /// YouTube's published Super Chat / Super Sticker tier color table
@@ -69,6 +72,11 @@ class YouTubeChatMessageRow extends StatelessWidget {
   /// Light gray wash while this row is the open mod-sheet target.
   final bool highlighted;
 
+  /// Signed-in user's own channel title(s), for the self-mention highlight
+  /// wash (blank/null entries ignored). Defaults empty so callers that
+  /// don't pass it just never self-match.
+  final List<String?> selfDisplayNames;
+
   const YouTubeChatMessageRow({
     super.key,
     required this.message,
@@ -76,10 +84,28 @@ class YouTubeChatMessageRow extends StatelessWidget {
     this.onMessageLongPress,
     this.onAuthorTap,
     this.highlighted = false,
+    this.selfDisplayNames = const [],
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
   double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
+
+  bool get _isHighlightMatch => chatContentIsHighlighted(
+    this.message.snippet.textMessageDetails?.messageText ??
+        this.message.displayText ??
+        '',
+    selfMentionEnabled: this.settingsBox.get(
+      SettingsKeys.ChatHighlightSelfMention.name,
+      defaultValue: true,
+    ),
+    selfNames: this.selfDisplayNames,
+    keywords: parseChatHighlightKeywords(
+      this.settingsBox.get(
+        SettingsKeys.ChatHighlightKeywords.name,
+        defaultValue: '',
+      ),
+    ),
+  );
 
   /// Role badge glyph size — matches the Twitch row's badge artwork.
   static const double _badgeSize = 16.0;
@@ -547,19 +573,29 @@ class YouTubeChatMessageRow extends StatelessWidget {
       child: this._buildByType(context),
     );
 
+    Widget child;
     if (this.onMessageLongPress != null && !this.message.isTombstoned) {
-      return ChatRowLongPressListener(
+      child = ChatRowLongPressListener(
         highlighted: this.highlighted,
         onLongPress: this.onMessageLongPress!,
         child: padded,
       );
-    }
-    if (this.highlighted) {
-      return ColoredBox(
+    } else if (this.highlighted) {
+      child = ColoredBox(
         color: TwitchChatMessageRow.holdHighlightColor(context),
         child: padded,
       );
+    } else {
+      child = padded;
     }
-    return padded;
+
+    if (this._isHighlightMatch) {
+      child = ColoredBox(
+        color: chatMentionHighlightColor(context),
+        child: child,
+      );
+    }
+
+    return child;
   }
 }

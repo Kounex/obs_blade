@@ -307,6 +307,8 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.TwitchChatEmoteSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.ChatHighlightSelfMention,
+            SettingsKeys.ChatHighlightKeywords,
             SettingsKeys.TwitchChatNoticeSubs,
             SettingsKeys.TwitchChatNoticeStreaks,
             SettingsKeys.TwitchChatNoticeRaids,
@@ -486,6 +488,10 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       ),
                       onMentionTap: (userId) =>
                           showChatUserCardSheet(context, userId: userId),
+                      selfDisplayNames: [
+                        this._store.user?.login,
+                        this._store.user?.displayName,
+                      ],
                       highlighted: this._modTargetMessageId == event.messageId,
                       onMessageLongPress: deleted
                           ? null

@@ -13,11 +13,13 @@ import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/chat_highlight_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_message_display.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_notice_visibility.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 /// Formats [ChatMessageEvent.receivedAt] for the user-card message list
 /// (Twitch-style `12:29 PM`).
@@ -93,6 +95,11 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// Prefix [event.receivedAt] as `12:29 PM` (user-card LIVE list).
   final bool showTimestamp;
 
+  /// Signed-in user's own login/display name(s), for the self-mention
+  /// highlight wash (blank/null entries ignored). Defaults empty so
+  /// callers that don't pass it just never self-match.
+  final List<String?> selfDisplayNames;
+
   const TwitchChatMessageRow({
     super.key,
     required this.event,
@@ -112,6 +119,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.mentionHexFor,
     this.compact = false,
     this.showTimestamp = false,
+    this.selfDisplayNames = const [],
   });
 
   static const double _badgeSize = 16.0;
@@ -127,6 +135,21 @@ class TwitchChatMessageRow extends StatelessWidget {
 
   bool get _isFirstMessage =>
       this.event.isFirstMessage && isChatFirstMessageVisible(this.settingsBox);
+
+  bool get _isHighlightMatch => chatContentIsHighlighted(
+    this.event.message.text,
+    selfMentionEnabled: this.settingsBox.get(
+      SettingsKeys.ChatHighlightSelfMention.name,
+      defaultValue: true,
+    ),
+    selfNames: this.selfDisplayNames,
+    keywords: parseChatHighlightKeywords(
+      this.settingsBox.get(
+        SettingsKeys.ChatHighlightKeywords.name,
+        defaultValue: '',
+      ),
+    ),
+  );
 
   /// Shared-chat origin channel name when this message was broadcast from
   /// a partner channel — never for same-channel messages (Twitch leaves
@@ -504,6 +527,13 @@ class TwitchChatMessageRow extends StatelessWidget {
           HapticFeedback.lightImpact();
           this.onDeletedTap!();
         },
+        child: child,
+      );
+    }
+
+    if (this._isHighlightMatch) {
+      child = ColoredBox(
+        color: chatMentionHighlightColor(context),
         child: child,
       );
     }

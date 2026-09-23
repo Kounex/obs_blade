@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_chat_message_row.dart';
 
@@ -357,6 +360,85 @@ void main() {
     await tester.pump();
 
     expect(find.byType(ChatRowLongPressListener), findsOneWidget);
+  });
+
+  group('self-mention / keyword highlight', () {
+    /// No theme extension is registered in [wrap]'s bare [MaterialApp],
+    /// so [chatMentionHighlightColor] falls back to this same constant —
+    /// matching the color the row would actually paint.
+    final expectedColor = AppStatusColors.standard.warning.withValues(
+      alpha: 0.12,
+    );
+
+    testWidgets('washes the row when content contains a self name', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage('m1', text: 'hey kounex, nice stream'),
+            settingsBox: settingsBox(),
+            selfDisplayNames: const ['kounex'],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is ColoredBox && w.color == expectedColor,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('does not wash a row with no self-name/keyword match', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage('m1', text: 'just a regular message'),
+            settingsBox: settingsBox(),
+            selfDisplayNames: const ['kounex'],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is ColoredBox && w.color == expectedColor,
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('washes the row on a configured keyword match', (tester) async {
+      await tester.runAsync(
+        () => settingsBox().put(
+          SettingsKeys.ChatHighlightKeywords.name,
+          'giveaway',
+        ),
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage('m1', text: 'check out my GIVEAWAY'),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is ColoredBox && w.color == expectedColor,
+        ),
+        findsOneWidget,
+      );
+    });
   });
 
   testWidgets('author color is stable per channel id', (tester) async {

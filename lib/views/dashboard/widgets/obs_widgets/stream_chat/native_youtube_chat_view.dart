@@ -241,6 +241,8 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
             SettingsKeys.TwitchChatTextSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.ChatHighlightSelfMention,
+            SettingsKeys.ChatHighlightKeywords,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
@@ -269,6 +271,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                       key: ValueKey(message.id),
                       message: message,
                       settingsBox: settingsBox,
+                      selfDisplayNames: [this._store.selfChannelTitle],
                       highlighted: this._modTargetMessageId == message.id,
                       onMessageLongPress: message.isTombstoned || !canModerate
                           ? null

@@ -6,6 +6,7 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/chat_highlight_helper.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
@@ -59,6 +60,11 @@ class KickChatMessageRow extends StatelessWidget {
   /// instance the Twitch engine populates its global catalog into).
   final ThirdPartyEmoteStore? emoteStore;
 
+  /// Signed-in user's own username(s), for the self-mention highlight
+  /// wash (blank/null entries ignored). Defaults empty so callers that
+  /// don't pass it just never self-match.
+  final List<String?> selfDisplayNames;
+
   const KickChatMessageRow({
     super.key,
     required this.message,
@@ -68,11 +74,27 @@ class KickChatMessageRow extends StatelessWidget {
     this.highlighted = false,
     this.broadcasterId,
     this.emoteStore,
+    this.selfDisplayNames = const [],
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
   double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
+
+  bool get _isHighlightMatch => chatContentIsHighlighted(
+    this.message.content,
+    selfMentionEnabled: this.settingsBox.get(
+      SettingsKeys.ChatHighlightSelfMention.name,
+      defaultValue: true,
+    ),
+    selfNames: this.selfDisplayNames,
+    keywords: parseChatHighlightKeywords(
+      this.settingsBox.get(
+        SettingsKeys.ChatHighlightKeywords.name,
+        defaultValue: '',
+      ),
+    ),
+  );
 
   /// Badge artwork size — matches the Twitch row's badge artwork.
   static const double _badgeSize = 16.0;
@@ -345,19 +367,29 @@ class KickChatMessageRow extends StatelessWidget {
             ),
     );
 
+    Widget child;
     if (this.onMessageLongPress != null && !this.message.isTombstoned) {
-      return ChatRowLongPressListener(
+      child = ChatRowLongPressListener(
         highlighted: this.highlighted,
         onLongPress: this.onMessageLongPress!,
         child: padded,
       );
-    }
-    if (this.highlighted) {
-      return ColoredBox(
+    } else if (this.highlighted) {
+      child = ColoredBox(
         color: TwitchChatMessageRow.holdHighlightColor(context),
         child: padded,
       );
+    } else {
+      child = padded;
     }
-    return padded;
+
+    if (this._isHighlightMatch) {
+      child = ColoredBox(
+        color: chatMentionHighlightColor(context),
+        child: child,
+      );
+    }
+
+    return child;
   }
 }

@@ -18,6 +18,7 @@ import 'debug_chat_samples.dart';
 import 'dialogs/channel_mod_sheet.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
+import 'native_chat_text_field.dart';
 
 export 'native_chat_appearance.dart' show NativeChatAppearance;
 
@@ -110,16 +111,17 @@ enum _OptionsPage {
   emotes,
   badges,
   eventMessages,
+  highlights,
   debugSamples,
 }
 
 /// Options for the native chat engines. Root lists short groups; each
-/// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
-/// Appearance + Emotes + per-category Badges + Event messages; Kick gets
-/// Appearance + Emotes + a single-toggle Badges page (`badge_type` values
-/// are unverified free-strings, so there is no stable catalog to build
-/// per-category rows from) + Event messages; other chat types only
-/// Appearance.
+/// drills into a sub-page (page-swap, no nested Navigator). Appearance +
+/// Highlights (self-mention/keyword row wash) are common to every engine;
+/// Twitch additionally gets Emotes + per-category Badges + Event
+/// messages; Kick additionally gets Emotes + a single-toggle Badges page
+/// (`badge_type` values are unverified free-strings, so there is no
+/// stable catalog to build per-category rows from) + Event messages.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
@@ -231,6 +233,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                     ? NativeChatOptionsSheet.kickNoticeRows
                     : NativeChatOptionsSheet.twitchNoticeRows,
               ),
+              _OptionsPage.highlights => _HighlightsPage(onBack: this._back),
               _OptionsPage.debugSamples => _DebugSamplesPage(
                 onBack: this._back,
               ),
@@ -255,6 +258,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           label: 'Appearance',
           subtitle: 'Text size, emote size, spacing, and separators',
           onTap: () => this._open(_OptionsPage.appearance),
+        ),
+        this._navRow(
+          context,
+          label: 'Highlights',
+          subtitle: 'Highlight your name and keywords in chat',
+          onTap: () => this._open(_OptionsPage.highlights),
         ),
         if (this._isTwitch) ...[
           this._navRow(
@@ -757,6 +766,105 @@ class _SingleTogglePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Self-mention / keyword row highlighting — a self-mention toggle plus a
+/// free-text keyword list, shared by every native engine (not per-engine:
+/// the settings keys and the matching rule are the same everywhere). The
+/// keyword field's [TextEditingController] is a stable instance field
+/// (not rebuilt from the settings box on every keystroke) so typing
+/// doesn't fight the [HiveBuilder] rebuild its own writes trigger.
+class _HighlightsPage extends StatefulWidget {
+  final VoidCallback onBack;
+
+  const _HighlightsPage({required this.onBack});
+
+  @override
+  State<_HighlightsPage> createState() => _HighlightsPageState();
+}
+
+class _HighlightsPageState extends State<_HighlightsPage> {
+  late final TextEditingController _keywordsController;
+
+  @override
+  void initState() {
+    super.initState();
+    var initial = '';
+    if (Hive.isBoxOpen(HiveKeys.Settings.name)) {
+      final value = Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.ChatHighlightKeywords.name);
+      if (value is String) initial = value;
+    }
+    this._keywordsController = TextEditingController(text: initial);
+  }
+
+  @override
+  void dispose() {
+    this._keywordsController.dispose();
+    super.dispose();
+  }
+
+  void _reset(Box settingsBox) {
+    settingsBox.put(SettingsKeys.ChatHighlightSelfMention.name, true);
+    settingsBox.put(SettingsKeys.ChatHighlightKeywords.name, '');
+    this._keywordsController.text = '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [
+        SettingsKeys.ChatHighlightSelfMention,
+        SettingsKeys.ChatHighlightKeywords,
+      ],
+      builder: (context, settingsBox, child) {
+        final selfMention = settingsBox.get(
+          SettingsKeys.ChatHighlightSelfMention.name,
+          defaultValue: true,
+        );
+        return _PageScaffold(
+          title: 'Highlights',
+          description:
+              'Wash a message row when it mentions your name or a '
+              'keyword you\'re watching for.',
+          onBack: this.widget.onBack,
+          onReset: () => this._reset(settingsBox),
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Highlight my name'),
+              subtitle: const Text(
+                'Matches your username anywhere in a message',
+              ),
+              trailing: BaseAdaptiveSwitch(
+                value: selfMention,
+                onChanged: (value) => settingsBox.put(
+                  SettingsKeys.ChatHighlightSelfMention.name,
+                  value,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text('Keywords', style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: AppSpacing.xs),
+            NativeChatTextField(
+              key: const Key('chat-highlight-keywords-field'),
+              controller: this._keywordsController,
+              hintText: 'One per line, or comma-separated',
+              minLines: 2,
+              maxLines: 4,
+              onChanged: (value) => settingsBox.put(
+                SettingsKeys.ChatHighlightKeywords.name,
+                value,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

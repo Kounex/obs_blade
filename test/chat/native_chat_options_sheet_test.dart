@@ -61,6 +61,7 @@ void main() {
       find.text('Text size, emote size, spacing, and separators'),
       findsOneWidget,
     );
+    expect(find.text('Highlights'), findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Badges'), findsOneWidget);
     expect(find.text('Event messages'), findsOneWidget);
@@ -308,6 +309,69 @@ void main() {
     await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
     expect(settingsBox().get(SettingsKeys.KickChatNoticeSubs.name), isTrue);
+
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('Highlights page toggles self-mention and shows for YouTube too '
+      '(not gated per-engine)', (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.YouTube)),
+    );
+
+    expect(find.text('Highlights'), findsOneWidget);
+    await tester.tap(find.text('Highlights'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Highlight my name'), findsOneWidget);
+    expect(
+      find.byKey(const Key('chat-highlight-keywords-field')),
+      findsOneWidget,
+    );
+
+    final selfMentionSwitch = find.descendant(
+      of: find.widgetWithText(ListTile, 'Highlight my name'),
+      matching: find.byType(BaseAdaptiveSwitch),
+    );
+    expect(tester.widget<BaseAdaptiveSwitch>(selfMentionSwitch).value, isTrue);
+
+    await tester.tap(selfMentionSwitch);
+    await tester.pump();
+    expect(
+      settingsBox().get(SettingsKeys.ChatHighlightSelfMention.name),
+      isFalse,
+    );
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(
+      settingsBox().get(SettingsKeys.ChatHighlightSelfMention.name),
+      isTrue,
+    );
+
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('Highlights keyword field writes ChatHighlightKeywords', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
+    );
+
+    await tester.tap(find.text('Highlights'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('chat-highlight-keywords-field')),
+      'giveaway, raffle',
+    );
+    await tester.pump();
+
+    expect(
+      settingsBox().get(SettingsKeys.ChatHighlightKeywords.name),
+      'giveaway, raffle',
+    );
 
     await closeHiveInZone(tester);
   });

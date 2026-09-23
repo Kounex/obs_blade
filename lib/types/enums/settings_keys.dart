@@ -365,7 +365,19 @@ enum SettingsKeys {
   /// A single master toggle, unlike Twitch's per-category rows — Kick's
   /// `badge_type` values are free-form and unverified, so there is no
   /// stable catalog to build per-category rows from. Active by default
-  KickChatBadges;
+  KickChatBadges,
+
+  /// [bool]: Wash a message row when it contains the signed-in user's own
+  /// display name — shared across all three native engines (not
+  /// per-engine: the feature and its master toggle are the same
+  /// everywhere). Active by default
+  ChatHighlightSelfMention,
+
+  /// [String]: Raw newline/comma-separated extra highlight keywords,
+  /// shared across all three native engines — see
+  /// [parseChatHighlightKeywords]. Empty by default (feature is
+  /// self-mention-only until the user adds something)
+  ChatHighlightKeywords;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -458,5 +470,7 @@ enum SettingsKeys {
     SettingsKeys.KickChatNoticeHosts: 'kick-chat-notice-hosts',
     SettingsKeys.KickChatThirdPartyEmotes: 'kick-chat-third-party-emotes',
     SettingsKeys.KickChatBadges: 'kick-chat-badges',
+    SettingsKeys.ChatHighlightSelfMention: 'chat-highlight-self-mention',
+    SettingsKeys.ChatHighlightKeywords: 'chat-highlight-keywords',
   }[this]!;
 }
