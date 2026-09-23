@@ -34,6 +34,7 @@ class NativeYouTubeChatView extends StatefulWidget {
 
 class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
   final ScrollController _scrollController = ScrollController();
+  final ChatRowParity _rowParity = ChatRowParity();
 
   /// Empty-timeline copy for a channel entry between streams — a lookup
   /// failure (network / consent wall) stays visible in [chatError].
@@ -295,6 +296,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
             SettingsKeys.TwitchChatTextSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.ChatShowTimestamps,
+            SettingsKeys.ChatAlternateRows,
+            SettingsKeys.ChatReadableNameColors,
             SettingsKeys.ChatHighlightSelfMention,
             SettingsKeys.ChatHighlightKeywords,
             SettingsKeys.ChatMuteWords,
@@ -317,6 +321,11 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                   ),
                 )
                 .toList();
+            final tinted = NativeChatAppearance.alternateRows(settingsBox)
+                ? this._rowParity.assign([
+                    for (final message in visibleItems) message.id,
+                  ])
+                : null;
             return Stack(
               children: [
                 ListView.separated(
@@ -338,7 +347,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                   itemBuilder: (context, index) {
                     final message = visibleItems[index];
                     final channelId = message.authorChannelId;
-                    return YouTubeChatMessageRow(
+                    final row = YouTubeChatMessageRow(
                       key: ValueKey(message.id),
                       message: message,
                       settingsBox: settingsBox,
@@ -362,6 +371,9 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                               fallbackAvatarUrl: message.authorProfileImageUrl,
                             ),
                     );
+                    return tinted == null
+                        ? row
+                        : chatAlternateRow(context, tinted[index], row);
                   },
                 ),
                 if (awaitingStream)

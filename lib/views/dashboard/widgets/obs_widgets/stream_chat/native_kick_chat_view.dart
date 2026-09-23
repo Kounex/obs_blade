@@ -45,6 +45,7 @@ class NativeKickChatView extends StatefulWidget {
 
 class _NativeKickChatViewState extends State<NativeKickChatView> {
   final ScrollController _scrollController = ScrollController();
+  final ChatRowParity _rowParity = ChatRowParity();
 
   /// Pinned to the newest message until the user scrolls up
   bool _pinnedToBottom = true;
@@ -294,6 +295,9 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
             SettingsKeys.TwitchChatTextSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.ChatShowTimestamps,
+            SettingsKeys.ChatAlternateRows,
+            SettingsKeys.ChatReadableNameColors,
             SettingsKeys.KickChatNoticeSubs,
             SettingsKeys.KickChatNoticeHosts,
             SettingsKeys.KickChatThirdPartyEmotes,
@@ -320,6 +324,11 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
               }
               return true;
             }).toList();
+            final tinted = NativeChatAppearance.alternateRows(settingsBox)
+                ? this._rowParity.assign([
+                    for (final message in visibleItems) message.id,
+                  ])
+                : null;
             final timeline = Stack(
               children: [
                 ListView.separated(
@@ -341,7 +350,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                   itemBuilder: (context, index) {
                     final message = visibleItems[index];
                     final authorId = message.authorId;
-                    return KickChatMessageRow(
+                    final row = KickChatMessageRow(
                       key: ValueKey(message.id),
                       message: message,
                       settingsBox: settingsBox,
@@ -366,6 +375,9 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
                               fallbackName: message.authorName,
                             ),
                     );
+                    return tinted == null
+                        ? row
+                        : chatAlternateRow(context, tinted[index], row);
                   },
                 ),
                 if (!this._pinnedToBottom)

@@ -203,6 +203,18 @@ enum SettingsKeys {
   /// Off by default.
   TwitchChatMessageSeparators,
 
+  /// [bool]: Prefix native chat lines with their time (all engines).
+  /// Off by default
+  ChatShowTimestamps,
+
+  /// [bool]: Tint every other native chat row (all engines).
+  /// Off by default
+  ChatAlternateRows,
+
+  /// [bool]: Adjust chatter name colors that are hard to read on the chat
+  /// background (all engines). Active by default
+  ChatReadableNameColors,
+
   /// [bool]: Backfill recent chat history (recent-messages.robotty.de)
   /// when the native Twitch chat joins a channel.
   /// Active by default
@@ -430,6 +442,9 @@ enum SettingsKeys {
     SettingsKeys.TwitchChatMessageSpacing: 'twitch-chat-message-spacing',
     SettingsKeys.TwitchChatMessageSeparators: 'twitch-chat-message-separators',
     SettingsKeys.TwitchChatLoadHistory: 'twitch-chat-load-history',
+    SettingsKeys.ChatShowTimestamps: 'chat-show-timestamps',
+    SettingsKeys.ChatAlternateRows: 'chat-alternate-rows',
+    SettingsKeys.ChatReadableNameColors: 'chat-readable-name-colors',
     SettingsKeys.TwitchChatNoticeSubs: 'twitch-chat-notice-subs',
     SettingsKeys.TwitchChatNoticeStreaks: 'twitch-chat-notice-streaks',
     SettingsKeys.TwitchChatNoticeRaids: 'twitch-chat-notice-raids',

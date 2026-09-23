@@ -563,6 +563,18 @@ class _AppearancePage extends StatelessWidget {
       SettingsKeys.TwitchChatMessageSeparators.name,
       NativeChatAppearance.separatorsDefault,
     );
+    settingsBox.put(
+      SettingsKeys.ChatShowTimestamps.name,
+      NativeChatAppearance.timestampsDefault,
+    );
+    settingsBox.put(
+      SettingsKeys.ChatAlternateRows.name,
+      NativeChatAppearance.alternateRowsDefault,
+    );
+    settingsBox.put(
+      SettingsKeys.ChatReadableNameColors.name,
+      NativeChatAppearance.readableNamesDefault,
+    );
   }
 
   @override
@@ -574,6 +586,9 @@ class _AppearancePage extends StatelessWidget {
         SettingsKeys.TwitchChatEmoteSize,
         SettingsKeys.TwitchChatMessageSpacing,
         SettingsKeys.TwitchChatMessageSeparators,
+        SettingsKeys.ChatShowTimestamps,
+        SettingsKeys.ChatAlternateRows,
+        SettingsKeys.ChatReadableNameColors,
       ],
       builder: (context, settingsBox, child) {
         final textSize = NativeChatAppearance.textSize(settingsBox);
@@ -583,7 +598,8 @@ class _AppearancePage extends StatelessWidget {
         return _PageScaffold(
           title: 'Appearance',
           description:
-              'Adjust how chat lines look - size, spacing, and dividers.',
+              'Adjust how chat lines look - size, spacing, dividers, '
+              'timestamps, and name colors.',
           onBack: this.onBack,
           onReset: () => this._reset(settingsBox),
           children: [
@@ -631,6 +647,36 @@ class _AppearancePage extends StatelessWidget {
                 ),
               ),
             ),
+            for (final (key, title, subtitle, fallback) in [
+              (
+                SettingsKeys.ChatAlternateRows,
+                'Alternating rows',
+                'Tint every other message',
+                NativeChatAppearance.alternateRowsDefault,
+              ),
+              (
+                SettingsKeys.ChatShowTimestamps,
+                'Timestamps',
+                'Show the time before each message',
+                NativeChatAppearance.timestampsDefault,
+              ),
+              (
+                SettingsKeys.ChatReadableNameColors,
+                'Readable name colors',
+                'Lighten or darken names that blend into the background',
+                NativeChatAppearance.readableNamesDefault,
+              ),
+            ])
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(title),
+                subtitle: Text(subtitle),
+                trailing: BaseAdaptiveSwitch(
+                  value:
+                      settingsBox.get(key.name, defaultValue: fallback) == true,
+                  onChanged: (value) => settingsBox.put(key.name, value),
+                ),
+              ),
           ],
         );
       },

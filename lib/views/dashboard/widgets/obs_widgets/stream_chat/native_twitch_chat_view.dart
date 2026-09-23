@@ -42,6 +42,7 @@ class NativeTwitchChatView extends StatefulWidget {
 
 class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   final ScrollController _scrollController = ScrollController();
+  final ChatRowParity _rowParity = ChatRowParity();
 
   /// Pinned to the newest message until the user scrolls up
   bool _pinnedToBottom = true;
@@ -311,6 +312,9 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             SettingsKeys.TwitchChatEmoteSize,
             SettingsKeys.TwitchChatMessageSpacing,
             SettingsKeys.TwitchChatMessageSeparators,
+            SettingsKeys.ChatShowTimestamps,
+            SettingsKeys.ChatAlternateRows,
+            SettingsKeys.ChatReadableNameColors,
             SettingsKeys.ChatHighlightSelfMention,
             SettingsKeys.ChatHighlightKeywords,
             SettingsKeys.ChatMuteWords,
@@ -364,6 +368,13 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
               for (final item in visibleItems)
                 if (item is ChatMessageEvent) item.messageId,
             };
+            final alternate = NativeChatAppearance.alternateRows(settingsBox);
+            final tinted = alternate
+                ? this._rowParity.assign([
+                    for (final item in visibleItems)
+                      item is ChatMessageEvent ? item.messageId : '',
+                  ])
+                : null;
             String? mentionHexFor(String userId) =>
                 this._store.chatterColor(userId);
             return Stack(
@@ -473,7 +484,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       }
                     }
 
-                    return TwitchChatMessageRow(
+                    final row = TwitchChatMessageRow(
                       event: event,
                       settingsBox: settingsBox,
                       isDeleted: deleted,
@@ -512,6 +523,9 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                                 ? () => this._openModActions(event)
                                 : () => this._openReplyActions(event)),
                     );
+                    return tinted == null
+                        ? row
+                        : chatAlternateRow(context, tinted[index], row);
                   },
                 ),
                 if (!this._pinnedToBottom)

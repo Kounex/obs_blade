@@ -232,7 +232,12 @@ class YouTubeChatMessageRow extends StatelessWidget {
   InlineSpan _authorSpan(BuildContext context) {
     final authorStyle = TextStyle(
       fontWeight: FontWeight.w600,
-      color: youTubeAuthorColor(context, this.message.authorChannelId),
+      color: NativeChatAppearance.readableNames(this.settingsBox)
+          ? readableNameColor(
+              youTubeAuthorColor(context, this.message.authorChannelId),
+              Theme.of(context).cardColor,
+            )
+          : youTubeAuthorColor(context, this.message.authorChannelId),
     );
     final name = this.message.authorName ?? 'Unknown';
     if (this.onAuthorTap == null) {
@@ -282,6 +287,8 @@ class YouTubeChatMessageRow extends StatelessWidget {
           context,
         ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
         children: [
+          if (NativeChatAppearance.timestamps(this.settingsBox))
+            chatLineTimeSpan(context, this.message.publishedAt, this._textSize),
           if (this.onAuthorTap == null) ...this._badgeSpans(),
           this._authorSpan(context),
           const TextSpan(text: ': '),

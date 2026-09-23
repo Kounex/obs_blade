@@ -206,7 +206,10 @@ class TwitchChatMessageRow extends StatelessWidget {
     if (hex != null && hex.length == 7) {
       final value = int.tryParse(hex.substring(1), radix: 16);
       if (value != null) {
-        return Color(0xFF000000 | value);
+        final color = Color(0xFF000000 | value);
+        return NativeChatAppearance.readableNames(this.settingsBox)
+            ? readableNameColor(color, Theme.of(context).cardColor)
+            : color;
       }
     }
     return Theme.of(context).textTheme.bodyMedium?.color ??
@@ -606,7 +609,10 @@ class TwitchChatMessageRow extends StatelessWidget {
               fontSize: this._textSize * 0.9,
               fontWeight: FontWeight.w400,
             ),
-          ),
+          )
+        else if (NativeChatAppearance.timestamps(this.settingsBox) &&
+            this.event.receivedAt != null)
+          chatLineTimeSpan(context, this.event.receivedAt!, this._textSize),
         if (this._sourceChannelName case final sourceName?)
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,

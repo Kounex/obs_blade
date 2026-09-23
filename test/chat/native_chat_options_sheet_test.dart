@@ -87,7 +87,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Adjust how chat lines look - size, spacing, and dividers.'),
+      find.text(
+        'Adjust how chat lines look - size, spacing, dividers, timestamps, '
+        'and name colors.',
+      ),
       findsOneWidget,
     );
     expect(find.byKey(const Key('appearance-preview')), findsOneWidget);

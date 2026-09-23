@@ -190,7 +190,10 @@ class KickChatMessageRow extends StatelessWidget {
   InlineSpan _authorSpan(BuildContext context) {
     final authorStyle = TextStyle(
       fontWeight: FontWeight.w600,
-      color: kickAuthorColor(context, this.message.sender?.identity?.color),
+      color: this._readable(
+        context,
+        kickAuthorColor(context, this.message.sender?.identity?.color),
+      ),
     );
     if (this.onAuthorTap == null) {
       return TextSpan(text: this.message.authorName, style: authorStyle);
@@ -366,6 +369,11 @@ class KickChatMessageRow extends StatelessWidget {
     );
   }
 
+  Color _readable(BuildContext context, Color color) =>
+      NativeChatAppearance.readableNames(this.settingsBox)
+      ? readableNameColor(color, Theme.of(context).cardColor)
+      : color;
+
   /// The plain chat line: badges + colored author + body.
   Widget _textRow(BuildContext context) {
     final Widget row = Text.rich(
@@ -374,6 +382,9 @@ class KickChatMessageRow extends StatelessWidget {
           context,
         ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
         children: [
+          if (NativeChatAppearance.timestamps(this.settingsBox) &&
+              this.message.createdAt != null)
+            chatLineTimeSpan(context, this.message.createdAt!, this._textSize),
           if (this.onAuthorTap == null) ...this._badgeSpans(),
           this._authorSpan(context),
           const TextSpan(text: ': '),
