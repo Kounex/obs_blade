@@ -142,14 +142,35 @@ refresh rotates BOTH tokens — single-flight in `KickAuthService`).
 `KickApiService` sends/replies/deletes/bans/timeouts/unbans with typed
 statusCode errors + 401→refresh-once→retry-once; no optimistic append (the
 Pusher echo renders own messages); the mod long-press shows for any signed-in
-user and 403s surface honestly (no "am I a mod" lookup exists). Pins
+user and 403s surface honestly (no "am I a mod" lookup exists). Sub/gift-sub/
+host notification rows (`KickChatroomEventKind`) and a read-only chat-mode
+awareness banner (slow/followers/subs/emote-only, `KickChatModeStrip` — Kick
+exposes no write API for these) round out parity with Twitch's notice
+rows; third-party (7TV) emotes render inline via the same
+`ThirdPartyEmoteStore` Twitch uses, and a single Badges master toggle
+(per-category values unverified) sits in the options sheet. Pins
 show on the shared banner (history + live create/delete; no Kick unpin
 API). The banner overlays the timeline (glass, same as the nav bars); its
 ✕ tucks it to a glass pin button at the top-right, and tapping the
 pin brings the banner back. The scroll pills (Paused / New messages)
-use that same glass. No emote picker. The channel list
+use that same glass. An emote picker (`KickEmoteService.fetchChannelEmotes`
+— channel + Kick-wide Global + Emojis in one anonymous call, plus a
+Third-party/7TV section) docks in the Kick input, mirroring Twitch's
+picker mechanics. The channel list
 shares `SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView
 path (slug == identity).
+
+**General native chat (all 3 engines):** self-mention/keyword row
+highlighting (`ChatHighlightSelfMention` + `ChatHighlightKeywords`, shared
+matcher in `chat_highlight_helper.dart`), a client-side mute-word filter,
+chat search/filter over each engine's buffered history
+(`ChatSearchSheet`), and a "Copy message" long-press action available even
+to fully read-only viewers (`MessageActionSheet`, generalized from
+Twitch's non-mod sheet) all ship uniformly. Message rows carry
+screen-reader semantics — each row collapses into one
+`Semantics(container: true, excludeSemantics: true, label: ...)` node
+(raw-field label, not the rendered span tree) with `onTap`/`onLongPress`
+as the two exposed actions.
 
 **Monetization (Pro):** native chat engines are gated behind the **Pro
 entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only

@@ -2,6 +2,66 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-23 — Native chat gap audit: Twitch-parity + general enhancements (17 commits)
+
+User asked for an audit of Twitch's native chat (the most advanced engine)
+against Kick/YouTube, plus general cross-engine enhancements — approved
+whole-report ("everything", tier S) via `AskQuestion`. Shipped in priority
+order, each unit gated (format/analyze/test) and committed on its own:
+
+- **YouTube** live viewer count in the chat header — free field
+  (`liveStreamingDetails.concurrentViewers`) on the same `videos.list` call
+  already made for `activeLiveChatId`, zero extra quota (`3febe6de`).
+- **General** new-message count on the pause/scroll chip, all 3 engines
+  (`fae9146a`).
+- **Kick** read-only chat-mode banner (slow/followers/subs/emote-only —
+  Kick has no write API for these, informational only), sub/gift-sub/host
+  notification rows (`KickChatroomEventKind` — these were previously
+  dropped as `unknown`), a defensive fix for the live `ChatroomUpdatedEvent`
+  nested `{enabled: bool}` shape, options-sheet Event-messages page, 7TV
+  third-party emotes, options-sheet Emotes page, a channel emote picker
+  (discovered live that the per-channel endpoint bundles Kick's Global +
+  Emojis sets too — `docs/kick-chat-audit.md`'s "no verified global-emote
+  endpoint" claim was stale, corrected in `04a3566e`), a Badges master
+  toggle (per-category `badge_type` values unverified, so one toggle not
+  Twitch's per-category set), and LIVE/viewer preview on unselected
+  channels in the multi-chat dropdown (`42436442`…`5264e8f7`).
+- **General** self-mention/keyword row highlighting (`ChatHighlightSelfMention`
+  + `ChatHighlightKeywords`, shared matcher) and a client-side mute-word
+  filter, both across all 3 engines (`10c05bad`, `6900f62f`).
+- **General** chat search/filter over each engine's buffered history
+  (`ChatSearchSheet`, `9a0258e9`) — fixed a MobX "no observables detected"
+  warning by reading a cheap observable unconditionally before the
+  `Observer` builder's early-return branch (precedent: `AddChatSheet`).
+- **General** "Copy message" long-press action, generalizing Twitch's
+  lightweight non-mod `MessageActionSheet` (nullable `onReply`, always-on
+  Copy) so fully read-only viewers — previously with zero long-press
+  affordance at all — get a Copy-only sheet instead of nothing (`5a379e7d`).
+- **General** screen-reader semantics on all 3 message row widgets — each
+  row collapses into one `Semantics(container: true, excludeSemantics:
+  true, label: ...)` node built from raw model fields (not the rendered
+  span tree, since the author name flips between a plain `TextSpan` and a
+  `WidgetSpan`-wrapped `Pressable`), with `onTap`/`onLongPress` as the two
+  surviving explicit actions (`22085b0f`).
+
+New Flutter testing gotcha found along the way: `tester.ensureSemantics()`'s
+`SemanticsHandle` must be `.dispose()`d as the literal last statement in
+the test body, not via `addTearDown` — Flutter's own end-of-test handle
+check runs before the `test` package's `addTearDown` queue, so an
+`addTearDown`-registered dispose is always reported as "still active".
+
+Full gate at wrap-up: `flutter analyze` clean (0 errors, only pre-existing
+`tool/*` info-lints and a handful of pre-existing warnings unrelated to
+this diff); `test/chat/ test/websocket/ test/persistence/` — only the 4
+known pre-existing hit-test-offset flakes in `mod_action_sheet_test.dart`
+plus one instance of the known pre-existing `state_ordering_test.dart`
+timing flake (both confirmed via stash/standalone re-run to predate and be
+unrelated to this wave).
+
+Explicitly out of scope (flagged, not built): on-disk scrollback
+persistence across app restarts — touches persistence, which AGENTS.md
+calls out as needing its own careful pass.
+
 ## 2026-09-23 — Kick token exchange proxy
 
 Kick requires a client secret and will not accept a public PKCE client

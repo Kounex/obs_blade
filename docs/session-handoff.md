@@ -2,9 +2,9 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-22** (`4.0-liquid-glass`
-**merged into `master`** — fast-forward, 211 commits — and closed; all
-clones track `master` now. Details: `changelog-agent.md` 2026-09-22).
+Read this first after `AGENTS.md`. Last reset: **2026-09-23** (native chat
+gap audit — Twitch-parity + general enhancements — shipped and pushed, 17
+commits. Details: `changelog-agent.md` 2026-09-23 "Native chat gap audit").
 
 ## Handoff hygiene (read before editing this file)
 
@@ -55,9 +55,21 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Goal: ship 4.0 from `master`.** The 4.0 UI rework (full-app polish wave
-+ custom-theme cleanup + dogfood-fix batches) is merged and
-dogfood-approved. Cold-start briefing on the ratified grammar + what
+**Just closed: native chat gap audit.** User asked to audit Twitch's
+native chat (most advanced engine) against Kick/YouTube and generally
+enhance all 3 — approved the whole report ("everything", tier S) via
+`AskQuestion`. All 17 items shipped, gated, committed, and pushed
+(`3104eceb..22085b0f`); full writeup: `changelog-agent.md` 2026-09-23
+"Native chat gap audit". `AGENTS.md`'s Chat/Kick chat/General native chat
+paragraphs were updated to match (a couple of earlier commits in this same
+wave — Kick emote picker, pin banner — had shipped without the doc update;
+caught and fixed this pass). No open thread here; next session picks a new
+priority (see below) or continues chat work if the user re-opens it (wave
+4 / entitlement gate still pending per `chat-native-roadmap.md`).
+
+**Longer-running goal: 4.0 is shipped from `master`.** The 4.0 UI rework
+(full-app polish wave + custom-theme cleanup + dogfood-fix batches) merged
+and is dogfood-approved. Cold-start briefing on the ratified grammar + what
 shipped:
 [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md);
 findings→fixes map + known leftovers:
