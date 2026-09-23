@@ -215,8 +215,8 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Kick root lists Appearance + Emotes + Event messages, no '
-      'Badges', (tester) async {
+  testWidgets('Kick root lists Appearance + Emotes + Badges + Event '
+      'messages', (tester) async {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
     );
@@ -224,9 +224,30 @@ void main() {
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
     expect(find.text('Third-party (7TV) emotes in chat'), findsOneWidget);
+    expect(find.text('Badges'), findsOneWidget);
+    expect(find.text('Role badge artwork next to names'), findsOneWidget);
     expect(find.text('Event messages'), findsOneWidget);
     expect(find.text('Subs, gifts, and host notices'), findsOneWidget);
-    expect(find.text('Badges'), findsNothing);
+  });
+
+  testWidgets('Kick Badges page is a single toggle for KickChatBadges, not '
+      'the per-category Twitch layout', (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
+    );
+
+    await tester.tap(find.text('Badges'));
+    await tester.pumpAndSettle();
+    expect(find.text('Role badge artwork'), findsOneWidget);
+
+    await tester.tap(find.byType(BaseAdaptiveSwitch));
+    await tester.pump();
+    expect(
+      settingsBox().get(SettingsKeys.KickChatBadges.name, defaultValue: true),
+      isFalse,
+    );
+
+    await closeHiveInZone(tester);
   });
 
   testWidgets('Kick Emotes page toggles KickChatThirdPartyEmotes', (

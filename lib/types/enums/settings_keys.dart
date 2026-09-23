@@ -359,7 +359,13 @@ enum SettingsKeys {
 
   /// [bool]: Render third-party (7TV) emotes inline in native Kick chat.
   /// Active by default
-  KickChatThirdPartyEmotes;
+  KickChatThirdPartyEmotes,
+
+  /// [bool]: Show role badge artwork next to names in native Kick chat.
+  /// A single master toggle, unlike Twitch's per-category rows — Kick's
+  /// `badge_type` values are free-form and unverified, so there is no
+  /// stable catalog to build per-category rows from. Active by default
+  KickChatBadges;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -451,5 +457,6 @@ enum SettingsKeys {
     SettingsKeys.KickChatNoticeSubs: 'kick-chat-notice-subs',
     SettingsKeys.KickChatNoticeHosts: 'kick-chat-notice-hosts',
     SettingsKeys.KickChatThirdPartyEmotes: 'kick-chat-third-party-emotes',
+    SettingsKeys.KickChatBadges: 'kick-chat-badges',
   }[this]!;
 }

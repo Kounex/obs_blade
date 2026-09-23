@@ -77,7 +77,17 @@ class KickChatMessageRow extends StatelessWidget {
   /// Badge artwork size — matches the Twitch row's badge artwork.
   static const double _badgeSize = 16.0;
 
+  /// Role badge artwork before the name — gated by a single master
+  /// toggle (`KickChatBadges`), unlike Twitch's per-category rows: Kick's
+  /// `badge_type` values are free-form and unverified, so there is no
+  /// stable catalog to build per-category toggles from.
   List<Widget> _badgeWidgets() {
+    if (!this.settingsBox.get(
+      SettingsKeys.KickChatBadges.name,
+      defaultValue: true,
+    )) {
+      return const [];
+    }
     final identity = this.message.sender?.identity;
     if (identity == null) return const [];
     final v2 = identity.displayBadges;

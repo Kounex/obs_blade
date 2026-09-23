@@ -115,9 +115,11 @@ enum _OptionsPage {
 
 /// Options for the native chat engines. Root lists short groups; each
 /// drills into a sub-page (page-swap, no nested Navigator). Twitch gets
-/// Appearance + Emotes + Badges + Event messages; Kick gets Appearance +
-/// Emotes + Event messages (no per-badge-category toggle — Kick's
-/// `badge_type` values are unverified); other chat types only Appearance.
+/// Appearance + Emotes + per-category Badges + Event messages; Kick gets
+/// Appearance + Emotes + a single-toggle Badges page (`badge_type` values
+/// are unverified free-strings, so there is no stable catalog to build
+/// per-category rows from) + Event messages; other chat types only
+/// Appearance.
 class NativeChatOptionsSheet extends StatefulWidget {
   final ChatType chatType;
 
@@ -197,8 +199,9 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             switch (this._page) {
               _OptionsPage.root => this._buildRoot(context),
               _OptionsPage.appearance => _AppearancePage(onBack: this._back),
-              _OptionsPage.emotes => _EmotesPage(
+              _OptionsPage.emotes => _SingleTogglePage(
                 onBack: this._back,
+                title: 'Emotes',
                 settingsKey: this._isKick
                     ? SettingsKeys.KickChatThirdPartyEmotes
                     : SettingsKeys.TwitchChatThirdPartyEmotes,
@@ -210,7 +213,18 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
                     : 'Choose whether 7TV and BTTV emotes render inline in '
                           'chat.',
               ),
-              _OptionsPage.badges => _BadgesPage(onBack: this._back),
+              _OptionsPage.badges =>
+                this._isKick
+                    ? _SingleTogglePage(
+                        onBack: this._back,
+                        title: 'Badges',
+                        settingsKey: SettingsKeys.KickChatBadges,
+                        rowLabel: 'Role badge artwork',
+                        description:
+                            'Choose whether role badges (moderator, '
+                            'subscriber, and similar) appear next to names.',
+                      )
+                    : _BadgesPage(onBack: this._back),
               _OptionsPage.eventMessages => _EventMessagesPage(
                 onBack: this._back,
                 rows: this._isKick
@@ -275,6 +289,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
             label: 'Emotes',
             subtitle: 'Third-party (7TV) emotes in chat',
             onTap: () => this._open(_OptionsPage.emotes),
+          ),
+          this._navRow(
+            context,
+            label: 'Badges',
+            subtitle: 'Role badge artwork next to names',
+            onTap: () => this._open(_OptionsPage.badges),
           ),
           this._navRow(
             context,
@@ -697,14 +717,19 @@ class _AppearanceSlider extends StatelessWidget {
   }
 }
 
-class _EmotesPage extends StatelessWidget {
+/// A single boolean-toggle settings page — used for both engines' Emotes
+/// page and Kick's Badges page (a single master toggle, unlike Twitch's
+/// per-category `_BadgesPage`).
+class _SingleTogglePage extends StatelessWidget {
   final VoidCallback onBack;
+  final String title;
   final SettingsKeys settingsKey;
   final String rowLabel;
   final String description;
 
-  const _EmotesPage({
+  const _SingleTogglePage({
     required this.onBack,
+    required this.title,
     required this.settingsKey,
     required this.rowLabel,
     required this.description,
@@ -716,7 +741,7 @@ class _EmotesPage extends StatelessWidget {
       hiveKey: HiveKeys.Settings,
       rebuildKeys: [this.settingsKey],
       builder: (context, settingsBox, child) => _PageScaffold(
-        title: 'Emotes',
+        title: this.title,
         description: this.description,
         onBack: this.onBack,
         onReset: () => settingsBox.put(this.settingsKey.name, true),

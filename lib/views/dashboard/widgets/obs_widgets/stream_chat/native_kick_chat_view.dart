@@ -271,6 +271,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
             SettingsKeys.KickChatNoticeSubs,
             SettingsKeys.KickChatNoticeHosts,
             SettingsKeys.KickChatThirdPartyEmotes,
+            SettingsKeys.KickChatBadges,
           ],
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
