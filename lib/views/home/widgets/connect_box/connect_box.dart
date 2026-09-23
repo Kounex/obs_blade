@@ -20,7 +20,10 @@ class ConnectBox extends StatelessWidget {
       builder: (context) => SwitcherCard(
         title: homeStore.connectMode.text,
         child: KeyedSubtree(
-          key: ValueKey(homeStore.connectMode),
+          key: ValueKey((
+            homeStore.connectMode,
+            homeStore.connectModeSwitchGeneration,
+          )),
           child: () {
             switch (homeStore.connectMode) {
               case ConnectMode.Autodiscover:

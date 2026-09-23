@@ -39,6 +39,13 @@ abstract class _HomeStore with Store {
 
   Connection typedInConnection = Connection('', 4455, '');
 
+  /// Bumped on every [setConnectMode] call so [ConnectBox]'s pane/title
+  /// AnimatedSwitchers always get a fresh key, even when re-entering a
+  /// mode whose previous pane is still mid-crossfade-out - otherwise two
+  /// panes for the same [ConnectMode] (an old outgoing one and a new
+  /// incoming one) briefly share a key and render on top of each other
+  int connectModeSwitchGeneration = 0;
+
   @action
   void setAutodiscoverPort(String autodiscoverPort) =>
       this.autodiscoverPort = autodiscoverPort;
@@ -71,6 +78,8 @@ abstract class _HomeStore with Store {
       this.protocolScheme = protocolScheme;
 
   @action
-  void setConnectMode(ConnectMode connectMode) =>
-      this.connectMode = connectMode;
+  void setConnectMode(ConnectMode connectMode) {
+    this.connectMode = connectMode;
+    this.connectModeSwitchGeneration++;
+  }
 }

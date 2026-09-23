@@ -51,7 +51,10 @@ class SwitcherCard extends StatelessWidget {
         transitionBuilder: (child, animation) =>
             FadeTransition(opacity: animation, child: child),
         child: Align(
-          key: ValueKey(this.title),
+          key: ValueKey((
+            homeStore.connectMode,
+            homeStore.connectModeSwitchGeneration,
+          )),
           alignment: Alignment.centerLeft,
           child: Text(
             this.title,
