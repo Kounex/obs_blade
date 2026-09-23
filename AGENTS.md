@@ -214,6 +214,7 @@ tips/blacksmith).
 | [`docs/chat-webview-audit.md`](docs/chat-webview-audit.md) | Twitch/YouTube/Owncast chat strategy |
 | [`docs/chat-native-roadmap.md`](docs/chat-native-roadmap.md) | Native chat: unexploited Twitch API surface + build order |
 | [`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md) | Native YouTube chat: API feasibility, quota reality, build plan |
+| [`docs/chatterino-comparison.md`](docs/chatterino-comparison.md) | Chatterino feature comparison, adapt list + YouTube channel→live resolution |
 | [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md) | Pro subscription: RevenueCat dashboard/store wiring checklist |
 | [`docs/upgrade-plan.md`](docs/upgrade-plan.md) | Flutter / package upgrade status |
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
