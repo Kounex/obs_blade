@@ -146,4 +146,64 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  /// Content that fits without scrolling at all (maxScrollExtent == 0, e.g.
+  /// a short setup form) - both pull directions are "out of range", so a
+  /// reversal reports as another OverscrollNotification (positive this
+  /// time) instead of a ScrollUpdateNotification.
+  Widget shortSheet(BuildContext context) => TextButton(
+    onPressed: () => ModalHandler.showBaseBottomSheet(
+      context: context,
+      barrierDismissible: true,
+      enableDrag: true,
+      maxHeightFraction: 0.86,
+      builder: (_) => ListView(
+        primary: false,
+        children: const [SizedBox(height: 48, child: Text('short row'))],
+      ),
+    ),
+    child: const Text('open short'),
+  );
+
+  testWidgets(
+    'dragging back up mid-gesture grows a non-scrolling (short-content) '
+    'sheet back too',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: Builder(builder: shortSheet)),
+        ),
+      );
+      await tester.tap(find.text('open short'));
+      await tester.pumpAndSettle();
+
+      final before = tester.getTopLeft(find.text('short row'));
+      final gesture = await tester.startGesture(before + const Offset(40, 12));
+
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump();
+      await gesture.moveBy(const Offset(0, 40));
+      await tester.pump();
+      await gesture.moveBy(const Offset(0, 40));
+      await tester.pump();
+      final shrunk = tester.getTopLeft(find.text('short row')).dy;
+      expect(
+        shrunk,
+        greaterThan(before.dy + 60),
+        reason: 'sanity check: the pull-down actually shrank the sheet',
+      );
+
+      await gesture.moveBy(const Offset(0, -80));
+      await tester.pump();
+      final grownBack = tester.getTopLeft(find.text('short row')).dy;
+      expect(
+        grownBack,
+        lessThan(shrunk - 40),
+        reason: 'reversing the drag mid-gesture must grow the sheet back up',
+      );
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+    },
+  );
 }

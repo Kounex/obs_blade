@@ -333,28 +333,39 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
   }
 
   /// A reversed drag (finger moving back toward the boundary) doesn't
-  /// generate more [OverscrollNotification]s - the scroll view considers it
-  /// a normal, valid scroll away from the boundary (pixels moving off 0) and
-  /// reports a plain [ScrollUpdateNotification] instead. Redirect that
-  /// motion into growing the sheet back and snap the scroll position back to
-  /// the boundary so the list itself doesn't visibly scroll - the whole
-  /// gesture should read as dragging the sheet, not the list underneath it.
-  void _trackRecovery(
-    BuildContext context,
-    ScrollUpdateNotification notification,
-  ) {
+  /// generate more negative-[OverscrollNotification]s. What it produces
+  /// instead depends on whether the sheet's content actually has scrollable
+  /// range:
+  /// - content taller than the sheet: the scroll view treats the reversal
+  ///   as a normal, valid scroll away from the boundary (pixels moving off
+  ///   0) and reports a plain [ScrollUpdateNotification].
+  /// - content that fits without scrolling at all (min == max extent, e.g.
+  ///   a short setup form): *every* direction is out of range, so the
+  ///   reversal still reports as [OverscrollNotification] - just with a
+  ///   positive `overscroll` instead of negative.
+  /// Either way, redirect that motion into growing the sheet back instead
+  /// of letting the list itself move - the whole gesture should read as
+  /// dragging the sheet, not the list underneath it.
+  void _trackRecovery(BuildContext context, ScrollNotification notification) {
     if (!this._pulled) return;
     final controller = this._sheetController(context);
     if (controller == null) return;
     final height = this._sheetHeight(notification.metrics);
     if (height <= 0) return;
 
-    final delta = notification.dragDetails?.primaryDelta;
+    final dragDetails = switch (notification) {
+      OverscrollNotification n => n.dragDetails,
+      ScrollUpdateNotification n => n.dragDetails,
+      _ => null,
+    };
+    final delta = dragDetails?.primaryDelta;
     if (delta == null || delta >= 0) return;
 
     controller.stop();
     controller.value = (controller.value - delta / height).clamp(0.0, 1.0);
 
+    /// Only meaningful for the scrollable-content case - a no-op when the
+    /// position never left the boundary in the first place.
     final position = Scrollable.maybeOf(notification.context!)?.position;
     position?.jumpTo(notification.metrics.minScrollExtent);
   }
@@ -418,7 +429,16 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
           this._track(context, notification);
           return false;
         }
-        if (notification is ScrollUpdateNotification && this._pulled) {
+
+        /// While already pulled, either a normal update (content with
+        /// scrollable range recovering off the boundary) or a positive
+        /// overscroll (content with no scrollable range at all, so a
+        /// reversal is still "out of range") means the finger is moving
+        /// back - grow the sheet instead of the content scrolling.
+        if (this._pulled &&
+            (notification is ScrollUpdateNotification ||
+                (notification is OverscrollNotification &&
+                    notification.overscroll > 0))) {
           this._trackRecovery(context, notification);
           return false;
         }
