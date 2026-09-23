@@ -86,7 +86,7 @@ Numeric rate limits are unpublished; handle 429.
 | AutoMod queue | ❌ | Kick has no AutoMod API |
 | Unban requests | ❌ first-class | channel-points redemption is the idiomatic workaround — skip |
 | Role badges | 🔶 partial | types+months in payload; artwork via `badges_v2` + channel `subscriber_badges`; mod/vip/broadcaster artwork not shipped → own assets or v2-only |
-| First-party emotes | ✅ | inline tokens + `files.kick.com` CDN + `/emotes/{channel}` list; no verified global-emote endpoint |
+| First-party emotes | ✅ | inline tokens + `files.kick.com` CDN + `/emotes/{channel}` list (verified 2026-09-23: this single call bundles the channel's own set AND Kick's platform-wide `Global`/`Emojis` sets — no separate global endpoint exists, but none is needed) |
 | 7TV third-party emotes | ✅ | `7tv.io/v3/users/kick/{kick_user_id}` first-class; BTTV/FFZ: no Kick support |
 | Pinned messages | ✅ | `PinnedMessageCreated/DeletedEvent` |
 | Replies | ✅ | `type:"reply"` + metadata; send via `reply_to_message_id` |
@@ -119,9 +119,15 @@ Numeric rate limits are unpublished; handle 429.
   honestly via snackbar (`modActionError`). Unban ships as a store
   wrapper only (no UI row — tombstoned-by-ban context doesn't carry the
   data to offer it meaningfully).
+- **W4 (landed):** first-party emote picker (`KickEmoteStore` +
+  `KickEmotePickerSheet`, `GET /emotes/{slug}` → Channel/Global/Emojis
+  sections) and 7TV third-party emote rendering (`fetchSevenTvKickChannel`,
+  keyed by Kick's numeric USER id, not chatroom id) both dock into the
+  native chat pane and input.
 - **Not planned (vapor):** warn/announce/AutoMod/unban-requests (no API),
   room-mode writes (no API), polls/predictions UI (read-only events), BTTV
-  bridge (no Kick namespace), global emote picker (no list endpoint).
+  bridge (no Kick namespace — 7TV is Kick's only third-party emote
+  provider).
 
 ## Open decisions / risks
 
