@@ -459,4 +459,118 @@ void main() {
     expect(first, isNotNull);
     expect(first, second);
   });
+
+  group('screen-reader semantics', () {
+    testWidgets('a plain message announces as one merged label', (
+      tester,
+    ) async {
+      /// Disposed explicitly at the end of the test body — `test`
+      /// package tearDowns run after Flutter's own end-of-test handle
+      /// check, so an `addTearDown`-registered dispose is too late.
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage('m1', authorName: 'Viewer', text: 'hello'),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(YouTubeChatMessageRow));
+      expect(semantics.label, 'Viewer: hello');
+      handle.dispose();
+    });
+
+    testWidgets('a tombstoned message appends the deleted marker', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage(
+              'm1',
+              authorName: 'Viewer',
+              text: 'hello',
+              tombstoned: true,
+            ),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(YouTubeChatMessageRow));
+      expect(semantics.label, 'Viewer: hello —Deleted');
+      handle.dispose();
+    });
+
+    testWidgets('a super chat announces the amount and comment', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final message = YouTubeChatMessage(
+        id: 'sc1',
+        snippet: YouTubeChatMessageSnippet(
+          type: YouTubeChatMessageType.superChat,
+          publishedAt: DateTime.utc(2026, 9, 3),
+          authorChannelId: 'chan-9',
+          superChatDetails: YouTubeSuperChatDetails(
+            amountDisplayString: '\$5.00',
+            tier: 3,
+            userComment: 'keep it up',
+          ),
+        ),
+        authorDetails: YouTubeChatAuthorDetails(
+          channelId: 'chan-9',
+          displayName: 'Fan Nine',
+        ),
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(message: message, settingsBox: settingsBox()),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(YouTubeChatMessageRow));
+      expect(semantics.label, 'Super Chat from Fan Nine of \$5.00. keep it up');
+      handle.dispose();
+    });
+
+    testWidgets('a poll announces the question', (tester) async {
+      final handle = tester.ensureSemantics();
+      final message = YouTubeChatMessage(
+        id: 'p1',
+        snippet: YouTubeChatMessageSnippet(
+          type: YouTubeChatMessageType.poll,
+          publishedAt: DateTime.utc(2026, 9, 3),
+          authorChannelId: 'chan-1',
+          pollDetails: YouTubePollDetails(
+            metadata: YouTubePollMetadata(questionText: 'Next game?'),
+          ),
+        ),
+        authorDetails: YouTubeChatAuthorDetails(
+          channelId: 'chan-1',
+          displayName: 'Host',
+        ),
+      );
+
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(message: message, settingsBox: settingsBox()),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(YouTubeChatMessageRow));
+      expect(semantics.label, 'Poll: Next game?');
+      handle.dispose();
+    });
+  });
 }

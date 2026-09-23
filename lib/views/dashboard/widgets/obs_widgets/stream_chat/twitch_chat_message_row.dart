@@ -136,6 +136,35 @@ class TwitchChatMessageRow extends StatelessWidget {
   bool get _isFirstMessage =>
       this.event.isFirstMessage && isChatFirstMessageVisible(this.settingsBox);
 
+  /// One coherent announcement for the whole row — built from the raw
+  /// fields (not the rendered spans), since the author name flips
+  /// between a plain [TextSpan] and a [WidgetSpan] depending on
+  /// [onAuthorTap] and badge icons carry no semantic label of their own.
+  /// Screen readers get this single label instead of swiping through
+  /// one fragment per badge/emote/link.
+  String get _semanticsLabel {
+    final buffer = StringBuffer();
+    if (this.showTimestamp && this.event.receivedAt != null) {
+      buffer.write('${formatChatMessageTime(this.event.receivedAt!)}. ');
+    }
+    if (this._sourceChannelName case final sourceName?) {
+      buffer.write('From #$sourceName. ');
+    }
+    buffer.write(this.event.chatterUserName);
+    buffer.write(': ');
+    buffer.write(this.event.message.text);
+    if (this.isDeleted) {
+      buffer.write(this.deletedMarker);
+      if (this.isDeletedExpanded && this.deletedActor != null) {
+        buffer.write(
+          '. ${this.deletedActor} deleted ${this.event.chatterUserName}\'s '
+          'message',
+        );
+      }
+    }
+    return buffer.toString();
+  }
+
   bool get _isHighlightMatch => chatContentIsHighlighted(
     this.event.message.text,
     selfMentionEnabled: this.settingsBox.get(
@@ -538,7 +567,22 @@ class TwitchChatMessageRow extends StatelessWidget {
       );
     }
 
-    return child;
+    /// Collapse the whole row into one accessibility node with a clean
+    /// label — the raw fragment-level semantics (badge icons, the
+    /// author's nested [Pressable], mention taps, links) would otherwise
+    /// make a screen reader swipe through many tiny, mostly-unlabeled
+    /// pieces per line. The primary/secondary actions survive as
+    /// explicit `onTap`/`onLongPress` on this same node (author card /
+    /// deleted-reveal toggle, and mod actions respectively) even though
+    /// they're excluded from the merged label.
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: this._semanticsLabel,
+      onTap: revealable ? this.onDeletedTap : this.onAuthorTap,
+      onLongPress: this.onMessageLongPress,
+      child: child,
+    );
   }
 
   Text _richText(BuildContext context) => Text.rich(

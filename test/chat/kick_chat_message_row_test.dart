@@ -240,4 +240,75 @@ void main() {
       },
     );
   });
+
+  group('screen-reader semantics', () {
+    testWidgets('a plain message announces as one merged label', (
+      tester,
+    ) async {
+      /// Disposed explicitly at the end of the test body — `test`
+      /// package tearDowns run after Flutter's own end-of-test handle
+      /// check, so an `addTearDown`-registered dispose is too late.
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          KickChatMessageRow(
+            message: kickMessage('m1', author: 'Viewer1', content: 'hello'),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(KickChatMessageRow));
+      expect(semantics.label, 'Viewer1: hello');
+      handle.dispose();
+    });
+
+    testWidgets('a system row announces its notice text', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          KickChatMessageRow(
+            message: const KickChatMessage(
+              id: 'system-sub-1',
+              content: 'Viewer1 subscribed',
+              type: KickChatMessageType.system,
+            ),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(KickChatMessageRow));
+      expect(semantics.label, 'Viewer1 subscribed');
+      handle.dispose();
+    });
+
+    testWidgets('a tombstoned message appends the deleted marker', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          KickChatMessageRow(
+            message: kickMessage(
+              'm1',
+              author: 'Viewer1',
+              content: 'hello',
+            ).copyWith(isTombstoned: true),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(KickChatMessageRow));
+      expect(semantics.label, 'Viewer1: hello —Deleted');
+      handle.dispose();
+    });
+  });
 }

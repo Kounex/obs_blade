@@ -90,6 +90,76 @@ class YouTubeChatMessageRow extends StatelessWidget {
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
   double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
 
+  /// One coherent announcement for the whole row, mirroring
+  /// [_buildByType]'s per-type text so a screen reader hears the same
+  /// content a sighted user sees — badges/tier-card chrome carry no
+  /// semantic label of their own, and the author name flips between a
+  /// plain [TextSpan] and a [WidgetSpan] depending on [onAuthorTap].
+  String get _semanticsLabel {
+    final author = this.message.authorName ?? 'Unknown';
+    final snippet = this.message.snippet;
+    switch (this.message.type) {
+      case YouTubeChatMessageType.superChat:
+        final details = snippet.superChatDetails;
+        final amount = details?.amountDisplayString;
+        final comment = details?.userComment;
+        return [
+          'Super Chat from $author'
+              '${amount != null ? ' of $amount' : ''}',
+          if (comment != null && comment.isNotEmpty) comment,
+        ].join('. ');
+      case YouTubeChatMessageType.superSticker:
+        final altText =
+            snippet.superStickerDetails?.superStickerMetadata?.altText;
+        return 'Super Sticker from $author'
+            '${altText != null ? ': $altText' : ''}';
+      case YouTubeChatMessageType.newSponsor:
+        final level = snippet.newSponsorDetails?.memberLevelName;
+        return '$author became a member'
+            '${level != null ? ' ($level)' : ''}';
+      case YouTubeChatMessageType.memberMilestone:
+        final details = snippet.memberMilestoneChatDetails;
+        final months = details?.memberMonth ?? 0;
+        final comment = details?.userComment;
+        return [
+          months > 0
+              ? '$author has been a member for $months months'
+              : '$author celebrated a membership milestone',
+          if (comment != null && comment.isNotEmpty) comment,
+        ].join('. ');
+      case YouTubeChatMessageType.membershipGifting:
+        final details = snippet.membershipGiftingDetails;
+        final count = details?.giftMembershipsCount ?? 0;
+        return count > 0
+            ? '$author gifted $count '
+                      '${details?.giftMembershipsLevelName ?? ''} memberships'
+                  .replaceAll('  ', ' ')
+            : '$author gifted memberships';
+      case YouTubeChatMessageType.giftMembershipReceived:
+        final level = snippet.giftMembershipReceivedDetails?.memberLevelName;
+        return '$author received a gift membership'
+            '${level != null ? ' ($level)' : ''}';
+      case YouTubeChatMessageType.poll:
+        final question = snippet.pollDetails?.metadata?.questionText;
+        return question != null ? 'Poll: $question' : 'Poll';
+      case YouTubeChatMessageType.sponsorOnlyModeStarted:
+        return '$author turned on members-only mode';
+      case YouTubeChatMessageType.sponsorOnlyModeEnded:
+        return '$author turned off members-only mode';
+      case YouTubeChatMessageType.chatEnded:
+        return 'Live chat has ended';
+      case YouTubeChatMessageType.tombstone:
+      case YouTubeChatMessageType.userBanned:
+        return '';
+      case YouTubeChatMessageType.textMessage:
+      case YouTubeChatMessageType.unknown:
+        final text = this.message.copyText;
+        return this.message.isTombstoned
+            ? '$author: $text —Deleted'
+            : '$author: $text';
+    }
+  }
+
   bool get _isHighlightMatch => chatContentIsHighlighted(
     this.message.snippet.textMessageDetails?.messageText ??
         this.message.displayText ??
@@ -596,6 +666,17 @@ class YouTubeChatMessageRow extends StatelessWidget {
       );
     }
 
-    return child;
+    /// Collapse the whole row into one accessibility node with a clean
+    /// label — same rationale as [TwitchChatMessageRow]'s equivalent
+    /// wrap. The primary/secondary actions survive as explicit
+    /// `onTap`/`onLongPress` on this same node.
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: this._semanticsLabel,
+      onTap: this.onAuthorTap,
+      onLongPress: this.onMessageLongPress,
+      child: child,
+    );
   }
 }

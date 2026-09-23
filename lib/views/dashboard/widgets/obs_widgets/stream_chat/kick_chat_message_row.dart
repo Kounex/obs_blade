@@ -81,6 +81,40 @@ class KickChatMessageRow extends StatelessWidget {
   double get _emoteSize => NativeChatAppearance.emoteSize(this.settingsBox);
   double get _spacing => NativeChatAppearance.messageSpacing(this.settingsBox);
 
+  /// One coherent announcement for the whole row — built from the raw
+  /// fields (not the rendered spans), since the author name flips
+  /// between a plain [TextSpan] and a [WidgetSpan] depending on
+  /// [onAuthorTap] and badge artwork carries no semantic label of its
+  /// own. Screen readers get this single label instead of swiping
+  /// through one fragment per badge/emote/link.
+  String get _semanticsLabel {
+    if (this.message.type == KickChatMessageType.system) {
+      return this.message.content.isNotEmpty
+          ? this.message.content
+          : 'Chat was cleared by a moderator';
+    }
+    final buffer = StringBuffer();
+    final reply = this.message.metadata;
+    final senderName = reply?.originalSenderName;
+    if (this.message.type == KickChatMessageType.reply &&
+        senderName != null &&
+        senderName.isNotEmpty) {
+      buffer.write('Replying to @$senderName');
+      final content = reply?.originalMessageContent;
+      if (content != null && content.isNotEmpty) {
+        buffer.write(': $content');
+      }
+      buffer.write('. ');
+    }
+    buffer.write(this.message.authorName);
+    buffer.write(': ');
+    buffer.write(this.message.content);
+    if (this.message.isTombstoned) {
+      buffer.write(' —Deleted');
+    }
+    return buffer.toString();
+  }
+
   bool get _isHighlightMatch => chatContentIsHighlighted(
     this.message.content,
     selfMentionEnabled: this.settingsBox.get(
@@ -390,6 +424,17 @@ class KickChatMessageRow extends StatelessWidget {
       );
     }
 
-    return child;
+    /// Collapse the whole row into one accessibility node with a clean
+    /// label — same rationale as [TwitchChatMessageRow]'s equivalent
+    /// wrap. The primary/secondary actions survive as explicit
+    /// `onTap`/`onLongPress` on this same node.
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: this._semanticsLabel,
+      onTap: this.onAuthorTap,
+      onLongPress: this.onMessageLongPress,
+      child: child,
+    );
   }
 }

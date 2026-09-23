@@ -154,4 +154,48 @@ void main() {
       );
     },
   );
+
+  group('screen-reader semantics', () {
+    testWidgets('a plain message announces as one merged label', (
+      tester,
+    ) async {
+      /// Disposed explicitly at the end of the test body — `test`
+      /// package tearDowns run after Flutter's own end-of-test handle
+      /// check, so an `addTearDown`-registered dispose is too late.
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        _wrap(
+          TwitchChatMessageRow(
+            event: _event('hello'),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(TwitchChatMessageRow));
+      expect(semantics.label, 'Viewer: hello');
+      handle.dispose();
+    });
+
+    testWidgets('a deleted message appends the deleted marker', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        _wrap(
+          TwitchChatMessageRow(
+            event: _event('hello'),
+            settingsBox: settingsBox(),
+            isDeleted: true,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(TwitchChatMessageRow));
+      expect(semantics.label, 'Viewer: hello —Deleted');
+      handle.dispose();
+    });
+  });
 }
