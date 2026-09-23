@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -54,19 +52,13 @@ class _ScrollRefreshIconState extends State<ScrollRefreshIcon>
     super.didUpdateWidget(oldWidget);
   }
 
+  /// Fully faded in by 80% of the arm threshold (barStretchOffset) instead
+  /// of hugging the threshold itself, so the icon shows up well before the
+  /// last stretch where the haptic + scale pulse (arming) happens.
   double _getRefreshOpacity(double barStretchOffset, double currentBarHeight) {
-    double opacity =
-        pow(
-          1.4,
-          0.2 * (currentBarHeight - this.widget.expandedBarHeight) -
-              (barStretchOffset / 6),
-        ) -
-        0.1;
-    return opacity > 1.0
-        ? 1.0
-        : opacity < 0.0
-        ? 0.0
-        : opacity;
+    final double pulled = currentBarHeight - this.widget.expandedBarHeight;
+    final double fraction = (pulled / (barStretchOffset * 0.8)).clamp(0.0, 1.0);
+    return Curves.easeOut.transform(fraction);
   }
 
   @override
