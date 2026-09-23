@@ -189,85 +189,76 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
 
   void _back() => this.setState(() => this._page = _OptionsPage.root);
 
+  /// Every page renders through [NativeChatSheetScaffold]: handle +
+  /// title / back chevron stay pinned, only the page body scrolls.
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.lg,
+    return switch (this._page) {
+      _OptionsPage.root => this._buildRoot(context),
+      _OptionsPage.appearance => _AppearancePage(onBack: this._back),
+      _OptionsPage.emotes => _SingleTogglePage(
+        onBack: this._back,
+        title: 'Emotes',
+        settingsKey: this._isKick
+            ? SettingsKeys.KickChatThirdPartyEmotes
+            : SettingsKeys.TwitchChatThirdPartyEmotes,
+        rowLabel: this._isKick
+            ? 'Third-party emotes (7TV)'
+            : 'Third-party emotes (7TV/BTTV/FFZ)',
+        description: this._isKick
+            ? 'Choose whether 7TV emotes render inline in chat.'
+            : 'Choose whether 7TV, BTTV and FFZ emotes render inline in '
+                  'chat.',
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            nativeChatSheetDragHandle(context),
-            switch (this._page) {
-              _OptionsPage.root => this._buildRoot(context),
-              _OptionsPage.appearance => _AppearancePage(onBack: this._back),
-              _OptionsPage.emotes => _SingleTogglePage(
+      _OptionsPage.badges =>
+        this._isKick
+            ? _SingleTogglePage(
                 onBack: this._back,
-                title: 'Emotes',
-                settingsKey: this._isKick
-                    ? SettingsKeys.KickChatThirdPartyEmotes
-                    : SettingsKeys.TwitchChatThirdPartyEmotes,
-                rowLabel: this._isKick
-                    ? 'Third-party emotes (7TV)'
-                    : 'Third-party emotes (7TV/BTTV/FFZ)',
-                description: this._isKick
-                    ? 'Choose whether 7TV emotes render inline in chat.'
-                    : 'Choose whether 7TV, BTTV and FFZ emotes render inline in '
-                          'chat.',
-              ),
-              _OptionsPage.badges =>
-                this._isKick
-                    ? _SingleTogglePage(
-                        onBack: this._back,
-                        title: 'Badges',
-                        settingsKey: SettingsKeys.KickChatBadges,
-                        rowLabel: 'Role badge artwork',
-                        description:
-                            'Choose whether role badges (moderator, '
-                            'subscriber, and similar) appear next to names.',
-                      )
-                    : _BadgesPage(onBack: this._back),
-              _OptionsPage.history => _SingleTogglePage(
-                onBack: this._back,
-                title: 'Chat history',
-                settingsKey: SettingsKeys.TwitchChatLoadHistory,
-                rowLabel: 'Load recent messages on join',
+                title: 'Badges',
+                settingsKey: SettingsKeys.KickChatBadges,
+                rowLabel: 'Role badge artwork',
                 description:
-                    'Show the last messages sent before you joined a '
-                    'channel (dimmed), from the community '
-                    'recent-messages service Chatterino uses.',
-              ),
-              _OptionsPage.eventMessages => _EventMessagesPage(
-                onBack: this._back,
-                rows: this._isKick
-                    ? NativeChatOptionsSheet.kickNoticeRows
-                    : NativeChatOptionsSheet.twitchNoticeRows,
-              ),
-              _OptionsPage.highlights => _HighlightsPage(onBack: this._back),
-              _OptionsPage.muteWords => _MuteWordsPage(onBack: this._back),
-              _OptionsPage.debugSamples => _DebugSamplesPage(
-                onBack: this._back,
-              ),
-            },
-          ],
-        ),
+                    'Choose whether role badges (moderator, '
+                    'subscriber, and similar) appear next to names.',
+              )
+            : _BadgesPage(onBack: this._back),
+      _OptionsPage.history => _SingleTogglePage(
+        onBack: this._back,
+        title: 'Chat history',
+        settingsKey: SettingsKeys.TwitchChatLoadHistory,
+        rowLabel: 'Load recent messages on join',
+        description:
+            'Show the last messages sent before you joined a '
+            'channel (dimmed), from the community '
+            'recent-messages service Chatterino uses.',
       ),
-    );
+      _OptionsPage.eventMessages => _EventMessagesPage(
+        onBack: this._back,
+        rows: this._isKick
+            ? NativeChatOptionsSheet.kickNoticeRows
+            : NativeChatOptionsSheet.twitchNoticeRows,
+      ),
+      _OptionsPage.highlights => _HighlightsPage(onBack: this._back),
+      _OptionsPage.muteWords => _MuteWordsPage(onBack: this._back),
+      _OptionsPage.debugSamples => _DebugSamplesPage(onBack: this._back),
+    };
   }
 
   Widget _buildRoot(BuildContext context) {
+    return NativeChatSheetScaffold(
+      header: Text(
+        'Native chat options',
+        style: nativeChatSheetTitleStyle(context),
+      ),
+      body: this._buildRootBody(context),
+    );
+  }
+
+  Widget _buildRootBody(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Native chat options', style: nativeChatSheetTitleStyle(context)),
-        const SizedBox(height: AppSpacing.sm),
         if (this._isTwitch && this.widget.modFoldedIntoOptions)
           this._foldedModCard(context),
         this._navRow(
@@ -481,62 +472,62 @@ class _PageScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColors =
         Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Pressable(
-              haptic: true,
-              onTap: this.onBack,
-              child: Padding(
-                padding: const EdgeInsets.only(
-                  right: AppSpacing.sm,
-                  top: AppSpacing.md,
-                  bottom: AppSpacing.md,
-                ),
-                child: Icon(
-                  CupertinoIcons.chevron_back,
-                  size: 20.0,
-                  color: textColors.highlightText,
-                ),
+    return NativeChatSheetScaffold(
+      headerGap: 0.0,
+      header: Row(
+        children: [
+          Pressable(
+            haptic: true,
+            onTap: this.onBack,
+            child: Padding(
+              padding: const EdgeInsets.only(
+                right: AppSpacing.sm,
+                top: AppSpacing.md,
+                bottom: AppSpacing.md,
+              ),
+              child: Icon(
+                CupertinoIcons.chevron_back,
+                size: 20.0,
+                color: textColors.highlightText,
               ),
             ),
-            Expanded(
-              child: Text(
-                this.title,
-                style: nativeChatSheetTitleStyle(context),
-              ),
-            ),
-            if (this.onReset != null)
-              Tooltip(
-                message: 'Reset to defaults',
-                child: Pressable(
-                  haptic: true,
-                  onTap: this.onReset,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xs,
-                      vertical: AppSpacing.md,
-                    ),
-                    child: Text(
-                      'Reset',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: textColors.highlightText,
-                        fontWeight: FontWeight.w600,
-                      ),
+          ),
+          Expanded(
+            child: Text(this.title, style: nativeChatSheetTitleStyle(context)),
+          ),
+          if (this.onReset != null)
+            Tooltip(
+              message: 'Reset to defaults',
+              child: Pressable(
+                haptic: true,
+                onTap: this.onReset,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Text(
+                    'Reset',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: textColors.highlightText,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(this.description, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: AppSpacing.sm),
-        ...this.children,
-      ],
+            ),
+        ],
+      ),
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: AppSpacing.xs),
+          Text(this.description, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: AppSpacing.sm),
+          ...this.children,
+        ],
+      ),
     );
   }
 }

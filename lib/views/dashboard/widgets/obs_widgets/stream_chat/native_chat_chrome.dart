@@ -267,3 +267,62 @@ Widget nativeChatSheetDragHandle(BuildContext context) => Center(
     ),
   ),
 );
+
+/// Standard chat sheet layout: drag handle + [header] (title, back
+/// chevron, actions) pinned at the top, only [body] scrolls. The shared
+/// modal body caps the sheet height and still turns a pull past the top
+/// of [body] into a sheet drag (same setup as the YouTube setup sheet).
+/// Rule: sheets with a handle / title / back chevron never put those
+/// inside the scroll view.
+class NativeChatSheetScaffold extends StatelessWidget {
+  final Widget header;
+  final Widget body;
+
+  /// Gap between the pinned header and the scrolling body.
+  final double headerGap;
+
+  const NativeChatSheetScaffold({
+    super.key,
+    required this.header,
+    required this.body,
+    this.headerGap = AppSpacing.sm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            this.headerGap,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [nativeChatSheetDragHandle(context), this.header],
+          ),
+        ),
+        Flexible(
+          child: SingleChildScrollView(
+            primary: false,
+            physics: const ClampingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0.0,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
+            child: this.body,
+          ),
+        ),
+      ],
+    );
+  }
+}

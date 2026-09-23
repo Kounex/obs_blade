@@ -245,64 +245,55 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     final settingsBox = Hive.box(HiveKeys.Settings.name);
     final newest = this._newestBuffered;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            nativeChatSheetDragHandle(context),
-            this._header(context, newest),
-            const SizedBox(height: AppSpacing.lg),
-            this._factsBlock(context),
-            if (this.widget.hostContext case final host?
-                when !this._isSelf &&
-                    (this._helixUser?.login ??
-                            this._newestBuffered?.chatterUserLogin) !=
-                        null) ...[
-              const SizedBox(height: AppSpacing.md),
-              ChatUserListActions(
-                userName:
-                    this._helixUser?.login ??
-                    this._newestBuffered!.chatterUserLogin,
-                hostContext: host,
+    return NativeChatSheetScaffold(
+      headerGap: AppSpacing.lg,
+      header: this._header(context, newest),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          this._factsBlock(context),
+          if (this.widget.hostContext case final host?
+              when !this._isSelf &&
+                  (this._helixUser?.login ??
+                          this._newestBuffered?.chatterUserLogin) !=
+                      null) ...[
+            const SizedBox(height: AppSpacing.md),
+            ChatUserListActions(
+              userName:
+                  this._helixUser?.login ??
+                  this._newestBuffered!.chatterUserLogin,
+              hostContext: host,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.lg),
+          this._liveDivider(context),
+          const SizedBox(height: AppSpacing.sm),
+          if (this._bufferedMessages.isEmpty)
+            Text(
+              'No messages in this chat yet',
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else ...[
+            for (var i = 0; i < this._bufferedMessages.length; i++) ...[
+              if (i > 0 && NativeChatAppearance.separators(settingsBox))
+                nativeChatHairline(context),
+              TwitchChatMessageRow(
+                key: ValueKey(
+                  'card-msg-${this._bufferedMessages[i].messageId}',
+                ),
+                event: this._bufferedMessages[i],
+                settingsBox: settingsBox,
+                showTimestamp: true,
               ),
             ],
-            const SizedBox(height: AppSpacing.lg),
-            this._liveDivider(context),
-            const SizedBox(height: AppSpacing.sm),
-            if (this._bufferedMessages.isEmpty)
-              Text(
-                'No messages in this chat yet',
-                style: Theme.of(context).textTheme.bodySmall,
-              )
-            else ...[
-              for (var i = 0; i < this._bufferedMessages.length; i++) ...[
-                if (i > 0 && NativeChatAppearance.separators(settingsBox))
-                  nativeChatHairline(context),
-                TwitchChatMessageRow(
-                  key: ValueKey(
-                    'card-msg-${this._bufferedMessages[i].messageId}',
-                  ),
-                  event: this._bufferedMessages[i],
-                  settingsBox: settingsBox,
-                  showTimestamp: true,
-                ),
-              ],
-            ],
-            if (this.widget.connection != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              nativeChatHairline(context),
-              const SizedBox(height: AppSpacing.lg),
-              this._connectionFooter(context, this.widget.connection!),
-            ],
           ],
-        ),
+          if (this.widget.connection != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            nativeChatHairline(context),
+            const SizedBox(height: AppSpacing.lg),
+            this._connectionFooter(context, this.widget.connection!),
+          ],
+        ],
       ),
     );
   }

@@ -103,42 +103,33 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
     final settingsBox = Hive.box(HiveKeys.Settings.name);
     final messages = this._bufferedMessages;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            nativeChatSheetDragHandle(context),
-            this._header(context),
-            const SizedBox(height: AppSpacing.lg),
-            this._factsBlock(context),
-            const SizedBox(height: AppSpacing.lg),
-            this._liveDivider(context),
-            const SizedBox(height: AppSpacing.sm),
-            if (messages.isEmpty)
-              Text(
-                'No messages in this chat yet',
-                style: Theme.of(context).textTheme.bodySmall,
-              )
-            else ...[
-              for (var i = 0; i < messages.length; i++) ...[
-                if (i > 0 && NativeChatAppearance.separators(settingsBox))
-                  nativeChatHairline(context),
-                YouTubeChatMessageRow(
-                  key: ValueKey('card-msg-${messages[i].id}'),
-                  message: messages[i],
-                  settingsBox: settingsBox,
-                ),
-              ],
+    return NativeChatSheetScaffold(
+      headerGap: AppSpacing.lg,
+      header: this._header(context),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          this._factsBlock(context),
+          const SizedBox(height: AppSpacing.lg),
+          this._liveDivider(context),
+          const SizedBox(height: AppSpacing.sm),
+          if (messages.isEmpty)
+            Text(
+              'No messages in this chat yet',
+              style: Theme.of(context).textTheme.bodySmall,
+            )
+          else ...[
+            for (var i = 0; i < messages.length; i++) ...[
+              if (i > 0 && NativeChatAppearance.separators(settingsBox))
+                nativeChatHairline(context),
+              YouTubeChatMessageRow(
+                key: ValueKey('card-msg-${messages[i].id}'),
+                message: messages[i],
+                settingsBox: settingsBox,
+              ),
             ],
           ],
-        ),
+        ],
       ),
     );
   }
