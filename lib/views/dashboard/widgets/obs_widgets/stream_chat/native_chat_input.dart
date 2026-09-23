@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
 import '../../../../../utils/styling_helper.dart';
+import 'chat_autocomplete_strip.dart';
 import 'native_chat_text_field.dart';
 
 export 'native_chat_text_field.dart'
@@ -44,6 +45,10 @@ class NativeChatInput extends StatefulWidget {
   /// [errorText] row.
   final Widget? contextStrip;
 
+  /// Autocomplete candidates (`@user` / emotes) for the word at the
+  /// cursor — null disables the suggestion strip.
+  final ChatCompletionSource? completionSource;
+
   /// Brand accent (send button fill)
   final Color accentColor;
 
@@ -72,6 +77,7 @@ class NativeChatInput extends StatefulWidget {
     this.focusNode,
     this.leading,
     this.contextStrip,
+    this.completionSource,
     this.lockedHintText = 'Logged in read-only',
     this.lockedActionText = 'Re-login to chat',
   });
@@ -164,6 +170,11 @@ class _NativeChatInputState extends State<NativeChatInput> {
             this.widget.contextStrip!,
             const SizedBox(height: AppSpacing.xs),
           ],
+          if (this.widget.completionSource != null)
+            ChatAutocompleteStrip(
+              controller: this._controller,
+              source: this.widget.completionSource!,
+            ),
           if (this.widget.errorText != null) ...[
             Row(
               children: [

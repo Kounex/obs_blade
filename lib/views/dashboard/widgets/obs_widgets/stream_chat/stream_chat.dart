@@ -35,6 +35,7 @@ import 'chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
+import 'chat_completion_sources.dart';
 import 'chat_emote_picker.dart';
 import 'kick_emote_picker.dart';
 import 'kick_chat_mode_strip.dart';
@@ -592,6 +593,7 @@ class _StreamChatState extends State<StreamChat>
                     accentColor:
                         chatType.brandColor ??
                         Theme.of(context).colorScheme.secondary,
+                    completionSource: kickChatCompletions,
                     onSend: kickStore.sendChatMessage,
                     onRelogin: () => showKickSetupSheet(context),
                     lockedHintText: 'Chat is read-only',
@@ -677,6 +679,7 @@ class _StreamChatState extends State<StreamChat>
                     accentColor:
                         chatType.brandColor ??
                         Theme.of(context).colorScheme.secondary,
+                    completionSource: youTubeChatCompletions,
                     onSend: youTubeStore.sendChatMessage,
                     onRelogin: () => startYouTubeLogin(context),
                     lockedHintText: 'Chat is read-only',
@@ -766,6 +769,7 @@ class _StreamChatState extends State<StreamChat>
                   accentColor:
                       chatType.brandColor ??
                       Theme.of(context).colorScheme.secondary,
+                  completionSource: twitchChatCompletions,
                   onSend: twitchStore.sendChatMessage,
                   onRelogin: () => startTwitchLogin(context),
                 )
