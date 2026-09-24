@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
@@ -986,51 +987,69 @@ class _ChatEmptyState extends StatelessWidget {
     final Color brandColor =
         this.chatType.brandColor ?? Theme.of(context).colorScheme.secondary;
 
-    /// Top-aligned (instead of centered in the fixed-height chat viewport)
-    /// so the state sits inside the actually visible area of the dashboard
-    /// scroll view
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          top: AppSpacing.xl,
-          left: AppSpacing.xl,
-          right: AppSpacing.xl,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _ChatBrandIcon(chatType: this.chatType, color: brandColor),
+    /// Centered in the chat viewport — every host (Chat tab, streaming
+    /// mode) gives chat a bounded, fully visible height. Scrolls when the
+    /// viewport is shorter than the content (landscape phone).
+    return _CenteredChatPlaceholder(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ChatBrandIcon(chatType: this.chatType, color: brandColor),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            '${this.chatType.text} Chat',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            this.promptBody ??
+                (this.nativeConnectPrompt
+                    ? 'Connect your Twitch account to see your chat natively.'
+                    : 'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.'),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          if (this.nativeConnectPrompt) ...[
             const SizedBox(height: AppSpacing.lg),
-            Text(
-              '${this.chatType.text} Chat',
-              style: Theme.of(context).textTheme.headlineSmall,
+            BaseButton(
+              text: this.connectLabel ?? 'Connect Twitch',
+              color: brandColor,
+              onPressed: this.onConnectTap ?? () => startTwitchLogin(context),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              this.promptBody ??
-                  (this.nativeConnectPrompt
-                      ? 'Connect your Twitch account to see your chat natively.'
-                      : 'No ${this.chatType.text} username selected, so no one\'s chat can be displayed.'),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
+          ] else if (this.settingsBox != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            BaseButton(
+              secondary: true,
+              text: 'Add username…',
+              onPressed: () => this._addUsername(context),
             ),
-            if (this.nativeConnectPrompt) ...[
-              const SizedBox(height: AppSpacing.lg),
-              BaseButton(
-                text: this.connectLabel ?? 'Connect Twitch',
-                color: brandColor,
-                onPressed: this.onConnectTap ?? () => startTwitchLogin(context),
-              ),
-            ] else if (this.settingsBox != null) ...[
-              const SizedBox(height: AppSpacing.lg),
-              BaseButton(
-                secondary: true,
-                text: 'Add username…',
-                onPressed: () => this._addUsername(context),
-              ),
-            ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Chat-slot placeholder layout (empty states, Pro upsell, waiting
+/// states): [child] centered in the bounded chat viewport, scrolling
+/// instead of overflowing when the viewport is shorter than the content.
+class _CenteredChatPlaceholder extends StatelessWidget {
+  final Widget child;
+
+  const _CenteredChatPlaceholder({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: constraints.hasBoundedHeight
+                ? math.max(0.0, constraints.maxHeight - 2 * AppSpacing.xl)
+                : 0.0,
+          ),
+          child: Center(child: this.child),
         ),
       ),
     );
@@ -1053,73 +1072,64 @@ class _ChatProUpsell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    /// Top-aligned (like [_ChatEmptyState]) so the pane sits inside the
-    /// actually visible area of the dashboard scroll view
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: const EdgeInsets.only(
-          top: AppSpacing.xl,
-          left: AppSpacing.xl,
-          right: AppSpacing.xl,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AccentIconTile(
-              icon: JamIcons.padlock,
-              size: 64.0,
-              iconSize: 30.0,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Native ${this.chatType.text} Chat',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Native chat is locked - unlock it with OBS Blade Pro.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.lg),
+    /// Centered in the chat viewport, like [_ChatEmptyState]
+    return _CenteredChatPlaceholder(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const AccentIconTile(
+            icon: JamIcons.padlock,
+            size: 64.0,
+            iconSize: 30.0,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Native ${this.chatType.text} Chat',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Native chat is locked - unlock it with OBS Blade Pro.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.lg),
 
-            /// Compact benefit taste - titles only; the paywall carries
-            /// the full copy. Icons stay neutral (rule 5 - the padlock
-            /// tile is the pane's one accent moment, paywall precedent).
-            /// Skips the first (platform) benefit - the headline above
-            /// already names this platform's native chat.
-            for (final ProBenefit benefit in kProBenefits.skip(1).take(3))
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      benefit.icon,
-                      size: 16.0,
-                      color:
-                          (Theme.of(context).extension<AppTextColors>() ??
-                                  AppTextColors.standard)
-                              .textSecondary,
+          /// Compact benefit taste - titles only; the paywall carries
+          /// the full copy. Icons stay neutral (rule 5 - the padlock
+          /// tile is the pane's one accent moment, paywall precedent).
+          /// Skips the first (platform) benefit - the headline above
+          /// already names this platform's native chat.
+          for (final ProBenefit benefit in kProBenefits.skip(1).take(3))
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    benefit.icon,
+                    size: 16.0,
+                    color:
+                        (Theme.of(context).extension<AppTextColors>() ??
+                                AppTextColors.standard)
+                            .textSecondary,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      benefit.title,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Flexible(
-                      child: Text(
-                        benefit.title,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            const SizedBox(height: AppSpacing.md),
-            BaseButton(
-              text: 'Explore Pro',
-              onPressed: () => Navigator.of(context).pushNamed(this.proRoute),
             ),
-          ],
-        ),
+          const SizedBox(height: AppSpacing.md),
+          BaseButton(
+            text: 'Explore Pro',
+            onPressed: () => Navigator.of(context).pushNamed(this.proRoute),
+          ),
+        ],
       ),
     );
   }
@@ -1153,43 +1163,39 @@ class _YouTubeChannelWaitingState extends StatelessWidget {
             'on its own as soon as the next stream starts.',
     };
 
-    return Container(
+    return ColoredBox(
       color: Theme.of(context).cardColor,
-      alignment: Alignment.topCenter,
-      padding: const EdgeInsets.only(
-        top: AppSpacing.xl,
-        left: AppSpacing.xl,
-        right: AppSpacing.xl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ChatBrandIcon(chatType: ChatType.YouTube, color: brandColor),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (resolving)
-            StylingHelper.isApple(context)
-                ? const CupertinoActivityIndicator(radius: 10.0)
-                : SizedBox(
-                    height: 18.0,
-                    width: 18.0,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: brandColor,
-                    ),
-                  )
-          else
-            BaseButton(
-              text: 'Check now',
-              secondary: true,
-              onPressed: this.tracker.recheck,
+      child: _CenteredChatPlaceholder(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ChatBrandIcon(chatType: ChatType.YouTube, color: brandColor),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-        ],
+            const SizedBox(height: AppSpacing.md),
+            if (resolving)
+              StylingHelper.isApple(context)
+                  ? const CupertinoActivityIndicator(radius: 10.0)
+                  : SizedBox(
+                      height: 18.0,
+                      width: 18.0,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: brandColor,
+                      ),
+                    )
+            else
+              BaseButton(
+                text: 'Check now',
+                secondary: true,
+                onPressed: this.tracker.recheck,
+              ),
+          ],
+        ),
       ),
     );
   }
