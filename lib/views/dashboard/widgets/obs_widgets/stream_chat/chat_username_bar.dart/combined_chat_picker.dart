@@ -16,8 +16,20 @@ import '../combined_chat_builder_sheet.dart';
 import '../combined_sources_sheet.dart';
 import '../native_chat_chrome.dart';
 
-/// Status dot color for a combined source — null draws no dot (offline /
-/// unknown reads as "nothing happening", not as an error).
+/// One line naming a combo's channels. Same-name channels (a streamer on
+/// all platforms) read as one name + the platforms ("LVNDMARK on Twitch,
+/// YouTube, Kick") instead of the name three times; mixed names list
+/// every channel.
+String combinedSourcesSubtitle(List<CombinedSource> sources) {
+  final names = {for (final s in sources) s.label.toLowerCase()};
+  final platforms = sources.map((s) => s.platform.text).join(', ');
+  if (names.length == 1) return '${sources.first.label} on $platforms';
+  return sources.map((s) => s.label).join(' · ');
+}
+
+/// Status dot color for a combined source: live green, connecting amber,
+/// needs-attention red, offline a neutral gray (still drawn — "offline" is
+/// information too). Null only when there's no status at all.
 Color? combinedStatusDotColor(
   BuildContext context,
   CombinedSourceStatus? status,
@@ -30,7 +42,8 @@ Color? combinedStatusDotColor(
     CombinedSourceStatus.connecting => colors.warning,
     CombinedSourceStatus.error ||
     CombinedSourceStatus.needsSetup => colors.unreachable,
-    CombinedSourceStatus.offline || null => null,
+    CombinedSourceStatus.offline => Colors.grey.shade500,
+    null => null,
   };
 }
 
@@ -57,7 +70,7 @@ class CombinedChatPicker extends StatelessWidget {
 
         final String subtitle = sources.isEmpty
             ? 'Sign in natively to Twitch, YouTube or Kick'
-            : sources.map((source) => source.label).join(' · ');
+            : combinedSourcesSubtitle(sources);
 
         return Semantics(
           button: true,
@@ -161,7 +174,7 @@ class CombinedBadgeStack extends StatelessWidget {
     super.key,
     required this.platforms,
     this.statuses = const {},
-    this.size = 26.0,
+    this.size = 30.0,
   });
 
   @override
@@ -169,7 +182,10 @@ class CombinedBadgeStack extends StatelessWidget {
     final surface = StylingHelper.lightenDarkenColor(
       Theme.of(context).cardColor,
     );
-    final overlap = this.size * 0.3;
+
+    /// Light overlap: enough to read as one group, while every badge's
+    /// status dot (bottom-right corner) stays fully visible.
+    final overlap = this.size * 0.18;
     if (this.platforms.isEmpty) {
       return Container(
         width: this.size,
@@ -188,12 +204,15 @@ class CombinedBadgeStack extends StatelessWidget {
     final width =
         this.size + (this.platforms.length - 1) * (this.size - overlap);
     return SizedBox(
-      width: width + 3.0,
-      height: this.size + 3.0,
+      width: width + 4.0,
+      height: this.size + 4.0,
       child: Stack(
         clipBehavior: Clip.none,
+
+        /// Painted last-to-first: each badge sits above the one to its
+        /// right, so its corner dot is never covered by a neighbour.
         children: [
-          for (var i = 0; i < this.platforms.length; i++)
+          for (var i = this.platforms.length - 1; i >= 0; i--)
             Positioned(
               left: i * (this.size - overlap),
               top: 0,
@@ -250,15 +269,16 @@ class _StackBadge extends StatelessWidget {
         ),
         if (this.dot != null)
           Positioned(
-            right: -3.0,
-            bottom: -3.0,
+            right: -4.0,
+            bottom: -4.0,
             child: Container(
-              width: 10.0,
-              height: 10.0,
+              key: Key('combined-stack-dot-${this.platform.name}'),
+              width: 13.0,
+              height: 13.0,
               decoration: BoxDecoration(
                 color: this.dot,
                 shape: BoxShape.circle,
-                border: Border.all(color: this.ring, width: 2.0),
+                border: Border.all(color: this.ring, width: 2.5),
               ),
             ),
           ),
@@ -306,6 +326,9 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
               _ComboTile(
                 key: const Key('combined-combo-tile-my'),
                 platforms: mine,
+                statuses: store.selectedComboId == kMyChatsComboId
+                    ? store.sourceStatus
+                    : const {},
                 title: 'My chats',
                 subtitle: mine.isEmpty
                     ? 'Your own channels - sign in natively to start'
@@ -319,13 +342,19 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
                 ),
                 onAction: () => this._then(
                   context,
-                  () => showCombinedSourcesSheet(this.hostContext),
+                  () => showCombinedSourcesSheet(
+                    this.hostContext,
+                    comboId: kMyChatsComboId,
+                  ),
                 ),
               ),
               for (final combo in store.combos)
                 _ComboTile(
                   key: Key('combined-combo-tile-${combo.id}'),
                   platforms: combo.platforms,
+                  statuses: store.selectedComboId == combo.id
+                      ? store.sourceStatus
+                      : const {},
                   title: combo.displayName,
                   subtitle: _comboChannels(combo),
                   selected: store.selectedComboId == combo.id,
@@ -374,6 +403,10 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
 
 class _ComboTile extends StatelessWidget {
   final List<ChatType> platforms;
+
+  /// Live dots — only for the combo on screen (the others aren't
+  /// connected).
+  final Map<ChatType, CombinedSourceStatus> statuses;
   final String title;
   final String subtitle;
   final bool own;
@@ -385,6 +418,7 @@ class _ComboTile extends StatelessWidget {
   const _ComboTile({
     super.key,
     required this.platforms,
+    this.statuses = const {},
     required this.title,
     required this.subtitle,
     this.own = false,
@@ -424,7 +458,11 @@ class _ComboTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              CombinedBadgeStack(platforms: this.platforms, size: 24.0),
+              CombinedBadgeStack(
+                platforms: this.platforms,
+                statuses: this.statuses,
+                size: 26.0,
+              ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(

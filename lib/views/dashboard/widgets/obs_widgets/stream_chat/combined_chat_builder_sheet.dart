@@ -88,6 +88,9 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   ];
 
   final Map<ChatType, _Pick> _picks = <ChatType, _Pick>{};
+
+  /// The platform picked first — names the combo when no name is typed.
+  ChatType? _primary;
   final TextEditingController _name = TextEditingController();
 
   /// Suggestions for the platforms without a pick.
@@ -111,6 +114,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
     final combo = this.widget.combo;
     if (combo != null) {
       this._name.text = combo.name ?? '';
+      this._primary = combo.primary;
       if (combo.twitch case final ref?) {
         this._picks[ChatType.Twitch] = _Pick(
           label: ref.displayName,
@@ -157,8 +161,12 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
     setState(() {
       if (pick == null) {
         this._picks.remove(platform);
+        if (this._primary == platform) {
+          this._primary = this._picks.keys.firstOrNull;
+        }
       } else {
         this._picks[platform] = pick;
+        this._primary ??= platform;
       }
       this._matches = [
         for (final match in this._matches)
@@ -363,6 +371,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
       twitch: this._picks[ChatType.Twitch]?.twitch,
       youTube: this._picks[ChatType.YouTube]?.youTube,
       kickSlug: this._picks[ChatType.Kick]?.kickSlug,
+      primary: this._primary,
     );
     await GetIt.instance<CombinedChatStore>().saveCombo(combo);
     if (this.mounted) Navigator.of(this.context).pop();
@@ -459,7 +468,11 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
           const SizedBox(height: AppSpacing.lg),
           NativeChatTextField(
             controller: this._name,
-            hintText: 'Name (optional)',
+            hintText: switch (this._primary) {
+              final primary? when this._picks[primary] != null =>
+                'Name (optional) - "${this._picks[primary]!.label}"',
+              _ => 'Name (optional)',
+            },
           ),
           if (!canSave) ...[
             const SizedBox(height: AppSpacing.sm),

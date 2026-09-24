@@ -46,12 +46,17 @@ class CombinedCombo {
   final CombinedYouTubeSource? youTube;
   final String? kickSlug;
 
+  /// The platform picked first in the builder — its channel names an
+  /// unnamed combo. Null on combos saved before it existed.
+  final ChatType? primary;
+
   const CombinedCombo({
     required this.id,
     this.name,
     this.twitch,
     this.youTube,
     this.kickSlug,
+    this.primary,
   });
 
   /// Platforms with a source, in timeline order.
@@ -63,15 +68,20 @@ class CombinedCombo {
 
   int get sourceCount => this.platforms.length;
 
-  /// The user's name, else the sources' names joined with " · ".
+  /// The user's name, else ONE channel name (the list of all of them is
+  /// the subtitle already): the first platform picked in the builder
+  /// ([primary]), then Twitch → YouTube → Kick.
   String get displayName {
     final name = this.name?.trim();
     if (name != null && name.isNotEmpty) return name;
-    return [
-      ?this.twitch?.displayName,
-      ?this.youTube?.label,
-      ?this.kickSlug,
-    ].join(' · ');
+    final names = {
+      ChatType.Twitch: this.twitch?.displayName,
+      ChatType.YouTube: this.youTube?.label,
+      ChatType.Kick: this.kickSlug,
+    };
+    return names[this.primary] ??
+        names.values.firstWhere((n) => n != null, orElse: () => '') ??
+        '';
   }
 
   factory CombinedCombo.fromJson(Map<Object?, Object?> json) {
@@ -85,6 +95,11 @@ class CombinedCombo {
           : null,
       youTube: youTube is Map ? CombinedYouTubeSource.fromJson(youTube) : null,
       kickSlug: json['kick'] as String?,
+      primary: switch (json['primary']) {
+        final String name =>
+          ChatType.values.where((type) => type.name == name).firstOrNull,
+        _ => null,
+      },
     );
   }
 
@@ -94,6 +109,7 @@ class CombinedCombo {
     'twitch': ?this.twitch?.toJson(),
     'youtube': ?this.youTube?.toJson(),
     'kick': ?this.kickSlug,
+    'primary': ?this.primary?.name,
   };
 }
 

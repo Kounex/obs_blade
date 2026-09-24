@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
@@ -148,5 +149,66 @@ void main() {
 
     expect(combined.selectedComboId, 'c1');
     expect(find.text('Combined chats'), findsNothing);
+  });
+
+  testWidgets('every source gets a visible status dot, offline included', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap(const CombinedChatPicker()));
+
+    /// Kick is connected (live), YouTube offline - both dots drawn.
+    expect(find.byKey(const Key('combined-stack-dot-Kick')), findsOneWidget);
+    expect(find.byKey(const Key('combined-stack-dot-YouTube')), findsOneWidget);
+
+    /// The live dot is on top of the stack, not under the next badge.
+    final dot = tester.getRect(
+      find.byKey(const Key('combined-stack-dot-YouTube')),
+    );
+    final kickBadge = tester.getRect(
+      find.byKey(const Key('combined-stack-Kick')),
+    );
+    expect(dot.right, greaterThan(kickBadge.left));
+    expect(dot.width, 13.0);
+  });
+
+  testWidgets('"Manage" on My chats opens My chats even when a saved combo '
+      'is shown', (tester) async {
+    combined.combos.add(
+      const CombinedCombo(id: 'c1', name: 'Co-stream', kickSlug: 'aaa'),
+    );
+    combined.selectedComboId = 'c1';
+    await tester.pumpWidget(wrap(const CombinedChatPicker()));
+
+    await tester.tap(find.byKey(const Key('combined-combo-card')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('combined-combo-tile-my')),
+        matching: find.text('Manage'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    /// The My-chats sheet: its intro text + per-platform toggles, not the
+    /// combo's Edit header.
+    expect(
+      find.textContaining('Your own channels on each platform'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit'), findsNothing);
+  });
+
+  test('same-name channels collapse to one name + platforms', () {
+    const same = [
+      CombinedSource(platform: ChatType.Twitch, key: '1', label: 'LVNDMARK'),
+      CombinedSource(platform: ChatType.YouTube, key: 'y', label: 'LVNDMARK'),
+      CombinedSource(platform: ChatType.Kick, key: 'k', label: 'lvndmark'),
+    ];
+    expect(combinedSourcesSubtitle(same), 'LVNDMARK on Twitch, YouTube, Kick');
+    const mixed = [
+      CombinedSource(platform: ChatType.Twitch, key: '1', label: 'xQcOW'),
+      CombinedSource(platform: ChatType.Kick, key: 'k', label: 'kicker'),
+    ];
+    expect(combinedSourcesSubtitle(mixed), 'xQcOW · kicker');
   });
 }

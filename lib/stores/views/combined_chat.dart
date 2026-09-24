@@ -143,6 +143,10 @@ abstract class _CombinedChatStore with Store {
     return combo == null ? this.mySources : this._sourcesOf(combo);
   }
 
+  /// [combo]'s sources resolved against the platform stores (the sheets
+  /// show a combo that isn't the one on screen too).
+  List<CombinedSource> sourcesOf(CombinedCombo combo) => this._sourcesOf(combo);
+
   List<CombinedSource> _sourcesOf(CombinedCombo combo) {
     final twitch = this._twitch();
     final youTube = this._youTube();

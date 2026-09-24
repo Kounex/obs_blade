@@ -10,6 +10,7 @@ import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
+import '../../../../../types/classes/combined/combined_combo.dart';
 import '../../../../../utils/modal_handler.dart';
 import 'chat_type_brand.dart';
 import 'combined_chat_builder_sheet.dart';
@@ -41,21 +42,32 @@ NativeChatConnectionStatus combinedChatWindowStatus(
 
 /// The combined chat's sources: one row per platform with its status and
 /// the fix for it (sign in, set up, retry), plus the "My chats" toggle.
-Future<void> showCombinedSourcesSheet(BuildContext context) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
-      builder: (_) => CombinedSourcesSheet(hostContext: context),
-    );
+/// [comboId] picks which combo the sheet is about ("My chats" by
+/// [kMyChatsComboId], a saved combo by its id); null = the one shown.
+Future<void> showCombinedSourcesSheet(
+  BuildContext context, {
+  String? comboId,
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (_) => CombinedSourcesSheet(hostContext: context, comboId: comboId),
+);
 
 class CombinedSourcesSheet extends StatelessWidget {
   /// The chat pane's context — sign-in dialogs open on it, not on the
   /// sheet that closes first.
   final BuildContext hostContext;
 
-  const CombinedSourcesSheet({super.key, required this.hostContext});
+  /// The combo this sheet manages — null follows the shown combo.
+  final String? comboId;
+
+  const CombinedSourcesSheet({
+    super.key,
+    required this.hostContext,
+    this.comboId,
+  });
 
   static const List<ChatType> kPlatforms = [
     ChatType.Twitch,
@@ -68,7 +80,11 @@ class CombinedSourcesSheet extends StatelessWidget {
     return Observer(
       builder: (_) {
         final store = GetIt.instance<CombinedChatStore>();
-        final combo = store.selectedCombo;
+        final id = this.comboId ?? store.selectedComboId;
+        CombinedCombo? combo;
+        for (final candidate in store.combos) {
+          if (candidate.id == id) combo = candidate;
+        }
         return NativeChatSheetScaffold(
           headerGap: AppSpacing.sm,
           header: Row(
@@ -99,7 +115,7 @@ class CombinedSourcesSheet extends StatelessWidget {
           ),
           body: combo == null
               ? this._myChatsBody(context, store)
-              : this._comboBody(context, store),
+              : this._comboBody(context, store, combo),
         );
       },
     );
@@ -124,7 +140,9 @@ class CombinedSourcesSheet extends StatelessWidget {
             platform: platform,
             source: available[platform],
             enabled: !store.disabledPlatforms.contains(platform),
-            status: store.sourceStatus[platform],
+            status: store.selectedComboId == kMyChatsComboId
+                ? store.sourceStatus[platform]
+                : null,
             onToggle: (value) => store.setPlatformEnabled(platform, value),
             onFix: () {
               Navigator.of(context).pop();
@@ -137,17 +155,26 @@ class CombinedSourcesSheet extends StatelessWidget {
 
   /// A saved combo: its sources with their status and fix actions (the
   /// channel set is changed in the builder, not toggled here).
-  Widget _comboBody(BuildContext context, CombinedChatStore store) {
+  Widget _comboBody(
+    BuildContext context,
+    CombinedChatStore store,
+    CombinedCombo combo,
+  ) {
+    /// Live status exists only for the combo on screen — the platform
+    /// stores are pointed at its channels, not at this one's.
+    final shown = store.selectedComboId == combo.id;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final source in store.activeSources)
+        for (final source in store.sourcesOf(combo))
           _SourceRow(
             platform: source.platform,
             source: source,
             enabled: true,
-            status: store.sourceStatus[source.platform],
+            status: shown
+                ? store.sourceStatus[source.platform]
+                : (source.unavailable ? CombinedSourceStatus.needsSetup : null),
             onFix: () {
               Navigator.of(context).pop();
               combinedSourceFix(
@@ -229,7 +256,10 @@ class _SourceRow extends StatelessWidget {
             CombinedSourceStatus.connecting => ('Connecting…', null),
             CombinedSourceStatus.needsSetup => ('Needs setup', 'Set up'),
             CombinedSourceStatus.error => ('Failed', 'Retry'),
-            CombinedSourceStatus.offline || null => ('Offline', null),
+            CombinedSourceStatus.offline => ('Offline', null),
+
+            /// Not the combo on screen — no live status to report.
+            null => ('Ready', null),
           };
 
     return Padding(

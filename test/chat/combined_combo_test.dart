@@ -29,12 +29,28 @@ void main() {
     expect(back.youTube, combo.youTube);
     expect(back.kickSlug, 'xqc');
     expect(back.platforms, [ChatType.Twitch, ChatType.YouTube, ChatType.Kick]);
+    expect(back.primary, isNull);
+    expect(
+      parseCombinedCombos([
+        {'id': 'p', 'kick': 'xqc', 'primary': 'Kick'},
+      ]).single.primary,
+      ChatType.Kick,
+    );
   });
 
-  test('display name falls back to the joined source names', () {
+  test('display name falls back to ONE channel name - the first picked', () {
     expect(
       CombinedCombo(id: 'c', twitch: twitch, kickSlug: 'xqc').displayName,
-      'xQcOW · xqc',
+      'xQcOW',
+    );
+    expect(
+      CombinedCombo(
+        id: 'c',
+        twitch: twitch,
+        kickSlug: 'xqc',
+        primary: ChatType.Kick,
+      ).displayName,
+      'xqc',
     );
     expect(
       const CombinedCombo(id: 'c', name: '  ', kickSlug: 'xqc').displayName,
