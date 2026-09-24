@@ -21,6 +21,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_combined_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/pinned_chat_banner.dart';
 
@@ -196,6 +197,42 @@ void main() {
 
     /// Inline in the first line: vertically centered on the name.
     expect((badge.center.dy - name.center.dy).abs(), lessThan(3.0));
+  });
+
+  testWidgets('the source strip shows one chip per source', (tester) async {
+    kick.messages.add(kickMessage('k1', 'kick line', at(1)));
+
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pump();
+
+    expect(find.byKey(const Key('combined-focus-YouTube')), findsOneWidget);
+    expect(find.byKey(const Key('combined-focus-Kick')), findsOneWidget);
+    expect(find.byKey(const Key('combined-focus-Twitch')), findsNothing);
+  });
+
+  testWidgets('a focused platform window shows "↩ Combined"', (tester) async {
+    combined.focusedPlatform = ChatType.Kick;
+
+    Widget window(ChatType type) => wrap(
+      NativeChatWindow(
+        chatType: type,
+        status: NativeChatConnectionStatus.live,
+        child: const SizedBox.expand(),
+      ),
+    );
+
+    await tester.pumpWidget(window(ChatType.Kick));
+    expect(find.byKey(const Key('combined-focus-back')), findsOneWidget);
+    expect(find.text('My chats'), findsOneWidget);
+
+    /// Other platforms' windows stay plain.
+    await tester.pumpWidget(window(ChatType.YouTube));
+    expect(find.byKey(const Key('combined-focus-back')), findsNothing);
+
+    combined.focusedPlatform = null;
+    await tester.pumpWidget(window(ChatType.Kick));
+    await tester.pump();
+    expect(find.byKey(const Key('combined-focus-back')), findsNothing);
   });
 
   testWidgets('a switched-off source drops out of the timeline', (

@@ -112,6 +112,24 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
     });
   }
 
+  late final _$focusedPlatformAtom = Atom(
+    name: '_CombinedChatStore.focusedPlatform',
+    context: context,
+  );
+
+  @override
+  ChatType? get focusedPlatform {
+    _$focusedPlatformAtom.reportRead();
+    return super.focusedPlatform;
+  }
+
+  @override
+  set focusedPlatform(ChatType? value) {
+    _$focusedPlatformAtom.reportWrite(value, super.focusedPlatform, () {
+      super.focusedPlatform = value;
+    });
+  }
+
   late final _$activateAsyncAction = AsyncAction(
     '_CombinedChatStore.activate',
     context: context,
@@ -174,12 +192,42 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
     return _$deleteComboAsyncAction.run(() => super.deleteCombo(comboId));
   }
 
+  late final _$_CombinedChatStoreActionController = ActionController(
+    name: '_CombinedChatStore',
+    context: context,
+  );
+
+  @override
+  void focus(ChatType platform) {
+    final _$actionInfo = _$_CombinedChatStoreActionController.startAction(
+      name: '_CombinedChatStore.focus',
+    );
+    try {
+      return super.focus(platform);
+    } finally {
+      _$_CombinedChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void returnToCombined() {
+    final _$actionInfo = _$_CombinedChatStoreActionController.startAction(
+      name: '_CombinedChatStore.returnToCombined',
+    );
+    try {
+      return super.returnToCombined();
+    } finally {
+      _$_CombinedChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
   @override
   String toString() {
     return '''
 active: ${active},
 disabledPlatforms: ${disabledPlatforms},
 selectedComboId: ${selectedComboId},
+focusedPlatform: ${focusedPlatform},
 selectedCombo: ${selectedCombo},
 activeSources: ${activeSources},
 mySources: ${mySources},

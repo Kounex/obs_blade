@@ -179,7 +179,7 @@ against the channel's `user_id` and stored as `KickAuth.channelSlug`;
 native-only — its selection persists as `SelectedKickNativeOwnChannel`,
 not in the shared WebView keys).
 
-**Combined chat (wave 1 of 3, read-only):** `ChatType.Combined`
+**Combined chat (waves 1-2 of 3, read-only):** `ChatType.Combined`
 (HiveField 4, native-only — `isNativeOnly`, no engine switch) merges the
 signed-in "You" channels ("My chats") into one Pro-gated timeline.
 `CombinedChatStore` binds to the persisted chat type app-wide (created
@@ -191,7 +191,14 @@ never changes). `NativeCombinedChatView` reuses each platform's row
 widget behind a platform icon; pins stack per platform
 (`CombinedPinStack`); sources sheet = status + sign-in/retry + toggles.
 Spec/plan: `docs/superpowers/specs|plans/2026-09-24-combined-chat*`.
-Next waves: builder + other streamers + focus shortcut, then writing/mod.
+Wave 2: saved combos of any channels (`CombinedCombo`, settings JSON;
+saving registers each source in its platform's own list — the stores
+only show what they list), builder sheet with confirm-only same-name
+suggestions (`CombinedMatchFinder`: Kick slug, YouTube `@handle` page,
+Twitch exact login — quota-free), combo dropdown in the chat bar, a
+source strip whose chips jump into one platform
+(`CombinedChatStore.focus` → "↩ Combined" strip on that window, no
+restore; YouTube `pausePolling` meanwhile). Next: wave 3 writing/mod.
 
 **General native chat (all 3 engines):** every store answers
 `isViewingOwnChannel` (the "You" entry — groundwork for the merged

@@ -178,6 +178,17 @@ abstract class _CombinedChatStore with Store {
 
   bool _settingsLoaded = false;
 
+  /// Set while the user jumped from the combined view into one platform
+  /// (tapping a source): that platform keeps showing the combo's channel,
+  /// shows a "↩ Combined" chip, and leaving it does NOT restore — the
+  /// user is expected back. Transient (not persisted).
+  @observable
+  ChatType? focusedPlatform;
+
+  /// The chat type switch [focus] is doing right now — the chat-type
+  /// watcher must not treat it as leaving Combined.
+  bool _focusSwitch = false;
+
   StreamSubscription<BoxEvent>? _chatTypeSub;
   ReactionDisposer? _sourcesReaction;
 
@@ -190,9 +201,17 @@ abstract class _CombinedChatStore with Store {
     final box = Hive.box(HiveKeys.Settings.name);
     void sync() {
       final type = box.get(SettingsKeys.SelectedChatType.name);
-      unawaited(
-        type == ChatType.Combined ? this.activate() : this.deactivate(),
-      );
+      if (type == ChatType.Combined) {
+        unawaited(this.activate());
+      } else if (this._focusSwitch || type == this.focusedPlatform) {
+        /// Focus jump: the combo stays owned, only YouTube pauses.
+        this._focusSwitch = false;
+        this._pauseBackground(except: type is ChatType ? type : null);
+      } else {
+        /// Any other type switch leaves Combined for real.
+        this.focusedPlatform = null;
+        unawaited(this.deactivate());
+      }
     }
 
     this._chatTypeSub = box
@@ -201,7 +220,12 @@ abstract class _CombinedChatStore with Store {
     this._sourcesReaction = reaction<List<CombinedSource>>(
       (_) => this.activeSources,
       (_) {
-        if (this.active) unawaited(this.activate());
+        /// Not during a focus jump: activate() ends the focus and resumes
+        /// YouTube while the user is still on the other platform — the
+        /// way back ("↩ Combined") re-activates anyway.
+        if (this.active && this.focusedPlatform == null) {
+          unawaited(this.activate());
+        }
       },
     );
     sync();
@@ -379,12 +403,45 @@ abstract class _CombinedChatStore with Store {
     ];
   }
 
+  /// Jump from the combined view into [platform]'s own chat, still on the
+  /// combo's channel ("↩ Combined" brings the user back). The other
+  /// sources stay selected: Twitch / Kick keep running, YouTube pauses.
+  @action
+  void focus(ChatType platform) {
+    if (!this.active) return;
+    this.focusedPlatform = platform;
+    this._focusSwitch = true;
+    Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.SelectedChatType.name, platform);
+  }
+
+  /// Back from a [focus] jump to the combined view.
+  @action
+  void returnToCombined() {
+    Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.SelectedChatType.name, ChatType.Combined);
+  }
+
+  /// YouTube polls on quota — pause it while the user looks at another
+  /// platform. Twitch / Kick connections cost nothing and keep running,
+  /// so the combined timeline stays complete for the way back.
+  void _pauseBackground({ChatType? except}) {
+    if (except == ChatType.YouTube) return;
+    if (this.activeSources.any((s) => s.platform == ChatType.YouTube)) {
+      this._youTube().pausePolling();
+    }
+  }
+
   /// Point every source's platform store at the source (remembering the
   /// previous selection once). Idempotent — re-run it when [mySources]
   /// changes while active (a sign-in adds a source live).
   @action
   Future<void> activate() async {
     this._ensureSettingsLoaded();
+    this.focusedPlatform = null;
+    this._youTube().resumePolling();
     final generation = ++this._generation;
     this.active = true;
     for (final source in this.activeSources) {
@@ -398,6 +455,8 @@ abstract class _CombinedChatStore with Store {
   @action
   Future<void> deactivate() async {
     this._ensureSettingsLoaded();
+    this.focusedPlatform = null;
+    this._youTube().resumePolling();
     if (!this.active && this._restore.isEmpty) return;
     this._generation++;
     this.active = false;

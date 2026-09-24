@@ -307,6 +307,24 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     );
   }
 
+  late final _$pollingPausedAtom = Atom(
+    name: '_YouTubeChatStore.pollingPaused',
+    context: context,
+  );
+
+  @override
+  bool get pollingPaused {
+    _$pollingPausedAtom.reportRead();
+    return super.pollingPaused;
+  }
+
+  @override
+  set pollingPaused(bool value) {
+    _$pollingPausedAtom.reportWrite(value, super.pollingPaused, () {
+      super.pollingPaused = value;
+    });
+  }
+
   late final _$initAsyncAction = AsyncAction(
     '_YouTubeChatStore.init',
     context: context,
@@ -419,6 +437,30 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   }
 
   @override
+  void pausePolling() {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.pausePolling',
+    );
+    try {
+      return super.pausePolling();
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void resumePolling() {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.resumePolling',
+    );
+    try {
+      return super.resumePolling();
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void recheckLiveNow() {
     final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
       name: '_YouTubeChatStore.recheckLiveNow',
@@ -484,6 +526,7 @@ sendChatError: ${sendChatError},
 moderationError: ${moderationError},
 ownChannel: ${ownChannel},
 selectedChannelLabel: ${selectedChannelLabel},
+pollingPaused: ${pollingPaused},
 nativeChannels: ${nativeChannels},
 isSignedInState: ${isSignedInState}
     ''';

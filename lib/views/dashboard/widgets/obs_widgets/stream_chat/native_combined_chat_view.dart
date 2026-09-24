@@ -306,7 +306,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
           },
         );
 
-        return CombinedPinStack(
+        final pinned = CombinedPinStack(
           pins: [
             if (twitchPin != null)
               CombinedPin(
@@ -325,6 +325,12 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
           ],
           child: timeline,
         );
+        return Column(
+          children: [
+            CombinedSourceStrip(sources: sources),
+            Expanded(child: pinned),
+          ],
+        );
       },
     );
   }
@@ -332,7 +338,10 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
   Widget _rowFor(BuildContext context, CombinedItem item, dynamic settings) {
     final payload = item.payload;
     final highlighted = this._actionTargetKey == item.key;
-    final badge = CombinedPlatformBadge(platform: item.platform);
+    final badge = CombinedPlatformBadge(
+      key: Key('combined-row-icon-${item.platform.name}'),
+      platform: item.platform,
+    );
     switch (payload) {
       case ChatSystemNotice():
         return Padding(
@@ -576,7 +585,6 @@ class CombinedPlatformBadge extends StatelessWidget {
     return Semantics(
       label: 'from ${this.platform.text}',
       child: Container(
-        key: Key('combined-row-icon-${this.platform.name}'),
         width: this.size,
         height: this.size,
         decoration: BoxDecoration(
@@ -638,5 +646,89 @@ class CombinedPinStack extends StatelessWidget {
       );
     }
     return current;
+  }
+}
+
+/// Slim strip over the merged timeline: one chip per source (platform
+/// badge + channel + status dot). Tapping a chip jumps into that
+/// platform's own chat on the combo's channel
+/// ([CombinedChatStore.focus]) — a "↩ Combined" strip there leads back.
+class CombinedSourceStrip extends StatelessWidget {
+  final List<CombinedSource> sources;
+
+  const CombinedSourceStrip({super.key, required this.sources});
+
+  @override
+  Widget build(BuildContext context) {
+    final store = GetIt.instance<CombinedChatStore>();
+    final statusColors =
+        Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
+    final muted = Theme.of(context).textTheme.bodySmall?.color;
+    return SizedBox(
+      height: 36.0,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        children: [
+          for (final source in this.sources)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
+              child: Pressable(
+                key: Key('combined-focus-${source.platform.name}'),
+                haptic: true,
+                onTap: source.unavailable
+                    ? null
+                    : () => store.focus(source.platform),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (source.platform.brandColor ?? muted!).withValues(
+                      alpha: kCombinedRowTintAlpha * 2,
+                    ),
+                    borderRadius: AppRadius.pill,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CombinedPlatformBadge(
+                        platform: source.platform,
+                        size: 14.0,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        source.label,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Container(
+                        width: 6.0,
+                        height: 6.0,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: switch (store.sourceStatus[source.platform]) {
+                            CombinedSourceStatus.live => statusColors.live,
+                            CombinedSourceStatus.connecting =>
+                              statusColors.warning,
+                            CombinedSourceStatus.error ||
+                            CombinedSourceStatus.needsSetup =>
+                              statusColors.unreachable,
+                            _ => muted,
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

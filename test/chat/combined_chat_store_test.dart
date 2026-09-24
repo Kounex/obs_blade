@@ -412,6 +412,63 @@ void main() {
       );
     });
 
+    test('focus keeps the combo, pauses YouTube; ↩ Combined resumes', () async {
+      store.bindToChatType();
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Combined,
+      );
+      await until(() => kick.selectedChannelSlug == 'kicker');
+      await until(
+        () => youTube.chatConnection != YouTubeChatConnectionState.idle,
+      );
+      expect(youTube.pollingPaused, isFalse);
+
+      store.focus(ChatType.Kick);
+      await until(() => youTube.pollingPaused);
+
+      /// Still the combo's channel on Kick, no restore ran.
+      expect(store.focusedPlatform, ChatType.Kick);
+      expect(store.active, isTrue);
+      expect(kick.selectedChannelSlug, 'kicker');
+      expect(youTube.pollingPaused, isTrue);
+      expect(youTube.chatConnection, YouTubeChatConnectionState.idle);
+
+      store.returnToCombined();
+      await until(() => !youTube.pollingPaused);
+
+      expect(store.focusedPlatform, isNull);
+      expect(youTube.selectedChannelLabel, kYouTubeOwnChannelLabel);
+      await store.dispose();
+    });
+
+    test('a real type switch after a focus jump still restores', () async {
+      store.bindToChatType();
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Combined,
+      );
+      await until(() => kick.selectedChannelSlug == 'kicker');
+
+      store.focus(ChatType.Kick);
+      await until(() => store.focusedPlatform == ChatType.Kick);
+      await until(() => youTube.pollingPaused);
+
+      /// From the focused Kick view the user picks YouTube in the type
+      /// dropdown - that's leaving Combined.
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.YouTube,
+      );
+      await until(() => kick.selectedChannelSlug == 'aaa');
+
+      expect(store.active, isFalse);
+      expect(store.focusedPlatform, isNull);
+      expect(youTube.selectedChannelLabel, 'A');
+      expect(youTube.pollingPaused, isFalse);
+      await store.dispose();
+    });
+
     test('activate twice keeps the original restore point', () async {
       await store.activate();
       await store.activate();

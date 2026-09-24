@@ -634,6 +634,27 @@ abstract class _YouTubeChatStore with Store {
     unawaited(this._pollLoop(label, flow));
   }
 
+  /// Background pause (combined chat focused elsewhere): stop polling to
+  /// save quota. The channel buffer and its page token stay, so
+  /// [resumePolling] continues where it left off. No-op when idle.
+  @observable
+  bool pollingPaused = false;
+
+  @action
+  void pausePolling() {
+    if (this.pollingPaused) return;
+    if (this.chatConnection == YouTubeChatConnectionState.idle) return;
+    this.pollingPaused = true;
+    this._stopPolling();
+  }
+
+  @action
+  void resumePolling() {
+    if (!this.pollingPaused) return;
+    this.pollingPaused = false;
+    this.connectChat();
+  }
+
   void _stopPolling() {
     this._pollFlow++;
     runInAction(() {

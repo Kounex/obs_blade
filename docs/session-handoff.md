@@ -107,18 +107,16 @@ session picks the entry up after a restart (backfill).
 (length stayed flat). User is watching for a recurrence; if it happens
 again, check whether rows still reach `TwitchChatStore.messages`.
 
-**Combined chat — wave 1 shipped (read-only merge + "My chats"),
-not dogfooded yet.** Spec + plan:
-[`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md),
-[`superpowers/plans/2026-09-24-combined-chat-wave1.md`](superpowers/plans/2026-09-24-combined-chat-wave1.md).
-Dogfood checklist: pick "Combined" in the chat type; signed-in platforms
-appear in "My chats" (tap it → sources sheet: status, sign in, toggles);
-rows interleave with platform icons; Twitch + Kick pins stack and tuck
-independently; switching the chat type back to e.g. Kick restores the
-channel Kick showed before (also after an app restart). Next: wave 2
-(combo builder, other streamers' channels + suggestions, focus shortcut
-with "↩ Combined", YouTube pause in the background), then wave 3
-(target picker, replies, mod actions).
+**Combined chat — waves 1 + 2 shipped, wave 2 not dogfooded yet.**
+Spec + plans in `docs/superpowers/{specs,plans}/2026-09-2*-combined-chat*`.
+Wave 2 dogfood checklist: chat bar combo dropdown → "New combined
+chat…" → pick a channel on one platform, suggestion chips appear for the
+others (tap to use), save; the new combo is selected and its channels
+now also appear in the single-platform dropdowns; long-press a combo →
+edit / delete. In the combined view, the source strip chips jump into
+that platform ("↩ Combined" strip there, YouTube pauses meanwhile);
+switching the chat type instead restores the pre-combo channels. Next:
+wave 3 (target picker, replies, mod actions in the combined view).
 
 **Immediate next threads:**
 

@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
+import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../../../../../utils/twitch/twitch_user_service.dart';
@@ -244,6 +247,7 @@ class NativeChatWindow extends StatelessWidget {
             ),
           ),
           const BaseDivider(),
+          _CombinedFocusStrip(chatType: this.chatType),
           Expanded(child: this.child),
           if (this.input != null) ...[const BaseDivider(), this.input!],
         ],
@@ -540,4 +544,76 @@ class _UptimeLineState extends State<_UptimeLine> {
       context,
     ).textTheme.bodySmall?.copyWith(fontFeatures: kTabularFigures),
   );
+}
+
+/// "↩ Combined" strip on a platform window the user jumped into from the
+/// combined chat ([CombinedChatStore.focus]) — shows which combo they
+/// came from and takes them back. Hidden otherwise (and in hosts without
+/// the combined store, e.g. isolated tests).
+class _CombinedFocusStrip extends StatelessWidget {
+  final ChatType chatType;
+
+  const _CombinedFocusStrip({required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!GetIt.instance.isRegistered<CombinedChatStore>()) {
+      return const SizedBox.shrink();
+    }
+    return Observer(
+      builder: (_) {
+        final store = GetIt.instance<CombinedChatStore>();
+        if (store.focusedPlatform != this.chatType) {
+          return const SizedBox.shrink();
+        }
+        final accent =
+            (Theme.of(context).extension<AppTextColors>() ??
+                    AppTextColors.standard)
+                .highlightText;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Pressable(
+              key: const Key('combined-focus-back'),
+              haptic: true,
+              onTap: store.returnToCombined,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minHeight: kMinInteractiveDimensionCupertino,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: Row(
+                  children: [
+                    Icon(
+                      CupertinoIcons.arrow_uturn_left,
+                      size: 16.0,
+                      color: accent,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Combined',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        store.selectedCombo?.displayName ?? 'My chats',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const BaseDivider(),
+          ],
+        );
+      },
+    );
+  }
 }

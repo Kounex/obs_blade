@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-25 - Combined chat wave 2 + dogfood polish
+
+- **Dogfood polish on wave 1** (`e7c597fa`, `580fe8d3`): combined rows
+  got a full-width platform tint, a brand stripe on the window's left
+  edge and an inline 16px square platform badge (rows' new `leading`
+  slot); the "My chats" sheet uses `BaseAdaptiveSwitch` /
+  `ThemedCupertinoButton`; "You" in all three channel dropdowns is a
+  solid `NativeChatYouChip`.
+- **Wave 2** (plan `docs/superpowers/plans/2026-09-25-combined-chat-wave2.md`):
+  saved combos + builder + suggestions + combo dropdown + source strip
+  focus jump + YouTube background pause. See AGENTS.md § Combined chat.
+  Live smoke of the suggestions confirmed "suggest, never auto-add":
+  YouTube `@xqc` is a different creator, Kick `ice_poseidon` and
+  `ice-poseidon` are two accounts.
+- End self-review (reviewer subagent still rate-limited) caught a
+  status-change reaction re-activating during a focus jump (would
+  resume YouTube while the user is on another platform).
+
 ## 2026-09-24 (night) - Combined chat wave 1 + full-buffer scroll fix
 
 - **Likely cause of the announcement "stall"** (`c8c48713`): the native
