@@ -13,6 +13,7 @@ import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../chat_type_brand.dart';
 import '../combined_chat_builder_sheet.dart';
+import '../combined_chat_icon.dart';
 import '../combined_sources_sheet.dart';
 import '../native_chat_chrome.dart';
 
@@ -194,11 +195,8 @@ class CombinedBadgeStack extends StatelessWidget {
           color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        child: Icon(
-          ChatType.Combined.icon,
-          size: this.size * 0.6,
-          color: Theme.of(context).textTheme.bodySmall?.color,
-        ),
+        alignment: Alignment.center,
+        child: CombinedChatIcon(size: this.size * 0.75),
       );
     }
     final width =

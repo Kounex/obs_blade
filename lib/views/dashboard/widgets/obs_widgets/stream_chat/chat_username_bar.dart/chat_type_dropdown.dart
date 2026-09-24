@@ -7,6 +7,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../chat_type_brand.dart';
+import '../combined_chat_icon.dart';
 
 class ChatTypeDropdown extends StatelessWidget {
   final Box settingsBox;
@@ -47,7 +48,12 @@ class ChatTypeDropdown extends StatelessWidget {
                     value: chatType,
                     child: Row(
                       children: [
-                        Icon(chatType.icon, color: chatType.brandColor),
+                        chatTypeIcon(
+                          context,
+                          chatType.icon,
+                          combined: chatType == ChatType.Combined,
+                          color: chatType.brandColor,
+                        ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(

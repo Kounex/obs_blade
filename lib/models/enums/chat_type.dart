@@ -48,6 +48,9 @@ extension ChatTypeFunctions on ChatType {
     ChatType.YouTube: JamIcons.youtube,
     ChatType.Owncast: CustomFlutterIcons.owncast_logo,
     ChatType.Kick: CustomFlutterIcons.kick,
-    ChatType.Combined: CustomFlutterIcons.combined_chat,
+
+    /// Monochrome fallback only — Combined renders its multi-color
+    /// `CombinedChatIcon` wherever the chat type is shown.
+    ChatType.Combined: JamIcons.messages,
   }[this]!;
 }

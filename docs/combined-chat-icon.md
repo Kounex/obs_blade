@@ -1,22 +1,19 @@
 # Combined chat icon
 
-`CustomFlutterIcons.combined_chat` (U+E802 in `assets/fonts/CustomFlutterIcons.ttf`)
-is drawn for the app, not a stock glyph: a solid speech bubble with a
-knocked-out "merge" mark — three input nodes whose streams curve into one
-output node (several platform chats flowing into one timeline). Single
-color, so it tints per theme like every other font glyph.
+The combined chat mark is a speech bubble holding three chat lines in the
+platforms' accent colors (Twitch purple `#B58CF0`, Kick green `#5FC27E`,
+YouTube red `#F07F78`) — several chats in one. Source:
+[`combined-chat-icon.svg`](combined-chat-icon.svg) (24×24 viewBox,
+provided by the maintainer).
 
-- Source: [`combined-chat-icon.svg`](combined-chat-icon.svg) (preview of the
-  exact outline).
-- Generator: [`tool/icons/combined_chat_glyph.py`](../tool/icons/combined_chat_glyph.py)
-  — builds the outline with skia-pathops boolean ops and adds/replaces the
-  glyph in the font:
+It's multi-color, so it can't be an icon-font glyph. `CombinedChatIcon`
+(`lib/views/dashboard/widgets/obs_widgets/stream_chat/combined_chat_icon.dart`)
+paints the same paths with a `CustomPainter` (no SVG package needed). The
+lines keep their fixed colors; the bubble follows the theme (`#3A3A44` on
+light surfaces, a lifted `#55555F` on dark ones so it doesn't sink into the
+dark control fill).
 
-  ```bash
-  python3 -m venv /tmp/iconvenv && /tmp/iconvenv/bin/pip install fonttools skia-pathops
-  /tmp/iconvenv/bin/python tool/icons/combined_chat_glyph.py \
-    assets/fonts/CustomFlutterIcons.ttf assets/fonts/CustomFlutterIcons.ttf /tmp/preview.svg
-  ```
-
-  Re-running is idempotent (the glyph is replaced in place); the other
-  glyphs (Owncast, Kick) are untouched.
+Used by the chat-type dropdown, the chat empty-state header and the combo
+card's placeholder tile (`chatTypeIcon(...)` picks it for
+`ChatType.Combined`). `ChatType.Combined.icon` is only a monochrome
+fallback (`JamIcons.messages`).

@@ -47,6 +47,7 @@ import 'native_chat_input.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
 import 'native_combined_chat_view.dart';
+import 'combined_chat_icon.dart';
 import 'combined_sources_sheet.dart';
 import 'native_kick_chat_view.dart';
 import 'native_reply_strip.dart';
@@ -966,7 +967,14 @@ class _ChatBrandIcon extends StatelessWidget {
         color: this.color.withValues(alpha: 0.15),
         shape: BoxShape.circle,
       ),
-      child: Icon(this.chatType.icon, color: this.color, size: 28.0),
+      alignment: Alignment.center,
+      child: chatTypeIcon(
+        context,
+        this.chatType.icon,
+        combined: this.chatType == ChatType.Combined,
+        color: this.color,
+        size: this.chatType == ChatType.Combined ? 34.0 : 28.0,
+      ),
     );
   }
 }
