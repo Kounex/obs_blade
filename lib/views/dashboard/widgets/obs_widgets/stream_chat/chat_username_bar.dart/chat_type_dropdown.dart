@@ -50,8 +50,7 @@ class ChatTypeDropdown extends StatelessWidget {
                       children: [
                         chatTypeIcon(
                           context,
-                          chatType.icon,
-                          combined: chatType == ChatType.Combined,
+                          chatType,
                           color: chatType.brandColor,
                         ),
                         const SizedBox(width: AppSpacing.md),

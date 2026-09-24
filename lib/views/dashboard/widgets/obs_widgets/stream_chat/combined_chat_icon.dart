@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../models/enums/chat_type.dart';
+
 /// The combined chat mark — a speech bubble holding three chat lines in
 /// the platforms' accent colors (Twitch purple, Kick green, YouTube red):
 /// several chats in one. Painted from the source SVG
@@ -95,14 +97,41 @@ class _CombinedChatPainter extends CustomPainter {
       oldDelegate.bubble != this.bubble;
 }
 
-/// A chat type's icon widget: the multi-color [CombinedChatIcon] for
-/// Combined, the font glyph (tinted [color]) for every platform.
+/// Per-type glyph scale so every chat type's INK reads the size of
+/// Kick's (the reference: its ink is 0.78 em tall). The glyphs come from
+/// two fonts + a painted SVG with very different ink boxes (measured with
+/// fontTools BoundsPen): Twitch 0.83 em tall, YouTube a wide 0.83 × 0.58
+/// logo (matched on width against Kick's height so it doesn't look
+/// shrunken), Owncast 0.95 em, the Combined SVG 0.77 em (y 3 → 21.5 of 24).
+const Map<ChatType, double> kChatTypeIconScale = {
+  ChatType.Twitch: 0.78 / 0.833,
+  ChatType.YouTube: 0.78 / 0.832,
+  ChatType.Owncast: 0.78 / 0.948,
+  ChatType.Kick: 1.0,
+  ChatType.Combined: 0.78 / 0.771,
+};
+
+/// A chat type's icon in a fixed [size] slot, normalised to Kick's ink
+/// size ([kChatTypeIconScale]) and centered: the multi-color
+/// [CombinedChatIcon] for Combined, the font glyph (tinted [color]) for
+/// every platform.
 Widget chatTypeIcon(
   BuildContext context,
-  IconData glyph, {
-  required bool combined,
+  ChatType chatType, {
   Color? color,
   double size = 24.0,
-}) => combined
-    ? CombinedChatIcon(size: size)
-    : Icon(glyph, color: color, size: size);
+}) {
+  final scale = kChatTypeIconScale[chatType] ?? 1.0;
+
+  /// Laid out at the slot [size] (layout never moves), then scaled about
+  /// the center so the INK matches Kick's.
+  return SizedBox.square(
+    dimension: size,
+    child: Transform.scale(
+      scale: scale,
+      child: chatType == ChatType.Combined
+          ? CombinedChatIcon(size: size)
+          : Icon(chatType.icon, color: color, size: size),
+    ),
+  );
+}

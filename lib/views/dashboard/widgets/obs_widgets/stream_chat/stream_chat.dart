@@ -970,10 +970,9 @@ class _ChatBrandIcon extends StatelessWidget {
       alignment: Alignment.center,
       child: chatTypeIcon(
         context,
-        this.chatType.icon,
-        combined: this.chatType == ChatType.Combined,
+        this.chatType,
         color: this.color,
-        size: this.chatType == ChatType.Combined ? 34.0 : 28.0,
+        size: 28.0,
       ),
     );
   }
