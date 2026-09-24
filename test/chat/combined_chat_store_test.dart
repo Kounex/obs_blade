@@ -284,6 +284,45 @@ void main() {
       await store.dispose();
     });
 
+    test(
+      'the restore point survives a restart while Combined is active',
+      () async {
+        await store.activate();
+        expect(kick.selectedChannelSlug, 'kicker');
+        expect(settingsBox().get(SettingsKeys.CombinedChatRestore.name), {
+          'YouTube': 'A',
+          'Kick': 'aaa',
+        });
+
+        /// A fresh store (next launch) that never activated still knows
+        /// what to put back once the user leaves Combined.
+        final next = CombinedChatStore(
+          twitchStore: () => twitch,
+          youTubeStore: () => youTube,
+          kickStore: () => kick,
+        );
+        await next.deactivate();
+
+        expect(kick.selectedChannelSlug, 'aaa');
+        expect(youTube.selectedChannelLabel, 'A');
+        expect(
+          settingsBox().get(SettingsKeys.CombinedChatRestore.name),
+          isNull,
+        );
+      },
+    );
+
+    test('leaving mid-activation stops selecting and restores', () async {
+      /// Deactivate before the first select resolves: no source may be
+      /// selected after the restore ran.
+      final activating = store.activate();
+      await store.deactivate();
+      await activating;
+
+      expect(store.active, isFalse);
+      expect(kick.selectedChannelSlug, 'aaa');
+    });
+
     test('activate twice keeps the original restore point', () async {
       await store.activate();
       await store.activate();

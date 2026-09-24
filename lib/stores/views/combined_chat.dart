@@ -7,7 +7,9 @@ import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
@@ -113,6 +115,11 @@ abstract class _CombinedChatStore with Store {
   /// [deactivate]. Twitch/YouTube/Kick keys as their `selectChannel`
   /// takes them.
   final Map<ChatType, String?> _restore = <ChatType, String?>{};
+
+  /// Bumped by every [activate] / [deactivate] — a superseded activation
+  /// (the user left Combined while it was still switching stores) stops
+  /// selecting instead of undoing the restore.
+  int _generation = 0;
 
   bool _settingsLoaded = false;
 
@@ -267,23 +274,27 @@ abstract class _CombinedChatStore with Store {
     /// reactivity trigger (same as the Twitch view).
     store.lifecycleVersion;
     DateTime? last;
-    var notice = 0;
     return [
       for (final item in store.messagesWithNotices())
-        if (item is ChatMessageEvent)
-          CombinedItem(
-            platform: ChatType.Twitch,
-            payload: item,
-            at: last = item.receivedAt ?? last,
-            key: 'twitch:${item.messageId}',
-          )
-        else
-          CombinedItem(
-            platform: ChatType.Twitch,
-            payload: item,
-            at: last,
-            key: 'twitch:notice:${notice++}:${identityHashCode(item)}',
-          ),
+        CombinedItem(
+          platform: ChatType.Twitch,
+          payload: item,
+          at: item is ChatMessageEvent
+              ? (last = item.receivedAt ?? last)
+              : last,
+          key: switch (item) {
+            final ChatMessageEvent event => 'twitch:${event.messageId}',
+
+            /// Notices by what they are, not by object identity — the
+            /// store replaces a notice object on a same-id update, and a
+            /// changed key would re-tint the zebra and fake an arrival.
+            final ChatNotificationNotice notice =>
+              'twitch:notice:${notice.event.messageId}',
+            final ChatSystemNotice notice =>
+              'twitch:system:${notice.kind.name}:${notice.afterSeq}',
+            _ => 'twitch:other:${identityHashCode(item)}',
+          },
+        ),
     ];
   }
 
@@ -316,8 +327,10 @@ abstract class _CombinedChatStore with Store {
   @action
   Future<void> activate() async {
     this._ensureSettingsLoaded();
+    final generation = ++this._generation;
     this.active = true;
     for (final source in this.mySources) {
+      if (generation != this._generation) return;
       await this._select(source);
     }
   }
@@ -325,10 +338,13 @@ abstract class _CombinedChatStore with Store {
   /// Put back what each platform store showed before [activate].
   @action
   Future<void> deactivate() async {
-    if (!this.active) return;
+    this._ensureSettingsLoaded();
+    if (!this.active && this._restore.isEmpty) return;
+    this._generation++;
     this.active = false;
     final restore = Map<ChatType, String?>.of(this._restore);
     this._restore.clear();
+    this._persistRestore();
     for (final entry in restore.entries) {
       try {
         switch (entry.key) {
@@ -348,28 +364,27 @@ abstract class _CombinedChatStore with Store {
     }
   }
 
+  /// Remember [platform]'s pre-combo selection once, durably — a restart
+  /// while Combined is active must still restore it later.
+  void _remember(ChatType platform, String? selection) {
+    if (this._restore.containsKey(platform)) return;
+    this._restore[platform] = selection;
+    this._persistRestore();
+  }
+
   Future<void> _select(CombinedSource source) async {
     switch (source.platform) {
       case ChatType.Twitch:
         final store = this._twitch();
-        this._restore.putIfAbsent(
-          ChatType.Twitch,
-          () => store.selectedChannelId,
-        );
+        this._remember(ChatType.Twitch, store.selectedChannelId);
         await store.selectChannel(source.key);
       case ChatType.YouTube:
         final store = this._youTube();
-        this._restore.putIfAbsent(
-          ChatType.YouTube,
-          () => store.selectedChannelLabel,
-        );
+        this._remember(ChatType.YouTube, store.selectedChannelLabel);
         await store.selectChannel(source.key);
       case ChatType.Kick:
         final store = this._kick();
-        this._restore.putIfAbsent(
-          ChatType.Kick,
-          () => store.selectedChannelSlug,
-        );
+        this._remember(ChatType.Kick, store.selectedChannelSlug);
         await store.selectChannel(source.key);
       case ChatType.Owncast:
       case ChatType.Combined:
@@ -400,6 +415,23 @@ abstract class _CombinedChatStore with Store {
     if (this._settingsLoaded) return;
     this._settingsLoaded = true;
     try {
+      /// Restore point of a session that ended while Combined was active
+      /// (map of `ChatType.name` → selection, null = the store's default).
+      final restore = Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.CombinedChatRestore.name);
+      if (restore is Map) {
+        for (final type in ChatType.values) {
+          if (restore.containsKey(type.name)) {
+            final value = restore[type.name];
+            this._restore[type] = value is String ? value : null;
+          }
+        }
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat restore load failed - $e');
+    }
+    try {
       final raw = Hive.box(
         HiveKeys.Settings.name,
       ).get(SettingsKeys.MyChatsDisabledPlatforms.name);
@@ -412,6 +444,22 @@ abstract class _CombinedChatStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog('Combined chat settings load failed - $e');
+    }
+  }
+
+  void _persistRestore() {
+    try {
+      final box = Hive.box(HiveKeys.Settings.name);
+      if (this._restore.isEmpty) {
+        box.delete(SettingsKeys.CombinedChatRestore.name);
+      } else {
+        box.put(SettingsKeys.CombinedChatRestore.name, {
+          for (final entry in this._restore.entries)
+            entry.key.name: entry.value,
+        });
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat restore persist failed - $e');
     }
   }
 

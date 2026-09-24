@@ -114,6 +114,12 @@ enum SettingsKeys {
   /// built-in "My chats" combo
   MyChatsDisabledPlatforms,
 
+  /// [Map<String, String?>]: per-platform selection (`ChatType.name` →
+  /// channel key) the native stores had before the combined chat took
+  /// them over - restored when the user leaves Combined, even after a
+  /// restart
+  CombinedChatRestore,
+
   /// [String]: The user's own Kick OAuth client id for the native Kick
   /// chat sign-in (manual-paste PKCE flow - Kick has no device flow) -
   /// falls back to the app-owned `kKickOAuthClientId` constant (empty
@@ -451,6 +457,7 @@ enum SettingsKeys {
     SettingsKeys.SelectedKickNativeOwnChannel:
         'selected-kick-native-own-channel',
     SettingsKeys.MyChatsDisabledPlatforms: 'my-chats-disabled-platforms',
+    SettingsKeys.CombinedChatRestore: 'combined-chat-restore',
     SettingsKeys.KickOAuthClientId: 'kick-oauth-client-id',
     SettingsKeys.KickOAuthClientSecret: 'kick-oauth-client-secret',
     SettingsKeys.TwitchChatBadgeBroadcaster: 'twitch-chat-badge-broadcaster',
