@@ -131,7 +131,10 @@ video; channel entries resolve their current stream via
 `videos.list`) and **auto-roll over** to the next stream
 (`kYouTubeLiveRecheckSchedule`); the WebView follows via
 `YouTubeWebLiveTracker`. The entry name is optional — left empty, it's
-the channel's display name (`YouTubeEntryNamer`, never an `@handle`).
+the channel's display name (`YouTubeEntryNamer`, never an `@handle`). Signed in, the account's **own channel**
+leads the native list marked "You" (`YouTubeChatStore.ownChannel`,
+reserved label `kYouTubeOwnChannelLabel`, id from `YouTubeAuth.channelId`;
+native-only, not in `YouTubeUsernames`).
 Design: `docs/chatterino-comparison.md` § YouTube. Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
 quota question before any default-on rollout.
 
@@ -170,9 +173,15 @@ use that same glass. An emote picker (`KickEmoteService.fetchChannelEmotes`
 Third-party/7TV section) docks in the Kick input, mirroring Twitch's
 picker mechanics. The channel list
 shares `SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView
-path (slug == identity).
+path (slug == identity). Signed in, the account's **own channel** leads
+the native list marked "You" (`KickChatStore.ownChannelSlug`, verified
+against the channel's `user_id` and stored as `KickAuth.channelSlug`;
+native-only — its selection persists as `SelectedKickNativeOwnChannel`,
+not in the shared WebView keys).
 
-**General native chat (all 3 engines):** self-mention/keyword row
+**General native chat (all 3 engines):** every store answers
+`isViewingOwnChannel` (the "You" entry — groundwork for the merged
+timeline, see `chatterino-comparison.md`); self-mention/keyword row
 highlighting (`ChatHighlightSelfMention` + `ChatHighlightKeywords`, shared
 matcher in `chat_highlight_helper.dart`), a client-side mute-word filter,
 chat search/filter over each engine's buffered history

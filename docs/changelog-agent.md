@@ -2,6 +2,30 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-24 (evening) - Own "You" chat on Kick + YouTube, centered placeholders
+
+- **Own channel entry on Kick + YouTube** (`dd4f4f1a`): signing in natively
+  lists the account's own channel first, marked "You" (Twitch already had
+  it). Native-only: never written into the WebView username lists. Kick
+  derives the slug from the username (`_` → `-` candidate) and verifies
+  it against the channel's `user_id`; the official `GET /channels` (own)
+  would need an extra `channel:read` scope, so it was avoided. YouTube
+  reads the `UC…` id off the existing `channels?mine=true` call. New
+  nullable Hive fields: `KickAuth.channelSlug` (7), `YouTubeAuth.channelId`
+  (5) — persistence tests read the exact pre-change frames. Old sessions
+  backfill on restore. All three stores expose `isViewingOwnChannel`, the
+  groundwork for the merged timeline (`chatterino-comparison.md`).
+- **Centered chat placeholders** (`ba5190e5`): empty states, Pro upsell and
+  the YouTube waiting state center in the chat viewport (they were
+  top-aligned for the old dashboard-scroll host, which no longer exists).
+- **Twitch announcement stall — not reproduced.** Widget tests with a
+  saturated 500-row buffer, an announcement (+ its twin chat.message,
+  link, emote, badge), alternate rows + timestamps on/off, then 8 more
+  messages: every row rendered, list stayed pinned to the bottom, no
+  layout exceptions. So the widget path is probably not the cause; the
+  store/EventSub side (or a real-payload difference) is the next suspect.
+  Needs a device repro with logs.
+
 ## 2026-09-24 (later) - Dogfood follow-ups: pinned sheet headers, "New messages" divider, optional YouTube entry name
 
 Same session, after the first dogfood install of the Chatterino wave

@@ -95,34 +95,29 @@ Registered); upload key A6:24:44 still "in review" — after it resolves:
 delete `android/app/src/main/assets/adi-registration.properties` and
 discard Play internal-track draft `3.3.0 (2026090701)`.
 
-**New dogfood feedback (2026-09-24, not started — pick up first):**
-- **BUG — Twitch native chat stalls after an announcement row.** After an
-  announcement notice rendered: ~100 px of blank space below it, then 2
-  more messages, then nothing — chat looked broken / unresponsive, no new
-  rows arrived (or none rendered). Suspects to check first: the announce
-  banner path in `native_twitch_chat_view.dart` (the announce body is
-  shown on the notice and its twin `channel.chat.message` is hidden via
-  `announceBodyIds` — check the item/index bookkeeping for the new
-  alternate-row parity, `historyDivider` and `continues` accent logic
-  around hidden twins), `TwitchChatNotificationRow` layout (blank 100 px),
-  and whether the pinned-to-bottom / unread logic stops scrolling (rows
-  arriving but off-screen) vs. the store actually stopping. Reproduce
-  with the debug samples page (Options → Debug samples) or an
-  announcement injected in a widget test, then check live.
-- **Chat empty-state placeholders should be vertically centered**, not
-  top-aligned — every "set up YouTube / add a Twitch name / add a Kick
-  channel / connect" placeholder, WebView and native engine alike
-  (`_ChatEmptyState` in `stream_chat.dart` is explicitly
-  `Alignment.topCenter` + top padding "so the state sits inside the
-  visible area of the dashboard scroll view" — re-check that reason on
-  the dashboard/streaming-mode hosts before switching to centered; also
-  the native views' own empty/offline texts and the YouTube
-  `_YouTubeChannelWaitingState`).
+**This session (2026-09-24 evening, NAS, tier S):** own "You" chat on
+native Kick + YouTube (`dd4f4f1a`) and centered chat placeholders
+(`ba5190e5`) — details in `changelog-agent.md`. **Not dogfooded yet**:
+check on device that signing in to Kick / YouTube adds the "You" entry
+(Kick: a username with `_` should resolve its `-` slug) and that an older
+session picks the entry up after a restart (backfill).
+
+**Open bug — Twitch native chat stalls after an announcement row** (from
+dogfood): ~100 px blank under the announcement, 2 more messages, then
+nothing. **Widget-level repro failed** (500-row buffer, announcement with
+twin chat.message/link/emote/badge, zebra + timestamps on/off → every
+row renders, stays pinned, no layout exceptions). Next: reproduce on
+device with logs (Options → Debug samples, or a real `/announce`) and
+check whether rows still reach the store (`TwitchChatStore.messages`
+growing?) vs. a render/scroll problem; the EventSub notification path
+logs every announcement's raw color (`Twitch announcement color=`).
 
 **Immediate next threads:**
 
-1. **The two feedback items above**, then dogfood feedback on the
-   not-yet-confirmed chat items.
+1. **The announcement stall above**, dogfood the new "You" entries, then
+   feedback on the not-yet-confirmed chat items. The own-channel contract
+   (`isViewingOwnChannel` on all three stores) is the base for the
+   merged timeline in thread 2.
 2. **Chat: Chatterino "medium" items** (`chatterino-comparison.md`
    verdict table): configurable mod buttons / timeout lengths, custom
    commands with OBS variables (scene, stream time), search operators

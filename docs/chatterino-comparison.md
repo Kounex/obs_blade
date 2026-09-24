@@ -167,6 +167,15 @@ Next up: the "Medium" rows of the verdict table.
 Then: medium items (mod buttons, commands, search operators, streamer
 mode, live dots), then the strategic merged timeline / 7TV cosmetics.
 
+**Merged-timeline prerequisite (shipped 2026-09-24):** every engine knows
+the signed-in account's own chat, so a combined view can default to
+"my Twitch + my YouTube + my Kick" without guessing. Contract, identical
+on all three stores: `isViewingOwnChannel`; Kick/YouTube also expose
+`isOwnChannel(key)`, `nativeChannels` (own entry first, marked "You" in
+the dropdown) and the persisted identity (`TwitchAuth` user,
+`YouTubeAuth.channelId`, `KickAuth.channelSlug`). The own entries are
+native-only - never written into the WebView username lists.
+
 ## Sources
 
 - chatterino2 source (paths above), `CHANGELOG.md`; wiki.chatterino.com
