@@ -21,6 +21,8 @@ class ChatTypeAdapter extends TypeAdapter<ChatType> {
         return ChatType.Owncast;
       case 3:
         return ChatType.Kick;
+      case 4:
+        return ChatType.Combined;
       default:
         return ChatType.Twitch;
     }
@@ -37,6 +39,8 @@ class ChatTypeAdapter extends TypeAdapter<ChatType> {
         writer.writeByte(2);
       case ChatType.Kick:
         writer.writeByte(3);
+      case ChatType.Combined:
+        writer.writeByte(4);
     }
   }
 

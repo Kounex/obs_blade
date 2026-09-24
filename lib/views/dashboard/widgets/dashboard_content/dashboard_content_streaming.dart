@@ -395,6 +395,9 @@ class _ChatHeaderToggleButton extends StatelessWidget {
             settingsBox.get(SettingsKeys.SelectedOwncastUsername.name) != null,
           ChatType.Kick =>
             settingsBox.get(SettingsKeys.SelectedKickUsername.name) != null,
+
+          /// Always active - the combined view shows its own source states.
+          ChatType.Combined => true,
         };
         return _OverlayToggleButton(
           icon: Icons.tune,

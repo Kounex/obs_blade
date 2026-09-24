@@ -43,6 +43,9 @@ class UsernameDropdown extends StatelessWidget {
                 SettingsKeys.KickUsernames.name,
                 defaultValue: <String>[],
               ),
+
+              /// Native-only: this WebView dropdown never shows for it.
+              ChatType.Combined => const <String>[],
             }
             .map<DropdownMenuItem<String>>(
               (chatUsername) => DropdownMenuItem<String>(
@@ -95,6 +98,7 @@ class UsernameDropdown extends StatelessWidget {
                   ChatType.Kick => settingsBox.get(
                     SettingsKeys.SelectedKickUsername.name,
                   ),
+                  ChatType.Combined => null,
                 },
                 isExpanded: true,
                 isDense: true,
@@ -118,7 +122,8 @@ class UsernameDropdown extends StatelessWidget {
                       SettingsKeys.SelectedYouTubeUsername.name,
                     ChatType.Owncast =>
                       SettingsKeys.SelectedOwncastUsername.name,
-                    ChatType.Kick => SettingsKeys.SelectedKickUsername.name,
+                    ChatType.Kick ||
+                    ChatType.Combined => SettingsKeys.SelectedKickUsername.name,
                   }, chatUsername);
                 },
               ),

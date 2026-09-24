@@ -40,6 +40,9 @@ class UsernameActionRow extends StatelessWidget {
       ChatType.Kick => this.settingsBox.get(
         SettingsKeys.SelectedKickUsername.name,
       ),
+
+      /// Native-only: the WebView username row never shows for Combined.
+      ChatType.Combined => null,
     };
 
     return Container(
@@ -70,7 +73,8 @@ class UsernameActionRow extends StatelessWidget {
                 ChatType.Owncast => AddEditOwncastUsernameDialog(
                   settingsBox: this.settingsBox,
                 ),
-                ChatType.Kick => AddEditKickUsernameDialog(
+                ChatType.Kick ||
+                ChatType.Combined => AddEditKickUsernameDialog(
                   settingsBox: this.settingsBox,
                 ),
               },
@@ -99,7 +103,8 @@ class UsernameActionRow extends StatelessWidget {
                         settingsBox: this.settingsBox,
                         username: selectedChatUsername,
                       ),
-                      ChatType.Kick => AddEditKickUsernameDialog(
+                      ChatType.Kick ||
+                      ChatType.Combined => AddEditKickUsernameDialog(
                         settingsBox: this.settingsBox,
                         username: selectedChatUsername,
                       ),

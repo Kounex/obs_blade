@@ -977,7 +977,10 @@ class _ChatEmptyState extends StatelessWidget {
         ChatType.Owncast => AddEditOwncastUsernameDialog(
           settingsBox: settingsBox,
         ),
-        ChatType.Kick => AddEditKickUsernameDialog(settingsBox: settingsBox),
+        ChatType.Kick ||
+        ChatType.Combined => AddEditKickUsernameDialog(
+          settingsBox: settingsBox,
+        ),
       },
     );
   }

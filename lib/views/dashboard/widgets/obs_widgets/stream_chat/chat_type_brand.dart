@@ -10,5 +10,8 @@ extension ChatTypeBrand on ChatType {
     ChatType.YouTube => const Color(0xFFFF0000),
     ChatType.Owncast => null,
     ChatType.Kick => const Color(0xFF53FC18),
+
+    /// Neutral - its rows carry each platform's own color.
+    ChatType.Combined => null,
   };
 }
