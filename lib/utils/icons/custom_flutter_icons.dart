@@ -18,4 +18,13 @@ class CustomFlutterIcons {
     fontFamily: _kFontFam,
     fontPackage: _kFontPkg,
   );
+
+  /// Combined chat: a speech bubble with three streams merging into one
+  /// (drawn for the app — source + generator notes in
+  /// `docs/combined-chat-icon.md`).
+  static const IconData combined_chat = IconData(
+    0xe802,
+    fontFamily: _kFontFam,
+    fontPackage: _kFontPkg,
+  );
 }

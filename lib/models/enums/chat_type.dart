@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/icons/custom_flutter_icons.dart';
 import '../type_ids.dart';
@@ -48,6 +48,6 @@ extension ChatTypeFunctions on ChatType {
     ChatType.YouTube: JamIcons.youtube,
     ChatType.Owncast: CustomFlutterIcons.owncast_logo,
     ChatType.Kick: CustomFlutterIcons.kick,
-    ChatType.Combined: CupertinoIcons.square_stack_3d_up,
+    ChatType.Combined: CustomFlutterIcons.combined_chat,
   }[this]!;
 }
