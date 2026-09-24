@@ -79,6 +79,42 @@ class ChatUsernameBar extends StatelessWidget {
             isNativeOnly(chatType) ||
             (nativeChatAvailableFor(chatType) && engine == ChatEngine.native);
 
+        /// Combined has no engine switch or account pill: type dropdown +
+        /// options share the first row, and its combo card gets a full
+        /// width row of its own (the narrow left column truncated it).
+        if (chatType == ChatType.Combined) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 256.0),
+                      child: ChatTypeDropdown(settingsBox: settingsBox),
+                    ),
+                  ),
+                  const Spacer(),
+                  Observer(
+                    builder: (_) => GetIt.instance<ProStore>().isPro
+                        ? const _NativeRightCluster(chatType: ChatType.Combined)
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+              Observer(
+                builder: (_) => GetIt.instance<ProStore>().isPro
+                    ? const Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.sm),
+                        child: CombinedChatPicker(),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          );
+        }
+
         /// No horizontal inset of its own — the host owns the page margin,
         /// so the bar's controls align edge-to-edge with the chat window
         /// below (Chat tab: [BaseConstrainedBox] padding; streaming mode:
@@ -124,7 +160,6 @@ class ChatUsernameBar extends StatelessWidget {
                               GetIt.instance<KickChatStore>()
                                   .nativeChannels
                                   .isNotEmpty,
-                            ChatType.Combined => true,
                             _ => false,
                           };
 
@@ -137,9 +172,7 @@ class ChatUsernameBar extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const SizedBox(height: AppSpacing.sm),
-                                    if (chatType == ChatType.Combined)
-                                      const CombinedChatPicker()
-                                    else if (chatType == ChatType.Kick)
+                                    if (chatType == ChatType.Kick)
                                       const KickNativeChannelDropdown()
                                     else if (chatType == ChatType.YouTube)
                                       const YouTubeNativeChannelDropdown()

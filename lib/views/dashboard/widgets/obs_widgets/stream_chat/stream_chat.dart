@@ -522,7 +522,7 @@ class _StreamChatState extends State<StreamChat>
                       nativeConnectPrompt: true,
                       promptBody:
                           'Combined chat merges your own Twitch, YouTube and Kick chats. Sign in natively on at least one platform to start.',
-                      connectLabel: 'Choose a platform',
+                      connectLabel: 'Sign in to a platform',
                       onConnectTap: () => showCombinedSourcesSheet(context),
                     ),
                   )
