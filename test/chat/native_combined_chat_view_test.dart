@@ -176,6 +176,28 @@ void main() {
     ]);
   });
 
+  testWidgets('the platform wash spans the full width; the badge sits on '
+      'the name line at badge size', (tester) async {
+    kick.messages.add(kickMessage('k1', 'kick line', at(1)));
+
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pump();
+
+    final view = tester.getRect(find.byType(NativeCombinedChatView));
+    final wash = tester.getRect(find.byType(CombinedSourceRow));
+    expect(wash.left, view.left, reason: 'stripe on the left edge');
+    expect(wash.right, view.right, reason: 'tint across the full width');
+
+    final badge = tester.getRect(
+      find.byKey(const Key('combined-row-icon-Kick')),
+    );
+    expect(badge.height, 16.0, reason: 'same height as platform badges');
+    final name = tester.getRect(find.textContaining('Kickk1').first);
+
+    /// Inline in the first line: vertically centered on the name.
+    expect((badge.center.dy - name.center.dy).abs(), lessThan(3.0));
+  });
+
   testWidgets('a switched-off source drops out of the timeline', (
     tester,
   ) async {

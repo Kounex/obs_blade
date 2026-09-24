@@ -104,6 +104,10 @@ class TwitchChatMessageRow extends StatelessWidget {
   /// callers that don't pass it just never self-match.
   final List<String?> selfDisplayNames;
 
+  /// Inline widget in front of the line (before timestamp and badges),
+  /// on the text's middle line — the combined chat's platform badge.
+  final Widget? leading;
+
   const TwitchChatMessageRow({
     super.key,
     required this.event,
@@ -123,6 +127,7 @@ class TwitchChatMessageRow extends StatelessWidget {
     this.mentionHexFor,
     this.compact = false,
     this.showTimestamp = false,
+    this.leading,
     this.selfDisplayNames = const [],
   });
 
@@ -596,6 +601,14 @@ class TwitchChatMessageRow extends StatelessWidget {
         context,
       ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
       children: [
+        if (this.leading case final leading?)
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.xs),
+              child: leading,
+            ),
+          ),
         if (this.showTimestamp && this.event.receivedAt != null)
           TextSpan(
             text: '${formatChatMessageTime(this.event.receivedAt!)} ',

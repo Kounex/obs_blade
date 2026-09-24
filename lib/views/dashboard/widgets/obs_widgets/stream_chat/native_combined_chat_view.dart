@@ -251,10 +251,10 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
               children: [
                 ListView.separated(
                   controller: this._scrollController,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                    vertical: AppSpacing.xs,
-                  ),
+
+                  /// No horizontal inset: each row's platform wash runs
+                  /// edge to edge and pads its own content.
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   itemCount: visible.length,
                   separatorBuilder: (context, index) => separators
                       ? Divider(
@@ -332,23 +332,47 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
   Widget _rowFor(BuildContext context, CombinedItem item, dynamic settings) {
     final payload = item.payload;
     final highlighted = this._actionTargetKey == item.key;
+    final badge = CombinedPlatformBadge(platform: item.platform);
     switch (payload) {
       case ChatSystemNotice():
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-          child: Text(
-            'Chat was cleared by a moderator',
-            style: Theme.of(context).textTheme.bodySmall,
+          child: Row(
+            children: [
+              badge,
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                'Chat was cleared by a moderator',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
           ),
         );
       case ChatNotificationNotice():
-        return TwitchChatNotificationRow(
-          event: payload.event,
-          settingsBox: settings,
-          onAuthorTap: () => showChatUserCardSheet(
-            context,
-            userId: payload.event.chatterUserId,
-          ),
+
+        /// Notices have their own icon row — the badge sits in front,
+        /// aligned with the notice's first line.
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.xs,
+                right: AppSpacing.xs,
+              ),
+              child: badge,
+            ),
+            Expanded(
+              child: TwitchChatNotificationRow(
+                event: payload.event,
+                settingsBox: settings,
+                onAuthorTap: () => showChatUserCardSheet(
+                  context,
+                  userId: payload.event.chatterUserId,
+                ),
+              ),
+            ),
+          ],
         );
       case ChatMessageEvent():
         final twitch = GetIt.instance<TwitchChatStore>();
@@ -357,6 +381,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
         return TwitchChatMessageRow(
           event: payload,
           settingsBox: settings,
+          leading: badge,
           isDeleted: deleted,
           deletedMarker: tombstone == null
               ? ' -Deleted'
@@ -381,6 +406,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
         return YouTubeChatMessageRow(
           message: payload,
           settingsBox: settings,
+          leading: badge,
           highlighted: highlighted,
           selfDisplayNames: [
             GetIt.instance<YouTubeChatStore>().selfChannelTitle,
@@ -408,6 +434,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
         return KickChatMessageRow(
           message: payload,
           settingsBox: settings,
+          leading: badge,
           broadcasterId: kick.channelInfo?.userId?.toString(),
           selfDisplayNames: [kick.selfUsername],
           highlighted: highlighted,
@@ -492,11 +519,11 @@ List<CombinedItem> combinedVisibleItems(
 /// rows, highlights and name colors still read on top of it.
 const double kCombinedRowTintAlpha = 0.07;
 
-/// A merged-timeline row: a brand-colored rail on the leading edge, a
-/// light platform tint over the whole row and a contained platform badge
-/// in front of the row — a square tile, unlike the round role/sub badges
-/// users carry, so the source never reads as one of theirs. Screen readers
-/// hear "from Twitch" etc.
+/// A merged-timeline row's platform wash: a light brand tint across the
+/// full row width and a brand stripe on the list's left edge (the list
+/// has no horizontal padding, so both reach the window edge). The
+/// platform badge itself sits inline in the row's first line (the rows'
+/// `leading` slot) so it shares the name's middle line.
 class CombinedSourceRow extends StatelessWidget {
   final ChatType platform;
   final Widget child;
@@ -517,17 +544,8 @@ class CombinedSourceRow extends StatelessWidget {
         border: Border(left: BorderSide(color: brand, width: 3.0)),
       ),
       child: Padding(
-        padding: const EdgeInsets.only(left: AppSpacing.xs),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 3.0, right: AppSpacing.xs),
-              child: CombinedPlatformBadge(platform: this.platform),
-            ),
-            Expanded(child: this.child),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        child: this.child,
       ),
     );
   }
@@ -542,7 +560,7 @@ class CombinedPlatformBadge extends StatelessWidget {
   const CombinedPlatformBadge({
     super.key,
     required this.platform,
-    this.size = 18.0,
+    this.size = 16.0,
   });
 
   @override

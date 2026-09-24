@@ -66,6 +66,10 @@ class KickChatMessageRow extends StatelessWidget {
   /// don't pass it just never self-match.
   final List<String?> selfDisplayNames;
 
+  /// Inline widget in front of the line (before timestamp and badges),
+  /// on the text's middle line — the combined chat's platform badge.
+  final Widget? leading;
+
   const KickChatMessageRow({
     super.key,
     required this.message,
@@ -76,6 +80,7 @@ class KickChatMessageRow extends StatelessWidget {
     this.broadcasterId,
     this.emoteStore,
     this.selfDisplayNames = const [],
+    this.leading,
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
@@ -350,6 +355,10 @@ class KickChatMessageRow extends StatelessWidget {
         : 'Chat was cleared by a moderator';
     return Row(
       children: [
+        if (this.leading case final leading?) ...[
+          leading,
+          const SizedBox(width: AppSpacing.xs),
+        ],
         Icon(icon, size: 14.0, color: accent),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
@@ -377,6 +386,14 @@ class KickChatMessageRow extends StatelessWidget {
           context,
         ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
         children: [
+          if (this.leading case final leading?)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.xs),
+                child: leading,
+              ),
+            ),
           if (NativeChatAppearance.timestamps(this.settingsBox) &&
               this.message.createdAt != null)
             chatLineTimeSpan(context, this.message.createdAt!, this._textSize),

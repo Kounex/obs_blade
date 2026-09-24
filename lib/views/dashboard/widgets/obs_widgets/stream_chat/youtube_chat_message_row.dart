@@ -77,6 +77,10 @@ class YouTubeChatMessageRow extends StatelessWidget {
   /// don't pass it just never self-match.
   final List<String?> selfDisplayNames;
 
+  /// Inline widget in front of the line (before timestamp and badges),
+  /// on the text's middle line — the combined chat's platform badge.
+  final Widget? leading;
+
   const YouTubeChatMessageRow({
     super.key,
     required this.message,
@@ -85,6 +89,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
     this.onAuthorTap,
     this.highlighted = false,
     this.selfDisplayNames = const [],
+    this.leading,
   });
 
   double get _textSize => NativeChatAppearance.textSize(this.settingsBox);
@@ -293,6 +298,14 @@ class YouTubeChatMessageRow extends StatelessWidget {
           context,
         ).textTheme.bodyMedium?.copyWith(fontSize: this._textSize),
         children: [
+          if (this.leading case final leading?)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.xs),
+                child: leading,
+              ),
+            ),
           if (NativeChatAppearance.timestamps(this.settingsBox))
             chatLineTimeSpan(context, this.message.publishedAt, this._textSize),
           if (this.onAuthorTap == null) ...this._badgeSpans(),
@@ -338,6 +351,14 @@ class YouTubeChatMessageRow extends StatelessWidget {
                 TextSpan(
                   style: baseStyle,
                   children: [
+                    if (this.leading case final leading?)
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: AppSpacing.xs),
+                          child: leading,
+                        ),
+                      ),
                     if (this.onAuthorTap == null) ...this._badgeSpans(),
                     this._authorSpan(context),
                   ],
