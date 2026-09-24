@@ -9,6 +9,14 @@ part of 'kick_chat.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$KickChatStore on _KickChatStore, Store {
+  Computed<List<String>>? _$nativeChannelsComputed;
+
+  @override
+  List<String> get nativeChannels =>
+      (_$nativeChannelsComputed ??= Computed<List<String>>(
+        () => super.nativeChannels,
+        name: '_KickChatStore.nativeChannels',
+      )).value;
   Computed<bool>? _$isSignedInStateComputed;
 
   @override
@@ -86,6 +94,24 @@ mixin _$KickChatStore on _KickChatStore, Store {
   set channelInfo(KickChannelInfo? value) {
     _$channelInfoAtom.reportWrite(value, super.channelInfo, () {
       super.channelInfo = value;
+    });
+  }
+
+  late final _$ownChannelSlugAtom = Atom(
+    name: '_KickChatStore.ownChannelSlug',
+    context: context,
+  );
+
+  @override
+  String? get ownChannelSlug {
+    _$ownChannelSlugAtom.reportRead();
+    return super.ownChannelSlug;
+  }
+
+  @override
+  set ownChannelSlug(String? value) {
+    _$ownChannelSlugAtom.reportWrite(value, super.ownChannelSlug, () {
+      super.ownChannelSlug = value;
     });
   }
 
@@ -243,6 +269,38 @@ mixin _$KickChatStore on _KickChatStore, Store {
     return _$initAsyncAction.run(() => super.init());
   }
 
+  late final _$refreshChannelLivePreviewsAsyncAction = AsyncAction(
+    '_KickChatStore.refreshChannelLivePreviews',
+    context: context,
+  );
+
+  @override
+  Future<void> refreshChannelLivePreviews() {
+    return _$refreshChannelLivePreviewsAsyncAction.run(
+      () => super.refreshChannelLivePreviews(),
+    );
+  }
+
+  late final _$beginLoginAsyncAction = AsyncAction(
+    '_KickChatStore.beginLogin',
+    context: context,
+  );
+
+  @override
+  Future<Uri?> beginLogin() {
+    return _$beginLoginAsyncAction.run(() => super.beginLogin());
+  }
+
+  late final _$pollProxyLoginAsyncAction = AsyncAction(
+    '_KickChatStore.pollProxyLogin',
+    context: context,
+  );
+
+  @override
+  Future<bool?> pollProxyLogin() {
+    return _$pollProxyLoginAsyncAction.run(() => super.pollProxyLogin());
+  }
+
   late final _$completeLoginAsyncAction = AsyncAction(
     '_KickChatStore.completeLogin',
     context: context,
@@ -313,26 +371,6 @@ mixin _$KickChatStore on _KickChatStore, Store {
     name: '_KickChatStore',
     context: context,
   );
-
-  late final _$beginLoginAsyncAction = AsyncAction(
-    '_KickChatStore.beginLogin',
-    context: context,
-  );
-
-  @override
-  Future<Uri?> beginLogin() {
-    return _$beginLoginAsyncAction.run(() => super.beginLogin());
-  }
-
-  late final _$pollProxyLoginAsyncAction = AsyncAction(
-    '_KickChatStore.pollProxyLogin',
-    context: context,
-  );
-
-  @override
-  Future<bool?> pollProxyLogin() {
-    return _$pollProxyLoginAsyncAction.run(() => super.pollProxyLogin());
-  }
 
   @override
   void cancelLogin() {
@@ -425,14 +463,16 @@ chatConnection: ${chatConnection},
 chatError: ${chatError},
 chatConnectedAt: ${chatConnectedAt},
 channelInfo: ${channelInfo},
+ownChannelSlug: ${ownChannelSlug},
 selectedChannelSlug: ${selectedChannelSlug},
 authState: ${authState},
 authError: ${authError},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 modActionError: ${modActionError},
-replyTarget: ${replyTarget},
 pinnedMessage: ${pinnedMessage},
+replyTarget: ${replyTarget},
+nativeChannels: ${nativeChannels},
 isSignedInState: ${isSignedInState}
     ''';
   }

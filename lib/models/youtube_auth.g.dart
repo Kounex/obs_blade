@@ -22,13 +22,14 @@ class YouTubeAuthAdapter extends TypeAdapter<YouTubeAuth> {
       expiresAtMs: (fields[2] as num).toInt(),
       scopes: (fields[3] as List).cast<String>(),
       channelTitle: fields[4] as String?,
+      channelId: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, YouTubeAuth obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.accessToken)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class YouTubeAuthAdapter extends TypeAdapter<YouTubeAuth> {
       ..writeByte(3)
       ..write(obj.scopes)
       ..writeByte(4)
-      ..write(obj.channelTitle);
+      ..write(obj.channelTitle)
+      ..writeByte(5)
+      ..write(obj.channelId);
   }
 
   @override

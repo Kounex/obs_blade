@@ -9,6 +9,14 @@ part of 'youtube_chat.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
+  Computed<List<YouTubeChatChannel>>? _$nativeChannelsComputed;
+
+  @override
+  List<YouTubeChatChannel> get nativeChannels =>
+      (_$nativeChannelsComputed ??= Computed<List<YouTubeChatChannel>>(
+        () => super.nativeChannels,
+        name: '_YouTubeChatStore.nativeChannels',
+      )).value;
   Computed<bool>? _$isSignedInStateComputed;
 
   @override
@@ -259,6 +267,24 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     });
   }
 
+  late final _$ownChannelAtom = Atom(
+    name: '_YouTubeChatStore.ownChannel',
+    context: context,
+  );
+
+  @override
+  YouTubeChatChannel? get ownChannel {
+    _$ownChannelAtom.reportRead();
+    return super.ownChannel;
+  }
+
+  @override
+  set ownChannel(YouTubeChatChannel? value) {
+    _$ownChannelAtom.reportWrite(value, super.ownChannel, () {
+      super.ownChannel = value;
+    });
+  }
+
   late final _$selectedChannelLabelAtom = Atom(
     name: '_YouTubeChatStore.selectedChannelLabel',
     context: context,
@@ -456,7 +482,9 @@ chatQuotaExhausted: ${chatQuotaExhausted},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 moderationError: ${moderationError},
+ownChannel: ${ownChannel},
 selectedChannelLabel: ${selectedChannelLabel},
+nativeChannels: ${nativeChannels},
 isSignedInState: ${isSignedInState}
     ''';
   }

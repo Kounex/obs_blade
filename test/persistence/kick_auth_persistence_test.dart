@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:hive_ce/src/binary/binary_reader_impl.dart';
+import 'package:hive_ce/src/binary/binary_writer_impl.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 
@@ -68,6 +70,53 @@ void main() {
       expect(read?.userId, isNull);
       expect(read?.username, isNull);
       expect(read?.profilePicture, isNull);
+    });
+
+    test('round-trips the own channel slug', () async {
+      final box = await Hive.openBox<KickAuth>(HiveKeys.KickAuth.name);
+      await box.put(
+        KickAuth.kBoxKey,
+        KickAuth(
+          accessToken: 'a',
+          refreshToken: 'r',
+          expiresAtMs: 0,
+          scopes: const [],
+          userId: 4242,
+          channelSlug: 'kicker',
+        ),
+      );
+
+      expect(box.get(KickAuth.kBoxKey)?.channelSlug, 'kicker');
+    });
+
+    test('a record written before channelSlug existed still reads', () {
+      /// The exact 7-field frame older builds wrote (fields 0-6).
+      final writer = BinaryWriterImpl(Hive);
+      writer
+        ..writeByte(7)
+        ..writeByte(0)
+        ..write('legacy-access')
+        ..writeByte(1)
+        ..write('legacy-refresh')
+        ..writeByte(2)
+        ..write(0)
+        ..writeByte(3)
+        ..write(<String>['user:read'])
+        ..writeByte(4)
+        ..write(4242)
+        ..writeByte(5)
+        ..write('Kicker')
+        ..writeByte(6)
+        ..write('https://pic.example/k.png');
+
+      final read = KickAuthAdapter().read(
+        BinaryReaderImpl(writer.toBytes(), Hive),
+      );
+
+      expect(read.accessToken, 'legacy-access');
+      expect(read.userId, 4242);
+      expect(read.username, 'Kicker');
+      expect(read.channelSlug, isNull);
     });
 
     test('expiresWithin / isExpired honor the window', () {

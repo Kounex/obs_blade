@@ -105,6 +105,11 @@ enum SettingsKeys {
   /// kick chat
   SelectedKickUsername,
 
+  /// [bool]: The native Kick chat shows the signed-in account's own
+  /// channel - which isn't part of [KickUsernames], so it can't live in
+  /// the shared [SelectedKickUsername]
+  SelectedKickNativeOwnChannel,
+
   /// [String]: The user's own Kick OAuth client id for the native Kick
   /// chat sign-in (manual-paste PKCE flow - Kick has no device flow) -
   /// falls back to the app-owned `kKickOAuthClientId` constant (empty
@@ -439,6 +444,8 @@ enum SettingsKeys {
     SettingsKeys.SelectedOwncastUsername: 'selected-owncast-username',
     SettingsKeys.KickUsernames: 'kick-usernames',
     SettingsKeys.SelectedKickUsername: 'selected-kick-username',
+    SettingsKeys.SelectedKickNativeOwnChannel:
+        'selected-kick-native-own-channel',
     SettingsKeys.KickOAuthClientId: 'kick-oauth-client-id',
     SettingsKeys.KickOAuthClientSecret: 'kick-oauth-client-secret',
     SettingsKeys.TwitchChatBadgeBroadcaster: 'twitch-chat-badge-broadcaster',

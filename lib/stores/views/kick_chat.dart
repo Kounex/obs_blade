@@ -18,6 +18,7 @@ import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
+import 'package:obs_blade/utils/kick_channel_slug.dart';
 
 part 'kick_chat.g.dart';
 
@@ -202,9 +203,37 @@ abstract class _KickChatStore with Store {
 
   Timer? _livePreviewTimer;
 
+  /// Slug of the signed-in account's own channel (the native "You" entry,
+  /// always first in [nativeChannels]) — null while signed out or when the
+  /// slug could not be verified. Native-only: never written into
+  /// [SettingsKeys.KickUsernames], so the WebView list stays the user's.
+  @observable
+  String? ownChannelSlug;
+
+  /// The native channel list: [ownChannelSlug] first, then the added
+  /// [channels] (an added copy of the own slug is folded into the own
+  /// entry).
+  @computed
+  List<String> get nativeChannels {
+    final own = this.ownChannelSlug;
+    return [
+      ?own,
+      for (final slug in this.channels)
+        if (slug != own) slug,
+    ];
+  }
+
+  /// Whether [slug] is the signed-in account's own channel.
+  bool isOwnChannel(String? slug) =>
+      slug != null && slug == this.ownChannelSlug;
+
+  /// Whether the visible chat is the signed-in account's own channel.
+  bool get isViewingOwnChannel => this.isOwnChannel(this.selectedChannelSlug);
+
   /// Currently viewed channel slug, persisted as
-  /// [SettingsKeys.SelectedKickUsername] (shared with the WebView path).
-  /// Null = no selection.
+  /// [SettingsKeys.SelectedKickUsername] (shared with the WebView path) —
+  /// or, for an own channel the WebView list doesn't carry, as
+  /// [SettingsKeys.SelectedKickNativeOwnChannel]. Null = no selection.
   @observable
   String? selectedChannelSlug;
 
@@ -306,6 +335,7 @@ abstract class _KickChatStore with Store {
       this.authError = null;
       this.authState = KickAuthState.signedOut;
     });
+    this._syncOwnChannel();
   }
 
   /// Cold start: restore channels + selection + a stored session, then
@@ -317,8 +347,16 @@ abstract class _KickChatStore with Store {
     this._ensureAuthBoxWatcher();
     this._ensureChannelsLoaded();
     await this._restoreAuth();
-    if (this.selectedChannelSlug == null && this.channels.isNotEmpty) {
-      unawaited(this.selectChannel(this.channels.first));
+    this._syncOwnChannel();
+
+    /// The own-channel flag wins over the shared WebView selection: it is
+    /// only set while the native engine shows the own chat (and cleared
+    /// on any other native pick), which leaves the shared key stale.
+    if (this.ownChannelSlug != null && this._readOwnChannelSelected()) {
+      this.selectedChannelSlug = this.ownChannelSlug;
+    }
+    if (this.selectedChannelSlug == null && this.nativeChannels.isNotEmpty) {
+      unawaited(this.selectChannel(this.nativeChannels.first));
     } else if (this.selectedChannelSlug != null) {
       this.connectChat();
     }
@@ -351,7 +389,7 @@ abstract class _KickChatStore with Store {
   @action
   Future<void> refreshChannelLivePreviews() async {
     if (!this._isProResolver()) return;
-    final slugs = List<String>.from(this.channels);
+    final slugs = List<String>.from(this.nativeChannels);
     if (slugs.isEmpty) {
       runInAction(() => this.channelLivePreview.clear());
       return;
@@ -372,7 +410,7 @@ abstract class _KickChatStore with Store {
     ]);
     runInAction(() {
       this.channelLivePreview.removeWhere(
-        (slug, _) => !this.channels.contains(slug),
+        (slug, _) => !this.nativeChannels.contains(slug),
       );
     });
   }
@@ -413,6 +451,69 @@ abstract class _KickChatStore with Store {
       return;
     }
     this.authState = KickAuthState.signedIn;
+    if (auth.channelSlug == null && auth.userId != null) {
+      unawaited(this._backfillOwnChannel(auth));
+    }
+  }
+
+  /// Sessions persisted before [KickAuth.channelSlug] existed resolve it
+  /// once on restore; the entry appears when it lands.
+  Future<void> _backfillOwnChannel(KickAuth auth) async {
+    final slug = await this._resolveOwnChannelSlug(
+      userId: auth.userId!,
+      username: auth.username,
+    );
+    if (slug == null) return;
+    final current = this._authBox.get(KickAuth.kBoxKey);
+    if (current == null || current.userId != auth.userId) return;
+    current.channelSlug = slug;
+    await current.save();
+    this._syncOwnChannel();
+    unawaited(this.refreshChannelLivePreviews());
+  }
+
+  /// The account's own channel slug. Kick's public users endpoint has no
+  /// slug and `GET /channels` (own channel) would need an extra
+  /// `channel:read` scope, so the slug is derived from the username
+  /// (`Ice_Poseidon` → `ice-poseidon`) and only accepted when the
+  /// resolved channel's `user_id` is the account's. Null when no
+  /// candidate verifies (or on any network failure).
+  Future<String?> _resolveOwnChannelSlug({
+    required int userId,
+    required String? username,
+  }) async {
+    final base = extractKickChannelSlug(username);
+    if (base == null) return null;
+    final candidates = {base, base.replaceAll('_', '-')};
+    for (final candidate in candidates) {
+      try {
+        final info = await this._channelService.resolveChannel(candidate);
+        if (info != null && info.userId == userId) return info.slug;
+      } catch (e) {
+        GeneralHelper.advLog('Kick own channel resolve failed - $e');
+      }
+    }
+    return null;
+  }
+
+  /// Mirror the stored session's own slug into [ownChannelSlug]. When the
+  /// own entry disappears (sign-out, wiped session) while it is the
+  /// visible chat and the user never added it themselves, the view falls
+  /// back to the first added channel (or none) — the dropdown can't show
+  /// a vanished value.
+  void _syncOwnChannel() {
+    final slug = this.authState == KickAuthState.signedIn
+        ? this._authBox.get(KickAuth.kBoxKey)?.channelSlug
+        : null;
+    final previous = this.ownChannelSlug;
+    runInAction(() => this.ownChannelSlug = slug);
+    final selected = this.selectedChannelSlug;
+    if (previous != null &&
+        previous != slug &&
+        selected == previous &&
+        !this.channels.contains(previous)) {
+      unawaited(this.selectChannel(this.channels.firstOrNull));
+    }
   }
 
   /// Step 1 of login: create the PKCE session, register it with the
@@ -516,6 +617,12 @@ abstract class _KickChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Kick user fetch failed - $e');
     }
+    final ownSlug = identity == null
+        ? null
+        : await this._resolveOwnChannelSlug(
+            userId: identity.userId,
+            username: identity.name,
+          );
     await this._authBox.put(
       KickAuth.kBoxKey,
       KickAuth(
@@ -527,11 +634,20 @@ abstract class _KickChatStore with Store {
         userId: identity?.userId,
         username: identity?.name,
         profilePicture: identity?.profilePicture,
+        channelSlug: ownSlug,
       ),
     );
     this._pendingLogin = null;
     this.authError = null;
     this.authState = KickAuthState.signedIn;
+    this._syncOwnChannel();
+
+    /// Signing in with nothing selected lands on the own chat — the same
+    /// default the Twitch engine has.
+    if (this.selectedChannelSlug == null && this.ownChannelSlug != null) {
+      unawaited(this.selectChannel(this.ownChannelSlug));
+    }
+    unawaited(this.refreshChannelLivePreviews());
     return true;
   }
 
@@ -557,6 +673,7 @@ abstract class _KickChatStore with Store {
     this.modActionError = null;
     this.authError = null;
     this.authState = KickAuthState.signedOut;
+    this._syncOwnChannel();
     final auth = this._authBox.get(KickAuth.kBoxKey);
     await this._authBox.delete(KickAuth.kBoxKey);
     if (auth != null) {
@@ -1137,6 +1254,7 @@ abstract class _KickChatStore with Store {
       this.authState = KickAuthState.signedOut;
       this.authError = message;
     });
+    this._syncOwnChannel();
   }
 
   /// Multi-chat: switch the visible channel (null = no selection / stop).
@@ -1202,13 +1320,15 @@ abstract class _KickChatStore with Store {
   @action
   void reloadChannels() {
     final parsed = this._readChannelsFromSettings();
+    final own = this.ownChannelSlug;
     final retired = {
       for (final slug in this.channels)
-        if (!parsed.contains(slug)) slug,
+        if (!parsed.contains(slug) && slug != own) slug,
     };
     final selected = this.selectedChannelSlug;
     final retireSelection =
         selected != null &&
+        selected != own &&
         (retired.contains(selected) || !parsed.contains(selected));
     if (retireSelection) {
       // Invalidate in-flight reads before clearing their visible destination.
@@ -1229,10 +1349,12 @@ abstract class _KickChatStore with Store {
       ..clear()
       ..addAll(parsed);
     this._channelBuffers.removeWhere(
-      (slug, _) => retired.contains(slug) || !parsed.contains(slug),
+      (slug, _) =>
+          slug != own && (retired.contains(slug) || !parsed.contains(slug)),
     );
     this.channelLivePreview.removeWhere(
-      (slug, _) => retired.contains(slug) || !parsed.contains(slug),
+      (slug, _) =>
+          slug != own && (retired.contains(slug) || !parsed.contains(slug)),
     );
     if (retireSelection) {
       this.selectedChannelSlug = null;
@@ -1280,19 +1402,36 @@ abstract class _KickChatStore with Store {
     return parsed;
   }
 
+  /// The shared [SettingsKeys.SelectedKickUsername] only ever holds a slug
+  /// of the WebView list — an own channel outside that list is remembered
+  /// as [SettingsKeys.SelectedKickNativeOwnChannel] instead (the WebView
+  /// dropdown can't show a value it doesn't list).
   void _persistSelectedChannel() {
     try {
       final box = Hive.box(HiveKeys.Settings.name);
-      if (this.selectedChannelSlug == null) {
+      final slug = this.selectedChannelSlug;
+      if (slug == null) {
         box.delete(SettingsKeys.SelectedKickUsername.name);
-      } else {
-        box.put(
-          SettingsKeys.SelectedKickUsername.name,
-          this.selectedChannelSlug,
-        );
+        box.delete(SettingsKeys.SelectedKickNativeOwnChannel.name);
+      } else if (this.channels.contains(slug)) {
+        box.put(SettingsKeys.SelectedKickUsername.name, slug);
+        box.delete(SettingsKeys.SelectedKickNativeOwnChannel.name);
+      } else if (this.isOwnChannel(slug)) {
+        box.put(SettingsKeys.SelectedKickNativeOwnChannel.name, true);
       }
     } catch (e) {
       GeneralHelper.advLog('Kick chat selection persist failed - $e');
+    }
+  }
+
+  bool _readOwnChannelSelected() {
+    try {
+      return Hive.box(
+            HiveKeys.Settings.name,
+          ).get(SettingsKeys.SelectedKickNativeOwnChannel.name) ==
+          true;
+    } catch (_) {
+      return false;
     }
   }
 

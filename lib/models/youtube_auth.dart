@@ -23,12 +23,19 @@ class YouTubeAuth extends HiveObject {
   @HiveField(4)
   String? channelTitle;
 
+  /// `UC…` id of the YouTube channel the token belongs to — the native
+  /// "You" entry in the channel list. Null on sessions persisted before
+  /// it existed (backfilled on the next restore).
+  @HiveField(5)
+  String? channelId;
+
   YouTubeAuth({
     required this.accessToken,
     required this.refreshToken,
     required this.expiresAtMs,
     required this.scopes,
     this.channelTitle,
+    this.channelId,
   });
 
   /// Key of the single record inside the YouTubeAuth box

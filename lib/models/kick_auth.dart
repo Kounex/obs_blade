@@ -32,6 +32,13 @@ class KickAuth extends HiveObject {
   @HiveField(6)
   String? profilePicture;
 
+  /// Slug of the token account's own channel — the native "You" entry in
+  /// the channel list. Verified against the channel's `user_id` at
+  /// sign-in; null on sessions persisted before it existed (backfilled on
+  /// the next restore).
+  @HiveField(7)
+  String? channelSlug;
+
   KickAuth({
     required this.accessToken,
     required this.refreshToken,
@@ -40,6 +47,7 @@ class KickAuth extends HiveObject {
     this.userId,
     this.username,
     this.profilePicture,
+    this.channelSlug,
   });
 
   /// Key of the single record inside the KickAuth box

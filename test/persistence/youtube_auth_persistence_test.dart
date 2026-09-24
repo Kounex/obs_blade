@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:hive_ce/src/binary/binary_reader_impl.dart';
+import 'package:hive_ce/src/binary/binary_writer_impl.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 
@@ -42,6 +44,51 @@ void main() {
       expect(read?.refreshToken, 'refresh-1');
       expect(read?.scopes, ['https://www.googleapis.com/auth/youtube']);
       expect(read?.channelTitle, 'Kounex');
+    });
+
+    test('round-trips the own channel id', () async {
+      final box = await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
+      await box.put(
+        YouTubeAuth.kBoxKey,
+        YouTubeAuth(
+          accessToken: 'a',
+          refreshToken: 'r',
+          expiresAtMs: 0,
+          scopes: const [],
+          channelTitle: 'My Channel',
+          channelId: 'UCownchannel000000000000',
+        ),
+      );
+
+      expect(
+        box.get(YouTubeAuth.kBoxKey)?.channelId,
+        'UCownchannel000000000000',
+      );
+    });
+
+    test('a record written before channelId existed still reads', () {
+      /// The exact 5-field frame older builds wrote (fields 0-4).
+      final writer = BinaryWriterImpl(Hive);
+      writer
+        ..writeByte(5)
+        ..writeByte(0)
+        ..write('legacy-access')
+        ..writeByte(1)
+        ..write('legacy-refresh')
+        ..writeByte(2)
+        ..write(0)
+        ..writeByte(3)
+        ..write(<String>['https://www.googleapis.com/auth/youtube'])
+        ..writeByte(4)
+        ..write('My Channel');
+
+      final read = YouTubeAuthAdapter().read(
+        BinaryReaderImpl(writer.toBytes(), Hive),
+      );
+
+      expect(read.accessToken, 'legacy-access');
+      expect(read.channelTitle, 'My Channel');
+      expect(read.channelId, isNull);
     });
 
     test('expiresWithin / isExpired honor the window', () {

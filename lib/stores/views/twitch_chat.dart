@@ -542,6 +542,12 @@ abstract class _TwitchChatStore with Store {
     return this.user!.login;
   }
 
+  /// Whether the visible chat is the signed-in account's own channel (the
+  /// "You" entry) — same contract as the Kick / YouTube stores'
+  /// `isViewingOwnChannel`.
+  bool get isViewingOwnChannel =>
+      this.user != null && this.selectedChannelId == null;
+
   /// Null-safe [effectiveBroadcasterId] for moderation dedup keys — the
   /// lifecycle apply methods can run without a login (tests, a session
   /// wipe mid-stream).

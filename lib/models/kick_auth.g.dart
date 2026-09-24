@@ -24,13 +24,14 @@ class KickAuthAdapter extends TypeAdapter<KickAuth> {
       userId: (fields[4] as num?)?.toInt(),
       username: fields[5] as String?,
       profilePicture: fields[6] as String?,
+      channelSlug: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, KickAuth obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.accessToken)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class KickAuthAdapter extends TypeAdapter<KickAuth> {
       ..writeByte(5)
       ..write(obj.username)
       ..writeByte(6)
-      ..write(obj.profilePicture);
+      ..write(obj.profilePicture)
+      ..writeByte(7)
+      ..write(obj.channelSlug);
   }
 
   @override

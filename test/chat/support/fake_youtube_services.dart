@@ -15,6 +15,7 @@ class FakeYouTubeAuthService extends YouTubeAuthService {
   YouTubeAuthException? failRefreshWith;
   Object? failChannelTitleWith;
   String? channelTitleResult = 'My Channel';
+  String channelIdResult = 'UCownchannel000000000000';
   String? revokedToken;
 
   /// Scopes the returned [YouTubeToken] carries (default: the YouTube
@@ -53,10 +54,16 @@ class FakeYouTubeAuthService extends YouTubeAuthService {
   }
 
   @override
-  Future<String?> fetchOwnChannelTitle(String accessToken) async {
+  Future<YouTubeOwnChannel?> fetchOwnChannel(String accessToken) async {
+    this.fetchOwnChannelCalls++;
     if (this.failChannelTitleWith != null) throw this.failChannelTitleWith!;
-    return this.channelTitleResult;
+    return YouTubeOwnChannel(
+      id: this.channelIdResult,
+      title: this.channelTitleResult,
+    );
   }
+
+  int fetchOwnChannelCalls = 0;
 
   @override
   Future<YouTubeToken> refreshToken(String refreshToken) async {

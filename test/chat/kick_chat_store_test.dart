@@ -1346,4 +1346,197 @@ void main() {
       expect(await store.fetchUserProfile(7), isNull);
     });
   });
+
+  group('own channel ("You" entry)', () {
+    /// The signed-in account (user id 9001) owns 'kicker' — its channel
+    /// resolves with `user_id` 9001 so the slug verifies.
+    void ownChannel({String slug = 'kicker', int userId = 9001}) {
+      channelService.channels[slug] = channelInfo(
+        slug,
+        id: 900,
+        chatroomId: 90,
+      ).copyWith(userId: userId);
+    }
+
+    Future<void> signIn() async {
+      settingsBox().put(SettingsKeys.KickOAuthClientId.name, 'client-1');
+      await store.beginLogin();
+      await store.completeLogin(
+        'https://localhost/kick-callback?code=code-1&state=test-state',
+      );
+    }
+
+    test('sign-in verifies and stores the own slug, listed first', () async {
+      configure();
+      ownChannel();
+      await store.init();
+
+      await signIn();
+
+      expect(authBox().get(KickAuth.kBoxKey)?.channelSlug, 'kicker');
+      expect(store.ownChannelSlug, 'kicker');
+      expect(store.nativeChannels, ['kicker', 'aaa', 'bbb']);
+      expect(store.isOwnChannel('kicker'), isTrue);
+      expect(store.isOwnChannel('aaa'), isFalse);
+
+      /// Native-only: the WebView list stays the user's.
+      expect(settingsBox().get(SettingsKeys.KickUsernames.name), [
+        'aaa',
+        'bbb',
+      ]);
+    });
+
+    test('an underscore username resolves its hyphenated slug', () async {
+      authService.identity = const KickUserIdentity(
+        userId: 9001,
+        name: 'Ice_Poseidon',
+      );
+      ownChannel(slug: 'ice-poseidon');
+      await store.init();
+
+      await signIn();
+
+      expect(store.ownChannelSlug, 'ice-poseidon');
+    });
+
+    test('a slug owned by someone else is never claimed', () async {
+      ownChannel(userId: 1234);
+      await store.init();
+
+      await signIn();
+
+      expect(store.authState, KickAuthState.signedIn);
+      expect(store.ownChannelSlug, isNull);
+      expect(authBox().get(KickAuth.kBoxKey)?.channelSlug, isNull);
+    });
+
+    test('signing in with nothing selected opens the own chat', () async {
+      ownChannel();
+      await store.init();
+      expect(store.selectedChannelSlug, isNull);
+
+      await signIn();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+
+      expect(store.selectedChannelSlug, 'kicker');
+      expect(store.isViewingOwnChannel, isTrue);
+      expect(pusher().connectCalls, [90]);
+
+      /// Outside the WebView list → remembered natively, shared key free.
+      expect(settingsBox().get(SettingsKeys.SelectedKickUsername.name), isNull);
+      expect(
+        settingsBox().get(SettingsKeys.SelectedKickNativeOwnChannel.name),
+        isTrue,
+      );
+    });
+
+    test('init restores a selected own chat', () async {
+      configure();
+      ownChannel();
+      await authBox().put(
+        KickAuth.kBoxKey,
+        validAuth()..channelSlug = 'kicker',
+      );
+      settingsBox().put(SettingsKeys.SelectedKickNativeOwnChannel.name, true);
+
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+
+      expect(store.selectedChannelSlug, 'kicker');
+      expect(pusher().connectCalls, [90]);
+    });
+
+    test('picking an added channel clears the own-chat flag', () async {
+      configure();
+      ownChannel();
+      await authBox().put(
+        KickAuth.kBoxKey,
+        validAuth()..channelSlug = 'kicker',
+      );
+      settingsBox().put(SettingsKeys.SelectedKickNativeOwnChannel.name, true);
+      await store.init();
+
+      await store.selectChannel('bbb');
+
+      expect(settingsBox().get(SettingsKeys.SelectedKickUsername.name), 'bbb');
+      expect(
+        settingsBox().get(SettingsKeys.SelectedKickNativeOwnChannel.name),
+        isNull,
+      );
+    });
+
+    test('a session stored before the slug existed backfills it', () async {
+      ownChannel();
+      await authBox().put(KickAuth.kBoxKey, validAuth());
+
+      await store.init();
+      await until(() => store.ownChannelSlug != null);
+
+      expect(store.ownChannelSlug, 'kicker');
+      expect(authBox().get(KickAuth.kBoxKey)?.channelSlug, 'kicker');
+    });
+
+    test('sign-out drops the entry and falls back to an added chat', () async {
+      configure();
+      ownChannel();
+      await authBox().put(
+        KickAuth.kBoxKey,
+        validAuth()..channelSlug = 'kicker',
+      );
+      settingsBox().put(SettingsKeys.SelectedKickNativeOwnChannel.name, true);
+      await store.init();
+      expect(store.selectedChannelSlug, 'kicker');
+
+      await store.logout();
+      await until(() => store.selectedChannelSlug == 'aaa');
+
+      expect(store.ownChannelSlug, isNull);
+      expect(store.nativeChannels, ['aaa', 'bbb']);
+      expect(store.selectedChannelSlug, 'aaa');
+      expect(
+        settingsBox().get(SettingsKeys.SelectedKickNativeOwnChannel.name),
+        isNull,
+      );
+    });
+
+    test('an own slug the user also added is listed once and survives '
+        'sign-out', () async {
+      settingsBox().put(SettingsKeys.KickUsernames.name, <String>['kicker']);
+      ownChannel();
+      await authBox().put(
+        KickAuth.kBoxKey,
+        validAuth()..channelSlug = 'kicker',
+      );
+      await store.init();
+
+      expect(store.nativeChannels, ['kicker']);
+      expect(store.selectedChannelSlug, 'kicker');
+
+      await store.logout();
+
+      expect(store.nativeChannels, ['kicker']);
+      expect(store.selectedChannelSlug, 'kicker');
+    });
+
+    test('reloadChannels keeps a selected own chat', () async {
+      configure();
+      ownChannel();
+      await authBox().put(
+        KickAuth.kBoxKey,
+        validAuth()..channelSlug = 'kicker',
+      );
+      settingsBox().put(SettingsKeys.SelectedKickNativeOwnChannel.name, true);
+      await store.init();
+
+      settingsBox().put(SettingsKeys.KickUsernames.name, <String>['aaa']);
+      store.reloadChannels();
+
+      expect(store.selectedChannelSlug, 'kicker');
+      expect(store.nativeChannels, ['kicker', 'aaa']);
+    });
+  });
 }

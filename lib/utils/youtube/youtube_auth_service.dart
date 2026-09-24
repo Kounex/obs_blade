@@ -33,6 +33,15 @@ const List<String> kYouTubeChatScopes = <String>[
   'https://www.googleapis.com/auth/youtube',
 ];
 
+/// The signed-in account's own channel (`channels.list?mine=true`).
+class YouTubeOwnChannel {
+  /// `UC…` channel id.
+  final String id;
+  final String? title;
+
+  const YouTubeOwnChannel({required this.id, this.title});
+}
+
 const String _kDeviceCodeUrl = 'https://oauth2.googleapis.com/device/code';
 const String _kTokenUrl = 'https://oauth2.googleapis.com/token';
 const String _kRevokeUrl = 'https://oauth2.googleapis.com/revoke';
@@ -183,10 +192,11 @@ class YouTubeAuthService {
     throw const YouTubeAuthException('Device code expired');
   }
 
-  /// `channels.list?part=snippet&mine=true` — title of the channel the
-  /// token belongs to (display only, stored on the YouTubeAuth record).
-  /// Mirrors TwitchAuthService.fetchOwnUser.
-  Future<String?> fetchOwnChannelTitle(String accessToken) async {
+  /// `channels.list?part=snippet&mine=true` — id + title of the channel
+  /// the token belongs to (stored on the YouTubeAuth record: the id is
+  /// the native "You" entry, the title is display). Mirrors
+  /// TwitchAuthService.fetchOwnUser. Null when the account has no channel.
+  Future<YouTubeOwnChannel?> fetchOwnChannel(String accessToken) async {
     final response = await this._client.get(
       Uri.parse(
         'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
@@ -202,9 +212,17 @@ class YouTubeAuthService {
     }
     final items = (json.decode(response.body) as Map<String, dynamic>)['items'];
     if (items is! List || items.isEmpty) return null;
-    final snippet = (items.first as Map<String, dynamic>)['snippet'];
-    if (snippet is! Map<String, dynamic>) return null;
-    return snippet['title'] as String?;
+    final item = items.first;
+    if (item is! Map<String, dynamic>) return null;
+    final id = item['id'];
+    if (id is! String || id.isEmpty) return null;
+    final snippet = item['snippet'];
+    return YouTubeOwnChannel(
+      id: id,
+      title: snippet is Map<String, dynamic>
+          ? snippet['title'] as String?
+          : null,
+    );
   }
 
   /// Exchange a refresh token for a new token pair. Google only returns a

@@ -21,8 +21,11 @@ import 'dialogs/add_edit_kick_username.dart';
 /// [KickChatStore.channelLivePreview] — a dedicated per-slug poll, since
 /// Kick has no Helix-style batch "which of these are live" endpoint like
 /// Twitch's. No Mod chip: Kick has no "am I a mod in this channel"
-/// lookup. "Add chat…" opens the existing Kick username dialog.
-/// Long-press removes an entry. Disabled while a switch is in flight.
+/// lookup. When signed in, the account's own channel leads the list,
+/// marked "You" (native-only — [KickChatStore.ownChannelSlug], not part
+/// of the WebView list, so it has no remove long-press). "Add chat…" opens
+/// the existing Kick username dialog. Long-press removes an added entry.
+/// Disabled while a switch is in flight.
 class KickNativeChannelDropdown extends StatelessWidget {
   /// "Add chat…" is an action sentinel (never a selection).
   static const String _kAddChatValue = '__add_chat__';
@@ -87,12 +90,24 @@ class KickNativeChannelDropdown extends StatelessWidget {
     );
   }
 
-  Widget _channelLabel(BuildContext context, String name) {
-    return Text(
-      name,
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.fade,
+  /// Name, plus the "You" marker for the own channel (same idiom as the
+  /// Twitch dropdown).
+  Widget _channelLabel(BuildContext context, String name, {bool own = false}) {
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+          ),
+        ),
+        if (own) ...[
+          const SizedBox(width: AppSpacing.xs),
+          Text('You', style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ],
     );
   }
 
@@ -108,7 +123,13 @@ class KickNativeChannelDropdown extends StatelessWidget {
     final live = store.isChannelLive(slug);
     return Row(
       children: [
-        Expanded(child: this._channelLabel(context, slug)),
+        Expanded(
+          child: this._channelLabel(
+            context,
+            slug,
+            own: store.isOwnChannel(slug),
+          ),
+        ),
         if (live) const SizedBox(width: AppSpacing.sm),
         if (live)
           NativeChatStatusChip.live(
@@ -129,14 +150,16 @@ class KickNativeChannelDropdown extends StatelessWidget {
             store.chatConnection == KickChatConnectionState.connecting;
 
         final items = <DropdownMenuItem<String>>[
-          for (final slug in store.channels)
+          for (final slug in store.nativeChannels)
             DropdownMenuItem<String>(
               value: slug,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onLongPress: () => this._confirmRemove(context, slug),
-                child: this._menuRow(context, store, slug),
-              ),
+              child: store.isOwnChannel(slug)
+                  ? this._menuRow(context, store, slug)
+                  : GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onLongPress: () => this._confirmRemove(context, slug),
+                      child: this._menuRow(context, store, slug),
+                    ),
             ),
           const DropdownMenuItem<String>(
             value: _kAddChatValue,
@@ -151,7 +174,8 @@ class KickNativeChannelDropdown extends StatelessWidget {
         ];
 
         final selectedBuilders = <Widget>[
-          for (final slug in store.channels) this._channelLabel(context, slug),
+          for (final slug in store.nativeChannels)
+            this._channelLabel(context, slug, own: store.isOwnChannel(slug)),
           this._channelLabel(context, 'Add chat…'),
         ];
 

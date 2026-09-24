@@ -10,6 +10,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_youtube_services.dart';
@@ -946,6 +947,167 @@ void main() {
       );
 
       expect(await store.fetchChannelInfo('chan-7'), isNull);
+    });
+  });
+
+  group('own channel ("You" entry)', () {
+    const ownId = 'UCownchannel000000000000';
+
+    /// Offline own channel (the resolver finds no live stream) — keeps the
+    /// poll loop idle so selection assertions don't race it.
+    YouTubeChatStore storeWithResolver() => YouTubeChatStore(
+      authService: authService,
+      chatService: chatService,
+      liveResolver: FakeYouTubeLiveResolver(),
+      sleep: (duration) async {},
+      isProResolver: () => true,
+    );
+
+    Future<void> seedOwnAuth({String? channelId = ownId}) => authBox().put(
+      YouTubeAuth.kBoxKey,
+      YouTubeAuth(
+        accessToken: 'access-1',
+        refreshToken: 'refresh-1',
+        expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+        scopes: kYouTubeChatScopes,
+        channelTitle: 'My Channel',
+        channelId: channelId,
+      ),
+    );
+
+    test(
+      'sign-in stores the channel id and lists the own entry first',
+      () async {
+        configure();
+        await store.dispose();
+        store = storeWithResolver();
+        await store.init();
+
+        await store.startLogin();
+
+        expect(authBox().get(YouTubeAuth.kBoxKey)?.channelId, ownId);
+        expect(store.nativeChannels.map((c) => c.label), [
+          kYouTubeOwnChannelLabel,
+          'A',
+          'B',
+        ]);
+        final own = store.nativeChannels.first;
+        expect(own.isOwn, isTrue);
+        expect(own.displayName, 'My Channel');
+        expect(own.target, const YouTubeChannelTarget('channel/$ownId'));
+
+        /// Native-only: the WebView list stays the user's.
+        expect(
+          (settingsBox().get(SettingsKeys.YouTubeUsernames.name) as Map).keys,
+          ['A', 'B'],
+        );
+      },
+    );
+
+    test('signing in with nothing selected opens the own chat', () async {
+      settingsBox().put(SettingsKeys.YouTubeApiKey.name, 'api-key');
+      await store.dispose();
+      store = storeWithResolver();
+      await store.init();
+      expect(store.selectedChannelLabel, isNull);
+
+      await store.startLogin();
+
+      expect(store.selectedChannelLabel, kYouTubeOwnChannelLabel);
+      expect(store.isViewingOwnChannel, isTrue);
+      expect(store.selectedChannel?.isOwn, isTrue);
+      expect(
+        settingsBox().get(SettingsKeys.SelectedYouTubeNativeChannelId.name),
+        kYouTubeOwnChannelLabel,
+      );
+    });
+
+    test('init restores a selected own chat', () async {
+      configure();
+      await seedOwnAuth();
+      settingsBox().put(
+        SettingsKeys.SelectedYouTubeNativeChannelId.name,
+        kYouTubeOwnChannelLabel,
+      );
+      await store.dispose();
+      store = storeWithResolver();
+
+      await store.init();
+
+      expect(store.selectedChannelLabel, kYouTubeOwnChannelLabel);
+      expect(store.ownChannel?.displayName, 'My Channel');
+    });
+
+    test('a persisted own selection without a session falls back', () async {
+      configure();
+      settingsBox().put(
+        SettingsKeys.SelectedYouTubeNativeChannelId.name,
+        kYouTubeOwnChannelLabel,
+      );
+      await store.dispose();
+      store = storeWithResolver();
+
+      await store.init();
+      await until(() => store.selectedChannelLabel != kYouTubeOwnChannelLabel);
+
+      expect(store.ownChannel, isNull);
+      expect(store.selectedChannelLabel, 'A');
+    });
+
+    test('a session stored before the id existed backfills it', () async {
+      configure();
+      await seedOwnAuth(channelId: null);
+      await store.dispose();
+      store = storeWithResolver();
+
+      await store.init();
+      await until(() => store.ownChannel != null);
+
+      expect(authService.fetchOwnChannelCalls, 1);
+      expect(authBox().get(YouTubeAuth.kBoxKey)?.channelId, ownId);
+      expect(store.nativeChannels.first.isOwn, isTrue);
+    });
+
+    test('logout drops the entry and falls back to an added chat', () async {
+      configure();
+      await seedOwnAuth();
+      settingsBox().put(
+        SettingsKeys.SelectedYouTubeNativeChannelId.name,
+        kYouTubeOwnChannelLabel,
+      );
+      await store.dispose();
+      store = storeWithResolver();
+      await store.init();
+
+      await store.logout();
+      await until(() => store.selectedChannelLabel == 'A');
+
+      expect(store.ownChannel, isNull);
+      expect(store.nativeChannels.map((c) => c.label), ['A', 'B']);
+      expect(store.isViewingOwnChannel, isFalse);
+    });
+
+    test('reloadChannels keeps a selected own chat', () async {
+      configure();
+      await seedOwnAuth();
+      settingsBox().put(
+        SettingsKeys.SelectedYouTubeNativeChannelId.name,
+        kYouTubeOwnChannelLabel,
+      );
+      await store.dispose();
+      store = storeWithResolver();
+      await store.init();
+
+      settingsBox().put(SettingsKeys.YouTubeUsernames.name, <String, String>{
+        'A': 'video-a-001',
+      });
+      store.reloadChannels();
+
+      expect(store.selectedChannelLabel, kYouTubeOwnChannelLabel);
+      expect(store.nativeChannels.map((c) => c.label), [
+        kYouTubeOwnChannelLabel,
+        'A',
+      ]);
     });
   });
 }

@@ -156,4 +156,28 @@ void main() {
       await closeHiveInZone(tester);
     }
   });
+
+  testWidgets('the own channel leads the list marked "You"', (tester) async {
+    store.channels.addAll(['aaa']);
+    store.ownChannelSlug = 'kicker';
+    store.selectedChannelSlug = 'kicker';
+
+    await tester.pumpWidget(
+      wrap(const Column(children: [KickNativeChannelDropdown()])),
+    );
+    await tester.pump();
+
+    /// Closed control: selected own channel carries the marker.
+    expect(find.text('kicker'), findsOneWidget);
+    expect(find.text('You'), findsOneWidget);
+
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    final kicker = tester.getTopLeft(find.text('kicker').last);
+    final added = tester.getTopLeft(find.text('aaa').last);
+    expect(kicker.dy, lessThan(added.dy));
+    expect(find.text('You'), findsWidgets);
+  });
 }

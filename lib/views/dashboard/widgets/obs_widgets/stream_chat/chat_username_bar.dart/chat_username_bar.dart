@@ -120,7 +120,7 @@ class ChatUsernameBar extends StatelessWidget {
                                   YouTubeAuthState.unconfigured,
                             ChatType.Kick =>
                               GetIt.instance<KickChatStore>()
-                                  .channels
+                                  .nativeChannels
                                   .isNotEmpty,
                             _ => false,
                           };

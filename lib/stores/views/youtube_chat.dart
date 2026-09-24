@@ -75,7 +75,24 @@ class YouTubeChatChannel {
   final String label;
   final YouTubeTarget target;
 
-  const YouTubeChatChannel({required this.label, required this.target});
+  /// The signed-in account's own channel (the native "You" entry) — its
+  /// [label] is [kYouTubeOwnChannelLabel], never a settings map key.
+  final bool isOwn;
+
+  /// Display name for the own entry (the channel title); user entries
+  /// show their [label].
+  final String? title;
+
+  const YouTubeChatChannel({
+    required this.label,
+    required this.target,
+    this.isOwn = false,
+    this.title,
+  });
+
+  /// What the channel pickers show.
+  String get displayName =>
+      this.isOwn ? (this.title ?? 'Own channel') : this.label;
 
   /// The pinned video id — null for channel entries (their video is
   /// resolved per stream).
@@ -86,6 +103,11 @@ class YouTubeChatChannel {
 
   bool get isChannel => this.target is YouTubeChannelTarget;
 }
+
+/// Reserved [YouTubeChatChannel.label] of the own-channel entry. Starts
+/// with a NUL so no typed entry name can collide with it; persisted as
+/// [SettingsKeys.SelectedYouTubeNativeChannelId] like any other label.
+const String kYouTubeOwnChannelLabel = '\u0000own';
 
 /// In-memory per-channel chat snapshot — swapped in/out of the live
 /// [messages] list on selectChannel so switching back restores recent
@@ -235,9 +257,32 @@ abstract class _YouTubeChatStore with Store {
   final ObservableList<YouTubeChatChannel> channels =
       ObservableList<YouTubeChatChannel>();
 
+  /// The signed-in account's own channel (the native "You" entry, always
+  /// first in [nativeChannels]) — null while signed out or before the
+  /// channel id is known. Native-only: never written into
+  /// [SettingsKeys.YouTubeUsernames].
+  @observable
+  YouTubeChatChannel? ownChannel;
+
+  /// The native channel list: [ownChannel] first, then the added
+  /// [channels].
+  @computed
+  List<YouTubeChatChannel> get nativeChannels => [
+    ?this.ownChannel,
+    ...this.channels,
+  ];
+
+  /// Whether [label] is the signed-in account's own channel entry.
+  bool isOwnChannel(String? label) =>
+      label == kYouTubeOwnChannelLabel && this.ownChannel != null;
+
+  /// Whether the visible chat is the signed-in account's own channel.
+  bool get isViewingOwnChannel => this.isOwnChannel(this.selectedChannelLabel);
+
   /// Currently viewed channel — the **label** (map key of
-  /// [SettingsKeys.YouTubeUsernames], stable across re-edits), persisted
-  /// as [SettingsKeys.SelectedYouTubeNativeChannelId]. Null = no selection.
+  /// [SettingsKeys.YouTubeUsernames], stable across re-edits, or
+  /// [kYouTubeOwnChannelLabel]), persisted as
+  /// [SettingsKeys.SelectedYouTubeNativeChannelId]. Null = no selection.
   @observable
   String? selectedChannelLabel;
 
@@ -283,6 +328,10 @@ abstract class _YouTubeChatStore with Store {
   String? get selfChannelTitle =>
       this._authBox.get(YouTubeAuth.kBoxKey)?.channelTitle;
 
+  /// `UC…` id of the signed-in channel.
+  String? get selfChannelId =>
+      this._authBox.get(YouTubeAuth.kBoxKey)?.channelId;
+
   /// Max recent lines shown on the native chat user card.
   static const int kUserCardMessageCap = 20;
 
@@ -320,7 +369,7 @@ abstract class _YouTubeChatStore with Store {
   YouTubeTarget? get _selectedTarget {
     final label = this.selectedChannelLabel;
     if (label == null) return null;
-    for (final channel in this.channels) {
+    for (final channel in this.nativeChannels) {
       if (channel.label == label) return channel.target;
     }
     return null;
@@ -330,7 +379,7 @@ abstract class _YouTubeChatStore with Store {
   YouTubeChatChannel? get selectedChannel {
     final label = this.selectedChannelLabel;
     if (label == null) return null;
-    for (final channel in this.channels) {
+    for (final channel in this.nativeChannels) {
       if (channel.label == label) return channel;
     }
     return null;
@@ -365,6 +414,7 @@ abstract class _YouTubeChatStore with Store {
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);
     if (auth == null) {
       this.authState = YouTubeAuthState.signedOut;
+      this._syncOwnChannel();
       this._autoSelectChannel();
       return;
     }
@@ -387,17 +437,66 @@ abstract class _YouTubeChatStore with Store {
         GeneralHelper.advLog('YouTube token refresh on init failed - $e');
         this.authState = YouTubeAuthState.signedOut;
       }
+      this._syncOwnChannel();
       return;
     }
     this.authState = YouTubeAuthState.signedIn;
+    this._syncOwnChannel();
+    if (auth.channelId == null) {
+      unawaited(this._backfillOwnChannel());
+    }
     this._autoSelectChannel();
+  }
+
+  /// Sessions persisted before [YouTubeAuth.channelId] existed fetch it
+  /// once on restore (1 quota unit); the entry appears when it lands.
+  Future<void> _backfillOwnChannel() async {
+    try {
+      final token = await this._validAccessToken();
+      final own = await this._authService.fetchOwnChannel(token);
+      final current = this._authBox.get(YouTubeAuth.kBoxKey);
+      if (own == null || current == null) return;
+      current
+        ..channelId = own.id
+        ..channelTitle = own.title ?? current.channelTitle;
+      await current.save();
+      this._syncOwnChannel();
+    } catch (e) {
+      GeneralHelper.advLog('YouTube own channel backfill failed - $e');
+    }
+  }
+
+  /// Mirror the stored session's channel into [ownChannel]. A selected own
+  /// entry that no longer exists (signed out, wiped session) falls back to
+  /// the first added entry (or none) — the dropdown can't show a vanished
+  /// value.
+  void _syncOwnChannel() {
+    final auth = this.authState == YouTubeAuthState.signedIn
+        ? this._authBox.get(YouTubeAuth.kBoxKey)
+        : null;
+    final channelId = auth?.channelId;
+    final target = channelId == null ? null : parseYouTubeTarget(channelId);
+    runInAction(() {
+      this.ownChannel = target == null
+          ? null
+          : YouTubeChatChannel(
+              label: kYouTubeOwnChannelLabel,
+              target: target,
+              isOwn: true,
+              title: auth?.channelTitle,
+            );
+    });
+    if (this.selectedChannelLabel == kYouTubeOwnChannelLabel &&
+        this.ownChannel == null) {
+      unawaited(this.selectChannel(this.channels.firstOrNull?.label));
+    }
   }
 
   /// Select the persisted channel (or the first configured one) and start
   /// polling — no-op without a readable configuration.
   void _autoSelectChannel() {
-    if (this.selectedChannelLabel == null && this.channels.isNotEmpty) {
-      unawaited(this.selectChannel(this.channels.first.label));
+    if (this.selectedChannelLabel == null && this.nativeChannels.isNotEmpty) {
+      unawaited(this.selectChannel(this.nativeChannels.first.label));
     } else if (this.selectedChannelLabel != null) {
       this.connectChat();
     }
@@ -440,22 +539,28 @@ abstract class _YouTubeChatStore with Store {
 
       this.authState = YouTubeAuthState.signingIn;
 
-      /// Channel title is display-only — a fetch failure must not fail
-      /// the sign-in.
-      String? channelTitle;
+      /// The own channel feeds the "You" entry + display — a fetch
+      /// failure must not fail the sign-in.
+      YouTubeOwnChannel? ownChannel;
       try {
-        channelTitle = await this._authService.fetchOwnChannelTitle(
-          token.accessToken,
-        );
+        ownChannel = await this._authService.fetchOwnChannel(token.accessToken);
       } catch (e) {
-        GeneralHelper.advLog('YouTube channel title fetch failed - $e');
+        GeneralHelper.advLog('YouTube own channel fetch failed - $e');
       }
-      await this._persistAuth(token, channelTitle);
+      await this._persistAuth(token, ownChannel);
       this.pendingUserCode = null;
       this.pendingVerificationUrl = null;
       this.authState = YouTubeAuthState.signedIn;
       this._ensureChannelsLoaded();
-      this.connectChat();
+      this._syncOwnChannel();
+
+      /// Signing in with nothing selected lands on the own chat — the
+      /// same default the Twitch engine has.
+      if (this.selectedChannelLabel == null && this.ownChannel != null) {
+        unawaited(this.selectChannel(kYouTubeOwnChannelLabel));
+      } else {
+        this.connectChat();
+      }
     } on YouTubeAuthException catch (e) {
       // A superseded flow must not clobber the new flow's state.
       if (flow != this._loginFlow) return;
@@ -495,6 +600,7 @@ abstract class _YouTubeChatStore with Store {
     this.authState = this.isConfigured
         ? YouTubeAuthState.signedOut
         : YouTubeAuthState.unconfigured;
+    this._syncOwnChannel();
     await this._authBox.delete(YouTubeAuth.kBoxKey);
     if (auth != null) {
       await this._authService.revoke(auth.accessToken);
@@ -944,6 +1050,7 @@ abstract class _YouTubeChatStore with Store {
     final selected = this.selectedChannelLabel;
     final retireSelection =
         selected != null &&
+        selected != kYouTubeOwnChannelLabel &&
         (retired.contains(selected) || !videos.containsKey(selected));
     if (retireSelection) {
       // Invalidate in-flight reads before clearing their visible destination.
@@ -955,7 +1062,9 @@ abstract class _YouTubeChatStore with Store {
       ..clear()
       ..addAll(parsed);
     this._channelBuffers.removeWhere(
-      (label, _) => retired.contains(label) || !videos.containsKey(label),
+      (label, _) =>
+          label != kYouTubeOwnChannelLabel &&
+          (retired.contains(label) || !videos.containsKey(label)),
     );
     bool retiredModeration(String key) =>
         retired.any((label) => key.startsWith('$label:'));
@@ -983,8 +1092,12 @@ abstract class _YouTubeChatStore with Store {
       final selected = Hive.box(
         HiveKeys.Settings.name,
       ).get(SettingsKeys.SelectedYouTubeNativeChannelId.name);
+
+      /// The own entry isn't known until the session restores —
+      /// [_syncOwnChannel] drops the selection if it never appears.
       if (selected is String &&
-          this.channels.any((channel) => channel.label == selected)) {
+          (selected == kYouTubeOwnChannelLabel ||
+              this.channels.any((channel) => channel.label == selected))) {
         this.selectedChannelLabel = selected;
       }
     } catch (e) {
@@ -1058,7 +1171,7 @@ abstract class _YouTubeChatStore with Store {
     bool ownsDestination() =>
         loginFlow == this._loginFlow &&
         identical(buffer, this._channelBuffers[label]) &&
-        this.channels.any(
+        this.nativeChannels.any(
           (channel) =>
               channel.label == label && channel.target.key == targetKey,
         );
@@ -1212,7 +1325,10 @@ abstract class _YouTubeChatStore with Store {
     return auth.accessToken;
   }
 
-  Future<void> _persistAuth(YouTubeToken token, String? channelTitle) async {
+  Future<void> _persistAuth(
+    YouTubeToken token,
+    YouTubeOwnChannel? ownChannel,
+  ) async {
     await this._authBox.put(
       YouTubeAuth.kBoxKey,
       YouTubeAuth(
@@ -1221,7 +1337,8 @@ abstract class _YouTubeChatStore with Store {
         expiresAtMs:
             DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000,
         scopes: token.scope,
-        channelTitle: channelTitle,
+        channelTitle: ownChannel?.title,
+        channelId: ownChannel?.id,
       ),
     );
   }
@@ -1237,6 +1354,7 @@ abstract class _YouTubeChatStore with Store {
       this.authState = YouTubeAuthState.signedOut;
       this.authError = message;
     });
+    this._syncOwnChannel();
   }
 
   void _resetToSignedOut() {
@@ -1250,6 +1368,7 @@ abstract class _YouTubeChatStore with Store {
           ? YouTubeAuthState.signedOut
           : YouTubeAuthState.unconfigured;
     });
+    this._syncOwnChannel();
   }
 
   Future<void> dispose() async {

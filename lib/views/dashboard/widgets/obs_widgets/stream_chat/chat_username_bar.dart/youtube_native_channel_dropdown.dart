@@ -17,9 +17,12 @@ import 'dialogs/add_edit_youtube_username.dart';
 /// [NativeChannelDropdown] bound to [YouTubeChatStore] (labels of the
 /// [SettingsKeys.YouTubeUsernames] map). No LIVE/Mod chips: the store only
 /// polls the selected channel, so per-channel live status doesn't exist.
-/// "Add chat…" opens the existing YouTube username dialog (entries are
-/// per-entry — channel entries follow their current stream). Long-press
-/// removes an entry. Disabled while a switch is in flight.
+/// When signed in, the account's own channel leads the list, marked "You"
+/// (native-only — [YouTubeChatStore.ownChannel], not part of the WebView
+/// list, so it has no remove long-press). "Add chat…" opens the existing
+/// YouTube username dialog (entries are per-entry — channel entries follow
+/// their current stream). Long-press removes an added entry. Disabled
+/// while a switch is in flight.
 class YouTubeNativeChannelDropdown extends StatelessWidget {
   /// "Add chat…" is an action sentinel (never a selection).
   static const String _kAddChatValue = '__add_chat__';
@@ -77,12 +80,24 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
     );
   }
 
-  Widget _channelLabel(BuildContext context, String name) {
-    return Text(
-      name,
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.fade,
+  /// Name, plus the "You" marker for the own channel (same idiom as the
+  /// Twitch dropdown).
+  Widget _channelLabel(BuildContext context, String name, {bool own = false}) {
+    return Row(
+      children: [
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+          ),
+        ),
+        if (own) ...[
+          const SizedBox(width: AppSpacing.xs),
+          Text('You', style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ],
     );
   }
 
@@ -95,14 +110,17 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
             store.chatConnection == YouTubeChatConnectionState.connecting;
 
         final items = <DropdownMenuItem<String>>[
-          for (final channel in store.channels)
+          for (final channel in store.nativeChannels)
             DropdownMenuItem<String>(
               value: channel.label,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onLongPress: () => this._confirmRemove(context, channel.label),
-                child: this._channelLabel(context, channel.label),
-              ),
+              child: channel.isOwn
+                  ? this._channelLabel(context, channel.displayName, own: true)
+                  : GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onLongPress: () =>
+                          this._confirmRemove(context, channel.label),
+                      child: this._channelLabel(context, channel.displayName),
+                    ),
             ),
           const DropdownMenuItem<String>(
             value: _kAddChatValue,
@@ -117,8 +135,12 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
         ];
 
         final selectedBuilders = <Widget>[
-          for (final channel in store.channels)
-            this._channelLabel(context, channel.label),
+          for (final channel in store.nativeChannels)
+            this._channelLabel(
+              context,
+              channel.displayName,
+              own: channel.isOwn,
+            ),
           this._channelLabel(context, 'Add chat…'),
         ];
 
