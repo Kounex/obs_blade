@@ -179,6 +179,20 @@ against the channel's `user_id` and stored as `KickAuth.channelSlug`;
 native-only — its selection persists as `SelectedKickNativeOwnChannel`,
 not in the shared WebView keys).
 
+**Combined chat (wave 1 of 3, read-only):** `ChatType.Combined`
+(HiveField 4, native-only — `isNativeOnly`, no engine switch) merges the
+signed-in "You" channels ("My chats") into one Pro-gated timeline.
+`CombinedChatStore` binds to the persisted chat type app-wide (created
+after Hive init in `main.dart`): selecting Combined points each platform
+store at its own channel, leaving restores the previous selections
+("shared" coupling — no extra connections). `timeline` = stable k-way
+merge by platform timestamp (`mergeCombinedStreams`, per-platform order
+never changes). `NativeCombinedChatView` reuses each platform's row
+widget behind a platform icon; pins stack per platform
+(`CombinedPinStack`); sources sheet = status + sign-in/retry + toggles.
+Spec/plan: `docs/superpowers/specs|plans/2026-09-24-combined-chat*`.
+Next waves: builder + other streamers + focus shortcut, then writing/mod.
+
 **General native chat (all 3 engines):** every store answers
 `isViewingOwnChannel` (the "You" entry — groundwork for the merged
 timeline, see `chatterino-comparison.md`); self-mention/keyword row

@@ -102,29 +102,29 @@ check on device that signing in to Kick / YouTube adds the "You" entry
 (Kick: a username with `_` should resolve its `-` slug) and that an older
 session picks the entry up after a restart (backfill).
 
-**Open bug — Twitch native chat stalls after an announcement row** (from
-dogfood): ~100 px blank under the announcement, 2 more messages, then
-nothing. **Widget-level repro failed** (500-row buffer, announcement with
-twin chat.message/link/emote/badge, zebra + timestamps on/off → every
-row renders, stays pinned, no layout exceptions). Next: reproduce on
-device with logs (Options → Debug samples, or a real `/announce`) and
-check whether rows still reach the store (`TwitchChatStore.messages`
-growing?) vs. a render/scroll problem; the EventSub notification path
-logs every announcement's raw color (`Twitch announcement color=`).
+**Twitch "stall" after an announcement — probable fix shipped**
+(`c8c48713`): at the 500-row cap the views stopped following new rows
+(length stayed flat). User is watching for a recurrence; if it happens
+again, check whether rows still reach `TwitchChatStore.messages`.
 
-**Combined chat — design written, awaiting user review:**
-[`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md)
-(decisions ratified in the brainstorm; one conflict flagged at the top of
-the spec — "shared" store coupling vs. "restore" + "keep running"). After
-review: tier-L plan, 3 waves (read-only merge + My chats → builder +
-suggestions + focus shortcut → writing/mod).
+**Combined chat — wave 1 shipped (read-only merge + "My chats"),
+not dogfooded yet.** Spec + plan:
+[`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md),
+[`superpowers/plans/2026-09-24-combined-chat-wave1.md`](superpowers/plans/2026-09-24-combined-chat-wave1.md).
+Dogfood checklist: pick "Combined" in the chat type; signed-in platforms
+appear in "My chats" (tap it → sources sheet: status, sign in, toggles);
+rows interleave with platform icons; Twitch + Kick pins stack and tuck
+independently; switching the chat type back to e.g. Kick restores the
+channel Kick showed before (also after an app restart). Next: wave 2
+(combo builder, other streamers' channels + suggestions, focus shortcut
+with "↩ Combined", YouTube pause in the background), then wave 3
+(target picker, replies, mod actions).
 
 **Immediate next threads:**
 
-1. **The announcement stall above**, dogfood the new "You" entries, then
-   feedback on the not-yet-confirmed chat items. The own-channel contract
-   (`isViewingOwnChannel` on all three stores) is the base for the
-   merged timeline in thread 2.
+1. Dogfood: the full-buffer scroll fix (`c8c48713`, likely the
+   announcement "stall"), the "You" entries, combined chat wave 1; then
+   feedback on the not-yet-confirmed chat items.
 2. **Chat: Chatterino "medium" items** (`chatterino-comparison.md`
    verdict table): configurable mod buttons / timeout lengths, custom
    commands with OBS variables (scene, stream time), search operators

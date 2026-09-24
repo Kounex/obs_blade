@@ -2,6 +2,30 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-24 (night) - Combined chat wave 1 + full-buffer scroll fix
+
+- **Likely cause of the announcement "stall"** (`c8c48713`): the native
+  views re-pinned to the bottom only when the timeline LENGTH changed. At
+  the 500-row cap every arrival evicts one row, so the length stays flat
+  and a taller new row (announcement banner, long message) left the list
+  stranded above the bottom. All three views now also key on the newest
+  item. Regression test fails on the old code.
+- **Combined chat, wave 1** (`8175d7a6`, `4ec2fcfb`; spec + plan
+  `docs/superpowers/{specs,plans}/2026-09-24-combined-chat*`): see
+  AGENTS.md § Combined chat. Brainstorm decisions: chat-type entry, one
+  channel per platform, no same-streamer verification (suggest-only
+  matching in wave 2), platform icon per row, target picker for writing
+  (wave 3), status strip → sources sheet, stacked per-platform pins with
+  their own tuck, shared store coupling with "restore on type switch" +
+  "focus shortcut keeps the combo" (wave 2).
+- End review (done in-session: the reviewer subagent hit the secondary
+  model's rate limit) fixed three store bugs: restore point lost across
+  an app restart (now persisted as `CombinedChatRestore`), leaving
+  Combined mid-activation, unstable Twitch notice keys.
+- Gotcha: a YouTube store with an instant `sleep` and an offline channel
+  entry spins its recheck loop on microtasks and starves Hive I/O in
+  unit tests — give such tests a real 1 ms sleeper.
+
 ## 2026-09-24 (evening) - Own "You" chat on Kick + YouTube, centered placeholders
 
 - **Own channel entry on Kick + YouTube** (`dd4f4f1a`): signing in natively
