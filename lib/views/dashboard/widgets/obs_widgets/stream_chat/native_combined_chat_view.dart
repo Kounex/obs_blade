@@ -173,7 +173,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
         final emoteCatalogVersion =
             GetIt.instance<ThirdPartyEmoteStore>().catalogVersion;
         final items = this._store.timeline;
-        final sources = this._store.mySources;
+        final sources = this._store.activeSources;
 
         if (items.isEmpty) {
           return Center(

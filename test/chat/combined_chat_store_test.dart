@@ -10,8 +10,10 @@ import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -321,6 +323,93 @@ void main() {
 
       expect(store.active, isFalse);
       expect(kick.selectedChannelSlug, 'aaa');
+    });
+
+    test('a saved combo of other channels registers them on their '
+        'platforms and becomes the active sources', () async {
+      kickChannels.channels['xqc'] = kickInfo('xqc', 676, 77);
+      final combo = CombinedCombo(
+        id: 'c1',
+        youTube: const CombinedYouTubeSource(label: 'xQc', value: '@xqcow'),
+        kickSlug: 'xqc',
+      );
+
+      /// Before: neither channel is in its platform's list.
+      expect(kick.channels, isNot(contains('xqc')));
+      expect(youTube.channels.map((c) => c.label), isNot(contains('xQc')));
+
+      await store.activate();
+      await store.saveCombo(combo);
+
+      expect(kick.channels, contains('xqc'));
+      expect(youTube.channels.map((c) => c.label), contains('xQc'));
+      expect(store.selectedComboId, 'c1');
+      expect(store.activeSources.map((s) => s.key), ['xQc', 'xqc']);
+      expect(kick.selectedChannelSlug, 'xqc');
+      expect(youTube.selectedChannelLabel, 'xQc');
+      expect(settingsBox().get(SettingsKeys.SelectedCombinedCombo.name), 'c1');
+
+      /// Leaving Combined still restores the pre-combo selections, not the
+      /// "My chats" ones picked in between.
+      await store.deactivate();
+      expect(kick.selectedChannelSlug, 'aaa');
+      expect(youTube.selectedChannelLabel, 'A');
+    });
+
+    test('combos persist and reload in a fresh store', () async {
+      await store.saveCombo(
+        const CombinedCombo(id: 'c1', name: 'Co-stream', kickSlug: 'aaa'),
+      );
+
+      final next = CombinedChatStore(
+        twitchStore: () => twitch,
+        youTubeStore: () => youTube,
+        kickStore: () => kick,
+      );
+      await next.selectCombo('c1');
+
+      expect(next.combos.single.displayName, 'Co-stream');
+      expect(next.selectedComboId, 'c1');
+    });
+
+    test('deleting the shown combo falls back to My chats', () async {
+      await store.saveCombo(const CombinedCombo(id: 'c1', kickSlug: 'aaa'));
+      expect(store.selectedComboId, 'c1');
+
+      await store.deleteCombo('c1');
+
+      expect(store.combos, isEmpty);
+      expect(store.selectedComboId, kMyChatsComboId);
+      expect(store.activeSources.map((s) => s.platform), [
+        ChatType.YouTube,
+        ChatType.Kick,
+      ]);
+
+      /// The channel stays in the Kick list.
+      expect(kick.channels, contains('aaa'));
+    });
+
+    test('a Twitch source while signed out is kept but unavailable', () async {
+      await store.saveCombo(
+        CombinedCombo(
+          id: 'c1',
+          twitch: TwitchChannelRef(
+            id: '42',
+            login: 'someone',
+            displayName: 'Someone',
+            addedAt: DateTime.utc(2026),
+          ),
+          kickSlug: 'aaa',
+        ),
+      );
+
+      final twitchSource = store.activeSources.first;
+      expect(twitchSource.platform, ChatType.Twitch);
+      expect(twitchSource.unavailable, isTrue);
+      expect(
+        store.sourceStatus[ChatType.Twitch],
+        CombinedSourceStatus.needsSetup,
+      );
     });
 
     test('activate twice keeps the original restore point', () async {

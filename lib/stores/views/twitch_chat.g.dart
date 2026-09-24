@@ -660,6 +660,18 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void ensureChannel(TwitchChannelRef ref) {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.ensureChannel',
+    );
+    try {
+      return super.ensureChannel(ref);
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void setReplyTarget(ChatMessageEvent event) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore.setReplyTarget',

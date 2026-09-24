@@ -7,6 +7,7 @@ import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
@@ -38,10 +39,16 @@ class CombinedSource {
   final String? key;
   final String label;
 
+  /// A saved combo's source that its platform can't show right now (not
+  /// signed in to Twitch, YouTube not set up) — kept in the combo, shown
+  /// as needing setup, skipped when selecting.
+  final bool unavailable;
+
   const CombinedSource({
     required this.platform,
     required this.key,
     required this.label,
+    this.unavailable = false,
   });
 
   @override
@@ -111,6 +118,54 @@ abstract class _CombinedChatStore with Store {
   @observable
   ObservableSet<ChatType> disabledPlatforms = ObservableSet<ChatType>();
 
+  /// Saved combos (persisted as [SettingsKeys.CombinedChatCombos]).
+  final ObservableList<CombinedCombo> combos = ObservableList<CombinedCombo>();
+
+  /// The combo the combined view shows — [kMyChatsComboId] or a saved
+  /// combo's id (persisted as [SettingsKeys.SelectedCombinedCombo]).
+  @observable
+  String selectedComboId = kMyChatsComboId;
+
+  /// The saved combo being shown, null for "My chats".
+  @computed
+  CombinedCombo? get selectedCombo {
+    for (final combo in this.combos) {
+      if (combo.id == this.selectedComboId) return combo;
+    }
+    return null;
+  }
+
+  /// What the combined view merges: "My chats" or the selected combo's
+  /// sources.
+  @computed
+  List<CombinedSource> get activeSources {
+    final combo = this.selectedCombo;
+    return combo == null ? this.mySources : this._sourcesOf(combo);
+  }
+
+  List<CombinedSource> _sourcesOf(CombinedCombo combo) {
+    final twitch = this._twitch();
+    final youTube = this._youTube();
+    return [
+      if (combo.twitch case final ref?)
+        CombinedSource(
+          platform: ChatType.Twitch,
+          key: ref.id == twitch.user?.id ? null : ref.id,
+          label: ref.displayName,
+          unavailable: !twitch.isLoggedIn,
+        ),
+      if (combo.youTube case final source?)
+        CombinedSource(
+          platform: ChatType.YouTube,
+          key: source.label,
+          label: source.label,
+          unavailable: youTube.authState == YouTubeAuthState.unconfigured,
+        ),
+      if (combo.kickSlug case final slug?)
+        CombinedSource(platform: ChatType.Kick, key: slug, label: slug),
+    ];
+  }
+
   /// Selections the platform stores had before [activate] — put back by
   /// [deactivate]. Twitch/YouTube/Kick keys as their `selectChannel`
   /// takes them.
@@ -144,7 +199,7 @@ abstract class _CombinedChatStore with Store {
         .watch(key: SettingsKeys.SelectedChatType.name)
         .listen((_) => sync());
     this._sourcesReaction = reaction<List<CombinedSource>>(
-      (_) => this.mySources,
+      (_) => this.activeSources,
       (_) {
         if (this.active) unawaited(this.activate());
       },
@@ -195,11 +250,13 @@ abstract class _CombinedChatStore with Store {
     ];
   }
 
-  /// Health of each source in [mySources].
+  /// Health of each source in [activeSources].
   @computed
   Map<ChatType, CombinedSourceStatus> get sourceStatus => {
-    for (final source in this.mySources)
-      source.platform: this._statusOf(source.platform),
+    for (final source in this.activeSources)
+      source.platform: source.unavailable
+          ? CombinedSourceStatus.needsSetup
+          : this._statusOf(source.platform),
   };
 
   CombinedSourceStatus _statusOf(ChatType platform) {
@@ -253,13 +310,14 @@ abstract class _CombinedChatStore with Store {
   @computed
   List<CombinedItem> get timeline {
     final streams = <List<CombinedItem>>[
-      for (final source in this.mySources)
-        switch (source.platform) {
-          ChatType.Twitch => this._twitchItems(),
-          ChatType.YouTube => this._youTubeItems(),
-          ChatType.Kick => this._kickItems(),
-          ChatType.Owncast || ChatType.Combined => const <CombinedItem>[],
-        },
+      for (final source in this.activeSources)
+        if (!source.unavailable)
+          switch (source.platform) {
+            ChatType.Twitch => this._twitchItems(),
+            ChatType.YouTube => this._youTubeItems(),
+            ChatType.Kick => this._kickItems(),
+            ChatType.Owncast || ChatType.Combined => const <CombinedItem>[],
+          },
     ];
     final merged = mergeCombinedStreams(streams);
     return merged.length > kMaxItems
@@ -329,8 +387,9 @@ abstract class _CombinedChatStore with Store {
     this._ensureSettingsLoaded();
     final generation = ++this._generation;
     this.active = true;
-    for (final source in this.mySources) {
+    for (final source in this.activeSources) {
       if (generation != this._generation) return;
+      if (source.unavailable) continue;
       await this._select(source);
     }
   }
@@ -404,16 +463,117 @@ abstract class _CombinedChatStore with Store {
       this.disabledPlatforms.add(platform);
     }
     this._persistDisabled();
-    if (enabled && this.active) {
+    if (enabled && this.active && this.selectedCombo == null) {
       for (final source in this.mySources) {
         if (source.platform == platform) await this._select(source);
       }
     }
   }
 
+  /// Show [comboId] ("My chats" or a saved combo). While active the new
+  /// sources are selected right away; the restore point stays the one
+  /// taken when Combined was entered.
+  @action
+  Future<void> selectCombo(String comboId) async {
+    this._ensureSettingsLoaded();
+    if (comboId != kMyChatsComboId &&
+        !this.combos.any((combo) => combo.id == comboId)) {
+      comboId = kMyChatsComboId;
+    }
+    if (comboId == this.selectedComboId) return;
+    this.selectedComboId = comboId;
+    this._persistSelectedCombo();
+    final combo = this.selectedCombo;
+    if (combo != null) this._registerSources(combo);
+    if (this.active) await this.activate();
+  }
+
+  /// Create or update a combo (matched by id) and show it. Its sources
+  /// are added to their platform's own channel list first — the platform
+  /// stores can only show channels they list.
+  @action
+  Future<void> saveCombo(CombinedCombo combo) async {
+    this._ensureSettingsLoaded();
+    final index = this.combos.indexWhere((c) => c.id == combo.id);
+    if (index >= 0) {
+      this.combos[index] = combo;
+    } else {
+      this.combos.add(combo);
+    }
+    this._persistCombos();
+    this._registerSources(combo);
+    if (this.selectedComboId == combo.id) {
+      if (this.active) await this.activate();
+    } else {
+      await this.selectCombo(combo.id);
+    }
+  }
+
+  /// Drop a saved combo; showing it falls back to "My chats". The
+  /// channels stay in the platform lists (the user may use them there).
+  @action
+  Future<void> deleteCombo(String comboId) async {
+    this._ensureSettingsLoaded();
+    this.combos.removeWhere((combo) => combo.id == comboId);
+    this._persistCombos();
+    if (this.selectedComboId == comboId) {
+      await this.selectCombo(kMyChatsComboId);
+    }
+  }
+
+  /// Put every source of [combo] into its platform's channel list
+  /// (idempotent; a YouTube entry deleted meanwhile is re-created).
+  void _registerSources(CombinedCombo combo) {
+    try {
+      if (combo.twitch case final ref?) this._twitch().ensureChannel(ref);
+      final box = Hive.box(HiveKeys.Settings.name);
+      if (combo.youTube case final source?) {
+        final entries = Map<String, String>.from(
+          box.get(
+            SettingsKeys.YouTubeUsernames.name,
+            defaultValue: <String, String>{},
+          ),
+        );
+        if (entries[source.label] != source.value) {
+          entries[source.label] = source.value;
+          box.put(SettingsKeys.YouTubeUsernames.name, entries);
+          this._youTube().reloadChannels();
+        }
+      }
+      if (combo.kickSlug case final slug?) {
+        final kick = this._kick();
+        if (!kick.isOwnChannel(slug)) {
+          final slugs = List<String>.from(
+            box.get(SettingsKeys.KickUsernames.name, defaultValue: <String>[]),
+          );
+          if (!slugs.contains(slug)) {
+            slugs.add(slug);
+            box.put(SettingsKeys.KickUsernames.name, slugs);
+            kick.reloadChannels();
+          }
+        }
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat source registration failed - $e');
+    }
+  }
+
   void _ensureSettingsLoaded() {
     if (this._settingsLoaded) return;
     this._settingsLoaded = true;
+    try {
+      final box = Hive.box(HiveKeys.Settings.name);
+      this.combos.addAll(
+        parseCombinedCombos(box.get(SettingsKeys.CombinedChatCombos.name)),
+      );
+      final selected = box.get(SettingsKeys.SelectedCombinedCombo.name);
+      if (selected is String &&
+          this.combos.any((combo) => combo.id == selected)) {
+        this.selectedComboId = selected;
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat combos load failed - $e');
+    }
     try {
       /// Restore point of a session that ended while Combined was active
       /// (map of `ChatType.name` → selection, null = the store's default).
@@ -460,6 +620,27 @@ abstract class _CombinedChatStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog('Combined chat restore persist failed - $e');
+    }
+  }
+
+  void _persistCombos() {
+    try {
+      Hive.box(HiveKeys.Settings.name).put(
+        SettingsKeys.CombinedChatCombos.name,
+        [for (final combo in this.combos) combo.toJson()],
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat combos persist failed - $e');
+    }
+  }
+
+  void _persistSelectedCombo() {
+    try {
+      Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.SelectedCombinedCombo.name, this.selectedComboId);
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat combo selection persist failed - $e');
     }
   }
 

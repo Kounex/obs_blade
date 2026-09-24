@@ -514,7 +514,7 @@ class _StreamChatState extends State<StreamChat>
             chatType: chatType,
             status: combinedChatWindowStatus(statuses),
             onStatusTapOverride: () => showCombinedSourcesSheet(context),
-            child: combined.mySources.isEmpty
+            child: combined.activeSources.isEmpty
                 ? StaggeredEntrance(
                     scaleFrom: 0.985,
                     child: _ChatEmptyState(

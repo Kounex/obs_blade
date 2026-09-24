@@ -1010,6 +1010,16 @@ abstract class _TwitchChatStore with Store {
     await this.selectChannel(ref.id);
   }
 
+  /// Multi-chat: put [ref] in the channel list without switching to it
+  /// (a saved combined chat registers its sources this way). No-op when
+  /// it's already listed or is the user's own channel.
+  @action
+  void ensureChannel(TwitchChannelRef ref) {
+    if (ref.id == this.user?.id || this.channels.contains(ref)) return;
+    this.channels.add(ref);
+    this._persistChannels();
+  }
+
   /// Multi-chat: drop a channel (and its in-memory buffer); removing the
   /// selected channel falls back to the user's own. The buffer drop runs
   /// AFTER the fallback switch — the switch re-snapshots the current

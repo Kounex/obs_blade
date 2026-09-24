@@ -57,7 +57,7 @@ class CombinedChatPicker extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  for (final source in store.mySources) ...[
+                  for (final source in store.activeSources) ...[
                     _SourceIcon(
                       platform: source.platform,
                       dimmed:

@@ -9,6 +9,22 @@ part of 'combined_chat.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$CombinedChatStore on _CombinedChatStore, Store {
+  Computed<CombinedCombo?>? _$selectedComboComputed;
+
+  @override
+  CombinedCombo? get selectedCombo =>
+      (_$selectedComboComputed ??= Computed<CombinedCombo?>(
+        () => super.selectedCombo,
+        name: '_CombinedChatStore.selectedCombo',
+      )).value;
+  Computed<List<CombinedSource>>? _$activeSourcesComputed;
+
+  @override
+  List<CombinedSource> get activeSources =>
+      (_$activeSourcesComputed ??= Computed<List<CombinedSource>>(
+        () => super.activeSources,
+        name: '_CombinedChatStore.activeSources',
+      )).value;
   Computed<List<CombinedSource>>? _$mySourcesComputed;
 
   @override
@@ -78,6 +94,24 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
     });
   }
 
+  late final _$selectedComboIdAtom = Atom(
+    name: '_CombinedChatStore.selectedComboId',
+    context: context,
+  );
+
+  @override
+  String get selectedComboId {
+    _$selectedComboIdAtom.reportRead();
+    return super.selectedComboId;
+  }
+
+  @override
+  set selectedComboId(String value) {
+    _$selectedComboIdAtom.reportWrite(value, super.selectedComboId, () {
+      super.selectedComboId = value;
+    });
+  }
+
   late final _$activateAsyncAction = AsyncAction(
     '_CombinedChatStore.activate',
     context: context,
@@ -110,11 +144,44 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
     );
   }
 
+  late final _$selectComboAsyncAction = AsyncAction(
+    '_CombinedChatStore.selectCombo',
+    context: context,
+  );
+
+  @override
+  Future<void> selectCombo(String comboId) {
+    return _$selectComboAsyncAction.run(() => super.selectCombo(comboId));
+  }
+
+  late final _$saveComboAsyncAction = AsyncAction(
+    '_CombinedChatStore.saveCombo',
+    context: context,
+  );
+
+  @override
+  Future<void> saveCombo(CombinedCombo combo) {
+    return _$saveComboAsyncAction.run(() => super.saveCombo(combo));
+  }
+
+  late final _$deleteComboAsyncAction = AsyncAction(
+    '_CombinedChatStore.deleteCombo',
+    context: context,
+  );
+
+  @override
+  Future<void> deleteCombo(String comboId) {
+    return _$deleteComboAsyncAction.run(() => super.deleteCombo(comboId));
+  }
+
   @override
   String toString() {
     return '''
 active: ${active},
 disabledPlatforms: ${disabledPlatforms},
+selectedComboId: ${selectedComboId},
+selectedCombo: ${selectedCombo},
+activeSources: ${activeSources},
 mySources: ${mySources},
 availableSources: ${availableSources},
 sourceStatus: ${sourceStatus},
