@@ -55,6 +55,11 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
   bool _unreadWhileScrolledUp = false;
   int _lastRenderedCount = 0;
 
+  /// Identity of the newest rendered item. At the buffer cap every new
+  /// row evicts one from the front, so the count stays flat — the tail
+  /// changing is what says "new content arrived".
+  Object? _lastRenderedNewest;
+
   /// Messages that arrived since scrolling up — shown inline on the pill
   /// (`"3 new messages ↓"`). Resets whenever [_unreadWhileScrolledUp]
   /// clears.
@@ -260,7 +265,10 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
 
         /// Stick to bottom only when the timeline length changes while
         /// pinned — tombstones don't change the count (no jump / unread).
-        final countChanged = items.length != this._lastRenderedCount;
+        final newest = items.isEmpty ? null : items.last.id;
+        final countChanged =
+            items.length != this._lastRenderedCount ||
+            newest != this._lastRenderedNewest;
         if (this._pinnedToBottom) {
           this._unreadWhileScrolledUp = false;
           this._unreadCount = 0;
@@ -270,7 +278,11 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
             });
           }
         } else if (countChanged) {
-          final added = items.length - this._lastRenderedCount;
+          /// At the cap the count stays flat — at least one row arrived.
+          final grown = items.length - this._lastRenderedCount;
+          final added = grown > 0
+              ? grown
+              : (newest != this._lastRenderedNewest ? 1 : 0);
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (this.mounted) {
               setState(() {
@@ -281,6 +293,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
           });
         }
         this._lastRenderedCount = items.length;
+        this._lastRenderedNewest = newest;
 
         /// Signed-in users get the mod long-press — YouTube has no cheap
         /// mod lookup, so a non-mod's action 403s into the snackbar

@@ -1014,6 +1014,34 @@ void main() {
       expect(bannerY, lessThan(freshY));
     });
 
+    testWidgets('a full buffer keeps following new rows (count stays flat)', (
+      tester,
+    ) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(textEvent('h$i', 'Filler', 'x'));
+      }
+      await tester.pumpWidget(
+        wrap(const SizedBox(height: 600.0, child: NativeTwitchChatView())),
+      );
+      await tester.pumpAndSettle();
+      final position = tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position;
+      expect(position.pixels, closeTo(position.maxScrollExtent, 1.0));
+
+      /// Each arrival evicts one row from the front: the length stays at
+      /// the cap while the tail grows taller.
+      final long = List.filled(40, 'long words here').join(' ');
+      for (var i = 0; i < 5; i++) {
+        store.appendChatMessageForTest(textEvent('n$i', 'Late', 'NEW$i $long'));
+        await tester.pumpAndSettle();
+      }
+
+      expect(store.messages.length, 500);
+      expect(position.pixels, closeTo(position.maxScrollExtent, 1.0));
+    });
+
     testWidgets('scrolling up shows the paused chip; tapping it resumes', (
       tester,
     ) async {

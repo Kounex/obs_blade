@@ -49,6 +49,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   bool _unreadWhileScrolledUp = false;
   int _lastRenderedCount = 0;
 
+  /// Identity of the newest rendered item. At the buffer cap every new
+  /// row evicts one from the front, so the count stays flat — the tail
+  /// changing is what says "new content arrived".
+  Object? _lastRenderedNewest;
+
   /// Messages that arrived since scrolling up — shown inline on the pill
   /// (`"3 new messages ↓"`). Resets whenever [_unreadWhileScrolledUp]
   /// clears.
@@ -268,7 +273,15 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         /// pause-chip resume path into an overscrolled, exception-spamming
         /// state. Tombstones don't change the count (no jump / unread);
         /// a /clear banner does.
-        final countChanged = items.length != this._lastRenderedCount;
+        final newest = switch (items.isEmpty ? null : items.last) {
+          /// Messages by id — an in-place upgrade (first-message flag)
+          /// of the newest row is not a new arrival.
+          final ChatMessageEvent event => event.messageId,
+          final other => other,
+        };
+        final countChanged =
+            items.length != this._lastRenderedCount ||
+            newest != this._lastRenderedNewest;
         if (this._pinnedToBottom) {
           this._unreadWhileScrolledUp = false;
           this._unreadCount = 0;
@@ -278,7 +291,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             });
           }
         } else if (countChanged) {
-          final added = items.length - this._lastRenderedCount;
+          /// At the cap the count stays flat — at least one row arrived.
+          final grown = items.length - this._lastRenderedCount;
+          final added = grown > 0
+              ? grown
+              : (newest != this._lastRenderedNewest ? 1 : 0);
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (this.mounted) {
               setState(() {
@@ -289,6 +306,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
           });
         }
         this._lastRenderedCount = items.length;
+        this._lastRenderedNewest = newest;
 
         /// Tracked so the pinned-message banner appears/clears with the
         /// store's refetch (connect/switch and local pin mutations).
