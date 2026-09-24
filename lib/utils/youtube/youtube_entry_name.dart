@@ -46,6 +46,11 @@ class YouTubeEntryNamer {
     }
   }
 
+  /// The channel title for an `@handle` / legacy path, or null when the
+  /// channel page doesn't exist — the combined chat's match suggestions
+  /// use this as a quota-free "is there such a channel" check.
+  Future<String?> channelPageTitle(String path) => this._pageTitle(path);
+
   /// `<feed><title>` of `feeds/videos.xml?channel_id=` — a few KB, no key.
   Future<String?> _channelTitle(String channelId) async {
     final body = await this._get(
