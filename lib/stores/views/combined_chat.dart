@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
@@ -113,6 +115,42 @@ abstract class _CombinedChatStore with Store {
   final Map<ChatType, String?> _restore = <ChatType, String?>{};
 
   bool _settingsLoaded = false;
+
+  StreamSubscription<BoxEvent>? _chatTypeSub;
+  ReactionDisposer? _sourcesReaction;
+
+  /// Follow the persisted chat type app-wide: Combined selected →
+  /// [activate], anything else → [deactivate]. One owner for every host
+  /// (Chat tab, streaming mode) — widgets never drive activation. While
+  /// active, a source appearing (sign-in) is selected right away.
+  void bindToChatType() {
+    if (this._chatTypeSub != null) return;
+    final box = Hive.box(HiveKeys.Settings.name);
+    void sync() {
+      final type = box.get(SettingsKeys.SelectedChatType.name);
+      unawaited(
+        type == ChatType.Combined ? this.activate() : this.deactivate(),
+      );
+    }
+
+    this._chatTypeSub = box
+        .watch(key: SettingsKeys.SelectedChatType.name)
+        .listen((_) => sync());
+    this._sourcesReaction = reaction<List<CombinedSource>>(
+      (_) => this.mySources,
+      (_) {
+        if (this.active) unawaited(this.activate());
+      },
+    );
+    sync();
+  }
+
+  Future<void> dispose() async {
+    await this._chatTypeSub?.cancel();
+    this._chatTypeSub = null;
+    this._sourcesReaction?.call();
+    this._sourcesReaction = null;
+  }
 
   /// The signed-in account's own channel on each platform ("You"
   /// entries), minus the ones switched off.

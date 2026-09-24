@@ -34,6 +34,7 @@ import 'stores/shared/tabs.dart';
 import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
+import 'stores/views/combined_chat.dart';
 import 'stores/views/kick_chat.dart';
 import 'stores/views/kick_emotes.dart';
 import 'stores/views/logs.dart';
@@ -126,6 +127,12 @@ void _initializeStores() {
     /// Fire-and-forget [init] — cold-start channel restore must not
     /// block store creation.
     () => KickChatStore()..init(),
+    dispose: (store) => store.dispose(),
+  );
+  GetIt.instance.registerLazySingleton<CombinedChatStore>(
+    /// Follows the persisted chat type on its own - created at startup
+    /// (below) so a restored Combined selection re-activates.
+    () => CombinedChatStore()..bindToChatType(),
     dispose: (store) => store.dispose(),
   );
 }
@@ -288,6 +295,11 @@ void main() async {
 
       /// Create all hive objects with references to the persistant boxes
       await _initializeHive();
+
+      /// Combined chat follows the persisted chat type from the start (a
+      /// restored Combined selection re-activates its sources) - after
+      /// Hive, it watches the settings box.
+      GetIt.instance<CombinedChatStore>();
 
       runApp(const LifecycleWatcher(app: PurchaseBase(child: App())));
     },

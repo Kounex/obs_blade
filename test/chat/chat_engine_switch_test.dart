@@ -73,21 +73,17 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('renders nothing for platforms without a native engine', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      wrap(
-        ChatEngineSwitch(
-          settingsBox: settingsBox(),
-          chatType: ChatType.Owncast,
-        ),
-      ),
-    );
-    expect(
-      find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
-      findsNothing,
-    );
+  testWidgets('renders nothing for Owncast (WebView-only) and Combined '
+      '(native-only)', (tester) async {
+    for (final chatType in [ChatType.Owncast, ChatType.Combined]) {
+      await tester.pumpWidget(
+        wrap(ChatEngineSwitch(settingsBox: settingsBox(), chatType: chatType)),
+      );
+      expect(
+        find.byType(CupertinoSlidingSegmentedControl<ChatEngine>),
+        findsNothing,
+      );
+    }
   });
 
   testWidgets('Twitch, YouTube and Kick show both segments', (tester) async {

@@ -19,6 +19,7 @@ import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/pro_store.dart';
+import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
@@ -45,6 +46,8 @@ import 'kick_setup_sheet.dart';
 import 'native_chat_input.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
+import 'native_combined_chat_view.dart';
+import 'combined_sources_sheet.dart';
 import 'native_kick_chat_view.dart';
 import 'native_reply_strip.dart';
 import 'native_twitch_chat_view.dart';
@@ -428,12 +431,13 @@ class _StreamChatState extends State<StreamChat>
               /// A native engine exists only where
               /// [nativeChatAvailableFor] says so (Twitch today)
               final nativeEngine =
-                  nativeChatAvailableFor(chatType) &&
-                  settingsBox.get(
-                        SettingsKeys.SelectedChatEngine.name,
-                        defaultValue: ChatEngine.webView,
-                      ) ==
-                      ChatEngine.native;
+                  isNativeOnly(chatType) ||
+                  (nativeChatAvailableFor(chatType) &&
+                      settingsBox.get(
+                            SettingsKeys.SelectedChatEngine.name,
+                            defaultValue: ChatEngine.webView,
+                          ) ==
+                          ChatEngine.native);
 
               /// Resolve before the URL is built below; tracking stops
               /// (timer cancelled) whenever no YouTube channel entry is
@@ -498,6 +502,36 @@ class _StreamChatState extends State<StreamChat>
   /// dispatch onto the Twitch / YouTube / Kick native chat windows.
   /// Verbatim the behavior before the entitlement gate existed.
   Widget _buildNativeChatSlot(BuildContext context, ChatType chatType) {
+    /// Combined: read-only merge of the "My chats" sources
+    /// ([CombinedChatStore] follows the chat type and points the platform
+    /// stores at them). No input dock yet.
+    if (chatType == ChatType.Combined) {
+      return Observer(
+        builder: (_) {
+          final combined = GetIt.instance<CombinedChatStore>();
+          final statuses = combined.sourceStatus.values;
+          return NativeChatWindow(
+            chatType: chatType,
+            status: combinedChatWindowStatus(statuses),
+            onStatusTapOverride: () => showCombinedSourcesSheet(context),
+            child: combined.mySources.isEmpty
+                ? StaggeredEntrance(
+                    scaleFrom: 0.985,
+                    child: _ChatEmptyState(
+                      chatType: chatType,
+                      nativeConnectPrompt: true,
+                      promptBody:
+                          'Combined chat merges your own Twitch, YouTube and Kick chats. Sign in natively on at least one platform to start.',
+                      connectLabel: 'Choose a platform',
+                      onConnectTap: () => showCombinedSourcesSheet(context),
+                    ),
+                  )
+                : const NativeCombinedChatView(),
+          );
+        },
+      );
+    }
+
     /// Native Kick chat: anonymous reads (no account, no API key) — the
     /// only prerequisite is a channel in the Kick list, so the
     /// unselected state offers the add dialog directly. The optional
@@ -977,8 +1011,7 @@ class _ChatEmptyState extends StatelessWidget {
         ChatType.Owncast => AddEditOwncastUsernameDialog(
           settingsBox: settingsBox,
         ),
-        ChatType.Kick ||
-        ChatType.Combined => AddEditKickUsernameDialog(
+        ChatType.Kick || ChatType.Combined => AddEditKickUsernameDialog(
           settingsBox: settingsBox,
         ),
       },

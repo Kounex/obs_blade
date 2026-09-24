@@ -179,7 +179,11 @@ void main() {
         authService: FakeYouTubeAuthService(),
         chatService: FakeYouTubeLiveChatService(),
         liveResolver: FakeYouTubeLiveResolver(),
-        sleep: (_) async {},
+
+        /// A real (tiny) wait: the own channel has no live stream, so the
+        /// store keeps re-checking - an instant sleeper would spin that
+        /// loop on microtasks and starve timers and Hive I/O.
+        sleep: (_) => Future<void>.delayed(const Duration(milliseconds: 1)),
         isProResolver: () => true,
       );
 
@@ -258,6 +262,26 @@ void main() {
       expect(store.active, isFalse);
       expect(kick.selectedChannelSlug, 'aaa');
       expect(youTube.selectedChannelLabel, 'A');
+    });
+
+    test('follows the persisted chat type (bindToChatType)', () async {
+      store.bindToChatType();
+      expect(store.active, isFalse);
+
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Combined,
+      );
+      await until(() => kick.selectedChannelSlug == 'kicker');
+      expect(store.active, isTrue);
+
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Kick,
+      );
+      await until(() => kick.selectedChannelSlug == 'aaa');
+      expect(store.active, isFalse);
+      await store.dispose();
     });
 
     test('activate twice keeps the original restore point', () async {

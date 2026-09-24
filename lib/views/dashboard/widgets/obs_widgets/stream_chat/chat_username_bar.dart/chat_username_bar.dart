@@ -16,6 +16,7 @@ import '../channel_mod_button.dart';
 import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
+import 'combined_chat_picker.dart';
 import 'kick_account_control.dart';
 import 'kick_chat_options_sheet.dart';
 import 'kick_native_channel_dropdown.dart';
@@ -75,7 +76,8 @@ class ChatUsernameBar extends StatelessWidget {
           defaultValue: ChatEngine.webView,
         );
         final bool nativeMode =
-            nativeChatAvailableFor(chatType) && engine == ChatEngine.native;
+            isNativeOnly(chatType) ||
+            (nativeChatAvailableFor(chatType) && engine == ChatEngine.native);
 
         /// No horizontal inset of its own — the host owns the page margin,
         /// so the bar's controls align edge-to-edge with the chat window
@@ -122,6 +124,7 @@ class ChatUsernameBar extends StatelessWidget {
                               GetIt.instance<KickChatStore>()
                                   .nativeChannels
                                   .isNotEmpty,
+                            ChatType.Combined => true,
                             _ => false,
                           };
 
@@ -134,7 +137,9 @@ class ChatUsernameBar extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const SizedBox(height: AppSpacing.sm),
-                                    if (chatType == ChatType.Kick)
+                                    if (chatType == ChatType.Combined)
+                                      const CombinedChatPicker()
+                                    else if (chatType == ChatType.Kick)
                                       const KickNativeChannelDropdown()
                                     else if (chatType == ChatType.YouTube)
                                       const YouTubeNativeChannelDropdown()
@@ -201,6 +206,12 @@ class _NativeRightCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// Combined: options only - the sources (and their sign-ins) live in
+    /// the "My chats" picker next to the type dropdown.
+    if (this.chatType == ChatType.Combined) {
+      return const NativeChatOptionsButton(chatType: ChatType.Combined);
+    }
+
     if (this.chatType == ChatType.Kick) {
       return const Row(
         mainAxisSize: MainAxisSize.min,

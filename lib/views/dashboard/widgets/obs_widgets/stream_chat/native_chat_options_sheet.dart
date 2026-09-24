@@ -279,15 +279,19 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           subtitle: 'Hide or censor words, ignore users',
           onTap: () => this._open(_OptionsPage.muteWords),
         ),
-        this._navRow(
-          context,
-          label: 'Search chat',
-          subtitle: 'Find messages or names in the buffered history',
-          onTap: () {
-            Navigator.of(context).pop();
-            showChatSearchSheet(context, chatType: this.widget.chatType);
-          },
-        ),
+
+        /// Search reads one engine's buffer - the merged timeline gets
+        /// its own search later.
+        if (this.widget.chatType != ChatType.Combined)
+          this._navRow(
+            context,
+            label: 'Search chat',
+            subtitle: 'Find messages or names in the buffered history',
+            onTap: () {
+              Navigator.of(context).pop();
+              showChatSearchSheet(context, chatType: this.widget.chatType);
+            },
+          ),
         if (this._isTwitch) ...[
           this._navRow(
             context,

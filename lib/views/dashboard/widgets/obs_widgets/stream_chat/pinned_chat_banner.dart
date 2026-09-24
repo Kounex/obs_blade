@@ -34,6 +34,14 @@ class PinnedChatBanner extends StatefulWidget {
   /// whole widget (tests and any caller that only wants the card).
   final Widget? child;
 
+  /// Distance from the top of [child] to the banner and the tucked pin —
+  /// the combined chat stacks one banner per platform.
+  final double topOffset;
+
+  /// Replaces the pin glyph on the banner and the tucked pin (the
+  /// combined chat shows the source platform's icon there).
+  final Widget? leading;
+
   const PinnedChatBanner({
     super.key,
     required this.messageId,
@@ -41,6 +49,8 @@ class PinnedChatBanner extends StatefulWidget {
     required this.text,
     this.onUnpin,
     this.child,
+    this.topOffset = 0.0,
+    this.leading,
   });
 
   @override
@@ -213,7 +223,12 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
                 onTap: () => setState(() => this._expanded = !this._expanded),
                 child: Row(
                   children: [
-                    Icon(CupertinoIcons.pin_fill, size: 14.0, color: pinColor),
+                    this.widget.leading ??
+                        Icon(
+                          CupertinoIcons.pin_fill,
+                          size: 14.0,
+                          color: pinColor,
+                        ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(child: message),
                     const SizedBox(width: AppSpacing.sm),
@@ -257,7 +272,11 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
           child: SizedBox(
             width: 40.0,
             height: 40.0,
-            child: Icon(CupertinoIcons.pin_fill, size: 16.0, color: pinColor),
+            child: Center(
+              child:
+                  this.widget.leading ??
+                  Icon(CupertinoIcons.pin_fill, size: 16.0, color: pinColor),
+            ),
           ),
         ),
       ),
@@ -281,7 +300,7 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
             this.widget.child!,
             if (!tucked)
               Positioned(
-                top: AppSpacing.xs,
+                top: AppSpacing.xs + this.widget.topOffset,
                 left: AppSpacing.sm,
                 right: AppSpacing.sm,
                 child: IgnorePointer(
@@ -301,7 +320,7 @@ class _PinnedChatBannerState extends State<PinnedChatBanner>
               ),
             if (t > 0)
               Positioned(
-                top: AppSpacing.xs,
+                top: AppSpacing.xs + this.widget.topOffset,
                 right: AppSpacing.sm,
                 child: IgnorePointer(
                   ignoring: t < 0.9,
