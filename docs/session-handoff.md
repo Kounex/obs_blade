@@ -112,6 +112,13 @@ check whether rows still reach the store (`TwitchChatStore.messages`
 growing?) vs. a render/scroll problem; the EventSub notification path
 logs every announcement's raw color (`Twitch announcement color=`).
 
+**Combined chat — design written, awaiting user review:**
+[`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md)
+(decisions ratified in the brainstorm; one conflict flagged at the top of
+the spec — "shared" store coupling vs. "restore" + "keep running"). After
+review: tier-L plan, 3 waves (read-only merge + My chats → builder +
+suggestions + focus shortcut → writing/mod).
+
 **Immediate next threads:**
 
 1. **The announcement stall above**, dogfood the new "You" entries, then
