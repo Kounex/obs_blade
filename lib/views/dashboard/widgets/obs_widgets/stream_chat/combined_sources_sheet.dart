@@ -12,6 +12,7 @@ import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../utils/modal_handler.dart';
 import 'chat_type_brand.dart';
+import 'combined_chat_builder_sheet.dart';
 import 'kick_setup_sheet.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_window.dart';
@@ -64,49 +65,112 @@ class CombinedSourcesSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NativeChatSheetScaffold(
-      headerGap: AppSpacing.sm,
-      header: Text('My chats', style: nativeChatSheetTitleStyle(context)),
-      body: Observer(
-        builder: (_) {
-          final store = GetIt.instance<CombinedChatStore>();
-          final available = {
-            for (final source in store.availableSources)
-              source.platform: source,
-          };
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Observer(
+      builder: (_) {
+        final store = GetIt.instance<CombinedChatStore>();
+        final combo = store.selectedCombo;
+        return NativeChatSheetScaffold(
+          headerGap: AppSpacing.sm,
+          header: Row(
             children: [
-              Text(
-                'Your own channels on each platform you are signed in to natively, merged into one chat.',
-                style: Theme.of(context).textTheme.bodySmall,
+              Expanded(
+                child: Text(
+                  combo?.displayName ?? 'My chats',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: nativeChatSheetTitleStyle(context),
+                ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              for (final platform in kPlatforms)
-                _SourceRow(
-                  platform: platform,
-                  source: available[platform],
-                  enabled: !store.disabledPlatforms.contains(platform),
-                  status: store.sourceStatus[platform],
-                  onToggle: (value) =>
-                      store.setPlatformEnabled(platform, value),
-                  onFix: () {
+              if (combo != null)
+                ThemedCupertinoButton(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  text: 'Edit',
+                  onPressed: () {
                     Navigator.of(context).pop();
-                    combinedSourceFix(this.hostContext, platform);
+                    showCombinedChatBuilderSheet(
+                      this.hostContext,
+                      combo: combo,
+                    );
                   },
                 ),
             ],
-          );
-        },
-      ),
+          ),
+          body: combo == null
+              ? this._myChatsBody(context, store)
+              : this._comboBody(context, store),
+        );
+      },
+    );
+  }
+
+  /// "My chats": every platform, with sign-in actions and on/off toggles.
+  Widget _myChatsBody(BuildContext context, CombinedChatStore store) {
+    final available = {
+      for (final source in store.availableSources) source.platform: source,
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Your own channels on each platform you are signed in to natively, merged into one chat.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        for (final platform in kPlatforms)
+          _SourceRow(
+            platform: platform,
+            source: available[platform],
+            enabled: !store.disabledPlatforms.contains(platform),
+            status: store.sourceStatus[platform],
+            onToggle: (value) => store.setPlatformEnabled(platform, value),
+            onFix: () {
+              Navigator.of(context).pop();
+              combinedSourceFix(this.hostContext, platform);
+            },
+          ),
+      ],
+    );
+  }
+
+  /// A saved combo: its sources with their status and fix actions (the
+  /// channel set is changed in the builder, not toggled here).
+  Widget _comboBody(BuildContext context, CombinedChatStore store) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final source in store.activeSources)
+          _SourceRow(
+            platform: source.platform,
+            source: source,
+            enabled: true,
+            status: store.sourceStatus[source.platform],
+            onFix: () {
+              Navigator.of(context).pop();
+              combinedSourceFix(
+                this.hostContext,
+                source.platform,
+                forMyChats: false,
+              );
+            },
+          ),
+      ],
     );
   }
 }
 
-/// What tapping a source's status does: sign in where there is no own
-/// channel yet, set up where the platform isn't configured, else retry.
-void combinedSourceFix(BuildContext context, ChatType platform) {
+/// What tapping a source's status does: set up where the platform isn't
+/// configured, sign in where the source needs the account (Twitch always;
+/// YouTube / Kick only for "My chats", whose sources ARE the own
+/// channels), else retry.
+void combinedSourceFix(
+  BuildContext context,
+  ChatType platform, {
+  bool forMyChats = true,
+}) {
   switch (platform) {
     case ChatType.Twitch:
       final store = GetIt.instance<TwitchChatStore>();
@@ -115,14 +179,14 @@ void combinedSourceFix(BuildContext context, ChatType platform) {
       final store = GetIt.instance<YouTubeChatStore>();
       if (store.authState == YouTubeAuthState.unconfigured) {
         showYouTubeSetupSheet(context);
-      } else if (store.ownChannel == null) {
+      } else if (forMyChats && store.ownChannel == null) {
         startYouTubeLogin(context);
       } else {
         store.connectChat();
       }
     case ChatType.Kick:
       final store = GetIt.instance<KickChatStore>();
-      store.ownChannelSlug == null
+      forMyChats && store.ownChannelSlug == null
           ? showKickSetupSheet(context)
           : store.connectChat();
     case ChatType.Owncast:
@@ -138,7 +202,9 @@ class _SourceRow extends StatelessWidget {
   final CombinedSource? source;
   final bool enabled;
   final CombinedSourceStatus? status;
-  final ValueChanged<bool> onToggle;
+
+  /// Null hides the switch (saved combos).
+  final ValueChanged<bool>? onToggle;
   final VoidCallback onFix;
 
   const _SourceRow({
@@ -146,7 +212,7 @@ class _SourceRow extends StatelessWidget {
     required this.source,
     required this.enabled,
     required this.status,
-    required this.onToggle,
+    this.onToggle,
     required this.onFix,
   });
 
@@ -195,8 +261,8 @@ class _SourceRow extends StatelessWidget {
               text: action,
               onPressed: this.onFix,
             ),
-          if (source != null)
-            BaseAdaptiveSwitch(value: this.enabled, onChanged: this.onToggle),
+          if (source != null && this.onToggle != null)
+            BaseAdaptiveSwitch(value: this.enabled, onChanged: this.onToggle!),
         ],
       ),
     );
