@@ -4,6 +4,10 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
+import '../chat_type_brand.dart';
+
+import '../../../../../../models/enums/chat_type.dart';
+
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/kick_chat.dart';
@@ -105,7 +109,7 @@ class KickNativeChannelDropdown extends StatelessWidget {
         ),
         if (own) ...[
           const SizedBox(width: AppSpacing.xs),
-          Text('You', style: Theme.of(context).textTheme.bodySmall),
+          NativeChatYouChip(color: ChatType.Kick.brandColor!),
         ],
       ],
     );

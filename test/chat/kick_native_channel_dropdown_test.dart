@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/kick_native_channel_dropdown.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
@@ -170,6 +171,7 @@ void main() {
     /// Closed control: selected own channel carries the marker.
     expect(find.text('kicker'), findsOneWidget);
     expect(find.text('You'), findsOneWidget);
+    expect(find.byType(NativeChatYouChip), findsOneWidget);
 
     await tester.tap(find.byType(DropdownButton<String>));
     await tester.pump();

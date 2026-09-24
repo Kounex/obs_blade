@@ -1,10 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/design/design.dart';
+import '../../../../../shared/general/base/adaptive_switch.dart';
+import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
@@ -189,14 +190,13 @@ class _SourceRow extends StatelessWidget {
             ),
           ),
           if (action != null)
-            CupertinoButton(
+            ThemedCupertinoButton(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              minimumSize: const Size(44.0, 44.0),
+              text: action,
               onPressed: this.onFix,
-              child: Text(action),
             ),
           if (source != null)
-            Switch.adaptive(value: this.enabled, onChanged: this.onToggle),
+            BaseAdaptiveSwitch(value: this.enabled, onChanged: this.onToggle),
         ],
       ),
     );

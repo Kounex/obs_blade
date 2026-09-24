@@ -4,6 +4,12 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
+import '../native_chat_chrome.dart';
+
+import '../chat_type_brand.dart';
+
+import '../../../../../../models/enums/chat_type.dart';
+
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../stores/views/youtube_chat.dart';
@@ -95,7 +101,7 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
         ),
         if (own) ...[
           const SizedBox(width: AppSpacing.xs),
-          Text('You', style: Theme.of(context).textTheme.bodySmall),
+          NativeChatYouChip(color: ChatType.YouTube.brandColor!),
         ],
       ],
     );

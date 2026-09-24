@@ -164,6 +164,16 @@ void main() {
     expect(top('youtube second'), lessThan(top('kick third')));
     expect(find.byKey(const Key('combined-row-icon-Kick')), findsNWidgets(2));
     expect(find.byKey(const Key('combined-row-icon-YouTube')), findsOneWidget);
+
+    /// Each row carries its platform's tint + rail.
+    final rows = tester.widgetList<CombinedSourceRow>(
+      find.byType(CombinedSourceRow),
+    );
+    expect(rows.map((r) => r.platform).toList(), [
+      ChatType.Kick,
+      ChatType.YouTube,
+      ChatType.Kick,
+    ]);
   });
 
   testWidgets('a switched-off source drops out of the timeline', (

@@ -108,6 +108,41 @@ class NativeChatStatusChip extends StatelessWidget {
   }
 }
 
+/// The "You" marker on the signed-in account's own channel in the channel
+/// dropdowns: a solid pill in the platform color with a contrasting
+/// label, so it reads apart from the neutral LIVE / Mod chips.
+class NativeChatYouChip extends StatelessWidget {
+  final Color color;
+
+  const NativeChatYouChip({super.key, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final label =
+        ThemeData.estimateBrightnessForColor(this.color) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs + 2.0,
+        vertical: 1.0,
+      ),
+      decoration: BoxDecoration(
+        color: this.color,
+        borderRadius: AppRadius.pill,
+      ),
+      child: Text(
+        'You',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: label,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
 /// Self-mention / keyword highlight wash — a warm, low-alpha tint distinct
 /// from [TwitchChatMessageRow.holdHighlightColor]'s neutral gray (that one
 /// means "selected for a mod action right now"; this one is passive, so it

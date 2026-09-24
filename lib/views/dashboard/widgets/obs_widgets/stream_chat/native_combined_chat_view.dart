@@ -488,8 +488,15 @@ List<CombinedItem> combinedVisibleItems(
   ];
 }
 
-/// A merged-timeline row: the platform row behind a small brand-colored
-/// platform icon (screen readers hear "from Twitch" etc.).
+/// Row wash alpha per platform brand color - light enough that zebra
+/// rows, highlights and name colors still read on top of it.
+const double kCombinedRowTintAlpha = 0.07;
+
+/// A merged-timeline row: a brand-colored rail on the leading edge, a
+/// light platform tint over the whole row and a contained platform badge
+/// in front of the row — a square tile, unlike the round role/sub badges
+/// users carry, so the source never reads as one of theirs. Screen readers
+/// hear "from Twitch" etc.
 class CombinedSourceRow extends StatelessWidget {
   final ChatType platform;
   final Widget child;
@@ -502,23 +509,65 @@ class CombinedSourceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 5.0, right: AppSpacing.xs),
-          child: Semantics(
-            label: 'from ${this.platform.text}',
-            child: Icon(
-              this.platform.icon,
-              key: Key('combined-row-icon-${this.platform.name}'),
-              size: 12.0,
-              color: this.platform.brandColor,
+    final brand =
+        this.platform.brandColor ?? Theme.of(context).colorScheme.secondary;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: brand.withValues(alpha: kCombinedRowTintAlpha),
+        border: Border(left: BorderSide(color: brand, width: 3.0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(left: AppSpacing.xs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 3.0, right: AppSpacing.xs),
+              child: CombinedPlatformBadge(platform: this.platform),
             ),
-          ),
+            Expanded(child: this.child),
+          ],
         ),
-        Expanded(child: this.child),
-      ],
+      ),
+    );
+  }
+}
+
+/// The source platform as a small filled tile: brand-colored square with
+/// the platform glyph in a contrasting color.
+class CombinedPlatformBadge extends StatelessWidget {
+  final ChatType platform;
+  final double size;
+
+  const CombinedPlatformBadge({
+    super.key,
+    required this.platform,
+    this.size = 18.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brand =
+        this.platform.brandColor ?? Theme.of(context).colorScheme.secondary;
+
+    /// Kick's neon green needs a dark glyph; Twitch purple / YouTube red a
+    /// light one.
+    final glyph = ThemeData.estimateBrightnessForColor(brand) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    return Semantics(
+      label: 'from ${this.platform.text}',
+      child: Container(
+        key: Key('combined-row-icon-${this.platform.name}'),
+        width: this.size,
+        height: this.size,
+        decoration: BoxDecoration(
+          color: brand,
+          borderRadius: BorderRadius.circular(AppRadius.sm / 2),
+        ),
+        alignment: Alignment.center,
+        child: Icon(this.platform.icon, size: this.size * 0.66, color: glyph),
+      ),
     );
   }
 }
