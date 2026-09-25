@@ -207,6 +207,38 @@ void main() {
     );
   });
 
+  test('GetVersion availableRequests gate newer-OBS controls', () async {
+    peer.responseData['GetVersion'] = {
+      'obsVersion': '31.0.0',
+      'obsWebSocketVersion': '5.5.0',
+      'rpcVersion': 1,
+      'availableRequests': ['SplitRecordFile', 'StartStream'],
+      'supportedImageFormats': ['jpg', 'png'],
+      'platform': 'macos',
+      'platformDescription': 'macOS',
+    };
+    await connect();
+    dashboardStore.handleStream();
+
+    expect(
+      dashboardStore.supportsRequest(RequestType.SplitRecordFile),
+      isFalse,
+    );
+
+    await NetworkHelper.makeRequest(
+      networkStore.activeSession!.socket,
+      RequestType.GetVersion,
+    );
+    await waitFor(
+      () => dashboardStore.supportsRequest(RequestType.SplitRecordFile),
+      'availableRequests applied',
+    );
+    expect(
+      dashboardStore.supportsRequest(RequestType.CreateRecordChapter),
+      isFalse,
+    );
+  });
+
   test('rejected batch mutation surfaces a notice', () async {
     await connect();
     peer.rejections['SaveSourceScreenshot'] =

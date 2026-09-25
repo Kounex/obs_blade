@@ -104,6 +104,32 @@ class GeneralActions extends StatelessWidget {
                             )
                           : null,
                     ),
+                    if (dashboardStore.supportsRequest(
+                      RequestType.SplitRecordFile,
+                    ))
+                      AppBarActionEntry(
+                        title: 'Split Recording File',
+                        leadingIcon: CupertinoIcons.scissors,
+                        onAction: dashboardStore.isRecording
+                            ? () => dashboardStore.sendMutation(
+                                RequestType.SplitRecordFile,
+                                label: 'Split recording',
+                              )
+                            : null,
+                      ),
+                    if (dashboardStore.supportsRequest(
+                      RequestType.CreateRecordChapter,
+                    ))
+                      AppBarActionEntry(
+                        title: 'Add Chapter Marker',
+                        leadingIcon: CupertinoIcons.bookmark_fill,
+                        onAction: dashboardStore.isRecording
+                            ? () => dashboardStore.sendMutation(
+                                RequestType.CreateRecordChapter,
+                                label: 'Chapter marker',
+                              )
+                            : null,
+                      ),
                   ],
                   if (!settingsBox.get(
                     SettingsKeys.ExposeReplayBufferControls.name,

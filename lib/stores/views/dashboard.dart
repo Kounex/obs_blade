@@ -257,6 +257,15 @@ abstract class _DashboardStore with Store {
   String get screenshotPath =>
       '${this.recordDirectory}/Screenshot ${DateTime.now().millisecondsSinceEpoch.millisecondsToFileNameDate(separator: "-", withTime: true)}.${this.screenshotFileFormat}';
 
+  /// Requests the connected OBS offers (GetVersion `availableRequests`) -
+  /// gates controls that need a newer OBS than the app's minimum (e.g.
+  /// split file / chapters, OBS 30.2+) so they never show as dead buttons
+  @observable
+  ObservableSet<String> availableRequests = ObservableSet<String>();
+
+  bool supportsRequest(RequestType request) =>
+      this.availableRequests.contains(request.name);
+
   String previewFileFormat = 'jpeg';
   String screenshotFileFormat = 'png';
   String? recordDirectory;
@@ -1525,6 +1534,10 @@ abstract class _DashboardStore with Store {
       case RequestType.GetVersion:
         GetVersionResponse getVersionResponse = GetVersionResponse(
           response.jsonRAW,
+        );
+
+        this.availableRequests = ObservableSet.of(
+          getVersionResponse.availableRequests.cast<String>(),
         );
 
         if (!getVersionResponse.supportedImageFormats.contains('jpg') &&

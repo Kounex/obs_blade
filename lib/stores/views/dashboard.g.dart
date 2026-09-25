@@ -697,6 +697,24 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$availableRequestsAtom = Atom(
+    name: '_DashboardStore.availableRequests',
+    context: context,
+  );
+
+  @override
+  ObservableSet<String> get availableRequests {
+    _$availableRequestsAtom.reportRead();
+    return super.availableRequests;
+  }
+
+  @override
+  set availableRequests(ObservableSet<String> value) {
+    _$availableRequestsAtom.reportWrite(value, super.availableRequests, () {
+      super.availableRequests = value;
+    });
+  }
+
   late final _$_checkOBSConnectionAsyncAction = AsyncAction(
     '_DashboardStore._checkOBSConnection',
     context: context,
@@ -897,6 +915,7 @@ editAudioVisibility: ${editAudioVisibility},
 studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
+availableRequests: ${availableRequests},
 mediaSceneItems: ${mediaSceneItems},
 currentInputs: ${currentInputs},
 globalInputs: ${globalInputs},
