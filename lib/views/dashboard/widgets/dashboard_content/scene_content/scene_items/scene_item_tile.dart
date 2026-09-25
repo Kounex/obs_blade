@@ -100,28 +100,36 @@ class SceneItemTile extends StatelessWidget {
             HiveBuilder<dynamic>(
               hiveKey: HiveKeys.Settings,
               rebuildKeys: const [SettingsKeys.ExposeStudioControls],
-              builder: (context, settingsBox, child) => Pressable(
-                haptic: true,
-                onTap: () => dashboardStore.sendMutation(
-                  RequestType.SetSceneItemEnabled,
-                  fields: {
-                    'sceneName': this._sceneName(dashboardStore, settingsBox),
-                    'sceneItemId': this.sceneItem.sceneItemId,
-                    'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
-                  },
-                  label: 'Source visibility',
-                ),
-                child: SizedBox(
-                  width: kBaseIconButtonMinHitArea,
-                  height: kBaseIconButtonMinHitArea,
-                  child: Center(
-                    child: AnimatedToggleIcon(
-                      icon: this.sceneItem.sceneItemEnabled!
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: this.sceneItem.sceneItemEnabled!
-                          ? theme.colorScheme.secondary
-                          : theme.disabledColor,
+              builder: (context, settingsBox, child) => Semantics(
+                button: true,
+                toggled: this.sceneItem.sceneItemEnabled,
+                label: this.sceneItem.sceneItemEnabled!
+                    ? 'Hide ${this.sceneItem.sourceName}'
+                    : 'Show ${this.sceneItem.sourceName}',
+                excludeSemantics: true,
+                child: Pressable(
+                  haptic: true,
+                  onTap: () => dashboardStore.sendMutation(
+                    RequestType.SetSceneItemEnabled,
+                    fields: {
+                      'sceneName': this._sceneName(dashboardStore, settingsBox),
+                      'sceneItemId': this.sceneItem.sceneItemId,
+                      'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
+                    },
+                    label: 'Source visibility',
+                  ),
+                  child: SizedBox(
+                    width: kBaseIconButtonMinHitArea,
+                    height: kBaseIconButtonMinHitArea,
+                    child: Center(
+                      child: AnimatedToggleIcon(
+                        icon: this.sceneItem.sceneItemEnabled!
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: this.sceneItem.sceneItemEnabled!
+                            ? theme.colorScheme.secondary
+                            : theme.disabledColor,
+                      ),
                     ),
                   ),
                 ),
@@ -197,23 +205,29 @@ class SceneItemTile extends StatelessWidget {
                   ),
                 ),
               ),
-            Pressable(
-              onTap: this.sceneItem.filters.isNotEmpty
-                  ? () => ModalHandler.showBaseCupertinoBottomSheet(
-                      context: context,
-                      modalWidgetBuilder: (context, controller) =>
-                          FilterList(sceneItem: this.sceneItem),
-                    )
-                  : null,
-              child: SizedBox(
-                width: kBaseIconButtonMinHitArea,
-                height: kBaseIconButtonMinHitArea,
-                child: Center(
-                  child: Icon(
-                    CupertinoIcons.color_filter,
-                    color: this.sceneItem.filters.isNotEmpty
-                        ? null
-                        : theme.disabledColor,
+            Semantics(
+              button: true,
+              enabled: this.sceneItem.filters.isNotEmpty,
+              label: 'Filters of ${this.sceneItem.sourceName}',
+              excludeSemantics: true,
+              child: Pressable(
+                onTap: this.sceneItem.filters.isNotEmpty
+                    ? () => ModalHandler.showBaseCupertinoBottomSheet(
+                        context: context,
+                        modalWidgetBuilder: (context, controller) =>
+                            FilterList(sceneItem: this.sceneItem),
+                      )
+                    : null,
+                child: SizedBox(
+                  width: kBaseIconButtonMinHitArea,
+                  height: kBaseIconButtonMinHitArea,
+                  child: Center(
+                    child: Icon(
+                      CupertinoIcons.color_filter,
+                      color: this.sceneItem.filters.isNotEmpty
+                          ? null
+                          : theme.disabledColor,
+                    ),
                   ),
                 ),
               ),
