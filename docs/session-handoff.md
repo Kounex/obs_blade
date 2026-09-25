@@ -114,7 +114,9 @@ chat…" → pick a channel on one platform; suggestion chips appear for the
 others (tap to use), save. The new combo is selected, and its channels
 now also appear in the single-platform dropdowns. Long-press a combo →
 edit / delete. In the combined view, the source strip chips jump into
-that platform ("↩ Combined" strip there, YouTube pauses meanwhile);
+that platform ("↩ Combined" strip there, YouTube pauses meanwhile —
+jump + back **confirmed on device 2026-09-25**; known gap: the strip
+is hidden while the merged timeline is still empty);
 switching the chat type instead restores the pre-combo channels.
 Wave 3 dogfood checklist (`08bef57e`): the combined view docks an input;
 the chip left of the field shows the target (chevron + "Send to" sheet
