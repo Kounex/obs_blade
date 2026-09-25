@@ -6,6 +6,7 @@ import 'package:obs_blade/shared/general/base/dropdown.dart';
 
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
+import 'confirm_switch.dart';
 
 class ProfileControl extends StatelessWidget {
   const ProfileControl({super.key});
@@ -38,10 +39,15 @@ class ProfileControl extends StatelessWidget {
             label: 'Profile',
             onChanged: (profileName) {
               if (profileName != dashboardStore.currentProfileName) {
-                dashboardStore.sendMutation(
-                  RequestType.SetCurrentProfile,
-                  fields: {'profileName': profileName},
-                  label: 'Profile switch',
+                confirmCollectionProfileSwitch(
+                  context,
+                  kind: 'Profile',
+                  target: profileName!,
+                  onConfirmed: () => dashboardStore.sendMutation(
+                    RequestType.SetCurrentProfile,
+                    fields: {'profileName': profileName},
+                    label: 'Profile switch',
+                  ),
                 );
               }
             },

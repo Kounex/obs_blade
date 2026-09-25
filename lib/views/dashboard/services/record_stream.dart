@@ -9,6 +9,22 @@ import '../widgets/dashboard_content/dialogs/start_stop_recording_dialog.dart';
 import '../widgets/dashboard_content/dialogs/start_stop_streaming_dialog.dart';
 
 class RecordStreamService {
+  /// Explicit Start / Stop instead of a Toggle: the user confirmed a
+  /// direction ("Stop Streaming"), so if OBS changed state in the meantime
+  /// (someone stopped it on the PC) the request fails instead of doing the
+  /// opposite of what was confirmed
+  static void _sendRecord(bool isRecording) =>
+      GetIt.instance<DashboardStore>().sendMutation(
+        isRecording ? RequestType.StopRecord : RequestType.StartRecord,
+        label: isRecording ? 'Stop recording' : 'Start recording',
+      );
+
+  static void _sendStream(bool isLive) =>
+      GetIt.instance<DashboardStore>().sendMutation(
+        isLive ? RequestType.StopStream : RequestType.StartStream,
+        label: isLive ? 'Stop stream' : 'Start stream',
+      );
+
   static void triggerRecordStartStop(
     BuildContext context,
     bool isRecording,
@@ -22,17 +38,10 @@ class RecordStreamService {
             context: context,
             dialogWidget: StartStopRecordingDialog(
               isRecording: isRecording,
-              onRecordStartStop: () =>
-                  GetIt.instance<DashboardStore>().sendMutation(
-                    RequestType.ToggleRecord,
-                    label: 'Recording start/stop',
-                  ),
+              onRecordStartStop: () => _sendRecord(isRecording),
             ),
           )
-        : GetIt.instance<DashboardStore>().sendMutation(
-            RequestType.ToggleRecord,
-            label: 'Recording start/stop',
-          );
+        : _sendRecord(isRecording);
   }
 
   static void triggerStreamStartStop(
@@ -48,16 +57,9 @@ class RecordStreamService {
             context: context,
             dialogWidget: StartStopStreamingDialog(
               isLive: isLive,
-              onStreamStartStop: () =>
-                  GetIt.instance<DashboardStore>().sendMutation(
-                    RequestType.ToggleStream,
-                    label: 'Stream start/stop',
-                  ),
+              onStreamStartStop: () => _sendStream(isLive),
             ),
           )
-        : GetIt.instance<DashboardStore>().sendMutation(
-            RequestType.ToggleStream,
-            label: 'Stream start/stop',
-          );
+        : _sendStream(isLive);
   }
 }

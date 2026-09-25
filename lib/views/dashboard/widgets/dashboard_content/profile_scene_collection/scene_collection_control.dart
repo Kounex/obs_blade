@@ -6,6 +6,7 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/dropdown.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/request_type.dart';
+import 'confirm_switch.dart';
 
 class SceneCollectionControl extends StatelessWidget {
   const SceneCollectionControl({super.key});
@@ -39,10 +40,15 @@ class SceneCollectionControl extends StatelessWidget {
             onChanged: (sceneCollection) {
               if (sceneCollection !=
                   dashboardStore.currentSceneCollectionName) {
-                dashboardStore.sendMutation(
-                  RequestType.SetCurrentSceneCollection,
-                  fields: {'sceneCollectionName': sceneCollection},
-                  label: 'Scene collection switch',
+                confirmCollectionProfileSwitch(
+                  context,
+                  kind: 'Scene Collection',
+                  target: sceneCollection!,
+                  onConfirmed: () => dashboardStore.sendMutation(
+                    RequestType.SetCurrentSceneCollection,
+                    fields: {'sceneCollectionName': sceneCollection},
+                    label: 'Scene collection switch',
+                  ),
                 );
               }
             },

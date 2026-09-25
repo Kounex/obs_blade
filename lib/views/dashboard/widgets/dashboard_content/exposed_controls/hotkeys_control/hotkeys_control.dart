@@ -10,6 +10,8 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/exposed_controls/hotkeys_control/hotkey_list.dart';
 
+import '../../../../services/hotkey_trigger.dart';
+
 import '../../../../../../models/hotkey.dart';
 import '../../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../../shared/general/hive_builder.dart';
@@ -86,12 +88,7 @@ class HotkeysControl extends StatelessWidget {
                       (hotkey) => BaseButton(
                         secondary: true,
                         child: Text(hotkey.name),
-                        onPressed: () =>
-                            GetIt.instance<DashboardStore>().sendMutation(
-                              RequestType.TriggerHotkeyByName,
-                              fields: {'hotkeyName': hotkey.name},
-                              label: 'Hotkey trigger',
-                            ),
+                        onPressed: () => triggerHotkey(context, hotkey.name),
                       ),
                     )
                     .toList(),

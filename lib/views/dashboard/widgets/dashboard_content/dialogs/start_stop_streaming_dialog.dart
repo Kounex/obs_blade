@@ -22,7 +22,7 @@ class StartStopStreamingDialog extends StatelessWidget {
       body: this.isLive
           ? 'Are you sure you want to stop the stream? Nothing more to show or talk about? Or just tired or no time?\n\n... just to make sure it\'s intentional!'
           : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',
-      isYesDestructive: true,
+      isYesDestructive: this.isLive,
       enableDontShowAgainOption: true,
       onOk: (checked) {
         Hive.box(HiveKeys.Settings.name).put(

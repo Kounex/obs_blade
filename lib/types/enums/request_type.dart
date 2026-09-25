@@ -208,11 +208,38 @@ enum RequestType {
   /// No specified parameters
   ToggleStream,
 
-  /// Pause or play a media source. Supports ffmpeg and vlc media sources (as of OBS v25.0.8)
+  /// Starts the stream output. Used behind the start confirmation instead of
+  /// [ToggleStream] so a state change in the meantime can't invert the
+  /// confirmed intent
   ///
-  /// {'sourceName': String } - Source name
-  /// {'playPause': bool } - Whether to pause or play the source. false for play, true for pause
-  PlayPauseMedia,
+  /// No specified parameters
+  StartStream,
+
+  /// Stops the stream output
+  ///
+  /// No specified parameters
+  StopStream,
+
+  /// Starts the record output
+  ///
+  /// No specified parameters
+  StartRecord,
+
+  /// Stops the record output
+  ///
+  /// No specified parameters
+  StopRecord,
+
+  /// Splits the current file being recorded into a new file (OBS 30.2+)
+  ///
+  /// No specified parameters
+  SplitRecordFile,
+
+  /// Adds a new chapter marker to the file currently being recorded - only
+  /// the Hybrid MP4 format supports chapters (OBS 30.2+)
+  ///
+  /// (Optional) {'chapterName': String } - Name of the new chapter
+  CreateRecordChapter,
 
   /// Toggles the status of the record output.
   ///
@@ -240,13 +267,6 @@ enum RequestType {
   ///
   /// {'studioModeEnabled': bool } - True == Enabled, False == Disabled
   SetStudioModeEnabled,
-
-  /// Transitions the currently previewed scene to the main output. Will return an error if Studio Mode is not enabled
-  ///
-  /// (Optional) {'with-transition': Object } - Change the active transition before switching scenes. Defaults to the active transition
-  /// (Optional) {'with-transition.name': String } - Name of the transition
-  /// (Optional) {'with-transition.duration': int } - Transition duration (in milliseconds)
-  TransitionToProgram,
 
   /// Switches to a scene collection.
   ///

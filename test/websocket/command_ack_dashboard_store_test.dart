@@ -9,6 +9,7 @@ import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/command_failure_notice.dart';
 import 'package:obs_blade/types/classes/obs_request_ack.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
@@ -186,6 +187,45 @@ void main() {
     expect(
       batchTypes.map((request) => request['requestType']),
       containsAll(['GetStreamStatus', 'GetRecordStatus', 'GetStats']),
+    );
+  });
+
+  test('rejected explicit stop re-reads via the stats batch', () async {
+    await connect();
+    peer.rejections['StopStream'] = RequestStatus.OutputNotRunning.identifier;
+
+    final ack = await dashboardStore.sendMutation(
+      RequestType.StopStream,
+      label: 'Stop stream',
+    );
+
+    expect(ack.failureKind, ObsRequestFailureKind.rejected);
+    await waitFor(() => peer.batches.isNotEmpty, 'stats batch re-read');
+    expect(
+      dashboardStore.commandFailureNotice?.message,
+      contains('Stop stream'),
+    );
+  });
+
+  test('rejected batch mutation surfaces a notice', () async {
+    await connect();
+    peer.rejections['SaveSourceScreenshot'] =
+        RequestStatus.GenericError.identifier;
+
+    final ack = await dashboardStore.sendBatchMutation(
+      RequestBatchType.Screenshot,
+      [
+        RequestBatchObject(RequestType.SaveSourceScreenshot, {
+          'sourceName': 'Camera',
+        }),
+      ],
+      label: 'Screenshot',
+    );
+
+    expect(ack.success, isFalse);
+    expect(
+      dashboardStore.commandFailureNotice?.message,
+      contains('Screenshot'),
     );
   });
 
@@ -462,6 +502,21 @@ void main() {
         expect(dashboardStore.commandFailureNotice, isNull);
       },
     );
+
+    test('stale guard refuses batch mutations too', () async {
+      await connect();
+      dashboardStore.reconnecting = true;
+
+      final ack = await dashboardStore.sendBatchMutation(
+        RequestBatchType.Screenshot,
+        [RequestBatchObject(RequestType.SaveSourceScreenshot)],
+        label: 'Screenshot',
+      );
+
+      expect(ack.failureKind, ObsRequestFailureKind.notSent);
+      expect(peer.batches, isEmpty);
+      expect(dashboardStore.commandFailureNotice, isNull);
+    });
 
     test('guard is inert while not stale', () async {
       await connect();

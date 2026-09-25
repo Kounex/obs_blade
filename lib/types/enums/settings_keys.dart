@@ -391,6 +391,11 @@ enum SettingsKeys {
   /// the hotkey feature and doesn't want to see this warning again
   DontShowHotkeysTechnicalPreviewWarning,
 
+  /// [bool]: If the user saw the confirmation before switching the scene
+  /// collection or profile (swaps every scene / output setting in OBS) and
+  /// doesn't want to see it again
+  DontShowSwitchCollectionProfileMessage,
+
   /// [bool]: Show sub / gift-sub chat notifications in native Kick chat.
   /// Active by default
   KickChatNoticeSubs,
@@ -537,6 +542,8 @@ enum SettingsKeys {
         'dont-show-consider-blacksmith-before-tip',
     SettingsKeys.DontShowHotkeysTechnicalPreviewWarning:
         'dont-show-hotkeys-technical-preview-warning',
+    SettingsKeys.DontShowSwitchCollectionProfileMessage:
+        'dont-show-switch-collection-profile-message',
     SettingsKeys.KickChatNoticeSubs: 'kick-chat-notice-subs',
     SettingsKeys.KickChatNoticeHosts: 'kick-chat-notice-hosts',
     SettingsKeys.KickChatThirdPartyEmotes: 'kick-chat-third-party-emotes',

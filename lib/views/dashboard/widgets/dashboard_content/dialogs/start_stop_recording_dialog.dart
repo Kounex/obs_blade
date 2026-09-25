@@ -22,7 +22,7 @@ class StartStopRecordingDialog extends StatelessWidget {
       body: this.isRecording
           ? 'Do you want to stop recording? Got everything on tape as intended?\n\nIf yes: nice work!'
           : 'Do you want to start recording? Recording unintentionally is not as bad as suddenly starting to stream!\n\nStill asking just to be sure!',
-      isYesDestructive: true,
+      isYesDestructive: this.isRecording,
       enableDontShowAgainOption: true,
       onOk: (checked) {
         Hive.box(HiveKeys.Settings.name).put(

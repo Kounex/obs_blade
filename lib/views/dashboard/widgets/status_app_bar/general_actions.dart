@@ -167,9 +167,9 @@ class GeneralActions extends StatelessWidget {
                       /// We also have to do this request in this batch format
                       /// due to API inconsistency -> check the comment of
                       /// [RequestBatchType.Screenshot]
-                      NetworkHelper.makeBatchRequest(
-                        networkStore.activeSession!.socket,
+                      dashboardStore.sendBatchMutation(
                         RequestBatchType.Screenshot,
+                        label: 'Screenshot',
                         [
                           RequestBatchObject(RequestType.SaveSourceScreenshot, {
                             'sourceName':

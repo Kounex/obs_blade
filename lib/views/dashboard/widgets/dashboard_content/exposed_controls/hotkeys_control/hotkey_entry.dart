@@ -1,14 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
 import '../../../../../../models/hotkey.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/icon_button.dart';
-import '../../../../../../stores/views/dashboard.dart';
-import '../../../../../../types/enums/request_type.dart';
+import '../../../../services/hotkey_trigger.dart';
 
 class HotkeyEntry extends StatelessWidget {
   final Box<Hotkey> hotkeyBox;
@@ -23,7 +20,7 @@ class HotkeyEntry extends StatelessWidget {
     ).extension<AppStatusColors>()!;
 
     return ListTile(
-      title: Text(this.hotkey.name.split('.').sublist(1).join()),
+      title: Text(hotkeyDisplayName(this.hotkey.name)),
       subtitle: Text(this.hotkey.name),
       contentPadding: const EdgeInsets.all(0),
       trailing: Row(
@@ -45,17 +42,9 @@ class HotkeyEntry extends StatelessWidget {
           ),
           const SizedBox(width: 18.0),
           BaseIconButton(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              Navigator.of(context).pop();
-              Future.delayed(const Duration(milliseconds: 500), () {
-                GetIt.instance<DashboardStore>().sendMutation(
-                  RequestType.TriggerHotkeyByName,
-                  fields: {'hotkeyName': this.hotkey.name},
-                  label: 'Hotkey trigger',
-                );
-              });
-            },
+            /// Fires immediately with the sheet still open - the confirm
+            /// overlay names the hotkey, so several can be fired in a row
+            onTap: () => triggerHotkey(context, this.hotkey.name),
             icon: CupertinoIcons.play_arrow_solid,
             backgroundColor: Theme.of(context).colorScheme.surface,
             foregroundColor: Theme.of(context).colorScheme.onSurface,

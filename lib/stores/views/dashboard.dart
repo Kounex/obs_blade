@@ -561,6 +561,42 @@ abstract class _DashboardStore with Store {
     return ack;
   }
 
+  /// [sendMutation] for batches (e.g. the save + fetch screenshot pair):
+  /// same stale-state refusal and failure surfacing, keyed on the first
+  /// failed entry. Batches here have no confirmed state to re-read, so no
+  /// resync.
+  Future<ObsBatchAck> sendBatchMutation(
+    RequestBatchType batchRequest,
+    List<RequestBatchObject> batch, {
+    String? label,
+  }) async {
+    if (this.obsStateStale) {
+      return const ObsBatchAck(failureKind: ObsRequestFailureKind.notSent);
+    }
+
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    final ack = session == null
+        ? const ObsBatchAck.connectionLost()
+        : await NetworkHelper.makeBatchRequest(
+            session.socket,
+            batchRequest,
+            batch,
+          );
+
+    if (!ack.success) {
+      _surfaceCommandFailure(
+        ack.failures.isNotEmpty
+            ? ack.failures.first
+            : ack.failureKind == ObsRequestFailureKind.timeout
+            ? ObsRequestAck.timeout(batch.first.type)
+            : ObsRequestAck.connectionLost(batch.first.type),
+        label: label,
+      );
+    }
+
+    return ack;
+  }
+
   @action
   void _handleFailedMutation(
     ObsRequestAck ack,
@@ -615,7 +651,11 @@ abstract class _DashboardStore with Store {
         }
         break;
       case RequestType.ToggleStream:
+      case RequestType.StartStream:
+      case RequestType.StopStream:
       case RequestType.ToggleRecord:
+      case RequestType.StartRecord:
+      case RequestType.StopRecord:
       case RequestType.ToggleRecordPause:
         _requestStatsBatch();
         break;
@@ -657,7 +697,8 @@ abstract class _DashboardStore with Store {
       default:
 
         /// No persisted state to re-read (TriggerHotkeyByName,
-        /// SaveReplayBuffer, ...) - the toast alone surfaces the failure
+        /// SaveReplayBuffer, SplitRecordFile, CreateRecordChapter, ...) -
+        /// the toast alone surfaces the failure
         break;
     }
   }
@@ -1022,6 +1063,17 @@ abstract class _DashboardStore with Store {
     );
 
     _periodicStatsRequest();
+  }
+
+  /// Runs the connection check right away instead of waiting for the next
+  /// periodic tick - called when the app comes back to the foreground or
+  /// the device regains network, so a dropped socket starts reconnecting
+  /// immediately. A reconnect loop already in flight owns the check (its
+  /// timer is cancelled while it runs), so this is a no-op then.
+  void checkConnectionNow() {
+    if (this.reconnecting || _checkConnectionTimer?.isActive != true) return;
+    _checkConnectionTimer!.cancel();
+    _checkOBSConnection();
   }
 
   /// While using the device this app is running on while connected to an OBS

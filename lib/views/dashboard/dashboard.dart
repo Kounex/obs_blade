@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -52,10 +55,25 @@ class DashboardView extends StatefulWidget {
   _DashboardViewState createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<DashboardView> {
+class _DashboardViewState extends State<DashboardView>
+    with WidgetsBindingObserver {
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+
   @override
   void initState() {
     super.initState();
+
+    /// Resume / network-back fast path for the connection check - without
+    /// it a socket that died in the background only gets noticed on the
+    /// next periodic tick
+    WidgetsBinding.instance.addObserver(this);
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
+      if (!results.contains(ConnectivityResult.none)) {
+        GetIt.instance<DashboardStore>().checkConnectionNow();
+      }
+    });
 
     /// Since GetIt exposes stores in a global manner and I want a view
     /// store to be clean once a view is entered / inititalized, we need to
@@ -125,7 +143,17 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      GetIt.instance<DashboardStore>().checkConnectionNow();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _connectivitySubscription?.cancel();
+
     /// Disable [Wakelock] - does not need to check whether this is active
     /// since calling disable is idempotent
     WakelockPlus.disable();
