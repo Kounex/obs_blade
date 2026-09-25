@@ -149,6 +149,16 @@ enum RequestType {
   /// { 'inputName': String } - Name of the input to get the audio sync offset of
   GetInputAudioSyncOffset,
 
+  /// Gets the audio balance of an input.
+  ///
+  /// {'inputName': String } - Name of the input to get the audio balance of
+  GetInputAudioBalance,
+
+  /// Gets the audio monitor type of an input.
+  ///
+  /// {'inputName': String } - Name of the input to get the audio monitor type of
+  GetInputAudioMonitorType,
+
   /// Gets an array of all of a source's filters.
   ///
   /// { 'sourceName': String } - Name of the source
@@ -313,6 +323,18 @@ enum RequestType {
   /// {'inputName': String } - Name of the input to set the audio sync offset of
   /// {'inputAudioSyncOffset': int } - New audio sync offset in milliseconds - >= -950, <= 20000
   SetInputAudioSyncOffset,
+
+  /// Sets the audio balance of an input.
+  ///
+  /// {'inputName': String } - Name of the input to set the audio balance of
+  /// {'inputAudioBalance': double } - New audio balance value - >= 0.0, <= 1.0
+  SetInputAudioBalance,
+
+  /// Sets the audio monitor type of an input.
+  ///
+  /// {'inputName': String } - Name of the input to set the audio monitor type of
+  /// {'monitorType': String } - Audio monitor type
+  SetInputAudioMonitorType,
 
   /// Sets the enable state of a source filter.
   ///

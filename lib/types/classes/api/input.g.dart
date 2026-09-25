@@ -16,6 +16,8 @@ _Input _$InputFromJson(Map<String, dynamic> json) => _Input(
       ?.map((e) => InputChannel.fromJson(e as Map<String, dynamic>))
       .toList(),
   syncOffset: (json['syncOffset'] as num?)?.toInt(),
+  audioBalance: (json['audioBalance'] as num?)?.toDouble(),
+  monitorType: json['monitorType'] as String?,
   inputMuted: json['inputMuted'] as bool? ?? false,
 );
 
@@ -27,5 +29,7 @@ Map<String, dynamic> _$InputToJson(_Input instance) => <String, dynamic>{
   'inputVolumeDb': instance.inputVolumeDb,
   'inputLevelsMul': instance.inputLevelsMul,
   'syncOffset': instance.syncOffset,
+  'audioBalance': instance.audioBalance,
+  'monitorType': instance.monitorType,
   'inputMuted': instance.inputMuted,
 };

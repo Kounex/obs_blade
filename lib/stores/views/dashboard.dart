@@ -54,6 +54,10 @@ import '../../types/classes/stream/events/input_volume_meters.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
 import '../../types/classes/stream/events/scene_item_lock_state_changed.dart';
+import '../../types/classes/stream/events/input_audio_balance_changed.dart';
+import '../../types/classes/stream/events/input_audio_monitor_type_changed.dart';
+import '../../types/classes/stream/responses/get_input_audio_balance.dart';
+import '../../types/classes/stream/responses/get_input_audio_monitor_type.dart';
 import '../../types/classes/stream/events/source_filter_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/events/virtual_cam_state_changed.dart';
@@ -661,6 +665,12 @@ abstract class _DashboardStore with Store {
           );
         }
         break;
+      case RequestType.SetInputAudioBalance:
+      case RequestType.SetInputAudioMonitorType:
+        if (fields?['inputName'] != null) {
+          requestInputAudioSettings(fields!['inputName'] as String);
+        }
+        break;
       case RequestType.ToggleStream:
       case RequestType.StartStream:
       case RequestType.StopStream:
@@ -1076,6 +1086,33 @@ abstract class _DashboardStore with Store {
     _periodicStatsRequest();
   }
 
+  /// Loads the per-input audio settings the inputs batch doesn't carry
+  /// (balance, monitoring) - the advanced audio sheet calls this on open;
+  /// live changes afterwards arrive via the Input* events
+  void requestInputAudioSettings(String inputName) {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    NetworkHelper.makeRequest(
+      session.socket,
+      RequestType.GetInputAudioBalance,
+      {'inputName': inputName},
+    );
+    NetworkHelper.makeRequest(
+      session.socket,
+      RequestType.GetInputAudioMonitorType,
+      {'inputName': inputName},
+    );
+  }
+
+  void _updateInput(String? inputName, Input Function(Input input) update) {
+    if (inputName == null) return;
+    this.allInputs = ObservableList.of(
+      this.allInputs.map(
+        (input) => input.inputName == inputName ? update(input) : input,
+      ),
+    );
+  }
+
   /// Runs the connection check right away instead of waiting for the next
   /// periodic tick - called when the app comes back to the foreground or
   /// the device regains network, so a dropped socket starts reconnecting
@@ -1489,6 +1526,21 @@ abstract class _DashboardStore with Store {
             }
             return sceneItem;
           }),
+        );
+        break;
+      case EventType.InputAudioBalanceChanged:
+        final balanceEvent = InputAudioBalanceChangedEvent(event.jsonRAW);
+        _updateInput(
+          balanceEvent.inputName,
+          (input) =>
+              input.copyWith(audioBalance: balanceEvent.inputAudioBalance),
+        );
+        break;
+      case EventType.InputAudioMonitorTypeChanged:
+        final monitorEvent = InputAudioMonitorTypeChangedEvent(event.jsonRAW);
+        _updateInput(
+          monitorEvent.inputName,
+          (input) => input.copyWith(monitorType: monitorEvent.monitorType),
         );
         break;
       case EventType.InputAudioSyncOffsetChanged:
@@ -1972,6 +2024,28 @@ abstract class _DashboardStore with Store {
             }
             return input;
           }),
+        );
+        break;
+      case RequestType.GetInputAudioBalance:
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        _updateInput(
+          requestData?['inputName'] as String?,
+          (input) => input.copyWith(
+            audioBalance: GetInputAudioBalanceResponse(
+              response.jsonRAW,
+            ).inputAudioBalance,
+          ),
+        );
+        break;
+      case RequestType.GetInputAudioMonitorType:
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        _updateInput(
+          requestData?['inputName'] as String?,
+          (input) => input.copyWith(
+            monitorType: GetInputAudioMonitorTypeResponse(
+              response.jsonRAW,
+            ).monitorType,
+          ),
         );
         break;
       case RequestType.GetInputAudioSyncOffset:

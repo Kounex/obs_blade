@@ -14,6 +14,11 @@ abstract class Input with _$Input {
     double? inputVolumeDb,
     List<InputChannel>? inputLevelsMul,
     int? syncOffset,
+
+    /// Loaded on demand by the per-input audio sheet (not part of the
+    /// inputs batch) - null until then
+    double? audioBalance,
+    String? monitorType,
     @Default(false) bool inputMuted,
   }) = _Input;
 

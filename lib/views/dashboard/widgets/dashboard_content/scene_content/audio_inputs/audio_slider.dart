@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
@@ -14,8 +15,10 @@ import '../../../../../../stores/shared/network.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/input.dart';
 import '../../../../../../types/enums/request_type.dart';
+import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/network_helper.dart';
 import '../animated_toggle_icon.dart';
+import 'audio_settings_sheet.dart';
 
 class AudioSlider extends StatefulWidget {
   final Input input;
@@ -173,6 +176,33 @@ class _AudioSliderState extends State<AudioSlider> {
                       : const SizedBox(),
                 ),
               ),
+              Semantics(
+                button: true,
+                label: 'Audio settings for ${this.widget.input.inputName}',
+                excludeSemantics: true,
+                child: Pressable(
+                  onTap: this.widget.input.inputName == null
+                      ? null
+                      : () => ModalHandler.showBaseCupertinoBottomSheet(
+                          context: context,
+                          modalWidgetBuilder: (context, controller) =>
+                              AudioSettingsSheet(
+                                inputName: this.widget.input.inputName!,
+                              ),
+                        ),
+                  child: SizedBox(
+                    width: kBaseIconButtonMinHitArea,
+                    height: kBaseIconButtonMinHitArea,
+                    child: Center(
+                      child: Icon(
+                        CupertinoIcons.slider_horizontal_3,
+                        size: 20.0,
+                        color: theme.extension<AppTextColors>()!.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -237,31 +267,39 @@ class _AudioSliderState extends State<AudioSlider> {
           ),
           Row(
             children: [
-              Pressable(
-                haptic: true,
-                onTap: () => GetIt.instance<DashboardStore>().sendMutation(
-                  RequestType.SetInputMute,
-                  fields: {
-                    'inputName': this.widget.input.inputName,
-                    'inputMuted': !this.widget.input.inputMuted,
-                  },
-                  label: 'Audio mute',
-                ),
-                child: SizedBox(
-                  width: kBaseIconButtonMinHitArea,
-                  height: kBaseIconButtonMinHitArea,
-                  child: Center(
-                    child: AnimatedToggleIcon(
-                      icon: this.widget.input.inputMuted
-                          ? Icons.volume_off
-                          : Icons.volume_up,
+              Semantics(
+                button: true,
+                toggled: !this.widget.input.inputMuted,
+                label: this.widget.input.inputMuted
+                    ? 'Unmute ${this.widget.input.inputName}'
+                    : 'Mute ${this.widget.input.inputName}',
+                excludeSemantics: true,
+                child: Pressable(
+                  haptic: true,
+                  onTap: () => GetIt.instance<DashboardStore>().sendMutation(
+                    RequestType.SetInputMute,
+                    fields: {
+                      'inputName': this.widget.input.inputName,
+                      'inputMuted': !this.widget.input.inputMuted,
+                    },
+                    label: 'Audio mute',
+                  ),
+                  child: SizedBox(
+                    width: kBaseIconButtonMinHitArea,
+                    height: kBaseIconButtonMinHitArea,
+                    child: Center(
+                      child: AnimatedToggleIcon(
+                        icon: this.widget.input.inputMuted
+                            ? Icons.volume_off
+                            : Icons.volume_up,
 
-                      /// Control on-state = highlight; the muted off-state
-                      /// drops to faint text (mock .mute.muted) - red is
-                      /// reserved for recording/program status
-                      color: this.widget.input.inputMuted
-                          ? theme.extension<AppTextColors>()!.textTertiary
-                          : highlight,
+                        /// Control on-state = highlight; the muted off-state
+                        /// drops to faint text (mock .mute.muted) - red is
+                        /// reserved for recording/program status
+                        color: this.widget.input.inputMuted
+                            ? theme.extension<AppTextColors>()!.textTertiary
+                            : highlight,
+                      ),
                     ),
                   ),
                 ),
@@ -274,6 +312,11 @@ class _AudioSliderState extends State<AudioSlider> {
                     min: 0.0,
                     max: 1.0,
                     value: (this.widget.input.inputVolumeMul ?? 0.0),
+
+                    /// Screen readers announce a percentage, not the raw
+                    /// 0..1 multiplier
+                    semanticFormatterCallback: (value) =>
+                        '${this.widget.input.inputName} volume ${(value * 100).round()} percent',
 
                     /// Track/fill/knob come from the sliderTheme (token-
                     /// delta §2 variant A: hairline track, highlight 55%

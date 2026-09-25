@@ -94,6 +94,12 @@ enum EventType {
   /// The sync offset of an input has changed.
   InputAudioSyncOffsetChanged,
 
+  /// The audio balance value of an input has changed.
+  InputAudioBalanceChanged,
+
+  /// The monitor type of an input has changed.
+  InputAudioMonitorTypeChanged,
+
   /// A source filter's enable state has changed.
   SourceFilterEnableStateChanged,
 }

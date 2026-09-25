@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Input {
 
- String? get inputKind; String? get inputName; String? get unversionedInputKind; double? get inputVolumeMul; double? get inputVolumeDb; List<InputChannel>? get inputLevelsMul; int? get syncOffset; bool get inputMuted;
+ String? get inputKind; String? get inputName; String? get unversionedInputKind; double? get inputVolumeMul; double? get inputVolumeDb; List<InputChannel>? get inputLevelsMul; int? get syncOffset;/// Loaded on demand by the per-input audio sheet (not part of the
+/// inputs batch) - null until then
+ double? get audioBalance; String? get monitorType; bool get inputMuted;
 /// Create a copy of Input
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $InputCopyWith<Input> get copyWith => _$InputCopyWithImpl<Input>(this as Input, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Input&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.inputName, inputName) || other.inputName == inputName)&&(identical(other.unversionedInputKind, unversionedInputKind) || other.unversionedInputKind == unversionedInputKind)&&(identical(other.inputVolumeMul, inputVolumeMul) || other.inputVolumeMul == inputVolumeMul)&&(identical(other.inputVolumeDb, inputVolumeDb) || other.inputVolumeDb == inputVolumeDb)&&const DeepCollectionEquality().equals(other.inputLevelsMul, inputLevelsMul)&&(identical(other.syncOffset, syncOffset) || other.syncOffset == syncOffset)&&(identical(other.inputMuted, inputMuted) || other.inputMuted == inputMuted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Input&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.inputName, inputName) || other.inputName == inputName)&&(identical(other.unversionedInputKind, unversionedInputKind) || other.unversionedInputKind == unversionedInputKind)&&(identical(other.inputVolumeMul, inputVolumeMul) || other.inputVolumeMul == inputVolumeMul)&&(identical(other.inputVolumeDb, inputVolumeDb) || other.inputVolumeDb == inputVolumeDb)&&const DeepCollectionEquality().equals(other.inputLevelsMul, inputLevelsMul)&&(identical(other.syncOffset, syncOffset) || other.syncOffset == syncOffset)&&(identical(other.audioBalance, audioBalance) || other.audioBalance == audioBalance)&&(identical(other.monitorType, monitorType) || other.monitorType == monitorType)&&(identical(other.inputMuted, inputMuted) || other.inputMuted == inputMuted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,inputKind,inputName,unversionedInputKind,inputVolumeMul,inputVolumeDb,const DeepCollectionEquality().hash(inputLevelsMul),syncOffset,inputMuted);
+int get hashCode => Object.hash(runtimeType,inputKind,inputName,unversionedInputKind,inputVolumeMul,inputVolumeDb,const DeepCollectionEquality().hash(inputLevelsMul),syncOffset,audioBalance,monitorType,inputMuted);
 
 @override
 String toString() {
-  return 'Input(inputKind: $inputKind, inputName: $inputName, unversionedInputKind: $unversionedInputKind, inputVolumeMul: $inputVolumeMul, inputVolumeDb: $inputVolumeDb, inputLevelsMul: $inputLevelsMul, syncOffset: $syncOffset, inputMuted: $inputMuted)';
+  return 'Input(inputKind: $inputKind, inputName: $inputName, unversionedInputKind: $unversionedInputKind, inputVolumeMul: $inputVolumeMul, inputVolumeDb: $inputVolumeDb, inputLevelsMul: $inputLevelsMul, syncOffset: $syncOffset, audioBalance: $audioBalance, monitorType: $monitorType, inputMuted: $inputMuted)';
 }
 
 
@@ -48,7 +50,7 @@ abstract mixin class $InputCopyWith<$Res>  {
   factory $InputCopyWith(Input value, $Res Function(Input) _then) = _$InputCopyWithImpl;
 @useResult
 $Res call({
- String? inputKind, String? inputName, String? unversionedInputKind, double? inputVolumeMul, double? inputVolumeDb, List<InputChannel>? inputLevelsMul, int? syncOffset, bool inputMuted
+ String? inputKind, String? inputName, String? unversionedInputKind, double? inputVolumeMul, double? inputVolumeDb, List<InputChannel>? inputLevelsMul, int? syncOffset, double? audioBalance, String? monitorType, bool inputMuted
 });
 
 
@@ -65,7 +67,7 @@ class _$InputCopyWithImpl<$Res>
 
 /// Create a copy of Input
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? inputKind = freezed,Object? inputName = freezed,Object? unversionedInputKind = freezed,Object? inputVolumeMul = freezed,Object? inputVolumeDb = freezed,Object? inputLevelsMul = freezed,Object? syncOffset = freezed,Object? inputMuted = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? inputKind = freezed,Object? inputName = freezed,Object? unversionedInputKind = freezed,Object? inputVolumeMul = freezed,Object? inputVolumeDb = freezed,Object? inputLevelsMul = freezed,Object? syncOffset = freezed,Object? audioBalance = freezed,Object? monitorType = freezed,Object? inputMuted = null,}) {
   return _then(_self.copyWith(
 inputKind: freezed == inputKind ? _self.inputKind : inputKind // ignore: cast_nullable_to_non_nullable
 as String?,inputName: freezed == inputName ? _self.inputName : inputName // ignore: cast_nullable_to_non_nullable
@@ -74,7 +76,9 @@ as String?,inputVolumeMul: freezed == inputVolumeMul ? _self.inputVolumeMul : in
 as double?,inputVolumeDb: freezed == inputVolumeDb ? _self.inputVolumeDb : inputVolumeDb // ignore: cast_nullable_to_non_nullable
 as double?,inputLevelsMul: freezed == inputLevelsMul ? _self.inputLevelsMul : inputLevelsMul // ignore: cast_nullable_to_non_nullable
 as List<InputChannel>?,syncOffset: freezed == syncOffset ? _self.syncOffset : syncOffset // ignore: cast_nullable_to_non_nullable
-as int?,inputMuted: null == inputMuted ? _self.inputMuted : inputMuted // ignore: cast_nullable_to_non_nullable
+as int?,audioBalance: freezed == audioBalance ? _self.audioBalance : audioBalance // ignore: cast_nullable_to_non_nullable
+as double?,monitorType: freezed == monitorType ? _self.monitorType : monitorType // ignore: cast_nullable_to_non_nullable
+as String?,inputMuted: null == inputMuted ? _self.inputMuted : inputMuted // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -160,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? inputKind,  String? inputName,  String? unversionedInputKind,  double? inputVolumeMul,  double? inputVolumeDb,  List<InputChannel>? inputLevelsMul,  int? syncOffset,  bool inputMuted)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? inputKind,  String? inputName,  String? unversionedInputKind,  double? inputVolumeMul,  double? inputVolumeDb,  List<InputChannel>? inputLevelsMul,  int? syncOffset,  double? audioBalance,  String? monitorType,  bool inputMuted)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Input() when $default != null:
-return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that.inputVolumeMul,_that.inputVolumeDb,_that.inputLevelsMul,_that.syncOffset,_that.inputMuted);case _:
+return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that.inputVolumeMul,_that.inputVolumeDb,_that.inputLevelsMul,_that.syncOffset,_that.audioBalance,_that.monitorType,_that.inputMuted);case _:
   return orElse();
 
 }
@@ -181,10 +185,10 @@ return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? inputKind,  String? inputName,  String? unversionedInputKind,  double? inputVolumeMul,  double? inputVolumeDb,  List<InputChannel>? inputLevelsMul,  int? syncOffset,  bool inputMuted)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? inputKind,  String? inputName,  String? unversionedInputKind,  double? inputVolumeMul,  double? inputVolumeDb,  List<InputChannel>? inputLevelsMul,  int? syncOffset,  double? audioBalance,  String? monitorType,  bool inputMuted)  $default,) {final _that = this;
 switch (_that) {
 case _Input():
-return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that.inputVolumeMul,_that.inputVolumeDb,_that.inputLevelsMul,_that.syncOffset,_that.inputMuted);case _:
+return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that.inputVolumeMul,_that.inputVolumeDb,_that.inputLevelsMul,_that.syncOffset,_that.audioBalance,_that.monitorType,_that.inputMuted);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +205,10 @@ return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? inputKind,  String? inputName,  String? unversionedInputKind,  double? inputVolumeMul,  double? inputVolumeDb,  List<InputChannel>? inputLevelsMul,  int? syncOffset,  bool inputMuted)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? inputKind,  String? inputName,  String? unversionedInputKind,  double? inputVolumeMul,  double? inputVolumeDb,  List<InputChannel>? inputLevelsMul,  int? syncOffset,  double? audioBalance,  String? monitorType,  bool inputMuted)?  $default,) {final _that = this;
 switch (_that) {
 case _Input() when $default != null:
-return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that.inputVolumeMul,_that.inputVolumeDb,_that.inputLevelsMul,_that.syncOffset,_that.inputMuted);case _:
+return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that.inputVolumeMul,_that.inputVolumeDb,_that.inputLevelsMul,_that.syncOffset,_that.audioBalance,_that.monitorType,_that.inputMuted);case _:
   return null;
 
 }
@@ -216,7 +220,7 @@ return $default(_that.inputKind,_that.inputName,_that.unversionedInputKind,_that
 @JsonSerializable()
 
 class _Input implements Input {
-  const _Input({required this.inputKind, required this.inputName, required this.unversionedInputKind, this.inputVolumeMul, this.inputVolumeDb, final  List<InputChannel>? inputLevelsMul, this.syncOffset, this.inputMuted = false}): _inputLevelsMul = inputLevelsMul;
+  const _Input({required this.inputKind, required this.inputName, required this.unversionedInputKind, this.inputVolumeMul, this.inputVolumeDb, final  List<InputChannel>? inputLevelsMul, this.syncOffset, this.audioBalance, this.monitorType, this.inputMuted = false}): _inputLevelsMul = inputLevelsMul;
   factory _Input.fromJson(Map<String, dynamic> json) => _$InputFromJson(json);
 
 @override final  String? inputKind;
@@ -234,6 +238,10 @@ class _Input implements Input {
 }
 
 @override final  int? syncOffset;
+/// Loaded on demand by the per-input audio sheet (not part of the
+/// inputs batch) - null until then
+@override final  double? audioBalance;
+@override final  String? monitorType;
 @override@JsonKey() final  bool inputMuted;
 
 /// Create a copy of Input
@@ -249,16 +257,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Input&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.inputName, inputName) || other.inputName == inputName)&&(identical(other.unversionedInputKind, unversionedInputKind) || other.unversionedInputKind == unversionedInputKind)&&(identical(other.inputVolumeMul, inputVolumeMul) || other.inputVolumeMul == inputVolumeMul)&&(identical(other.inputVolumeDb, inputVolumeDb) || other.inputVolumeDb == inputVolumeDb)&&const DeepCollectionEquality().equals(other._inputLevelsMul, _inputLevelsMul)&&(identical(other.syncOffset, syncOffset) || other.syncOffset == syncOffset)&&(identical(other.inputMuted, inputMuted) || other.inputMuted == inputMuted));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Input&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.inputName, inputName) || other.inputName == inputName)&&(identical(other.unversionedInputKind, unversionedInputKind) || other.unversionedInputKind == unversionedInputKind)&&(identical(other.inputVolumeMul, inputVolumeMul) || other.inputVolumeMul == inputVolumeMul)&&(identical(other.inputVolumeDb, inputVolumeDb) || other.inputVolumeDb == inputVolumeDb)&&const DeepCollectionEquality().equals(other._inputLevelsMul, _inputLevelsMul)&&(identical(other.syncOffset, syncOffset) || other.syncOffset == syncOffset)&&(identical(other.audioBalance, audioBalance) || other.audioBalance == audioBalance)&&(identical(other.monitorType, monitorType) || other.monitorType == monitorType)&&(identical(other.inputMuted, inputMuted) || other.inputMuted == inputMuted));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,inputKind,inputName,unversionedInputKind,inputVolumeMul,inputVolumeDb,const DeepCollectionEquality().hash(_inputLevelsMul),syncOffset,inputMuted);
+int get hashCode => Object.hash(runtimeType,inputKind,inputName,unversionedInputKind,inputVolumeMul,inputVolumeDb,const DeepCollectionEquality().hash(_inputLevelsMul),syncOffset,audioBalance,monitorType,inputMuted);
 
 @override
 String toString() {
-  return 'Input(inputKind: $inputKind, inputName: $inputName, unversionedInputKind: $unversionedInputKind, inputVolumeMul: $inputVolumeMul, inputVolumeDb: $inputVolumeDb, inputLevelsMul: $inputLevelsMul, syncOffset: $syncOffset, inputMuted: $inputMuted)';
+  return 'Input(inputKind: $inputKind, inputName: $inputName, unversionedInputKind: $unversionedInputKind, inputVolumeMul: $inputVolumeMul, inputVolumeDb: $inputVolumeDb, inputLevelsMul: $inputLevelsMul, syncOffset: $syncOffset, audioBalance: $audioBalance, monitorType: $monitorType, inputMuted: $inputMuted)';
 }
 
 
@@ -269,7 +277,7 @@ abstract mixin class _$InputCopyWith<$Res> implements $InputCopyWith<$Res> {
   factory _$InputCopyWith(_Input value, $Res Function(_Input) _then) = __$InputCopyWithImpl;
 @override @useResult
 $Res call({
- String? inputKind, String? inputName, String? unversionedInputKind, double? inputVolumeMul, double? inputVolumeDb, List<InputChannel>? inputLevelsMul, int? syncOffset, bool inputMuted
+ String? inputKind, String? inputName, String? unversionedInputKind, double? inputVolumeMul, double? inputVolumeDb, List<InputChannel>? inputLevelsMul, int? syncOffset, double? audioBalance, String? monitorType, bool inputMuted
 });
 
 
@@ -286,7 +294,7 @@ class __$InputCopyWithImpl<$Res>
 
 /// Create a copy of Input
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? inputKind = freezed,Object? inputName = freezed,Object? unversionedInputKind = freezed,Object? inputVolumeMul = freezed,Object? inputVolumeDb = freezed,Object? inputLevelsMul = freezed,Object? syncOffset = freezed,Object? inputMuted = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? inputKind = freezed,Object? inputName = freezed,Object? unversionedInputKind = freezed,Object? inputVolumeMul = freezed,Object? inputVolumeDb = freezed,Object? inputLevelsMul = freezed,Object? syncOffset = freezed,Object? audioBalance = freezed,Object? monitorType = freezed,Object? inputMuted = null,}) {
   return _then(_Input(
 inputKind: freezed == inputKind ? _self.inputKind : inputKind // ignore: cast_nullable_to_non_nullable
 as String?,inputName: freezed == inputName ? _self.inputName : inputName // ignore: cast_nullable_to_non_nullable
@@ -295,7 +303,9 @@ as String?,inputVolumeMul: freezed == inputVolumeMul ? _self.inputVolumeMul : in
 as double?,inputVolumeDb: freezed == inputVolumeDb ? _self.inputVolumeDb : inputVolumeDb // ignore: cast_nullable_to_non_nullable
 as double?,inputLevelsMul: freezed == inputLevelsMul ? _self._inputLevelsMul : inputLevelsMul // ignore: cast_nullable_to_non_nullable
 as List<InputChannel>?,syncOffset: freezed == syncOffset ? _self.syncOffset : syncOffset // ignore: cast_nullable_to_non_nullable
-as int?,inputMuted: null == inputMuted ? _self.inputMuted : inputMuted // ignore: cast_nullable_to_non_nullable
+as int?,audioBalance: freezed == audioBalance ? _self.audioBalance : audioBalance // ignore: cast_nullable_to_non_nullable
+as double?,monitorType: freezed == monitorType ? _self.monitorType : monitorType // ignore: cast_nullable_to_non_nullable
+as String?,inputMuted: null == inputMuted ? _self.inputMuted : inputMuted // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

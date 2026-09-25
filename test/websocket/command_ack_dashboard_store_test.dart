@@ -6,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart' hide when;
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/types/classes/command_failure_notice.dart';
 import 'package:obs_blade/types/classes/obs_request_ack.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -238,6 +239,63 @@ void main() {
       isFalse,
     );
   });
+
+  test(
+    'audio settings: load on demand, live events, resync on failure',
+    () async {
+      peer.responseData['GetInputAudioBalance'] = {'inputAudioBalance': 0.25};
+      peer.responseData['GetInputAudioMonitorType'] = {
+        'monitorType': 'OBS_MONITORING_TYPE_MONITOR_ONLY',
+      };
+      await connect();
+      dashboardStore.handleStream();
+      dashboardStore.allInputs = ObservableList.of([
+        const Input(
+          inputKind: 'wasapi_input_capture',
+          inputName: 'Mic',
+          unversionedInputKind: 'wasapi_input_capture',
+        ),
+      ]);
+
+      dashboardStore.requestInputAudioSettings('Mic');
+      await waitFor(
+        () =>
+            dashboardStore.allInputs.single.audioBalance == 0.25 &&
+            dashboardStore.allInputs.single.monitorType ==
+                'OBS_MONITORING_TYPE_MONITOR_ONLY',
+        'balance + monitor type loaded',
+      );
+
+      peer.event('InputAudioBalanceChanged', {
+        'inputName': 'Mic',
+        'inputAudioBalance': 0.5,
+      });
+      peer.event('InputAudioMonitorTypeChanged', {
+        'inputName': 'Mic',
+        'monitorType': 'OBS_MONITORING_TYPE_NONE',
+      });
+      await waitFor(
+        () =>
+            dashboardStore.allInputs.single.audioBalance == 0.5 &&
+            dashboardStore.allInputs.single.monitorType ==
+                'OBS_MONITORING_TYPE_NONE',
+        'events applied',
+      );
+
+      final baseline = requestsOf('GetInputAudioBalance').length;
+      peer.rejections['SetInputAudioBalance'] =
+          RequestStatus.GenericError.identifier;
+      await dashboardStore.sendMutation(
+        RequestType.SetInputAudioBalance,
+        fields: {'inputName': 'Mic', 'inputAudioBalance': 1.0},
+        label: 'Audio balance',
+      );
+      await waitFor(
+        () => requestsOf('GetInputAudioBalance').length > baseline,
+        'balance re-read after rejection',
+      );
+    },
+  );
 
   test('rejected batch mutation surfaces a notice', () async {
     await connect();
