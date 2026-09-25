@@ -100,6 +100,15 @@ enum EventType {
   /// The monitor type of an input has changed.
   InputAudioMonitorTypeChanged,
 
+  /// A media input has started playing.
+  MediaInputPlaybackStarted,
+
+  /// A media input has finished playing.
+  MediaInputPlaybackEnded,
+
+  /// An action has been performed on a media input (play, pause, ...).
+  MediaInputActionTriggered,
+
   /// A source filter's enable state has changed.
   SourceFilterEnableStateChanged,
 }

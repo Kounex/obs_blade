@@ -14,6 +14,7 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/request_type.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../animated_toggle_icon.dart';
+import 'media_controls.dart';
 
 class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
@@ -126,9 +127,15 @@ class SceneItemTile extends StatelessWidget {
               ),
             ),
 
+            if (!isGroup && isMediaInputKind(this.sceneItem.inputKind))
+              MediaControls(inputName: this.sceneItem.sourceName!),
+
             /// Lock (OBS canvas: no accidental move / resize). Groups skip
-            /// it - their children carry the lock that matters
-            if (!isGroup && this.sceneItem.sceneItemLocked != null)
+            /// it - their children carry the lock that matters - and media
+            /// rows give the slot to the transport (row width on phones)
+            if (!isGroup &&
+                !isMediaInputKind(this.sceneItem.inputKind) &&
+                this.sceneItem.sceneItemLocked != null)
               HiveBuilder<dynamic>(
                 hiveKey: HiveKeys.Settings,
                 rebuildKeys: const [SettingsKeys.ExposeStudioControls],

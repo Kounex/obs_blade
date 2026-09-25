@@ -159,6 +159,11 @@ enum RequestType {
   /// {'inputName': String } - Name of the input to get the audio monitor type of
   GetInputAudioMonitorType,
 
+  /// Gets the status of a media input (state, duration, cursor)
+  ///
+  /// {'inputName': String } - Name of the media input
+  GetMediaInputStatus,
+
   /// Gets an array of all of a source's filters.
   ///
   /// { 'sourceName': String } - Name of the source
@@ -335,6 +340,12 @@ enum RequestType {
   /// {'inputName': String } - Name of the input to set the audio monitor type of
   /// {'monitorType': String } - Audio monitor type
   SetInputAudioMonitorType,
+
+  /// Triggers an action on a media input (play, pause, restart, stop, ...)
+  ///
+  /// {'inputName': String } - Name of the media input
+  /// {'mediaAction': String } - OBS_WEBSOCKET_MEDIA_INPUT_ACTION_*
+  TriggerMediaInputAction,
 
   /// Sets the enable state of a source filter.
   ///

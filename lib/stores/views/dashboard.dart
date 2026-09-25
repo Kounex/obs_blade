@@ -58,6 +58,7 @@ import '../../types/classes/stream/events/input_audio_balance_changed.dart';
 import '../../types/classes/stream/events/input_audio_monitor_type_changed.dart';
 import '../../types/classes/stream/responses/get_input_audio_balance.dart';
 import '../../types/classes/stream/responses/get_input_audio_monitor_type.dart';
+import '../../types/classes/stream/responses/get_media_input_status.dart';
 import '../../types/classes/stream/events/source_filter_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/events/virtual_cam_state_changed.dart';
@@ -163,6 +164,12 @@ abstract class _DashboardStore with Store {
           (sceneItem.sceneItemEnabled ?? false),
     ),
   );
+
+  /// Latest known OBS media state (OBS_MEDIA_STATE_*) per media input name
+  /// - filled on demand by the media controls and kept live by the
+  /// MediaInput* events
+  @observable
+  ObservableMap<String, String> mediaStates = ObservableMap();
 
   /// Will contain all inputs returned by [GetInputList] which will even contian
   /// special inputs etc.
@@ -665,6 +672,11 @@ abstract class _DashboardStore with Store {
           );
         }
         break;
+      case RequestType.TriggerMediaInputAction:
+        if (fields?['inputName'] != null) {
+          requestMediaStatus(fields!['inputName'] as String);
+        }
+        break;
       case RequestType.SetInputAudioBalance:
       case RequestType.SetInputAudioMonitorType:
         if (fields?['inputName'] != null) {
@@ -1104,6 +1116,22 @@ abstract class _DashboardStore with Store {
     );
   }
 
+  void requestMediaStatus(String inputName) {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    NetworkHelper.makeRequest(session.socket, RequestType.GetMediaInputStatus, {
+      'inputName': inputName,
+    });
+  }
+
+  /// Play / pause / restart / stop a media input (`OBS_WEBSOCKET_MEDIA_INPUT_ACTION_*`)
+  Future<ObsRequestAck> triggerMediaAction(String inputName, String action) =>
+      this.sendMutation(
+        RequestType.TriggerMediaInputAction,
+        fields: {'inputName': inputName, 'mediaAction': action},
+        label: 'Media control',
+      );
+
   void _updateInput(String? inputName, Input Function(Input input) update) {
     if (inputName == null) return;
     this.allInputs = ObservableList.of(
@@ -1527,6 +1555,18 @@ abstract class _DashboardStore with Store {
             return sceneItem;
           }),
         );
+        break;
+      case EventType.MediaInputPlaybackStarted:
+      case EventType.MediaInputPlaybackEnded:
+      case EventType.MediaInputActionTriggered:
+
+        /// The events only say *that* something happened - re-read the
+        /// state for inputs the media controls are showing
+        final String? mediaInputName = event.json['inputName'];
+        if (mediaInputName != null &&
+            this.mediaStates.containsKey(mediaInputName)) {
+          requestMediaStatus(mediaInputName);
+        }
         break;
       case EventType.InputAudioBalanceChanged:
         final balanceEvent = InputAudioBalanceChangedEvent(event.jsonRAW);
@@ -2025,6 +2065,15 @@ abstract class _DashboardStore with Store {
             return input;
           }),
         );
+        break;
+      case RequestType.GetMediaInputStatus:
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        final String? mediaInputName = requestData?['inputName'];
+        if (mediaInputName != null) {
+          this.mediaStates[mediaInputName] = GetMediaInputStatusResponse(
+            response.jsonRAW,
+          ).mediaState;
+        }
         break;
       case RequestType.GetInputAudioBalance:
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);

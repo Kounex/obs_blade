@@ -297,6 +297,48 @@ void main() {
     },
   );
 
+  test(
+    'media controls: status on demand, events re-read, action resyncs',
+    () async {
+      peer.responseData['GetMediaInputStatus'] = {
+        'mediaState': 'OBS_MEDIA_STATE_PLAYING',
+        'mediaDuration': 1000,
+        'mediaCursor': 10,
+      };
+      await connect();
+      dashboardStore.handleStream();
+
+      dashboardStore.requestMediaStatus('Intro');
+      await waitFor(
+        () => dashboardStore.mediaStates['Intro'] == 'OBS_MEDIA_STATE_PLAYING',
+        'media status loaded',
+      );
+
+      /// An event for a tracked input triggers a re-read; untracked ignored
+      final baseline = requestsOf('GetMediaInputStatus').length;
+      peer.responseData['GetMediaInputStatus'] = {
+        'mediaState': 'OBS_MEDIA_STATE_ENDED',
+      };
+      peer.event('MediaInputPlaybackEnded', {'inputName': 'Other'});
+      peer.event('MediaInputPlaybackEnded', {'inputName': 'Intro'});
+      await waitFor(
+        () => dashboardStore.mediaStates['Intro'] == 'OBS_MEDIA_STATE_ENDED',
+        'event re-read applied',
+      );
+      expect(requestsOf('GetMediaInputStatus').length, baseline + 1);
+
+      final ack = await dashboardStore.triggerMediaAction(
+        'Intro',
+        'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART',
+      );
+      expect(ack.success, isTrue);
+      expect(requestsOf('TriggerMediaInputAction').single['requestData'], {
+        'inputName': 'Intro',
+        'mediaAction': 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART',
+      });
+    },
+  );
+
   test('rejected batch mutation surfaces a notice', () async {
     await connect();
     peer.rejections['SaveSourceScreenshot'] =
