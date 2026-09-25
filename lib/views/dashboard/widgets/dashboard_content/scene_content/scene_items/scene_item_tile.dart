@@ -15,6 +15,7 @@ import '../../../../../../types/enums/request_type.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../animated_toggle_icon.dart';
 import 'media_controls.dart';
+import 'text_source_sheet.dart';
 
 class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
@@ -129,6 +130,26 @@ class SceneItemTile extends StatelessWidget {
 
             if (!isGroup && isMediaInputKind(this.sceneItem.inputKind))
               MediaControls(inputName: this.sceneItem.sourceName!),
+            if (!isGroup && isTextInputKind(this.sceneItem.inputKind))
+              Semantics(
+                button: true,
+                label: 'Edit text of ${this.sceneItem.sourceName}',
+                excludeSemantics: true,
+                child: Pressable(
+                  onTap: () => ModalHandler.showBaseCupertinoBottomSheet(
+                    context: context,
+                    modalWidgetBuilder: (context, controller) =>
+                        TextSourceSheet(inputName: this.sceneItem.sourceName!),
+                  ),
+                  child: const SizedBox(
+                    width: kBaseIconButtonMinHitArea,
+                    height: kBaseIconButtonMinHitArea,
+                    child: Center(
+                      child: Icon(CupertinoIcons.textformat, size: 20.0),
+                    ),
+                  ),
+                ),
+              ),
 
             /// Lock (OBS canvas: no accidental move / resize). Groups skip
             /// it - their children carry the lock that matters - and media

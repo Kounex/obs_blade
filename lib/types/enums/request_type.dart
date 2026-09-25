@@ -164,6 +164,11 @@ enum RequestType {
   /// {'inputName': String } - Name of the media input
   GetMediaInputStatus,
 
+  /// Gets the settings of an input (only values that differ from defaults)
+  ///
+  /// {'inputName': String } - Name of the input
+  GetInputSettings,
+
   /// Gets an array of all of a source's filters.
   ///
   /// { 'sourceName': String } - Name of the source
@@ -346,6 +351,14 @@ enum RequestType {
   /// {'inputName': String } - Name of the media input
   /// {'mediaAction': String } - OBS_WEBSOCKET_MEDIA_INPUT_ACTION_*
   TriggerMediaInputAction,
+
+  /// Sets the settings of an input
+  ///
+  /// {'inputName': String } - Name of the input
+  /// {'inputSettings': Object } - Settings to apply
+  /// (Optional) {'overlay': bool } - true (default) = apply on top of the
+  /// existing settings, false = reset to defaults first
+  SetInputSettings,
 
   /// Sets the enable state of a source filter.
   ///
