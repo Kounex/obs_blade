@@ -2,6 +2,20 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-25 (evening) - 4.0: Pro copy refresh + version bump
+
+- **Pro benefits** (`kProBenefits`) rewritten for what 4.0 actually
+  ships: new **Combined Chat** and **Custom Themes** cards (Pro already
+  unlocked themes, it just wasn't said), "Multi-Chat" became **Every
+  Channel** (combos + live-at-a-glance), moderation copy is honest about
+  what's Twitch-only (AutoMod, unban requests, chat modes). Eight cards
+  now; the tablet grid is already count-agnostic.
+- Paywall hero line, the "Welcome to Pro" thank-you and the locked native
+  chat pane follow the same copy (the pane no longer says "Native Combined
+  Chat" - Combined is native-only).
+- `pubspec.yaml` → **4.0.0+2026092501**. Store metadata / README carry no
+  Pro copy - untouched.
+
 ## 2026-09-25 (afternoon) - Combined chat wave 3: writing
 
 - **Wave 3** (`08bef57e`): combined-view input dock with a target chip

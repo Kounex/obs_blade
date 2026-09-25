@@ -26,42 +26,54 @@ const List<ProBenefit> kProBenefits = [
     icon: CupertinoIcons.chat_bubble_text_fill,
     title: 'Native Chat, Every Platform',
     body:
-        'Read and write Twitch, Kick and YouTube chat right from your phone - fast and smooth, no browser embed.',
+        'Twitch, Kick and YouTube chat, built right into the app - read and write without a browser in sight.',
+  ),
+  ProBenefit(
+    icon: CupertinoIcons.arrow_merge,
+    title: 'Combined Chat',
+    body:
+        'All your chats in one live timeline. Reply to anyone and it lands on the right platform.',
   ),
   ProBenefit(
     icon: CupertinoIcons.rectangle_stack_fill,
-    title: 'Multi-Chat',
+    title: 'Every Channel',
     body:
-        'Add every channel you mod or follow and switch between them from the chat bar - each keeps its own history.',
+        'Add the channels you mod or follow, save your own combos and see who\'s live at a glance.',
   ),
   ProBenefit(
     icon: CupertinoIcons.shield_fill,
     title: 'Full Moderation Toolkit',
     body:
-        'Delete, timeout, ban, warn and clear a room with a tap - plus a live AutoMod queue and an unban-request inbox.',
+        'Delete, timeout and ban on every platform - plus AutoMod, unban requests and chat modes on Twitch.',
   ),
   ProBenefit(
     icon: CupertinoIcons.smiley_fill,
     title: 'Emotes & Badges',
     body:
-        'First-party and 7TV/BTTV emotes render inline, with a full picker and role badges across every chat.',
+        '7TV, BTTV and FFZ emotes inline, a full emote picker, autocomplete and role badges.',
   ),
   ProBenefit(
     icon: CupertinoIcons.search_circle_fill,
     title: 'Smarter Chat',
     body:
-        'Highlight mentions and keywords, mute what you don\'t want to see, and search your chat history.',
+        'Highlight mentions and keywords, mute words and users, and search your chat history.',
+  ),
+  ProBenefit(
+    icon: CupertinoIcons.paintbrush_fill,
+    title: 'Custom Themes',
+    body:
+        'Make OBS Blade yours - design your own color themes and switch between them anytime.',
   ),
   ProBenefit(
     icon: CupertinoIcons.sparkles,
     title: 'What\'s Next',
     body:
-        'Pro keeps growing - think stream health alerts and deeper platform tools. No dates promised, but the bench is full.',
+        'Pro keeps growing - stream health alerts and deeper platform tools are on the bench. No dates promised.',
   ),
 ];
 
 /// Browsable benefits: a swipeable card carousel with page dots on phone,
-/// a 2x2 grid on tablet (design system § Responsive layouts).
+/// a two-column grid on tablet (design system § Responsive layouts).
 class ProBenefitsBrowser extends StatefulWidget {
   const ProBenefitsBrowser({super.key});
 

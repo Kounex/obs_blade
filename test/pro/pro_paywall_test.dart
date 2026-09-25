@@ -342,10 +342,12 @@ void main() {
 
     expect(find.byType(SmoothPageIndicator), findsNothing);
     expect(find.text('Native Chat, Every Platform'), findsOneWidget);
-    expect(find.text('Multi-Chat'), findsOneWidget);
+    expect(find.text('Combined Chat'), findsOneWidget);
+    expect(find.text('Every Channel'), findsOneWidget);
     expect(find.text('Full Moderation Toolkit'), findsOneWidget);
     expect(find.text('Emotes & Badges'), findsOneWidget);
     expect(find.text('Smarter Chat'), findsOneWidget);
+    expect(find.text('Custom Themes'), findsOneWidget);
     expect(find.text('What\'s Next'), findsOneWidget);
   });
 }

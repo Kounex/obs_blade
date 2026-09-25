@@ -120,9 +120,9 @@ class ProUnlockedView extends StatelessWidget {
                     index: 2,
                     scaleFrom: 0.985,
                     child: Text(
-                      'Thanks for supporting OBS Blade - native chat and '
-                      'moderation are unlocked. And everything you already '
-                      'used stays free, forever.',
+                      'Thanks for supporting OBS Blade! Native and combined '
+                      'chat, the full mod toolkit and custom themes are all '
+                      'yours. And everything free stays free, forever.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
                         color: textColors.textSecondary,

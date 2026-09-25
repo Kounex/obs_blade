@@ -1137,12 +1137,15 @@ class _ChatProUpsell extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            'Native ${this.chatType.text} Chat',
+            /// Combined is native-only - "Native" would be redundant there
+            isNativeOnly(this.chatType)
+                ? '${this.chatType.text} Chat'
+                : 'Native ${this.chatType.text} Chat',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Native chat is locked - unlock it with OBS Blade Pro.',
+            'Native chat is part of OBS Blade Pro - unlock it to read, write and moderate right here.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
