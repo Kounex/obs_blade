@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -21,8 +23,11 @@ import 'dialogs/add_edit_youtube_username.dart';
 
 /// Multi-chat channel picker for the native YouTube chat bar — a fork of
 /// [NativeChannelDropdown] bound to [YouTubeChatStore] (labels of the
-/// [SettingsKeys.YouTubeUsernames] map). No LIVE/Mod chips: the store only
-/// polls the selected channel, so per-channel live status doesn't exist.
+/// [SettingsKeys.YouTubeUsernames] map). Own channel first, the rest A–Z;
+/// the menu scrolls past [kChatChannelMenuMaxHeight]. Rows show LIVE /
+/// OFFLINE from [YouTubeChatStore.liveStateForChannel] — channel entries
+/// are checked quota-free when the menu opens (pinned videos stay
+/// unknown). No Mod chip: the API has no cheap "am I a mod" lookup.
 /// When signed in, the account's own channel leads the list, marked "You"
 /// (native-only — [YouTubeChatStore.ownChannel], not part of the WebView
 /// list, so it has no remove long-press). "Add chat…" opens the existing
@@ -86,6 +91,39 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
     );
   }
 
+  /// Open-menu row: name (+ You) and the LIVE / OFFLINE tag once known.
+  Widget _menuRow(
+    BuildContext context,
+    YouTubeChatStore store,
+    YouTubeChatChannel channel,
+  ) {
+    final live = store.liveStateForChannel(channel.label);
+    return Row(
+      children: [
+        Expanded(
+          child: this._channelLabel(
+            context,
+            channel.displayName,
+            own: channel.isOwn,
+          ),
+        ),
+        if (live != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          NativeChatLiveTag(
+            key: Key(
+              'youtube-channel-dropdown-${live ? 'live' : 'offline'}-'
+              '${channel.isOwn ? 'own' : channel.label}',
+            ),
+            live: live,
+            viewerCount: channel.label == store.selectedChannelLabel
+                ? store.selectedChannelViewerCount
+                : null,
+          ),
+        ],
+      ],
+    );
+  }
+
   /// Name, plus the "You" marker for the own channel (same idiom as the
   /// Twitch dropdown).
   Widget _channelLabel(BuildContext context, String name, {bool own = false}) {
@@ -115,17 +153,24 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
         final switching =
             store.chatConnection == YouTubeChatConnectionState.connecting;
 
+        /// Own channel first, the rest A–Z.
+        final channels = [...store.nativeChannels]
+          ..sort((a, b) {
+            if (a.isOwn != b.isOwn) return a.isOwn ? -1 : 1;
+            return compareChatChannelNames(a.displayName, b.displayName);
+          });
+
         final items = <DropdownMenuItem<String>>[
-          for (final channel in store.nativeChannels)
+          for (final channel in channels)
             DropdownMenuItem<String>(
               value: channel.label,
               child: channel.isOwn
-                  ? this._channelLabel(context, channel.displayName, own: true)
+                  ? this._menuRow(context, store, channel)
                   : GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onLongPress: () =>
                           this._confirmRemove(context, channel.label),
-                      child: this._channelLabel(context, channel.displayName),
+                      child: this._menuRow(context, store, channel),
                     ),
             ),
           const DropdownMenuItem<String>(
@@ -141,7 +186,7 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
         ];
 
         final selectedBuilders = <Widget>[
-          for (final channel in store.nativeChannels)
+          for (final channel in channels)
             this._channelLabel(
               context,
               channel.displayName,
@@ -179,8 +224,13 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
                     value: store.selectedChannelLabel,
                     isExpanded: true,
                     isDense: true,
+                    menuMaxHeight: kChatChannelMenuMaxHeight,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     icon: const Icon(Icons.arrow_drop_down),
+
+                    /// Opening the menu refreshes the live tags (at most
+                    /// once a minute, quota-free).
+                    onTap: () => unawaited(store.refreshChannelLivePreviews()),
                     items: items,
                     selectedItemBuilder: (_) => selectedBuilders,
                     onChanged: switching

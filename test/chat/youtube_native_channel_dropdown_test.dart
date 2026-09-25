@@ -9,6 +9,7 @@ import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/youtube_native_channel_dropdown.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_youtube_services.dart';
@@ -104,5 +105,52 @@ void main() {
 
     expect(find.text('You'), findsNothing);
     expect(find.text('Friend'), findsWidgets);
+  });
+
+  testWidgets('entries sort A–Z after "You"; LIVE / OFFLINE once checked, '
+      'the selected entry from its connection', (tester) async {
+    for (final label in ['zed', 'Alpha', 'mid']) {
+      store.channels.add(
+        YouTubeChatChannel(
+          label: label,
+          target: YouTubeChannelTarget('@$label'),
+        ),
+      );
+    }
+    store.ownChannel = const YouTubeChatChannel(
+      label: kYouTubeOwnChannelLabel,
+      target: YouTubeChannelTarget('channel/UCownchannel000000000000'),
+      isOwn: true,
+      title: 'My Channel',
+    );
+    store.channelLivePreview.addAll({'Alpha': true, 'zed': false});
+    store.selectedChannelLabel = 'mid';
+    store.awaitingLiveStream = true;
+
+    await tester.pumpWidget(
+      wrap(const Column(children: [YouTubeNativeChannelDropdown()])),
+    );
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    double top(String text) => tester.getTopLeft(find.text(text).last).dy;
+    expect(top('My Channel'), lessThan(top('Alpha')));
+    expect(top('Alpha'), lessThan(top('mid')));
+    expect(top('mid'), lessThan(top('zed')));
+
+    Finder tag(String state, String label) =>
+        find.byKey(Key('youtube-channel-dropdown-$state-$label'));
+    expect(tag('live', 'Alpha'), findsOneWidget);
+    expect(tag('offline', 'zed'), findsOneWidget);
+    expect(tag('offline', 'mid'), findsOneWidget);
+    expect(tag('live', 'own'), findsNothing);
+    expect(tag('offline', 'own'), findsNothing);
+    expect(
+      tester
+          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+          .menuMaxHeight,
+      kChatChannelMenuMaxHeight,
+    );
   });
 }

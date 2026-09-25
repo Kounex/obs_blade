@@ -11,6 +11,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/native_channel_dropdown.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
@@ -98,6 +99,7 @@ void main() {
       store.channels.addAll([ref('chan-1'), ref('chan-2')]);
       store.moderatedChannelIds.add('chan-2');
       store.channelLiveViewers.addAll({'chan-1': 1200, 'user-1': 42});
+      store.liveCheckedIds.addAll(['user-1', 'chan-1', 'chan-2']);
 
       await tester.pumpWidget(
         wrap(const Column(children: [NativeChannelDropdown()])),
@@ -130,8 +132,60 @@ void main() {
         findsOneWidget,
       );
       expect(find.byIcon(Icons.shield), findsNothing);
+
+      /// Polled and not live: OFFLINE.
+      expect(
+        find.byKey(const Key('channel-dropdown-offline-chan-2')),
+        findsOneWidget,
+      );
     },
   );
+
+  testWidgets('channels sort A–Z after the own channel; unpolled ones '
+      'show no live state; the menu is height-capped', (tester) async {
+    store.channels.addAll([
+      TwitchChannelRef(
+        id: 'z',
+        login: 'zed',
+        displayName: 'zed',
+        addedAt: DateTime.utc(2026, 8, 9),
+      ),
+      TwitchChannelRef(
+        id: 'a',
+        login: 'Alpha',
+        displayName: 'Alpha',
+        addedAt: DateTime.utc(2026, 8, 10),
+      ),
+      TwitchChannelRef(
+        id: 'm',
+        login: 'mid',
+        displayName: 'mid',
+        addedAt: DateTime.utc(2026, 8, 11),
+      ),
+    ]);
+    store.liveCheckedIds.addAll(['user-1', 'z', 'a']);
+
+    await tester.pumpWidget(
+      wrap(const Column(children: [NativeChannelDropdown()])),
+    );
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    double top(String text) => tester.getTopLeft(find.text(text).last).dy;
+    expect(top('Kounex'), lessThan(top('Alpha')));
+    expect(top('Alpha'), lessThan(top('mid')));
+    expect(top('mid'), lessThan(top('zed')));
+
+    expect(find.byKey(const Key('channel-dropdown-offline-a')), findsOneWidget);
+    expect(find.byKey(const Key('channel-dropdown-offline-m')), findsNothing);
+    expect(find.byKey(const Key('channel-dropdown-live-m')), findsNothing);
+
+    final dropdown = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>),
+    );
+    expect(dropdown.menuMaxHeight, kChatChannelMenuMaxHeight);
+  });
 
   testWidgets('selecting a channel calls selectChannel', (tester) async {
     /// try/finally: a failed expectation must still run the FakeAsync-zone

@@ -13,6 +13,7 @@ import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/combined/combined_match_finder.dart';
@@ -177,5 +178,48 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('No YouTube channel'), findsOneWidget);
+  });
+
+  testWidgets('the channel menu lists A–Z with LIVE / OFFLINE tags', (
+    tester,
+  ) async {
+    kick.channels.addAll(['alpha', 'mid']);
+    kick.channelLivePreview['xqc'] = const KickChannelInfo(
+      id: 1,
+      slug: 'xqc',
+      chatroom: KickChatroom(id: 2),
+      livestream: KickLivestreamInfo(isLive: true, viewerCount: 5000),
+    );
+    kick.channelLivePreview['alpha'] = const KickChannelInfo(
+      id: 3,
+      slug: 'alpha',
+      chatroom: KickChatroom(id: 4),
+    );
+    await pumpSheet(tester);
+
+    await tester.tap(find.byKey(const Key('combined-builder-Kick')));
+    await tester.pumpAndSettle();
+
+    double top(String text) => tester.getTopLeft(find.text(text).last).dy;
+    expect(top('alpha'), lessThan(top('mid')));
+    expect(top('mid'), lessThan(top('xqc')));
+    expect(
+      find.byKey(const Key('combined-builder-live-Kick-xqc')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('combined-builder-offline-Kick-alpha')),
+      findsOneWidget,
+    );
+
+    /// Not resolved yet: no claim either way.
+    expect(
+      find.byKey(const Key('combined-builder-live-Kick-mid')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const Key('combined-builder-offline-Kick-mid')),
+      findsNothing,
+    );
   });
 }

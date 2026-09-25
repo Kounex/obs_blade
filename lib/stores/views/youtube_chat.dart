@@ -211,6 +211,66 @@ abstract class _YouTubeChatStore with Store {
   @observable
   YouTubeChatConnectionState chatConnection = YouTubeChatConnectionState.idle;
 
+  /// Live preview per channel entry for the pickers (label → live?),
+  /// from the quota-free `/live` page check ([refreshChannelLivePreviews]).
+  /// Absent = unknown (not checked yet, lookup failed, a pinned video).
+  final ObservableMap<String, bool> channelLivePreview =
+      ObservableMap<String, bool>();
+
+  DateTime? _livePreviewAt;
+
+  /// Picker live state of [label]: true / false once checked, null before.
+  /// The selected entry answers from its connection instead (connected =
+  /// live, waiting for a stream = offline).
+  bool? liveStateForChannel(String label) {
+    if (label == this.selectedChannelLabel) {
+      if (this.chatConnection == YouTubeChatConnectionState.connected) {
+        return true;
+      }
+      if (this.awaitingLiveStream) return false;
+    }
+    return this.channelLivePreview[label];
+  }
+
+  /// Check every channel entry's live state — run when a picker opens,
+  /// at most once a minute ([force] skips that). No API quota: one
+  /// `/live` page fetch per channel entry; pinned videos are skipped.
+  Future<void> refreshChannelLivePreviews({bool force = false}) async {
+    if (!this._isProResolver()) return;
+    final now = DateTime.now();
+    final last = this._livePreviewAt;
+    if (!force && last != null && now.difference(last).inSeconds < 60) {
+      return;
+    }
+    this._livePreviewAt = now;
+    final entries = [
+      for (final channel in this.nativeChannels)
+        if (channel.target case final YouTubeChannelTarget target)
+          (channel.label, target),
+    ];
+    await Future.wait([
+      for (final (label, target) in entries)
+        this._liveResolver
+            .resolveLiveVideoId(target)
+            .then((videoId) {
+              runInAction(
+                () => this.channelLivePreview[label] = videoId != null,
+              );
+            })
+            .catchError((Object e) {
+              GeneralHelper.advLog(
+                'YouTube live preview failed for $label - $e',
+              );
+            }),
+    ]);
+    runInAction(() {
+      final labels = {for (final (label, _) in entries) label};
+      this.channelLivePreview.removeWhere(
+        (label, _) => !labels.contains(label),
+      );
+    });
+  }
+
   /// Concurrent-viewer snapshot for [selectedChannelLabel] — resolved
   /// once alongside `activeLiveChatId` (see [_ChannelBuffer.viewerCount]);
   /// not re-polled while connected.

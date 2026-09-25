@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
@@ -111,6 +112,9 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   @override
   void initState() {
     super.initState();
+
+    /// Fresh live tags for the YouTube picker (quota-free, throttled).
+    unawaited(this._youTube.refreshChannelLivePreviews());
     final combo = this.widget.combo;
     if (combo != null) {
       this._name.text = combo.name ?? '';
@@ -220,8 +224,42 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
     _ => _Pick(label: match.value, kickSlug: match.value),
   };
 
-  /// Choices for a platform: own channel first, then the platform's list.
-  List<_Pick> _optionsFor(ChatType platform) {
+  /// Choices for a platform: own channel first, then the platform's list
+  /// A–Z.
+  List<_Pick> _optionsFor(ChatType platform) =>
+      this._unsortedOptionsFor(platform)..sort((a, b) {
+        if (a.own != b.own) return a.own ? -1 : 1;
+        return compareChatChannelNames(a.label, b.label);
+      });
+
+  /// Live state of [pick] as its platform store knows it (null = unknown,
+  /// e.g. a channel typed via "Other…" that isn't polled).
+  bool? _liveOf(ChatType platform, _Pick pick) => switch (platform) {
+    ChatType.Twitch => this._twitch.liveStateForChannel(
+      pick.own ? null : pick.twitch?.id,
+    ),
+    ChatType.YouTube => this._youTube.liveStateForChannel(
+      pick.own ? kYouTubeOwnChannelLabel : pick.label,
+    ),
+    ChatType.Kick => switch (pick.kickSlug) {
+      final slug? => this._kick.liveStateForChannel(slug),
+      null => null,
+    },
+    _ => null,
+  };
+
+  int? _viewersOf(ChatType platform, _Pick pick) => switch (platform) {
+    ChatType.Twitch => this._twitch.viewerCountForChannel(
+      pick.own ? null : pick.twitch?.id,
+    ),
+    ChatType.Kick => switch (pick.kickSlug) {
+      final slug? => this._kick.viewerCountForChannel(slug),
+      null => null,
+    },
+    _ => null,
+  };
+
+  List<_Pick> _unsortedOptionsFor(ChatType platform) {
     switch (platform) {
       case ChatType.Twitch:
         final user = this._twitch.user;
@@ -434,6 +472,8 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
               platform: platform,
               pick: this._picks[platform],
               options: this._optionsFor(platform),
+              liveOf: (pick) => this._liveOf(platform, pick),
+              viewersOf: (pick) => this._viewersOf(platform, pick),
               onPick: (pick) => this._setPick(platform, pick),
               onOther: () => this._pickOther(platform),
               onClear: () => this._setPick(platform, null),
@@ -499,6 +539,10 @@ class _PlatformRow extends StatelessWidget {
   final ChatType platform;
   final _Pick? pick;
   final List<_Pick> options;
+
+  /// Live state / viewer count of an option (read inside an Observer).
+  final bool? Function(_Pick pick) liveOf;
+  final int? Function(_Pick pick) viewersOf;
   final ValueChanged<_Pick> onPick;
   final VoidCallback onOther;
   final VoidCallback onClear;
@@ -507,6 +551,8 @@ class _PlatformRow extends StatelessWidget {
     required this.platform,
     required this.pick,
     required this.options,
+    required this.liveOf,
+    required this.viewersOf,
     required this.onPick,
     required this.onOther,
     required this.onClear,
@@ -525,29 +571,56 @@ class _PlatformRow extends StatelessWidget {
             child: PopupMenuButton<Object>(
               key: Key('combined-builder-${this.platform.name}'),
               tooltip: 'Pick a ${this.platform.text} channel',
+
+              /// Long lists scroll instead of filling the screen; a bit
+              /// wider than the default 280 so names keep room next to
+              /// the LIVE tag.
+              constraints: const BoxConstraints(
+                minWidth: 112.0,
+                maxWidth: 320.0,
+                maxHeight: kChatChannelMenuMaxHeight,
+              ),
               onSelected: (value) =>
                   value is _Pick ? this.onPick(value) : this.onOther(),
               itemBuilder: (_) => [
                 for (final option in this.options)
                   PopupMenuItem<Object>(
                     value: option,
-                    child: Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            option.label,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (option.own) ...[
-                          const SizedBox(width: AppSpacing.xs),
-                          NativeChatYouChip(
-                            color:
-                                this.platform.brandColor ??
-                                Theme.of(context).colorScheme.secondary,
-                          ),
-                        ],
-                      ],
+
+                    /// Observer: live tags land while the menu is open.
+                    child: Observer(
+                      builder: (context) {
+                        final live = this.liveOf(option);
+                        return Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                option.label,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (option.own) ...[
+                              const SizedBox(width: AppSpacing.xs),
+                              NativeChatYouChip(
+                                color:
+                                    this.platform.brandColor ??
+                                    Theme.of(context).colorScheme.secondary,
+                              ),
+                            ],
+                            if (live != null) ...[
+                              const SizedBox(width: AppSpacing.sm),
+                              NativeChatLiveTag(
+                                key: Key(
+                                  'combined-builder-${live ? 'live' : 'offline'}'
+                                  '-${this.platform.name}-${option.label}',
+                                ),
+                                live: live,
+                                viewerCount: this.viewersOf(option),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ),
                 PopupMenuItem<Object>(

@@ -6,6 +6,7 @@ import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../native_chat_chrome.dart';
 
 class UsernameDropdown extends StatelessWidget {
   final Box settingsBox;
@@ -19,46 +20,49 @@ class UsernameDropdown extends StatelessWidget {
       defaultValue: ChatType.Twitch,
     );
 
-    final List<DropdownMenuItem<String>> usernameItems =
+    final List<String> names =
         switch (chatType) {
-              ChatType.Twitch => settingsBox.get(
-                SettingsKeys.TwitchUsernames.name,
-                defaultValue: <String>[],
-              ),
-              ChatType.YouTube =>
-                settingsBox
-                    .get(
-                      SettingsKeys.YouTubeUsernames.name,
-                      defaultValue: <String, String>{},
-                    )
-                    .keys,
-              ChatType.Owncast =>
-                settingsBox
-                    .get(
-                      SettingsKeys.OwncastUsernames.name,
-                      defaultValue: <String, String>{},
-                    )
-                    .keys,
-              ChatType.Kick => settingsBox.get(
-                SettingsKeys.KickUsernames.name,
-                defaultValue: <String>[],
-              ),
+            ChatType.Twitch => settingsBox.get(
+              SettingsKeys.TwitchUsernames.name,
+              defaultValue: <String>[],
+            ),
+            ChatType.YouTube =>
+              settingsBox
+                  .get(
+                    SettingsKeys.YouTubeUsernames.name,
+                    defaultValue: <String, String>{},
+                  )
+                  .keys,
+            ChatType.Owncast =>
+              settingsBox
+                  .get(
+                    SettingsKeys.OwncastUsernames.name,
+                    defaultValue: <String, String>{},
+                  )
+                  .keys,
+            ChatType.Kick => settingsBox.get(
+              SettingsKeys.KickUsernames.name,
+              defaultValue: <String>[],
+            ),
 
-              /// Native-only: this WebView dropdown never shows for it.
-              ChatType.Combined => const <String>[],
-            }
-            .map<DropdownMenuItem<String>>(
-              (chatUsername) => DropdownMenuItem<String>(
-                value: chatUsername,
-                child: Text(
-                  chatUsername,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.fade,
-                ),
-              ),
-            )
-            .toList();
+            /// Native-only: this WebView dropdown never shows for it.
+            ChatType.Combined => const <String>[],
+          }.cast<String>().toList()
+          /// A–Z (the stored order is insertion order).
+          ..sort(compareChatChannelNames);
+    final List<DropdownMenuItem<String>> usernameItems = names
+        .map<DropdownMenuItem<String>>(
+          (chatUsername) => DropdownMenuItem<String>(
+            value: chatUsername,
+            child: Text(
+              chatUsername,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.fade,
+            ),
+          ),
+        )
+        .toList();
 
     return Flexible(
       child: ConstrainedBox(
@@ -102,6 +106,7 @@ class UsernameDropdown extends StatelessWidget {
                 },
                 isExpanded: true,
                 isDense: true,
+                menuMaxHeight: kChatChannelMenuMaxHeight,
                 borderRadius: BorderRadius.circular(AppRadius.md),
 
                 /// No chevron when there is nothing to pick

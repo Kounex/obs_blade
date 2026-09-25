@@ -297,6 +297,11 @@ abstract class _TwitchChatStore with Store {
   /// Batch-polled live viewer counts keyed by broadcaster id (own + saved
   /// channels). Absent key = offline/unknown. Feeds the channel dropdown
   /// LIVE chips and keeps [selectedChannelIsLive] in sync.
+  /// Broadcaster ids the last batch poll answered for — for these, absent
+  /// from [channelLiveViewers] means offline; any other id (not polled
+  /// yet, added since) is unknown to the pickers.
+  final ObservableSet<String> liveCheckedIds = ObservableSet<String>();
+
   final ObservableMap<String, int> channelLiveViewers =
       ObservableMap<String, int>();
 
@@ -790,6 +795,7 @@ abstract class _TwitchChatStore with Store {
     this._livePollTimer = null;
     runInAction(() {
       this.channelLiveViewers.clear();
+      this.liveCheckedIds.clear();
       this.selectedChannelIsLive = false;
       this.selectedChannelViewerCount = null;
     });
@@ -802,6 +808,7 @@ abstract class _TwitchChatStore with Store {
   Future<void> refreshSelectedChannelLive() async {
     if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
       this.channelLiveViewers.clear();
+      this.liveCheckedIds.clear();
       this.selectedChannelIsLive = false;
       this.selectedChannelViewerCount = null;
       return;
@@ -819,6 +826,9 @@ abstract class _TwitchChatStore with Store {
       this.channelLiveViewers
         ..clear()
         ..addAll(live);
+      this.liveCheckedIds
+        ..clear()
+        ..addAll(ids);
       final id = this.effectiveBroadcasterId;
       this.selectedChannelIsLive = live.containsKey(id);
       this.selectedChannelViewerCount = live[id];
@@ -832,6 +842,15 @@ abstract class _TwitchChatStore with Store {
     final id = channelId ?? this.user?.id;
     if (id == null) return false;
     return this.channelLiveViewers.containsKey(id);
+  }
+
+  /// Picker live state of [channelId] (null = own): true / false once the
+  /// batch poll has answered, null before (or for a channel added since).
+  bool? liveStateForChannel(String? channelId) {
+    final id = channelId ?? this.user?.id;
+    if (id == null) return null;
+    if (this.channelLiveViewers.containsKey(id)) return true;
+    return this.liveCheckedIds.contains(id) ? false : null;
   }
 
   /// Viewer count when [isChannelLive]; null when offline/unknown.

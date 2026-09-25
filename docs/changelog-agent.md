@@ -18,6 +18,18 @@ Running log of upgrade/migration work. Not store release notes.
   `selectedChannelIsLive`, YouTube connected = live, Kick
   `channelInfo.isLive`). The strip also stays visible above the "Waiting
   for messages" placeholder.
+- **Channel pickers (dogfood ask):** every channel dropdown (Twitch /
+  YouTube / Kick native, the WebView username dropdown, the combined
+  builder's pickers) lists own first, then A–Z
+  (`compareChatChannelNames`), and caps the open menu at
+  `kChatChannelMenuMaxHeight` (scrolls beyond). Rows show
+  `NativeChatLiveTag`: LIVE · viewers / OFFLINE once known, nothing while
+  unknown. Twitch now tracks which ids the batch poll answered
+  (`liveCheckedIds`), so a channel added since the last poll isn't
+  called offline. YouTube got a picker-only live preview
+  (`channelLivePreview`, quota-free `/live` page check per channel entry,
+  run on menu open / builder open, throttled to 1/min; pinned videos stay
+  unknown). The WebView dropdown has no live data (no API there).
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

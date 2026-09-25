@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
@@ -1110,4 +1111,61 @@ void main() {
       ]);
     });
   });
+
+  group('channel live preview (pickers)', () {
+    test('checks channel entries only; a failed lookup stays unknown; '
+        'throttled to once a minute unless forced', () async {
+      settingsBox().put(SettingsKeys.YouTubeUsernames.name, <String, String>{
+        'Live': '@live',
+        'Off': '@off',
+        'Broken': '@broken',
+        'Pinned': 'video-a-001',
+      });
+      final resolver = _ByPathResolver({
+        '@live': 'video-live-01',
+        '@off': null,
+        '@broken': const YouTubeLiveResolveException('layout drift'),
+      });
+      await store.dispose();
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        liveResolver: resolver,
+        sleep: (duration) async {},
+        isProResolver: () => true,
+      );
+      store.reloadChannels();
+
+      await store.refreshChannelLivePreviews();
+
+      expect(store.liveStateForChannel('Live'), isTrue);
+      expect(store.liveStateForChannel('Off'), isFalse);
+      expect(store.liveStateForChannel('Broken'), isNull);
+      expect(store.liveStateForChannel('Pinned'), isNull);
+      expect(resolver.calls, hasLength(3));
+
+      await store.refreshChannelLivePreviews();
+      expect(resolver.calls, hasLength(3), reason: 'throttled');
+
+      await store.refreshChannelLivePreviews(force: true);
+      expect(resolver.calls, hasLength(6));
+    });
+  });
+}
+
+/// Answers per channel path: a video id (live), null (offline) or an
+/// exception to throw.
+class _ByPathResolver extends YouTubeLiveResolver {
+  final Map<String, Object?> answers;
+  final List<String> calls = <String>[];
+
+  _ByPathResolver(this.answers);
+
+  @override
+  Future<String?> resolveLiveVideoId(YouTubeChannelTarget channel) async {
+    this.calls.add(channel.path);
+    final answer = this.answers[channel.path];
+    if (answer is Exception) throw answer;
+    return answer as String?;
+  }
 }

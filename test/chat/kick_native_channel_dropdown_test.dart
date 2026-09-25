@@ -120,8 +120,33 @@ void main() {
         find.byKey(const Key('kick-channel-dropdown-live-bbb')),
         findsNothing,
       );
+      expect(
+        find.byKey(const Key('kick-channel-dropdown-offline-bbb')),
+        findsOneWidget,
+      );
     },
   );
+
+  testWidgets('slugs sort A–Z; the menu is height-capped', (tester) async {
+    store.channels.addAll(['zed', 'Alpha', 'mid']);
+
+    await tester.pumpWidget(
+      wrap(const Column(children: [KickNativeChannelDropdown()])),
+    );
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    double top(String text) => tester.getTopLeft(find.text(text).last).dy;
+    expect(top('Alpha'), lessThan(top('mid')));
+    expect(top('mid'), lessThan(top('zed')));
+    expect(
+      tester
+          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+          .menuMaxHeight,
+      kChatChannelMenuMaxHeight,
+    );
+  });
 
   testWidgets('no chip while the preview has not resolved yet', (tester) async {
     store.channels.add('aaa');

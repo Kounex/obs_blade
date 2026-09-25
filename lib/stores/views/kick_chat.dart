@@ -421,6 +421,11 @@ abstract class _KickChatStore with Store {
   bool isChannelLive(String slug) =>
       this.channelLivePreview[slug]?.isLive ?? false;
 
+  /// Picker live state of [slug]: true / false once its preview resolved,
+  /// null before.
+  bool? liveStateForChannel(String slug) =>
+      this.channelLivePreview[slug]?.isLive;
+
   /// Viewer count when [isChannelLive]; null when offline/unresolved.
   int? viewerCountForChannel(String slug) =>
       this.channelLivePreview[slug]?.viewerCount;

@@ -21,7 +21,9 @@ import 'dialogs/add_edit_kick_username.dart';
 /// Multi-chat channel picker for the native Kick chat bar — a fork of
 /// [YouTubeNativeChannelDropdown] bound to [KickChatStore] (the slugs of
 /// [SettingsKeys.KickUsernames]; slug == identity, shared with the WebView
-/// path). Open-menu rows show a LIVE chip (+ viewer count) from
+/// path). Own channel first, the rest A–Z; the menu scrolls past
+/// [kChatChannelMenuMaxHeight]. Open-menu rows show LIVE (+ viewer count)
+/// or OFFLINE from
 /// [KickChatStore.channelLivePreview] — a dedicated per-slug poll, since
 /// Kick has no Helix-style batch "which of these are live" endpoint like
 /// Twitch's. No Mod chip: Kick has no "am I a mod in this channel"
@@ -115,16 +117,13 @@ class KickNativeChannelDropdown extends StatelessWidget {
     );
   }
 
-  /// Open-menu row: name + LIVE chip when [KickChatStore.channelLivePreview]
-  /// has resolved [slug] as live. Menu width is locked to the dropdown
+  /// Open-menu row: name + LIVE / OFFLINE once
+  /// [KickChatStore.channelLivePreview] has resolved [slug]. Menu width is locked to the dropdown
   /// button (not the screen), so [Expanded] pushes the chip to that
   /// trailing edge without a fixed size — same idiom as the Twitch
   /// dropdown's `_menuRow`.
   Widget _menuRow(BuildContext context, KickChatStore store, String slug) {
-    final statusColors =
-        Theme.of(context).extension<AppStatusColors>() ??
-        AppStatusColors.standard;
-    final live = store.isChannelLive(slug);
+    final live = store.liveStateForChannel(slug);
     return Row(
       children: [
         Expanded(
@@ -134,13 +133,16 @@ class KickNativeChannelDropdown extends StatelessWidget {
             own: store.isOwnChannel(slug),
           ),
         ),
-        if (live) const SizedBox(width: AppSpacing.sm),
-        if (live)
-          NativeChatStatusChip.live(
-            key: Key('kick-channel-dropdown-live-$slug'),
-            color: statusColors.live,
+        if (live != null) ...[
+          const SizedBox(width: AppSpacing.sm),
+          NativeChatLiveTag(
+            key: Key(
+              'kick-channel-dropdown-${live ? 'live' : 'offline'}-$slug',
+            ),
+            live: live,
             viewerCount: store.viewerCountForChannel(slug),
           ),
+        ],
       ],
     );
   }
@@ -153,8 +155,16 @@ class KickNativeChannelDropdown extends StatelessWidget {
         final switching =
             store.chatConnection == KickChatConnectionState.connecting;
 
+        /// Own channel first, the rest A–Z.
+        final slugs = [...store.nativeChannels]
+          ..sort((a, b) {
+            final ownA = store.isOwnChannel(a);
+            if (ownA != store.isOwnChannel(b)) return ownA ? -1 : 1;
+            return compareChatChannelNames(a, b);
+          });
+
         final items = <DropdownMenuItem<String>>[
-          for (final slug in store.nativeChannels)
+          for (final slug in slugs)
             DropdownMenuItem<String>(
               value: slug,
               child: store.isOwnChannel(slug)
@@ -178,7 +188,7 @@ class KickNativeChannelDropdown extends StatelessWidget {
         ];
 
         final selectedBuilders = <Widget>[
-          for (final slug in store.nativeChannels)
+          for (final slug in slugs)
             this._channelLabel(context, slug, own: store.isOwnChannel(slug)),
           this._channelLabel(context, 'Add chat…'),
         ];
@@ -212,6 +222,7 @@ class KickNativeChannelDropdown extends StatelessWidget {
                     value: store.selectedChannelSlug,
                     isExpanded: true,
                     isDense: true,
+                    menuMaxHeight: kChatChannelMenuMaxHeight,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     icon: const Icon(Icons.arrow_drop_down),
                     items: items,

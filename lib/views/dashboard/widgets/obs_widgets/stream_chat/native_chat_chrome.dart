@@ -43,6 +43,11 @@ class NativeChatStatusChip extends StatelessWidget {
   factory NativeChatStatusChip.mod({Key? key}) =>
       NativeChatStatusChip(key: key, label: 'Mod');
 
+  /// Neutral OFFLINE chip — the counterpart of [NativeChatStatusChip.live]
+  /// in the channel pickers.
+  factory NativeChatStatusChip.offline({Key? key}) =>
+      NativeChatStatusChip(key: key, label: 'OFFLINE');
+
   @override
   Widget build(BuildContext context) {
     final Color? color = this.color;
@@ -106,6 +111,40 @@ class NativeChatStatusChip extends StatelessWidget {
             ),
     );
   }
+}
+
+/// Live state of a channel in the channel pickers: `LIVE · viewers` while
+/// on air, `OFFLINE` once known to be off air, nothing while unknown (not
+/// polled yet, lookup failed) — an unknown channel never claims offline.
+class NativeChatLiveTag extends StatelessWidget {
+  /// true = live, false = offline, null = unknown (renders nothing).
+  final bool? live;
+  final int? viewerCount;
+
+  const NativeChatLiveTag({super.key, required this.live, this.viewerCount});
+
+  @override
+  Widget build(BuildContext context) => switch (this.live) {
+    true => NativeChatStatusChip.live(
+      color:
+          (Theme.of(context).extension<AppStatusColors>() ??
+                  AppStatusColors.standard)
+              .live,
+      viewerCount: this.viewerCount,
+    ),
+    false => NativeChatStatusChip.offline(),
+    null => const SizedBox.shrink(),
+  };
+}
+
+/// Height cap of the channel pickers' open menus — longer lists scroll.
+const double kChatChannelMenuMaxHeight = 360.0;
+
+/// A–Z order of the channel pickers (case-insensitive; the own "You"
+/// entry is placed first by the callers, not by this).
+int compareChatChannelNames(String a, String b) {
+  final byName = a.toLowerCase().compareTo(b.toLowerCase());
+  return byName != 0 ? byName : a.compareTo(b);
 }
 
 /// The "You" marker on the signed-in account's own channel in the channel

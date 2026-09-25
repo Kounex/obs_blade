@@ -16,7 +16,8 @@ import '../native_chat_chrome.dart';
 /// Multi-chat channel picker for the native chat bar, in the
 /// [UsernameDropdown] idiom: the user's own channel first (marked "You"),
 /// then the added channels, and an "Add chat…" entry at the bottom (an
-/// action, not a selection). Open-menu rows show LIVE / Mod status chips
+/// action, not a selection). Open-menu rows (own first, then A–Z; the menu scrolls past
+/// [kChatChannelMenuMaxHeight]) show LIVE / OFFLINE + Mod chips
 /// (closed/selected value stays name-only — the header already mirrors
 /// the effective channel). Long-pressing an added channel offers removal
 /// (the selected channel falls back to own). Disabled while a switch is
@@ -78,10 +79,7 @@ class NativeChannelDropdown extends StatelessWidget {
     required String name,
     bool own = false,
   }) {
-    final statusColors =
-        Theme.of(context).extension<AppStatusColors>() ??
-        AppStatusColors.standard;
-    final live = store.isChannelLive(channelId);
+    final live = store.liveStateForChannel(channelId);
     final mod = store.canModerateChannel(channelId);
 
     /// Menu width is locked to the dropdown button (not the screen), so
@@ -106,14 +104,17 @@ class NativeChannelDropdown extends StatelessWidget {
             ],
           ),
         ),
-        if (live || mod) const SizedBox(width: AppSpacing.sm),
-        if (live)
-          NativeChatStatusChip.live(
-            key: Key('channel-dropdown-live-${channelId ?? 'own'}'),
-            color: statusColors.live,
+        if (live != null || mod) const SizedBox(width: AppSpacing.sm),
+        if (live != null)
+          NativeChatLiveTag(
+            key: Key(
+              'channel-dropdown-${live ? 'live' : 'offline'}-'
+              '${channelId ?? 'own'}',
+            ),
+            live: live,
             viewerCount: store.viewerCountForChannel(channelId),
           ),
-        if (live && mod) const SizedBox(width: AppSpacing.xs),
+        if (live != null && mod) const SizedBox(width: AppSpacing.xs),
         if (mod)
           NativeChatStatusChip.mod(
             key: Key('channel-dropdown-mod-${channelId ?? 'own'}'),
@@ -133,6 +134,12 @@ class NativeChannelDropdown extends StatelessWidget {
         final ownName =
             store.user?.displayName ?? store.user?.login ?? 'Own channel';
 
+        /// Own channel first, the rest A–Z.
+        final channels = [...store.channels]
+          ..sort(
+            (a, b) => compareChatChannelNames(a.displayName, b.displayName),
+          );
+
         final items = <DropdownMenuItem<String>>[
           DropdownMenuItem<String>(
             value: _kOwnValue,
@@ -144,7 +151,7 @@ class NativeChannelDropdown extends StatelessWidget {
               own: true,
             ),
           ),
-          for (final ref in store.channels)
+          for (final ref in channels)
             DropdownMenuItem<String>(
               value: ref.id,
               child: GestureDetector(
@@ -174,7 +181,7 @@ class NativeChannelDropdown extends StatelessWidget {
         /// for the effective channel, so they stay off the compact control.
         final selectedBuilders = <Widget>[
           this._channelLabel(context, name: ownName, own: true),
-          for (final ref in store.channels)
+          for (final ref in channels)
             this._channelLabel(context, name: ref.displayName),
           this._channelLabel(context, name: 'Add chat…'),
         ];
@@ -208,6 +215,7 @@ class NativeChannelDropdown extends StatelessWidget {
                     value: store.selectedChannelId ?? _kOwnValue,
                     isExpanded: true,
                     isDense: true,
+                    menuMaxHeight: kChatChannelMenuMaxHeight,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     icon: const Icon(Icons.arrow_drop_down),
                     items: items,
