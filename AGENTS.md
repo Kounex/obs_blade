@@ -179,7 +179,7 @@ against the channel's `user_id` and stored as `KickAuth.channelSlug`;
 native-only — its selection persists as `SelectedKickNativeOwnChannel`,
 not in the shared WebView keys).
 
-**Combined chat (waves 1-2 of 3, read-only):** `ChatType.Combined`
+**Combined chat (waves 1-3 shipped):** `ChatType.Combined`
 (HiveField 4, native-only — `isNativeOnly`, no engine switch) merges the
 signed-in "You" channels ("My chats") into one Pro-gated timeline.
 `CombinedChatStore` binds to the persisted chat type app-wide (created
@@ -198,7 +198,14 @@ suggestions (`CombinedMatchFinder`: Kick slug, YouTube `@handle` page,
 Twitch exact login — quota-free), combo dropdown in the chat bar, a
 source strip whose chips jump into one platform
 (`CombinedChatStore.focus` → "↩ Combined" strip on that window, no
-restore; YouTube `pausePolling` meanwhile). Next: wave 3 writing/mod.
+restore; YouTube `pausePolling` meanwhile). Wave 3 (writing):
+`CombinedChatInput` sends to `CombinedChatStore.sendTarget` — a pending
+reply's platform, else the target chip's pick (`CombinedChatSendTarget`),
+else the first writable source; the emote picker / autocomplete / accent
+follow the target. Long-press opens the row platform's own sheet (mod
+sheet where allowed, else Copy + Reply); the platform store is already on
+the row's channel (shared coupling), so its sheets act on the right
+channel as-is. `setReplyTarget` keeps one reply across stores.
 
 **General native chat (all 3 engines):** every store answers
 `isViewingOwnChannel` (the "You" entry — groundwork for the merged

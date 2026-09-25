@@ -2,6 +2,20 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-25 (afternoon) - Combined chat wave 3: writing
+
+- **Wave 3** (`08bef57e`): combined-view input dock with a target chip
+  (platform badge, chevron when more than one source is writable, "Send
+  to" sheet, pick persisted as `CombinedChatSendTarget`). The emote picker
+  (Twitch / Kick), autocomplete and accent follow the target. Long-press
+  routes to the row platform's own sheet (Twitch mod or Copy+Reply,
+  YouTube mod or Copy, Kick reply/mod or Copy); a reply locks the chip to
+  its platform, and picking another target drops it. Twitch mods can unpin
+  from the combined pin stack.
+- Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
+  hangs the whole file at teardown with "Cannot close sink while adding
+  stream". Wrap the tap in `tester.runAsync` and `flush()` the box.
+
 ## 2026-09-25 - Combined chat wave 2 + dogfood polish
 
 - **Dogfood polish on wave 1** (`e7c597fa`, `580fe8d3`): combined rows

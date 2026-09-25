@@ -107,16 +107,23 @@ session picks the entry up after a restart (backfill).
 (length stayed flat). User is watching for a recurrence; if it happens
 again, check whether rows still reach `TwitchChatStore.messages`.
 
-**Combined chat — waves 1 + 2 shipped, wave 2 not dogfooded yet.**
+**Combined chat — all three waves shipped; waves 2 + 3 not dogfooded yet.**
 Spec + plans in `docs/superpowers/{specs,plans}/2026-09-2*-combined-chat*`.
 Wave 2 dogfood checklist: chat bar combo dropdown → "New combined
-chat…" → pick a channel on one platform, suggestion chips appear for the
-others (tap to use), save; the new combo is selected and its channels
-now also appear in the single-platform dropdowns; long-press a combo →
+chat…" → pick a channel on one platform; suggestion chips appear for the
+others (tap to use), save. The new combo is selected, and its channels
+now also appear in the single-platform dropdowns. Long-press a combo →
 edit / delete. In the combined view, the source strip chips jump into
 that platform ("↩ Combined" strip there, YouTube pauses meanwhile);
-switching the chat type instead restores the pre-combo channels. Next:
-wave 3 (target picker, replies, mod actions in the combined view).
+switching the chat type instead restores the pre-combo channels.
+Wave 3 dogfood checklist (`08bef57e`): the combined view docks an input;
+the chip left of the field shows the target (chevron + "Send to" sheet
+when more than one source is writable), and the pick survives a restart.
+Send on each platform. Long-press a Twitch / Kick row → Reply: the chip
+locks to that platform, the reply strip shows, ✕ unlocks. Mod rows get
+the platform's mod sheet (delete / timeout / ban act on that platform
+only). Emote picker + autocomplete switch with the target (no emote
+button on YouTube).
 
 **Immediate next threads:**
 
