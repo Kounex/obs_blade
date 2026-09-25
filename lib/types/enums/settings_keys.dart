@@ -126,6 +126,10 @@ enum SettingsKeys {
   /// [String]: id of the combo the combined chat shows (`my` = "My chats")
   SelectedCombinedCombo,
 
+  /// [String]: `ChatType.name` the combined chat's input sends to when no
+  /// reply is pending (the user's last pick of the target chip)
+  CombinedChatSendTarget,
+
   /// [String]: The user's own Kick OAuth client id for the native Kick
   /// chat sign-in (manual-paste PKCE flow - Kick has no device flow) -
   /// falls back to the app-owned `kKickOAuthClientId` constant (empty
@@ -466,6 +470,7 @@ enum SettingsKeys {
     SettingsKeys.CombinedChatRestore: 'combined-chat-restore',
     SettingsKeys.CombinedChatCombos: 'combined-chat-combos',
     SettingsKeys.SelectedCombinedCombo: 'selected-combined-combo',
+    SettingsKeys.CombinedChatSendTarget: 'combined-chat-send-target',
     SettingsKeys.KickOAuthClientId: 'kick-oauth-client-id',
     SettingsKeys.KickOAuthClientSecret: 'kick-oauth-client-secret',
     SettingsKeys.TwitchChatBadgeBroadcaster: 'twitch-chat-badge-broadcaster',

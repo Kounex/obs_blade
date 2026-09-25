@@ -22,8 +22,10 @@ import 'chat_notice_visibility.dart';
 import 'chat_tombstone.dart';
 import 'chat_type_brand.dart';
 import 'dialogs/chat_user_card_sheet.dart';
+import 'dialogs/kick_mod_action_sheet.dart';
 import 'dialogs/kick_user_card_sheet.dart';
 import 'dialogs/mod_action_sheet.dart';
+import 'dialogs/youtube_mod_action_sheet.dart';
 import 'dialogs/youtube_user_card_sheet.dart';
 import 'kick_chat_message_row.dart';
 import 'kick_chat_notice_visibility.dart';
@@ -34,13 +36,19 @@ import 'twitch_chat_message_row.dart';
 import 'twitch_chat_notification_row.dart';
 import 'youtube_chat_message_row.dart';
 
-/// Read-only merged timeline of the "My chats" sources
+/// Merged timeline of the combined chat's sources
 /// ([CombinedChatStore.timeline]). Every row is rendered by its platform's
-/// own row widget behind a small brand-colored platform icon; long-press
-/// offers Copy only (writing / mod land in a later wave), author taps open
-/// the platform's user card.
+/// own row widget behind a small brand-colored platform icon. Long-press
+/// opens that platform's own sheet — the mod sheet where the account may
+/// moderate, else Copy (+ Reply on Twitch / Kick when it may write);
+/// actions run on the platform store, which the combo points at the
+/// row's channel. Author taps open the platform's user card.
 class NativeCombinedChatView extends StatefulWidget {
-  const NativeCombinedChatView({super.key});
+  /// Fired after a sheet's Reply sets the target — the host focuses the
+  /// input (whose target chip locks to the reply's platform).
+  final VoidCallback? onReplyTargetSet;
+
+  const NativeCombinedChatView({super.key, this.onReplyTargetSet});
 
   @override
   State<NativeCombinedChatView> createState() => _NativeCombinedChatViewState();
@@ -59,7 +67,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
   /// cap most of the time, so the tail changing is the arrival signal.
   String? _lastRenderedNewest;
 
-  /// Row under the open Copy sheet (hold wash).
+  /// Row under the open action sheet (hold wash).
   String? _actionTargetKey;
 
   CombinedChatStore get _store => GetIt.instance<CombinedChatStore>();
@@ -113,21 +121,74 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
     });
   }
 
-  Future<void> _openCopy(
-    String key, {
-    required String authorName,
-    required String text,
-  }) async {
+  /// Runs [open] with [key]'s row washed as the sheet's target.
+  Future<void> _withTarget(String key, Future<void> Function() open) async {
     this.setState(() => this._actionTargetKey = key);
     try {
-      await showMessageActionSheet(
-        this.context,
-        authorName: authorName,
-        messageText: text,
-      );
+      await open();
     } finally {
       if (this.mounted) this.setState(() => this._actionTargetKey = null);
     }
+  }
+
+  void _replyTo(Object payload) {
+    this._store.setReplyTarget(payload);
+    this.widget.onReplyTargetSet?.call();
+  }
+
+  /// Twitch: the mod sheet when moderating the source channel, else Copy
+  /// (+ Reply with write access) — same split as the Twitch view.
+  Future<void> _openTwitchActions(String key, ChatMessageEvent event) {
+    final twitch = GetIt.instance<TwitchChatStore>();
+    final onReply = twitch.canWriteChat ? () => this._replyTo(event) : null;
+    return this._withTarget(
+      key,
+      () => twitch.canModerateSelectedChannel
+          ? showModActionSheet(this.context, event, onReply: onReply)
+          : showMessageActionSheet(
+              this.context,
+              authorName: event.chatterUserName,
+              messageText: event.message.text,
+              userListName: event.chatterUserLogin,
+              onReply: onReply,
+            ),
+    );
+  }
+
+  /// YouTube: the mod sheet when signed in (a non-mod's action fails
+  /// honestly into its snackbar), else Copy. No replies on YouTube.
+  Future<void> _openYouTubeActions(String key, YouTubeChatMessage message) {
+    final youTube = GetIt.instance<YouTubeChatStore>();
+    return this._withTarget(
+      key,
+      () => youTube.canWrite
+          ? showYouTubeModActionSheet(this.context, message)
+          : showMessageActionSheet(
+              this.context,
+              authorName: message.authorName ?? 'YouTube',
+              messageText: message.copyText,
+            ),
+    );
+  }
+
+  /// Kick: reply / mod sheet when signed in (honest 403 for non-mods),
+  /// else Copy.
+  Future<void> _openKickActions(String key, KickChatMessage message) {
+    final kick = GetIt.instance<KickChatStore>();
+    return this._withTarget(
+      key,
+      () => kick.canWrite
+          ? showKickModActionSheet(
+              this.context,
+              message,
+              onReply: () => this._replyTo(message),
+            )
+          : showMessageActionSheet(
+              this.context,
+              authorName: message.authorName,
+              messageText: message.content,
+            ),
+    );
   }
 
   /// Stick-to-bottom bookkeeping, same contract as the platform views:
@@ -314,6 +375,9 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
                 messageId: twitchPin.messageId,
                 senderName: twitchPin.senderUserName,
                 text: twitchPin.message.text,
+                onUnpin: twitch.canModerateSelectedChannel
+                    ? twitch.unpinMessage
+                    : null,
               ),
             if (kickPin != null)
               CombinedPin(
@@ -404,11 +468,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
               showChatUserCardSheet(context, userId: userId),
           onMessageLongPress: deleted
               ? null
-              : () => this._openCopy(
-                  item.key,
-                  authorName: payload.chatterUserName,
-                  text: payload.message.text,
-                ),
+              : () => this._openTwitchActions(item.key, payload),
         );
       case YouTubeChatMessage():
         final channelId = payload.authorChannelId;
@@ -430,11 +490,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
                 ),
           onMessageLongPress: payload.isTombstoned || payload.copyText.isEmpty
               ? null
-              : () => this._openCopy(
-                  item.key,
-                  authorName: payload.authorName ?? 'YouTube',
-                  text: payload.copyText,
-                ),
+              : () => this._openYouTubeActions(item.key, payload),
         );
       case KickChatMessage():
         final kick = GetIt.instance<KickChatStore>();
@@ -456,11 +512,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
                 ),
           onMessageLongPress: payload.isTombstoned || system
               ? null
-              : () => this._openCopy(
-                  item.key,
-                  authorName: payload.authorName,
-                  text: payload.content,
-                ),
+              : () => this._openKickActions(item.key, payload),
         );
     }
     return const SizedBox.shrink();
@@ -605,11 +657,15 @@ class CombinedPin {
   final String senderName;
   final String text;
 
+  /// Set when the account may unpin (Twitch mods).
+  final Future<bool> Function()? onUnpin;
+
   const CombinedPin({
     required this.platform,
     required this.messageId,
     required this.senderName,
     required this.text,
+    this.onUnpin,
   });
 }
 
@@ -636,6 +692,7 @@ class CombinedPinStack extends StatelessWidget {
         messageId: pin.messageId,
         senderName: pin.senderName,
         text: pin.text,
+        onUnpin: pin.onUnpin,
         topOffset: i * kStackStep,
         leading: Icon(
           pin.platform.icon,

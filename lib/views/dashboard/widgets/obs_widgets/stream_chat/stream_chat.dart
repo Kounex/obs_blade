@@ -38,6 +38,7 @@ import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'chat_completion_sources.dart';
+import 'combined_chat_input.dart';
 import 'chat_emote_picker.dart';
 import 'kick_emote_picker.dart';
 import 'kick_chat_mode_strip.dart';
@@ -503,9 +504,9 @@ class _StreamChatState extends State<StreamChat>
   /// dispatch onto the Twitch / YouTube / Kick native chat windows.
   /// Verbatim the behavior before the entitlement gate existed.
   Widget _buildNativeChatSlot(BuildContext context, ChatType chatType) {
-    /// Combined: read-only merge of the "My chats" sources
-    /// ([CombinedChatStore] follows the chat type and points the platform
-    /// stores at them). No input dock yet.
+    /// Combined: merge of the combo's sources ([CombinedChatStore]
+    /// follows the chat type and points the platform stores at them). The
+    /// dock sends to the target chip's platform.
     if (chatType == ChatType.Combined) {
       return Observer(
         builder: (_) {
@@ -527,7 +528,16 @@ class _StreamChatState extends State<StreamChat>
                       onConnectTap: () => showCombinedSourcesSheet(context),
                     ),
                   )
-                : const NativeCombinedChatView(),
+                : NativeCombinedChatView(
+                    onReplyTargetSet: () =>
+                        this._chatInputFocusNode.requestFocus(),
+                  ),
+            input: combined.activeSources.isEmpty
+                ? null
+                : CombinedChatInput(
+                    controller: this._chatInputController,
+                    focusNode: this._chatInputFocusNode,
+                  ),
           );
         },
       );

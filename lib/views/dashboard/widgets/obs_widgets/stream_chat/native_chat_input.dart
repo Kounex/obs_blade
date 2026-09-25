@@ -65,6 +65,9 @@ class NativeChatInput extends StatefulWidget {
   final String lockedHintText;
   final String lockedActionText;
 
+  /// Placeholder of the text field (e.g. naming the send target).
+  final String hintText;
+
   const NativeChatInput({
     super.key,
     required this.canSend,
@@ -80,6 +83,7 @@ class NativeChatInput extends StatefulWidget {
     this.completionSource,
     this.lockedHintText = 'Logged in read-only',
     this.lockedActionText = 'Re-login to chat',
+    this.hintText = 'Send a message…',
   });
 
   @override
@@ -213,7 +217,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                   maxLength: 500,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => this._submit(),
-                  hintText: 'Send a message…',
+                  hintText: this.widget.hintText,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),

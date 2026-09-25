@@ -18,8 +18,10 @@ import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/kick/kick_auth_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/combined_chat_input.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_combined_chat_view.dart';
@@ -76,6 +78,32 @@ void main() {
     await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
     await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
     await Hive.openBox<KickAuth>(HiveKeys.KickAuth.name);
+
+    /// Write-scoped tokens on Kick + YouTube: a test opts into writing by
+    /// flipping the store's `authState` to signed in.
+    await Hive.box<KickAuth>(HiveKeys.KickAuth.name).put(
+      KickAuth.kBoxKey,
+      KickAuth(
+        accessToken: 'a',
+        refreshToken: 'r',
+        expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600000,
+        scopes: kKickChatScopes,
+        userId: 9001,
+        username: 'kicker',
+        channelSlug: 'kicker',
+      ),
+    );
+    await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).put(
+      YouTubeAuth.kBoxKey,
+      YouTubeAuth(
+        accessToken: 'a',
+        refreshToken: 'r',
+        expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600000,
+        scopes: kYouTubeChatScopes,
+        channelTitle: 'My Channel',
+        channelId: 'UCownchannel000000000000',
+      ),
+    );
 
     twitch = TwitchChatStore(
       authService: FakeTwitchAuthService(),
@@ -366,5 +394,102 @@ void main() {
     );
 
     expect(visible.map((i) => i.key), ['kick:k1']);
+  });
+
+  group('writing', () {
+    Widget view() => wrap(
+      Column(
+        children: [
+          const Expanded(child: NativeCombinedChatView()),
+          CombinedChatInput(
+            controller: TextEditingController(),
+            focusNode: FocusNode(),
+          ),
+        ],
+      ),
+    );
+
+    testWidgets('signed out everywhere: the dock is read-only', (tester) async {
+      await tester.pumpWidget(view());
+      await tester.pump();
+
+      expect(find.text('Chat is read-only'), findsOneWidget);
+      expect(find.byKey(const Key('combined-send-target')), findsNothing);
+    });
+
+    testWidgets('the target chip picks between writable sources', (
+      tester,
+    ) async {
+      kick.authState = KickAuthState.signedIn;
+      youTube.authState = YouTubeAuthState.signedIn;
+      await tester.pumpWidget(view());
+      await tester.pump();
+
+      /// Source order: YouTube before Kick in "My chats".
+      expect(find.text('Send to YouTube…'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('combined-send-target')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('combined-send-target-YouTube')), findsOne);
+
+      /// The pick persists to Hive — real I/O that never completes inside
+      /// testWidgets' fake-async zone; runAsync escapes it.
+      await tester.runAsync(() async {
+        await tester.tap(find.byKey(const Key('combined-send-target-Kick')));
+        await Hive.box(HiveKeys.Settings.name).flush();
+      });
+      await tester.pumpAndSettle();
+
+      expect(combined.sendTarget, ChatType.Kick);
+      expect(find.text('Send to Kick…'), findsOneWidget);
+    });
+
+    testWidgets('long-press a Kick row → Reply locks the target to Kick', (
+      tester,
+    ) async {
+      kick.authState = KickAuthState.signedIn;
+      youTube.authState = YouTubeAuthState.signedIn;
+      kick.messages.add(kickMessage('k1', 'kick line', at(1)));
+      await tester.pumpWidget(view());
+      await tester.pump();
+      expect(combined.sendTarget, ChatType.YouTube);
+
+      await tester.longPress(find.textContaining('kick line'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reply'));
+      await tester.pumpAndSettle();
+
+      expect(kick.replyTarget?.id, 'k1');
+      expect(combined.sendTarget, ChatType.Kick);
+      expect(find.textContaining('Replying to'), findsOneWidget);
+
+      /// Locked: the chip doesn't open the picker while replying.
+      await tester.tap(find.byKey(const Key('combined-send-target')));
+      await tester.pumpAndSettle();
+      expect(find.text('Send to'), findsNothing);
+
+      /// ✕ on the strip drops the reply; the pick applies again.
+      await tester.tap(find.byIcon(CupertinoIcons.xmark).last);
+      await tester.pump();
+      expect(kick.replyTarget, isNull);
+      expect(combined.sendTarget, ChatType.YouTube);
+    });
+
+    testWidgets('signed out on Kick: long-press offers Copy, no Reply', (
+      tester,
+    ) async {
+      await tester.runAsync(
+        () => Hive.box<KickAuth>(HiveKeys.KickAuth.name).clear(),
+      );
+      kick.messages.add(kickMessage('k1', 'kick line', at(1)));
+      await tester.pumpWidget(view());
+      await tester.pump();
+
+      await tester.longPress(find.textContaining('kick line'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Copy'), findsWidgets);
+      expect(find.text('Reply'), findsNothing);
+    });
   });
 }

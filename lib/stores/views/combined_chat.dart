@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/combined/combined_combo.dart';
+import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
@@ -407,6 +408,128 @@ abstract class _CombinedChatStore with Store {
     ];
   }
 
+  /// The user's last pick of the input's target chip (persisted as
+  /// [SettingsKeys.CombinedChatSendTarget]); only honored while that
+  /// platform is writable.
+  @observable
+  ChatType? sendTargetChoice;
+
+  /// Active sources the signed-in accounts may write to, in source order —
+  /// what the target chip offers.
+  @computed
+  List<ChatType> get writableTargets => [
+    for (final source in this.activeSources)
+      if (!source.unavailable && this._canWrite(source.platform))
+        source.platform,
+  ];
+
+  bool _canWrite(ChatType platform) => switch (platform) {
+    ChatType.Twitch => this._twitch().isLoggedIn && this._twitch().canWriteChat,
+    ChatType.YouTube =>
+      this._youTube().isSignedInState && this._youTube().canWrite,
+    ChatType.Kick => this._kick().isSignedInState && this._kick().canWrite,
+    ChatType.Owncast || ChatType.Combined => false,
+  };
+
+  /// The platform with a pending reply (Twitch / Kick — YouTube has no
+  /// replies), when it is a writable source here.
+  @computed
+  ChatType? get replyPlatform {
+    final writable = this.writableTargets;
+    if (writable.contains(ChatType.Twitch) &&
+        this._twitch().replyTarget != null) {
+      return ChatType.Twitch;
+    }
+    if (writable.contains(ChatType.Kick) && this._kick().replyTarget != null) {
+      return ChatType.Kick;
+    }
+    return null;
+  }
+
+  /// Where the input sends: a pending reply's platform, else the user's
+  /// last pick, else the first writable source. Null = nothing writable.
+  @computed
+  ChatType? get sendTarget {
+    final writable = this.writableTargets;
+    if (writable.isEmpty) return null;
+    final reply = this.replyPlatform;
+    if (reply != null) return reply;
+    final choice = this.sendTargetChoice;
+    if (choice != null && writable.contains(choice)) return choice;
+    return writable.first;
+  }
+
+  /// The target store's send state (dock spinner / error line).
+  @computed
+  bool get sendingChat => switch (this.sendTarget) {
+    ChatType.Twitch => this._twitch().sendingChat,
+    ChatType.YouTube => this._youTube().sendingChat,
+    ChatType.Kick => this._kick().sendingChat,
+    _ => false,
+  };
+
+  @computed
+  String? get sendChatError => switch (this.sendTarget) {
+    ChatType.Twitch => this._twitch().sendChatError,
+    ChatType.YouTube => this._youTube().sendChatError,
+    ChatType.Kick => this._kick().sendChatError,
+    _ => null,
+  };
+
+  /// Pick the target chip's platform (remembered across sessions). A
+  /// pending reply elsewhere is dropped — the reply locks its platform.
+  @action
+  void selectSendTarget(ChatType platform) {
+    this._ensureSettingsLoaded();
+    if (platform != this.replyPlatform) this.clearReplyTarget();
+    this.sendTargetChoice = platform;
+    try {
+      Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.CombinedChatSendTarget.name, platform.name);
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat send target persist failed - $e');
+    }
+  }
+
+  /// Reply to a merged-timeline message: its platform's store takes the
+  /// target (and sends it along), any other platform's pending reply is
+  /// dropped so only one reply strip shows.
+  @action
+  void setReplyTarget(Object payload) {
+    switch (payload) {
+      case ChatMessageEvent():
+        this._kick().clearReplyTarget();
+        this._twitch().setReplyTarget(payload);
+      case KickChatMessage():
+        this._twitch().clearReplyTarget();
+        this._kick().setReplyTarget(payload);
+    }
+  }
+
+  @action
+  void clearReplyTarget() {
+    this._twitch().clearReplyTarget();
+    this._kick().clearReplyTarget();
+  }
+
+  /// Send [text] to [sendTarget] (with its pending reply). Never throws;
+  /// failures surface in [sendChatError].
+  Future<bool> send(String text) async {
+    switch (this.sendTarget) {
+      case ChatType.Twitch:
+        return this._twitch().sendChatMessage(text);
+      case ChatType.YouTube:
+        return this._youTube().sendChatMessage(text);
+      case ChatType.Kick:
+        return this._kick().sendChatMessage(text);
+      case ChatType.Owncast:
+      case ChatType.Combined:
+      case null:
+        return false;
+    }
+  }
+
   /// Jump from the combined view into [platform]'s own chat, still on the
   /// combo's channel ("↩ Combined" brings the user back). The other
   /// sources stay selected: Twitch / Kick keep running, YouTube pauses.
@@ -653,6 +776,16 @@ abstract class _CombinedChatStore with Store {
       }
     } catch (e) {
       GeneralHelper.advLog('Combined chat restore load failed - $e');
+    }
+    try {
+      final target = Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.CombinedChatSendTarget.name);
+      for (final type in ChatType.values) {
+        if (type.name == target) this.sendTargetChoice = type;
+      }
+    } catch (e) {
+      GeneralHelper.advLog('Combined chat send target load failed - $e');
     }
     try {
       final raw = Hive.box(

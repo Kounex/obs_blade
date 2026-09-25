@@ -101,6 +101,7 @@ void main() {
     late YouTubeChatStore youTube;
     late KickChatStore kick;
     late FakeKickChannelService kickChannels;
+    late FakeKickApiService kickApi;
     late CombinedChatStore store;
 
     Box settingsBox() => Hive.box(HiveKeys.Settings.name);
@@ -167,7 +168,7 @@ void main() {
       kick = KickChatStore(
         channelService: kickChannels,
         authService: FakeKickAuthService(),
-        apiService: FakeKickApiService(),
+        apiService: kickApi = FakeKickApiService(),
         isProResolver: () => true,
         pusherFactory: ({required onEvent, required onStateChanged}) =>
             FakeKickPusherService(
@@ -517,6 +518,78 @@ void main() {
         store.sourceStatus[ChatType.YouTube],
         CombinedSourceStatus.offline,
       );
+    });
+
+    group('writing', () {
+      test('the target defaults to the first writable source and the pick '
+          'persists', () async {
+        await store.activate();
+
+        expect(store.writableTargets, [ChatType.YouTube, ChatType.Kick]);
+        expect(store.sendTarget, ChatType.YouTube);
+
+        store.selectSendTarget(ChatType.Kick);
+        expect(store.sendTarget, ChatType.Kick);
+        expect(
+          settingsBox().get(SettingsKeys.CombinedChatSendTarget.name),
+          'Kick',
+        );
+
+        final fresh = CombinedChatStore(
+          twitchStore: () => twitch,
+          youTubeStore: () => youTube,
+          kickStore: () => kick,
+        );
+        await fresh.activate();
+        expect(fresh.sendTarget, ChatType.Kick);
+      });
+
+      test('a pick that is not writable falls back', () async {
+        await store.activate();
+        store.selectSendTarget(ChatType.Kick);
+        await store.setPlatformEnabled(ChatType.Kick, false);
+
+        expect(store.sendTarget, ChatType.YouTube);
+      });
+
+      test('a reply locks the target to its platform; picking another '
+          'target drops it', () async {
+        await store.activate();
+        final message = kickMessage('k1', DateTime.utc(2026, 9, 25));
+
+        store.setReplyTarget(message);
+        expect(kick.replyTarget, same(message));
+        expect(store.replyPlatform, ChatType.Kick);
+        expect(store.sendTarget, ChatType.Kick);
+
+        store.selectSendTarget(ChatType.YouTube);
+        expect(kick.replyTarget, isNull);
+        expect(store.sendTarget, ChatType.YouTube);
+      });
+
+      test('send goes to the target store with its reply', () async {
+        await store.activate();
+        await until(
+          () => kick.chatConnection == KickChatConnectionState.connected,
+        );
+        store.setReplyTarget(kickMessage('k1', DateTime.utc(2026, 9, 25)));
+
+        expect(await store.send('hello kick'), isTrue);
+
+        expect(kickApi.sendCalls.single.content, 'hello kick');
+        expect(kickApi.sendCalls.single.replyToMessageId, 'k1');
+        expect(kickApi.sendCalls.single.broadcasterUserId, 9001);
+        expect(kick.replyTarget, isNull);
+      });
+
+      test('nothing writable: no target, send refuses', () async {
+        await store.setPlatformEnabled(ChatType.Kick, false);
+        await store.setPlatformEnabled(ChatType.YouTube, false);
+        await store.activate();
+
+        expect(store.sendTarget, isNull);
+        expect(await store.send('hi'), isFalse);
+      });
     });
   });
 }

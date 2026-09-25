@@ -57,6 +57,43 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
         () => super.timeline,
         name: '_CombinedChatStore.timeline',
       )).value;
+  Computed<List<ChatType>>? _$writableTargetsComputed;
+
+  @override
+  List<ChatType> get writableTargets =>
+      (_$writableTargetsComputed ??= Computed<List<ChatType>>(
+        () => super.writableTargets,
+        name: '_CombinedChatStore.writableTargets',
+      )).value;
+  Computed<ChatType?>? _$replyPlatformComputed;
+
+  @override
+  ChatType? get replyPlatform =>
+      (_$replyPlatformComputed ??= Computed<ChatType?>(
+        () => super.replyPlatform,
+        name: '_CombinedChatStore.replyPlatform',
+      )).value;
+  Computed<ChatType?>? _$sendTargetComputed;
+
+  @override
+  ChatType? get sendTarget => (_$sendTargetComputed ??= Computed<ChatType?>(
+    () => super.sendTarget,
+    name: '_CombinedChatStore.sendTarget',
+  )).value;
+  Computed<bool>? _$sendingChatComputed;
+
+  @override
+  bool get sendingChat => (_$sendingChatComputed ??= Computed<bool>(
+    () => super.sendingChat,
+    name: '_CombinedChatStore.sendingChat',
+  )).value;
+  Computed<String?>? _$sendChatErrorComputed;
+
+  @override
+  String? get sendChatError => (_$sendChatErrorComputed ??= Computed<String?>(
+    () => super.sendChatError,
+    name: '_CombinedChatStore.sendChatError',
+  )).value;
 
   late final _$activeAtom = Atom(
     name: '_CombinedChatStore.active',
@@ -130,6 +167,24 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
     });
   }
 
+  late final _$sendTargetChoiceAtom = Atom(
+    name: '_CombinedChatStore.sendTargetChoice',
+    context: context,
+  );
+
+  @override
+  ChatType? get sendTargetChoice {
+    _$sendTargetChoiceAtom.reportRead();
+    return super.sendTargetChoice;
+  }
+
+  @override
+  set sendTargetChoice(ChatType? value) {
+    _$sendTargetChoiceAtom.reportWrite(value, super.sendTargetChoice, () {
+      super.sendTargetChoice = value;
+    });
+  }
+
   late final _$activateAsyncAction = AsyncAction(
     '_CombinedChatStore.activate',
     context: context,
@@ -198,6 +253,42 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
   );
 
   @override
+  void selectSendTarget(ChatType platform) {
+    final _$actionInfo = _$_CombinedChatStoreActionController.startAction(
+      name: '_CombinedChatStore.selectSendTarget',
+    );
+    try {
+      return super.selectSendTarget(platform);
+    } finally {
+      _$_CombinedChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setReplyTarget(Object payload) {
+    final _$actionInfo = _$_CombinedChatStoreActionController.startAction(
+      name: '_CombinedChatStore.setReplyTarget',
+    );
+    try {
+      return super.setReplyTarget(payload);
+    } finally {
+      _$_CombinedChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void clearReplyTarget() {
+    final _$actionInfo = _$_CombinedChatStoreActionController.startAction(
+      name: '_CombinedChatStore.clearReplyTarget',
+    );
+    try {
+      return super.clearReplyTarget();
+    } finally {
+      _$_CombinedChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void focus(ChatType platform) {
     final _$actionInfo = _$_CombinedChatStoreActionController.startAction(
       name: '_CombinedChatStore.focus',
@@ -228,12 +319,18 @@ active: ${active},
 disabledPlatforms: ${disabledPlatforms},
 selectedComboId: ${selectedComboId},
 focusedPlatform: ${focusedPlatform},
+sendTargetChoice: ${sendTargetChoice},
 selectedCombo: ${selectedCombo},
 activeSources: ${activeSources},
 mySources: ${mySources},
 availableSources: ${availableSources},
 sourceStatus: ${sourceStatus},
-timeline: ${timeline}
+timeline: ${timeline},
+writableTargets: ${writableTargets},
+replyPlatform: ${replyPlatform},
+sendTarget: ${sendTarget},
+sendingChat: ${sendingChat},
+sendChatError: ${sendChatError}
     ''';
   }
 }
