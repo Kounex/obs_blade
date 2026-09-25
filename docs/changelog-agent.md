@@ -49,6 +49,12 @@ Running log of upgrade/migration work. Not store release notes.
   it moderates the combo channel), each tab the platform's own panel
   (`ChannelModSheet(embedded: true)` for Twitch). Shared rows:
   `dialogs/channel_mod_chrome.dart`. Poll creation is untested live.
+  Dogfood follow-up: the combined sheet always shows one tab per source
+  (the shield too, whenever the combo has sources). A tab that can't be
+  moderated (`combinedModBlock`: not set up / signed out / old Twitch
+  scopes / not a Twitch mod / unavailable) dims with a lock and explains
+  why, offers the fix (reusing `combinedSourceFix`) and lists what that
+  platform's mods could do (`kCombinedModCapabilities`).
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

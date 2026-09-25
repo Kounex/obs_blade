@@ -234,8 +234,8 @@ class ChatUsernameBar extends StatelessWidget {
 /// a refused action toasts why ([chatNotModeratorText]). The shield drops
 /// first when the cluster doesn't fit.
 ///
-/// Combined: shield (when any source is moderatable, tabbed sheet) +
-/// options.
+/// Combined: shield (whenever the combo has sources — its tabbed sheet
+/// explains per platform) + options.
 class _NativeRightCluster extends StatelessWidget {
   final ChatType chatType;
 
@@ -248,9 +248,10 @@ class _NativeRightCluster extends StatelessWidget {
     if (this.chatType == ChatType.Combined) {
       return Observer(
         builder: (_) {
-          final canMod = combinedModPlatforms(
-            GetIt.instance<CombinedChatStore>(),
-          ).isNotEmpty;
+          /// Always with sources: the sheet's per-platform tabs explain
+          /// what can't be moderated and why.
+          final canMod =
+              GetIt.instance<CombinedChatStore>().activeSources.isNotEmpty;
           return Row(
             mainAxisSize: MainAxisSize.min,
             children: [

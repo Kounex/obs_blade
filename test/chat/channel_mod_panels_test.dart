@@ -182,9 +182,7 @@ void main() {
       ChatBanEntry(userId: 'chan-9', userName: 'spam', at: DateTime(2026)),
     );
     youTube.selectedChannelLabel = 'Friend';
-    await tester.pumpWidget(
-      wrap(YouTubeChannelModPanel(onToast: toasts.add)),
-    );
+    await tester.pumpWidget(wrap(YouTubeChannelModPanel(onToast: toasts.add)));
 
     expect(find.text('spam'), findsOneWidget);
     expect(find.byKey(const Key('channel-mod-unban-chan-9')), findsNothing);
@@ -196,35 +194,78 @@ void main() {
     expect(find.text('Polls need a live chat.'), findsOneWidget);
   });
 
-  testWidgets('combined: one tab per moderatable source; switching tabs '
-      'swaps the panel', (tester) async {
-    expect(combinedModPlatforms(combined), [ChatType.YouTube, ChatType.Kick]);
+  testWidgets('combined: every source gets a tab; a blocked one explains '
+      'why, offers the fix and lists what mods could do', (tester) async {
+    /// The reported case: a random streamer's combo, YouTube not set up.
+    youTube.authState = YouTubeAuthState.unconfigured;
+    await tester.pumpWidget(wrap(CombinedChannelModSheet(onToast: toasts.add)));
 
-    await tester.pumpWidget(
-      wrap(CombinedChannelModSheet(onToast: toasts.add)),
-    );
-
+    expect(combinedModPlatforms(combined), [ChatType.Kick]);
     expect(find.byKey(const Key('combined-mod-tab-YouTube')), findsOneWidget);
     expect(find.byKey(const Key('combined-mod-tab-Kick')), findsOneWidget);
-    expect(find.byKey(const Key('combined-mod-tab-Twitch')), findsNothing);
-    expect(find.byType(YouTubeChannelModPanel), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('combined-mod-tab-Kick')));
+    /// Opens on the first moderatable tab.
+    expect(find.byType(KickChannelModPanel), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('combined-mod-tab-YouTube')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(KickChannelModPanel), findsOneWidget);
     expect(find.byType(YouTubeChannelModPanel), findsNothing);
+    expect(
+      find.byKey(const Key('combined-mod-blocked-YouTube')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('isn\'t set up yet'), findsOneWidget);
+    expect(find.byKey(const Key('combined-mod-fix-YouTube')), findsOneWidget);
+    expect(
+      find.text(kCombinedModCapabilities[ChatType.YouTube]!),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('combined: a single moderatable source shows no tab strip', (
+  testWidgets('combined: nothing moderatable still shows the tabs', (
     tester,
   ) async {
     youTube.authState = YouTubeAuthState.signedOut;
-    await tester.pumpWidget(
-      wrap(CombinedChannelModSheet(onToast: toasts.add)),
-    );
+    kick.authState = KickAuthState.signedOut;
+    await tester.pumpWidget(wrap(CombinedChannelModSheet(onToast: toasts.add)));
 
-    expect(find.byKey(const Key('combined-mod-tab-Kick')), findsNothing);
-    expect(find.byType(KickChannelModPanel), findsOneWidget);
+    expect(combinedModPlatforms(combined), isEmpty);
+    expect(find.byKey(const Key('combined-mod-tab-YouTube')), findsOneWidget);
+    expect(find.byKey(const Key('combined-mod-tab-Kick')), findsOneWidget);
+    expect(
+      find.byKey(const Key('combined-mod-blocked-YouTube')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Sign in to YouTube'), findsWidgets);
+  });
+
+  test('combined: a Twitch source the account doesn\'t moderate is '
+      'blocked as not-a-moderator', () async {
+    final source = CombinedSource(
+      platform: ChatType.Twitch,
+      key: 'chan-1',
+      label: 'Streamer',
+    );
+    twitch.authState = TwitchAuthState.loggedIn;
+    twitch.user = FakeTwitchAuthService.user;
+    await Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name).put(
+      TwitchAuth.kBoxKey,
+      TwitchAuth(
+        accessToken: 'a',
+        refreshToken: 'r',
+        expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600000,
+        scopes: const [
+          'moderator:manage:chat_messages',
+          'moderator:manage:banned_users',
+        ],
+      ),
+    );
+    twitch.selectedChannelId = 'chan-1';
+
+    expect(combinedModBlock(source), CombinedModBlock.notModerator);
+
+    twitch.moderatedChannelIds.add('chan-1');
+    expect(combinedModBlock(source), isNull);
   });
 }
