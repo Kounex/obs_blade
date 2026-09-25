@@ -210,15 +210,23 @@ Channel mod sheets: Twitch (full Helix), Kick (`KickChannelModPanel`:
 modes read-only, session bans + unban, unban by name), YouTube
 (`YouTubeChannelModPanel`: polls, session bans, owner-only moderators);
 Kick/YouTube shields show whenever signed in (no mod lookup) and 403s
-toast `chatNotModeratorText`. Combined: `CombinedChannelModSheet` tabs
-per moderatable source. Kick/YouTube have no ban-list APIs — the
-`recentBans` lists are what the session saw.
+toast `chatNotModeratorText`. Combined: `CombinedChannelModSheet` —
+always one tab per source; a tab that can't be moderated
+(`combinedModBlock`) explains why + offers the fix. Kick/YouTube have no
+ban-list APIs — the `recentBans` lists are what the session saw.
 Status language: "LIVE" / the live green = streamer on air only;
 connection health is quiet when fine and only surfaces as a problem
 marker (`CombinedIssueMarker`) or label.
 Channel pickers everywhere: own first then A–Z, menu capped at
 `kChatChannelMenuMaxHeight`, `NativeChatLiveTag` (LIVE / OFFLINE /
-nothing when unknown) from each store's `liveStateForChannel`.
+nothing when unknown) from each store's `liveStateForChannel`; the
+combo switcher shows on-air state for every combo
+(`CombinedChatStore.liveSourcesOf`). Live data cadence: Twitch Helix
+batch 10 s + EventSub `stream.online/offline`; Kick 15 s for the
+selected channel (60 s list) + Pusher `channel.{id}` on/off-air events;
+YouTube viewers 30 s (quota) — constants `kTwitchLivePollInterval`,
+`kKickSelectedLiveInterval` / `kKickListLiveInterval`,
+`kViewerRefreshInterval`.
 
 **General native chat (all 3 engines):** every store answers
 `isViewingOwnChannel` (the "You" entry — groundwork for the merged

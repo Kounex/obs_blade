@@ -1,6 +1,6 @@
 # Combined chat (Twitch + YouTube + Kick) — design
 
-**Date:** 2026-09-24 · **Status:** design, awaiting user review · **Process
+**Date:** 2026-09-24 · **Status:** shipped (waves 1–3, 2026-09-25; later polish in `changelog-agent.md`) · **Process
 tier:** L (multi-day, touches all three chat stores + persistence) — full
 SDD per `docs/superpowers/plan-defect-checklist.md` §0 once the plan exists.
 

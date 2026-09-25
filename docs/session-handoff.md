@@ -2,11 +2,11 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-24** (end of
-the Chatterino-wave session: research + YouTube channel-follow + six
-Chatterino ports, then dogfood follow-ups — pinned sheet headers, "New
-messages" divider, optional YouTube entry name. 12 commits, pushed,
-deployed to Kounex iOS. Details: `changelog-agent.md` 2026-09-24 entries).
+Read this first after `AGENTS.md`. Last reset: **2026-09-25** (end of
+the combined-chat session: combined chat waves 1–3, channel mod sheets,
+picker live tags, status-language cleanup, faster live data. ~47
+commits, pushed, deployed to Kounex iOS, user-approved on device.
+Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 
 ## Handoff hygiene (read before editing this file)
 
@@ -57,126 +57,105 @@ source of truth; never leave work local-only when handing over.
 
 ## Right now
 
-**Just closed: the chat session** (NAS, tier S, `12fa6d86..7f61c351`, all
-pushed; the workstation is on `7f61c351` and "Kounex iOS" runs that
-release build with `PRO_RELEASE_TEST_UNLOCK` + the Kick OAuth defines —
-recipe in `docs/private/maintainer-workflow.md` § Dogfood release).
-Research + verdict table: [`chatterino-comparison.md`](chatterino-comparison.md).
+**Just closed: the combined-chat session** (NAS, 2026-09-24 → 25,
+`82fd1c66..HEAD`, all pushed; the workstation is on the same commit and
+"Kounex iOS" runs that release build with `PRO_RELEASE_TEST_UNLOCK` +
+the Kick OAuth defines — recipe in `docs/private/maintainer-workflow.md`
+§ Dogfood release). What shipped (details: `changelog-agent.md`
+2026-09-24 / 25 entries, rules: `AGENTS.md` § Combined chat):
 
-**On the device, user-approved so far:** the wave overall ("very good"),
-pinned sheet headers + "New messages" divider (requested and shipped),
-optional YouTube name (shipped after a correction: auto-names never carry
-an `@`). **Not explicitly confirmed yet:** YouTube channel auto-rollover
-across a real stream end, Twitch history backfill, autocomplete strip,
-readability toggles, FFZ / zero-width emotes, highlighted/ignored users +
-censor mode. Ask for feedback on these first.
+- **Combined chat, waves 1–3** — merged Twitch + YouTube + Kick timeline,
+  "My chats" + saved combos (builder, same-name suggestions, switcher),
+  focus jump + "↩ Combined", writing (target chip, replies, per-platform
+  long-press sheets, emotes/autocomplete follow the target).
+- **Channel mod sheets** for Kick + YouTube (shield always shown while
+  signed in; 403 → "not a moderator" toast) and a **tabbed** combined
+  mod sheet (one tab per source, blocked tabs explain why + fix).
+- **Channel pickers**: own first then A–Z, height-capped + scrolling,
+  LIVE · viewers / OFFLINE tags everywhere (YouTube via the quota-free
+  `/live` check).
+- **Status language**: "LIVE" / live green = streamer on air only;
+  connection health is quiet (problem markers only). On-air rings + LIVE
+  pip on badges, `LIVE · n · viewers` summary, every combo in the
+  switcher shows who's live.
+- **Live data**: Twitch poll 10 s + EventSub `stream.online/offline`;
+  Kick 15 s for the channel on screen (60 s list) + `channel.{id}`
+  `StreamerIsLive` / `StopStreamBroadcast`; YouTube viewers every 30 s.
 
-**Chat conventions established this session (keep them):**
-- Sheets: handle + title + back chevron pinned, only the body scrolls —
-  build new sheets on `NativeChatSheetScaffold`.
-- History rows: `isHistorical` on every engine's message model, dimmed
-  via `kChatHistoryOpacity`, `ChatHistoryDivider` in the platform color.
-- Shared filter reads go through `ChatFilterSettings`; appearance reads
-  through `NativeChatAppearance`.
-- Network-facing helpers get a live smoke as a throwaway `flutter test`
-  file with an explicit `http.Client()` (plain `dart run` can't compile
-  anything importing the freezed chat models) — the YouTube resolver's
-  first two versions passed unit tests and failed live.
+**Dogfood status:** the user reports everything **currently good** on
+device (end of session). Nothing open from this session; the user will
+report findings. **Unverified against live services** (only fakes /
+docs so far) — watch these first when feedback arrives:
+- Kick `StreamerIsLive` / `StopStreamBroadcast` push: the `channel.{id}`
+  subscription is verified live, an actual go-live event is not
+  captured yet (fallback: the 15 s refresh).
+- YouTube poll start/end + moderator list/add/remove (docs-built).
+- Twitch `stream.online` / `stream.offline` EventSub (standard, but first
+  use in this app).
 
-**Store/Pro state:** products exist on both stores with locked regionalized
-pricing **$4.99/mo, $49.99/yr, $99.99 lifetime** (ASC 175/175 territories,
-Play 173/173 regions). ASC products SUBMITTED for review 2026-09-08
-(review screenshots uploaded) — watch for approval; Play products ACTIVE.
-RevenueCat path is live (`pro` entitlement; keys pasted). Open: verify Play
-RTDN test notification (Pub/Sub perms — service account admin again, retry);
-sandbox dogfood per `revenuecat-setup.md` §5; enroll Apple Small Business
-Program. Google developer verification DONE (`com.kounex.obsBlade`
-Registered); upload key A6:24:44 still "in review" — after it resolves:
-delete `android/app/src/main/assets/adi-registration.properties` and
-discard Play internal-track draft `3.3.0 (2026090701)`.
-
-**This session (2026-09-24 evening, NAS, tier S):** own "You" chat on
-native Kick + YouTube (`dd4f4f1a`) and centered chat placeholders
-(`ba5190e5`) — details in `changelog-agent.md`. **Not dogfooded yet**:
-check on device that signing in to Kick / YouTube adds the "You" entry
-(Kick: a username with `_` should resolve its `-` slug) and that an older
-session picks the entry up after a restart (backfill).
-
-**Twitch "stall" after an announcement — probable fix shipped**
-(`c8c48713`): at the 500-row cap the views stopped following new rows
-(length stayed flat). User is watching for a recurrence; if it happens
-again, check whether rows still reach `TwitchChatStore.messages`.
-
-**Combined chat — all three waves shipped; waves 2 + 3 not dogfooded yet.**
-Spec + plans in `docs/superpowers/{specs,plans}/2026-09-2*-combined-chat*`.
-Wave 2 dogfood checklist: chat bar combo dropdown → "New combined
-chat…" → pick a channel on one platform; suggestion chips appear for the
-others (tap to use), save. The new combo is selected, and its channels
-now also appear in the single-platform dropdowns. Long-press a combo →
-edit / delete. In the combined view, the source strip chips jump into
-that platform ("↩ Combined" strip there, YouTube pauses meanwhile —
-jump + back **confirmed on device 2026-09-25**; the strip now stays up
-on an empty timeline and shows a LIVE · viewers tag per live streamer
-next to the chat dot);
-switching the chat type instead restores the pre-combo channels.
-Wave 3 dogfood checklist (`08bef57e`): the combined view docks an input;
-the chip left of the field shows the target (chevron + "Send to" sheet
-when more than one source is writable), and the pick survives a restart.
-Send on each platform. Long-press a Twitch / Kick row → Reply: the chip
-locks to that platform, the reply strip shows, ✕ unlocks. Mod rows get
-the platform's mod sheet (delete / timeout / ban act on that platform
-only). Emote picker + autocomplete switch with the target (no emote
-button on YouTube).
-
-**Channel mod sheets (`dfb8f0a3`, not dogfooded):** shield on Kick /
-YouTube whenever signed in, tabbed shield in Combined. Check: Kick bans
-list fills from another mod's ban + Unban / unban by name; a non-mod
-action toasts "not a moderator"; YouTube poll start/end (never run
-against the live API yet), "Make moderator" + moderator list on the own
-channel while live; Combined tabs per platform.
+**Store/Pro state (unchanged):** products on both stores at **$4.99/mo,
+$49.99/yr, $99.99 lifetime**; ASC products submitted 2026-09-08 — watch
+for approval; Play products ACTIVE; RevenueCat live (`pro`). Open: Play
+RTDN test notification (Pub/Sub perms), sandbox dogfood per
+`revenuecat-setup.md` §5, Apple Small Business Program. Upload key
+A6:24:44 still "in review" — after it resolves, delete
+`android/app/src/main/assets/adi-registration.properties` and discard
+Play internal-track draft `3.3.0 (2026090701)`.
 
 **Immediate next threads:**
 
-1. Dogfood: the full-buffer scroll fix (`c8c48713`, likely the
-   announcement "stall"), the "You" entries, combined chat wave 1; then
-   feedback on the not-yet-confirmed chat items.
+1. Act on dogfood findings (combined chat, mod sheets, live data).
 2. **Chat: Chatterino "medium" items** (`chatterino-comparison.md`
    verdict table): configurable mod buttons / timeout lengths, custom
-   commands with OBS variables (scene, stream time), search operators
-   (`from:`, `has:link`, `is:first-msg`), OBS-driven streamer mode, live
-   dots in the channel dropdowns (Helix `streams` batch / Kick
-   `livestream`). Then strategic: merged Twitch+YouTube+Kick timeline,
-   7TV cosmetics (paints, personal emotes via EventAPI), live emote-set
-   updates. YouTube follow-ups: OAuth own-channel path
-   (`liveBroadcasts.list`), OBS `StreamStateChanged` → immediate
-   re-resolve; watch Kick's Pusher → Centrifugo migration risk.
+   commands with OBS variables, search operators (`from:`, `has:link`,
+   `is:first-msg`), OBS-driven streamer mode. Strategic: 7TV cosmetics
+   (paints, personal emotes via EventAPI), live emote-set updates.
+   YouTube: OAuth own-channel path (`liveBroadcasts.list`), OBS
+   `StreamStateChanged` → immediate re-resolve. Watch Kick's Pusher →
+   Centrifugo migration risk (the combined chat's Kick live push rides
+   the same socket).
 3. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
 4. **Android runtime smoke** + release mechanics (version/changelog,
-   `fastlane/metadata`, visual-QA pass).
-5. YouTube quota spike (`tool/youtube_spike/`) — still pending.
+   `fastlane/metadata`, visual-QA pass) — the combined chat has never
+   run on Android.
+5. YouTube quota spike (`tool/youtube_spike/`) — still pending; the 30 s
+   viewer refresh adds ~120 units/h per connected chat on top.
 6. Astra follow-ups (post-4.0 ok): conversation-owned drafts wave;
    optional live-session strip; syncOffset gating.
 
-Process notes: `AGENTS.md` session-start checklist is resume-proof (run it
-anyway). Default process tier **S**. Known flakes (don't chase): 4
-`mod_action_sheet_test.dart` hit-test-offset failures (reproduce on the
-pre-change tree too), `test/websocket/state_ordering_test.dart`
-(intermittent), and random single-file "loading" `WebSocketException`s on
-long multi-directory runs (rerun the file). **New gotchas this session:**
-plain `dart run` can't compile anything importing the freezed chat models
-(pulls in Flutter) — do live network smokes as a throwaway
-`flutter test` file with an explicit `http.Client()`;
-`test/flutter_test_config.dart` now exists (suite-wide network mocks —
-extend it rather than adding per-file hacks). `pkill -f` patterns matching
-`flutter` can kill your own shell — kill by pid.
+**Chat conventions (keep them):**
+- Sheets: build on `NativeChatSheetScaffold` (pinned header, scrolling
+  body); channel-mod rows from `dialogs/channel_mod_chrome.dart`.
+- History rows: `isHistorical` + `kChatHistoryOpacity` +
+  `ChatHistoryDivider`. Filters via `ChatFilterSettings`, appearance via
+  `NativeChatAppearance`.
+- "LIVE" / live green = on air only; connection problems use
+  `CombinedIssueMarker` / labels, a healthy connection shows nothing.
+- Kick / YouTube mod actions: no mod lookup exists — always offer, map a
+  403 to `chatNotModeratorText`.
+- Network-facing helpers get a live smoke as a throwaway `flutter test`
+  file (plain `dart run` can't compile the freezed chat models). Kick's
+  `kick.com/api/v2` rejects `dart:io`'s default client with a Cloudflare
+  403 — use the app's browser UA or `curl -A` for smokes.
+
+Process notes: default process tier **S**; `AGENTS.md` session-start
+checklist is resume-proof (run it anyway). Known flakes (don't chase):
+4 `mod_action_sheet_test.dart` hit-test-offset failures (reproduce on
+the pre-change tree too), `test/websocket/state_ordering_test.dart`
+(intermittent), random single-file "loading" `WebSocketException`s on
+long runs (rerun the file). Full serial chat + persistence gate ≈ 5 min
+here (~1150 tests). **Gotchas:** a Hive `put` inside a `testWidgets`
+body hangs the whole file at teardown ("Cannot close sink while adding
+stream") — wrap it in `tester.runAsync` + `flush()`, or use a plain
+`test`. `test/flutter_test_config.dart` holds suite-wide network mocks
+(extend it). `pkill -f` patterns matching `flutter` can kill your own
+shell — kill by pid. Never answer an interactive `rm -i` — use `rm -f`
+(one sat blocked for 19 h this session).
 Machine note (this box): **`/tmp` is a 3.8G tmpfs** — if it fills with
-`flutter_tools.*` dirs, `flutter test` hangs silently in the kernel
-compiler ("Free up space"); `rm -rf /tmp/flutter_tools.*` and re-run.
-Also watch for **stale `flutter_tester` processes** lingering across
-separate `flutter test` invocations in the same session (kill by pid,
-`ps aux | grep flutter_tester`). Always `flutter test -j 1` here; running
-`build_runner` here re-resolves `pubspec.lock` down to the older local SDK
-and regenerates unrelated `.g.dart` files — `git checkout` those before
+`flutter_tools.*` dirs, `flutter test` hangs silently; `rm -rf
+/tmp/flutter_tools.*` and re-run. Always `flutter test -j 1` here;
+`build_runner` here re-resolves `pubspec.lock` to the older local SDK —
+`git checkout pubspec.lock` (and any unrelated `.g.dart`) before
 committing.
 
 ## Verify quickly
@@ -199,6 +178,7 @@ in `docs/private/maintainer-workflow.md`.
 | [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md) | 4.0 cold-start briefing (read first) |
 | [`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, leftovers |
 | [`chatterino-comparison.md`](chatterino-comparison.md) | Chatterino feature verdicts + YouTube channel→live design (2026-09-24 wave) |
+| [`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md) | Combined chat design (waves 1–3 shipped; plans next to it) |
 | [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
 | [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 |
