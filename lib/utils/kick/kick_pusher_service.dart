@@ -41,6 +41,10 @@ class KickPusherService {
   Timer? _pingTimer;
 
   int? _chatroomId;
+
+  /// The channel's own id — `channel.{id}` carries the stream on/off air
+  /// events (`StreamerIsLive` / `StopStreamBroadcast`). Optional.
+  int? _channelId;
   int _reconnectAttempts = 0;
   bool _disposed = false;
 
@@ -55,9 +59,10 @@ class KickPusherService {
   /// (Re)arms the session against [chatroomId] — resets the backoff and
   /// opens the socket. Returns once the socket is initiated; the
   /// connection result arrives via [onStateChanged].
-  Future<void> connect({required int chatroomId}) async {
+  Future<void> connect({required int chatroomId, int? channelId}) async {
     this._disposed = false;
     this._chatroomId = chatroomId;
+    this._channelId = channelId;
     this._reconnectAttempts = 0;
     this._openSocket();
   }
@@ -108,6 +113,19 @@ class KickPusherService {
             'channel': 'chatrooms.${this._chatroomId}.v2',
           },
         });
+
+        /// Stream on/off air — community-documented event names, not in
+        /// Kick's public docs; best effort (the store's poll covers a
+        /// miss).
+        if (this._channelId case final channelId?) {
+          this._send(<String, Object?>{
+            'event': 'pusher:subscribe',
+            'data': <String, Object?>{
+              'auth': '',
+              'channel': 'channel.$channelId',
+            },
+          });
+        }
         this._pingTimer?.cancel();
         this._pingTimer = Timer.periodic(_pingInterval, (_) {
           this._send(<String, Object?>{'event': 'pusher:ping', 'data': {}});

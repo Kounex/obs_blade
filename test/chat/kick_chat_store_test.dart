@@ -1242,6 +1242,52 @@ void main() {
     });
   });
 
+  group('stream on/off air push', () {
+    test('StreamerIsLive / StopStreamBroadcast flip the live state; the '
+        'socket subscribes channel.{id}', () async {
+      configure();
+      channelService.channels['aaa'] = channelInfo(
+        'aaa',
+        id: 101,
+        chatroomId: 42,
+        isLive: false,
+      );
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+      expect(pusher().connectChannelIds.last, 101);
+      expect(store.channelInfo?.isLive, isFalse);
+
+      channelService.channels['aaa'] = channelInfo(
+        'aaa',
+        id: 101,
+        chatroomId: 42,
+        viewerCount: 55,
+      );
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\StreamerIsLive',
+          channel: 'channel.101',
+          data: <String, Object?>{
+            'livestream': <String, Object?>{'id': 1, 'channel_id': 101},
+          },
+        ),
+      );
+      expect(store.channelInfo?.isLive, isTrue);
+      await until(() => store.channelInfo?.viewerCount == 55);
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\StopStreamBroadcast',
+          channel: 'channel.101',
+        ),
+      );
+      expect(store.channelInfo?.isLive, isFalse);
+      expect(store.liveStateForChannel('aaa'), isFalse);
+    });
+  });
+
   group('moderation', () {
     test('wrappers refuse when signed out', () async {
       configure();

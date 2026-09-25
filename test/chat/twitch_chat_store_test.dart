@@ -1638,6 +1638,30 @@ void main() {
       },
     );
 
+    test('stream.online / offline flip the selected channel right away; '
+        'the store wires the callback into EventSub', () async {
+      await login();
+      await store.addChannel(ref('chan-1'));
+      expect(eventSubService.onStreamStatus, isNotNull);
+      expect(store.selectedChannelIsLive, isFalse);
+
+      channelService.liveStreams = {'chan-1': 777};
+      eventSubService.onStreamStatus!(true);
+      expect(store.selectedChannelIsLive, isTrue);
+      expect(store.liveStateForChannel('chan-1'), isTrue);
+
+      /// The follow-up poll fills in the viewers.
+      for (var i = 0; i < 200 && store.selectedChannelViewerCount != 777; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+      expect(store.selectedChannelViewerCount, 777);
+
+      eventSubService.onStreamStatus!(false);
+      expect(store.selectedChannelIsLive, isFalse);
+      expect(store.liveStateForChannel('chan-1'), isFalse);
+      expect(store.selectedChannelViewerCount, isNull);
+    });
+
     test('sendChatMessage targets the effective broadcaster', () async {
       await login();
       await store.selectChannel('chan-9');

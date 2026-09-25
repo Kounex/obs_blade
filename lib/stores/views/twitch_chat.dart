@@ -93,6 +93,12 @@ class _ChannelBuffer {
 
 /// Owns the native Twitch chat: device-flow login state, the persisted
 /// [TwitchAuth] record and the EventSub-backed message buffer.
+/// Live status + viewers poll — one Helix `streams` request covers the
+/// own and every saved channel (≤100 ids), so 10 s stays far inside the
+/// ~800 requests/min per-user budget. `stream.online/offline` EventSub
+/// flips the selected channel instantly in between.
+const Duration kTwitchLivePollInterval = Duration(seconds: 10);
+
 abstract class _TwitchChatStore with Store {
   static const int kMaxMessages = 500;
   static const Duration kRefreshWindow = Duration(minutes: 5);
@@ -737,7 +743,7 @@ abstract class _TwitchChatStore with Store {
         (event) => this.applyAutoModMessageUpdate(event),
         this._onEventSubState,
         this._onEventSubRevoked,
-      );
+      )..onStreamStatus = this._onStreamStatus;
       await this._eventSub!.connect(
         accessToken: token,
         userId: this.user!.id,
@@ -784,7 +790,7 @@ abstract class _TwitchChatStore with Store {
 
   void _startLivePoll() {
     this._livePollTimer?.cancel();
-    this._livePollTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+    this._livePollTimer = Timer.periodic(kTwitchLivePollInterval, (_) {
       unawaited(this.refreshSelectedChannelLive());
     });
     unawaited(this.refreshSelectedChannelLive());
@@ -835,6 +841,25 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.advLog('Twitch live status refresh failed - $e');
     }
+  }
+
+  /// `stream.online` / `.offline` pushed for the chat's channel: flip the
+  /// LIVE state right away (the next poll fills in the viewer count), so
+  /// going live / ending shows within seconds, not at the next poll.
+  void _onStreamStatus(bool online) {
+    runInAction(() {
+      final id = this.effectiveBroadcasterIdSafe;
+      if (id.isEmpty) return;
+      this.selectedChannelIsLive = online;
+      this.liveCheckedIds.add(id);
+      if (online) {
+        this.channelLiveViewers.putIfAbsent(id, () => 0);
+      } else {
+        this.channelLiveViewers.remove(id);
+        this.selectedChannelViewerCount = null;
+      }
+    });
+    if (online) unawaited(this.refreshSelectedChannelLive());
   }
 
   /// Whether [channelId] (null = own) is currently live per the batch poll.

@@ -69,6 +69,12 @@ class _ChannelBuffer {
     : messages = messages ?? <KickChatMessage>[];
 }
 
+/// Live preview cadence: the channel on screen vs the rest of the list
+/// (one anonymous `/channels/{slug}` request per channel per round; Kick
+/// publishes no limit and throttles aggressive clients).
+const Duration kKickSelectedLiveInterval = Duration(seconds: 15);
+const Duration kKickListLiveInterval = Duration(minutes: 1);
+
 /// Factory seam for the realtime transport — tests substitute a fake
 /// pusher; production uses [KickPusherService.new].
 typedef KickPusherFactory =
@@ -379,10 +385,20 @@ abstract class _KickChatStore with Store {
   /// Refreshes [channelLivePreview] for every added channel, then starts a
   /// minute-interval timer that repeats it — reads are anonymous, so this
   /// runs regardless of sign-in state, unlike Twitch's auth-gated poll.
+  ///
+  /// The channel on screen (the selected one — in a combined chat too, the
+  /// combo points the store at it) refreshes faster on its own timer
+  /// ([kKickSelectedLiveInterval]): one anonymous request per round, so
+  /// the header / combined viewer counts stay current without hammering
+  /// Kick for the whole list.
   void _startLivePreviewPoll() {
     this._livePreviewTimer?.cancel();
-    this._livePreviewTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+    this._livePreviewTimer = Timer.periodic(kKickListLiveInterval, (_) {
       unawaited(this.refreshChannelLivePreviews());
+    });
+    this._selectedLiveTimer?.cancel();
+    this._selectedLiveTimer = Timer.periodic(kKickSelectedLiveInterval, (_) {
+      unawaited(this.refreshSelectedLivePreview());
     });
     unawaited(this.refreshChannelLivePreviews());
   }
@@ -390,6 +406,26 @@ abstract class _KickChatStore with Store {
   void _stopLivePreviewPoll() {
     this._livePreviewTimer?.cancel();
     this._livePreviewTimer = null;
+    this._selectedLiveTimer?.cancel();
+    this._selectedLiveTimer = null;
+  }
+
+  Timer? _selectedLiveTimer;
+
+  /// One preview round for the selected channel only.
+  Future<void> refreshSelectedLivePreview() async {
+    final slug = this.selectedChannelSlug;
+    if (slug == null || !this._isProResolver()) return;
+    try {
+      final info = await this._channelService.resolveChannel(slug);
+      if (info == null) return;
+      runInAction(() {
+        this.channelLivePreview[slug] = info;
+        this._applyLiveInfo(slug, info);
+      });
+    } catch (e) {
+      GeneralHelper.advLog('Kick live refresh failed for $slug - $e');
+    }
   }
 
   /// Resolves every added channel's slug to get fresh live/viewer data
@@ -429,6 +465,25 @@ abstract class _KickChatStore with Store {
         (slug, _) => !this.nativeChannels.contains(slug),
       );
     });
+  }
+
+  /// Stream went on / off air (socket push): flip the LIVE state right
+  /// away, then fetch the viewer count — seconds instead of the next poll.
+  void _applyStreamStatus(String slug, {required bool online}) {
+    final current = this.channelInfo;
+    if (slug != this.selectedChannelSlug || current == null) return;
+    final updated = current.copyWith(
+      livestream: online
+          ? KickLivestreamInfo(
+              isLive: true,
+              viewerCount: current.livestream?.viewerCount,
+            )
+          : null,
+    );
+    this.channelInfo = updated;
+    this._channelBuffers[slug]?.channelInfo = updated;
+    this.channelLivePreview[slug] = updated;
+    if (online) unawaited(this.refreshSelectedLivePreview());
   }
 
   /// Carry a fresh preview's live state + viewer count into the selected
@@ -825,7 +880,7 @@ abstract class _KickChatStore with Store {
       },
     );
     this._pusher = pusher;
-    await pusher.connect(chatroomId: info.chatroomId);
+    await pusher.connect(chatroomId: info.chatroomId, channelId: info.id);
   }
 
   /// History lands below any live messages that beat it, deduped by id
@@ -880,6 +935,10 @@ abstract class _KickChatStore with Store {
           this._applyGiftedSubscriptions(event);
         case KickChatroomEventKind.streamHost:
           this._applyStreamHost(event);
+        case KickChatroomEventKind.streamStarted:
+          this._applyStreamStatus(slug, online: true);
+        case KickChatroomEventKind.streamStopped:
+          this._applyStreamStatus(slug, online: false);
         case KickChatroomEventKind.unknown:
           break;
       }

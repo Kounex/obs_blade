@@ -63,6 +63,9 @@ class FakeKickPusherService extends KickPusherService {
 
   /// Chatroom ids of every [connect] call.
   final List<int> connectCalls = <int>[];
+
+  /// `channel.{id}` of every [connect] call (stream on/off air events).
+  final List<int?> connectChannelIds = <int?>[];
   int disconnectCalls = 0;
 
   /// Whether [connect] reports the socket as connected immediately
@@ -70,8 +73,9 @@ class FakeKickPusherService extends KickPusherService {
   bool autoConnect = true;
 
   @override
-  Future<void> connect({required int chatroomId}) async {
+  Future<void> connect({required int chatroomId, int? channelId}) async {
     this.connectCalls.add(chatroomId);
+    this.connectChannelIds.add(channelId);
     if (this.autoConnect) {
       this.onStateChanged(KickPusherConnectionState.connected);
     }

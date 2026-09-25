@@ -43,6 +43,14 @@ class TwitchEventSubService {
   ];
   static const String _kMessageType = 'channel.chat.message';
 
+  /// `stream.online` / `stream.offline` v1 — the channel's on-air flips,
+  /// pushed the moment they happen (no scope; condition is the
+  /// broadcaster only). Best-effort like the lifecycle types.
+  static const List<String> _kStreamTypes = <String>[
+    'stream.online',
+    'stream.offline',
+  ];
+
   /// `channel.moderate` v2 — optional best-effort type after the channel
   /// chat suite, created only when [connect] passes `includeModeration`
   /// (the token must carry the full moderator:read bundle; condition
@@ -79,6 +87,12 @@ class TwitchEventSubService {
   /// resolutions. Optional; a null callback skips parsing.
   final void Function(AutoModMessageHoldEvent event)? onAutoModMessageHold;
   final void Function(AutoModMessageUpdateEvent event)? onAutoModMessageUpdate;
+
+  /// `stream.online` (true) / `stream.offline` (false) for the chat's
+  /// channel — null skips the subscriptions. Settable after construction
+  /// (before [connect]) so the store can wire it without widening its
+  /// factory seam.
+  void Function(bool online)? onStreamStatus;
 
   final void Function(TwitchEventSubState state) onStateChanged;
 
@@ -130,6 +144,7 @@ class TwitchEventSubService {
     this.onChannelModerate,
     this.onAutoModMessageHold,
     this.onAutoModMessageUpdate,
+    this.onStreamStatus,
     required this.onStateChanged,
     required this.onRevoked,
     http.Client? client,
@@ -318,6 +333,10 @@ class TwitchEventSubService {
               ),
             );
           }
+        case 'stream.online':
+          this.onStreamStatus?.call(true);
+        case 'stream.offline':
+          this.onStreamStatus?.call(false);
         case 'automod.message.hold':
           final callback = this.onAutoModMessageHold;
           if (callback != null) {
@@ -540,8 +559,57 @@ class TwitchEventSubService {
     if (this._includeAutoMod) {
       created.addAll(await this._createAutoModSubscriptions());
     }
+    if (this.onStreamStatus != null) {
+      created.addAll(await this._createStreamSubscriptions());
+    }
     this._subscriptionIds = created;
     return true;
+  }
+
+  /// `stream.online` / `stream.offline` for the CURRENT [_broadcasterId]
+  /// (channel-scoped, follows [switchChannel]). Best-effort: without them
+  /// the live state still follows the store's poll.
+  Future<List<String>> _createStreamSubscriptions() async {
+    final token = this._accessToken;
+    final broadcasterId = this._broadcasterId;
+    final sessionId = this._sessionId;
+    if (token == null || broadcasterId == null || sessionId == null) {
+      return const [];
+    }
+    final created = <String>[];
+    for (final type in _kStreamTypes) {
+      try {
+        final response = await this._client.post(
+          Uri.parse(_subscriptionsUrl),
+          headers: {
+            ...TwitchAuthService.helixHeaders(token),
+            'Content-Type': 'application/json',
+          },
+          body: json.encode({
+            'type': type,
+            'version': '1',
+            'condition': {'broadcaster_user_id': broadcasterId},
+            'transport': {'method': 'websocket', 'session_id': sessionId},
+          }),
+        );
+        if (response.statusCode == 202) {
+          final data =
+              (json.decode(response.body) as Map<String, dynamic>)['data'];
+          final id = (data as List).first['id'] as String?;
+          if (id != null) created.add(id);
+        } else {
+          GeneralHelper.advLog(
+            'Twitch EventSub: stream subscription $type failed '
+            '(${response.statusCode}) - live state follows the poll',
+          );
+        }
+      } catch (e) {
+        GeneralHelper.advLog(
+          'Twitch EventSub: stream subscription $type failed - $e',
+        );
+      }
+    }
+    return created;
   }
 
   /// `automod.message.hold/.update` v2 for the CURRENT [_broadcasterId] —

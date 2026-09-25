@@ -33,6 +33,11 @@ enum KickChatroomEventKind {
   /// number_viewers, host_username}`) — same reverse-engineered caveat
   /// as [subscription].
   streamHost,
+
+  /// `StreamerIsLive` / `StopStreamBroadcast` on `channel.{id}` — the
+  /// channel went on / off air (community-documented, best effort).
+  streamStarted,
+  streamStopped,
   unknown,
 }
 
@@ -105,6 +110,12 @@ class KickPusherEvent {
     }
     if (name.endsWith('SubscriptionEvent')) {
       return KickChatroomEventKind.subscription;
+    }
+    if (name.endsWith('StreamerIsLive')) {
+      return KickChatroomEventKind.streamStarted;
+    }
+    if (name.endsWith('StopStreamBroadcast')) {
+      return KickChatroomEventKind.streamStopped;
     }
     if (name.endsWith('StreamHostEvent')) {
       return KickChatroomEventKind.streamHost;

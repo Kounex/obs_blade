@@ -80,6 +80,18 @@ Running log of upgrade/migration work. Not store release notes.
   stream — the poll loop now re-reads it every
   `kViewerRefreshInterval` (2 min, 1 quota unit each). Twitch already
   re-polls every minute.
+- **Faster live data + instant on/off air** (dogfood: "the faster the
+  better"). Intervals sized to each platform's limits: Twitch batch poll
+  10 s (`kTwitchLivePollInterval`; one Helix request covers ≤100 ids),
+  Kick 15 s for the channel on screen (`kKickSelectedLiveInterval`, one
+  anonymous request) + 60 s for the list, YouTube viewers 30 s
+  (`kViewerRefreshInterval`, ~120 units/h ≈ 3% over the chat poll).
+  Push instead of poll for the flip itself: Twitch EventSub
+  `stream.online` / `stream.offline` v1 (no scope; wired via
+  `TwitchEventSubService.onStreamStatus` so the store's factory seam
+  stays put), Kick `channel.{id}` Pusher channel (`StreamerIsLive` /
+  `StopStreamBroadcast` — community-documented, subscription verified
+  live 2026-09-25, events not yet captured on a real go-live).
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

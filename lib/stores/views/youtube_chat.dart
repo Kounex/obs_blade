@@ -111,8 +111,9 @@ class YouTubeChatChannel {
 const String kYouTubeOwnChannelLabel = '\u0000own';
 
 /// How often a connected YouTube chat re-reads its viewer count (one
-/// `videos.list` unit each) so the LIVE chips follow the stream.
-const Duration kViewerRefreshInterval = Duration(minutes: 2);
+/// `videos.list` unit each, ~120/h — about 3% on top of the chat poll)
+/// so the LIVE chips follow the stream.
+const Duration kViewerRefreshInterval = Duration(seconds: 30);
 
 /// In-memory per-channel chat snapshot — swapped in/out of the live
 /// [messages] list on selectChannel so switching back restores recent
