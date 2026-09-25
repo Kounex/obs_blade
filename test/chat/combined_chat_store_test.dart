@@ -510,7 +510,7 @@ void main() {
         () => kick.chatConnection == KickChatConnectionState.connected,
       );
 
-      expect(store.sourceStatus[ChatType.Kick], CombinedSourceStatus.live);
+      expect(store.sourceStatus[ChatType.Kick], CombinedSourceStatus.connected);
 
       /// The fake resolver finds no live stream for the own channel.
       await until(() => youTube.awaitingLiveStream);

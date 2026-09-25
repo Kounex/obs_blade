@@ -126,8 +126,11 @@ class NativeChatWindow extends StatelessWidget {
         Theme.of(context).textTheme.bodySmall?.color ??
         (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
             .textSecondary;
+
+    /// Connected is the quiet default: a neutral dot, no label — green /
+    /// "live" in the header only ever mean on air (the LIVE chip).
     return switch (this.status) {
-      NativeChatConnectionStatus.live => ('connected', statusColors.live),
+      NativeChatConnectionStatus.live => ('connected', muted),
       NativeChatConnectionStatus.connecting => (
         'connecting…',
         statusColors.warning,
@@ -228,19 +231,26 @@ class NativeChatWindow extends StatelessWidget {
                     NativeChatStatusChip.mod(key: const Key('chat-header-mod')),
                   ],
                   const Spacer(),
-                  _StatusDot(status: this.status, color: statusColor),
-                  const SizedBox(width: AppSpacing.xs),
+                  Semantics(
+                    key: const Key('chat-header-status'),
+                    label: 'Chat $statusLabel',
+                    child: _StatusDot(status: this.status, color: statusColor),
+                  ),
                   AnimatedSwitcher(
                     duration: AppMotion.medium,
                     transitionBuilder: (child, animation) =>
                         nativeChatSwapTransition(context, child, animation),
-                    child: Text(
-                      statusLabel,
-                      key: ValueKey(statusLabel),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: statusColor),
-                    ),
+                    child: this.status == NativeChatConnectionStatus.live
+                        ? const SizedBox.shrink(key: ValueKey('quiet'))
+                        : Padding(
+                            key: ValueKey(statusLabel),
+                            padding: const EdgeInsets.only(left: AppSpacing.xs),
+                            child: Text(
+                              statusLabel,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: statusColor),
+                            ),
+                          ),
                   ),
                 ],
               ),

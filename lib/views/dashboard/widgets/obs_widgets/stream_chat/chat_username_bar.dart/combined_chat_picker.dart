@@ -28,24 +28,118 @@ String combinedSourcesSubtitle(List<CombinedSource> sources) {
   return sources.map((s) => s.label).join(' · ');
 }
 
-/// Status dot color for a combined source: live green, connecting amber,
-/// needs-attention red, offline a neutral gray (still drawn — "offline" is
-/// information too). Null only when there's no status at all.
-Color? combinedStatusDotColor(
-  BuildContext context,
-  CombinedSourceStatus? status,
-) {
-  final colors =
-      Theme.of(context).extension<AppStatusColors>() ??
-      AppStatusColors.standard;
-  return switch (status) {
-    CombinedSourceStatus.live => colors.live,
-    CombinedSourceStatus.connecting => colors.warning,
-    CombinedSourceStatus.error ||
-    CombinedSourceStatus.needsSetup => colors.unreachable,
-    CombinedSourceStatus.offline => Colors.grey.shade500,
-    null => null,
-  };
+/// Connection problems worth a marker — a healthy (or plainly offline)
+/// connection shows nothing: green / "live" are reserved for on air.
+enum CombinedIssue {
+  connecting,
+
+  /// Failed, or the platform needs the user (sign in / set up).
+  attention,
+}
+
+CombinedIssue? combinedIssueOf(CombinedSourceStatus? status) =>
+    switch (status) {
+      CombinedSourceStatus.connecting => CombinedIssue.connecting,
+      CombinedSourceStatus.error ||
+      CombinedSourceStatus.needsSetup => CombinedIssue.attention,
+      _ => null,
+    };
+
+/// Short label for a source's connection state in chip rows / sheets —
+/// null for the quiet states (connected, offline).
+String? combinedIssueLabel(CombinedSourceStatus? status) => switch (status) {
+  CombinedSourceStatus.connecting => 'Connecting…',
+  CombinedSourceStatus.needsSetup => 'Needs setup',
+  CombinedSourceStatus.error => 'Failed',
+  _ => null,
+};
+
+/// Small corner marker of a connection issue: an amber spinner while
+/// connecting, a red ⚠ when it needs the user.
+class CombinedIssueMarker extends StatelessWidget {
+  final CombinedIssue issue;
+  final double size;
+
+  /// Ring around the marker (the surface under it) so it reads on top of
+  /// a badge.
+  final Color? ring;
+
+  const CombinedIssueMarker({
+    super.key,
+    required this.issue,
+    this.size = 14.0,
+    this.ring,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors =
+        Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
+    final color = this.issue == CombinedIssue.connecting
+        ? colors.warning
+        : colors.unreachable;
+    return Semantics(
+      label: this.issue == CombinedIssue.connecting
+          ? 'connecting'
+          : 'needs attention',
+      child: Container(
+        width: this.size,
+        height: this.size,
+        padding: const EdgeInsets.all(1.5),
+        decoration: BoxDecoration(color: this.ring, shape: BoxShape.circle),
+        child: this.issue == CombinedIssue.connecting
+            ? CircularProgressIndicator(strokeWidth: 1.8, color: color)
+            : Container(
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Text(
+                  '!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: this.size * 0.62,
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+/// The combined card's on-air summary: `LIVE · 2 · 3.1k` in the LIVE
+/// chip style while any source is on air (count of live sources, total
+/// known viewers), a muted "Offline" otherwise.
+class CombinedLiveSummary extends StatelessWidget {
+  final Map<ChatType, int?> live;
+
+  const CombinedLiveSummary({super.key, required this.live});
+
+  @override
+  Widget build(BuildContext context) {
+    if (this.live.isEmpty) {
+      return Text(
+        'Offline',
+        key: const Key('combined-summary-offline'),
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
+    final viewers = this.live.values.whereType<int>().fold<int>(
+      0,
+      (sum, count) => sum + count,
+    );
+    final hasViewers = this.live.values.any((count) => count != null);
+    final colors =
+        Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
+    return NativeChatStatusChip(
+      key: const Key('combined-summary-live'),
+      label: this.live.length > 1 ? 'LIVE · ${this.live.length}' : 'LIVE',
+      color: colors.live,
+      viewerCountLabel: hasViewers ? formatChatViewerCount(viewers) : null,
+    );
+  }
 }
 
 /// The combined chat's channel control: a full-width card under the
@@ -64,8 +158,9 @@ class CombinedChatPicker extends StatelessWidget {
         final combo = store.selectedCombo;
         final sources = store.activeSources;
         final statuses = store.sourceStatus;
-        final live = statuses.values
-            .where((status) => status == CombinedSourceStatus.live)
+        final live = store.liveSources;
+        final issues = statuses.values
+            .where((status) => combinedIssueOf(status) != null)
             .length;
         final muted = Theme.of(context).textTheme.bodySmall;
 
@@ -76,8 +171,10 @@ class CombinedChatPicker extends StatelessWidget {
         return Semantics(
           button: true,
           label:
-              '${combo?.displayName ?? 'My chats'}, $live of '
-              '${sources.length} live. Switch combined chat',
+              '${combo?.displayName ?? 'My chats'}, '
+              '${live.isEmpty ? 'offline' : '${live.length} on air'}'
+              '${issues > 0 ? ', $issues need attention' : ''}. '
+              'Switch combined chat',
           excludeSemantics: true,
           child: Pressable(
             key: const Key('combined-combo-card'),
@@ -104,6 +201,7 @@ class CombinedChatPicker extends StatelessWidget {
                   CombinedBadgeStack(
                     platforms: [for (final s in sources) s.platform],
                     statuses: statuses,
+                    live: live.keys.toSet(),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -142,11 +240,23 @@ class CombinedChatPicker extends StatelessWidget {
                   ),
                   if (sources.isNotEmpty) ...[
                     const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      '$live/${sources.length} live',
-                      key: const Key('combined-combo-live-count'),
-                      style: muted,
-                    ),
+                    CombinedLiveSummary(live: live),
+                    if (issues > 0) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      Row(
+                        key: const Key('combined-summary-issues'),
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CombinedIssueMarker(
+                            issue: CombinedIssue.attention,
+                          ),
+                          if (issues > 1) ...[
+                            const SizedBox(width: 2.0),
+                            Text('$issues', style: muted),
+                          ],
+                        ],
+                      ),
+                    ],
                   ],
                   const SizedBox(width: AppSpacing.sm),
                   Icon(
@@ -164,17 +274,22 @@ class CombinedChatPicker extends StatelessWidget {
   }
 }
 
-/// Overlapping square platform badges (a combo's "avatar stack"), each
-/// with its status dot. Empty → one neutral placeholder tile.
+/// Overlapping square platform badges (a combo's "avatar stack"). A
+/// badge whose streamer is on air ([live]) wears a ring in the live
+/// color; a connection problem adds a corner [CombinedIssueMarker]. A
+/// healthy, offline source is a plain badge. Empty → one neutral
+/// placeholder tile.
 class CombinedBadgeStack extends StatelessWidget {
   final List<ChatType> platforms;
   final Map<ChatType, CombinedSourceStatus> statuses;
+  final Set<ChatType> live;
   final double size;
 
   const CombinedBadgeStack({
     super.key,
     required this.platforms,
     this.statuses = const {},
+    this.live = const {},
     this.size = 30.0,
   });
 
@@ -218,10 +333,8 @@ class CombinedBadgeStack extends StatelessWidget {
                 platform: this.platforms[i],
                 size: this.size,
                 ring: surface,
-                dot: combinedStatusDotColor(
-                  context,
-                  this.statuses[this.platforms[i]],
-                ),
+                onAir: this.live.contains(this.platforms[i]),
+                issue: combinedIssueOf(this.statuses[this.platforms[i]]),
               ),
             ),
         ],
@@ -234,13 +347,15 @@ class _StackBadge extends StatelessWidget {
   final ChatType platform;
   final double size;
   final Color ring;
-  final Color? dot;
+  final bool onAir;
+  final CombinedIssue? issue;
 
   const _StackBadge({
     required this.platform,
     required this.size,
     required this.ring,
-    required this.dot,
+    required this.onAir,
+    required this.issue,
   });
 
   @override
@@ -260,27 +375,71 @@ class _StackBadge extends StatelessWidget {
           decoration: BoxDecoration(
             color: brand,
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: this.ring, width: 2.0),
+            border: Border.all(
+              color: this.onAir
+                  ? (Theme.of(context).extension<AppStatusColors>() ??
+                            AppStatusColors.standard)
+                        .live
+                  : this.ring,
+              width: this.onAir ? 2.5 : 2.0,
+            ),
           ),
           alignment: Alignment.center,
           child: Icon(this.platform.icon, size: this.size * 0.55, color: glyph),
         ),
-        if (this.dot != null)
+        if (this.onAir)
           Positioned(
-            right: -4.0,
-            bottom: -4.0,
-            child: Container(
-              key: Key('combined-stack-dot-${this.platform.name}'),
-              width: 13.0,
-              height: 13.0,
-              decoration: BoxDecoration(
-                color: this.dot,
-                shape: BoxShape.circle,
-                border: Border.all(color: this.ring, width: 2.5),
-              ),
+            key: Key('combined-stack-live-${this.platform.name}'),
+            left: 0,
+            right: 0,
+            bottom: -5.0,
+            child: Center(child: _LivePip(ring: this.ring)),
+          ),
+        if (this.issue case final issue?)
+          Positioned(
+            right: -5.0,
+            top: -5.0,
+            child: CombinedIssueMarker(
+              key: Key('combined-stack-issue-${this.platform.name}'),
+              issue: issue,
+              ring: this.ring,
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Tiny "LIVE" tab under an on-air badge (the ring alone is easy to miss
+/// on a green brand like Kick's).
+class _LivePip extends StatelessWidget {
+  final Color ring;
+
+  const _LivePip({required this.ring});
+
+  @override
+  Widget build(BuildContext context) {
+    final live =
+        (Theme.of(context).extension<AppStatusColors>() ??
+                AppStatusColors.standard)
+            .live;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 3.0),
+      decoration: BoxDecoration(
+        color: live,
+        borderRadius: BorderRadius.circular(3.0),
+        border: Border.all(color: this.ring, width: 1.5),
+      ),
+      child: const Text(
+        'LIVE',
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 7.0,
+          fontWeight: FontWeight.w900,
+          height: 1.2,
+          letterSpacing: 0.3,
+        ),
+      ),
     );
   }
 }
@@ -327,6 +486,9 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
                 statuses: store.selectedComboId == kMyChatsComboId
                     ? store.sourceStatus
                     : const {},
+                live: store.selectedComboId == kMyChatsComboId
+                    ? store.liveSources.keys.toSet()
+                    : const {},
                 title: 'My chats',
                 subtitle: mine.isEmpty
                     ? 'Your own channels - sign in natively to start'
@@ -352,6 +514,9 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
                   platforms: combo.platforms,
                   statuses: store.selectedComboId == combo.id
                       ? store.sourceStatus
+                      : const {},
+                  live: store.selectedComboId == combo.id
+                      ? store.liveSources.keys.toSet()
                       : const {},
                   title: combo.displayName,
                   subtitle: _comboChannels(combo),
@@ -402,9 +567,10 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
 class _ComboTile extends StatelessWidget {
   final List<ChatType> platforms;
 
-  /// Live dots — only for the combo on screen (the others aren't
-  /// connected).
+  /// Connection issues + on-air rings — only for the combo on screen
+  /// (the others aren't connected).
   final Map<ChatType, CombinedSourceStatus> statuses;
+  final Set<ChatType> live;
   final String title;
   final String subtitle;
   final bool own;
@@ -417,6 +583,7 @@ class _ComboTile extends StatelessWidget {
     super.key,
     required this.platforms,
     this.statuses = const {},
+    this.live = const {},
     required this.title,
     required this.subtitle,
     this.own = false,
@@ -459,6 +626,7 @@ class _ComboTile extends StatelessWidget {
               CombinedBadgeStack(
                 platforms: this.platforms,
                 statuses: this.statuses,
+                live: this.live,
                 size: 26.0,
               ),
               const SizedBox(width: AppSpacing.md),

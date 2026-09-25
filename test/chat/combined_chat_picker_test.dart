@@ -9,6 +9,7 @@ import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
@@ -106,9 +107,8 @@ void main() {
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
   });
 
-  testWidgets('the card spans the row and shows name, channels, live count', (
-    tester,
-  ) async {
+  testWidgets('the card spans the row and shows name, channels, on-air '
+      'summary', (tester) async {
     await tester.pumpWidget(wrap(const CombinedChatPicker()));
 
     final card = tester.getRect(find.byKey(const Key('combined-combo-card')));
@@ -117,7 +117,11 @@ void main() {
 
     expect(find.text('My chats'), findsOneWidget);
     expect(find.text('My Channel · kicker'), findsOneWidget);
-    expect(find.text('1/2 live'), findsOneWidget);
+
+    /// Kick's chat is connected, but nobody is on air: "Offline", never
+    /// a connection count dressed up as "live".
+    expect(find.byKey(const Key('combined-summary-offline')), findsOneWidget);
+    expect(find.textContaining('live'), findsNothing);
     expect(find.byKey(const Key('combined-stack-YouTube')), findsOneWidget);
     expect(find.byKey(const Key('combined-stack-Kick')), findsOneWidget);
   });
@@ -151,24 +155,32 @@ void main() {
     expect(find.text('Combined chats'), findsNothing);
   });
 
-  testWidgets('every source gets a visible status dot, offline included', (
+  testWidgets('on air rings the badge and fills the summary; connection '
+      'problems get a marker; a healthy connection shows nothing', (
     tester,
   ) async {
+    /// Kick: chat connected + streamer live. YouTube: needs setup
+    /// (unconfigured), not live.
+    kick.channelInfo = const KickChannelInfo(
+      id: 1,
+      slug: 'kicker',
+      chatroom: KickChatroom(id: 2),
+      livestream: KickLivestreamInfo(isLive: true, viewerCount: 3100),
+    );
     await tester.pumpWidget(wrap(const CombinedChatPicker()));
 
-    /// Kick is connected (live), YouTube offline - both dots drawn.
-    expect(find.byKey(const Key('combined-stack-dot-Kick')), findsOneWidget);
-    expect(find.byKey(const Key('combined-stack-dot-YouTube')), findsOneWidget);
+    expect(find.byKey(const Key('combined-stack-live-Kick')), findsOneWidget);
+    expect(find.byKey(const Key('combined-stack-live-YouTube')), findsNothing);
+    expect(find.byKey(const Key('combined-summary-live')), findsOneWidget);
+    expect(find.text('3.1k'), findsOneWidget);
 
-    /// The live dot is on top of the stack, not under the next badge.
-    final dot = tester.getRect(
-      find.byKey(const Key('combined-stack-dot-YouTube')),
+    /// Kick is healthy: no marker. YouTube needs the user: a marker.
+    expect(find.byKey(const Key('combined-stack-issue-Kick')), findsNothing);
+    expect(
+      find.byKey(const Key('combined-stack-issue-YouTube')),
+      findsOneWidget,
     );
-    final kickBadge = tester.getRect(
-      find.byKey(const Key('combined-stack-Kick')),
-    );
-    expect(dot.right, greaterThan(kickBadge.left));
-    expect(dot.width, 13.0);
+    expect(find.byKey(const Key('combined-summary-issues')), findsOneWidget);
   });
 
   testWidgets('"Manage" on My chats opens My chats even when a saved combo '

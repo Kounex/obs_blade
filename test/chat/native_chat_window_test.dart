@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
@@ -35,15 +36,35 @@ void main() {
     for (final (status, label) in [
       (NativeChatConnectionStatus.offline, 'offline'),
       (NativeChatConnectionStatus.connecting, 'connecting…'),
-      (NativeChatConnectionStatus.live, 'connected'),
       (NativeChatConnectionStatus.reconnecting, 'reconnecting…'),
       (NativeChatConnectionStatus.failed, 'failed'),
     ]) {
       await tester.pumpWidget(wrap(buildWindow(status: status)));
+      await tester.pumpAndSettle();
       expect(find.text('Stream Chat'), findsOneWidget);
       expect(find.text(label), findsOneWidget);
       expect(find.text('chat content'), findsOneWidget);
     }
+  });
+
+  testWidgets('connected is quiet: no label, and never the live green', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(buildWindow(status: NativeChatConnectionStatus.live)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('connected'), findsNothing);
+    final green = AppStatusColors.standard.live;
+    final greenDots = find.byWidgetPredicate(
+      (w) =>
+          w is Container &&
+          w.decoration is BoxDecoration &&
+          (w.decoration! as BoxDecoration).shape == BoxShape.circle &&
+          (w.decoration! as BoxDecoration).color == green,
+    );
+    expect(greenDots, findsNothing);
   });
 
   testWidgets('LIVE/Mod chips sit after the title, before connection status', (
@@ -67,7 +88,9 @@ void main() {
         .getTopLeft(find.byKey(const Key('chat-header-live')))
         .dx;
     final modX = tester.getTopLeft(find.byKey(const Key('chat-header-mod'))).dx;
-    final statusX = tester.getTopLeft(find.text('connected')).dx;
+    final statusX = tester
+        .getTopLeft(find.byKey(const Key('chat-header-status')))
+        .dx;
 
     expect(titleX, lessThan(liveX));
     expect(liveX, lessThan(modX));
@@ -153,7 +176,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('connected'));
+    await tester.tap(find.text('Stream Chat'));
     expect(mergedCard, isTrue);
   });
 

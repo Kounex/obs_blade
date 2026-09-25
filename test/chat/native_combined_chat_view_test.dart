@@ -239,8 +239,8 @@ void main() {
     expect(find.byKey(const Key('combined-focus-Twitch')), findsNothing);
   });
 
-  testWidgets('live sources carry a LIVE tag next to the chat dot; the '
-      'strip stays up on an empty chat', (tester) async {
+  testWidgets('live sources carry a LIVE tag, others "Offline"; the strip '
+      'stays up on an empty chat', (tester) async {
     kick.channelInfo = const KickChannelInfo(
       id: 1,
       slug: 'kicker',
@@ -257,10 +257,10 @@ void main() {
 
     expect(find.byKey(const Key('combined-live-Kick')), findsOneWidget);
     expect(find.byKey(const Key('combined-live-YouTube')), findsNothing);
-    expect(find.byKey(const Key('combined-chat-dot-Kick')), findsOneWidget);
     expect(combined.liveSources, {ChatType.Kick: 1234});
 
-    /// Stream ends: the tag goes, the chat dot stays.
+    /// Stream ends: LIVE turns into "Offline" (the chat connection is a
+    /// separate, quiet fact).
     kick.channelInfo = const KickChannelInfo(
       id: 1,
       slug: 'kicker',
@@ -268,7 +268,18 @@ void main() {
     );
     await tester.pump();
     expect(find.byKey(const Key('combined-live-Kick')), findsNothing);
-    expect(find.byKey(const Key('combined-chat-dot-Kick')), findsOneWidget);
+    expect(find.byKey(const Key('combined-offline-Kick')), findsOneWidget);
+  });
+
+  testWidgets('a connection problem shows a marker + label instead of '
+      '"Offline"', (tester) async {
+    kick.chatConnection = KickChatConnectionState.error;
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pump();
+
+    expect(find.byKey(const Key('combined-issue-Kick')), findsOneWidget);
+    expect(find.text('Failed'), findsOneWidget);
+    expect(find.byKey(const Key('combined-offline-Kick')), findsNothing);
   });
 
   testWidgets('a focused platform window shows "↩ Combined"', (tester) async {

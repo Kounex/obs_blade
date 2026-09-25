@@ -213,6 +213,9 @@ Kick/YouTube shields show whenever signed in (no mod lookup) and 403s
 toast `chatNotModeratorText`. Combined: `CombinedChannelModSheet` tabs
 per moderatable source. Kick/YouTube have no ban-list APIs — the
 `recentBans` lists are what the session saw.
+Status language: "LIVE" / the live green = streamer on air only;
+connection health is quiet when fine and only surfaces as a problem
+marker (`CombinedIssueMarker`) or label.
 Channel pickers everywhere: own first then A–Z, menu capped at
 `kChatChannelMenuMaxHeight`, `NativeChatLiveTag` (LIVE / OFFLINE /
 nothing when unknown) from each store's `liveStateForChannel`.

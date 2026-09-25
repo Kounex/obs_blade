@@ -21,6 +21,8 @@ import '../../../../../models/enums/chat_type.dart';
 import 'chat_notice_visibility.dart';
 import 'chat_tombstone.dart';
 import 'chat_type_brand.dart';
+import 'chat_username_bar.dart/combined_chat_picker.dart'
+    show CombinedIssueMarker, combinedIssueLabel, combinedIssueOf;
 import 'dialogs/chat_user_card_sheet.dart';
 import 'dialogs/kick_mod_action_sheet.dart';
 import 'dialogs/kick_user_card_sheet.dart';
@@ -718,10 +720,14 @@ class CombinedPinStack extends StatelessWidget {
 }
 
 /// Slim strip over the merged timeline: one chip per source — platform
-/// badge, channel, chat-connection dot, and a LIVE · viewers tag while
-/// that streamer is on air ([CombinedChatStore.liveSources]). Tapping a chip jumps into that
-/// platform's own chat on the combo's channel
-/// ([CombinedChatStore.focus]) — a "↩ Combined" strip there leads back.
+/// badge, channel, then its state in the same words as everywhere else:
+/// `LIVE · viewers` while that streamer is on air
+/// ([CombinedChatStore.liveSources]), a connection problem as an issue
+/// marker + label (connecting / failed / needs setup), or a muted
+/// "Offline". A healthy connection shows nothing extra — green / "live"
+/// only ever mean on air. Tapping a chip jumps into that platform's own
+/// chat on the combo's channel ([CombinedChatStore.focus]) — a
+/// "↩ Combined" strip there leads back.
 class CombinedSourceStrip extends StatelessWidget {
   final List<CombinedSource> sources;
 
@@ -733,10 +739,10 @@ class CombinedSourceStrip extends StatelessWidget {
     final statusColors =
         Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
-    final muted = Theme.of(context).textTheme.bodySmall?.color;
+    final muted = Theme.of(context).textTheme.bodySmall;
 
-    /// Own Observer: the dots and LIVE tags change without the timeline
-    /// changing, so the parent list's rebuilds can't be relied on.
+    /// Own Observer: the states change without the timeline changing, so
+    /// the parent list's rebuilds can't be relied on.
     return Observer(
       builder: (context) {
         final live = store.liveSources;
@@ -763,7 +769,7 @@ class CombinedSourceStrip extends StatelessWidget {
                         horizontal: AppSpacing.sm,
                       ),
                       decoration: BoxDecoration(
-                        color: (source.platform.brandColor ?? muted!)
+                        color: (source.platform.brandColor ?? muted!.color!)
                             .withValues(alpha: kCombinedRowTintAlpha * 2),
                         borderRadius: AppRadius.pill,
                       ),
@@ -780,34 +786,14 @@ class CombinedSourceStrip extends StatelessWidget {
                             style: Theme.of(context).textTheme.labelMedium,
                           ),
                           const SizedBox(width: AppSpacing.xs),
-                          Container(
-                            key: Key(
-                              'combined-chat-dot-${source.platform.name}',
-                            ),
-                            width: 6.0,
-                            height: 6.0,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: switch (store.sourceStatus[source
-                                  .platform]) {
-                                CombinedSourceStatus.live => statusColors.live,
-                                CombinedSourceStatus.connecting =>
-                                  statusColors.warning,
-                                CombinedSourceStatus.error ||
-                                CombinedSourceStatus.needsSetup =>
-                                  statusColors.unreachable,
-                                _ => muted,
-                              },
-                            ),
+                          ...this._state(
+                            context,
+                            source.platform,
+                            live,
+                            store.sourceStatus[source.platform],
+                            statusColors,
+                            muted,
                           ),
-                          if (live.containsKey(source.platform)) ...[
-                            const SizedBox(width: AppSpacing.xs),
-                            NativeChatStatusChip.live(
-                              key: Key('combined-live-${source.platform.name}'),
-                              color: statusColors.live,
-                              viewerCount: live[source.platform],
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -818,5 +804,44 @@ class CombinedSourceStrip extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// On air wins; else a connection issue; else "Offline".
+  List<Widget> _state(
+    BuildContext context,
+    ChatType platform,
+    Map<ChatType, int?> live,
+    CombinedSourceStatus? status,
+    AppStatusColors colors,
+    TextStyle? muted,
+  ) {
+    if (live.containsKey(platform)) {
+      return [
+        NativeChatStatusChip.live(
+          key: Key('combined-live-${platform.name}'),
+          color: colors.live,
+          viewerCount: live[platform],
+        ),
+      ];
+    }
+    final issue = combinedIssueOf(status);
+    if (issue != null) {
+      return [
+        CombinedIssueMarker(
+          key: Key('combined-issue-${platform.name}'),
+          issue: issue,
+          size: 12.0,
+        ),
+        const SizedBox(width: 3.0),
+        Text(combinedIssueLabel(status) ?? '', style: muted),
+      ];
+    }
+    return [
+      Text(
+        'Offline',
+        key: Key('combined-offline-${platform.name}'),
+        style: muted,
+      ),
+    ];
   }
 }

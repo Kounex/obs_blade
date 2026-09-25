@@ -19,8 +19,11 @@ import 'package:obs_blade/utils/general_helper.dart';
 part 'combined_chat.g.dart';
 
 /// Per-source health, rendered as the combined chat's status dots.
+/// Chat-connection health only — whether the streamer is on air is
+/// [CombinedChatStore.liveSources]. "Live" / green are reserved for on
+/// air in the UI; a healthy connection shows nothing.
 enum CombinedSourceStatus {
-  live,
+  connected,
   connecting,
 
   /// Reachable but nothing to show (stream offline, channel between
@@ -324,7 +327,7 @@ abstract class _CombinedChatStore with Store {
         final store = this._twitch();
         if (!store.isLoggedIn) return CombinedSourceStatus.needsSetup;
         return switch (store.chatConnection) {
-          TwitchChatConnectionState.live => CombinedSourceStatus.live,
+          TwitchChatConnectionState.live => CombinedSourceStatus.connected,
           TwitchChatConnectionState.connecting ||
           TwitchChatConnectionState.reconnecting =>
             CombinedSourceStatus.connecting,
@@ -339,7 +342,7 @@ abstract class _CombinedChatStore with Store {
         }
         if (store.awaitingLiveStream) return CombinedSourceStatus.offline;
         return switch (store.chatConnection) {
-          YouTubeChatConnectionState.connected => CombinedSourceStatus.live,
+          YouTubeChatConnectionState.connected => CombinedSourceStatus.connected,
           YouTubeChatConnectionState.connecting =>
             CombinedSourceStatus.connecting,
           YouTubeChatConnectionState.error => CombinedSourceStatus.error,
@@ -348,7 +351,7 @@ abstract class _CombinedChatStore with Store {
         };
       case ChatType.Kick:
         return switch (this._kick().chatConnection) {
-          KickChatConnectionState.connected => CombinedSourceStatus.live,
+          KickChatConnectionState.connected => CombinedSourceStatus.connected,
           KickChatConnectionState.connecting ||
           KickChatConnectionState.reconnecting =>
             CombinedSourceStatus.connecting,

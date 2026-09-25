@@ -55,6 +55,18 @@ Running log of upgrade/migration work. Not store release notes.
   scopes / not a Twitch mod / unavailable) dims with a lock and explains
   why, offers the fix (reusing `combinedSourceFix`) and lists what that
   platform's mods could do (`kCombinedModCapabilities`).
+- **Live vs connected, disambiguated** (dogfood: "x/y live" counted
+  connections and the green dots read as on air). Rule now: "LIVE" and
+  the live green mean only *streamer on air*; a healthy chat connection
+  is quiet. `CombinedSourceStatus.live` → `connected`. Combined card:
+  on-air ring + "LIVE" pip on the badge, `CombinedLiveSummary` (LIVE ·
+  n · viewers, or "Offline"), a red ⚠ `CombinedIssueMarker` count for
+  sources that need the user. Badge stack: ring = on air, corner marker
+  = connecting (amber spinner) / needs attention (red !), plain = fine.
+  Source strip: `LIVE · viewers` / issue + label / "Offline". Sources
+  sheet: two lines ("On air · 850 viewers" + "Chat connected"). Platform
+  window headers: connected = neutral dot, no label (only connecting /
+  reconnecting / failed / offline print).
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

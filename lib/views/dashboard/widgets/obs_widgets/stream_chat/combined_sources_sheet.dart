@@ -21,13 +21,14 @@ import 'twitch_device_code_dialog.dart';
 import 'youtube_device_code_dialog.dart';
 import 'youtube_setup_sheet.dart';
 
-/// The combined window's status: the healthiest source wins (one live
-/// source means the timeline is live), then connecting; failed only when
-/// every source failed.
+/// The combined window's connection status: the healthiest source wins
+/// (one connected source means the timeline is flowing), then
+/// connecting; failed only when every source failed. Connection only —
+/// on air is shown by LIVE chips.
 NativeChatConnectionStatus combinedChatWindowStatus(
   Iterable<CombinedSourceStatus> statuses,
 ) {
-  if (statuses.contains(CombinedSourceStatus.live)) {
+  if (statuses.contains(CombinedSourceStatus.connected)) {
     return NativeChatConnectionStatus.live;
   }
   if (statuses.contains(CombinedSourceStatus.connecting)) {
@@ -143,6 +144,9 @@ class CombinedSourcesSheet extends StatelessWidget {
             status: store.selectedComboId == kMyChatsComboId
                 ? store.sourceStatus[platform]
                 : null,
+            live: store.selectedComboId == kMyChatsComboId
+                ? store.liveSources
+                : const {},
             onToggle: (value) => store.setPlatformEnabled(platform, value),
             onFix: () {
               Navigator.of(context).pop();
@@ -175,6 +179,7 @@ class CombinedSourcesSheet extends StatelessWidget {
             status: shown
                 ? store.sourceStatus[source.platform]
                 : (source.unavailable ? CombinedSourceStatus.needsSetup : null),
+            live: shown ? store.liveSources : const {},
             onFix: () {
               Navigator.of(context).pop();
               combinedSourceFix(
@@ -230,6 +235,9 @@ class _SourceRow extends StatelessWidget {
   final bool enabled;
   final CombinedSourceStatus? status;
 
+  /// On-air sources of the shown combo (platform → viewers).
+  final Map<ChatType, int?> live;
+
   /// Null hides the switch (saved combos).
   final ValueChanged<bool>? onToggle;
   final VoidCallback onFix;
@@ -239,6 +247,7 @@ class _SourceRow extends StatelessWidget {
     required this.source,
     required this.enabled,
     required this.status,
+    this.live = const {},
     this.onToggle,
     required this.onFix,
   });
@@ -247,20 +256,32 @@ class _SourceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final muted = Theme.of(context).textTheme.bodySmall;
     final source = this.source;
+    final onAir = this.enabled && this.live.containsKey(this.platform);
+    final viewers = this.live[this.platform];
+
+    /// Two separate facts, never merged into one word: whether the
+    /// streamer is on air, and how the chat connection is doing.
     final (String label, String? action) = source == null
         ? ('Not signed in', 'Sign in')
         : !this.enabled
         ? ('Off', null)
         : switch (this.status) {
-            CombinedSourceStatus.live => ('Live', null),
+            CombinedSourceStatus.connected => ('Chat connected', null),
             CombinedSourceStatus.connecting => ('Connecting…', null),
             CombinedSourceStatus.needsSetup => ('Needs setup', 'Set up'),
-            CombinedSourceStatus.error => ('Failed', 'Retry'),
-            CombinedSourceStatus.offline => ('Offline', null),
+            CombinedSourceStatus.error => ('Chat failed', 'Retry'),
+            CombinedSourceStatus.offline => ('Chat not connected', null),
 
-            /// Not the combo on screen — no live status to report.
+            /// Not the combo on screen — nothing connected to report.
             null => ('Ready', null),
           };
+    final airLine = source == null || !this.enabled || this.status == null
+        ? null
+        : onAir
+        ? (viewers == null
+              ? 'On air'
+              : 'On air · ${formatChatViewerCount(viewers)} viewers')
+        : 'Offline';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
@@ -277,6 +298,22 @@ class _SourceRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (airLine != null)
+                  Text(
+                    airLine,
+                    key: Key('combined-source-air-${this.platform.name}'),
+                    style: onAir
+                        ? muted?.copyWith(
+                            color:
+                                (Theme.of(
+                                          context,
+                                        ).extension<AppStatusColors>() ??
+                                        AppStatusColors.standard)
+                                    .live,
+                            fontWeight: FontWeight.w600,
+                          )
+                        : muted,
+                  ),
                 Text(
                   label,
                   key: Key('combined-source-status-${this.platform.name}'),
