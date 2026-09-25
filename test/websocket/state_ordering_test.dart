@@ -301,6 +301,29 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 400));
       expect(dashboardStore.currentSceneItems.single.sceneItemEnabled, isTrue);
     });
+
+    test(
+      'lock event updates the displayed item, other scenes ignored',
+      () async {
+        setupItemListPeer();
+        await applyInitialItemList();
+
+        peer.event('SceneItemLockStateChanged', {
+          'sceneName': 'Other',
+          'sceneItemId': 7,
+          'sceneItemLocked': true,
+        });
+        peer.event('SceneItemLockStateChanged', {
+          'sceneName': 'Camera',
+          'sceneItemId': 7,
+          'sceneItemLocked': true,
+        });
+        await waitFor(
+          () => dashboardStore.currentSceneItems.single.sceneItemLocked == true,
+          'lock applied from the displayed scene',
+        );
+      },
+    );
   });
 
   /// Same ordering guarantee for the audio volume/mute domain: an

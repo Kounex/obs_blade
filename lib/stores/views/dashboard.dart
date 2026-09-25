@@ -53,6 +53,7 @@ import '../../types/classes/stream/events/input_volume_changed.dart';
 import '../../types/classes/stream/events/input_volume_meters.dart';
 import '../../types/classes/stream/events/scene_collection_list_changed.dart';
 import '../../types/classes/stream/events/scene_item_enable_state_changed.dart';
+import '../../types/classes/stream/events/scene_item_lock_state_changed.dart';
 import '../../types/classes/stream/events/source_filter_enable_state_changed.dart';
 import '../../types/classes/stream/events/studio_mode_switched.dart';
 import '../../types/classes/stream/events/virtual_cam_state_changed.dart';
@@ -638,6 +639,7 @@ abstract class _DashboardStore with Store {
         _sendGetSceneList();
         break;
       case RequestType.SetSceneItemEnabled:
+      case RequestType.SetSceneItemLocked:
         _requestDisplayedSceneItems();
         break;
       case RequestType.SetInputMute:
@@ -1460,6 +1462,29 @@ abstract class _DashboardStore with Store {
               return sceneItem.copyWith(
                 sceneItemEnabled:
                     sceneItemEnableStateChangedEvent.sceneItemEnabled,
+              );
+            }
+            return sceneItem;
+          }),
+        );
+        break;
+      case EventType.SceneItemLockStateChanged:
+        SceneItemLockStateChangedEvent sceneItemLockStateChangedEvent =
+            SceneItemLockStateChangedEvent(event.jsonRAW);
+
+        /// Same per-scene id scoping as the enable state. Lock state isn't
+        /// ordering-journaled: nothing optimistic writes it and every
+        /// GetSceneItemList re-read carries the confirmed value anyway
+        if (sceneItemLockStateChangedEvent.sceneName != _displayedSceneName) {
+          break;
+        }
+
+        this.currentSceneItems = ObservableList.of(
+          this.currentSceneItems.map((sceneItem) {
+            if (sceneItem.sceneItemId ==
+                sceneItemLockStateChangedEvent.sceneItemId) {
+              return sceneItem.copyWith(
+                sceneItemLocked: sceneItemLockStateChangedEvent.sceneItemLocked,
               );
             }
             return sceneItem;

@@ -203,6 +203,14 @@ enum RequestType {
   /// {'sceneItemEnabled': bool} - New enable state of the scene item
   SetSceneItemEnabled,
 
+  /// Sets the lock state of a scene item (locked items can't be moved or
+  /// resized in OBS' canvas).
+  ///
+  /// {'sceneName': String } - Name of the scene the item is in
+  /// {'sceneItemId': int } - Numeric ID of the scene item
+  /// {'sceneItemLocked': bool } - New lock state of the scene item
+  SetSceneItemLocked,
+
   /// Toggles the status of the stream output.
   ///
   /// No specified parameters

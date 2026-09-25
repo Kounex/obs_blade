@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/filter_list/filter_list.dart';
 
@@ -18,6 +19,19 @@ class SceneItemTile extends StatelessWidget {
   final SceneItem sceneItem;
 
   const SceneItemTile({super.key, required this.sceneItem});
+
+  /// Groups in WebSocket 5.X and higher is weird, therefore we need to use
+  /// the parents scene item name as the 'sceneName' property if we are
+  /// changing a child of a group...
+  String? _sceneName(DashboardStore dashboardStore, Box settingsBox) =>
+      this.sceneItem.parentGroupName ??
+      (settingsBox.get(
+                SettingsKeys.ExposeStudioControls.name,
+                defaultValue: false,
+              ) &&
+              dashboardStore.studioMode
+          ? dashboardStore.studioModePreviewSceneName
+          : dashboardStore.activeSceneName);
 
   @override
   Widget build(BuildContext context) {
@@ -89,19 +103,7 @@ class SceneItemTile extends StatelessWidget {
                 onTap: () => dashboardStore.sendMutation(
                   RequestType.SetSceneItemEnabled,
                   fields: {
-                    /// Groups in WebSocket 5.X and higher is weird, therefore
-                    /// we need to use the parents scene item name as the
-                    /// 'sceneName' property if we are toggling a child of a
-                    /// group...
-                    'sceneName':
-                        this.sceneItem.parentGroupName ??
-                        (settingsBox.get(
-                                  SettingsKeys.ExposeStudioControls.name,
-                                  defaultValue: false,
-                                ) &&
-                                dashboardStore.studioMode
-                            ? dashboardStore.studioModePreviewSceneName
-                            : dashboardStore.activeSceneName),
+                    'sceneName': this._sceneName(dashboardStore, settingsBox),
                     'sceneItemId': this.sceneItem.sceneItemId,
                     'sceneItemEnabled': !this.sceneItem.sceneItemEnabled!,
                   },
@@ -123,6 +125,50 @@ class SceneItemTile extends StatelessWidget {
                 ),
               ),
             ),
+
+            /// Lock (OBS canvas: no accidental move / resize). Groups skip
+            /// it - their children carry the lock that matters
+            if (!isGroup && this.sceneItem.sceneItemLocked != null)
+              HiveBuilder<dynamic>(
+                hiveKey: HiveKeys.Settings,
+                rebuildKeys: const [SettingsKeys.ExposeStudioControls],
+                builder: (context, settingsBox, child) => Semantics(
+                  button: true,
+                  label: this.sceneItem.sceneItemLocked!
+                      ? 'Unlock ${this.sceneItem.sourceName}'
+                      : 'Lock ${this.sceneItem.sourceName}',
+                  excludeSemantics: true,
+                  child: Pressable(
+                    haptic: true,
+                    onTap: () => dashboardStore.sendMutation(
+                      RequestType.SetSceneItemLocked,
+                      fields: {
+                        'sceneName': this._sceneName(
+                          dashboardStore,
+                          settingsBox,
+                        ),
+                        'sceneItemId': this.sceneItem.sceneItemId,
+                        'sceneItemLocked': !this.sceneItem.sceneItemLocked!,
+                      },
+                      label: 'Source lock',
+                    ),
+                    child: SizedBox(
+                      width: kBaseIconButtonMinHitArea,
+                      height: kBaseIconButtonMinHitArea,
+                      child: Center(
+                        child: AnimatedToggleIcon(
+                          icon: this.sceneItem.sceneItemLocked!
+                              ? CupertinoIcons.lock_fill
+                              : CupertinoIcons.lock_open,
+                          color: this.sceneItem.sceneItemLocked!
+                              ? theme.colorScheme.onSurface
+                              : theme.disabledColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             Pressable(
               onTap: this.sceneItem.filters.isNotEmpty
                   ? () => ModalHandler.showBaseCupertinoBottomSheet(
