@@ -126,6 +126,56 @@ void main() {
     expect(find.byKey(const Key('combined-stack-Kick')), findsOneWidget);
   });
 
+  testWidgets('the switcher shows who is on air for every combo, not only '
+      'the selected one', (tester) async {
+    combined.combos.add(
+      const CombinedCombo(id: 'c1', name: 'Co-stream', kickSlug: 'aaa'),
+    );
+    kick.channels.add('aaa');
+    kick.channelLivePreview['aaa'] = const KickChannelInfo(
+      id: 5,
+      slug: 'aaa',
+      chatroom: KickChatroom(id: 6),
+      livestream: KickLivestreamInfo(isLive: true, viewerCount: 900),
+    );
+    await tester.pumpWidget(wrap(const CombinedChatPicker()));
+
+    await tester.tap(find.byKey(const Key('combined-combo-card')));
+    await tester.pumpAndSettle();
+
+    /// "My chats" is selected; the saved combo c1 is not — still live.
+    expect(combined.selectedComboId, kMyChatsComboId);
+    expect(find.byKey(const Key('combined-summary-live-c1')), findsOneWidget);
+    expect(find.text('900'), findsOneWidget);
+    expect(find.byKey(const Key('combined-stack-live-Kick')), findsOneWidget);
+    expect(find.byKey(const Key('combined-summary-live-my')), findsNothing);
+  });
+
+  testWidgets('the LIVE pip fits inside the smaller switcher badge', (
+    tester,
+  ) async {
+    kick.channelInfo = const KickChannelInfo(
+      id: 1,
+      slug: 'kicker',
+      chatroom: KickChatroom(id: 2),
+      livestream: KickLivestreamInfo(isLive: true, viewerCount: 10),
+    );
+    await tester.pumpWidget(
+      wrap(
+        const CombinedBadgeStack(
+          platforms: [ChatType.Kick],
+          live: {ChatType.Kick},
+          size: 26.0,
+        ),
+      ),
+    );
+
+    final badge = tester.getRect(find.byKey(const Key('combined-stack-Kick')));
+    final pip = tester.getRect(find.text('LIVE'));
+    expect(pip.width, lessThan(badge.width));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('tapping the card opens the switcher: My chats, saved combos, '
       'a plain "New combined chat" button', (tester) async {
     combined.combos.add(

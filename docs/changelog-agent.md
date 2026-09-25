@@ -67,6 +67,12 @@ Running log of upgrade/migration work. Not store release notes.
   sheet: two lines ("On air · 850 viewers" + "Chat connected"). Platform
   window headers: connected = neutral dot, no label (only connecting /
   reconnecting / failed / offline print).
+  Follow-up: the LIVE pip is 6pt without an outline (merges with the
+  ring, fits the 26px switcher badge), and the switcher shows on-air
+  rings + a LIVE summary for every combo, not only the selected one
+  (`CombinedChatStore.liveSourcesOf` over the platforms' per-channel
+  live data; `refreshLivePreviews` when the sheet opens). With several
+  sources live the card stays one chip: "LIVE · 3 · 12.4k".
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

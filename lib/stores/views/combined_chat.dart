@@ -321,6 +321,46 @@ abstract class _CombinedChatStore with Store {
     };
   }
 
+  /// On air state of any combo's [sources] (not just the shown one) from
+  /// each platform's per-channel live data — Twitch's batch poll over
+  /// its list, Kick's channel previews, YouTube's `/live` page checks
+  /// ([refreshLivePreviews]). Live sources map to their viewer count.
+  Map<ChatType, int?> liveSourcesOf(List<CombinedSource> sources) {
+    final twitch = this._twitch();
+    final youTube = this._youTube();
+    final kick = this._kick();
+    return {
+      for (final source in sources)
+        if (!source.unavailable)
+          ...switch (source.platform) {
+            ChatType.Twitch
+                when twitch.liveStateForChannel(source.key) ?? false =>
+              {ChatType.Twitch: twitch.viewerCountForChannel(source.key)},
+            ChatType.YouTube
+                when youTube.liveStateForChannel(source.key ?? '') ?? false =>
+              {
+                ChatType.YouTube: source.key == youTube.selectedChannelLabel
+                    ? youTube.selectedChannelViewerCount
+                    : null,
+              },
+            ChatType.Kick
+                when kick.liveStateForChannel(source.key ?? '') ?? false =>
+              {ChatType.Kick: kick.viewerCountForChannel(source.key ?? '')},
+            _ => const <ChatType, int?>{},
+          },
+    };
+  }
+
+  /// Ask every platform for fresh per-channel live data (the switcher
+  /// sheet opening). Twitch / Kick poll on their own timers anyway;
+  /// YouTube's check is throttled to once a minute.
+  void refreshLivePreviews() {
+    final twitch = this._twitch();
+    if (twitch.isLoggedIn) unawaited(twitch.refreshSelectedChannelLive());
+    unawaited(this._kick().refreshChannelLivePreviews());
+    unawaited(this._youTube().refreshChannelLivePreviews());
+  }
+
   CombinedSourceStatus _statusOf(ChatType platform) {
     switch (platform) {
       case ChatType.Twitch:

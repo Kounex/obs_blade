@@ -114,14 +114,21 @@ class CombinedIssueMarker extends StatelessWidget {
 class CombinedLiveSummary extends StatelessWidget {
   final Map<ChatType, int?> live;
 
-  const CombinedLiveSummary({super.key, required this.live});
+  /// Distinguishes several summaries on one screen (switcher tiles).
+  final String keySuffix;
+
+  const CombinedLiveSummary({
+    super.key,
+    required this.live,
+    this.keySuffix = '',
+  });
 
   @override
   Widget build(BuildContext context) {
     if (this.live.isEmpty) {
       return Text(
         'Offline',
-        key: const Key('combined-summary-offline'),
+        key: Key('combined-summary-offline${this.keySuffix}'),
         style: Theme.of(context).textTheme.bodySmall,
       );
     }
@@ -134,7 +141,7 @@ class CombinedLiveSummary extends StatelessWidget {
         Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     return NativeChatStatusChip(
-      key: const Key('combined-summary-live'),
+      key: Key('combined-summary-live${this.keySuffix}'),
       label: this.live.length > 1 ? 'LIVE · ${this.live.length}' : 'LIVE',
       color: colors.live,
       viewerCountLabel: hasViewers ? formatChatViewerCount(viewers) : null,
@@ -393,7 +400,7 @@ class _StackBadge extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: -5.0,
-            child: Center(child: _LivePip(ring: this.ring)),
+            child: const Center(child: _LivePip()),
           ),
         if (this.issue case final issue?)
           Positioned(
@@ -413,9 +420,7 @@ class _StackBadge extends StatelessWidget {
 /// Tiny "LIVE" tab under an on-air badge (the ring alone is easy to miss
 /// on a green brand like Kick's).
 class _LivePip extends StatelessWidget {
-  final Color ring;
-
-  const _LivePip({required this.ring});
+  const _LivePip();
 
   @override
   Widget build(BuildContext context) {
@@ -423,18 +428,22 @@ class _LivePip extends StatelessWidget {
         (Theme.of(context).extension<AppStatusColors>() ??
                 AppStatusColors.standard)
             .live;
+
+    /// No contrasting outline: the pip is the ring's own green, so the two
+    /// read as one shape.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 3.0),
+      padding: const EdgeInsets.symmetric(horizontal: 2.5),
       decoration: BoxDecoration(
         color: live,
         borderRadius: BorderRadius.circular(3.0),
-        border: Border.all(color: this.ring, width: 1.5),
       ),
       child: const Text(
         'LIVE',
+        maxLines: 1,
+        softWrap: false,
         style: TextStyle(
           color: Colors.black,
-          fontSize: 7.0,
+          fontSize: 6.0,
           fontWeight: FontWeight.w900,
           height: 1.2,
           letterSpacing: 0.3,
@@ -455,12 +464,31 @@ Future<void> showCombinedChatSwitcherSheet(BuildContext context) =>
       builder: (_) => CombinedChatSwitcherSheet(hostContext: context),
     );
 
-class CombinedChatSwitcherSheet extends StatelessWidget {
+/// Every combo shows who's on air (rings + LIVE summary), not only the
+/// one on screen: the platforms' per-channel live data covers all listed
+/// channels ([CombinedChatStore.liveSourcesOf]); opening the sheet asks
+/// for a fresh round. Connection markers stay with the shown combo —
+/// the others aren't connected.
+class CombinedChatSwitcherSheet extends StatefulWidget {
   /// The chat bar's context — follow-up sheets open on it, not on this
   /// sheet (which closes first).
   final BuildContext hostContext;
 
   const CombinedChatSwitcherSheet({super.key, required this.hostContext});
+
+  @override
+  State<CombinedChatSwitcherSheet> createState() =>
+      _CombinedChatSwitcherSheetState();
+}
+
+class _CombinedChatSwitcherSheetState extends State<CombinedChatSwitcherSheet> {
+  BuildContext get hostContext => this.widget.hostContext;
+
+  @override
+  void initState() {
+    super.initState();
+    GetIt.instance<CombinedChatStore>().refreshLivePreviews();
+  }
 
   void _then(BuildContext context, void Function() action) {
     Navigator.of(context).pop();
@@ -482,13 +510,14 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
             children: [
               _ComboTile(
                 key: const Key('combined-combo-tile-my'),
+                id: kMyChatsComboId,
                 platforms: mine,
                 statuses: store.selectedComboId == kMyChatsComboId
                     ? store.sourceStatus
                     : const {},
                 live: store.selectedComboId == kMyChatsComboId
-                    ? store.liveSources.keys.toSet()
-                    : const {},
+                    ? store.liveSources
+                    : store.liveSourcesOf(store.mySources),
                 title: 'My chats',
                 subtitle: mine.isEmpty
                     ? 'Your own channels - sign in natively to start'
@@ -511,13 +540,14 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
               for (final combo in store.combos)
                 _ComboTile(
                   key: Key('combined-combo-tile-${combo.id}'),
+                  id: combo.id,
                   platforms: combo.platforms,
                   statuses: store.selectedComboId == combo.id
                       ? store.sourceStatus
                       : const {},
                   live: store.selectedComboId == combo.id
-                      ? store.liveSources.keys.toSet()
-                      : const {},
+                      ? store.liveSources
+                      : store.liveSourcesOf(store.sourcesOf(combo)),
                   title: combo.displayName,
                   subtitle: _comboChannels(combo),
                   selected: store.selectedComboId == combo.id,
@@ -565,12 +595,16 @@ class CombinedChatSwitcherSheet extends StatelessWidget {
 }
 
 class _ComboTile extends StatelessWidget {
+  /// Combo id ([kMyChatsComboId] for "My chats") — keys the tile's parts.
+  final String id;
   final List<ChatType> platforms;
 
-  /// Connection issues + on-air rings — only for the combo on screen
-  /// (the others aren't connected).
+  /// Connection issues — only for the combo on screen (the others aren't
+  /// connected).
   final Map<ChatType, CombinedSourceStatus> statuses;
-  final Set<ChatType> live;
+
+  /// On-air sources (platform → viewers) — for every combo.
+  final Map<ChatType, int?> live;
   final String title;
   final String subtitle;
   final bool own;
@@ -581,6 +615,7 @@ class _ComboTile extends StatelessWidget {
 
   const _ComboTile({
     super.key,
+    required this.id,
     required this.platforms,
     this.statuses = const {},
     this.live = const {},
@@ -626,7 +661,7 @@ class _ComboTile extends StatelessWidget {
               CombinedBadgeStack(
                 platforms: this.platforms,
                 statuses: this.statuses,
-                live: this.live,
+                live: this.live.keys.toSet(),
                 size: 26.0,
               ),
               const SizedBox(width: AppSpacing.md),
@@ -663,6 +698,13 @@ class _ComboTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
+                    if (this.live.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      CombinedLiveSummary(
+                        live: this.live,
+                        keySuffix: '-${this.id}',
+                      ),
+                    ],
                   ],
                 ),
               ),
