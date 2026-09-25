@@ -2,6 +2,34 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-26 - 4.0: base-app pass (dashboard + OBS control)
+
+Audit of the non-chat app (dashboard controls, OBS v5 coverage, connect /
+stats / settings), then everything but the "bigger" items shipped:
+
+- **Safety / feedback:** start confirms no longer red; stream/record
+  confirms send explicit `Start*`/`Stop*` (a race can't invert the
+  confirmed intent); hotkeys fire immediately + "Fired: X" overlay on ack;
+  screenshot via new `sendBatchMutation`; scene collection / profile
+  switch confirm (`DontShowSwitchCollectionProfileMessage`); one reconnect
+  signal (inline stale badges; `ReconnectToast` = tokenized "Reconnected"
+  flash only); `checkConnectionNow()` on app resume + connectivity back.
+- **OBS features:** split file + chapter markers (gated on GetVersion
+  `availableRequests` → `DashboardStore.supportsRequest`), scene item lock
+  (+ `SceneItemLockStateChanged`), per-input audio sheet (balance +
+  monitoring, loaded on open, live via Input* events), media transport on
+  ffmpeg/VLC rows (`mediaStates`, MediaInput* events → re-read), text
+  source editing (`GetInputSettings` / `SetInputSettings` overlay).
+- **A11y:** scene tiles collapse to one node ("Gameplay, on program" +
+  mode hint); labelled eye/lock/filter/media/text/mute buttons; volume
+  slider reads a percentage.
+- **Settings:** "Kick Chats" data row; FAQ entries for Quick Connect, chat
+  engines, Pro.
+- Dropped dead `PlayPauseMedia` / `TransitionToProgram`. Stale notes in
+  `dashboard-store-websocket-audit.md` and `state-and-plan.md` marked.
+- Deferred (post-4.0): Live Activity / ongoing notification, home widget,
+  Shortcuts, filter create/edit, stats export, connection sort, `ssid`.
+
 ## 2026-09-25 (evening) - 4.0: Pro copy refresh + version bump
 
 - **Pro benefits** (`kProBenefits`) rewritten for what 4.0 actually

@@ -58,6 +58,12 @@ MobX observables (scenes, inputs, live/record flags, …)
 
 ## Problems found (severity)
 
+> **Historical (2026-09-26 check):** the High items below are fixed in
+> code (`SceneListChanged`, stats-timer pause around collection changes,
+> scene-change refresh scope, `EventSubscription` bitmask in identify),
+> and the command-ack layer (`sendMutation` / `sendBatchMutation`) replaced
+> the fire-and-forget model. Kept for context — don't re-flag them.
+
 ### High — wrong or wasteful behavior
 
 1. **`EventType.ScenesChanged` never matches** OBS `SceneListChanged` → scene

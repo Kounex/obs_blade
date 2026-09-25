@@ -81,6 +81,13 @@ absorb, or open decisions that were never ratified for build.
 
 ### A. Ratified contract items, deferred (token-delta §5)
 
+> **Status 2026-09-26:** item 1 shipped in a different shape — no scrim;
+> `DashboardStore.sendMutation` refuses sends while `obsStateStale`,
+> `StaleGuard` disables controls, `StaleStateBadge` / the health pill say
+> "LAST KNOWN STATE", LIVE/REC pills go neutral. Item 4 resolved with it:
+> `ReconnectToast` is now only a tokenized "Reconnected to OBS" flash.
+> Items 2 and 3 remain open.
+
 1. **Reconnecting: blocking scrim + inert command handlers.**
    *What:* when the OBS socket drops, the connected view must put an
    input-blocking scrim over the content area and make every OBS-command
