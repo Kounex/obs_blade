@@ -15,6 +15,7 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -236,6 +237,38 @@ void main() {
     expect(find.byKey(const Key('combined-focus-YouTube')), findsOneWidget);
     expect(find.byKey(const Key('combined-focus-Kick')), findsOneWidget);
     expect(find.byKey(const Key('combined-focus-Twitch')), findsNothing);
+  });
+
+  testWidgets('live sources carry a LIVE tag next to the chat dot; the '
+      'strip stays up on an empty chat', (tester) async {
+    kick.channelInfo = const KickChannelInfo(
+      id: 1,
+      slug: 'kicker',
+      chatroom: KickChatroom(id: 2),
+      livestream: KickLivestreamInfo(isLive: true, viewerCount: 1234),
+    );
+
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pump();
+
+    /// No messages yet: placeholder AND the strip.
+    expect(find.textContaining('Waiting for messages'), findsOneWidget);
+    expect(find.byKey(const Key('combined-focus-Kick')), findsOneWidget);
+
+    expect(find.byKey(const Key('combined-live-Kick')), findsOneWidget);
+    expect(find.byKey(const Key('combined-live-YouTube')), findsNothing);
+    expect(find.byKey(const Key('combined-chat-dot-Kick')), findsOneWidget);
+    expect(combined.liveSources, {ChatType.Kick: 1234});
+
+    /// Stream ends: the tag goes, the chat dot stays.
+    kick.channelInfo = const KickChannelInfo(
+      id: 1,
+      slug: 'kicker',
+      chatroom: KickChatroom(id: 2),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('combined-live-Kick')), findsNothing);
+    expect(find.byKey(const Key('combined-chat-dot-Kick')), findsOneWidget);
   });
 
   testWidgets('a focused platform window shows "↩ Combined"', (tester) async {

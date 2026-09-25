@@ -49,6 +49,14 @@ mixin _$CombinedChatStore on _CombinedChatStore, Store {
         () => super.sourceStatus,
         name: '_CombinedChatStore.sourceStatus',
       )).value;
+  Computed<Map<ChatType, int?>>? _$liveSourcesComputed;
+
+  @override
+  Map<ChatType, int?> get liveSources =>
+      (_$liveSourcesComputed ??= Computed<Map<ChatType, int?>>(
+        () => super.liveSources,
+        name: '_CombinedChatStore.liveSources',
+      )).value;
   Computed<List<CombinedItem>>? _$timelineComputed;
 
   @override
@@ -325,6 +333,7 @@ activeSources: ${activeSources},
 mySources: ${mySources},
 availableSources: ${availableSources},
 sourceStatus: ${sourceStatus},
+liveSources: ${liveSources},
 timeline: ${timeline},
 writableTargets: ${writableTargets},
 replyPlatform: ${replyPlatform},

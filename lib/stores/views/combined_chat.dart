@@ -288,6 +288,36 @@ abstract class _CombinedChatStore with Store {
           : this._statusOf(source.platform),
   };
 
+  /// Whether each source's streamer is live (not the chat connection —
+  /// that's [sourceStatus]): live platforms map to their viewer count
+  /// (null when unknown); offline / unknown ones are absent. Read off the
+  /// platform stores, which the combo points at the source channels.
+  @computed
+  Map<ChatType, int?> get liveSources {
+    final twitch = this._twitch();
+    final youTube = this._youTube();
+    final kick = this._kick();
+    return {
+      for (final source in this.activeSources)
+        if (!source.unavailable)
+          ...switch (source.platform) {
+            ChatType.Twitch
+                when twitch.isLoggedIn && twitch.selectedChannelIsLive =>
+              {ChatType.Twitch: twitch.selectedChannelViewerCount},
+
+            /// YouTube only connects to a live stream's chat.
+            ChatType.YouTube
+                when youTube.chatConnection ==
+                    YouTubeChatConnectionState.connected =>
+              {ChatType.YouTube: youTube.selectedChannelViewerCount},
+            ChatType.Kick when kick.channelInfo?.isLive ?? false => {
+              ChatType.Kick: kick.channelInfo?.viewerCount,
+            },
+            _ => const <ChatType, int?>{},
+          },
+    };
+  }
+
   CombinedSourceStatus _statusOf(ChatType platform) {
     switch (platform) {
       case ChatType.Twitch:

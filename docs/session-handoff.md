@@ -115,8 +115,9 @@ others (tap to use), save. The new combo is selected, and its channels
 now also appear in the single-platform dropdowns. Long-press a combo →
 edit / delete. In the combined view, the source strip chips jump into
 that platform ("↩ Combined" strip there, YouTube pauses meanwhile —
-jump + back **confirmed on device 2026-09-25**; known gap: the strip
-is hidden while the merged timeline is still empty);
+jump + back **confirmed on device 2026-09-25**; the strip now stays up
+on an empty timeline and shows a LIVE · viewers tag per live streamer
+next to the chat dot);
 switching the chat type instead restores the pre-combo channels.
 Wave 3 dogfood checklist (`08bef57e`): the combined view docks an input;
 the chip left of the field shows the target (chevron + "Send to" sheet

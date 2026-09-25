@@ -12,6 +12,12 @@ Running log of upgrade/migration work. Not store release notes.
   YouTube mod or Copy, Kick reply/mod or Copy); a reply locks the chip to
   its platform, and picking another target drops it. Twitch mods can unpin
   from the combined pin stack.
+- **Dogfood feedback:** the source-strip dots only said "chat
+  connected", not "streamer live". Each chip now adds a LIVE · viewers tag
+  (`CombinedChatStore.liveSources`, read off the platform stores: Twitch
+  `selectedChannelIsLive`, YouTube connected = live, Kick
+  `channelInfo.isLive`). The strip also stays visible above the "Waiting
+  for messages" placeholder.
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

@@ -237,7 +237,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
         final sources = this._store.activeSources;
 
         if (items.isEmpty) {
-          return Center(
+          final placeholder = Center(
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: Text(
@@ -250,6 +250,17 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
               ),
             ),
           );
+
+          /// The strip stays up on a quiet chat — who's live and the
+          /// jump into a platform matter most exactly then.
+          return sources.isEmpty
+              ? placeholder
+              : Column(
+                  children: [
+                    CombinedSourceStrip(sources: sources),
+                    Expanded(child: placeholder),
+                  ],
+                );
         }
 
         this._trackArrivals(items);
@@ -706,8 +717,9 @@ class CombinedPinStack extends StatelessWidget {
   }
 }
 
-/// Slim strip over the merged timeline: one chip per source (platform
-/// badge + channel + status dot). Tapping a chip jumps into that
+/// Slim strip over the merged timeline: one chip per source — platform
+/// badge, channel, chat-connection dot, and a LIVE · viewers tag while
+/// that streamer is on air ([CombinedChatStore.liveSources]). Tapping a chip jumps into that
 /// platform's own chat on the combo's channel
 /// ([CombinedChatStore.focus]) — a "↩ Combined" strip there leads back.
 class CombinedSourceStrip extends StatelessWidget {
@@ -722,70 +734,89 @@ class CombinedSourceStrip extends StatelessWidget {
         Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     final muted = Theme.of(context).textTheme.bodySmall?.color;
-    return SizedBox(
-      height: 36.0,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        children: [
-          for (final source in this.sources)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.sm),
-              child: Pressable(
-                key: Key('combined-focus-${source.platform.name}'),
-                haptic: true,
-                onTap: source.unavailable
-                    ? null
-                    : () => store.focus(source.platform),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (source.platform.brandColor ?? muted!).withValues(
-                      alpha: kCombinedRowTintAlpha * 2,
+
+    /// Own Observer: the dots and LIVE tags change without the timeline
+    /// changing, so the parent list's rebuilds can't be relied on.
+    return Observer(
+      builder: (context) {
+        final live = store.liveSources;
+        return SizedBox(
+          height: 36.0,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
+            children: [
+              for (final source in this.sources)
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: Pressable(
+                    key: Key('combined-focus-${source.platform.name}'),
+                    haptic: true,
+                    onTap: source.unavailable
+                        ? null
+                        : () => store.focus(source.platform),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (source.platform.brandColor ?? muted!)
+                            .withValues(alpha: kCombinedRowTintAlpha * 2),
+                        borderRadius: AppRadius.pill,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CombinedPlatformBadge(
+                            platform: source.platform,
+                            size: 14.0,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            source.label,
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Container(
+                            key: Key(
+                              'combined-chat-dot-${source.platform.name}',
+                            ),
+                            width: 6.0,
+                            height: 6.0,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: switch (store.sourceStatus[source
+                                  .platform]) {
+                                CombinedSourceStatus.live => statusColors.live,
+                                CombinedSourceStatus.connecting =>
+                                  statusColors.warning,
+                                CombinedSourceStatus.error ||
+                                CombinedSourceStatus.needsSetup =>
+                                  statusColors.unreachable,
+                                _ => muted,
+                              },
+                            ),
+                          ),
+                          if (live.containsKey(source.platform)) ...[
+                            const SizedBox(width: AppSpacing.xs),
+                            NativeChatStatusChip.live(
+                              key: Key('combined-live-${source.platform.name}'),
+                              color: statusColors.live,
+                              viewerCount: live[source.platform],
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    borderRadius: AppRadius.pill,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CombinedPlatformBadge(
-                        platform: source.platform,
-                        size: 14.0,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        source.label,
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Container(
-                        width: 6.0,
-                        height: 6.0,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: switch (store.sourceStatus[source.platform]) {
-                            CombinedSourceStatus.live => statusColors.live,
-                            CombinedSourceStatus.connecting =>
-                              statusColors.warning,
-                            CombinedSourceStatus.error ||
-                            CombinedSourceStatus.needsSetup =>
-                              statusColors.unreachable,
-                            _ => muted,
-                          },
-                        ),
-                      ),
-                    ],
                   ),
                 ),
-              ),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
