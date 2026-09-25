@@ -413,7 +413,10 @@ abstract class _KickChatStore with Store {
             .resolveChannel(slug)
             .then((info) {
               if (info == null) return;
-              runInAction(() => this.channelLivePreview[slug] = info);
+              runInAction(() {
+                this.channelLivePreview[slug] = info;
+                this._applyLiveInfo(slug, info);
+              });
             })
             .catchError((Object e) {
               GeneralHelper.advLog(
@@ -426,6 +429,19 @@ abstract class _KickChatStore with Store {
         (slug, _) => !this.nativeChannels.contains(slug),
       );
     });
+  }
+
+  /// Carry a fresh preview's live state + viewer count into the selected
+  /// channel's [channelInfo] (header LIVE chip, combined chips) — it is
+  /// otherwise resolved once per connect. The chatroom modes stay as the
+  /// socket keeps them (`ChatroomUpdatedEvent`).
+  void _applyLiveInfo(String slug, KickChannelInfo fresh) {
+    final current = this.channelInfo;
+    if (slug != this.selectedChannelSlug || current == null) return;
+    if (current.livestream == fresh.livestream) return;
+    final updated = current.copyWith(livestream: fresh.livestream);
+    this.channelInfo = updated;
+    this._channelBuffers[slug]?.channelInfo = updated;
   }
 
   /// Dropdown LIVE chip — true once [channelLivePreview] has resolved

@@ -73,6 +73,13 @@ Running log of upgrade/migration work. Not store release notes.
   (`CombinedChatStore.liveSourcesOf` over the platforms' per-channel
   live data; `refreshLivePreviews` when the sheet opens). With several
   sources live the card stays one chip: "LIVE · 3 · 12.4k".
+  Dogfood bug: viewer counts froze after the connect. Kick resolved the
+  selected channel's `channelInfo` (live + viewers) once per connect —
+  the minute-interval preview round now carries fresh `livestream` data
+  into it (`_applyLiveInfo`). YouTube read `concurrentViewers` once per
+  stream — the poll loop now re-reads it every
+  `kViewerRefreshInterval` (2 min, 1 quota unit each). Twitch already
+  re-polls every minute.
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

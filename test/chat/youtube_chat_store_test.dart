@@ -1197,6 +1197,35 @@ void main() {
     });
   });
 
+  group('viewer count refresh', () {
+    test('a connected chat re-reads its viewer count on the refresh '
+        'interval', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.viewerCounts['video-a-001'] = 100;
+      await store.dispose();
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        sleep: (duration) =>
+            Future<void>.delayed(const Duration(milliseconds: 1)),
+        isProResolver: () => true,
+        viewerRefreshInterval: Duration.zero,
+      );
+      await store.init();
+      await until(() => store.selectedChannelViewerCount == 100);
+
+      /// The stream grows: the next poll round picks it up.
+      chatService.viewerCounts['video-a-001'] = 2500;
+      await until(() => chatService.isParked);
+      chatService.pushPollResponse(page([ytMessage('m1')]));
+      await until(() => store.selectedChannelViewerCount == 2500);
+
+      expect(store.selectedChannelViewerCount, 2500);
+      await store.selectChannel(null);
+    });
+  });
+
   group('channel live preview (pickers)', () {
     test('checks channel entries only; a failed lookup stays unknown; '
         'throttled to once a minute unless forced', () async {

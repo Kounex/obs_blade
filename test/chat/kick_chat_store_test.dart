@@ -1211,6 +1211,37 @@ void main() {
     });
   });
 
+  group('live preview', () {
+    test('a refreshed preview updates the selected channel\'s live state '
+        'and viewers (header / combined chips)', () async {
+      configure();
+      channelService.channels['aaa'] = channelInfo(
+        'aaa',
+        id: 101,
+        chatroomId: 42,
+        isLive: false,
+      );
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+      final slug = store.selectedChannelSlug!;
+      expect(slug, 'aaa');
+      expect(store.channelInfo?.isLive, isFalse);
+
+      /// The streamer goes live: the next preview round carries it over.
+      final current = channelService.channels[slug]!;
+      channelService.channels[slug] = current.copyWith(
+        livestream: const KickLivestreamInfo(isLive: true, viewerCount: 42),
+      );
+      await store.refreshChannelLivePreviews();
+
+      expect(store.channelInfo?.isLive, isTrue);
+      expect(store.channelInfo?.viewerCount, 42);
+      expect(store.channelInfo?.chatroomId, current.chatroomId);
+    });
+  });
+
   group('moderation', () {
     test('wrappers refuse when signed out', () async {
       configure();

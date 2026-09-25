@@ -110,6 +110,10 @@ class YouTubeChatChannel {
 /// [SettingsKeys.SelectedYouTubeNativeChannelId] like any other label.
 const String kYouTubeOwnChannelLabel = '\u0000own';
 
+/// How often a connected YouTube chat re-reads its viewer count (one
+/// `videos.list` unit each) so the LIVE chips follow the stream.
+const Duration kViewerRefreshInterval = Duration(minutes: 2);
+
 /// In-memory per-channel chat snapshot — swapped in/out of the live
 /// [messages] list on selectChannel so switching back restores recent
 /// history and the poll resumes from [nextPageToken] without re-resolving
@@ -155,6 +159,7 @@ abstract class _YouTubeChatStore with Store {
   /// the wait per hit, capped here.
   static const int kMaxBackoffMillis = 60000;
 
+
   final YouTubeAuthService _authService;
   final YouTubeLiveChatService _chatService;
   final YouTubeLiveResolver _liveResolver;
@@ -184,13 +189,18 @@ abstract class _YouTubeChatStore with Store {
   /// the locked pane.
   final bool Function() _isProResolver;
 
+  /// How often a connected chat re-reads its viewer count (tests: zero).
+  final Duration _viewerRefreshInterval;
+
   _YouTubeChatStore({
     YouTubeAuthService? authService,
     YouTubeLiveChatService? chatService,
     YouTubeLiveResolver? liveResolver,
     Future<void> Function(Duration)? sleep,
     bool Function()? isProResolver,
-  }) : _authService = authService ?? YouTubeAuthService(),
+    Duration viewerRefreshInterval = kViewerRefreshInterval,
+  }) : _viewerRefreshInterval = viewerRefreshInterval,
+       _authService = authService ?? YouTubeAuthService(),
        _chatService = chatService ?? YouTubeLiveChatService(),
        _liveResolver = liveResolver ?? YouTubeLiveResolver(),
        _sleep = sleep ?? Future.delayed,
@@ -924,6 +934,9 @@ abstract class _YouTubeChatStore with Store {
     var attached = false;
     final callStopwatch = Stopwatch();
 
+    /// Viewer count refresh — resolved once per connect otherwise.
+    final viewerStopwatch = Stopwatch()..start();
+
     /// The chat is over: remember which video so a channel's lagging
     /// `/live` page doesn't re-attach to it, and drop the dead cursor.
     _PassOutcome ended() {
@@ -1007,6 +1020,12 @@ abstract class _YouTubeChatStore with Store {
         return ended();
       }
 
+      if (viewerStopwatch.elapsed >= this._viewerRefreshInterval) {
+        viewerStopwatch.reset();
+        await this._refreshViewerCount(label, buffer, apiKey, superseded);
+        if (superseded()) return _PassOutcome.stopped;
+      }
+
       // Net-of-call pacing: the server interval spans response to next
       // request, so subtract the elapsed request time (floor at 0).
       final waitMillis =
@@ -1016,6 +1035,34 @@ abstract class _YouTubeChatStore with Store {
       );
     }
     return _PassOutcome.stopped;
+  }
+
+  /// Re-read the live video's `concurrentViewers` (1 quota unit) so the
+  /// LIVE chips follow a growing stream. Best effort: failures keep the
+  /// last count.
+  Future<void> _refreshViewerCount(
+    String label,
+    _ChannelBuffer buffer,
+    String apiKey,
+    bool Function() superseded,
+  ) async {
+    final videoId = buffer.videoId;
+    if (videoId == null) return;
+    try {
+      final details = await this._chatService.resolveLiveStreamingDetails(
+        videoId,
+        apiKey: apiKey,
+      );
+      if (superseded() || details.concurrentViewers == null) return;
+      buffer.viewerCount = details.concurrentViewers;
+      runInAction(() {
+        if (this.selectedChannelLabel == label) {
+          this.selectedChannelViewerCount = details.concurrentViewers;
+        }
+      });
+    } catch (e) {
+      GeneralHelper.advLog('YouTube viewer count refresh failed - $e');
+    }
   }
 
   /// Route one poll page: lifecycle events (tombstone / userBanned) mutate
