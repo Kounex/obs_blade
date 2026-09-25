@@ -237,6 +237,33 @@ class DataManagementView extends StatelessWidget {
                   },
                 ),
                 DataEntry(
+                  title: 'Kick Chats',
+                  description:
+                      'All Kick channels that have been added to the stream chat widget in the dashboard, plus your Kick sign-in.',
+                  onClear: () {
+                    for (final SettingsKeys key in const [
+                      SettingsKeys.SelectedKickUsername,
+                      SettingsKeys.KickUsernames,
+                      SettingsKeys.SelectedKickNativeOwnChannel,
+                      SettingsKeys.KickOAuthClientId,
+                      SettingsKeys.KickOAuthClientSecret,
+                    ]) {
+                      Hive.box(HiveKeys.Settings.name).delete(key.name);
+                    }
+                    Hive.box<KickAuth>(HiveKeys.KickAuth.name).clear();
+
+                    Hive.box<AppLog>(HiveKeys.AppLog.name).add(
+                      AppLog(
+                        DateTime.now().millisecondsSinceEpoch,
+                        LogLevel.Warning,
+                        'All kick chats have been deleted by the user.',
+                        null,
+                        true,
+                      ),
+                    );
+                  },
+                ),
+                DataEntry(
                   title: 'Don\'t ask me again Checks',
                   description:
                       'All checks set in the dialogs popped up to explain something very important but could get annoying very fast and aren\'t showing up anymore. If you want to see them again - here you go!',

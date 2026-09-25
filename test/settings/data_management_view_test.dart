@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/past_record_data.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/button.dart';
 import 'package:obs_blade/stores/shared/tabs.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/settings/data_management/data_management.dart';
 import 'package:obs_blade/views/settings/data_management/widgets/data_entry.dart';
 
@@ -48,6 +50,23 @@ void main() {
     await Hive.box<PastRecordData>(
       HiveKeys.PastRecordData.name,
     ).add(PastRecordData()..name = 'Recording');
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.KickUsernames.name, ['xqc']);
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.SelectedKickUsername.name, 'xqc');
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.TwitchUsernames.name, ['kounex']);
+    await Hive.box<KickAuth>(HiveKeys.KickAuth.name).add(
+      KickAuth(
+        accessToken: 'a',
+        refreshToken: 'r',
+        expiresAtMs: 0,
+        scopes: const [],
+      ),
+    );
   });
 
   tearDown(() async {
@@ -91,5 +110,45 @@ void main() {
 
     expect(Hive.box<PastStreamData>(HiveKeys.PastStreamData.name), isEmpty);
     expect(Hive.box<PastRecordData>(HiveKeys.PastRecordData.name), isEmpty);
+  });
+
+  testWidgets('Kick Chats clear removes Kick channels + sign-in only', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2340);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    final kickEntry = find.ancestor(
+      of: find.text('Kick Chats'),
+      matching: find.byType(DataEntry),
+    );
+    await tester.ensureVisible(kickEntry);
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(of: kickEntry, matching: find.byType(BaseButton)),
+    );
+    await tester.pumpAndSettle();
+
+    /// The confirm callback clears Hive boxes (real I/O) - run it in a real
+    /// zone so the writes can complete instead of hanging the suite
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Yes'));
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    });
+    await tester.pumpAndSettle();
+
+    final settings = Hive.box(HiveKeys.Settings.name);
+    expect(settings.get(SettingsKeys.KickUsernames.name), isNull);
+    expect(settings.get(SettingsKeys.SelectedKickUsername.name), isNull);
+    expect(Hive.box<KickAuth>(HiveKeys.KickAuth.name), isEmpty);
+
+    /// Other platforms untouched
+    expect(settings.get(SettingsKeys.TwitchUsernames.name), ['kounex']);
   });
 }

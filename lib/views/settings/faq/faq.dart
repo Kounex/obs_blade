@@ -105,6 +105,32 @@ class FAQView extends StatelessWidget {
                   ),
                   SizedBox(height: AppSpacing.xxl),
                   FAQBlock(
+                    heading: 'Is there a faster way to connect?',
+                    text:
+                        'Yes - Quick Connect. In OBS, open Tools → WebSocket Server Settings → Show Connect Info. Then tap Scan in OBS Blade\'s connect box and point the camera at the QR code: host, port and password are filled in for you.',
+                  ),
+                  SizedBox(height: AppSpacing.xxl),
+                  FAQBlock(
+                    heading: 'Which chats can I use?',
+                    customBody: EnumerationBlock(
+                      title:
+                          'Chat has its own tab and also sits next to your controls while you\'re live. Two ways to show it:',
+                      entries: [
+                        'WebView (free): the Twitch, YouTube, Kick or Owncast chat page, embedded as-is',
+                        'Native (Pro): Twitch, Kick and YouTube chat built into the app - sign in to write and moderate, and combine them into one timeline',
+                        'Switch between the two with the WebView / Native toggle in the chat bar',
+                        'Native YouTube chat needs your own YouTube API key - the setup sheet in the chat walks you through it',
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.xxl),
+                  FAQBlock(
+                    heading: 'What does OBS Blade Pro unlock?',
+                    text:
+                        'Native chat for Twitch, Kick and YouTube, combined chat, the moderation toolkit, emotes and badges, smarter chat tools and custom themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
+                  ),
+                  SizedBox(height: AppSpacing.xxl),
+                  FAQBlock(
                     heading: 'When will feature XY be available?',
                     text:
                         'I have quite a backlog to work through - some stuff I want to implement in general and some have been requested by you! I dont\'t have a public board showcasing all the tasks currently (might be added in the future). Feel free to contact me for feature requests / bugs or check the GitHub page!',
