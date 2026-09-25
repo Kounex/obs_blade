@@ -132,6 +132,21 @@ class KickPusherEvent {
     return id is int ? id : null;
   }
 
+  /// `UserBannedEvent` — the banned user's name (`user.username`).
+  String? get targetUsername =>
+      kickJsonObject(this.data['user'])?['username'] as String?;
+
+  /// `UserBannedEvent` — the acting mod (`banned_by.username`).
+  String? get bannedByUsername =>
+      kickJsonObject(this.data['banned_by'])?['username'] as String?;
+
+  /// `UserBannedEvent` — when a timeout ends (`expires_at`); null = a
+  /// permanent ban (or an unparsable value).
+  DateTime? get banExpiresAt {
+    final raw = this.data['expires_at'];
+    return raw is String ? DateTime.tryParse(raw) : null;
+  }
+
   /// `SubscriptionEvent` — `{username, months}`. Null when either field
   /// is missing (the reverse-engineered shape doesn't hold) — the store
   /// skips the notice rather than showing a garbled one.

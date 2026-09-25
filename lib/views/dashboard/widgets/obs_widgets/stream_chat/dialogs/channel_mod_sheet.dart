@@ -76,7 +76,15 @@ class ChannelModSheet extends StatefulWidget {
   /// Failure snackbar hook — hosted by the caller's context.
   final void Function(String message) onFailure;
 
-  const ChannelModSheet({super.key, required this.onFailure});
+  /// Inside another sheet (the combined chat's platform tabs): no own
+  /// padding / drag handle / scroll cap — the host provides them.
+  final bool embedded;
+
+  const ChannelModSheet({
+    super.key,
+    required this.onFailure,
+    this.embedded = false,
+  });
 
   @override
   State<ChannelModSheet> createState() => _ChannelModSheetState();
@@ -186,8 +194,34 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
         uniqueChatMode: false,
       );
 
+  Widget _body(BuildContext context) => AnimatedSwitcher(
+    duration: AppMotion.medium,
+    transitionBuilder: (child, animation) =>
+        chatSheetPaneTransition(context, child, animation),
+    child: KeyedSubtree(
+      key: ValueKey(this._step),
+      child: switch (this._step) {
+        _ChannelModStep.root => this._buildRoot(context),
+        _ChannelModStep.followerPresets => this._buildFollowerPresets(context),
+        _ChannelModStep.slowPresets => this._buildSlowPresets(context),
+        _ChannelModStep.announceCompose => this._buildAnnounceCompose(context),
+      },
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
+    if (this.widget.embedded) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          this._titleRow(context),
+          const SizedBox(height: AppSpacing.sm),
+          this._body(context),
+        ],
+      );
+    }
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.55;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -205,26 +239,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
-            child: SingleChildScrollView(
-              child: AnimatedSwitcher(
-                duration: AppMotion.medium,
-                transitionBuilder: (child, animation) =>
-                    chatSheetPaneTransition(context, child, animation),
-                child: KeyedSubtree(
-                  key: ValueKey(this._step),
-                  child: switch (this._step) {
-                    _ChannelModStep.root => this._buildRoot(context),
-                    _ChannelModStep.followerPresets =>
-                      this._buildFollowerPresets(context),
-                    _ChannelModStep.slowPresets => this._buildSlowPresets(
-                      context,
-                    ),
-                    _ChannelModStep.announceCompose =>
-                      this._buildAnnounceCompose(context),
-                  },
-                ),
-              ),
-            ),
+            child: SingleChildScrollView(child: this._body(context)),
           ),
         ],
       ),

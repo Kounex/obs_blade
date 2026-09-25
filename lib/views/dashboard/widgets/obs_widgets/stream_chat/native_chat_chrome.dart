@@ -137,6 +137,14 @@ class NativeChatLiveTag extends StatelessWidget {
   };
 }
 
+/// The toast for a mod action the platform refused with 403 — on Kick
+/// and YouTube the app can't know up front whether the account moderates
+/// a channel, so the button is always offered and a refusal explains
+/// itself instead of reading like a bug.
+String chatNotModeratorText(String platform) =>
+    'Nothing changed - $platform says you are not a moderator in this '
+    'channel.';
+
 /// Height cap of the channel pickers' open menus — longer lists scroll.
 const double kChatChannelMenuMaxHeight = 360.0;
 

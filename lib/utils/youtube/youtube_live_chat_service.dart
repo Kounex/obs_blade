@@ -10,6 +10,32 @@ import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 const String _kApiBase = 'https://www.googleapis.com/youtube/v3';
 
 /// One page of a `liveChatMessages.list` response.
+/// One `liveChatModerator` resource: [id] is what removal takes.
+class YouTubeChatModerator {
+  final String id;
+  final String channelId;
+  final String? displayName;
+
+  const YouTubeChatModerator({
+    required this.id,
+    required this.channelId,
+    this.displayName,
+  });
+
+  static YouTubeChatModerator? fromJson(Object? json) {
+    if (json is! Map) return null;
+    final id = json['id'];
+    final details = (json['snippet'] as Map?)?['moderatorDetails'] as Map?;
+    final channelId = details?['channelId'];
+    if (id is! String || channelId is! String) return null;
+    return YouTubeChatModerator(
+      id: id,
+      channelId: channelId,
+      displayName: details?['displayName'] as String?,
+    );
+  }
+}
+
 class YouTubeLiveChatPage {
   final List<YouTubeChatMessage> messages;
   final String? nextPageToken;
@@ -229,8 +255,9 @@ class YouTubeLiveChatService {
   }
 
   /// `liveChatBans.insert` — permanent when [durationSeconds] is null,
-  /// temporary (timeout) otherwise.
-  Future<void> ban({
+  /// temporary (timeout) otherwise. Returns the ban resource id
+  /// (`liveChatBans.delete` needs it to lift the ban), null if absent.
+  Future<String?> ban({
     required String accessToken,
     required String liveChatId,
     required String channelId,
@@ -251,6 +278,12 @@ class YouTubeLiveChatService {
     if (response.statusCode != 200) {
       throw YouTubeLiveChatService._errorFor(response, 'Banning user');
     }
+    try {
+      return (json.decode(response.body) as Map<String, dynamic>)['id']
+          as String?;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// `liveChatBans.delete` — [banId] is the id of the ban resource
@@ -265,6 +298,130 @@ class YouTubeLiveChatService {
     );
     if (response.statusCode != 204) {
       throw YouTubeLiveChatService._errorFor(response, 'Unbanning user');
+    }
+  }
+
+  /// `liveChatMessages.insert` with a `pollEvent` — [options] must hold
+  /// 2–4 entries. Fails with `preconditionCheckFailed` while another poll
+  /// is active. Returns the poll message (its id closes it).
+  Future<YouTubeChatMessage> createPoll({
+    required String accessToken,
+    required String liveChatId,
+    required String question,
+    required List<String> options,
+  }) async {
+    final response = await this._client.post(
+      this._uri('liveChat/messages', {'part': 'snippet'}),
+      headers: this._headers(accessToken: accessToken, jsonBody: true),
+      body: json.encode({
+        'snippet': {
+          'liveChatId': liveChatId,
+          'type': 'pollEvent',
+          'pollDetails': {
+            'metadata': {
+              'questionText': question,
+              'options': [
+                for (final option in options) {'optionText': option},
+              ],
+            },
+          },
+        },
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw YouTubeLiveChatService._errorFor(response, 'Starting the poll');
+    }
+    return YouTubeChatMessage.fromJson(
+      json.decode(response.body) as Map<String, Object?>,
+    );
+  }
+
+  /// `liveChatMessages.transition?status=closed` — ends the active poll
+  /// [pollMessageId].
+  Future<void> closePoll({
+    required String accessToken,
+    required String pollMessageId,
+  }) async {
+    final response = await this._client.post(
+      this._uri('liveChat/messages/transition', {
+        'id': pollMessageId,
+        'status': 'closed',
+        'part': 'snippet',
+      }),
+      headers: this._headers(accessToken: accessToken),
+    );
+    if (response.statusCode != 200) {
+      throw YouTubeLiveChatService._errorFor(response, 'Ending the poll');
+    }
+  }
+
+  /// `liveChatModerators.list` — owner-only. All pages (50 per page).
+  Future<List<YouTubeChatModerator>> listModerators({
+    required String accessToken,
+    required String liveChatId,
+  }) async {
+    final moderators = <YouTubeChatModerator>[];
+    String? pageToken;
+    do {
+      final response = await this._client.get(
+        this._uri('liveChat/moderators', {
+          'liveChatId': liveChatId,
+          'part': 'snippet',
+          'maxResults': '50',
+          'pageToken': ?pageToken,
+        }),
+        headers: this._headers(accessToken: accessToken),
+      );
+      if (response.statusCode != 200) {
+        throw YouTubeLiveChatService._errorFor(response, 'Listing moderators');
+      }
+      final body = json.decode(response.body) as Map<String, dynamic>;
+      for (final item in (body['items'] as List? ?? const [])) {
+        final moderator = YouTubeChatModerator.fromJson(item);
+        if (moderator != null) moderators.add(moderator);
+      }
+      pageToken = body['nextPageToken'] as String?;
+    } while (pageToken != null && moderators.length < 500);
+    return moderators;
+  }
+
+  /// `liveChatModerators.insert` — owner-only.
+  Future<YouTubeChatModerator?> addModerator({
+    required String accessToken,
+    required String liveChatId,
+    required String channelId,
+  }) async {
+    final response = await this._client.post(
+      this._uri('liveChat/moderators', {'part': 'snippet'}),
+      headers: this._headers(accessToken: accessToken, jsonBody: true),
+      body: json.encode({
+        'snippet': {
+          'liveChatId': liveChatId,
+          'moderatorDetails': {'channelId': channelId},
+        },
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw YouTubeLiveChatService._errorFor(response, 'Adding the moderator');
+    }
+    return YouTubeChatModerator.fromJson(json.decode(response.body));
+  }
+
+  /// `liveChatModerators.delete` — owner-only; [moderatorId] is the
+  /// moderator resource id.
+  Future<void> removeModerator({
+    required String accessToken,
+    required String moderatorId,
+  }) async {
+    final response = await this._client.delete(
+      this._uri('liveChat/moderators', {'id': moderatorId}),
+      headers: this._headers(accessToken: accessToken),
+    );
+    if (response.statusCode != 204) {
+      throw YouTubeLiveChatService._errorFor(
+        response,
+        'Removing the moderator',
+      );
     }
   }
 

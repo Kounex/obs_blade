@@ -92,7 +92,13 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
     final ok = await action();
     if (!this.mounted) return;
     Navigator.of(context).pop();
-    if (!ok) this.widget.onFailure(this._store.moderationError ?? failureText);
+    if (!ok) {
+      this.widget.onFailure(
+        this._store.moderationForbidden
+            ? chatNotModeratorText('YouTube')
+            : this._store.moderationError ?? failureText,
+      );
+    }
   }
 
   /// Confirm before an API call — cancel leaves the sheet open.
@@ -230,6 +236,31 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
             ),
           ),
         ),
+
+        /// Own channel only (moderator management is owner-only):
+        /// promote the author — skipped for the owner and existing mods.
+        if (this._store.isViewingOwnChannel &&
+            !this.widget.message.isOwner &&
+            !this.widget.message.isModerator &&
+            this.widget.message.authorChannelId != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: this._actionRow(
+              context,
+              icon: CupertinoIcons.shield_lefthalf_fill,
+              label: 'Make moderator',
+              onTap: () => this._confirmThenRun(
+                title: 'Make $name a moderator?',
+                body: '$name can delete messages and ban people in your chat.',
+                okText: 'Make moderator',
+                destructive: false,
+                action: () => this._store.addModerator(
+                  this.widget.message.authorChannelId!,
+                ),
+                failureText: 'Could not add the moderator',
+              ),
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.xs),
           child: this._actionRow(

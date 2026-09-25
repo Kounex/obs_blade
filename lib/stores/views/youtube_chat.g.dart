@@ -267,6 +267,60 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     });
   }
 
+  late final _$moderationForbiddenAtom = Atom(
+    name: '_YouTubeChatStore.moderationForbidden',
+    context: context,
+  );
+
+  @override
+  bool get moderationForbidden {
+    _$moderationForbiddenAtom.reportRead();
+    return super.moderationForbidden;
+  }
+
+  @override
+  set moderationForbidden(bool value) {
+    _$moderationForbiddenAtom.reportWrite(value, super.moderationForbidden, () {
+      super.moderationForbidden = value;
+    });
+  }
+
+  late final _$activePollAtom = Atom(
+    name: '_YouTubeChatStore.activePoll',
+    context: context,
+  );
+
+  @override
+  YouTubeChatMessage? get activePoll {
+    _$activePollAtom.reportRead();
+    return super.activePoll;
+  }
+
+  @override
+  set activePoll(YouTubeChatMessage? value) {
+    _$activePollAtom.reportWrite(value, super.activePoll, () {
+      super.activePoll = value;
+    });
+  }
+
+  late final _$moderatorsAtom = Atom(
+    name: '_YouTubeChatStore.moderators',
+    context: context,
+  );
+
+  @override
+  ObservableList<YouTubeChatModerator>? get moderators {
+    _$moderatorsAtom.reportRead();
+    return super.moderators;
+  }
+
+  @override
+  set moderators(ObservableList<YouTubeChatModerator>? value) {
+    _$moderatorsAtom.reportWrite(value, super.moderators, () {
+      super.moderators = value;
+    });
+  }
+
   late final _$ownChannelAtom = Atom(
     name: '_YouTubeChatStore.ownChannel',
     context: context,
@@ -509,6 +563,66 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   }
 
   @override
+  Future<bool> createPoll(String question, List<String> options) {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.createPoll',
+    );
+    try {
+      return super.createPoll(question, options);
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<bool> closeActivePoll() {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.closeActivePoll',
+    );
+    try {
+      return super.closeActivePoll();
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<bool> loadModerators() {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.loadModerators',
+    );
+    try {
+      return super.loadModerators();
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<bool> addModerator(String channelId) {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.addModerator',
+    );
+    try {
+      return super.addModerator(channelId);
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  Future<bool> removeModerator(YouTubeChatModerator moderator) {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.removeModerator',
+    );
+    try {
+      return super.removeModerator(moderator);
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   String toString() {
     return '''
 authState: ${authState},
@@ -524,6 +638,9 @@ chatQuotaExhausted: ${chatQuotaExhausted},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 moderationError: ${moderationError},
+moderationForbidden: ${moderationForbidden},
+activePoll: ${activePoll},
+moderators: ${moderators},
 ownChannel: ${ownChannel},
 selectedChannelLabel: ${selectedChannelLabel},
 pollingPaused: ${pollingPaused},

@@ -781,6 +781,91 @@ void main() {
       expect(store.messages.single.isTombstoned, isFalse);
     });
 
+    test('bans list: own bans keep the ban id (liftable); echoes from '
+        'other mods do not; unban drops the entry', () async {
+      configure();
+      await seedAuth();
+      await connectWith(ytMessage('m1', author: 'chan-1'));
+
+      chatService.banId = 'ban-own';
+      expect(await store.banUser('chan-1', durationSeconds: 300), isTrue);
+      expect(store.recentBans.single.banId, 'ban-own');
+      expect(store.recentBans.single.isTimeout, isTrue);
+
+      final callsBefore = chatService.listCalls;
+      chatService.pushPollResponse(
+        page([ytUserBanned('chan-1'), ytUserBanned('chan-9')]),
+      );
+      await until(() => chatService.listCalls > callsBefore);
+      await until(() => store.recentBans.length == 2);
+
+      expect(store.recentBans.first.userId, 'chan-9');
+      expect(store.recentBans.first.banId, isNull);
+      expect(store.recentBans.last.banId, 'ban-own');
+
+      expect(await store.unbanUser('ban-own'), isTrue);
+      expect(store.recentBans.map((b) => b.userId), ['chan-9']);
+    });
+
+    test('a 403 marks the action as forbidden', () async {
+      configure();
+      await seedAuth();
+      await connectWith(ytMessage('m1'));
+      chatService.deleteThrows = const YouTubeForbiddenException('403');
+
+      expect(await store.deleteMessage('m1'), isFalse);
+      expect(store.moderationForbidden, isTrue);
+    });
+
+    test('polls start and end on the live chat', () async {
+      configure();
+      await seedAuth();
+      await connectWith(ytMessage('m1'));
+
+      expect(await store.createPoll('Best map?', ['A', 'B', 'C']), isTrue);
+      expect(chatService.pollCalls.single.question, 'Best map?');
+      expect(chatService.pollCalls.single.options, ['A', 'B', 'C']);
+      expect(store.activePoll?.id, 'poll-1');
+
+      expect(await store.closeActivePoll(), isTrue);
+      expect(chatService.closePollCalls, ['poll-1']);
+      expect(store.activePoll, isNull);
+    });
+
+    test('moderators load, add and remove', () async {
+      configure();
+      await seedAuth();
+      await connectWith(ytMessage('m1'));
+      chatService.moderators.add(
+        const YouTubeChatModerator(
+          id: 'mod-a',
+          channelId: 'chan-a',
+          displayName: 'A',
+        ),
+      );
+
+      expect(await store.loadModerators(), isTrue);
+      expect(store.moderators!.map((m) => m.id), ['mod-a']);
+
+      expect(await store.addModerator('chan-b'), isTrue);
+      expect(chatService.addModeratorCalls, ['chan-b']);
+      expect(store.moderators!.map((m) => m.channelId), ['chan-a', 'chan-b']);
+
+      expect(await store.removeModerator(store.moderators!.first), isTrue);
+      expect(chatService.removeModeratorCalls, ['mod-a']);
+      expect(store.moderators!.map((m) => m.channelId), ['chan-b']);
+    });
+
+    test('channel mod actions refuse without a live chat', () async {
+      configure();
+      await seedAuth();
+      await store.init();
+
+      expect(await store.createPoll('Q', ['A', 'B']), isFalse);
+      expect(store.moderationError, contains('not live'));
+      expect(chatService.pollCalls, isEmpty);
+    });
+
     test('unban forwards the ban id', () async {
       configure();
       await seedAuth();

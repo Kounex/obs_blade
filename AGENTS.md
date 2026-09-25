@@ -206,6 +206,13 @@ follow the target. Long-press opens the row platform's own sheet (mod
 sheet where allowed, else Copy + Reply); the platform store is already on
 the row's channel (shared coupling), so its sheets act on the right
 channel as-is. `setReplyTarget` keeps one reply across stores.
+Channel mod sheets: Twitch (full Helix), Kick (`KickChannelModPanel`:
+modes read-only, session bans + unban, unban by name), YouTube
+(`YouTubeChannelModPanel`: polls, session bans, owner-only moderators);
+Kick/YouTube shields show whenever signed in (no mod lookup) and 403s
+toast `chatNotModeratorText`. Combined: `CombinedChannelModSheet` tabs
+per moderatable source. Kick/YouTube have no ban-list APIs — the
+`recentBans` lists are what the session saw.
 Channel pickers everywhere: own first then A–Z, menu capped at
 `kChatChannelMenuMaxHeight`, `NativeChatLiveTag` (LIVE / OFFLINE /
 nothing when unknown) from each store's `liveStateForChannel`.

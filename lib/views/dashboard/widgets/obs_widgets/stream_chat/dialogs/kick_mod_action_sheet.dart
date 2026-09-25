@@ -111,7 +111,13 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
     final ok = await action();
     if (!this.mounted) return;
     Navigator.of(context).pop();
-    if (!ok) this.widget.onFailure(this._store.modActionError ?? failureText);
+    if (!ok) {
+      this.widget.onFailure(
+        this._store.modActionForbidden
+            ? chatNotModeratorText('Kick')
+            : this._store.modActionError ?? failureText,
+      );
+    }
   }
 
   /// Confirm before an API call — cancel leaves the sheet open.

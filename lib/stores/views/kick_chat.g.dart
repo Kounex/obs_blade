@@ -223,6 +223,24 @@ mixin _$KickChatStore on _KickChatStore, Store {
     });
   }
 
+  late final _$modActionForbiddenAtom = Atom(
+    name: '_KickChatStore.modActionForbidden',
+    context: context,
+  );
+
+  @override
+  bool get modActionForbidden {
+    _$modActionForbiddenAtom.reportRead();
+    return super.modActionForbidden;
+  }
+
+  @override
+  set modActionForbidden(bool value) {
+    _$modActionForbiddenAtom.reportWrite(value, super.modActionForbidden, () {
+      super.modActionForbidden = value;
+    });
+  }
+
   late final _$pinnedMessageAtom = Atom(
     name: '_KickChatStore.pinnedMessage',
     context: context,
@@ -357,6 +375,18 @@ mixin _$KickChatStore on _KickChatStore, Store {
     return _$unbanUserAsyncAction.run(() => super.unbanUser(userId));
   }
 
+  late final _$unbanUsernameAsyncAction = AsyncAction(
+    '_KickChatStore.unbanUsername',
+    context: context,
+  );
+
+  @override
+  Future<bool> unbanUsername(String nameOrSlug) {
+    return _$unbanUsernameAsyncAction.run(
+      () => super.unbanUsername(nameOrSlug),
+    );
+  }
+
   late final _$selectChannelAsyncAction = AsyncAction(
     '_KickChatStore.selectChannel',
     context: context,
@@ -470,6 +500,7 @@ authError: ${authError},
 sendingChat: ${sendingChat},
 sendChatError: ${sendChatError},
 modActionError: ${modActionError},
+modActionForbidden: ${modActionForbidden},
 pinnedMessage: ${pinnedMessage},
 replyTarget: ${replyTarget},
 nativeChannels: ${nativeChannels},

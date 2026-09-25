@@ -7,12 +7,16 @@ import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/pro_store.dart';
+import '../../../../../../stores/views/combined_chat.dart';
 import '../../../../../../stores/views/kick_chat.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../stores/views/youtube_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../channel_mod_button.dart';
+import '../dialogs/combined_channel_mod_sheet.dart';
+import '../dialogs/kick_channel_mod_sheet.dart';
+import '../dialogs/youtube_channel_mod_sheet.dart';
 import '../native_chat_options_sheet.dart';
 import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
@@ -225,13 +229,13 @@ class ChatUsernameBar extends StatelessWidget {
 /// Shield shows when moderating and the cluster fits; otherwise Mod folds
 /// into a combined options chip ([NativeChatOptionsButton.modFoldedIntoOptions]).
 ///
-/// YouTube dispatches to its own minimal cluster (options + account) — no
-/// shield: YouTube has no cheap "am I a mod" lookup, so mod actions live on
-/// the per-message long-press only (plan §7).
+/// YouTube and Kick: shield + options + account. Neither has a cheap "am
+/// I a mod" lookup, so the shield shows whenever the account may write;
+/// a refused action toasts why ([chatNotModeratorText]). The shield drops
+/// first when the cluster doesn't fit.
 ///
-/// Kick mirrors YouTube's minimal cluster (options + account) — no
-/// shield: Kick has no "am I a mod" lookup, so mod actions live on the
-/// per-message long-press and 403s surface honestly.
+/// Combined: shield (when any source is moderatable, tabbed sheet) +
+/// options.
 class _NativeRightCluster extends StatelessWidget {
   final ChatType chatType;
 
@@ -242,28 +246,68 @@ class _NativeRightCluster extends StatelessWidget {
     /// Combined: options only - the sources (and their sign-ins) live in
     /// the "My chats" picker next to the type dropdown.
     if (this.chatType == ChatType.Combined) {
-      return const NativeChatOptionsButton(chatType: ChatType.Combined);
-    }
-
-    if (this.chatType == ChatType.Kick) {
-      return const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          KickChatOptionsButton(),
-          SizedBox(width: AppSpacing.sm),
-          Flexible(child: KickAccountControl()),
-        ],
+      return Observer(
+        builder: (_) {
+          final canMod = combinedModPlatforms(
+            GetIt.instance<CombinedChatStore>(),
+          ).isNotEmpty;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canMod) ...[
+                const ChannelModButton(onTap: showCombinedChannelModSheet),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              const NativeChatOptionsButton(chatType: ChatType.Combined),
+            ],
+          );
+        },
       );
     }
 
-    if (this.chatType == ChatType.YouTube) {
-      return const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          YouTubeChatOptionsButton(),
-          SizedBox(width: AppSpacing.sm),
-          Flexible(child: YouTubeAccountControl()),
-        ],
+    if (this.chatType == ChatType.Kick || this.chatType == ChatType.YouTube) {
+      final kick = this.chatType == ChatType.Kick;
+      return LayoutBuilder(
+        builder: (context, constraints) => Observer(
+          builder: (_) {
+            final canWrite = kick
+                ? GetIt.instance<KickChatStore>().isSignedInState &&
+                      GetIt.instance<KickChatStore>().canWrite
+                : GetIt.instance<YouTubeChatStore>().isSignedInState &&
+                      GetIt.instance<YouTubeChatStore>().canWrite;
+
+            /// The account chip is at most ~140pt wide.
+            final showShield =
+                canWrite &&
+                nativeModClusterFitsWithShield(
+                  maxWidth: constraints.maxWidth,
+                  accountWidth: 140.0,
+                );
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showShield) ...[
+                  ChannelModButton(
+                    key: Key('channel-mod-button-${this.chatType.name}'),
+                    onTap: kick
+                        ? showKickChannelModSheet
+                        : showYouTubeChannelModSheet,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
+                kick
+                    ? const KickChatOptionsButton()
+                    : const YouTubeChatOptionsButton(),
+                const SizedBox(width: AppSpacing.sm),
+                Flexible(
+                  child: kick
+                      ? const KickAccountControl()
+                      : const YouTubeAccountControl(),
+                ),
+              ],
+            );
+          },
+        ),
       );
     }
 

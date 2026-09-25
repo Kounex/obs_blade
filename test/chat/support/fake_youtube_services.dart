@@ -131,6 +131,17 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   final List<({String channelId, int? durationSeconds})> banCalls =
       <({String channelId, int? durationSeconds})>[];
   Object? banThrows;
+  String? banId = 'ban-1';
+
+  final List<({String question, List<String> options})> pollCalls =
+      <({String question, List<String> options})>[];
+  Object? pollThrows;
+  final List<String> closePollCalls = <String>[];
+
+  final List<YouTubeChatModerator> moderators = <YouTubeChatModerator>[];
+  Object? moderatorsThrows;
+  final List<String> addModeratorCalls = <String>[];
+  final List<String> removeModeratorCalls = <String>[];
 
   final List<String> unbanCalls = <String>[];
   Object? unbanThrows;
@@ -218,7 +229,7 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   }
 
   @override
-  Future<void> ban({
+  Future<String?> ban({
     required String accessToken,
     required String liveChatId,
     required String channelId,
@@ -226,6 +237,77 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
   }) async {
     this.banCalls.add((channelId: channelId, durationSeconds: durationSeconds));
     if (this.banThrows != null) throw this.banThrows!;
+    return this.banId;
+  }
+
+  @override
+  Future<YouTubeChatMessage> createPoll({
+    required String accessToken,
+    required String liveChatId,
+    required String question,
+    required List<String> options,
+  }) async {
+    this.pollCalls.add((question: question, options: options));
+    if (this.pollThrows != null) throw this.pollThrows!;
+    return YouTubeChatMessage(
+      id: 'poll-1',
+      snippet: YouTubeChatMessageSnippet(
+        type: YouTubeChatMessageType.poll,
+        publishedAt: DateTime.utc(2026, 9, 25),
+        pollDetails: YouTubePollDetails(
+          metadata: YouTubePollMetadata(
+            questionText: question,
+            options: [
+              for (final option in options)
+                YouTubePollOption(optionText: option),
+            ],
+            status: 'active',
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> closePoll({
+    required String accessToken,
+    required String pollMessageId,
+  }) async {
+    this.closePollCalls.add(pollMessageId);
+  }
+
+  @override
+  Future<List<YouTubeChatModerator>> listModerators({
+    required String accessToken,
+    required String liveChatId,
+  }) async {
+    if (this.moderatorsThrows != null) throw this.moderatorsThrows!;
+    return List.of(this.moderators);
+  }
+
+  @override
+  Future<YouTubeChatModerator?> addModerator({
+    required String accessToken,
+    required String liveChatId,
+    required String channelId,
+  }) async {
+    this.addModeratorCalls.add(channelId);
+    final moderator = YouTubeChatModerator(
+      id: 'mod-$channelId',
+      channelId: channelId,
+      displayName: 'Mod $channelId',
+    );
+    this.moderators.add(moderator);
+    return moderator;
+  }
+
+  @override
+  Future<void> removeModerator({
+    required String accessToken,
+    required String moderatorId,
+  }) async {
+    this.removeModeratorCalls.add(moderatorId);
+    this.moderators.removeWhere((m) => m.id == moderatorId);
   }
 
   @override

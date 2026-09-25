@@ -8,8 +8,13 @@ import 'dialogs/channel_mod_sheet.dart';
 /// Native-mode bar entry for channel Mod actions. Styled like
 /// [NativeChatOptionsButton] (44pt tile). Visibility is gated by the
 /// username bar's fit check + [TwitchChatStore.canModerateSelectedChannel].
+///
+/// [onTap] defaults to the Twitch sheet; Kick / YouTube / Combined pass
+/// their own.
 class ChannelModButton extends StatelessWidget {
-  const ChannelModButton({super.key});
+  final void Function(BuildContext context)? onTap;
+
+  const ChannelModButton({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +22,7 @@ class ChannelModButton extends StatelessWidget {
       message: 'Channel moderation',
       child: Pressable(
         haptic: true,
-        onTap: () => showChannelModSheet(context),
+        onTap: () => (this.onTap ?? showChannelModSheet)(context),
         child: Container(
           constraints: const BoxConstraints(
             minWidth: kMinInteractiveDimensionCupertino,

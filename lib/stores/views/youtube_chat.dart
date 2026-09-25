@@ -6,6 +6,7 @@ import 'package:mobx/mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -131,6 +132,9 @@ class _ChannelBuffer {
   /// Snapshot taken when [liveChatId] was resolved — not re-polled
   /// afterward (see [YouTubeLiveStreamingDetails]).
   int? viewerCount;
+
+  List<ChatBanEntry> bans = <ChatBanEntry>[];
+  YouTubeChatMessage? activePoll;
 
   _ChannelBuffer({
     List<YouTubeChatMessage>? messages,
@@ -311,6 +315,31 @@ abstract class _YouTubeChatStore with Store {
   @observable
   String? moderationError;
 
+  /// The last mod action came back 403 — YouTube's answer when the
+  /// account isn't the owner / a moderator here. The UI explains it.
+  @observable
+  bool moderationForbidden = false;
+
+  /// Bans / timeouts seen in the selected chat this session (issued here
+  /// or echoed as `userBannedEvent`), newest first — YouTube has no
+  /// ban-list API. Only entries with a [ChatBanEntry.banId] (issued here)
+  /// can be lifted.
+  final ObservableList<ChatBanEntry> recentBans =
+      ObservableList<ChatBanEntry>();
+
+  /// The chat's active poll (`activePollItem` of the last poll page).
+  @observable
+  YouTubeChatMessage? activePoll;
+
+  /// Moderators of the selected chat — owner-only
+  /// ([loadModerators]); null until loaded.
+  @observable
+  ObservableList<YouTubeChatModerator>? moderators;
+
+  /// Whether the signed-in account owns the selected chat — the only
+  /// case the moderator list works.
+  bool get isViewingOwnChannel => this.isOwnChannel(this.selectedChannelLabel);
+
   /// Native YouTube channels derived from [SettingsKeys.YouTubeUsernames]
   /// (label → raw value; entries whose value parses to neither a channel
   /// nor a video via [parseYouTubeTarget] are skipped).
@@ -335,9 +364,6 @@ abstract class _YouTubeChatStore with Store {
   /// Whether [label] is the signed-in account's own channel entry.
   bool isOwnChannel(String? label) =>
       label == kYouTubeOwnChannelLabel && this.ownChannel != null;
-
-  /// Whether the visible chat is the signed-in account's own channel.
-  bool get isViewingOwnChannel => this.isOwnChannel(this.selectedChannelLabel);
 
   /// Currently viewed channel — the **label** (map key of
   /// [SettingsKeys.YouTubeUsernames], stable across re-edits, or
@@ -963,6 +989,9 @@ abstract class _YouTubeChatStore with Store {
         this.chatConnection = YouTubeChatConnectionState.connected;
         this.awaitingLiveStream = false;
         this.chatError = null;
+        final poll = page.activePollItem;
+        buffer.activePoll = poll;
+        if (this.selectedChannelLabel == label) this.activePoll = poll;
         this._applyPageMessages(
           label,
           historyPage
@@ -1031,10 +1060,22 @@ abstract class _YouTubeChatStore with Store {
   /// itself is not appended as a row.
   @action
   void _applyUserBanned(String label, YouTubeChatMessage event) {
-    final bannedChannelId =
-        event.snippet.userBannedDetails?.bannedUserDetails?.channelId;
+    final details = event.snippet.userBannedDetails;
+    final bannedChannelId = details?.bannedUserDetails?.channelId;
     if (bannedChannelId == null || bannedChannelId.isEmpty) return;
     if (!this._moderationKeyIsNew('$label:purge:$bannedChannelId')) return;
+    final seconds = details?.banDurationSeconds;
+    this._recordBan(
+      ChatBanEntry(
+        userId: bannedChannelId,
+        userName: details?.bannedUserDetails?.displayName,
+        expiresAt: details?.banType == 'temporary' && seconds != null
+            ? event.publishedAt.add(Duration(seconds: seconds))
+            : null,
+        bannedBy: event.authorName,
+        at: event.publishedAt,
+      ),
+    );
     for (var i = 0; i < this.messages.length; i++) {
       final message = this.messages[i];
       if (message.snippet.authorChannelId == bannedChannelId &&
@@ -1076,11 +1117,18 @@ abstract class _YouTubeChatStore with Store {
         _ChannelBuffer.new,
       );
       previous.messages = List.of(this.messages);
+      previous.bans = List.of(this.recentBans);
+      previous.activePoll = this.activePoll;
     }
 
     this.selectedChannelLabel = label;
     this._persistSelectedChannel();
     this.sendChatError = null;
+    this.moderationError = null;
+    this.moderationForbidden = false;
+    this.recentBans.clear();
+    this.activePoll = null;
+    this.moderators = null;
 
     this.messages.clear();
     if (label != null) {
@@ -1089,6 +1137,8 @@ abstract class _YouTubeChatStore with Store {
         _ChannelBuffer.new,
       );
       this.messages.addAll(buffer.messages);
+      this.recentBans.addAll(buffer.bans);
+      this.activePoll = buffer.activePoll;
       this.selectedChannelViewerCount = buffer.viewerCount;
       this.selectedLiveVideoId = buffer.liveChatId != null
           ? buffer.videoId
@@ -1306,12 +1356,14 @@ abstract class _YouTubeChatStore with Store {
   Future<bool> deleteMessage(String messageId) async {
     if (!this.canWrite) return false;
     this.moderationError = null;
+    this.moderationForbidden = false;
     try {
       final token = await this._validAccessToken();
       await this._chatService.delete(accessToken: token, messageId: messageId);
     } on YouTubeApiException catch (e) {
       GeneralHelper.advLog('YouTube message delete failed - $e');
       this.moderationError = e.message;
+      this.moderationForbidden = e is YouTubeForbiddenException;
       return false;
     } catch (e) {
       GeneralHelper.advLog('YouTube message delete failed - $e');
@@ -1340,9 +1392,11 @@ abstract class _YouTubeChatStore with Store {
     final liveChatId = this._channelBuffers[label]?.liveChatId;
     if (label == null || liveChatId == null) return false;
     this.moderationError = null;
+    this.moderationForbidden = false;
+    final String? banId;
     try {
       final token = await this._validAccessToken();
-      await this._chatService.ban(
+      banId = await this._chatService.ban(
         accessToken: token,
         liveChatId: liveChatId,
         channelId: channelId,
@@ -1351,6 +1405,7 @@ abstract class _YouTubeChatStore with Store {
     } on YouTubeApiException catch (e) {
       GeneralHelper.advLog('YouTube ban failed - $e');
       this.moderationError = e.message;
+      this.moderationForbidden = e is YouTubeForbiddenException;
       return false;
     } catch (e) {
       GeneralHelper.advLog('YouTube ban failed - $e');
@@ -1358,6 +1413,24 @@ abstract class _YouTubeChatStore with Store {
       return false;
     }
     this._moderationKeyIsNew('$label:purge:$channelId');
+    String? name;
+    for (final message in this.messages) {
+      if (message.snippet.authorChannelId == channelId) {
+        name = message.authorName;
+      }
+    }
+    this._recordBan(
+      ChatBanEntry(
+        userId: channelId,
+        userName: name,
+        expiresAt: durationSeconds == null
+            ? null
+            : DateTime.now().add(Duration(seconds: durationSeconds)),
+        bannedBy: this.selfChannelTitle,
+        banId: banId,
+        at: DateTime.now(),
+      ),
+    );
     for (var i = 0; i < this.messages.length; i++) {
       final message = this.messages[i];
       if (message.snippet.authorChannelId == channelId &&
@@ -1374,12 +1447,16 @@ abstract class _YouTubeChatStore with Store {
   Future<bool> unbanUser(String banId) async {
     if (!this.canWrite) return false;
     this.moderationError = null;
+    this.moderationForbidden = false;
     try {
       final token = await this._validAccessToken();
       await this._chatService.unban(accessToken: token, banId: banId);
+      this.recentBans.removeWhere((ban) => ban.banId == banId);
+      this._syncModerationToBuffer();
     } on YouTubeApiException catch (e) {
       GeneralHelper.advLog('YouTube unban failed - $e');
       this.moderationError = e.message;
+      this.moderationForbidden = e is YouTubeForbiddenException;
       return false;
     } catch (e) {
       GeneralHelper.advLog('YouTube unban failed - $e');
@@ -1388,6 +1465,130 @@ abstract class _YouTubeChatStore with Store {
     }
     return true;
   }
+
+  /// Newest first; one entry per user. A later echo keeps the ban id an
+  /// own action stored first.
+  void _recordBan(ChatBanEntry entry) {
+    final index = this.recentBans.indexWhere((b) => b.userId == entry.userId);
+    final kept = index >= 0 ? this.recentBans.removeAt(index) : null;
+    this.recentBans.insert(
+      0,
+      entry.copyWith(
+        userName: entry.userName ?? kept?.userName,
+        banId: entry.banId ?? kept?.banId,
+      ),
+    );
+    this._syncModerationToBuffer();
+  }
+
+  void _syncModerationToBuffer() {
+    final label = this.selectedChannelLabel;
+    if (label == null) return;
+    this._channelBuffers.putIfAbsent(label, _ChannelBuffer.new).bans = List.of(
+      this.recentBans,
+    );
+  }
+
+  /// Run a channel mod call ([moderationError] / [moderationForbidden]
+  /// on failure) against the selected chat's `liveChatId`.
+  Future<bool> _channelModAction(
+    String failure,
+    Future<void> Function(String token, String liveChatId) call,
+  ) async {
+    if (!this.canWrite) return false;
+    final liveChatId =
+        this._channelBuffers[this.selectedChannelLabel]?.liveChatId;
+    this.moderationError = null;
+    this.moderationForbidden = false;
+    if (liveChatId == null) {
+      this.moderationError = '$failure - the chat is not live';
+      return false;
+    }
+    try {
+      await call(await this._validAccessToken(), liveChatId);
+      return true;
+    } on YouTubeApiException catch (e) {
+      GeneralHelper.advLog('YouTube channel mod action failed - $e');
+      runInAction(() {
+        this.moderationError = e.message;
+        this.moderationForbidden = e is YouTubeForbiddenException;
+      });
+      return false;
+    } catch (e) {
+      GeneralHelper.advLog('YouTube channel mod action failed - $e');
+      runInAction(() => this.moderationError = failure);
+      return false;
+    }
+  }
+
+  /// Start a poll in the selected chat (2–4 options).
+  @action
+  Future<bool> createPoll(String question, List<String> options) => this
+      ._channelModAction('Could not start the poll', (token, liveChatId) async {
+        final poll = await this._chatService.createPoll(
+          accessToken: token,
+          liveChatId: liveChatId,
+          question: question,
+          options: options,
+        );
+        runInAction(() => this.activePoll = poll);
+      });
+
+  /// End the active poll.
+  @action
+  Future<bool> closeActivePoll() {
+    final poll = this.activePoll;
+    if (poll == null) return Future.value(false);
+    return this._channelModAction('Could not end the poll', (token, _) async {
+      await this._chatService.closePoll(
+        accessToken: token,
+        pollMessageId: poll.id,
+      );
+      runInAction(() => this.activePoll = null);
+    });
+  }
+
+  /// Load the selected chat's moderators (owner-only — a 403 elsewhere
+  /// sets [moderationForbidden]).
+  @action
+  Future<bool> loadModerators() => this._channelModAction(
+    'Could not load moderators',
+    (token, liveChatId) async {
+      final list = await this._chatService.listModerators(
+        accessToken: token,
+        liveChatId: liveChatId,
+      );
+      runInAction(() => this.moderators = ObservableList.of(list));
+    },
+  );
+
+  /// Make the author of [channelId] a moderator of the selected chat.
+  @action
+  Future<bool> addModerator(String channelId) => this._channelModAction(
+    'Could not add the moderator',
+    (token, liveChatId) async {
+      final moderator = await this._chatService.addModerator(
+        accessToken: token,
+        liveChatId: liveChatId,
+        channelId: channelId,
+      );
+      if (moderator != null) {
+        runInAction(() => this.moderators?.add(moderator));
+      }
+    },
+  );
+
+  @action
+  Future<bool> removeModerator(YouTubeChatModerator moderator) => this
+      ._channelModAction('Could not remove the moderator', (token, _) async {
+        await this._chatService.removeModerator(
+          accessToken: token,
+          moderatorId: moderator.id,
+        );
+        runInAction(
+          () => this.moderators?.removeWhere((m) => m.id == moderator.id),
+        );
+      });
 
   Future<String> _validAccessToken() async {
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);

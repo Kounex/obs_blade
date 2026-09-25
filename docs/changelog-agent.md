@@ -30,6 +30,25 @@ Running log of upgrade/migration work. Not store release notes.
   (`channelLivePreview`, quota-free `/live` page check per channel entry,
   run on menu open / builder open, throttled to 1/min; pinned videos stay
   unknown). The WebView dropdown has no live data (no API there).
+- **Channel mod sheets for Kick + YouTube, tabbed in Combined** (dogfood
+  ask). Verified against the live API docs (2026-09-25): Kick's public
+  API only has send / delete / ban-timeout-unban (no modes, clear,
+  announce, ban list, moderators); YouTube adds polls (`pollEvent`
+  insert + `liveChatMessages.transition` close) and owner-only
+  `liveChatModerators` list/insert/delete, no modes/clear/announce/ban
+  list. Kick panel: modes read-only, bans seen this session (own + other
+  mods' `UserBannedEvent` echoes, `ChatBanEntry`) with Unban, unban by
+  username (anonymous slug → `user_id`). YouTube panel: start/end poll,
+  bans seen (liftable only when issued here — `ban()` now returns the
+  ban id `liveChatBans.delete` needs), moderators on the own channel +
+  "Make moderator" in the message sheet. Both shields show whenever
+  signed in with write access (no mod lookup exists); a 403 sets
+  `modActionForbidden` / `moderationForbidden` and toasts
+  `chatNotModeratorText` instead of a raw error. Combined: shield →
+  `CombinedChannelModSheet`, one tab per moderatable source (Twitch when
+  it moderates the combo channel), each tab the platform's own panel
+  (`ChannelModSheet(embedded: true)` for Twitch). Shared rows:
+  `dialogs/channel_mod_chrome.dart`. Poll creation is untested live.
 - Gotcha: a Hive `put` inside a `testWidgets` body (here: the target pick)
   hangs the whole file at teardown with "Cannot close sink while adding
   stream". Wrap the tap in `tester.runAsync` and `flush()` the box.

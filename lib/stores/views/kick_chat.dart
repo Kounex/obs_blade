@@ -7,6 +7,7 @@ import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
+import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
@@ -62,6 +63,7 @@ class _ChannelBuffer {
   List<KickChatMessage> messages;
   KickChannelInfo? channelInfo;
   KickChatMessage? pinnedMessage;
+  List<ChatBanEntry> bans = <ChatBanEntry>[];
 
   _ChannelBuffer({List<KickChatMessage>? messages, this.channelInfo})
     : messages = messages ?? <KickChatMessage>[];
@@ -267,6 +269,17 @@ abstract class _KickChatStore with Store {
   /// YouTubeChatStore.moderationError.
   @observable
   String? modActionError;
+
+  /// The last mod action came back 403 — Kick's answer when the account
+  /// isn't a moderator here. The UI explains it instead of a raw error.
+  @observable
+  bool modActionForbidden = false;
+
+  /// Bans / timeouts seen in the selected channel this session (issued
+  /// here or echoed from other mods), newest first — Kick has no ban-list
+  /// API. Swapped with the channel buffer; unbans drop the entry.
+  final ObservableList<ChatBanEntry> recentBans =
+      ObservableList<ChatBanEntry>();
 
   /// The channel's current pin (history `pinned_message`, then live
   /// create/delete events). One pin per channel; swapped with the buffer
@@ -840,8 +853,9 @@ abstract class _KickChatStore with Store {
           this._applyChatroomUpdated(slug, event);
         case KickChatroomEventKind.userUnbanned:
 
-          /// Unbans don't resurrect tombstoned rows.
-          break;
+          /// Unbans don't resurrect tombstoned rows — only the ban list
+          /// forgets the user.
+          if (event.targetUserId case final id?) this._forgetBan('$id');
         case KickChatroomEventKind.pinnedMessage:
           this._applyPinned(slug, event);
         case KickChatroomEventKind.subscription:
@@ -927,6 +941,20 @@ abstract class _KickChatStore with Store {
   void _applyUserBanned(KickPusherEvent event) {
     final userId = event.targetUserId;
     if (userId == null) return;
+    String? name = event.targetUsername;
+    for (final message in this.messages) {
+      if (name != null) break;
+      if (message.sender?.id == userId) name = message.sender?.username;
+    }
+    this._recordBan(
+      ChatBanEntry(
+        userId: '$userId',
+        userName: name,
+        expiresAt: event.banExpiresAt,
+        bannedBy: event.bannedByUsername,
+        at: DateTime.now(),
+      ),
+    );
     for (var i = 0; i < this.messages.length; i++) {
       final message = this.messages[i];
       if (message.sender?.id == userId && !message.isTombstoned) {
@@ -1112,12 +1140,14 @@ abstract class _KickChatStore with Store {
   Future<bool> deleteChatMessage(String messageId) async {
     if (!this.canWrite) return false;
     this.modActionError = null;
+    this.modActionForbidden = false;
     try {
       await this._apiService.deleteMessage(messageId: messageId);
       return true;
     } on KickApiException catch (e) {
       GeneralHelper.advLog('Kick message delete failed - $e');
       this.modActionError = e.message;
+      this.modActionForbidden = e.statusCode == 403;
       return false;
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick message delete failed - $e');
@@ -1146,16 +1176,33 @@ abstract class _KickChatStore with Store {
     final broadcasterUserId = this.channelInfo?.userId;
     if (!this.canWrite || broadcasterUserId == null) return false;
     this.modActionError = null;
+    this.modActionForbidden = false;
     try {
       await this._apiService.banUser(
         broadcasterUserId: broadcasterUserId,
         userId: userId,
         durationMinutes: durationMinutes,
       );
+      String? name;
+      for (final message in this.messages) {
+        if (message.sender?.id == userId) name = message.sender?.username;
+      }
+      this._recordBan(
+        ChatBanEntry(
+          userId: '$userId',
+          userName: name,
+          expiresAt: durationMinutes == null
+              ? null
+              : DateTime.now().add(Duration(minutes: durationMinutes)),
+          bannedBy: this.selfUsername,
+          at: DateTime.now(),
+        ),
+      );
       return true;
     } on KickApiException catch (e) {
       GeneralHelper.advLog('Kick ban/timeout failed - $e');
       this.modActionError = e.message;
+      this.modActionForbidden = e.statusCode == 403;
       return false;
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick ban/timeout failed - $e');
@@ -1175,15 +1222,18 @@ abstract class _KickChatStore with Store {
     final broadcasterUserId = this.channelInfo?.userId;
     if (!this.canWrite || broadcasterUserId == null) return false;
     this.modActionError = null;
+    this.modActionForbidden = false;
     try {
       await this._apiService.unbanUser(
         broadcasterUserId: broadcasterUserId,
         userId: userId,
       );
+      this._forgetBan('$userId');
       return true;
     } on KickApiException catch (e) {
       GeneralHelper.advLog('Kick unban failed - $e');
       this.modActionError = e.message;
+      this.modActionForbidden = e.statusCode == 403;
       return false;
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick unban failed - $e');
@@ -1194,6 +1244,69 @@ abstract class _KickChatStore with Store {
       this.modActionError = 'Could not lift the ban';
       return false;
     }
+  }
+
+  /// Unban by name (channel mod sheet): Kick user ids aren't typed by
+  /// people, so [nameOrSlug] resolves through the anonymous channel
+  /// lookup (every Kick user has a channel; its `user_id` is the id the
+  /// ban API takes). False with [modActionError] set when nobody matches.
+  @action
+  Future<bool> unbanUsername(String nameOrSlug) async {
+    final slug = extractKickChannelSlug(
+      nameOrSlug.trim().replaceFirst(RegExp('^@'), ''),
+    );
+    this.modActionError = null;
+    this.modActionForbidden = false;
+    if (slug == null) {
+      this.modActionError = 'Enter a Kick username';
+      return false;
+    }
+    final KickChannelInfo? info;
+    try {
+      info =
+          await this._channelService.resolveChannel(slug) ??
+          (slug.contains('_')
+              ? await this._channelService.resolveChannel(
+                  slug.replaceAll('_', '-'),
+                )
+              : null);
+    } catch (e) {
+      GeneralHelper.advLog('Kick unban lookup failed - $e');
+      this.modActionError = 'Could not look up "$slug"';
+      return false;
+    }
+    final userId = info?.userId;
+    if (userId == null) {
+      this.modActionError = 'No Kick user "$slug"';
+      return false;
+    }
+    return this.unbanUser(userId);
+  }
+
+  /// Newest first; one entry per user (a re-ban replaces the old one).
+  void _recordBan(ChatBanEntry entry) {
+    final index = this.recentBans.indexWhere((b) => b.userId == entry.userId);
+    final kept = index >= 0 ? this.recentBans.removeAt(index) : null;
+    this.recentBans.insert(
+      0,
+      entry.userName == null && kept?.userName != null
+          ? entry.copyWith(userName: kept!.userName)
+          : entry,
+    );
+    this._syncBansToBuffer();
+  }
+
+  void _syncBansToBuffer() {
+    final slug = this.selectedChannelSlug;
+    if (slug == null) return;
+    this._channelBuffers.putIfAbsent(slug, _ChannelBuffer.new).bans = List.of(
+      this.recentBans,
+    );
+  }
+
+  void _forgetBan(String userId) {
+    this.recentBans.removeWhere((b) => b.userId == userId);
+    this._syncBansToBuffer();
   }
 
   /// Max recent lines shown on the native chat user card.
@@ -1296,9 +1409,12 @@ abstract class _KickChatStore with Store {
     this.replyTarget = null;
     this.sendChatError = null;
     this.modActionError = null;
+    this.modActionForbidden = false;
+    this.recentBans.clear();
     if (slug != null) {
       final buffer = this._channelBuffers.putIfAbsent(slug, _ChannelBuffer.new);
       this.messages.addAll(buffer.messages);
+      this.recentBans.addAll(buffer.bans);
       this.pinnedMessage = buffer.pinnedMessage;
       this.channelInfo = buffer.channelInfo;
       if (this._isProResolver()) {

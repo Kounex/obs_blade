@@ -1275,6 +1275,80 @@ void main() {
       },
     );
 
+    test('a 403 marks the action as forbidden (not a mod)', () async {
+      await connectSignedIn();
+      apiService.banThrows = const KickApiException(
+        'no permission',
+        statusCode: 403,
+      );
+      expect(await store.banUser(7), isFalse);
+      expect(store.modActionForbidden, isTrue);
+
+      apiService.banThrows = const KickApiException('rate', statusCode: 429);
+      expect(await store.banUser(7), isFalse);
+      expect(store.modActionForbidden, isFalse);
+    });
+
+    test('bans seen (own + echoed) list newest first; unbans drop them; '
+        'the list follows the channel', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageEvent('m1', senderId: 7, username: 'user-7'));
+      await until(() => store.messages.isNotEmpty);
+
+      expect(await store.timeoutUser(7, 10), isTrue);
+      expect(store.recentBans.single.userName, 'user-7');
+      expect(store.recentBans.single.isTimeout, isTrue);
+
+      /// Another mod's ban arrives as an echo only.
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\UserBannedEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{
+            'user': <String, Object?>{'id': 9, 'username': 'spammer'},
+            'banned_by': <String, Object?>{'username': 'othermod'},
+            'expires_at': null,
+          },
+        ),
+      );
+      await until(() => store.recentBans.length == 2);
+      expect(store.recentBans.first.userName, 'spammer');
+      expect(store.recentBans.first.bannedBy, 'othermod');
+      expect(store.recentBans.first.isTimeout, isFalse);
+
+      expect(await store.unbanUser(9), isTrue);
+      expect(store.recentBans.map((b) => b.userId), ['7']);
+
+      /// An unban echo (another mod lifted it) drops the entry too.
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\UserUnbannedEvent',
+          channel: 'chatrooms.42.v2',
+          data: <String, Object?>{
+            'user': <String, Object?>{'id': 7},
+          },
+        ),
+      );
+      await until(() => store.recentBans.isEmpty);
+    });
+
+    test('unbanUsername resolves the name to a user id', () async {
+      await connectSignedIn();
+      channelService.channels['spammer'] = const KickChannelInfo(
+        id: 500,
+        userId: 4242,
+        slug: 'spammer',
+        chatroom: KickChatroom(id: 501),
+      );
+
+      expect(await store.unbanUsername('@Spammer'), isTrue);
+      expect(apiService.unbanCalls.single.userId, 4242);
+
+      expect(await store.unbanUsername('nobody'), isFalse);
+      expect(store.modActionError, 'No Kick user "nobody"');
+      expect(apiService.unbanCalls, hasLength(1));
+    });
+
     test('the UserBannedEvent echo reconciles after a local ban', () async {
       await connectSignedIn();
       pusher().emitEvent(messageEvent('m1', senderId: 7, username: 'user-7'));
