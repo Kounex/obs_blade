@@ -1,26 +1,33 @@
-DISCLAIMER: This app is not in any way affiliated with OBS (Open Broadcaster Software). It's an unofficial, free and open source app to control OBS (https://github.com/Kounex/obs_blade)
+DISCLAIMER: This app is not in any way affiliated with OBS (Open Broadcaster Software). It's an unofficial, open source app to control OBS (https://github.com/Kounex/obs_blade)
 
-OBS Blade is designed to be your stream companion and help you to manage your live stream. While using OBS (Open Broadcaster Software) you can connect to the running instance and gain control over important parts of the software. This should help you to manage what your audience can see / hear without the need to switch to OBS on your machine and make such changes. You can keep doing what you do and easily use this app to control OBS!
+OBS Blade is your stream companion. Connect to OBS over your network and run your whole show from your phone or tablet - no need to jump back to your PC mid-stream.
 
-Currently OBS Blade supports:
+OBS Blade 4.0 is a full redesign: faster, cleaner and built for phone and tablet alike.
 
-- Start / stop the stream
-- Changing the active scene
-- Toggle visibility of scene items (like desktop capture etc.)
-- Change the volume of your current audio sources (or mute them)
-- View any Twitch chat and write messages
-- See live statistics of your stream performance (FPS, CPU usage, kbit/s etc.)
+EVERYTHING YOU NEED - FREE, FOREVER
 
-OBS Blade also saves statistics of your previous streams so you can track the overall performance and some nice to know facts!
+- Start and stop your stream, recording, replay buffer and virtual camera
+- Switch scenes, with studio mode and transitions
+- Show and hide sources in any scene
+- Mix audio with live volume meters, or mute in one tap
+- Watch a live scene preview
+- Switch profiles and scene collections, trigger hotkeys
+- Keep an eye on stream health: FPS, CPU, bitrate, dropped frames
+- Look back on every past stream and recording in your statistics
+- Twitch, YouTube, Kick and Owncast chat in its own tab - or next to your controls while you're live
+- Arrange the dashboard your way
 
-This app is still in its early stages and will get updated with new features over time - for now the main features which I want to add are:
+OBS BLADE PRO
 
-- More engagement with OBS (renaming, sorting, scripted switching etc.)
-- Export / merge statistics
-- Soundboard
-- Incoming feature requests
-- (Maybe) Streamlabs client connection
+Chat is where your stream lives, so Pro makes it native:
 
-I hope you have a good time using this app. If you encounter any bugs, have feature requests or anything similar, feel free to get in touch with me!
+- Native chat for Twitch, Kick and YouTube - read and write without a browser in sight
+- Combined chat: all your chats in one live timeline, and replies land on the right platform
+- Every channel you mod or follow, saved combos and who's live at a glance
+- A full moderation toolkit: delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch
+- 7TV, BTTV and FFZ emotes, an emote picker, autocomplete and role badges
+- Highlights, mute words, chat search - and custom themes for the whole app
 
-contact@kounex.com
+Pro comes monthly, yearly or as a one-time lifetime unlock. Cancel anytime in your store account.
+
+Got a bug, an idea or a feature request? Get in touch - on GitHub or at contact@kounex.com

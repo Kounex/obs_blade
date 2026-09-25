@@ -1,1 +1,1 @@
-Unofficial OBS controller!
+OBS remote for your stream - scenes, audio, stats and chat, all in your pocket.
