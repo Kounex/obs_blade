@@ -128,6 +128,13 @@ the platform's mod sheet (delete / timeout / ban act on that platform
 only). Emote picker + autocomplete switch with the target (no emote
 button on YouTube).
 
+**Channel mod sheets (`dfb8f0a3`, not dogfooded):** shield on Kick /
+YouTube whenever signed in, tabbed shield in Combined. Check: Kick bans
+list fills from another mod's ban + Unban / unban by name; a non-mod
+action toasts "not a moderator"; YouTube poll start/end (never run
+against the live API yet), "Make moderator" + moderator list on the own
+channel while live; Combined tabs per platform.
+
 **Immediate next threads:**
 
 1. Dogfood: the full-buffer scroll fix (`c8c48713`, likely the
