@@ -5,12 +5,11 @@ import 'package:obs_blade/shared/design/design.dart';
 
 import '../../../../shared/general/social_block.dart';
 import '../../../../shared/general/themed/rich_text.dart';
-import '../../../../utils/styling_helper.dart';
 import '../intro_page.dart';
 
-/// Welcome brand art: the OBS Blade vortex mark slowly turning inside
-/// breathing accent rings, the wordmark underneath. Built from the existing
-/// brand PNGs - the rings and glow are drawn in code
+/// Welcome brand art: the OBS Blade vortex mark slowly turning on a soft
+/// neutral disc inside breathing accent rings. The mark is the existing
+/// brand PNG - disc, rings and glow are drawn in code
 class WelcomeVisual extends IntroVisual {
   const WelcomeVisual({super.key, required super.active});
 
@@ -30,89 +29,64 @@ class _WelcomeVisualState extends IntroLoopState<WelcomeVisual> {
     final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
     final bool dark = Theme.of(context).brightness == Brightness.dark;
 
-    return SizedBox(
-      width: 360.0,
-      height: 400.0,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          StaggeredEntrance(
-            scaleFrom: 0.9,
-            duration: AppMotion.dramatic,
-            child: SizedBox(
-              width: 240.0,
-              height: 240.0,
-              child: AnimatedBuilder(
-                animation: loop,
-                builder: (context, _) {
-                  final double t = loop.value;
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CustomPaint(
-                        size: const Size.square(240.0),
-                        painter: _RingsPainter(
-                          t: t,
-                          accent: accent,
-                          dark: dark,
+    /// Neutral disc behind the mark - same white / black 7 % idiom as the
+    /// decorative icon tiles, fading out radially instead of a hard edge
+    final Color disc = (dark ? Colors.white : Colors.black).withValues(
+      alpha: dark ? 0.08 : 0.06,
+    );
+
+    return StaggeredEntrance(
+      scaleFrom: 0.9,
+      duration: AppMotion.dramatic,
+      child: SizedBox(
+        width: 300.0,
+        height: 300.0,
+        child: AnimatedBuilder(
+          animation: loop,
+          builder: (context, _) {
+            final double t = loop.value;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  size: const Size.square(300.0),
+                  painter: _RingsPainter(t: t, accent: accent),
+                ),
+                Container(
+                  width: 176.0,
+                  height: 176.0,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [disc, disc, disc.withValues(alpha: 0.0)],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
+                  ),
+                  child: Center(
+                    /// Circular clip, inset past the bitmap edge: a rotated
+                    /// bitmap's transparent border otherwise resamples into
+                    /// a faint hairline on device (the mark's outer ring
+                    /// ends at ~92 % radius)
+                    child: ClipOval(
+                      clipper: const _InsetOvalClipper(2.0),
+                      child: Transform.rotate(
+                        angle: -t * 2 * pi,
+                        filterQuality: FilterQuality.medium,
+                        child: Image.asset(
+                          'assets/images/logo_vortex.png',
+                          width: 96.0,
+                          height: 96.0,
+                          color: accent,
+                          colorBlendMode: BlendMode.srcIn,
                         ),
                       ),
-                      Container(
-                        width: 132.0,
-                        height: 132.0,
-                        decoration: ShapeDecoration(
-                          color: Color.alphaBlend(
-                            accent.withValues(alpha: 0.12),
-                            Theme.of(context).cardColor,
-                          ),
-                          shape: ContinuousRectangleBorder(
-                            borderRadius: BorderRadius.circular(132.0 * 0.38),
-                            side: BorderSide(color: accent, width: 1.5),
-                          ),
-                          shadows: [
-                            BoxShadow(
-                              color: accent.withValues(alpha: 0.35),
-                              blurRadius: 36.0,
-                              spreadRadius: -6.0,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          /// Circular clip, inset past the bitmap edge: a
-                          /// rotated bitmap's transparent border otherwise
-                          /// resamples into a faint hairline on device (the
-                          /// mark's outer ring ends at ~92 % radius)
-                          child: ClipOval(
-                            clipper: const _InsetOvalClipper(2.0),
-                            child: Transform.rotate(
-                              angle: -t * 2 * pi,
-                              filterQuality: FilterQuality.medium,
-                              child: Image.asset(
-                                'assets/images/logo_vortex.png',
-                                width: 76.0,
-                                height: 76.0,
-                                color: accent,
-                                colorBlendMode: BlendMode.srcIn,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          StaggeredEntrance(
-            index: 2,
-            child: Image.asset(
-              StylingHelper.brightnessAwareOBSLogo(context),
-              width: 150.0,
-            ),
-          ),
-        ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -132,14 +106,16 @@ class _InsetOvalClipper extends CustomClipper<Rect> {
       oldClipper.inset != this.inset;
 }
 
-/// Concentric rings around the mark: two arcs sweeping in opposite
-/// directions plus a breathing halo
+/// Rings around the mark: two faint guide circles, a breathing halo and
+/// two comet arcs orbiting in opposite directions. Every motion completes
+/// whole cycles per loop (arcs 2 / -1 turns, halo 3 breaths), so the loop
+/// wraps seamlessly; each arc fades in at its tail AND out at its head,
+/// so neither end shows a hard stop
 class _RingsPainter extends CustomPainter {
   final double t;
   final Color accent;
-  final bool dark;
 
-  _RingsPainter({required this.t, required this.accent, required this.dark});
+  _RingsPainter({required this.t, required this.accent});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -148,59 +124,61 @@ class _RingsPainter extends CustomPainter {
 
     canvas.drawCircle(
       center,
-      size.width * 0.36 + breathe * 6.0,
+      size.width / 2,
       Paint()
         ..shader = RadialGradient(
           colors: [
-            accent.withValues(alpha: 0.18 + breathe * 0.06),
+            accent.withValues(alpha: 0.16 + breathe * 0.06),
             accent.withValues(alpha: 0.0),
           ],
+          stops: [0.0, 0.72 + breathe * 0.06],
         ).createShader(Rect.fromCircle(center: center, radius: size.width / 2)),
     );
 
-    void ring(double radius, double alpha, double width) => canvas.drawCircle(
+    void ring(double radius, double alpha) => canvas.drawCircle(
       center,
       radius,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = width
+        ..strokeWidth = 1.0
         ..color = accent.withValues(alpha: alpha),
     );
 
-    ring(size.width * 0.38, 0.14, 1.0);
-    ring(size.width * 0.48, 0.08, 1.0);
+    ring(size.width * 0.36, 0.12);
+    ring(size.width * 0.46, 0.07);
 
+    /// The gradient is laid out from angle 0 and rotated into place -
+    /// sweep angles past 2 pi would clamp and draw a visible seam
     void arc(double radius, double start, double sweep, double alpha) {
+      final Rect rect = Rect.fromCircle(center: center, radius: radius);
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
+        rect,
         start,
         sweep,
         false,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.0
-          ..strokeCap = StrokeCap.round
           ..shader = SweepGradient(
-            startAngle: start,
-            endAngle: start + sweep,
+            endAngle: sweep,
             colors: [
               accent.withValues(alpha: 0.0),
               accent.withValues(alpha: alpha),
+              accent.withValues(alpha: 0.0),
             ],
-            transform: GradientRotation(0.0),
-          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+            stops: const [0.0, 0.78, 1.0],
+            transform: GradientRotation(start),
+          ).createShader(rect),
       );
     }
 
-    arc(size.width * 0.38, t * 2 * pi * 2, pi * 0.9, 0.9);
-    arc(size.width * 0.48, -t * 2 * pi * 1.5 + pi, pi * 0.6, 0.55);
+    arc(size.width * 0.36, t * 2 * pi * 2, pi * 0.9, 0.9);
+    arc(size.width * 0.46, -t * 2 * pi + pi, pi * 0.6, 0.55);
   }
 
   @override
   bool shouldRepaint(_RingsPainter oldDelegate) =>
-      oldDelegate.t != this.t ||
-      oldDelegate.accent != this.accent ||
-      oldDelegate.dark != this.dark;
+      oldDelegate.t != this.t || oldDelegate.accent != this.accent;
 }
 
 /// "Unofficial, open source · built on obs-websocket" small print with the

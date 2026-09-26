@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/design/design.dart';
@@ -72,10 +73,14 @@ class MockSceneTile extends StatelessWidget {
                   : Theme.of(context).dividerColor.withValues(alpha: 0.4),
             ),
           ),
-          child: Text(
+
+          /// Shrinks instead of breaking inside a word ("Gamepla-y"), same
+          /// rule as the real scene tile ([SelectableBox])
+          child: AutoSizeText(
             this.name,
             maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            minFontSize: 8.0,
+            wrapWords: false,
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
@@ -130,23 +135,25 @@ class MockAudioRow extends StatelessWidget {
     final AppTextColors textColors = theme.extension<AppTextColors>()!;
     final bool hot = this.level >= 0.9;
 
-    return Row(
+    /// Name on top, then meter + mute glyph in one row - the glyph centers
+    /// on the meter track like the real audio slider
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                this.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelMedium!.copyWith(
-                  color: textColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 6.0),
-              Opacity(
+        Text(
+          this.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelMedium!.copyWith(
+            color: textColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          children: [
+            Expanded(
+              child: Opacity(
                 opacity: this.muted ? 0.35 : 1.0,
                 child: LayoutBuilder(
                   builder: (context, constraints) => Stack(
@@ -185,16 +192,18 @@ class MockAudioRow extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Icon(
-          this.muted
-              ? CupertinoIcons.speaker_slash_fill
-              : CupertinoIcons.speaker_2_fill,
-          size: 16.0,
-          color: this.muted ? statusColors.recording : textColors.textSecondary,
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Icon(
+              this.muted
+                  ? CupertinoIcons.speaker_slash_fill
+                  : CupertinoIcons.speaker_2_fill,
+              size: 16.0,
+              color: this.muted
+                  ? statusColors.recording
+                  : textColors.textSecondary,
+            ),
+          ],
         ),
       ],
     );

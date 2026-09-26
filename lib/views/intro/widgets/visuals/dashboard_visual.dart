@@ -21,10 +21,10 @@ class DashboardVisual extends IntroVisual {
 class _DashboardVisualState extends IntroLoopState<DashboardVisual> {
   /// Native (unscaled) content sizes of both layouts - the device frame
   /// lerps between them and scales the content to fit
-  static const Size _phoneContent = Size(280.0, 548.0);
+  static const Size _phoneContent = Size(280.0, 572.0);
   static const Size _tabletContent = Size(660.0, 420.0);
 
-  static const Size _phoneFrame = Size(214.0, 414.0);
+  static const Size _phoneFrame = Size(214.0, 432.0);
   static const Size _tabletFrame = Size(400.0, 256.0);
 
   static const List<String> _scenes = ['Gameplay', 'Just Chatting', 'BRB'];
