@@ -2,6 +2,22 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Android: links open again, intro links on the baseline
+
+First Android emulator dogfood (Pixel 7, API 36): every `SocialBlock`
+link showed "Couldn't open link".
+
+- Cause: Android 11+ package visibility. With targetSdk >= 30 the
+  manifest must declare `<queries>` for the intents it probes, otherwise
+  `canLaunchUrl` sees no handler and returns false. Not emulator-only -
+  the manifest never had the block, so real devices are affected too.
+  Added VIEW http/https + SENDTO mailto queries.
+- Intro slide inline links (`WidgetSpan` + `SocialBlock`) used the
+  default bottom placeholder alignment and sat above the line; now
+  `PlaceholderAlignment.baseline` / alphabetic.
+- Verified on the emulator: the WebSocket link opens Chrome, links
+  render on the text baseline.
+
 ## 2026-09-27 - Dashboard: Stats unwrapped on tablet too
 
 Dogfood: in tablet mode the Stats element still sat inside a titled
