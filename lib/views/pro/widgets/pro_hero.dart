@@ -1,10 +1,16 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../../models/enums/chat_type.dart';
 import '../../../shared/design/design.dart';
 import '../../../stores/pro_store.dart';
 import '../../../utils/pro_ids.dart';
 import '../../../utils/styling_helper.dart';
+import '../../dashboard/widgets/obs_widgets/stream_chat/combined_chat_icon.dart';
+import 'pro_palette.dart';
 
 /// Paywall hero: the OBS Blade vortex mark (brand icon, no wordmark) in a
 /// squircle on the scene-tile color idiom (token-delta §2.2) - full-strength
@@ -54,7 +60,16 @@ class ProHero extends StatelessWidget {
               : null,
           child: Stack(
             clipBehavior: Clip.none,
+            alignment: Alignment.center,
             children: [
+              /// Platform-colour halo turning slowly behind the mark
+              const Positioned(
+                left: -34.0,
+                top: -34.0,
+                right: -34.0,
+                bottom: -34.0,
+                child: _PlatformHalo(),
+              ),
               Container(
                 width: 96.0,
                 height: 96.0,
@@ -62,7 +77,10 @@ class ProHero extends StatelessWidget {
                   /// Scene-button idiom: weak tint fill, full-color ring -
                   /// squircle (same ContinuousRectangleBorder contract as the
                   /// decorative icon tiles, size x 0.38)
-                  color: accent.withValues(alpha: 0.12),
+                  color: Color.alphaBlend(
+                    accent.withValues(alpha: 0.12),
+                    Theme.of(context).scaffoldBackgroundColor,
+                  ),
                   shape: ContinuousRectangleBorder(
                     borderRadius: BorderRadius.circular(96.0 * 0.38),
                     side: BorderSide(color: accent, width: 1.5),
@@ -119,7 +137,124 @@ class ProHero extends StatelessWidget {
             color: Theme.of(context).extension<AppTextColors>()!.textPrimary,
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        const Wrap(
+          alignment: WrapAlignment.center,
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: [
+            _PlatformChip(type: ChatType.Twitch),
+            _PlatformChip(type: ChatType.Kick),
+            _PlatformChip(type: ChatType.YouTube),
+          ],
+        ),
       ],
+    );
+  }
+}
+
+/// Soft sweep of the three platform hues, blurred into a halo and turning
+/// once per [_period]. Static under reduced motion.
+class _PlatformHalo extends StatefulWidget {
+  const _PlatformHalo();
+
+  static const Duration _period = Duration(seconds: 12);
+
+  @override
+  State<_PlatformHalo> createState() => _PlatformHaloState();
+}
+
+class _PlatformHaloState extends State<_PlatformHalo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: _PlatformHalo._period,
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduce(this.context)) {
+      this._controller.stop();
+    } else if (!this._controller.isAnimating) {
+      this._controller.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    this._controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double alpha = ProPalette.darkSurface(context) ? 0.55 : 0.35;
+
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 22.0, sigmaY: 22.0),
+          child: RotationTransition(
+            turns: this._controller,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: SweepGradient(
+                  colors: [
+                    ProPalette.twitch.withValues(alpha: alpha),
+                    ProPalette.kick.withValues(alpha: alpha * 0.8),
+                    ProPalette.youtube.withValues(alpha: alpha),
+                    ProPalette.twitch.withValues(alpha: alpha),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Platform name with its mark, tinted in the platform's colour
+class _PlatformChip extends StatelessWidget {
+  final ChatType type;
+
+  const _PlatformChip({required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color ink = ProPalette.platformInk(context, this.type);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: ProPalette.brand(this.type).withValues(alpha: 0.14),
+        borderRadius: AppRadius.pill,
+        border: Border.all(
+          color: ProPalette.brand(this.type).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          chatTypeIcon(context, this.type, size: 16.0, color: ink),
+          const SizedBox(width: 6.0),
+          Text(
+            this.type.text,
+            style: Theme.of(context).textTheme.labelLarge!.copyWith(
+              color: ink,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -124,15 +124,13 @@ class ProSalesView extends StatelessWidget {
                       ),
                     ),
 
-                    /// The cards stagger per card (indexes 4-6) instead of
-                    /// entering as one block
                     ProPricing(store: this.store, entranceIndexBase: 4),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
               StaggeredEntrance(
-                index: 7,
+                index: 5,
                 scaleFrom: 0.985,
                 child: Padding(
                   padding: gutter,
@@ -148,8 +146,11 @@ class ProSalesView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+
+                      /// Wraps instead of overflowing at large text sizes
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           _LegalLink(
                             text: 'Terms of Use',
@@ -208,6 +209,9 @@ class _LegalLink extends StatelessWidget {
       child: SizedBox(
         height: 44.0,
         child: Center(
+          /// Shrink-wraps the link (a plain Center stretches to the full
+          /// width and forces every link onto its own Wrap line)
+          widthFactor: 1.0,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Text(

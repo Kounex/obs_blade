@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-26 (night) - Pro paywall overhaul: fewer cards, more colour
+
+- Benefits 8 -> 4 themed cards: Every Chat, One Place (Twitch/Kick/YouTube
+  marks in brand colours -> combined mark), Moderate From Your Pocket,
+  Chat, Supercharged, Make It Yours (built-in theme swatches). Each card
+  has an identity hue (radial wash, hairline, glow tile, tags); the page
+  dots take the current card's hue. Carousel height = tallest card
+  (invisible sizing pass), so copy / text scale can't overflow; tablet
+  grid rows equalise via IntrinsicHeight.
+- Pricing 3 cards -> 1 plan card: selectable rows (radio, icon, badge,
+  price; Lifetime in gold), Yearly preselected, one gradient CTA
+  ("Get Pro <plan>") + a plan-specific fine-print line.
+- Hero: blurred platform-hue halo turning behind the vortex (static under
+  reduced motion) + Twitch / Kick / YouTube chips.
+- Legal links wrap instead of overflowing at large text sizes.
+- Design system: paywall colour exception written down (§ Per-surface
+  direction). `ProPalette` holds the hues.
+- Tests: plan selection retargets CTA + buy; benefit titles from
+  `kProBenefits`.
+
 ## 2026-09-26 (evening) - Spacing: nav-bar top gap + full-bleed Pro carousel
 
 - Pushed pages (translucent nav bar) now start content `AppSpacing.lg`

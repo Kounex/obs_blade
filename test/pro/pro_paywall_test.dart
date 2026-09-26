@@ -14,6 +14,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/pro_ids.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/views/pro/pro_paywall.dart';
+import 'package:obs_blade/views/pro/widgets/pro_benefits.dart';
 import 'package:obs_blade/views/pro/widgets/pro_hero.dart';
 import 'package:obs_blade/views/settings/widgets/support_dialog/support_skeleton.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -122,16 +123,24 @@ void main() {
       'free-forever line and disabled placeholder pricing', (tester) async {
     await pumpPaywall(tester, newStore()..init());
 
-    /// Benefits browser (first carousel page is built eagerly)
-    expect(find.text('Native Chat, Every Platform'), findsOneWidget);
+    /// Benefits browser (first carousel page is built eagerly; the
+    /// hidden sizing pass outside the PageView doesn't count)
+    expect(
+      find.descendant(
+        of: find.byType(PageView),
+        matching: find.text('Every Chat, One Place'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(SmoothPageIndicator), findsOneWidget);
 
     /// The honest free-core line
     expect(find.textContaining('stays free'), findsOneWidget);
 
     /// All three offers in placeholder form
+    /// One plan card: three rows, one CTA
     expect(find.text('Price shown at purchase'), findsNWidgets(3));
-    expect(find.text('Not live yet'), findsNWidgets(3));
+    expect(find.text('Not live yet'), findsOneWidget);
     expect(find.text('BEST VALUE'), findsOneWidget);
   });
 
@@ -142,11 +151,11 @@ void main() {
     /// the translucent nav bar, so a top-aligned target would sit under
     /// the bar and eat the tap
     await Scrollable.ensureVisible(
-      tester.element(find.text('Not live yet').first),
+      tester.element(find.text('Not live yet')),
       alignment: 0.5,
     );
     await tester.pump();
-    await tester.tap(find.text('Not live yet').first);
+    await tester.tap(find.text('Not live yet'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -173,9 +182,42 @@ void main() {
     expect(find.text('€59.99'), findsOneWidget);
     expect(find.text('Price shown at purchase'), findsNothing);
     expect(find.text('BEST VALUE'), findsOneWidget);
-    expect(find.text('Choose Yearly'), findsOneWidget);
-    expect(find.text('Choose Monthly'), findsOneWidget);
-    expect(find.text('Choose Lifetime'), findsOneWidget);
+
+    /// Yearly is preselected - the single CTA names it
+    expect(find.text('Get Pro Yearly'), findsOneWidget);
+  });
+
+  testWidgets('selecting a plan row retargets the CTA and the buy', (
+    tester,
+  ) async {
+    gateway.storeProducts = [
+      fakeProduct(kProYearlyId, price: '€19.99', rawPrice: 19.99),
+      fakeProduct(kProMonthlyId, price: '€2.99', rawPrice: 2.99),
+      fakeProduct(kProLifetimeId, price: '€59.99', rawPrice: 59.99),
+    ];
+
+    await pumpPaywall(tester, newStore()..init());
+
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Lifetime')),
+      alignment: 0.5,
+    );
+    await tester.pump();
+    await tester.tap(find.text('Lifetime'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Get Pro Lifetime'), findsOneWidget);
+    expect(find.text('Get Pro Yearly'), findsNothing);
+
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Get Pro Lifetime')),
+      alignment: 0.5,
+    );
+    await tester.pump();
+    await tester.tap(find.text('Get Pro Lifetime'));
+    await tester.pump();
+
+    expect(gateway.lastBoughtProduct!.id, kProLifetimeId);
   });
 
   testWidgets('buy tap calls ProStore.buy with the tapped product', (
@@ -192,11 +234,11 @@ void main() {
     /// under the translucent nav bar (the body extends behind it) and
     /// the bar would eat the tap
     await Scrollable.ensureVisible(
-      tester.element(find.text('Choose Yearly')),
+      tester.element(find.text('Get Pro Yearly')),
       alignment: 0.5,
     );
     await tester.pump();
-    await tester.tap(find.text('Choose Yearly'));
+    await tester.tap(find.text('Get Pro Yearly'));
     await tester.pump();
 
     expect(gateway.buyCalls, 1);
@@ -341,14 +383,9 @@ void main() {
     await pumpPaywall(tester, newStore()..init(), width: 900.0);
 
     expect(find.byType(SmoothPageIndicator), findsNothing);
-    expect(find.text('Native Chat, Every Platform'), findsOneWidget);
-    expect(find.text('Combined Chat'), findsOneWidget);
-    expect(find.text('Every Channel'), findsOneWidget);
-    expect(find.text('Full Moderation Toolkit'), findsOneWidget);
-    expect(find.text('Emotes & Badges'), findsOneWidget);
-    expect(find.text('Smarter Chat'), findsOneWidget);
-    expect(find.text('Custom Themes'), findsOneWidget);
-    expect(find.text('What\'s Next'), findsOneWidget);
+    for (final ProBenefit benefit in kProBenefits) {
+      expect(find.text(benefit.title), findsOneWidget);
+    }
   });
 }
 

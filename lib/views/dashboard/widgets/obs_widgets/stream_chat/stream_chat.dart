@@ -1153,9 +1153,9 @@ class _ChatProUpsell extends StatelessWidget {
 
           /// Compact benefit taste - titles only; the paywall carries
           /// the full copy. Icons stay neutral (rule 5 - the padlock
-          /// tile is the pane's one accent moment, paywall precedent).
-          /// Skips the first (platform) benefit - the headline above
-          /// already names this platform's native chat.
+          /// tile is the pane's one accent moment; the paywall's colour
+          /// is its own exception). Skips the first (platform) benefit -
+          /// the headline above already names this platform's native chat.
           for (final ProBenefit benefit in kProBenefits.skip(1).take(3))
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),

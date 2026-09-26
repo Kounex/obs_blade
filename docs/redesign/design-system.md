@@ -145,6 +145,18 @@ When editing dashboard layout or the order feature, route through `ResponsiveWid
 - **Data mgmt / logs / customisation**: danger-zone IA (same double-confirm), log
   readability (level gutters, no perpetual pulse on static data — pulse only when
   "live"), order editor drag polish (spring lift + haptics).
+- **Pro paywall — colour exception (2026-09-26).** The paywall is the one
+  surface allowed to spend colour freely, overriding rule 5 there only
+  (neutral decorative tiles, one accent moment): platform brand hues
+  (Twitch / Kick / YouTube) plus one identity hue per benefit card
+  (`ProPalette`, `lib/views/pro/widgets/pro_palette.dart`). None of these
+  hues carries status meaning, so live-green / recording-red semantics are
+  untouched; the filled CTA stays the only accent-coloured button.
+  Composition: hero (vortex over a slowly turning platform-hue halo, static
+  under reduced motion; platform chips) → 4 themed benefit cards (carousel
+  on phone, 2×2 grid on tablet; the carousel sizes to its tallest card) →
+  one plan card with selectable rows + a single gradient CTA. Ink for
+  hues on light surfaces is deepened via `ProPalette.ink`.
 
 ## Verification
 
