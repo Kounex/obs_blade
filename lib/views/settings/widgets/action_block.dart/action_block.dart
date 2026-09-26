@@ -65,8 +65,12 @@ class ActionBlock extends StatelessWidget {
       }
     }
 
+    /// Dense blocks (no caption) still keep the card edge [AppSpacing.lg]
+    /// below whatever precedes them - the card itself adds [AppSpacing.sm]
     return Padding(
-      padding: EdgeInsets.only(top: !this.dense ? AppSpacing.xl : 0.0),
+      padding: EdgeInsets.only(
+        top: !this.dense ? AppSpacing.xl : AppSpacing.lg - AppSpacing.sm,
+      ),
       child: BaseCard(
         above: this.title != null && this.title!.isNotEmpty
             ? Padding(

@@ -23,7 +23,7 @@ class ChatView extends StatelessWidget {
         customBody: Padding(
           padding: EdgeInsets.only(
             /// Breathing room between the nav bar and the chat chrome
-            top: AppSpacing.md,
+            top: AppSpacing.lg,
 
             /// Full available height, resting the standard gap above the
             /// glass tab bar

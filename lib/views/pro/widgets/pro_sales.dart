@@ -41,6 +41,8 @@ class ProSalesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const EdgeInsets gutter = EdgeInsets.symmetric(horizontal: AppSpacing.lg);
+
     return SingleChildScrollView(
       physics: StylingHelper.platformAwareScrollPhysics,
 
@@ -56,8 +58,10 @@ class ProSalesView extends StatelessWidget {
         bottom: tabBarBottomPadding(context),
       ),
       child: Center(
+        /// No gutter on the column itself - the benefits carousel runs
+        /// full-bleed, every other section applies [gutter] on its own
         child: BaseConstrainedBox(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          maxWidth: kBaseConstrainedMaxWidth + 2 * AppSpacing.lg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -65,23 +69,29 @@ class ProSalesView extends StatelessWidget {
               StaggeredEntrance(
                 index: 0,
                 scaleFrom: 0.985,
-                child: ProHero(store: this.store),
+                child: Padding(
+                  padding: gutter,
+                  child: ProHero(store: this.store),
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               StaggeredEntrance(
                 index: 1,
                 scaleFrom: 0.985,
-                child: Text(
-                  'Everything you already use - OBS control, stats, '
-                  'WebView chat - stays free. Forever.',
-                  textAlign: TextAlign.center,
+                child: Padding(
+                  padding: gutter,
+                  child: Text(
+                    'Everything you already use - OBS control, stats, '
+                    'WebView chat - stays free. Forever.',
+                    textAlign: TextAlign.center,
 
-                  /// Conversion-critical copy earns the AA level
-                  /// (token-delta §2.1 body copy)
-                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).extension<AppTextColors>()!.textSecondary,
+                    /// Conversion-critical copy earns the AA level
+                    /// (token-delta §2.1 body copy)
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).extension<AppTextColors>()!.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -92,78 +102,85 @@ class ProSalesView extends StatelessWidget {
                 child: ProBenefitsBrowser(),
               ),
               const SizedBox(height: AppSpacing.xl),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  StaggeredEntrance(
-                    index: 3,
-                    scaleFrom: 0.985,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                      child: Text(
-                        'CHOOSE YOUR PRO',
-                        style: Theme.of(context).textTheme.labelSmall!.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).extension<AppTextColors>()!.textTertiary,
+              Padding(
+                padding: gutter,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StaggeredEntrance(
+                      index: 3,
+                      scaleFrom: 0.985,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                        child: Text(
+                          'CHOOSE YOUR PRO',
+                          style: Theme.of(context).textTheme.labelSmall!
+                              .copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).extension<AppTextColors>()!.textTertiary,
+                              ),
                         ),
                       ),
                     ),
-                  ),
 
-                  /// The cards stagger per card (indexes 4-6) instead of
-                  /// entering as one block
-                  ProPricing(store: this.store, entranceIndexBase: 4),
-                ],
+                    /// The cards stagger per card (indexes 4-6) instead of
+                    /// entering as one block
+                    ProPricing(store: this.store, entranceIndexBase: 4),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.xl),
               StaggeredEntrance(
                 index: 7,
                 scaleFrom: 0.985,
-                child: Column(
-                  children: [
-                    Observer(
-                      builder: (context) => BaseButton(
-                        text: 'Restore purchases',
-                        secondary: true,
-                        onPressed: this.store.pending
-                            ? null
-                            : () => this.store.restore(explicit: true),
+                child: Padding(
+                  padding: gutter,
+                  child: Column(
+                    children: [
+                      Observer(
+                        builder: (context) => BaseButton(
+                          text: 'Restore purchases',
+                          secondary: true,
+                          onPressed: this.store.pending
+                              ? null
+                              : () => this.store.restore(explicit: true),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _LegalLink(
-                          text: 'Terms of Use',
-                          onTap: () => this._openTerms(context),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
+                      const SizedBox(height: AppSpacing.lg),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _LegalLink(
+                            text: 'Terms of Use',
+                            onTap: () => this._openTerms(context),
                           ),
-                          child: Text(
-                            '·',
-                            style: Theme.of(context).textTheme.bodySmall!
-                                .copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).extension<AppTextColors>()!.textTertiary,
-                                ),
-                          ),
-                        ),
-                        _LegalLink(
-                          text: 'Privacy Policy',
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const PrivacyPolicyView(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                            ),
+                            child: Text(
+                              '·',
+                              style: Theme.of(context).textTheme.bodySmall!
+                                  .copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).extension<AppTextColors>()!.textTertiary,
+                                  ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          _LegalLink(
+                            text: 'Privacy Policy',
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const PrivacyPolicyView(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.xxl),

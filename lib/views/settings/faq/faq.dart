@@ -25,7 +25,7 @@ class FAQView extends StatelessWidget {
             scaleFrom: 0.985,
             index: 0,
             child: Padding(
-              padding: EdgeInsets.only(top: 12.0),
+              padding: EdgeInsets.only(top: AppSpacing.lg),
               child: SubpageHeader(
                 visual: DecorativeIconTile(
                   icon: CupertinoIcons.chat_bubble_text_fill,

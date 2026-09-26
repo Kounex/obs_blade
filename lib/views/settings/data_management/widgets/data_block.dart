@@ -29,41 +29,46 @@ class DataBlock extends StatelessWidget {
         ? Theme.of(context).extension<AppStatusColors>()!.recording
         : null;
 
-    return BaseCard(
-      above: this.caption != null
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
-              child: Row(
-                children: [
-                  if (this.danger) ...[
-                    Icon(
-                      CupertinoIcons.exclamationmark_triangle_fill,
-                      size: 11.0,
-                      color: dangerColor,
+    /// Same section rhythm as [ActionBlock] (Settings root) - keeps the
+    /// first caption clear of the nav bar and spaces stacked blocks
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.xl),
+      child: BaseCard(
+        above: this.caption != null
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+                child: Row(
+                  children: [
+                    if (this.danger) ...[
+                      Icon(
+                        CupertinoIcons.exclamationmark_triangle_fill,
+                        size: 11.0,
+                        color: dangerColor,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                    ],
+                    Text(
+                      this.caption!.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color:
+                            dangerColor ??
+                            Theme.of(
+                              context,
+                            ).extension<AppTextColors>()!.textTertiary,
+                      ),
                     ),
-                    const SizedBox(width: AppSpacing.xs),
                   ],
-                  Text(
-                    this.caption!.toUpperCase(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color:
-                          dangerColor ??
-                          Theme.of(
-                            context,
-                          ).extension<AppTextColors>()!.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : null,
-      paintBorder: this.danger,
-      borderColor: dangerColor?.withOpacity(0.6),
-      topPadding: 8.0,
-      bottomPadding: 12.0,
-      child: ColumnSeparated(
-        paddingSeparator: const EdgeInsets.symmetric(vertical: 16.0),
-        children: this.dataEntries,
+                ),
+              )
+            : null,
+        paintBorder: this.danger,
+        borderColor: dangerColor?.withOpacity(0.6),
+        topPadding: 8.0,
+        bottomPadding: 12.0,
+        child: ColumnSeparated(
+          paddingSeparator: const EdgeInsets.symmetric(vertical: 16.0),
+          children: this.dataEntries,
+        ),
       ),
     );
   }

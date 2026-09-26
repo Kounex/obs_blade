@@ -25,7 +25,7 @@ class AboutView extends StatelessWidget {
         title: 'About',
         listViewChildren: [
           Padding(
-            padding: const EdgeInsets.only(top: 12.0),
+            padding: const EdgeInsets.only(top: AppSpacing.lg),
             child: Column(
               children: [
                 const StaggeredEntrance(

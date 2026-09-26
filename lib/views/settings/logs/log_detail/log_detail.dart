@@ -172,7 +172,7 @@ class LogDetailView extends StatelessWidget {
                 ],
               ),
               listViewChildren: [
-                const SizedBox(height: 12.0),
+                const SizedBox(height: AppSpacing.lg),
                 StaggeredEntrance(
                   scaleFrom: 0.985,
                   index: 0,

@@ -2,6 +2,21 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-26 (evening) - Spacing: nav-bar top gap + full-bleed Pro carousel
+
+- Pushed pages (translucent nav bar) now start content `AppSpacing.lg`
+  below the bar instead of ad-hoc 0/12: `DataBlock` gets the same `xl`
+  section rhythm as `ActionBlock` (Data Management's first caption sat
+  flush under the bar), dense `ActionBlock` keeps an `lg` gap to the card
+  edge, About / FAQ / Privacy / log detail / Elements Order / Chat tab
+  move 12 -> 16.
+- Pro paywall: the sales column drops its shared gutter so the benefits
+  carousel runs to the screen edges (neighbour cards peek in from the
+  edge instead of being clipped at 16 px); every other section pads
+  itself, max width grows by the gutter so tablet width is unchanged.
+  `viewportFraction` 0.88 -> 0.94 keeps the centered card aligned with
+  the hero and pricing cards.
+
 ## 2026-09-26 (later) - Ack layer: survive WLAN stalls, no false failures
 
 Dogfood: a scene switch OBS applied showed "Scene switch failed" and put

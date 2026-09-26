@@ -41,7 +41,7 @@ class DashboardCustomisationOrderView extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.lg,
-                AppSpacing.md,
+                AppSpacing.lg,
                 AppSpacing.lg,
                 AppSpacing.md,
               ),

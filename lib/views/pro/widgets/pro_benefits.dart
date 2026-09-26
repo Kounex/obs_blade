@@ -74,15 +74,26 @@ const List<ProBenefit> kProBenefits = [
 
 /// Browsable benefits: a swipeable card carousel with page dots on phone,
 /// a two-column grid on tablet (design system § Responsive layouts).
+///
+/// Laid out full-bleed by the parent: the phone carousel runs to the
+/// screen edges (cards slide in and out there instead of being clipped at
+/// the content gutter), the tablet grid insets itself by [gutter].
 class ProBenefitsBrowser extends StatefulWidget {
-  const ProBenefitsBrowser({super.key});
+  /// Horizontal content gutter of the surrounding column
+  final double gutter;
+
+  const ProBenefitsBrowser({super.key, this.gutter = AppSpacing.lg});
 
   @override
   State<ProBenefitsBrowser> createState() => _ProBenefitsBrowserState();
 }
 
 class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
-  final PageController _pageController = PageController(viewportFraction: 0.88);
+  /// With [AppSpacing.xs] on each side of a page, 0.94 rests the centered
+  /// card within ~1px of the [AppSpacing.lg] content gutter across phone
+  /// widths (360-430) - aligned with the hero and pricing cards, with the
+  /// neighbours peeking in from the screen edge
+  final PageController _pageController = PageController(viewportFraction: 0.94);
 
   @override
   void dispose() {
@@ -137,23 +148,28 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
 
       /// Two-per-row grid built from however many benefits exist - a
       /// trailing odd card takes the row alone instead of hardcoding four
-      tabletWidget: Column(
-        children: [
-          for (int i = 0; i < kProBenefits.length; i += 2) ...[
-            if (i > 0) const SizedBox(height: AppSpacing.lg),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: ProBenefitCard(benefit: kProBenefits[i])),
-                if (i + 1 < kProBenefits.length) ...[
-                  const SizedBox(width: AppSpacing.lg),
-                  Expanded(child: ProBenefitCard(benefit: kProBenefits[i + 1])),
-                ] else
-                  const Spacer(),
-              ],
-            ),
+      tabletWidget: Padding(
+        padding: EdgeInsets.symmetric(horizontal: this.widget.gutter),
+        child: Column(
+          children: [
+            for (int i = 0; i < kProBenefits.length; i += 2) ...[
+              if (i > 0) const SizedBox(height: AppSpacing.lg),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: ProBenefitCard(benefit: kProBenefits[i])),
+                  if (i + 1 < kProBenefits.length) ...[
+                    const SizedBox(width: AppSpacing.lg),
+                    Expanded(
+                      child: ProBenefitCard(benefit: kProBenefits[i + 1]),
+                    ),
+                  ] else
+                    const Spacer(),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
