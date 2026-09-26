@@ -2,6 +2,18 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Android: glass bars blur like iOS
+
+Dogfood: Android nav/tab bars were only see-through (0.9 alpha, no
+blur) - `GlassBar` gated `BackdropFilter` on `isApple`. The gate
+predates today's WebView setup: `webview_flutter_android` 4.x renders
+through texture-layer composition by default (no
+`displayWithHybridComposition`), which a backdrop filter samples like
+any layer. Blur now runs on every platform; the True Dark (no blur)
+path is unchanged. Verified on the Pixel 7 API 36 emulator (Settings
+nav bar, tab bar). Still open: blur over a *live* chat WebView on a
+real Android device (the jank concern token-delta §3 flagged).
+
 ## 2026-09-27 - Android: links open again, intro links on the baseline
 
 First Android emulator dogfood (Pixel 7, API 36): every `SocialBlock`

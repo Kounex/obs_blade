@@ -2,7 +2,6 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
-import '../../utils/styling_helper.dart';
 import 'app_glass.dart';
 
 /// Which edge of a floating bar faces the scrollable content - the 1px
@@ -23,9 +22,11 @@ AppGlass appGlassOf(BuildContext context) {
 /// driven by the [AppGlass] theme extension: backdrop blur (sigma) + bar
 /// slot color at glass alpha + the specular edge line.
 ///
+/// Same glass on every platform - Android blurs too (the chat WebView
+/// renders through texture-layer composition by default, which a
+/// [BackdropFilter] samples like any other layer).
+///
 /// Fallbacks (token-delta §3), one code path:
-/// - non-Apple platforms: no [BackdropFilter] (live blur over platform
-///   views is a known jank path) - near-opaque solid at [fallbackAlpha]
 /// - True Dark scaffold (#000): blur contributes nothing - specular +
 ///   alpha only
 /// - reduced transparency: Flutter exposes no reduce-transparency
@@ -59,21 +60,12 @@ class GlassBar extends StatelessWidget {
   /// no action slots are populated
   static const double minContentHeight = 55.0;
 
-  /// Alpha of the solid (no-blur) fallback path
-  static const double fallbackAlpha = 0.9;
-
   @override
   Widget build(BuildContext context) {
     final AppGlass glass = appGlassOf(context);
-    final bool apple = StylingHelper.isApple(context);
-    final bool trueDark =
-        Theme.of(context).scaffoldBackgroundColor == Colors.black;
-    final bool blur = apple && !trueDark;
-
-    Color barColor = this.color ?? glass.barColor;
-    if (!apple) {
-      barColor = barColor.withValues(alpha: fallbackAlpha);
-    }
+    final bool blur =
+        Theme.of(context).scaffoldBackgroundColor != Colors.black;
+    final Color barColor = this.color ?? glass.barColor;
 
     return Stack(
       fit: StackFit.passthrough,
