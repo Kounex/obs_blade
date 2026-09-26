@@ -35,9 +35,13 @@ class _AudioSliderState extends State<AudioSlider> {
 
   /// Peak-hold tick (meter): pins to the latest level rise, holds for
   /// [_peakHoldFor], then steps back down to the live level - the tick's
-  /// AnimatedPositioned smooths each step
+  /// AnimatedPositioned smooths each step. Whenever the tick sits above the
+  /// live level and isn't holding, it falls - also when the level keeps
+  /// dropping after a finished fall or the meter goes silent (the fall used
+  /// to start only on a new peak, leaving the tick stuck otherwise)
   double _peakLevel = 0.0;
   double _lastLevel = 0.0;
+  bool _peakHolding = false;
   Timer? _peakHoldTimer;
   Timer? _peakDecayTimer;
 
@@ -51,6 +55,7 @@ class _AudioSliderState extends State<AudioSlider> {
     _controller = TextEditingController(
       text: this.widget.input.syncOffset.toString(),
     );
+    _trackPeak(_currentLevel());
   }
 
   @override
@@ -71,25 +76,42 @@ class _AudioSliderState extends State<AudioSlider> {
   }
 
   void _trackPeak(double level) {
-    if (level >= _peakLevel) {
+    _lastLevel = level;
+    if (level > 0 && level >= _peakLevel) {
       _peakLevel = level;
+      _peakHolding = true;
       _peakHoldTimer?.cancel();
-      _peakDecayTimer?.cancel();
       _peakHoldTimer = Timer(_peakHoldFor, () {
-        _peakDecayTimer = Timer.periodic(AppMotion.instant, (timer) {
-          if (!this.mounted) {
-            timer.cancel();
-            return;
-          }
-          setState(() {
-            _peakLevel = max(_lastLevel, _peakLevel - _peakDecayStep);
-          });
-          if (_peakLevel <= _lastLevel) {
-            timer.cancel();
-          }
-        });
+        _peakHolding = false;
+        _ensurePeakFalls();
       });
     }
+    _ensurePeakFalls();
+  }
+
+  /// Starts the fall if the tick is above the live level, not holding and
+  /// not already falling - the timer ends itself once it reached the level
+  void _ensurePeakFalls() {
+    if (_peakHolding || _peakDecayTimer != null || _peakLevel <= _lastLevel) {
+      return;
+    }
+    _peakDecayTimer = Timer.periodic(AppMotion.instant, (timer) {
+      if (!this.mounted) {
+        timer.cancel();
+        return;
+      }
+
+      /// A new peak re-armed the hold mid-fall - pause, the hold's end
+      /// restarts the fall
+      if (_peakHolding || _peakLevel <= _lastLevel) {
+        timer.cancel();
+        _peakDecayTimer = null;
+        return;
+      }
+      setState(() {
+        _peakLevel = max(_lastLevel, _peakLevel - _peakDecayStep);
+      });
+    });
   }
 
   double _transformMulToLevel(double mul) {
@@ -118,7 +140,6 @@ class _AudioSliderState extends State<AudioSlider> {
     Color highlight = theme.colorScheme.secondary;
 
     final double currentLevel = _currentLevel();
-    _lastLevel = currentLevel;
 
     /// Near-clip (~-6dBFS and up) tips the meter into the warning-red `.hot`
     /// zone - the meter is the ratified rule-7 exception: semantic live
