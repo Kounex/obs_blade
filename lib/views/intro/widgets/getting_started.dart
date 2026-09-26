@@ -42,6 +42,8 @@ class GettingStarted extends StatelessWidget {
                     textSpans: [
                       const TextSpan(text: 'An unofficial, '),
                       WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
                         child: SocialBlock(
                           topPadding: 0,
                           bottomPadding: 0,
@@ -59,6 +61,8 @@ class GettingStarted extends StatelessWidget {
                             ' OBS controller to master your streams and recordings!\n\nMaking use of the beautiful, open source ',
                       ),
                       WidgetSpan(
+                        alignment: PlaceholderAlignment.baseline,
+                        baseline: TextBaseline.alphabetic,
                         child: SocialBlock(
                           topPadding: 0,
                           bottomPadding: 0,
