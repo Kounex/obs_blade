@@ -78,14 +78,20 @@ class _WelcomeVisualState extends IntroLoopState<WelcomeVisual> {
                           ],
                         ),
                         child: Center(
-                          child: Transform.rotate(
-                            angle: -t * 2 * pi,
-                            child: Image.asset(
-                              'assets/images/logo_vortex.png',
-                              width: 76.0,
-                              height: 76.0,
-                              color: accent,
-                              colorBlendMode: BlendMode.srcIn,
+                          /// Circular clip: a rotated bitmap's transparent
+                          /// square edge otherwise resamples into a faint
+                          /// diamond hairline on device
+                          child: ClipOval(
+                            child: Transform.rotate(
+                              angle: -t * 2 * pi,
+                              filterQuality: FilterQuality.medium,
+                              child: Image.asset(
+                                'assets/images/logo_vortex.png',
+                                width: 76.0,
+                                height: 76.0,
+                                color: accent,
+                                colorBlendMode: BlendMode.srcIn,
+                              ),
                             ),
                           ),
                         ),
