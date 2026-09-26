@@ -27,8 +27,7 @@ class AppGlass extends ThemeExtension<AppGlass> {
   final double saturate;
 
   /// Peak opacity of the 1px specular top line (on the edge facing the
-  /// content) - the sole glass signal on True Dark / opaque-fallback
-  /// surfaces, never above [specularOpacityCap]
+  /// content), never above [specularOpacityCap]
   final double specularOpacity;
 
   const AppGlass({

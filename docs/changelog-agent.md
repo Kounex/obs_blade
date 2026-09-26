@@ -9,8 +9,8 @@ blur) - `GlassBar` gated `BackdropFilter` on `isApple`. The gate
 predates today's WebView setup: `webview_flutter_android` 4.x renders
 through texture-layer composition by default (no
 `displayWithHybridComposition`), which a backdrop filter samples like
-any layer. Blur now runs on every platform; the True Dark (no blur)
-path is unchanged. Verified on the Pixel 7 API 36 emulator (Settings
+any layer. Blur now runs on every platform. Follow-up: the True Dark
+no-blur rule is gone too - one glass everywhere. Verified on the Pixel 7 API 36 emulator (Settings
 nav bar, tab bar). Still open: blur over a *live* chat WebView on a
 real Android device (the jank concern token-delta §3 flagged).
 

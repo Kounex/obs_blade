@@ -22,17 +22,14 @@ AppGlass appGlassOf(BuildContext context) {
 /// driven by the [AppGlass] theme extension: backdrop blur (sigma) + bar
 /// slot color at glass alpha + the specular edge line.
 ///
-/// Same glass on every platform - Android blurs too (the chat WebView
-/// renders through texture-layer composition by default, which a
-/// [BackdropFilter] samples like any other layer).
+/// Same glass on every platform and theme (True Dark included) - Android
+/// blurs too (the chat WebView renders through texture-layer composition
+/// by default, which a [BackdropFilter] samples like any other layer).
 ///
-/// Fallbacks (token-delta §3), one code path:
-/// - True Dark scaffold (#000): blur contributes nothing - specular +
-///   alpha only
-/// - reduced transparency: Flutter exposes no reduce-transparency
-///   accessibility flag (checked Flutter 3.44 `MediaQuery` /
-///   `AccessibilityFeatures`) - when the SDK surfaces one it folds into
-///   the same `_blur` condition here
+/// Reduced transparency: Flutter exposes no reduce-transparency
+/// accessibility flag (checked Flutter 3.44 `MediaQuery` /
+/// `AccessibilityFeatures`) - when the SDK surfaces one it becomes the
+/// single no-blur condition here.
 ///
 /// The `AppGlass.saturate` garnish is plumbed through the token but not
 /// applied: `dart:ui` `ImageFilter` has no color-filter pass (blur /
@@ -63,25 +60,21 @@ class GlassBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppGlass glass = appGlassOf(context);
-    final bool blur =
-        Theme.of(context).scaffoldBackgroundColor != Colors.black;
     final Color barColor = this.color ?? glass.barColor;
 
     return Stack(
       fit: StackFit.passthrough,
       children: [
         Positioned.fill(
-          child: blur
-              ? ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: glass.sigma,
-                      sigmaY: glass.sigma,
-                    ),
-                    child: ColoredBox(color: barColor),
-                  ),
-                )
-              : ColoredBox(color: barColor),
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: glass.sigma,
+                sigmaY: glass.sigma,
+              ),
+              child: ColoredBox(color: barColor),
+            ),
+          ),
         ),
         this.child,
         Positioned(
