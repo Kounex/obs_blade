@@ -8,6 +8,16 @@ picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
 Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 
+**Update 2026-09-27 — intro v2 shipped to dogfood** (awaiting the
+user's on-device verdict): the intro was rebuilt as 4 swipeable screens
+with code-drawn animated mockups; every user sees it once via the new
+`HasUserSeenIntro202609` key. Spec:
+`superpowers/specs/2026-09-27-intro-v2-design.md`, details:
+`changelog-agent.md` 2026-09-27 "Intro v2". Verified on the Pixel 7
+emulator (full flow + relaunch) and installed on Kounex iOS. Watch
+first: tablet/landscape on a real iPad, copy wording, and mockup loop
+smoothness on older phones.
+
 ## Handoff hygiene (read before editing this file)
 
 - **This is a baton, not a history log.** It holds only what the *next*
