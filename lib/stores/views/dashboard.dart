@@ -43,6 +43,7 @@ import '../../types/classes/api/scene.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/api/stream_stats.dart';
 import '../../types/classes/command_failure_notice.dart';
+import '../../types/classes/media/media_status.dart';
 import '../../types/classes/default_filter.dart';
 import '../../types/classes/obs_request_ack.dart';
 import '../../types/classes/stream/events/base.dart';
@@ -58,6 +59,7 @@ import '../../types/classes/stream/events/scene_item_lock_state_changed.dart';
 import '../../types/classes/stream/events/input_audio_balance_changed.dart';
 import '../../types/classes/stream/events/input_audio_monitor_type_changed.dart';
 import '../../types/classes/stream/responses/get_input_audio_balance.dart';
+import '../../types/classes/stream/responses/get_source_active.dart';
 import '../../types/classes/stream/responses/get_input_audio_monitor_type.dart';
 import '../../types/classes/stream/responses/get_media_input_status.dart';
 import '../../types/classes/stream/events/source_filter_enable_state_changed.dart';
@@ -178,6 +180,25 @@ abstract class _DashboardStore with Store {
   /// MediaInput* events
   @observable
   ObservableMap<String, String> mediaStates = ObservableMap();
+
+  /// Full GetMediaInputStatus snapshot (state + duration + cursor) per media
+  /// input name - the Media hub's source for progress / time labels.
+  /// Filled alongside [mediaStates]
+  @observable
+  ObservableMap<String, MediaStatus> mediaStatus = ObservableMap();
+
+  /// Whether a media input is currently in program (GetSourceActive's
+  /// `videoActive`) - OBS only outputs a media source's audio while it is,
+  /// so the Media hub marks inputs that would play unheard. Re-read on
+  /// program scene / transition / scene item visibility changes
+  @observable
+  ObservableMap<String, bool> mediaInProgram = ObservableMap();
+
+  /// Every media (ffmpeg / VLC) input of the scene collection, in OBS order
+  @computed
+  List<Input> get mediaInputs => this.allInputs
+      .where((input) => isMediaInputKind(input.inputKind))
+      .toList();
 
   /// Will contain all inputs returned by [GetInputList] which will even contian
   /// special inputs etc.
@@ -695,6 +716,7 @@ abstract class _DashboardStore with Store {
         }
         break;
       case RequestType.TriggerMediaInputAction:
+      case RequestType.SetMediaInputCursor:
         if (fields?['inputName'] != null) {
           requestMediaStatus(fields!['inputName'] as String);
         }
@@ -1164,6 +1186,47 @@ abstract class _DashboardStore with Store {
     });
   }
 
+  /// Status + in-program state of every media input - the Media hub calls
+  /// this when it shows up; the input list reload keeps it current after
+  void requestAllMediaStatus() {
+    for (final input in this.mediaInputs) {
+      if (input.inputName == null) continue;
+      requestMediaStatus(input.inputName!);
+    }
+    requestMediaInProgram();
+  }
+
+  /// Re-reads GetSourceActive for the media inputs - cheap (one request per
+  /// media input) and only issued on program-changing events
+  void requestMediaInProgram() {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    for (final input in this.mediaInputs) {
+      if (input.inputName == null) continue;
+      NetworkHelper.sendRequest(session.socket, RequestType.GetSourceActive, {
+        'sourceName': input.inputName,
+      });
+    }
+  }
+
+  /// Media hub "Stop all": stops every media input that is playing or
+  /// paused among [inputNames]
+  void stopAllMedia(Iterable<String> inputNames) {
+    for (final inputName in inputNames) {
+      if (this.mediaStatus[inputName]?.active ?? false) {
+        triggerMediaAction(inputName, kMediaActionStop);
+      }
+    }
+  }
+
+  /// Seek a media input to [cursorMs]
+  Future<ObsRequestAck> setMediaCursor(String inputName, int cursorMs) =>
+      this.sendMutation(
+        RequestType.SetMediaInputCursor,
+        fields: {'inputName': inputName, 'mediaCursor': cursorMs},
+        label: 'Media seek',
+      );
+
   /// Play / pause / restart / stop a media input (`OBS_WEBSOCKET_MEDIA_INPUT_ACTION_*`)
   Future<ObsRequestAck> triggerMediaAction(String inputName, String action) =>
       this.sendMutation(
@@ -1456,6 +1519,13 @@ abstract class _DashboardStore with Store {
         _sceneOrdering.noteEvent(_SceneField.program);
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
         _requestDisplayedSceneItems();
+        requestMediaInProgram();
+        break;
+      case EventType.SceneTransitionEnded:
+
+        /// Sources of the old scene only go inactive once the transition
+        /// finished - re-read after it, not just on the program switch
+        requestMediaInProgram();
         break;
       case EventType.CurrentPreviewSceneChanged:
         CurrentPreviewSceneChangedEvent currentPreviewSceneChangedEvent =
@@ -1561,6 +1631,11 @@ abstract class _DashboardStore with Store {
         SceneItemEnableStateChangedEvent sceneItemEnableStateChangedEvent =
             SceneItemEnableStateChangedEvent(event.jsonRAW);
 
+        /// Any scene counts for the Media hub's in-program marker: an eye
+        /// toggle inside a nested "Soundboard" scene changes what is heard
+        /// without touching the displayed scene
+        requestMediaInProgram();
+
         /// sceneItemId is only unique within a scene — ignore other scenes.
         if (sceneItemEnableStateChangedEvent.sceneName != _displayedSceneName) {
           break;
@@ -1615,7 +1690,8 @@ abstract class _DashboardStore with Store {
         /// state for inputs the media controls are showing
         final String? mediaInputName = event.json['inputName'];
         if (mediaInputName != null &&
-            this.mediaStates.containsKey(mediaInputName)) {
+            (this.mediaStates.containsKey(mediaInputName) ||
+                this.mediaStatus.containsKey(mediaInputName))) {
           requestMediaStatus(mediaInputName);
         }
         break;
@@ -1928,6 +2004,20 @@ abstract class _DashboardStore with Store {
 
         this.allInputs = ObservableList.of(getInputListResponse.inputs);
 
+        /// Media hub: drop stale entries (renamed / removed inputs, other
+        /// collection) and refresh the rest once the hub has asked
+        final Set<String> mediaNames = {
+          for (final input in this.mediaInputs)
+            if (input.inputName != null) input.inputName!,
+        };
+        this.mediaStatus.removeWhere((name, _) => !mediaNames.contains(name));
+        this.mediaInProgram.removeWhere(
+          (name, _) => !mediaNames.contains(name),
+        );
+        if (this.mediaStatus.isNotEmpty || this.mediaInProgram.isNotEmpty) {
+          requestAllMediaStatus();
+        }
+
         /// Tag the batch so an InputVolumeChanged / InputMuteStateChanged
         /// event that arrives while it is in flight beats its stale values
         _inputBatchTags.add(_audioOrdering.capture());
@@ -2144,9 +2234,23 @@ abstract class _DashboardStore with Store {
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
         final String? mediaInputName = requestData?['inputName'];
         if (mediaInputName != null) {
-          this.mediaStates[mediaInputName] = GetMediaInputStatusResponse(
+          final status = GetMediaInputStatusResponse(response.jsonRAW);
+          this.mediaStates[mediaInputName] = status.mediaState;
+          this.mediaStatus[mediaInputName] = MediaStatus(
+            state: status.mediaState,
+            duration: status.mediaDuration,
+            cursor: status.mediaCursor,
+            receivedAt: DateTime.now(),
+          );
+        }
+        break;
+      case RequestType.GetSourceActive:
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        final String? sourceName = requestData?['sourceName'];
+        if (sourceName != null) {
+          this.mediaInProgram[sourceName] = GetSourceActiveResponse(
             response.jsonRAW,
-          ).mediaState;
+          ).videoActive;
         }
         break;
       case RequestType.GetInputAudioBalance:

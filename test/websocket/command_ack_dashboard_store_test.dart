@@ -339,6 +339,111 @@ void main() {
     },
   );
 
+  test('media hub: full status + in-program state, program changes re-read, '
+      'stop all only stops active inputs', () async {
+    peer.responseDataFor = (request) {
+      final data = request['requestData'] as Map<String, dynamic>?;
+      switch (request['requestType']) {
+        case 'GetInputList':
+          return {
+            'inputs': [
+              {
+                'inputName': 'Horn',
+                'inputKind': 'ffmpeg_source',
+                'unversionedInputKind': 'ffmpeg_source',
+              },
+              {
+                'inputName': 'Playlist',
+                'inputKind': 'vlc_source',
+                'unversionedInputKind': 'vlc_source',
+              },
+              {
+                'inputName': 'Mic',
+                'inputKind': 'wasapi_input_capture',
+                'unversionedInputKind': 'wasapi_input_capture',
+              },
+            ],
+          };
+        case 'GetMediaInputStatus':
+          return data?['inputName'] == 'Horn'
+              ? {
+                  'mediaState': 'OBS_MEDIA_STATE_PLAYING',
+                  'mediaDuration': 4000,
+                  'mediaCursor': 1000,
+                }
+              : {'mediaState': 'OBS_MEDIA_STATE_STOPPED'};
+        case 'GetSourceActive':
+          return {
+            'videoActive': data?['sourceName'] == 'Horn',
+            'videoShowing': true,
+          };
+      }
+      return null;
+    };
+
+    /// The input batch that follows GetInputList needs answers too
+    peer.responseData['GetInputVolume'] = {
+      'inputVolumeMul': 1.0,
+      'inputVolumeDb': 0.0,
+    };
+    peer.responseData['GetInputMute'] = {'inputMuted': false};
+    peer.responseData['GetInputAudioSyncOffset'] = {'inputAudioSyncOffset': 0};
+    peer.droppedRequestTypes.addAll([
+      'GetSceneItemList',
+      'GetSceneTransitionList',
+    ]);
+    await connect();
+    dashboardStore.handleStream();
+    dashboardStore.initialRequests();
+
+    await waitFor(
+      () => dashboardStore.mediaInputs.length == 2,
+      'media inputs derived from the input list',
+    );
+    dashboardStore.requestAllMediaStatus();
+    await waitFor(
+      () =>
+          dashboardStore.mediaStatus['Horn']?.duration == 4000 &&
+          dashboardStore.mediaStatus['Playlist'] != null &&
+          dashboardStore.mediaInProgram['Horn'] == true &&
+          dashboardStore.mediaInProgram['Playlist'] == false,
+      'status + in-program loaded',
+    );
+    expect(dashboardStore.mediaStatus['Horn']!.cursor, 1000);
+
+    final baseline = requestsOf('GetSourceActive').length;
+    peer.event('CurrentProgramSceneChanged', {'sceneName': 'Break'});
+    peer.event('SceneTransitionEnded', {'transitionName': 'Fade'});
+    peer.event('SceneItemEnableStateChanged', {
+      'sceneName': 'Soundboard',
+      'sceneItemId': 3,
+      'sceneItemEnabled': false,
+    });
+    await waitFor(
+      () => requestsOf('GetSourceActive').length >= baseline + 6,
+      'in-program re-read on every program-changing event',
+    );
+
+    dashboardStore.stopAllMedia(['Horn', 'Playlist']);
+    await waitFor(
+      () => requestsOf('TriggerMediaInputAction').isNotEmpty,
+      'stop sent',
+    );
+    expect(requestsOf('TriggerMediaInputAction').map((r) => r['requestData']), [
+      {
+        'inputName': 'Horn',
+        'mediaAction': 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP',
+      },
+    ]);
+
+    final seek = await dashboardStore.setMediaCursor('Horn', 2500);
+    expect(seek.success, isTrue);
+    expect(requestsOf('SetMediaInputCursor').single['requestData'], {
+      'inputName': 'Horn',
+      'mediaCursor': 2500,
+    });
+  });
+
   test('rejected batch mutation surfaces a notice', () async {
     await connect();
     peer.rejections['SaveSourceScreenshot'] =

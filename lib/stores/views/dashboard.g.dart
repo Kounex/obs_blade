@@ -17,6 +17,14 @@ mixin _$DashboardStore on _DashboardStore, Store {
         () => super.mediaSceneItems,
         name: '_DashboardStore.mediaSceneItems',
       )).value;
+  Computed<List<Input>>? _$mediaInputsComputed;
+
+  @override
+  List<Input> get mediaInputs =>
+      (_$mediaInputsComputed ??= Computed<List<Input>>(
+        () => super.mediaInputs,
+        name: '_DashboardStore.mediaInputs',
+      )).value;
   Computed<ObservableList<Input>>? _$currentInputsComputed;
 
   @override
@@ -450,6 +458,42 @@ mixin _$DashboardStore on _DashboardStore, Store {
   set mediaStates(ObservableMap<String, String> value) {
     _$mediaStatesAtom.reportWrite(value, super.mediaStates, () {
       super.mediaStates = value;
+    });
+  }
+
+  late final _$mediaStatusAtom = Atom(
+    name: '_DashboardStore.mediaStatus',
+    context: context,
+  );
+
+  @override
+  ObservableMap<String, MediaStatus> get mediaStatus {
+    _$mediaStatusAtom.reportRead();
+    return super.mediaStatus;
+  }
+
+  @override
+  set mediaStatus(ObservableMap<String, MediaStatus> value) {
+    _$mediaStatusAtom.reportWrite(value, super.mediaStatus, () {
+      super.mediaStatus = value;
+    });
+  }
+
+  late final _$mediaInProgramAtom = Atom(
+    name: '_DashboardStore.mediaInProgram',
+    context: context,
+  );
+
+  @override
+  ObservableMap<String, bool> get mediaInProgram {
+    _$mediaInProgramAtom.reportRead();
+    return super.mediaInProgram;
+  }
+
+  @override
+  set mediaInProgram(ObservableMap<String, bool> value) {
+    _$mediaInProgramAtom.reportWrite(value, super.mediaInProgram, () {
+      super.mediaInProgram = value;
     });
   }
 
@@ -939,6 +983,8 @@ hotkeys: ${hotkeys},
 currentSceneItems: ${currentSceneItems},
 sceneItemsSceneName: ${sceneItemsSceneName},
 mediaStates: ${mediaStates},
+mediaStatus: ${mediaStatus},
+mediaInProgram: ${mediaInProgram},
 allInputs: ${allInputs},
 globalInputNames: ${globalInputNames},
 currentTransition: ${currentTransition},
@@ -955,6 +1001,7 @@ studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
 availableRequests: ${availableRequests},
 mediaSceneItems: ${mediaSceneItems},
+mediaInputs: ${mediaInputs},
 currentInputs: ${currentInputs},
 globalInputs: ${globalInputs},
 screenshotPath: ${screenshotPath}

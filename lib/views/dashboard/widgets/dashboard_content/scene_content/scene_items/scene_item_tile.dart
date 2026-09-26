@@ -48,6 +48,38 @@ class SceneItemTile extends StatelessWidget {
               : CupertinoIcons.folder_solid
         : CupertinoIcons.photo_on_rectangle;
 
+    /// The Media hub owns media transport while it is exposed - rows then
+    /// keep the lock like every other source. Hub off → the row transport
+    /// stays, so media control never disappears with the toggle
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.ExposeMediaHub],
+      builder: (context, settingsBox, child) => _row(
+        context,
+        dashboardStore: dashboardStore,
+        theme: theme,
+        isGroup: isGroup,
+        typeIcon: typeIcon,
+        rowMediaControls:
+            !isGroup &&
+            isMediaInputKind(this.sceneItem.inputKind) &&
+            !(settingsBox.get(
+                  SettingsKeys.ExposeMediaHub.name,
+                  defaultValue: true,
+                )
+                as bool),
+      ),
+    );
+  }
+
+  Widget _row(
+    BuildContext context, {
+    required DashboardStore dashboardStore,
+    required ThemeData theme,
+    required bool isGroup,
+    required IconData typeIcon,
+    required bool rowMediaControls,
+  }) {
     /// Group rows forward the tap of the whole row to the same group
     /// visibility toggle the leading icon already exposes (still gated on
     /// the visibility edit mode)
@@ -136,7 +168,7 @@ class SceneItemTile extends StatelessWidget {
               ),
             ),
 
-            if (!isGroup && isMediaInputKind(this.sceneItem.inputKind))
+            if (rowMediaControls)
               MediaControls(inputName: this.sceneItem.sourceName!),
             if (!isGroup && isTextInputKind(this.sceneItem.inputKind))
               Semantics(
@@ -161,9 +193,10 @@ class SceneItemTile extends StatelessWidget {
 
             /// Lock (OBS canvas: no accidental move / resize). Groups skip
             /// it - their children carry the lock that matters - and media
-            /// rows give the slot to the transport (row width on phones)
+            /// rows with their own transport give it the slot (row width on
+            /// phones)
             if (!isGroup &&
-                !isMediaInputKind(this.sceneItem.inputKind) &&
+                !rowMediaControls &&
                 this.sceneItem.sceneItemLocked != null)
               HiveBuilder<dynamic>(
                 hiveKey: HiveKeys.Settings,

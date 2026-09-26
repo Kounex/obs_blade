@@ -169,6 +169,11 @@ enum RequestType {
   /// {'inputName': String } - Name of the media input
   GetMediaInputStatus,
 
+  /// Gets the active and show state of a source (active = in program)
+  ///
+  /// {'sourceName': String } - Name of the source
+  GetSourceActive,
+
   /// Gets the settings of an input (only values that differ from defaults)
   ///
   /// {'inputName': String } - Name of the input
@@ -356,6 +361,12 @@ enum RequestType {
   /// {'inputName': String } - Name of the media input
   /// {'mediaAction': String } - OBS_WEBSOCKET_MEDIA_INPUT_ACTION_*
   TriggerMediaInputAction,
+
+  /// Sets the cursor position of a media input
+  ///
+  /// {'inputName': String } - Name of the media input
+  /// {'mediaCursor': num } - New cursor position in milliseconds
+  SetMediaInputCursor,
 
   /// Sets the settings of an input
   ///

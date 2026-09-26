@@ -28,6 +28,9 @@ enum EventType {
   /// A scene transition has started.
   SceneTransitionStarted,
 
+  /// A scene transition has completed fully (program switched).
+  SceneTransitionEnded,
+
   /// The current scene transition has changed.
   CurrentSceneTransitionChanged,
 

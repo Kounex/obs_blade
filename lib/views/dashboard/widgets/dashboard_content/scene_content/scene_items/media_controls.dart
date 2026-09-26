@@ -5,12 +5,10 @@ import 'package:get_it/get_it.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/icon_button.dart';
 import '../../../../../../stores/views/dashboard.dart';
+import '../../../../../../types/classes/media/media_status.dart';
 
-/// Media input kinds that answer the OBS media-input requests
-bool isMediaInputKind(String? inputKind) =>
-    inputKind != null &&
-    (inputKind.startsWith('ffmpeg_source') ||
-        inputKind.startsWith('vlc_source'));
+export '../../../../../../types/classes/media/media_status.dart'
+    show isMediaInputKind;
 
 /// Compact transport for a media source row: restart + play/pause. The
 /// state comes from GetMediaInputStatus (requested on first build) and the
@@ -59,7 +57,7 @@ class _MediaControlsState extends State<MediaControls> {
         builder: (context) {
           final bool playing =
               dashboardStore.mediaStates[this.widget.inputName] ==
-              'OBS_MEDIA_STATE_PLAYING';
+              kMediaStatePlaying;
 
           return Row(
             mainAxisSize: MainAxisSize.min,
@@ -69,7 +67,7 @@ class _MediaControlsState extends State<MediaControls> {
                 semanticLabel: 'Restart ${this.widget.inputName}',
                 onTap: () => dashboardStore.triggerMediaAction(
                   this.widget.inputName,
-                  'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART',
+                  kMediaActionRestart,
                 ),
               ),
               _button(
@@ -81,9 +79,7 @@ class _MediaControlsState extends State<MediaControls> {
                     : 'Play ${this.widget.inputName}',
                 onTap: () => dashboardStore.triggerMediaAction(
                   this.widget.inputName,
-                  playing
-                      ? 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PAUSE'
-                      : 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_PLAY',
+                  playing ? kMediaActionPause : kMediaActionPlay,
                 ),
               ),
             ],

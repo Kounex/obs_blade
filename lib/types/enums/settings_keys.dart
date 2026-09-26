@@ -313,6 +313,18 @@ enum SettingsKeys {
   /// they can be adjusted in the app
   ExposeInputAudioSyncOffset,
 
+  /// [bool]: If the Media hub (soundboard pads + transport for every media
+  /// source) is shown next to Scene Items / Audio. While on, scene item rows
+  /// drop their own media transport. Active by default
+  ExposeMediaHub,
+
+  /// [String]: Active view of the Media hub - 'pads' (default) or 'list'
+  MediaHubViewMode,
+
+  /// [Map]: Media hub layout per connection (connection key → hidden input
+  /// names + manual order), see `MediaHubLayout`
+  MediaHubLayouts,
+
   /// [bool]: If true OBS Blade will try to reconnect to an OBS instance on connection
   /// lost indefinetily instead of an amount of retries before aborting
   UnlimitedReconnects,
@@ -526,6 +538,9 @@ enum SettingsKeys {
     SettingsKeys.ExposeReplayBufferControls: 'expose-replay-buffer-collection',
     SettingsKeys.ExposeHotkeys: 'expose-hotkeys',
     SettingsKeys.ExposeInputAudioSyncOffset: 'expose-input-audio-sync-offset',
+    SettingsKeys.ExposeMediaHub: 'expose-media-hub',
+    SettingsKeys.MediaHubViewMode: 'media-hub-view-mode',
+    SettingsKeys.MediaHubLayouts: 'media-hub-layouts',
     SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
     SettingsKeys.CommandFailureToasts: 'command-failure-toasts',
     SettingsKeys.DashboardElementsOrder: 'dashboard-elements-order',
