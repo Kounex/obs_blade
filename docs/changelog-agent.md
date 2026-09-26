@@ -2,6 +2,34 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-26 (later) - Ack layer: survive WLAN stalls, no false failures
+
+Dogfood: a scene switch OBS applied showed "Scene switch failed" and put
+the app into reconnect. Cross-read of the device app log and OBS's own
+log: a multi-second WLAN stall hit the 3 s ping keepalive (dart:io closes
+after ping + 3 s without pong), the app reset a socket that would have
+recovered, and every in-flight ack was failed as connectionLost -> toast.
+Each reconnect's first attempt then died with 4007 because the stats poll
+wrote to the not-yet-identified socket.
+
+- Keepalive `NetworkHelper.socketPingInterval` 15 s; `requestAckTimeout`
+  35 s (> 2x keepalive, so a stall ends as ack or connection loss); a
+  timeout on a dead socket resolves as connectionLost.
+- connectionLost / notSent are "unconfirmed": log only, no toast, no
+  resync - the reconnect burst re-reads. No session -> notSent.
+- `NetworkStore.setOBSWebSocket` publishes `activeSession` only after
+  Identified; a failed reconnect keeps the old (dead) session as target.
+- Reconnect loop pauses the stats poll, tries once immediately, resumes
+  polls + the preview loop; the dashboard stream's onDone triggers
+  `checkConnectionNow`.
+- `sendRequest` / `sendBatchRequest` (untracked) for reads, polls and
+  slider ticks; `makeRequest` / `makeBatchRequest` only where awaited.
+- Preview screenshots carry `imageWidth` (device short side, capped at the
+  canvas from new `GetVideoSettings`) - was full canvas (3440 px here).
+- Maintainer setup finding: the OBS Mac's Tailscale exit node had LAN
+  access off, so replies to the phone went via the exit node (~5x RTT);
+  enabled `--exit-node-allow-lan-access`.
+
 ## 2026-09-26 - 4.0: base-app pass (dashboard + OBS control)
 
 Audit of the non-chat app (dashboard controls, OBS v5 coverage, connect /
