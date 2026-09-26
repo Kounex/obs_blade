@@ -198,22 +198,16 @@ List<Widget> _buildStandalone(
       return const [];
     case DashboardElement.OBSStats:
       return const [
-        /// Phone: no wrapping card (the inner stat containers are cards
-        /// already) and no fixed frame - the section measures its pages and
-        /// takes the tallest one's height, so shorter pages leave no dead
-        /// space. The dots get bottom spacing so they don't sit on the
-        /// first card. Tablet keeps the titled full-width card.
-        ResponsiveWidgetWrapper(
-          mobileWidget: Stats(
-            autoHeight: true,
-            pageIndicatorPadding: EdgeInsets.only(
-              top: AppSpacing.md,
-              bottom: AppSpacing.md,
-            ),
-          ),
-          tabletWidget: DashboardElementCard(
-            title: 'Stats',
-            child: SizedBox(height: 650.0, child: Stats()),
+        /// No wrapping card on either form factor (the inner stat
+        /// containers are cards already) and no fixed frame - the section
+        /// measures its pages and takes the tallest one's height, so
+        /// shorter pages leave no dead space. The dots get bottom spacing
+        /// so they don't sit on the first card.
+        Stats(
+          autoHeight: true,
+          pageIndicatorPadding: EdgeInsets.only(
+            top: AppSpacing.md,
+            bottom: AppSpacing.md,
           ),
         ),
       ];

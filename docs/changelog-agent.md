@@ -2,6 +2,13 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Dashboard: Stats unwrapped on tablet too
+
+Dogfood: in tablet mode the Stats element still sat inside a titled
+"Stats" card with a fixed 650px frame. It now uses the phone
+composition on both form factors - no wrapping card (the stat
+containers are cards already), auto height from the tallest page.
+
 ## 2026-09-27 - Scene switch: stale item lists, fade on every switch
 
 Dogfood: a scene switch occasionally kept showing the previous scene's
