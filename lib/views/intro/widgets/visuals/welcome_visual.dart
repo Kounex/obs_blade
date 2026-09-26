@@ -78,10 +78,12 @@ class _WelcomeVisualState extends IntroLoopState<WelcomeVisual> {
                           ],
                         ),
                         child: Center(
-                          /// Circular clip: a rotated bitmap's transparent
-                          /// square edge otherwise resamples into a faint
-                          /// diamond hairline on device
+                          /// Circular clip, inset past the bitmap edge: a
+                          /// rotated bitmap's transparent border otherwise
+                          /// resamples into a faint hairline on device (the
+                          /// mark's outer ring ends at ~92 % radius)
                           child: ClipOval(
+                            clipper: const _InsetOvalClipper(2.0),
                             child: Transform.rotate(
                               angle: -t * 2 * pi,
                               filterQuality: FilterQuality.medium,
@@ -114,6 +116,20 @@ class _WelcomeVisualState extends IntroLoopState<WelcomeVisual> {
       ),
     );
   }
+}
+
+/// Oval clip deflated by [inset] on every side
+class _InsetOvalClipper extends CustomClipper<Rect> {
+  final double inset;
+
+  const _InsetOvalClipper(this.inset);
+
+  @override
+  Rect getClip(Size size) => (Offset.zero & size).deflate(this.inset);
+
+  @override
+  bool shouldReclip(_InsetOvalClipper oldClipper) =>
+      oldClipper.inset != this.inset;
 }
 
 /// Concentric rings around the mark: two arcs sweeping in opposite
