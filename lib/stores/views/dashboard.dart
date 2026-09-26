@@ -1224,13 +1224,30 @@ abstract class _DashboardStore with Store {
     }
   }
 
-  /// Seek a media input to [cursorMs]
-  Future<ObsRequestAck> setMediaCursor(String inputName, int cursorMs) =>
-      this.sendMutation(
-        RequestType.SetMediaInputCursor,
-        fields: {'inputName': inputName, 'mediaCursor': cursorMs},
-        label: 'Media seek',
+  /// Seek a media input to [cursorMs]. OBS fires no event for a seek, so
+  /// the known position moves right away (the slider would snap back to
+  /// the old extrapolated cursor otherwise) and is re-read on success - a
+  /// rejection re-reads via the failed-mutation resync
+  Future<ObsRequestAck> setMediaCursor(String inputName, int cursorMs) async {
+    final MediaStatus? previous = this.mediaStatus[inputName];
+    if (previous != null) {
+      runInAction(
+        () => this.mediaStatus[inputName] = MediaStatus(
+          state: previous.state,
+          duration: previous.duration,
+          cursor: cursorMs,
+          receivedAt: DateTime.now(),
+        ),
       );
+    }
+    final ObsRequestAck ack = await this.sendMutation(
+      RequestType.SetMediaInputCursor,
+      fields: {'inputName': inputName, 'mediaCursor': cursorMs},
+      label: 'Media seek',
+    );
+    if (ack.success) requestMediaStatus(inputName);
+    return ack;
+  }
 
   /// Play / pause / restart / stop a media input (`OBS_WEBSOCKET_MEDIA_INPUT_ACTION_*`)
   Future<ObsRequestAck> triggerMediaAction(String inputName, String action) =>

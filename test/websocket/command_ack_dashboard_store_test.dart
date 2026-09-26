@@ -436,12 +436,21 @@ void main() {
       },
     ]);
 
-    final seek = await dashboardStore.setMediaCursor('Horn', 2500);
+    /// A seek fires no OBS event: the cursor moves locally at once and the
+    /// status is re-read after the ack
+    final statusReads = requestsOf('GetMediaInputStatus').length;
+    final seekFuture = dashboardStore.setMediaCursor('Horn', 2500);
+    expect(dashboardStore.mediaStatus['Horn']!.cursor, 2500);
+    final seek = await seekFuture;
     expect(seek.success, isTrue);
     expect(requestsOf('SetMediaInputCursor').single['requestData'], {
       'inputName': 'Horn',
       'mediaCursor': 2500,
     });
+    await waitFor(
+      () => requestsOf('GetMediaInputStatus').length > statusReads,
+      'status re-read after the seek',
+    );
   });
 
   test('rejected batch mutation surfaces a notice', () async {
