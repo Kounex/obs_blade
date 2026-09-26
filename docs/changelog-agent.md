@@ -2,6 +2,37 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Media hub (soundboard)
+
+A third surface next to Scene Items / Audio for every media source.
+Spec: `superpowers/specs/2026-09-27-media-hub-design.md`.
+
+- Phone: a **Media** tab in the Scene Items / Audio card. Tablet: a
+  full-width Media card under the pair. When the user's order splits
+  the two, the hub card follows the later one.
+- **Pads** (default): tap = play from the start (soundboard), long
+  press = transport sheet; accent ring, progress bar and remaining time
+  while playing. **List**: time `0:12 / 1:05` + restart / play-pause /
+  stop. Transport sheet: seek (`SetMediaInputCursor`), VLC previous /
+  next. Toolbar: Pads|List (persisted `MediaHubViewMode`), Stop all,
+  Arrange (reorder + hide per connection).
+- **Not in program** marker (speaker-slash, dimmed): `GetSourceActive`
+  per media input, re-read on program switch, `SceneTransitionEnded`
+  and any eye toggle - only once the hub has asked. The empty state
+  explains the nested "Soundboard" scene tip.
+- Progress is extrapolated from the last `GetMediaInputStatus` (OBS
+  sends no cursor events); `MediaClock` ticks only for playing rows.
+- Persistence: settings keys only (`ExposeMediaHub` default true,
+  `MediaHubViewMode`, `MediaHubLayouts` JSON keyed `name:`/`host:` like
+  hidden scenes) - no Hive type changes. Malformed layout JSON reads as
+  the default layout.
+- Scene item rows drop their media transport (lock returns) while the
+  hub is on; hub off → rows keep it.
+- Tests: `test/media/media_hub_layout_test.dart`,
+  `test/dashboard/media_hub_test.dart`, store test in
+  `command_ack_dashboard_store_test.dart`. Not yet run on a device or
+  against a real OBS.
+
 ## 2026-09-27 - Intro v2: short welcome with live mockups
 
 The old intro (Getting Started stage + 5 slides, WebSocket setup
