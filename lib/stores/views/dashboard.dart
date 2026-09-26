@@ -1209,6 +1209,11 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  /// Event-driven re-read - only once the hub has asked (no hub, no reads)
+  void _refreshMediaInProgram() {
+    if (this.mediaInProgram.isNotEmpty) requestMediaInProgram();
+  }
+
   /// Media hub "Stop all": stops every media input that is playing or
   /// paused among [inputNames]
   void stopAllMedia(Iterable<String> inputNames) {
@@ -1519,13 +1524,13 @@ abstract class _DashboardStore with Store {
         _sceneOrdering.noteEvent(_SceneField.program);
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
         _requestDisplayedSceneItems();
-        requestMediaInProgram();
+        _refreshMediaInProgram();
         break;
       case EventType.SceneTransitionEnded:
 
         /// Sources of the old scene only go inactive once the transition
         /// finished - re-read after it, not just on the program switch
-        requestMediaInProgram();
+        _refreshMediaInProgram();
         break;
       case EventType.CurrentPreviewSceneChanged:
         CurrentPreviewSceneChangedEvent currentPreviewSceneChangedEvent =
@@ -1634,7 +1639,7 @@ abstract class _DashboardStore with Store {
         /// Any scene counts for the Media hub's in-program marker: an eye
         /// toggle inside a nested "Soundboard" scene changes what is heard
         /// without touching the displayed scene
-        requestMediaInProgram();
+        _refreshMediaInProgram();
 
         /// sceneItemId is only unique within a scene — ignore other scenes.
         if (sceneItemEnableStateChangedEvent.sceneName != _displayedSceneName) {
