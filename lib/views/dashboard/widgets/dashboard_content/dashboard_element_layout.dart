@@ -11,6 +11,7 @@ import 'exposed_controls/exposed_controls.dart';
 import 'profile_scene_collection/profile_scene_collection.dart';
 import 'scene_buttons/scene_buttons.dart';
 import 'scene_content/audio_inputs/audio_inputs.dart';
+import 'scene_content/media_hub/media_hub.dart';
 import 'scene_content/scene_content.dart';
 import 'scene_content/scene_content_mobile.dart';
 import 'scene_content/scene_items/scene_items.dart';
@@ -57,6 +58,11 @@ List<Widget> buildOrderedDashboardSlivers(
     SettingsKeys.ExposeStudioControls,
   );
 
+  /// On by default - [_settingsFlag] defaults to false
+  final bool exposeMediaHub =
+      settingsBox.get(SettingsKeys.ExposeMediaHub.name, defaultValue: true)
+          as bool;
+
   bool isVisible(DashboardElement element) => switch (element) {
     DashboardElement.ExposedProfile => exposeProfile,
     DashboardElement.ExposedControls => exposeControls,
@@ -98,9 +104,15 @@ List<Widget> buildOrderedDashboardSlivers(
       addBlock([
         ResponsiveWidgetWrapper(
           mobileWidget: DashboardElementCard(
-            child: SceneContentMobile(audioFirst: audioFirst),
+            child: SceneContentMobile(
+              audioFirst: audioFirst,
+              mediaHub: exposeMediaHub,
+            ),
           ),
-          tabletWidget: SceneContent(audioFirst: audioFirst),
+          tabletWidget: SceneContent(
+            audioFirst: audioFirst,
+            mediaHub: exposeMediaHub,
+          ),
         ),
       ]);
       continue;
@@ -109,6 +121,19 @@ List<Widget> buildOrderedDashboardSlivers(
     addBlock(
       _buildStandalone(current, exposeStudioControls: exposeStudioControls),
     );
+
+    /// Scene Items and Audio split apart by the user's order: the Media hub
+    /// follows the later of the two as its own card (both form factors)
+    if (exposeMediaHub &&
+        _kScenePair.contains(current) &&
+        !order.skip(i + 1).any(_kScenePair.contains)) {
+      addBlock(const [
+        DashboardElementCard(
+          title: 'Media',
+          child: SizedBox(height: 400.0, child: MediaHub()),
+        ),
+      ]);
+    }
   }
 
   /// Leading md so the first element never sits directly on the app bar -

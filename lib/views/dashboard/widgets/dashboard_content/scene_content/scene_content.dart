@@ -3,13 +3,22 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/design/design.dart';
 import '../dashboard_element_card.dart';
 import 'audio_inputs/audio_inputs.dart';
+import 'media_hub/media_hub.dart';
 import 'scene_items/scene_items.dart';
 
 class SceneContent extends StatelessWidget {
   /// When true, the Audio card is on the left.
   final bool audioFirst;
 
-  const SceneContent({super.key, this.audioFirst = false});
+  /// Full-width Media hub card under the pair (Customisation → Media Hub) -
+  /// a wide pad grid is what a soundboard wants
+  final bool mediaHub;
+
+  const SceneContent({
+    super.key,
+    this.audioFirst = false,
+    this.mediaHub = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +44,28 @@ class SceneContent extends StatelessWidget {
       ),
     );
 
-    return Row(
+    final Widget pair = Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         Flexible(child: this.audioFirst ? audioCard : itemsCard),
         Flexible(child: this.audioFirst ? itemsCard : audioCard),
+      ],
+    );
+
+    if (!this.mediaHub) return pair;
+
+    return Column(
+      children: [
+        pair,
+        const SizedBox(height: AppSpacing.md),
+        const StaggeredEntrance(
+          index: 2,
+          scaleFrom: 0.985,
+          child: DashboardElementCard(
+            title: 'Media',
+            child: SizedBox(height: 340.0, child: MediaHub()),
+          ),
+        ),
       ],
     );
   }

@@ -26,6 +26,7 @@ class DashboardContent extends StatelessWidget {
         SettingsKeys.ExposeReplayBufferControls,
         SettingsKeys.ExposeHotkeys,
         SettingsKeys.ExposeStudioControls,
+        SettingsKeys.ExposeMediaHub,
       ],
       builder: (context, settingsBox, child) {
         final List<DashboardElement> order =

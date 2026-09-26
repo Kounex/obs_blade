@@ -2,28 +2,45 @@ import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
 import 'audio_inputs/audio_inputs.dart';
+import 'media_hub/media_hub.dart';
 import 'scene_items/scene_items.dart';
 
 class SceneContentMobile extends StatelessWidget {
   /// When true, the Audio tab is listed (and shown) before Scene Items.
   final bool audioFirst;
 
-  const SceneContentMobile({super.key, this.audioFirst = false});
+  /// Third tab: the Media hub (Customisation → Media Hub)
+  final bool mediaHub;
+
+  const SceneContentMobile({
+    super.key,
+    this.audioFirst = false,
+    this.mediaHub = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
 
-    final List<Widget> tabs = this.audioFirst
-        ? const [Tab(child: Text('Audio')), Tab(child: Text('Scene Items'))]
-        : const [Tab(child: Text('Scene Items')), Tab(child: Text('Audio'))];
+    final List<Widget> tabs = [
+      ...this.audioFirst
+          ? const [Tab(child: Text('Audio')), Tab(child: Text('Scene Items'))]
+          : const [Tab(child: Text('Scene Items')), Tab(child: Text('Audio'))],
+      if (this.mediaHub) const Tab(child: Text('Media')),
+    ];
 
-    final List<Widget> views = this.audioFirst
-        ? const [AudioInputs(), SceneItems()]
-        : const [SceneItems(), AudioInputs()];
+    final List<Widget> views = [
+      ...this.audioFirst
+          ? const [AudioInputs(), SceneItems()]
+          : const [SceneItems(), AudioInputs()],
+      if (this.mediaHub) const MediaHub(maxPadExtent: 120.0),
+    ];
 
+    /// Keyed on the tab count so toggling the hub rebuilds the controller
+    /// (DefaultTabController can't change length in place)
     return DefaultTabController(
-      length: 2,
+      key: ValueKey(tabs.length),
+      length: tabs.length,
 
       /// Card fill behind the whole block (tab strip + content) so the
       /// fixed 400px content height reads as intentional container room

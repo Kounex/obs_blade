@@ -82,6 +82,25 @@ class DashboardCustomisationView extends StatelessWidget {
                     ),
                   ),
                   BlockEntry(
+                    leading: CupertinoIcons.music_note_list,
+                    leadingSize: 28.0,
+                    title: 'Media Hub',
+                    help:
+                        'Adds a Media tab next to Scene Items and Audio (a card below them on tablets): every media source as a soundboard pad - tap to play from the start - plus a list with full playback controls. While active, scene item rows leave media playback to the hub.',
+                    trailing: BaseAdaptiveSwitch(
+                      value: settingsBox.get(
+                        SettingsKeys.ExposeMediaHub.name,
+                        defaultValue: true,
+                      ),
+                      onChanged: (exposeMediaHub) {
+                        settingsBox.put(
+                          SettingsKeys.ExposeMediaHub.name,
+                          exposeMediaHub,
+                        );
+                      },
+                    ),
+                  ),
+                  BlockEntry(
                     leading: Icons.live_tv_rounded,
                     leadingSize: 28.0,
                     title: 'Streaming Controls',
