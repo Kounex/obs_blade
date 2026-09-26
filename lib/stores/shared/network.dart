@@ -49,6 +49,11 @@ abstract class _NetworkStore with Store {
   StreamSubscription? _messagePumpSubscription;
   ConnectionStage _handshakeStage = ConnectionStage.connecting;
 
+  /// Connects (or reconnects) to OBS. The new socket is only published as
+  /// [activeSession] once OBS answered Identified - until then nothing else
+  /// can send on it (OBS closes a socket with 4007 NotIdentified when any
+  /// non-Identify message arrives first). On a failed reconnect the previous
+  /// (dead) session stays in place so the reconnect loop keeps its target.
   @action
   Future<WebSocketCloseCode> setOBSWebSocket(
     Connection connection, {
@@ -67,17 +72,18 @@ abstract class _NetworkStore with Store {
     this.connectionInProgress = true;
     _handshakeStage = ConnectionStage.connecting;
 
+    Session? session;
+
     try {
       final authCompleter = Completer<ConnectionAttemptResult>();
       final startedAt = DateTime.now();
 
-      this.activeSession = Session(
+      session = Session(
         NetworkHelper.establishWebSocket(connection, connectTimeout: timeout),
         connection,
       );
 
-      this.activeSession!.socketStream = this.activeSession!.socket.stream
-          .asBroadcastStream();
+      session.socketStream = session.socket.stream.asBroadcastStream();
 
       GeneralHelper.advLog(
         'Handshake: connecting to ${connection.host}'
@@ -88,7 +94,7 @@ abstract class _NetworkStore with Store {
       // TCP/WS upgrade — stay on [connecting] until ready so unreachable
       // hosts don't get the "did not greet" message.
       try {
-        await this.activeSession!.socket.ready;
+        await session.socket.ready;
       } catch (e) {
         GeneralHelper.advLog(
           'Handshake: could not open WebSocket | $e',
@@ -101,16 +107,13 @@ abstract class _NetworkStore with Store {
           detail: e.toString(),
         );
         this.connectionClodeCode = this.lastConnectionResult!.closeCode;
-        this.activeSession?.socket.sink.close();
-        if (!reconnect) {
-          this.activeSession = null;
-        }
+        session.socket.sink.close();
         this.connectionInProgress = false;
         return this.connectionClodeCode!;
       }
 
       _handshakeStage = ConnectionStage.waitingHello;
-      _authSubscription = _handleInitialWebSocket(connection, authCompleter);
+      _authSubscription = _handleInitialWebSocket(session, authCompleter);
 
       GeneralHelper.advLog(
         'Handshake: waiting Hello for ${connection.host}'
@@ -146,12 +149,11 @@ abstract class _NetworkStore with Store {
       );
 
       if (this.connectionClodeCode != WebSocketCloseCode.DontClose) {
-        this.activeSession?.socket.sink.close();
-        if (!reconnect) {
-          this.activeSession = null;
-        }
+        session.socket.sink.close();
       } else {
-        // Fresh connect or reconnect: own the message pump once.
+        // Fresh connect or reconnect: publish the identified session and
+        // own the message pump once.
+        this.activeSession = session;
         this.handleStream();
       }
     } catch (e) {
@@ -168,10 +170,7 @@ abstract class _NetworkStore with Store {
         detail: e.toString(),
       );
       this.connectionClodeCode = WebSocketCloseCode.UnknownReason;
-      this.activeSession?.socket.sink.close();
-      if (!reconnect) {
-        this.activeSession = null;
-      }
+      session?.socket.sink.close();
     }
 
     this.connectionInProgress = false;
@@ -222,13 +221,13 @@ abstract class _NetworkStore with Store {
   }
 
   StreamSubscription _handleInitialWebSocket(
-    Connection connection,
+    Session session,
     Completer<ConnectionAttemptResult> authCompleter,
-  ) => this.activeSession!.socketStream!.listen(
+  ) => session.socketStream!.listen(
     (event) {
       try {
         final jsonObject = json.decode(event) as Map<String, dynamic>;
-        _handleNewProtocol(connection, authCompleter, jsonObject);
+        _handleNewProtocol(session, authCompleter, jsonObject);
       } catch (e) {
         GeneralHelper.advLog(
           'Handshake decode error: $e',
@@ -247,11 +246,11 @@ abstract class _NetworkStore with Store {
     },
     onDone: () {
       final closeCode = WebSocketCloseCode.fromIdentifier(
-        this.activeSession?.socket.closeCode,
+        session.socket.closeCode,
       );
       GeneralHelper.advLog(
         'Initial WebSocket done, close code: '
-        '${this.activeSession?.socket.closeCode} (${closeCode.message})',
+        '${session.socket.closeCode} (${closeCode.message})',
         includeInLogs: true,
       );
 
@@ -260,7 +259,7 @@ abstract class _NetworkStore with Store {
         ConnectionAttemptResult(
           closeCode: closeCode,
           stage: _handshakeStage,
-          detail: this.activeSession?.socket.closeReason,
+          detail: session.socket.closeReason,
         ),
       );
     },
@@ -282,10 +281,11 @@ abstract class _NetworkStore with Store {
   );
 
   void _handleNewProtocol(
-    Connection connection,
+    Session session,
     Completer<ConnectionAttemptResult> authCompleter,
     Map<String, dynamic> json,
   ) {
+    final connection = session.connection;
     if (json['op'] == WebSocketOpCode.Hello.identifier) {
       final d = json['d'] as Map<String, dynamic>? ?? {};
       final auth = d['authentication'];
@@ -307,7 +307,7 @@ abstract class _NetworkStore with Store {
       );
 
       _handshakeStage = ConnectionStage.waitingIdentified;
-      AuthenticationHelper.identify(activeSession!, rpcVersion: rpcVersion);
+      AuthenticationHelper.identify(session, rpcVersion: rpcVersion);
     } else if (json['op'] == WebSocketOpCode.Identified.identifier) {
       _handshakeStage = ConnectionStage.identified;
       _completeAuth(authCompleter, ConnectionAttemptResult.success);

@@ -25,7 +25,7 @@ void main() {
   }
 
   setUp(() async {
-    NetworkHelper.requestAckTimeout = const Duration(seconds: 10);
+    NetworkHelper.requestAckTimeout = const Duration(seconds: 35);
     peer = await FakeObsPeer.start();
     networkStore = NetworkStore();
     GetIt.instance.registerSingleton<NetworkStore>(networkStore);
@@ -33,7 +33,7 @@ void main() {
 
   tearDown(() async {
     NetworkHelper.failAllPendingAcks();
-    NetworkHelper.requestAckTimeout = const Duration(seconds: 10);
+    NetworkHelper.requestAckTimeout = const Duration(seconds: 35);
     networkStore.closeSession();
     await peer.close();
     await GetIt.instance.reset();
@@ -154,6 +154,119 @@ void main() {
       );
       expect(NetworkHelper.pendingAckCount, 0);
     });
+
+    test(
+      'timeout on a socket that died meanwhile resolves as connectionLost',
+      () async {
+        /// Raw channel outside the store: no message pump fails the ack on
+        /// close, so the timeout is what resolves it
+        final channel = NetworkHelper.establishWebSocket(peer.connection);
+        await channel.ready;
+        channel.stream.listen((_) {}, onError: (_) {});
+        NetworkHelper.requestAckTimeout = shortAckTimeout;
+        peer.droppedRequestTypes.add('SetInputMute');
+
+        final ackFuture = NetworkHelper.makeRequest(
+          channel,
+          RequestType.SetInputMute,
+          {'inputName': 'Mic', 'inputMuted': true},
+        );
+        await peer.closeSockets();
+
+        final ack = await ackFuture;
+        expect(channel.closeCode, isNotNull);
+        expect(ack.failureKind, ObsRequestFailureKind.connectionLost);
+        expect(NetworkHelper.pendingAckCount, 0);
+      },
+    );
+
+    test(
+      'sendRequest is untracked: nothing pending, still on the wire',
+      () async {
+        await connect();
+
+        NetworkHelper.sendRequest(
+          networkStore.activeSession!.socket,
+          RequestType.GetVersion,
+        );
+        NetworkHelper.sendBatchRequest(
+          networkStore.activeSession!.socket,
+          RequestBatchType.Stats,
+          [RequestBatchObject(RequestType.GetStats)],
+        );
+        expect(NetworkHelper.pendingAckCount, 0);
+
+        for (
+          var i = 0;
+          i < 100 && (peer.requests.isEmpty || peer.batches.isEmpty);
+          i++
+        ) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        expect(peer.requests.single['requestType'], 'GetVersion');
+        expect(peer.batches, hasLength(1));
+      },
+    );
+
+    test('sendRequest on a closed socket does not throw', () async {
+      await connect();
+      final socket = networkStore.activeSession!.socket;
+      await peer.closeSockets();
+      await socket.sink.done.catchError((_) {});
+
+      expect(
+        () => NetworkHelper.sendRequest(socket, RequestType.GetStats),
+        returnsNormally,
+      );
+      expect(NetworkHelper.pendingAckCount, 0);
+    });
+  });
+
+  group('handshake gate', () {
+    test(
+      'activeSession is only published once OBS answered Identified',
+      () async {
+        peer.identify = false;
+        final result = networkStore.setOBSWebSocket(
+          peer.connection,
+          timeout: const Duration(milliseconds: 300),
+        );
+
+        /// Mid-handshake nothing can reach the socket (OBS would close it
+        /// with 4007 on any non-Identify message)
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        expect(networkStore.activeSession, isNull);
+
+        expect(await result, WebSocketCloseCode.HandshakeTimeout);
+        expect(networkStore.activeSession, isNull);
+      },
+    );
+
+    test(
+      'failed reconnect keeps the previous session as reconnect target',
+      () async {
+        await connect();
+        final previous = networkStore.activeSession;
+        await peer.closeSockets();
+
+        peer.identify = false;
+        final closeCode = await networkStore.setOBSWebSocket(
+          peer.connection,
+          reconnect: true,
+          timeout: const Duration(milliseconds: 300),
+        );
+
+        expect(closeCode, WebSocketCloseCode.HandshakeTimeout);
+        expect(networkStore.activeSession, same(previous));
+
+        peer.identify = true;
+        expect(
+          await networkStore.setOBSWebSocket(peer.connection, reconnect: true),
+          WebSocketCloseCode.DontClose,
+        );
+        expect(networkStore.activeSession, isNot(same(previous)));
+      },
+    );
   });
 
   group('makeBatchRequest ack', () {

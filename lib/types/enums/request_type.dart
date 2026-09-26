@@ -132,6 +132,11 @@ enum RequestType {
   /// No specified parameters
   GetStats,
 
+  /// Gets the current video settings (base / output resolution, fps).
+  ///
+  /// No specified parameters
+  GetVideoSettings,
+
   /// Gets the status of the virtualcam output.
   ///
   /// No specified parameters

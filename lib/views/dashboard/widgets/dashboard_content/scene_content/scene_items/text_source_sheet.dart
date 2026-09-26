@@ -64,7 +64,7 @@ class _TextSourceSheetState extends State<TextSourceSheet> {
       }
     });
 
-    NetworkHelper.makeRequest(session.socket, RequestType.GetInputSettings, {
+    NetworkHelper.sendRequest(session.socket, RequestType.GetInputSettings, {
       'inputName': this.widget.inputName,
     });
   }

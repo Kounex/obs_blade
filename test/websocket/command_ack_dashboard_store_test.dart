@@ -420,10 +420,14 @@ void main() {
   });
 
   test(
-    'connection loss storm: pending mutations fail together, one aggregate notice',
+    'connection loss mid-flight: mutations resolve unconfirmed - no toast, no re-read',
     () async {
       await connect();
-      peer.droppedRequestTypes.addAll(['SetInputMute', 'SetInputVolume']);
+      dashboardStore.handleStream();
+      peer.droppedRequestTypes.addAll([
+        'SetCurrentProgramScene',
+        'SetInputMute',
+      ]);
 
       final notices = <CommandFailureNotice>[];
       final dispose = autorun((_) {
@@ -431,41 +435,46 @@ void main() {
         if (notice != null) notices.add(notice);
       });
 
+      /// OBS may well have applied these - the socket died before the ack
+      /// could arrive (the dogfood case: the switch landed on OBS, a WLAN
+      /// stall killed the socket, the app claimed "Scene switch failed")
+      final sceneAck = dashboardStore.sendMutation(
+        RequestType.SetCurrentProgramScene,
+        fields: {'sceneName': 'Break'},
+        label: 'Scene switch',
+      );
       final muteAck = dashboardStore.sendMutation(
         RequestType.SetInputMute,
         fields: {'inputName': 'Mic', 'inputMuted': true},
         label: 'Audio mute',
       );
-      final volumeAck = dashboardStore.sendMutation(
-        RequestType.SetInputVolume,
-        fields: {'inputName': 'Mic', 'inputVolumeMul': 0.5},
-        label: 'Volume',
-      );
 
       await peer.closeSockets();
 
-      final acks = await Future.wait([muteAck, volumeAck]);
+      final acks = await Future.wait([sceneAck, muteAck]);
       expect(
         acks.map((ack) => ack.failureKind),
         everyElement(ObsRequestFailureKind.connectionLost),
       );
-      expect(notices, hasLength(1));
-      expect(notices.single.message, contains('connection'));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(notices, isEmpty);
+      expect(requestsOf('GetSceneList'), isEmpty);
+      expect(requestsOf('GetInputMute'), isEmpty);
 
       dispose();
     },
   );
 
   test(
-    'no active session: mutation fails as connectionLost immediately',
+    'no active session: mutation is refused as notSent without a notice',
     () async {
       final ack = await dashboardStore.sendMutation(
         RequestType.ToggleStream,
         label: 'Stream',
       );
 
-      expect(ack.failureKind, ObsRequestFailureKind.connectionLost);
-      expect(dashboardStore.commandFailureNotice, isNotNull);
+      expect(ack.failureKind, ObsRequestFailureKind.notSent);
+      expect(dashboardStore.commandFailureNotice, isNull);
     },
   );
 
@@ -542,7 +551,7 @@ void main() {
     await connect();
     NetworkHelper.requestAckTimeout = const Duration(milliseconds: 100);
     addTearDown(
-      () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+      () => NetworkHelper.requestAckTimeout = const Duration(seconds: 35),
     );
     peer.droppedRequestTypes.add('SetInputMute');
 

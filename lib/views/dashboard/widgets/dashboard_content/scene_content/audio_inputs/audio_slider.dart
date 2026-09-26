@@ -328,7 +328,7 @@ class _AudioSliderState extends State<AudioSlider> {
                     /// [Slider.onChangeEnd] - a failed commit re-reads the
                     /// confirmed volume (socket order guarantees the commit
                     /// wins over in-flight ticks)
-                    onChanged: (volume) => NetworkHelper.makeRequest(
+                    onChanged: (volume) => NetworkHelper.sendRequest(
                       networkStore.activeSession!.socket,
                       RequestType.SetInputVolume,
                       {

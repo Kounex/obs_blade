@@ -23,7 +23,7 @@ class HotkeysControl extends StatelessWidget {
 
   void _onHotkeys(BuildContext context) {
     GetIt.instance<DashboardStore>().hotkeys = null;
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetHotkeyList,
     );

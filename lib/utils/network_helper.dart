@@ -62,11 +62,21 @@ class NetworkHelper {
   static Map<String, _PendingRequestAck> _pendingRequestByUUID = {};
   static Map<String, _PendingBatchAck> _pendingBatchByUUID = {};
 
+  /// WebSocket keepalive: a ping goes out after this much quiet and the
+  /// socket counts as dead when its pong doesn't arrive within the same
+  /// span again - so a dead socket is detected after at most twice this.
+  /// WLAN stalls of several seconds are normal (power save, roaming); a
+  /// shorter interval tore down sockets that would have recovered and
+  /// failed every request in flight with them.
+  static const Duration socketPingInterval = Duration(seconds: 15);
+
   /// How long an acked request ([makeRequest] / [makeBatchRequest]) waits
-  /// for OBS to answer before it counts as failed (hard timeout). Generous
-  /// on purpose - slow-but-eventually-successful acks must not surface as
-  /// failures. Tests lower this to keep the suite fast.
-  static Duration requestAckTimeout = const Duration(seconds: 10);
+  /// for OBS to answer before it counts as failed (hard timeout). Longer
+  /// than the worst-case dead-socket detection (2x [socketPingInterval]) on
+  /// purpose: a stall either recovers (the ack arrives) or ends as a
+  /// connection loss - a timeout then really means OBS didn't answer on a
+  /// live socket. Tests lower this to keep the suite fast.
+  static Duration requestAckTimeout = const Duration(seconds: 35);
 
   /// Amount of request / batch acks still waiting for an answer - test hook
   /// to assert pending-map hygiene (late acks, timeouts, disconnects must
@@ -76,8 +86,8 @@ class NetworkHelper {
 
   /// Establish and return an instance of [IOWebSocketChannel] based on the
   /// information inside a connection (IP and port). Currently using a
-  /// [pingInterval] of 3 seconds which will check if the WebSocket connection
-  /// is still alive in a 3 seconds interval - this will result in being able
+  /// [pingInterval] of [socketPingInterval] which will check if the WebSocket
+  /// connection is still alive - this will result in being able
   /// to check for [closeStatus] or [closeResult] whether the connection is
   /// alive or not. Mainly used in [DashboardStore] where a [Timer] is periodically
   /// checking this to be able to reconnect if possible or navigate back to
@@ -88,7 +98,7 @@ class NetworkHelper {
   /// unreachable) before assuming the peer is OBS.
   static IOWebSocketChannel establishWebSocket(
     Connection connection, {
-    Duration pingInterval = const Duration(seconds: 3),
+    Duration pingInterval = socketPingInterval,
     Duration? connectTimeout,
   }) {
     NetworkHelper._requestBodyByUUID = {};
@@ -354,53 +364,39 @@ class NetworkHelper {
     String uuid,
   ) => NetworkHelper._requestBatchByUUID.remove(uuid);
 
-  /// Making a request to the OBS WebSocket to trigger a request being
-  /// sent back through the stream so we every listener can act accordingly
-  ///
-  /// Returns the ack of the request (command-ack layer): the returned
+  /// Sends a request without waiting for its answer - reads and polls
+  /// (their responses are handled by the stream listeners) and continuous
+  /// control ticks. Nothing is tracked, so polling costs no timers and a
+  /// dropped socket has nothing of these to fail.
+  static void sendRequest(
+    IOWebSocketChannel channel,
+    RequestType request, [
+    Map<String, dynamic>? fields,
+  ]) {
+    try {
+      _addRequest(channel, const Uuid().v4(), request, fields);
+    } catch (_) {
+      /// Dead socket - the connection check takes it from here
+    }
+  }
+
+  /// Making a request to the OBS WebSocket and wait for its ack
+  /// (command-ack layer) - for mutations whose outcome matters. The returned
   /// [Future] completes once OBS answers - with a rejection when
   /// `requestStatus.result` is false, with [ObsRequestFailureKind.timeout]
-  /// after [requestAckTimeout] and with [ObsRequestFailureKind.connectionLost]
-  /// when the connection drops first. Callers which don't care (polling
-  /// reads, slider ticks, ...) can keep ignoring the result - fire-and-forget
-  /// keeps working unchanged.
+  /// after [requestAckTimeout] (live socket only) and with
+  /// [ObsRequestFailureKind.connectionLost] when the connection drops first.
+  /// Use [sendRequest] when nobody awaits the result.
   static Future<ObsRequestAck> makeRequest(
     IOWebSocketChannel channel,
     RequestType request, [
     Map<String, dynamic>? fields,
-    bool customContent = false,
   ]) {
-    if (request != RequestType.GetSourceScreenshot) {
-      GeneralHelper.advLog('Outgoing: $request');
-    }
-
     String requestUUID = const Uuid().v4();
-
-    /// If we send a request which has fields, we want to
-    /// be able to know, once we receive the response, what
-    /// information we sent initially (like input name etc.) since
-    /// in the new protocol (>= 5.X) we don't get this information
-    /// in the response anymore
-    if (!customContent && fields != null && request.name.startsWith('Get')) {
-      NetworkHelper._requestBodyByUUID[requestUUID] = fields;
-    }
-
-    final pending = _trackRequestAck(requestUUID, request);
+    final pending = _trackRequestAck(channel, requestUUID, request);
 
     try {
-      channel.sink.add(
-        json.encode(
-          _requestObject(
-            customContent
-                ? fields!
-                : {
-                    'requestType': request.name,
-                    'requestId': requestUUID,
-                    'requestData': {...?fields},
-                  },
-          ),
-        ),
-      );
+      _addRequest(channel, requestUUID, request, fields);
     } catch (e) {
       _completeAckOnSendFailure(
         requestUUID,
@@ -410,6 +406,50 @@ class NetworkHelper {
     }
 
     return pending.completer.future;
+  }
+
+  static void _addRequest(
+    IOWebSocketChannel channel,
+    String requestUUID,
+    RequestType request,
+    Map<String, dynamic>? fields,
+  ) {
+    if (request != RequestType.GetSourceScreenshot) {
+      GeneralHelper.advLog('Outgoing: $request');
+    }
+
+    /// If we send a request which has fields, we want to
+    /// be able to know, once we receive the response, what
+    /// information we sent initially (like input name etc.) since
+    /// in the new protocol (>= 5.X) we don't get this information
+    /// in the response anymore
+    if (fields != null && request.name.startsWith('Get')) {
+      NetworkHelper._requestBodyByUUID[requestUUID] = fields;
+    }
+
+    channel.sink.add(
+      json.encode(
+        _requestObject({
+          'requestType': request.name,
+          'requestId': requestUUID,
+          'requestData': {...?fields},
+        }),
+      ),
+    );
+  }
+
+  /// Fire-and-forget pendant of [makeBatchRequest] - see [sendRequest]
+  static void sendBatchRequest(
+    IOWebSocketChannel channel,
+    RequestBatchType batchRequest,
+    List<RequestBatchObject> batch,
+  ) {
+    if (batch.isEmpty) return;
+    try {
+      _addBatch(channel, const Uuid().v4(), batchRequest, batch);
+    } catch (_) {
+      /// Dead socket - the connection check takes it from here
+    }
   }
 
   /// Making use of the batch request capability to request information
@@ -433,20 +473,11 @@ class NetworkHelper {
       return Future.value(const ObsBatchAck());
     }
 
-    if (batchRequest != RequestBatchType.Stats) {
-      GeneralHelper.advLog('Outgoing Batch: $batchRequest');
-    }
-
     String requestUUID = const Uuid().v4();
-
-    if (batchRequest.lookup) {
-      NetworkHelper._requestBatchByUUID[requestUUID] = batch;
-    }
-
-    final pending = _trackBatchAck(requestUUID);
+    final pending = _trackBatchAck(channel, requestUUID);
 
     try {
-      channel.sink.add(json.encode(_requestBatchObject(requestUUID, batch)));
+      _addBatch(channel, requestUUID, batchRequest, batch);
     } catch (e) {
       _completeAckOnSendFailure(
         requestUUID,
@@ -458,7 +489,27 @@ class NetworkHelper {
     return pending.completer.future;
   }
 
+  static void _addBatch(
+    IOWebSocketChannel channel,
+    String requestUUID,
+    RequestBatchType batchRequest,
+    List<RequestBatchObject> batch,
+  ) {
+    if (batchRequest != RequestBatchType.Stats) {
+      GeneralHelper.advLog('Outgoing Batch: $batchRequest');
+    }
+
+    if (batchRequest.lookup) {
+      NetworkHelper._requestBatchByUUID[requestUUID] = batch;
+    }
+
+    channel.sink.add(json.encode(_requestBatchObject(requestUUID, batch)));
+  }
+
+  /// A timeout only means "OBS didn't answer" while the socket is still
+  /// open - on a socket that died meanwhile the answer was lost with it
   static _PendingRequestAck _trackRequestAck(
+    IOWebSocketChannel channel,
     String requestUUID,
     RequestType? requestType,
   ) {
@@ -469,17 +520,26 @@ class NetworkHelper {
           pending.completer.isCompleted) {
         return;
       }
+      final socketDead = channel.closeCode != null;
       GeneralHelper.advLog(
-        'Request timed out waiting for ack: $requestType',
+        'Request timed out waiting for ack: $requestType'
+        '${socketDead ? " (socket closed)" : ""}',
         level: LogLevel.Warning,
         includeInLogs: true,
       );
-      pending.completer.complete(ObsRequestAck.timeout(requestType));
+      pending.completer.complete(
+        socketDead
+            ? ObsRequestAck.connectionLost(requestType)
+            : ObsRequestAck.timeout(requestType),
+      );
     });
     return pending;
   }
 
-  static _PendingBatchAck _trackBatchAck(String requestUUID) {
+  static _PendingBatchAck _trackBatchAck(
+    IOWebSocketChannel channel,
+    String requestUUID,
+  ) {
     final pending = _PendingBatchAck();
     NetworkHelper._pendingBatchByUUID[requestUUID] = pending;
     pending.timeoutTimer = Timer(NetworkHelper.requestAckTimeout, () {
@@ -487,12 +547,18 @@ class NetworkHelper {
           pending.completer.isCompleted) {
         return;
       }
+      final socketDead = channel.closeCode != null;
       GeneralHelper.advLog(
-        'Batch request timed out waiting for ack',
+        'Batch request timed out waiting for ack'
+        '${socketDead ? " (socket closed)" : ""}',
         level: LogLevel.Warning,
         includeInLogs: true,
       );
-      pending.completer.complete(const ObsBatchAck.timeout());
+      pending.completer.complete(
+        socketDead
+            ? const ObsBatchAck.connectionLost()
+            : const ObsBatchAck.timeout(),
+      );
     });
     return pending;
   }

@@ -28,6 +28,7 @@ import 'package:obs_blade/types/classes/stream/responses/get_replay_buffer_statu
 import 'package:obs_blade/types/classes/stream/responses/get_scene_collection_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_source_filter_list.dart';
 import 'package:obs_blade/types/classes/stream/responses/get_special_inputs.dart';
+import 'package:obs_blade/types/classes/stream/responses/get_video_settings.dart';
 import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
@@ -279,6 +280,9 @@ abstract class _DashboardStore with Store {
       this.availableRequests.contains(request.name);
 
   String previewFileFormat = 'jpeg';
+
+  /// OBS base (canvas) width from GetVideoSettings - caps the preview width
+  int? _canvasWidth;
   String screenshotFileFormat = 'png';
   String? recordDirectory;
 
@@ -381,41 +385,45 @@ abstract class _DashboardStore with Store {
     /// leftover tags are dead weight - wipe them (see [_wipeOrderingQueues])
     _resetOrdering();
     _wipeOrderingQueues();
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetVersion,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetRecordDirectory,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
+      GetIt.instance<NetworkStore>().activeSession!.socket,
+      RequestType.GetVideoSettings,
+    );
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneCollectionList,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetProfileList,
     );
     _sendGetStudioModeEnabled();
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetRecordStatus,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetStreamStatus,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetReplayBufferStatus,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetVirtualCamStatus,
     );
 
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetHotkeyList,
     );
@@ -429,15 +437,15 @@ abstract class _DashboardStore with Store {
   /// current scene collection)
   void _sceneCollectionRequests() {
     _sendGetSceneList();
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetInputList,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSpecialInputs,
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneTransitionList,
     );
@@ -467,7 +475,7 @@ abstract class _DashboardStore with Store {
   /// matched against scene events that arrived while it was in flight
   void _sendGetSceneList() {
     _sceneListTags.add(_sceneOrdering.capture());
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneList,
     );
@@ -476,7 +484,7 @@ abstract class _DashboardStore with Store {
   /// GetStudioModeEnabled pendant of [_sendGetSceneList]
   void _sendGetStudioModeEnabled() {
     _studioModeTags.add(_sceneOrdering.capture());
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetStudioModeEnabled,
     );
@@ -488,7 +496,7 @@ abstract class _DashboardStore with Store {
     (_sceneItemListTags[sceneName] ??= Queue()).add(
       _sceneItemOrdering.capture(),
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetSceneItemList,
       {'sceneName': sceneName},
@@ -501,7 +509,7 @@ abstract class _DashboardStore with Store {
     (_groupSceneItemListTags[sourceName] ??= Queue()).add(
       _sceneItemOrdering.capture(),
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetGroupSceneItemList,
       {'sceneName': sourceName},
@@ -514,7 +522,7 @@ abstract class _DashboardStore with Store {
     (_inputReadTags[(inputName, _AudioField.volume)] ??= Queue()).add(
       _audioOrdering.capture(),
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetInputVolume,
       {'inputName': inputName},
@@ -526,7 +534,7 @@ abstract class _DashboardStore with Store {
     (_inputReadTags[(inputName, _AudioField.mute)] ??= Queue()).add(
       _audioOrdering.capture(),
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetInputMute,
       {'inputName': inputName},
@@ -546,7 +554,7 @@ abstract class _DashboardStore with Store {
 
   /// Sends a mutation ([request]) through the command-ack layer and awaits
   /// OBS' answer. On **definitive** failure (explicit rejection or hard
-  /// timeout) or connection loss this:
+  /// timeout on a live socket) this:
   ///
   /// 1. re-reads the confirmed state from OBS via the matching `Get*`
   ///    request - the existing response handlers apply it (self-healing;
@@ -554,6 +562,11 @@ abstract class _DashboardStore with Store {
   /// 2. surfaces a deduped toast via [commandFailureNotice] (respects the
   ///    [SettingsKeys.CommandFailureToasts] kill-switch - off = log-only)
   /// 3. writes the failure to the logs
+  ///
+  /// A connection loss is no failure verdict: the request may well have
+  /// been applied (OBS just couldn't answer on the dropped socket). It is
+  /// logged only - the reconnect burst re-reads the confirmed state and the
+  /// reconnect toast already tells the user what is going on.
   ///
   /// The returned [Future] exists for tests / interested callers - call
   /// sites can keep ignoring it.
@@ -572,7 +585,7 @@ abstract class _DashboardStore with Store {
 
     final session = GetIt.instance<NetworkStore>().activeSession;
     final ack = session == null
-        ? ObsRequestAck.connectionLost(request)
+        ? ObsRequestAck.notSent(request)
         : await NetworkHelper.makeRequest(session.socket, request, fields);
 
     if (!ack.success) {
@@ -597,7 +610,7 @@ abstract class _DashboardStore with Store {
 
     final session = GetIt.instance<NetworkStore>().activeSession;
     final ack = session == null
-        ? const ObsBatchAck.connectionLost()
+        ? const ObsBatchAck(failureKind: ObsRequestFailureKind.notSent)
         : await NetworkHelper.makeBatchRequest(
             session.socket,
             batchRequest,
@@ -610,6 +623,8 @@ abstract class _DashboardStore with Store {
             ? ack.failures.first
             : ack.failureKind == ObsRequestFailureKind.timeout
             ? ObsRequestAck.timeout(batch.first.type)
+            : ack.failureKind == ObsRequestFailureKind.notSent
+            ? ObsRequestAck.notSent(batch.first.type)
             : ObsRequestAck.connectionLost(batch.first.type),
         label: label,
       );
@@ -624,10 +639,10 @@ abstract class _DashboardStore with Store {
     Map<String, dynamic>? fields, {
     String? label,
   }) {
-    /// A dead session has nothing to re-read - and during reconnect the fresh
-    /// socket may not be identified yet, so resync reads could get it closed
-    /// by OBS. The post-connect init burst re-reads everything anyway.
-    if (ack.failureKind != ObsRequestFailureKind.connectionLost) {
+    /// A dead session has nothing to re-read - the post-reconnect init
+    /// burst re-reads everything anyway
+    if (ack.failureKind != ObsRequestFailureKind.connectionLost &&
+        ack.failureKind != ObsRequestFailureKind.notSent) {
       _resyncAfterFailedMutation(ack.requestType, fields);
     }
     _surfaceCommandFailure(ack, fields: fields, label: label);
@@ -665,7 +680,7 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.SetInputAudioSyncOffset:
         if (fields?['inputName'] != null) {
-          NetworkHelper.makeRequest(
+          NetworkHelper.sendRequest(
             session.socket,
             RequestType.GetInputAudioSyncOffset,
             {'inputName': fields!['inputName']},
@@ -693,13 +708,13 @@ abstract class _DashboardStore with Store {
         _requestStatsBatch();
         break;
       case RequestType.ToggleReplayBuffer:
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           session.socket,
           RequestType.GetReplayBufferStatus,
         );
         break;
       case RequestType.ToggleVirtualCam:
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           session.socket,
           RequestType.GetVirtualCamStatus,
         );
@@ -709,16 +724,16 @@ abstract class _DashboardStore with Store {
         break;
       case RequestType.SetCurrentSceneTransition:
       case RequestType.SetCurrentSceneTransitionDuration:
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           session.socket,
           RequestType.GetCurrentSceneTransition,
         );
         break;
       case RequestType.SetCurrentProfile:
-        NetworkHelper.makeRequest(session.socket, RequestType.GetProfileList);
+        NetworkHelper.sendRequest(session.socket, RequestType.GetProfileList);
         break;
       case RequestType.SetCurrentSceneCollection:
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           session.socket,
           RequestType.GetSceneCollectionList,
         );
@@ -749,6 +764,14 @@ abstract class _DashboardStore with Store {
       includeInLogs: true,
     );
 
+    /// Unconfirmed, not failed (connection dropped with the request in
+    /// flight) or never sent - the reconnect UI owns this state, a toast
+    /// would claim a failure OBS may never have had
+    if (ack.failureKind == ObsRequestFailureKind.connectionLost ||
+        ack.failureKind == ObsRequestFailureKind.notSent) {
+      return;
+    }
+
     final toastsEnabled =
         Hive.box(
               HiveKeys.Settings.name,
@@ -760,13 +783,10 @@ abstract class _DashboardStore with Store {
 
     /// Dedup identity: the same command failing on the SAME target is one
     /// failure (retries); different targets (two inputs, two scenes) are
-    /// distinct failures and each surfaces. Connection-loss storms always
-    /// collapse to one aggregate notice.
+    /// distinct failures and each surfaces
     final target =
         fields?['inputName'] ?? fields?['sceneName'] ?? fields?['sceneItemId'];
-    final dedupKey = ack.failureKind == ObsRequestFailureKind.connectionLost
-        ? 'connectionLost'
-        : '${ack.failureKind}:${ack.requestType}:$target';
+    final dedupKey = '${ack.failureKind}:${ack.requestType}:$target';
     if (dedupKey == _lastCommandFailureToastKey &&
         now.difference(_lastCommandFailureToastAt) <
             _commandFailureToastDedupWindow) {
@@ -781,11 +801,10 @@ abstract class _DashboardStore with Store {
           '$what failed - OBS rejected the command',
         ObsRequestFailureKind.timeout =>
           '$what failed - OBS did not answer in time',
+
+        /// Unreachable: returned early above - kept for exhaustiveness
         ObsRequestFailureKind.connectionLost =>
           '$what failed - connection to OBS was lost',
-
-        /// Unreachable: the stale-state guard in [sendMutation] refuses the
-        /// send before any failure surfacing - case kept for exhaustiveness
         ObsRequestFailureKind.notSent =>
           '$what was not sent - no connection to OBS',
         null => '$what failed',
@@ -815,7 +834,7 @@ abstract class _DashboardStore with Store {
           } catch (e) {
             GeneralHelper.advLog(e);
           }
-        });
+        }, onDone: checkConnectionNow);
   }
 
   /// Cancel timers and the OBS message subscription (e.g. when leaving
@@ -826,7 +845,7 @@ abstract class _DashboardStore with Store {
     _obsStreamSubscription = null;
   }
 
-  void _requestPreviewImage() => NetworkHelper.makeRequest(
+  void _requestPreviewImage() => NetworkHelper.sendRequest(
     GetIt.instance<NetworkStore>().activeSession!.socket,
     RequestType.GetSourceScreenshot,
     {
@@ -839,9 +858,23 @@ abstract class _DashboardStore with Store {
           ? this.studioModePreviewSceneName
           : this.activeSceneName,
       'imageFormat': this.previewFileFormat,
+      'imageWidth': _previewImageWidth,
       'compressionQuality': -1,
     },
   );
+
+  /// Preview screenshot width: the device's physical screen width (short
+  /// side), capped at the OBS canvas width - OBS otherwise sends every frame
+  /// at canvas resolution (e.g. 3440px), several times more than the phone
+  /// can show. Smaller frames also back up less during WLAN stalls
+  int get _previewImageWidth {
+    final view = PlatformDispatcher.instance.implicitView;
+    int width = view != null
+        ? view.physicalSize.shortestSide.round().clamp(320, 1920)
+        : 1280;
+    if (_canvasWidth != null && _canvasWidth! < width) width = _canvasWidth!;
+    return width;
+  }
 
   /// Periodically polls the OBS, stream and record stats by making use
   /// of the batch request capabilities every second since we don't receive
@@ -857,7 +890,7 @@ abstract class _DashboardStore with Store {
 
   /// One-off stats batch (stream / record / OBS status) - the periodic poll
   /// and the re-read after failed stream / record mutations both use this
-  void _requestStatsBatch() => NetworkHelper.makeBatchRequest(
+  void _requestStatsBatch() => NetworkHelper.sendBatchRequest(
     GetIt.instance<NetworkStore>().activeSession!.socket,
     RequestBatchType.Stats,
     [
@@ -1068,7 +1101,7 @@ abstract class _DashboardStore with Store {
     _checkConnectionTimer?.cancel();
   }
 
-  void fetchSceneItemsFilters() => NetworkHelper.makeBatchRequest(
+  void fetchSceneItemsFilters() => NetworkHelper.sendBatchRequest(
     GetIt.instance<NetworkStore>().activeSession!.socket,
     RequestBatchType.FilterList,
     this.currentSceneItems
@@ -1104,12 +1137,12 @@ abstract class _DashboardStore with Store {
   void requestInputAudioSettings(String inputName) {
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (session == null) return;
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       session.socket,
       RequestType.GetInputAudioBalance,
       {'inputName': inputName},
     );
-    NetworkHelper.makeRequest(
+    NetworkHelper.sendRequest(
       session.socket,
       RequestType.GetInputAudioMonitorType,
       {'inputName': inputName},
@@ -1119,7 +1152,7 @@ abstract class _DashboardStore with Store {
   void requestMediaStatus(String inputName) {
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (session == null) return;
-    NetworkHelper.makeRequest(session.socket, RequestType.GetMediaInputStatus, {
+    NetworkHelper.sendRequest(session.socket, RequestType.GetMediaInputStatus, {
       'inputName': inputName,
     });
   }
@@ -1166,6 +1199,10 @@ abstract class _DashboardStore with Store {
             null &&
         !GetIt.instance<NetworkStore>().obsTerminated) {
       this.reconnecting = true;
+
+      /// Nothing may hit the wire until the new socket is identified -
+      /// polls on a dead socket only produce noise
+      _pauseStatsPolling();
       WebSocketCloseCode? closeCode;
       int tries = 0;
 
@@ -1181,7 +1218,9 @@ abstract class _DashboardStore with Store {
               ) ||
               tries < 5) &&
           (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
-        await Future.delayed(const Duration(seconds: 3));
+        /// First attempt right away - a WLAN blip is usually over by the
+        /// time the drop is detected; back off between retries only
+        if (tries > 0) await Future.delayed(const Duration(seconds: 3));
         closeCode = await GetIt.instance<NetworkStore>().setOBSWebSocket(
           GetIt.instance<NetworkStore>().activeSession!.connection,
           reconnect: true,
@@ -1210,6 +1249,11 @@ abstract class _DashboardStore with Store {
         this.reconnecting = false;
         this.handleStream();
         this.initialRequests();
+        _periodicStatsRequest();
+
+        /// The preview loop is response-driven - its last request died
+        /// with the old socket, so kick it again
+        if (this.shouldRequestPreviewImage) _requestPreviewImage();
         _checkConnectionTimer?.cancel();
         _checkConnectionTimer = Timer(
           const Duration(seconds: 3),
@@ -1311,7 +1355,7 @@ abstract class _DashboardStore with Store {
         CurrentSceneCollectionChangedEvent currentSceneCollectionChangedEvent =
             CurrentSceneCollectionChangedEvent(event.jsonRAW);
 
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.GetSceneCollectionList,
         );
@@ -1368,7 +1412,7 @@ abstract class _DashboardStore with Store {
         _sendGetSceneList();
         break;
       case EventType.CurrentSceneTransitionChanged:
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.GetSceneTransitionList,
         );
@@ -1672,6 +1716,9 @@ abstract class _DashboardStore with Store {
 
         this.recordDirectory = getRecordDirectoryResponse.recordDirectory;
         break;
+      case RequestType.GetVideoSettings:
+        _canvasWidth = GetVideoSettingsResponse(response.jsonRAW).baseWidth;
+        break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse = GetSceneListResponse(
           response.jsonRAW,
@@ -1857,7 +1904,7 @@ abstract class _DashboardStore with Store {
         /// Tag the batch so an InputVolumeChanged / InputMuteStateChanged
         /// event that arrives while it is in flight beats its stale values
         _inputBatchTags.add(_audioOrdering.capture());
-        NetworkHelper.makeBatchRequest(
+        NetworkHelper.sendBatchRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestBatchType.Input,
           [
@@ -1881,7 +1928,7 @@ abstract class _DashboardStore with Store {
 
         this.availableTransitions = getSceneTransitionListResponse.transitions;
 
-        NetworkHelper.makeRequest(
+        NetworkHelper.sendRequest(
           GetIt.instance<NetworkStore>().activeSession!.socket,
           RequestType.GetCurrentSceneTransition,
         );
@@ -2609,7 +2656,7 @@ abstract class _DashboardStore with Store {
         }
 
         if (filterKinds.isNotEmpty) {
-          NetworkHelper.makeBatchRequest(
+          NetworkHelper.sendBatchRequest(
             GetIt.instance<NetworkStore>().activeSession!.socket,
             RequestBatchType.FilterDefaultSettings,
             filterKinds

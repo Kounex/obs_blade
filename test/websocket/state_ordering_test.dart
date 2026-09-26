@@ -222,7 +222,7 @@ void main() {
       peer.droppedRequestTypes.add('GetSourceFilterList');
       NetworkHelper.requestAckTimeout = const Duration(milliseconds: 300);
       addTearDown(
-        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 35),
       );
     }
 
@@ -365,7 +365,7 @@ void main() {
       /// can never fire coincident with a delayed response
       NetworkHelper.requestAckTimeout = const Duration(milliseconds: 800);
       addTearDown(
-        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 35),
       );
     }
 
@@ -506,7 +506,7 @@ void main() {
     void setupShortAckTimeout() {
       NetworkHelper.requestAckTimeout = const Duration(milliseconds: 800);
       addTearDown(
-        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 10),
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 35),
       );
     }
 
