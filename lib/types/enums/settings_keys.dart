@@ -10,9 +10,13 @@ enum SettingsKeys {
   /// important changes
   //HasUserSeenIntro,
 
-  /// [bool]: If the user already saw the intro - will be set after being in landing
-  /// of Home Tab and will prevent the user from seeing the intro slides again
+  /// [bool]: If the user already saw the 2022-08 intro. Deprecated - no longer
+  /// read since the v2 intro (4.0) gets shown to everyone once
   HasUserSeenIntro202208,
+
+  /// [bool]: If the user already saw the v2 intro (4.0) - set by its Skip /
+  /// Start and prevents the intro from showing on launch again
+  HasUserSeenIntro202609,
 
   /// [bool]: If the user has bought Blacksmith. Will be checked in [PurchaseBase] on the fly
   /// (checked from the App Store) but the user might have no internet connection so it's persisted
@@ -447,6 +451,7 @@ enum SettingsKeys {
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
     SettingsKeys.HasUserSeenIntro202208: 'has-user-seen-intro-202208',
+    SettingsKeys.HasUserSeenIntro202609: 'has-user-seen-intro-202609',
     SettingsKeys.BoughtBlacksmith: 'bought-blacksmith',
     SettingsKeys.BoughtPro: 'bought-pro',
     SettingsKeys.ProDebugOverride: 'pro-debug-override',

@@ -144,7 +144,6 @@ flutter:
   assets:
     - assets/icons/app/
     - assets/images/
-    - assets/images/intro/
 
   fonts:
     - family: JamIcons

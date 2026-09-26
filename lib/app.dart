@@ -419,11 +419,10 @@ class App extends StatelessWidget {
                 : null,
             initialRoute:
                 settingsBox.get(
-                  SettingsKeys.HasUserSeenIntro202208.name,
+                  SettingsKeys.HasUserSeenIntro202609.name,
                   defaultValue: false,
                 )
                 ? AppRoutingKeys.Tabs.route
-                // ? AppRoutingKeys.Intro.route
                 : AppRoutingKeys.Intro.route,
             onGenerateInitialRoutes: (initialRoute) => [
               MaterialPageRoute(

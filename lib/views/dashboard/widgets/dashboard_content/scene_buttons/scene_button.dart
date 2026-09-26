@@ -172,7 +172,7 @@ class SceneButton extends StatelessWidget {
                           ),
                         ),
                         child: tally != null
-                            ? _TallyChip(
+                            ? SceneTallyChip(
                                 key: ValueKey(tally),
                                 label: tally,
                                 isProgram: tally == 'PGM',
@@ -246,11 +246,15 @@ class SceneButton extends StatelessWidget {
 /// studio mode is active. PGM follows the token-delta §2.2 tag contract
 /// (darkened [AppStatusColors.programTagFill] + white ≥10px text); PVW is
 /// live green with a dark label for AA (mock v10)
-class _TallyChip extends StatelessWidget {
+class SceneTallyChip extends StatelessWidget {
   final String label;
   final bool isProgram;
 
-  const _TallyChip({super.key, required this.label, required this.isProgram});
+  const SceneTallyChip({
+    super.key,
+    required this.label,
+    required this.isProgram,
+  });
 
   @override
   Widget build(BuildContext context) {

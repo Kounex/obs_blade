@@ -8,8 +8,8 @@
 // READ-ONLY discipline: no clears, no deletes, no purchases, no settings
 // toggles, nothing is saved. The only interactions are navigation, scrolling
 // and opening/closing dialogs or sheets via their Cancel/close affordances.
-// The intro's final "Start" buttons (which would persist
-// `HasUserSeenIntro202208`) are deliberately NOT tapped - the test leaves the
+// The intro's Skip / "Get started" buttons (which would persist
+// `HasUserSeenIntro202609`) are deliberately NOT tapped - the test leaves the
 // intro by replacing the root route, exactly like the settings entry does in
 // reverse.
 
@@ -233,9 +233,9 @@ void main() {
     app.main();
     await _pump(tester, 5000); // native splash + app boot + entrances
 
-    // Fresh install (no HasUserSeenIntro202208): the app boots into the
+    // Fresh install (no HasUserSeenIntro202609): the app boots into the
     // intro instead of the tabs. Move to the tabs exactly like the
-    // intro's own Start button does - minus the settings write.
+    // intro's own Skip button does - minus the settings write.
     if (find.byType(IntroView).evaluate().isNotEmpty) {
       // ignore: avoid_print
       print(
@@ -571,39 +571,23 @@ void main() {
       rootNavigator: true,
     ).pushReplacementNamed(AppRoutingKeys.Intro.route);
     await _waitFor(tester, find.byType(IntroView), timeoutMs: 15000);
-    await _waitFor(tester, find.text('Start'), timeoutMs: 10000);
+    // Intro v2: four swipeable screens (welcome + three animated mockups),
+    // no slide locks. The mockups loop, so frames are fixed-delay shots.
+    await _waitFor(tester, find.text('Next'), timeoutMs: 10000);
     await _shot(tester, '40_intro_welcome', settleMs: 1500);
+    for (final String name in [
+      '41_intro_dashboard',
+      '42_intro_customise',
+      '43_intro_stats',
+    ]) {
+      await _tryTap(tester, find.text('Next'), warnOnMissing: '$name Next');
+      await _pump(tester, 900);
+      await _shot(tester, name, settleMs: 2500);
+    }
+    await _waitFor(tester, find.text('Get started'));
 
-    await _tryTap(
-      tester,
-      find.text('Start'),
-      warnOnMissing: 'intro Start button',
-    );
-    // Unified slides: first two are WS setup (locked 5s for first-time),
-    // then a light app tour. Poll for the unlocked Next / Start button.
-    await _waitFor(tester, find.text('Getting Started'), timeoutMs: 10000);
-    await _waitFor(tester, find.text('Next'));
-    await _shot(tester, '41_intro_ws_setup_1', settleMs: 400);
-    await _tryTap(tester, find.text('Next'), warnOnMissing: 'slide 1 Next');
-    await _pump(tester, 900);
-    await _waitFor(tester, find.text('Next'));
-    await _shot(tester, '42_intro_ws_setup_2', settleMs: 400);
-    await _tryTap(tester, find.text('Next'), warnOnMissing: 'slide 2 Next');
-    await _pump(tester, 900);
-    await _waitFor(tester, find.text('Next'));
-    await _shot(tester, '43_intro_tour_home', settleMs: 400);
-    await _tryTap(tester, find.text('Next'), warnOnMissing: 'slide 3 Next');
-    await _pump(tester, 600);
-    await _waitFor(tester, find.text('Next'));
-    await _shot(tester, '44_intro_tour_dashboard', settleMs: 400);
-    await _tryTap(tester, find.text('Next'), warnOnMissing: 'slide 4 Next');
-    await _pump(tester, 600);
-    // Last slide: the primary button reads "Start"
-    await _waitFor(tester, find.text('Start'));
-    await _shot(tester, '45_intro_tour_ready', settleMs: 400);
-
-    // Leave the intro WITHOUT tapping the final "Start" (it would persist
-    // HasUserSeenIntro202208). Route replacement mirrors the entry path.
+    // Leave the intro WITHOUT tapping "Get started" (it would persist
+    // HasUserSeenIntro202609). Route replacement mirrors the entry path.
     final BuildContext introContext = tester.element(
       find.byType(IntroView).first,
     );

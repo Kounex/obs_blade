@@ -38,7 +38,7 @@ class OnAirStatusCluster extends StatelessWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _OnAirPill(
+            OnAirPill(
               label: 'LIVE',
               active: dashboardStore.isLive,
               unknown: reconnecting,
@@ -48,7 +48,7 @@ class OnAirStatusCluster extends StatelessWidget {
                       .secondsToFormattedDurationString(),
             ),
             const SizedBox(width: AppSpacing.md),
-            _OnAirPill(
+            OnAirPill(
               label: 'REC',
               active: dashboardStore.isRecording,
               unknown: reconnecting,
@@ -75,7 +75,7 @@ class OnAirStatusCluster extends StatelessWidget {
   }
 }
 
-class _OnAirPill extends StatelessWidget {
+class OnAirPill extends StatelessWidget {
   final String label;
 
   /// Whether the underlying broadcast state is on (streaming / recording
@@ -100,7 +100,8 @@ class _OnAirPill extends StatelessWidget {
   /// Elapsed time readout (tabular figures) shown inside the pill
   final String timerText;
 
-  const _OnAirPill({
+  const OnAirPill({
+    super.key,
     required this.label,
     required this.active,
     required this.activeColor,

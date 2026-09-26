@@ -2,6 +2,40 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Intro v2: short welcome with live mockups
+
+The old intro (Getting Started stage + 5 slides, WebSocket setup
+screenshots behind a 5 s lock, icon tile + paragraph per slide) was
+rebuilt from scratch. Spec: `superpowers/specs/2026-09-27-intro-v2-design.md`.
+
+- One swipeable flow, 4 screens: Welcome (vortex mark turning inside
+  sweeping accent rings + wordmark, open-source / obs-websocket small
+  print), Dashboard (device mockup: LIVE/REC timers running, scenes
+  switching with press + PGM, moving meters; morphs phone → tablet
+  side-by-side), Make it yours (Settings → Customisation: switches flip
+  on and light up Studio Mode tallies / Transition / record / replay /
+  hotkey controls, then Elements Order drags Audio to the top), Stats
+  (real `StatTile`s ticking, bitrate sparkline drawing, past sessions).
+- Mockups are code, not screenshots: real tokens / leaves
+  (`OnAirPill`, `SceneTallyChip` made public for this, `StatTile`,
+  `BaseAdaptiveSwitch`, `DecorativeIconTile`), authored at a fixed size
+  and scaled as a whole; loops run only on the visible page, park on a
+  representative frame under reduced motion, ignore text scaling (copy
+  clamps at 1.3x). Light, dark and custom themes follow automatically.
+- Navigation: free swipe, Back · expanding dots · Next, Skip top-right
+  (Close from Settings), last page stretches into "Get started".
+  No slide lock. Tablets: visual + copy side by side, larger type.
+- New seen-key `HasUserSeenIntro202609` gates launch - every existing
+  user sees v2 once. `HasUserSeenIntro202208` is kept, no longer read.
+  Skip / Get started persist it; the Settings entry writes nothing.
+- WebSocket setup help left the intro (FAQ covers it); the three
+  `assets/images/intro/*.png` screenshots are deleted. `IntroStore`
+  shrank to `currentPage`.
+- Tests: `test/intro/intro_view_test.dart` (swipe/Next/Back, Skip +
+  Get started persist, Settings entry doesn't, reduced motion).
+  Screenshot walk updated (40-43). Visually checked headless at
+  phone / small phone / tablet, dark + light; not yet run on a device.
+
 ## 2026-09-27 - Android: glass bars blur like iOS
 
 Dogfood: Android nav/tab bars were only see-through (0.9 alpha, no
