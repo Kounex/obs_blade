@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import '../../../shared/design/design.dart';
+import '../../../shared/general/base/button.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../stores/pro_store.dart';
 import '../../../utils/pro_ids.dart';
 import '../../../utils/pro_product.dart';
 import '../../../utils/styling_helper.dart';
 import '../../settings/widgets/support_dialog/support_skeleton.dart';
-import 'pro_palette.dart';
 
 /// Pricing section of the paywall: ONE card with the three plans as
 /// selectable rows and a single CTA (was three cards with a button each).
@@ -42,21 +42,13 @@ class ProPricing extends StatefulWidget {
       title: 'Yearly',
       cadence: 'per year',
       badge: 'BEST VALUE',
-      icon: CupertinoIcons.star_fill,
     ),
-    ProOffer(
-      productId: kProMonthlyId,
-      title: 'Monthly',
-      cadence: 'per month',
-      icon: CupertinoIcons.calendar,
-    ),
+    ProOffer(productId: kProMonthlyId, title: 'Monthly', cadence: 'per month'),
     ProOffer(
       productId: kProLifetimeId,
       title: 'Lifetime',
       cadence: 'once - yours forever',
       badge: 'ONE-TIME',
-      icon: CupertinoIcons.infinite,
-      color: ProPalette.gold,
     ),
   ];
 
@@ -107,9 +99,6 @@ class _ProPricingState extends State<ProPricing> {
           return const SupportSkeleton(rows: 3);
         }
 
-        final Color accent = Theme.of(
-          context,
-        ).buttonTheme.colorScheme!.secondary;
         final ProOffer selected = this._selected;
         final ProProduct? selectedProduct = this._productFor(
           selected.productId,
@@ -141,8 +130,6 @@ class _ProPricingState extends State<ProPricing> {
                 rightPadding: 0.0,
                 bottomPadding: 0.0,
                 leftPadding: 0.0,
-                paintBorder: true,
-                borderColor: accent.withValues(alpha: 0.35),
                 paddingChild: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   children: [
@@ -158,14 +145,21 @@ class _ProPricingState extends State<ProPricing> {
                       ),
                     ],
                     const SizedBox(height: AppSpacing.md),
-                    _ProCta(
-                      text: selectedProduct == null
-                          ? 'Not live yet'
-                          : 'Get Pro ${selected.title}',
-                      placeholder: selectedProduct == null,
-                      onPressed: store.pending
-                          ? null
-                          : () => this._buy(context, selectedProduct),
+
+                    /// The paywall's one accent moment (token-delta §5)
+                    SizedBox(
+                      width: double.infinity,
+                      child: Opacity(
+                        opacity: selectedProduct == null ? 0.55 : 1.0,
+                        child: BaseButton(
+                          text: selectedProduct == null
+                              ? 'Not live yet'
+                              : 'Get Pro ${selected.title}',
+                          onPressed: store.pending
+                              ? null
+                              : () => this._buy(context, selectedProduct),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
@@ -194,23 +188,18 @@ class ProOffer {
   final String title;
   final String cadence;
   final String? badge;
-  final IconData icon;
-
-  /// Identity hue of the row - null uses the theme accent
-  final Color? color;
 
   const ProOffer({
     required this.productId,
     required this.title,
     required this.cadence,
-    required this.icon,
     this.badge,
-    this.color,
   });
 }
 
-/// One selectable plan: radio mark, icon, title + cadence, price. The
-/// selected row lights up in its identity hue.
+/// One selectable plan: radio mark, title (+ badge) over cadence, price.
+/// Selection = accent ring + radio fill on a faint accent wash; the
+/// unselected rows stay neutral.
 class _PlanRow extends StatelessWidget {
   final ProOffer offer;
 
@@ -229,15 +218,13 @@ class _PlanRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color hue =
-        this.offer.color ??
-        Theme.of(context).buttonTheme.colorScheme!.secondary;
-    final Color ink = ProPalette.ink(context, hue);
+    final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
     final AppTextColors textColors = Theme.of(
       context,
     ).extension<AppTextColors>()!;
-    final bool dark = ProPalette.darkSurface(context);
-    final Color neutral = (dark ? Colors.white : Colors.black);
+    final Color neutral = Theme.of(context).cardColor.computeLuminance() <= 0.2
+        ? Colors.white
+        : Colors.black;
 
     return Semantics(
       button: true,
@@ -249,32 +236,23 @@ class _PlanRow extends StatelessWidget {
           duration: AppMotion.fast,
           curve: AppMotion.standard,
           constraints: const BoxConstraints(minHeight: 64.0),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
+            /// Nested-tint rule (token-delta §2.3): a 6% wash keeps the
+            /// accent-text badge and secondary copy on it above 4.3:1
             color: this.selected
-                ? hue.withValues(alpha: 0.14)
-                : neutral.withValues(alpha: 0.04),
+                ? accent.withValues(alpha: 0.06)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
-              color: this.selected
-                  ? hue.withValues(alpha: 0.9)
-                  : neutral.withValues(alpha: 0.08),
+              color: this.selected ? accent : neutral.withValues(alpha: 0.12),
               width: this.selected ? 1.5 : 1.0,
             ),
           ),
           child: Row(
             children: [
-              _RadioMark(selected: this.selected, color: hue),
+              _RadioMark(selected: this.selected, color: accent),
               const SizedBox(width: AppSpacing.md),
-              Icon(
-                this.offer.icon,
-                size: 18.0,
-                color: this.selected ? ink : textColors.textTertiary,
-              ),
-              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,7 +267,20 @@ class _PlanRow extends StatelessWidget {
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         if (this.offer.badge != null)
-                          _Badge(text: this.offer.badge!, color: hue),
+                          Text(
+                            this.offer.badge!,
+                            style: Theme.of(context).textTheme.labelSmall!
+                                .copyWith(
+                                  /// Neutral text levels, not the accent:
+                                  /// accent-as-text drops under 3:1 on the
+                                  /// selected row's wash in several
+                                  /// built-in themes (Pure Indigo 2.4:1) -
+                                  /// the ring + radio carry the selection
+                                  color: this.selected
+                                      ? textColors.textPrimary
+                                      : textColors.textSecondary,
+                                ),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 2.0),
@@ -342,7 +333,7 @@ class _RadioMark extends StatelessWidget {
         border: Border.all(
           color: this.selected
               ? this.color
-              : Theme.of(context).extension<AppTextColors>()!.textOrnament,
+              : Theme.of(context).extension<AppTextColors>()!.textTertiary,
           width: 1.5,
         ),
       ),
@@ -350,104 +341,11 @@ class _RadioMark extends StatelessWidget {
           ? Icon(
               CupertinoIcons.checkmark_alt,
               size: 14.0,
-              color: this.color.computeLuminance() > 0.5
-                  ? Colors.black
-                  : Colors.white,
+              color: StylingHelper.surroundingAwareAccent(
+                surroundingColor: this.color,
+              ),
             )
           : null,
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String text;
-  final Color color;
-
-  const _Badge({required this.text, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 2.0,
-      ),
-      decoration: BoxDecoration(
-        color: this.color.withValues(alpha: 0.18),
-        borderRadius: AppRadius.pill,
-      ),
-      child: Text(
-        this.text,
-        style: Theme.of(context).textTheme.labelSmall!.copyWith(
-          color: ProPalette.ink(context, this.color),
-        ),
-      ),
-    );
-  }
-}
-
-/// The paywall's one filled CTA: accent gradient with a soft glow
-class _ProCta extends StatelessWidget {
-  final String text;
-  final bool placeholder;
-  final VoidCallback? onPressed;
-
-  const _ProCta({
-    required this.text,
-    required this.placeholder,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final Color accent = Theme.of(context).buttonTheme.colorScheme!.secondary;
-    final Color deep = Color.lerp(accent, Colors.black, 0.3)!;
-
-    /// Gradient pill + glow painted by the button's own container, the
-    /// label pressed through [Pressable] like every other button (a
-    /// transparent ElevatedButton over a gradient box leaves the box
-    /// peeking out under Material's tap-target padding)
-    return Semantics(
-      button: true,
-      enabled: this.onPressed != null,
-      child: Pressable(
-        onTap: this.onPressed,
-        child: Opacity(
-          opacity: this.placeholder || this.onPressed == null ? 0.55 : 1.0,
-          child: Container(
-            width: double.infinity,
-            constraints: const BoxConstraints(minHeight: 52.0),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.pill,
-              gradient: LinearGradient(colors: [accent, deep]),
-              boxShadow: this.placeholder
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.35),
-                        blurRadius: 18.0,
-                        offset: const Offset(0.0, 4.0),
-                      ),
-                    ],
-            ),
-
-            /// Filled-CTA label contract (token-delta §2.4): 17/700
-            child: Text(
-              this.text,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 17.0,
-                fontWeight: FontWeight.w700,
-                color: StylingHelper.surroundingAwareAccent(
-                  surroundingColor: accent,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

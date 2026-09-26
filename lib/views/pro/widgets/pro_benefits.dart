@@ -6,13 +6,8 @@ import '../../../models/enums/chat_type.dart';
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../shared/general/responsive_widget_wrapper.dart';
-import '../../../types/extensions/string.dart';
-import '../../../utils/built_in_themes.dart';
 import '../../dashboard/widgets/obs_widgets/stream_chat/combined_chat_icon.dart';
 import 'pro_palette.dart';
-
-/// Which illustration a benefit card renders above its copy
-enum ProBenefitVisual { platforms, moderation, chatTools, themes }
 
 /// One browsable Pro benefit. Copy rule (monetization strategy):
 /// honest, no dates promised for unreleased features.
@@ -21,36 +16,31 @@ class ProBenefit {
   final String title;
   final String body;
 
-  /// Identity hue - card wash, border and the icon tile
+  /// Fill of the benefit's icon tile - the card itself stays neutral
   final Color color;
 
-  final ProBenefitVisual visual;
-
-  /// Short feature tags listed under the body
-  final List<String> tags;
+  /// Replaces the single icon tile with the platform marks
+  final bool showPlatforms;
 
   const ProBenefit({
     required this.icon,
     required this.title,
     required this.body,
     required this.color,
-    required this.visual,
-    this.tags = const [],
+    this.showPlatforms = false,
   });
 }
 
-/// Four themed cards (was eight single-feature cards): chat everywhere,
-/// moderation, chat tools, themes. The native-chat upsell in the chat pane
-/// lists titles from here as its benefit taste.
+/// Four themed cards (was eight single-feature cards). The native-chat
+/// upsell in the chat pane lists titles from here as its benefit taste.
 const List<ProBenefit> kProBenefits = [
   ProBenefit(
     icon: CupertinoIcons.chat_bubble_2_fill,
     title: 'Every Chat, One Place',
     body:
-        'Native Twitch, Kick and YouTube chat - on their own or merged into one live timeline. Replies land on the right platform.',
+        'Native Twitch, Kick and YouTube chat - on their own or merged into one timeline. Save your channel combos, see who\'s live, and replies land on the right platform.',
     color: ProPalette.twitch,
-    visual: ProBenefitVisual.platforms,
-    tags: ['Combined chat', 'Saved combos', 'Who\'s live'],
+    showPlatforms: true,
   ),
   ProBenefit(
     icon: CupertinoIcons.shield_fill,
@@ -58,17 +48,13 @@ const List<ProBenefit> kProBenefits = [
     body:
         'Delete, timeout and ban on every platform - plus AutoMod, unban requests and chat modes on Twitch.',
     color: ProPalette.moderation,
-    visual: ProBenefitVisual.moderation,
-    tags: ['AutoMod', 'Unban requests', 'Chat modes'],
   ),
   ProBenefit(
-    icon: CupertinoIcons.sparkles,
+    icon: CupertinoIcons.smiley_fill,
     title: 'Chat, Supercharged',
     body:
-        '7TV, BTTV and FFZ emotes inline, an emote picker and badges - plus mention highlights, muted words and chat search.',
-    color: ProPalette.chat,
-    visual: ProBenefitVisual.chatTools,
-    tags: ['7TV · BTTV · FFZ', 'Highlights', 'Search'],
+        '7TV, BTTV and FFZ emotes, an emote picker and badges - plus mention highlights, muted words and chat search.',
+    color: ProPalette.chatTools,
   ),
   ProBenefit(
     icon: CupertinoIcons.paintbrush_fill,
@@ -76,8 +62,6 @@ const List<ProBenefit> kProBenefits = [
     body:
         'Design your own color themes and switch anytime. Pro keeps growing - stream health alerts are on the bench, no dates promised.',
     color: ProPalette.themes,
-    visual: ProBenefitVisual.themes,
-    tags: ['Custom themes', 'More coming'],
   ),
 ];
 
@@ -104,21 +88,6 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
   /// neighbours peeking in from the screen edge
   final PageController _pageController = PageController(viewportFraction: 0.94);
 
-  /// Page the dots and card depth follow (fractional while swiping)
-  double _page = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    this._pageController.addListener(this._onScroll);
-  }
-
-  void _onScroll() {
-    if (!this._pageController.hasClients) return;
-    final double page = this._pageController.page ?? 0.0;
-    if (page != this._page) setState(() => this._page = page);
-  }
-
   @override
   void dispose() {
     this._pageController.dispose();
@@ -127,18 +96,9 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
 
   @override
   Widget build(BuildContext context) {
-    /// Active dot takes the current card's identity hue, blended while
-    /// swiping between two cards
-    final int lower = this._page.floor().clamp(0, kProBenefits.length - 1);
-    final int upper = this._page.ceil().clamp(0, kProBenefits.length - 1);
-    final Color activeDot = ProPalette.ink(
+    final AppTextColors textColors = Theme.of(
       context,
-      Color.lerp(
-        kProBenefits[lower].color,
-        kProBenefits[upper].color,
-        (this._page - lower).clamp(0.0, 1.0),
-      )!,
-    );
+    ).extension<AppTextColors>()!;
 
     return ResponsiveWidgetWrapper(
       mobileWidget: Column(
@@ -164,7 +124,7 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.xs,
                           ),
-                          child: ProBenefitCard(benefit: benefit, fill: false),
+                          child: ProBenefitCard(benefit: benefit),
                         ),
                       ),
                     ),
@@ -173,23 +133,12 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
                   child: PageView.builder(
                     controller: this._pageController,
                     itemCount: kProBenefits.length,
-                    itemBuilder: (context, index) {
-                      /// Off-center cards settle back slightly - depth while
-                      /// swiping, flat at rest
-                      final double distance = (this._page - index).abs().clamp(
-                        0.0,
-                        1.0,
-                      );
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.xs,
-                        ),
-                        child: Transform.scale(
-                          scale: 1.0 - 0.04 * distance,
-                          child: ProBenefitCard(benefit: kProBenefits[index]),
-                        ),
-                      );
-                    },
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
+                      child: ProBenefitCard(benefit: kProBenefits[index]),
+                    ),
                   ),
                 ),
               ],
@@ -199,15 +148,15 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
           SmoothPageIndicator(
             controller: this._pageController,
             count: kProBenefits.length,
-            effect: ExpandingDotsEffect(
+
+            /// Unified page-dot grammar (same as the intro slides): worm
+            /// effect, neutral active/inactive levels
+            effect: WormEffect(
               dotHeight: 8.0,
               dotWidth: 8.0,
-              expansionFactor: 3.0,
               spacing: AppSpacing.sm,
-              dotColor: Theme.of(
-                context,
-              ).extension<AppTextColors>()!.textOrnament,
-              activeDotColor: activeDot,
+              dotColor: textColors.textOrnament,
+              activeDotColor: textColors.textPrimary,
             ),
           ),
         ],
@@ -245,314 +194,146 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
   }
 }
 
+/// Neutral liquid card: one coloured icon tile (or the platform marks),
+/// title, body.
 class ProBenefitCard extends StatelessWidget {
   final ProBenefit benefit;
 
-  /// Pins the tags to the bottom edge of a bounded slot. False lays the
-  /// card out at its natural height (the carousel's sizing pass)
-  final bool fill;
-
-  const ProBenefitCard({super.key, required this.benefit, this.fill = true});
+  const ProBenefitCard({super.key, required this.benefit});
 
   @override
   Widget build(BuildContext context) {
-    final Color cardColor = Theme.of(context).cardColor;
-    final Color ink = ProPalette.ink(context, this.benefit.color);
-    final AppTextColors textColors = Theme.of(
-      context,
-    ).extension<AppTextColors>()!;
-
-    /// Own card surface instead of BaseCard: BaseCard shrink-wraps its
-    /// child in a Column, but this card fills its carousel / grid slot so
-    /// the tags can sit on the bottom edge (Spacer). Same radius as the
-    /// card contract, hairline in the identity hue
-    return Container(
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(kBaseCardBorderRadius),
-        border: Border.all(color: this.benefit.color.withValues(alpha: 0.28)),
-
-        /// Identity wash: a soft radial glow of the card's hue from the
-        /// top-right corner, fading into the regular card fill
-        gradient: RadialGradient(
-          center: Alignment.topRight,
-          radius: 1.4,
-          colors: [
-            Color.alphaBlend(
-              this.benefit.color.withValues(alpha: 0.20),
-              cardColor,
+    return BaseCard(
+      constrained: false,
+      centerChild: false,
+      topPadding: 0.0,
+      rightPadding: 0.0,
+      bottomPadding: 0.0,
+      leftPadding: 0.0,
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (this.benefit.showPlatforms)
+              const _PlatformTiles()
+            else
+              ProIconTile(
+                color: this.benefit.color,
+                child: Icon(
+                  this.benefit.icon,
+                  size: 22.0,
+                  color: ProPalette.onFill(this.benefit.color),
+                ),
+              ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              this.benefit.title,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
-            cardColor,
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              this.benefit.body,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.textSecondary,
+              ),
+            ),
           ],
         ),
       ),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 56.0, child: _BenefitVisual(benefit: this.benefit)),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            this.benefit.title,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            this.benefit.body,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall!.copyWith(color: textColors.textSecondary),
-          ),
-          if (this.fill) const Spacer(),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: [
-              for (final String tag in this.benefit.tags)
-                _Tag(text: tag, color: this.benefit.color, ink: ink),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
 
-class _Tag extends StatelessWidget {
-  final String text;
+/// Solid squircle icon tile (iOS settings-icon idiom) - same shape
+/// contract as the neutral DecorativeIconTile
+class ProIconTile extends StatelessWidget {
   final Color color;
-  final Color ink;
-
-  const _Tag({required this.text, required this.color, required this.ink});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 3.0,
-      ),
-      decoration: BoxDecoration(
-        color: this.color.withValues(alpha: 0.14),
-        borderRadius: AppRadius.pill,
-      ),
-      child: Text(
-        this.text,
-        style: Theme.of(
-          context,
-        ).textTheme.labelSmall!.copyWith(color: this.ink, letterSpacing: 0.2),
-      ),
-    );
-  }
-}
-
-/// Glowing squircle tile in an identity hue (the paywall's colourful
-/// counterpart to the neutral DecorativeIconTile)
-class ProGlowTile extends StatelessWidget {
-  final Color color;
-  final double size;
   final Widget child;
+  final double size;
 
-  const ProGlowTile({
+  const ProIconTile({
     super.key,
     required this.color,
     required this.child,
-    this.size = 52.0,
+    this.size = 40.0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color card = Theme.of(context).cardColor;
+
+    /// A fill close to the card (Kick's green on light cards, the neutral
+    /// combined tile) gets a hairline so the tile keeps its edge
+    final Color fill = Color.alphaBlend(this.color, card);
+    final double lighter =
+        (fill.computeLuminance() > card.computeLuminance()
+            ? fill.computeLuminance()
+            : card.computeLuminance()) +
+        0.05;
+    final double darker =
+        (fill.computeLuminance() > card.computeLuminance()
+            ? card.computeLuminance()
+            : fill.computeLuminance()) +
+        0.05;
+    final bool needsEdge = lighter / darker < 1.6;
+    final bool darkCard = card.computeLuminance() <= 0.2;
+
     return Container(
       width: this.size,
       height: this.size,
       decoration: ShapeDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            this.color.withValues(alpha: 0.30),
-            this.color.withValues(alpha: 0.12),
-          ],
-        ),
+        color: this.color,
         shape: ContinuousRectangleBorder(
           borderRadius: BorderRadius.circular(this.size * 0.38),
-          side: BorderSide(color: this.color.withValues(alpha: 0.55)),
+          side: needsEdge
+              ? BorderSide(
+                  color: (darkCard ? Colors.white : Colors.black).withValues(
+                    alpha: 0.14,
+                  ),
+                )
+              : BorderSide.none,
         ),
-        shadows: [
-          BoxShadow(
-            color: this.color.withValues(alpha: 0.30),
-            blurRadius: 16.0,
-          ),
-        ],
       ),
       child: Center(child: this.child),
     );
   }
 }
 
-class _BenefitVisual extends StatelessWidget {
-  final ProBenefit benefit;
-
-  const _BenefitVisual({required this.benefit});
-
-  Widget _iconTile(BuildContext context) => ProGlowTile(
-    color: this.benefit.color,
-    child: Icon(
-      this.benefit.icon,
-      size: 26.0,
-      color: ProPalette.ink(context, this.benefit.color),
-    ),
-  );
+/// Twitch, Kick and YouTube marks on their brand fills, then the combined
+/// mark on a neutral tile
+class _PlatformTiles extends StatelessWidget {
+  const _PlatformTiles();
 
   @override
   Widget build(BuildContext context) {
-    return switch (this.benefit.visual) {
-      /// The three platform marks in their brand colours, merging into the
-      /// combined-chat mark
-      ProBenefitVisual.platforms => Row(
-        children: [
-          for (final ChatType type in const [
-            ChatType.Twitch,
-            ChatType.Kick,
-            ChatType.YouTube,
-          ]) ...[
-            ProGlowTile(
-              color: ProPalette.brand(type),
-              child: chatTypeIcon(
-                context,
-                type,
-                size: 26.0,
-                color: ProPalette.platformInk(context, type),
-              ),
+    final bool dark = Theme.of(context).cardColor.computeLuminance() <= 0.2;
+
+    return Row(
+      children: [
+        for (final ChatType type in const [
+          ChatType.Twitch,
+          ChatType.Kick,
+          ChatType.YouTube,
+        ]) ...[
+          ProIconTile(
+            color: ProPalette.brand(type),
+            child: chatTypeIcon(
+              context,
+              type,
+              size: 22.0,
+              color: ProPalette.onFill(ProPalette.brand(type)),
             ),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          Icon(
-            CupertinoIcons.arrow_right,
-            size: 16.0,
-            color: Theme.of(context).extension<AppTextColors>()!.textTertiary,
           ),
           const SizedBox(width: AppSpacing.sm),
-          const ProGlowTile(
-            color: ProPalette.chat,
-            child: CombinedChatIcon(size: 30.0),
-          ),
         ],
-      ),
-
-      /// Shield plus the actions it covers
-      ProBenefitVisual.moderation => Row(
-        children: [
-          this._iconTile(context),
-          const SizedBox(width: AppSpacing.md),
-          const _MiniChip(
-            icon: CupertinoIcons.trash_fill,
-            color: ProPalette.youtube,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const _MiniChip(
-            icon: CupertinoIcons.timer_fill,
-            color: ProPalette.moderation,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const _MiniChip(
-            icon: CupertinoIcons.hammer_fill,
-            color: ProPalette.twitch,
-          ),
-        ],
-      ),
-
-      /// Emotes, mention highlights, search
-      ProBenefitVisual.chatTools => Row(
-        children: [
-          this._iconTile(context),
-          const SizedBox(width: AppSpacing.md),
-          const _MiniChip(
-            icon: CupertinoIcons.smiley_fill,
-            color: Color(0xFFFFD60A),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const _MiniChip(
-            icon: CupertinoIcons.at_circle_fill,
-            color: ProPalette.chat,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          const _MiniChip(
-            icon: CupertinoIcons.search,
-            color: ProPalette.twitch,
-          ),
-        ],
-      ),
-
-      /// The built-in themes as swatches (accent dot over background)
-      ProBenefitVisual.themes => Row(
-        children: [
-          this._iconTile(context),
-          const SizedBox(width: AppSpacing.md),
-          for (final theme in BuiltInThemes.themes) ...[
-            _ThemeSwatch(
-              background: theme.backgroundColorHex.hexToColor(),
-              accent: theme.accentColorHex.hexToColor(),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-        ],
-      ),
-    };
-  }
-}
-
-class _MiniChip extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-
-  const _MiniChip({required this.icon, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36.0,
-      height: 36.0,
-      decoration: BoxDecoration(
-        color: this.color.withValues(alpha: 0.16),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        this.icon,
-        size: 18.0,
-        color: ProPalette.ink(context, this.color),
-      ),
-    );
-  }
-}
-
-class _ThemeSwatch extends StatelessWidget {
-  final Color background;
-  final Color accent;
-
-  const _ThemeSwatch({required this.background, required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool dark = ProPalette.darkSurface(context);
-    return Container(
-      width: 30.0,
-      height: 30.0,
-      decoration: BoxDecoration(
-        color: this.background,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: (dark ? Colors.white : Colors.black).withValues(alpha: 0.18),
+        ProIconTile(
+          color: (dark ? Colors.white : Colors.black).withValues(alpha: 0.07),
+          child: const CombinedChatIcon(size: 24.0),
         ),
-      ),
-      child: Center(
-        child: Container(
-          width: 14.0,
-          height: 14.0,
-          decoration: BoxDecoration(color: this.accent, shape: BoxShape.circle),
-        ),
-      ),
+      ],
     );
   }
 }

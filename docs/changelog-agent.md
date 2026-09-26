@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Pro paywall: colour pass (calmer, readable)
+
+Dogfood feedback on the overhaul: too colourful, halo has to go, should
+not look AI-generated, colours must stay readable.
+
+- Hero back to the pre-overhaul version (no platform halo, no chips).
+- Benefit cards: neutral liquid cards; colour only in one solid icon
+  tile per card (platform card: Twitch / Kick / YouTube brand tiles +
+  neutral combined tile). Dropped radial washes, tinted borders, glow
+  tiles, action chips, theme swatches, tag pills and hue-tinted page
+  dots (back to the neutral worm dots).
+- Plan card: plain `BaseButton` CTA (no gradient / glow), no per-plan
+  icons, no gold Lifetime; badges as caption text in neutral levels.
+- Contrast checked against every built-in theme's real card colour:
+  tile glyphs >= 4.3:1 on their fills (YouTube fill deepened to #E00000,
+  Kick carries a black glyph); accent-as-text removed from the selected
+  plan row (Pure Indigo was 2.4:1); low-contrast tiles get a hairline.
+
 ## 2026-09-26 (night) - Pro paywall overhaul: fewer cards, more colour
 
 - Benefits 8 -> 4 themed cards: Every Chat, One Place (Twitch/Kick/YouTube
