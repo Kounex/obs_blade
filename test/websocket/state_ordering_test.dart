@@ -330,6 +330,65 @@ void main() {
   /// InputVolumeChanged / InputMuteStateChanged event that arrives while a
   /// GetInputVolume / GetInputMute re-read is in flight must survive the
   /// (older) response
+  group('scene-item list ordering', () {
+    Map<String, dynamic> itemsFor(String sourceName, int id) => {
+      'sceneItems': [
+        {
+          'sceneItemId': id,
+          'sceneItemIndex': 0,
+          'sceneItemEnabled': true,
+          'sourceName': sourceName,
+          'isGroup': false,
+        },
+      ],
+    };
+
+    test('a late item list for a scene the dashboard already left does not '
+        'replace the current scene\'s items', () async {
+      /// OBS answers from a thread pool: the Camera read (sent first)
+      /// answers AFTER the Break read
+      peer.responseDataFor = (request) =>
+          request['requestType'] == 'GetSceneItemList'
+          ? (request['requestData']['sceneName'] == 'Camera'
+                ? itemsFor('webcam', 1)
+                : itemsFor('brb-slate', 2))
+          : null;
+      peer.ackDelayFor = (request) =>
+          request['requestType'] == 'GetSceneItemList' &&
+              request['requestData']['sceneName'] == 'Camera'
+          ? const Duration(milliseconds: 300)
+          : null;
+      peer.droppedRequestTypes.add('GetSourceFilterList');
+      NetworkHelper.requestAckTimeout = const Duration(milliseconds: 300);
+      addTearDown(
+        () => NetworkHelper.requestAckTimeout = const Duration(seconds: 35),
+      );
+
+      await connect();
+      dashboardStore.handleStream();
+
+      peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+      await waitFor(
+        () => requestsOf('GetSceneItemList').length == 1,
+        'Camera item read in flight',
+      );
+      peer.event('CurrentProgramSceneChanged', {'sceneName': 'Break'});
+
+      await waitFor(
+        () =>
+            dashboardStore.currentSceneItems.isNotEmpty &&
+            dashboardStore.currentSceneItems.single.sourceName == 'brb-slate',
+        'Break items applied',
+      );
+
+      /// the late Camera response lands now - it must be dropped
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      expect(dashboardStore.activeSceneName, 'Break');
+      expect(dashboardStore.currentSceneItems.single.sourceName, 'brb-slate');
+      expect(dashboardStore.sceneItemsSceneName, 'Break');
+    });
+  });
+
   group('audio volume/mute ordering', () {
     Input mic() => dashboardStore.allInputs.singleWhere(
       (input) => input.inputName == 'Mic',

@@ -14,6 +14,8 @@ import 'package:obs_blade/models/connection.dart';
 /// - [rejections]: explicit `result: false` ack with a code/comment
 /// - [droppedRequestTypes]: the ack is never sent (client must time out)
 /// - [ackDelay]: postpone every ack (late-ack / slow-peer scenarios)
+/// - [ackDelayFor]: per-request delay - answers out of send order, like
+///   real OBS, which processes requests on a thread pool
 /// - [closeSockets]: kill the connection mid-flight (disconnect scenarios)
 ///
 /// Everything the client sent is recorded in [requests] / [batches] so tests
@@ -54,8 +56,15 @@ class FakeObsPeer {
   /// Optional delay applied before any ack is sent
   Duration? ackDelay;
 
+  /// Per-request ack delay (wins over [ackDelay] when it returns non-null)
+  Duration? Function(Map<String, dynamic> request)? ackDelayFor;
+
   /// requestType → responseData merged into the success ack
   final Map<String, Map<String, dynamic>> responseData = {};
+
+  /// Per-request responseData (wins over [responseData] when it returns
+  /// non-null) - e.g. a different item list per requested scene
+  Map<String, dynamic>? Function(Map<String, dynamic> request)? responseDataFor;
 
   /// When false, Identify is never answered (handshake stall scenarios)
   bool identify = true;
@@ -97,7 +106,8 @@ class FakeObsPeer {
   Future<void> _ackRequest(WebSocket socket, Map<String, dynamic> data) async {
     final type = data['requestType'] as String;
     if (droppedRequestTypes.contains(type)) return;
-    if (ackDelay != null) await Future<void>.delayed(ackDelay!);
+    final delay = ackDelayFor?.call(data) ?? ackDelay;
+    if (delay != null) await Future<void>.delayed(delay);
     if (socket.closeCode != null) return;
 
     final rejectionCode = rejections[type];
@@ -115,7 +125,10 @@ class FakeObsPeer {
                   'comment': rejectionComment,
                 }
               : {'result': true, 'code': 100},
-          'responseData': responseData[type] ?? <String, dynamic>{},
+          'responseData':
+              responseDataFor?.call(data) ??
+              responseData[type] ??
+              <String, dynamic>{},
         },
       }),
     );

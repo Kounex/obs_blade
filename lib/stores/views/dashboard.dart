@@ -157,6 +157,13 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableList<SceneItem> currentSceneItems = ObservableList();
 
+  /// Scene the [currentSceneItems] were read for - set together with them
+  /// by the GetSceneItemList response. The item list keys its entrance on
+  /// it, so a scene switch fades the new items in even when the item count
+  /// stays the same
+  @observable
+  String? sceneItemsSceneName;
+
   @computed
   ObservableList<SceneItem> get mediaSceneItems => ObservableList.of(
     this.currentSceneItems.where(
@@ -1785,6 +1792,15 @@ abstract class _DashboardStore with Store {
             ? _sceneItemListTags[sceneName]!.removeFirst()
             : null;
 
+        /// OBS answers requests from a thread pool, so responses can
+        /// arrive out of send order: after a quick A -> B switch, A's item
+        /// list may land after B's and would replace B's items. Only the
+        /// displayed scene's list applies - the tag is popped above
+        /// either way so the per-scene FIFO stays aligned
+        if (sceneName != null && sceneName != _displayedSceneName) {
+          break;
+        }
+
         SceneItem applyItem(SceneItem item) {
           if (sceneName == null || itemListTag == null) return item;
           final id = item.sceneItemId;
@@ -1811,6 +1827,7 @@ abstract class _DashboardStore with Store {
               (sc1, sc2) =>
                   (sc2.sceneItemIndex ?? 0) - (sc1.sceneItemIndex ?? 0),
             );
+        this.sceneItemsSceneName = sceneName;
 
         this.fetchSceneItemsFilters();
 
@@ -1875,6 +1892,16 @@ abstract class _DashboardStore with Store {
             .sceneItems
             .map(applyChild)
             .toList();
+
+        /// Same out-of-order guard as GetSceneItemList: a group read sent
+        /// for the previous scene finds no parent here and drops below;
+        /// one whose group name also exists in the new scene would splice
+        /// its children in twice, so skip when they are already present
+        if (this.currentSceneItems.any(
+          (sceneItem) => sceneItem.parentGroupName == parentSceneItemName,
+        )) {
+          break;
+        }
 
         final parentIndex = this.currentSceneItems.indexWhere(
           (sceneItem) =>

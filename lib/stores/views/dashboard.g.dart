@@ -417,6 +417,24 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$sceneItemsSceneNameAtom = Atom(
+    name: '_DashboardStore.sceneItemsSceneName',
+    context: context,
+  );
+
+  @override
+  String? get sceneItemsSceneName {
+    _$sceneItemsSceneNameAtom.reportRead();
+    return super.sceneItemsSceneName;
+  }
+
+  @override
+  set sceneItemsSceneName(String? value) {
+    _$sceneItemsSceneNameAtom.reportWrite(value, super.sceneItemsSceneName, () {
+      super.sceneItemsSceneName = value;
+    });
+  }
+
   late final _$mediaStatesAtom = Atom(
     name: '_DashboardStore.mediaStates',
     context: context,
@@ -919,6 +937,7 @@ activeSceneName: ${activeSceneName},
 scenes: ${scenes},
 hotkeys: ${hotkeys},
 currentSceneItems: ${currentSceneItems},
+sceneItemsSceneName: ${sceneItemsSceneName},
 mediaStates: ${mediaStates},
 allInputs: ${allInputs},
 globalInputNames: ${globalInputNames},

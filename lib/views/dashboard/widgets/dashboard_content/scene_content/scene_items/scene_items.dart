@@ -53,9 +53,22 @@ class _SceneItemsState extends State<SceneItems>
                               final int index = entry.$1;
                               final sceneItem = entry.$2;
 
+                              /// Keyed per scene: a switch between two
+                              /// scenes that both have items remounts the
+                              /// rows so the entrance replays (it only ran
+                              /// from an empty list before). Fade only - a
+                              /// rise on every switch reads as jumpy
+                              final Key entranceKey = ValueKey((
+                                dashboardStore.sceneItemsSceneName,
+                                sceneItem.parentGroupName,
+                                sceneItem.sceneItemId,
+                              ));
+
                               if (sceneItem.parentGroupName == null) {
                                 return StaggeredEntrance(
+                                  key: entranceKey,
                                   index: index,
+                                  rise: 0.0,
                                   child: StaleGuard(
                                     child: VisibilitySlideWrapper(
                                       sceneItem: sceneItem,
@@ -71,7 +84,9 @@ class _SceneItemsState extends State<SceneItems>
                               /// / expanding the group animates - visibility is
                               /// still driven by the parents [SceneItem.displayGroup]
                               return StaggeredEntrance(
+                                key: entranceKey,
                                 index: index,
+                                rise: 0.0,
                                 child: _AnimatedGroupChild(
                                   visible: dashboardStore.currentSceneItems
                                       .firstWhere(

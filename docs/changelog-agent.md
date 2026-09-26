@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Scene switch: stale item lists, fade on every switch
+
+Dogfood: a scene switch occasionally kept showing the previous scene's
+items; items only animated when coming from an empty scene.
+
+- Cause (not the ack layer): obs-websocket processes requests on a
+  thread pool, so responses can arrive out of send order. After a quick
+  A -> B switch, A's GetSceneItemList response could land after B's and
+  replace B's items. GetSceneItemList now applies only when its request
+  body's scene is the displayed scene (the per-scene ordering tag is
+  still popped so the FIFO stays aligned). GetGroupSceneItemList skips
+  when the group's children are already present (no double splice).
+- New observable `sceneItemsSceneName` (set with the item list). The
+  scene-item rows key their `StaggeredEntrance` on (scene, parent group,
+  item id), so every switch replays the entrance; `rise: 0` - fade only.
+- Tests: `FakeObsPeer.ackDelayFor` / `responseDataFor` (per-request delay
+  and payload, i.e. out-of-order answers); ordering test for the late
+  item list (fails without the guard); widget test for the fade-only
+  replay on a switch between two populated scenes (fails without the key).
+
 ## 2026-09-27 - Pro paywall: colour pass (calmer, readable)
 
 Dogfood feedback on the overhaul: too colourful, halo has to go, should
