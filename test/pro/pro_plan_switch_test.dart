@@ -158,7 +158,10 @@ void main() {
     expect(cancelNotice, findsOneWidget);
     expect(find.text('Cancel your monthly subscription'), findsOneWidget);
     expect(switchTo(kProLifetimeId), findsNothing);
-    expect(find.text('Manage subscription'), findsOneWidget);
+
+    /// One way to the store's subscriptions - the notice's button
+    expect(find.text('Open subscriptions'), findsOneWidget);
+    expect(find.text('Manage subscription'), findsNothing);
   });
 
   testWidgets('settled lifetime shows no switch and nothing to manage', (

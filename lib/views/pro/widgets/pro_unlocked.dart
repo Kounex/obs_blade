@@ -144,12 +144,11 @@ class ProUnlockedView extends StatelessWidget {
                     index: 5,
                     scaleFrom: 0.985,
 
-                    /// Lifetime with nothing left renewing has no
-                    /// subscription to manage
+                    /// Lifetime has no subscription to manage - one that
+                    /// still renews gets the cancel notice's own button
                     child: Observer(
                       builder: (context) =>
-                          this.store.plan.currentPlan == kProLifetimeId &&
-                              !this.store.plan.subscriptionToCancel
+                          this.store.plan.currentPlan == kProLifetimeId
                           ? const SizedBox()
                           : Column(
                               children: [
