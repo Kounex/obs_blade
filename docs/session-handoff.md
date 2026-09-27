@@ -36,8 +36,10 @@ Play listing already uploaded (Play held by managed publishing - publish
 together with the production release).
 
 **Update 2026-09-28 - 4.0 release in progress** (`tool/release/`, README
-there; runs on the workstation). Build **4.0.0 (2026092803)** is on
-**TestFlight (internal)** and the **Play internal track** (all Play
+there; runs on the workstation). Build **4.0.0 (2026092804)** is on
+**TestFlight (internal)** and the **Play internal track** (adds the
+media per-source fix, the in-app manage-subscriptions sheet and the
+paywall scroll fix over 2026092803) (all Play
 App content declarations done by the user, incl. Data safety + App
 access). Before `submit ios`: App Privacy
 (Apple) form (user), upgrade test over the store
