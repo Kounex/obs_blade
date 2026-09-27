@@ -53,6 +53,7 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/dashboard.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/audio_inputs/audio_inputs.dart';
 import 'package:obs_blade/views/intro/intro.dart';
 import 'package:obs_blade/views/statistics/statistic_detail/statistic_detail.dart';
 
@@ -801,9 +802,13 @@ void main() {
       'dashboard_audio',
       settleMs: 1500,
       crops: {
-        // .last: on tablets the scene item list (left) has a 'Music' too
+        // scoped to the mixer: the scene item list and the Media Hub have a
+        // 'Music' too (side by side on tablets)
         'fader': [
-          find.text('Music').last,
+          find.descendant(
+            of: find.byType(AudioInputs),
+            matching: find.text('Music'),
+          ),
           find.byWidgetPredicate((w) => w is Slider || w is CupertinoSlider),
         ],
       },
