@@ -7,6 +7,7 @@ import '../../../shared/dialogs/confirmation.dart';
 import '../../../shared/dialogs/input.dart';
 import '../../../shared/general/app_bar_actions.dart';
 import '../../../shared/general/base/card.dart';
+import '../../../shared/general/base/constrained_box.dart';
 import '../../../shared/general/base/icon_button.dart';
 import '../../../shared/general/responsive_widget_wrapper.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
@@ -14,7 +15,6 @@ import '../../../types/extensions/int.dart';
 import '../../../types/extensions/list.dart';
 import '../../../types/interfaces/past_stats_data.dart';
 import '../../../utils/modal_handler.dart';
-import '../../../utils/styling_helper.dart';
 import '../../dashboard/widgets/obs_widgets/stats/stats_container.dart';
 import '../widgets/stats_entry/stats_entry.dart';
 import 'widgets/stat_tile.dart';
@@ -174,12 +174,13 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
         listViewChildren: [
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+              constraints: const BoxConstraints(maxWidth: kWideContentMaxWidth),
               child: Column(
                 children: [
                   StaggeredEntrance(
                     scaleFrom: 0.985,
                     child: BaseCard(
+                      maxWidth: kWideContentMaxWidth,
                       child: StatsEntry(
                         pastStatsData: pastStatsData,
                         usedInDetail: true,
@@ -193,54 +194,19 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
                       right: AppSpacing.lg,
                       bottom: AppSpacing.xxl,
                     ),
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      runSpacing: AppSpacing.xl,
-                      spacing: AppSpacing.xl,
-                      children: streamCharts.mapIndexed((streamChart, index) {
-                        final Widget chartCard = BaseCard(
-                          topPadding: 0,
-                          rightPadding: 0,
-                          bottomPadding: 0,
-                          leftPadding: 0,
-                          paddingChild: const EdgeInsets.all(0),
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.all(AppSpacing.md) +
-                                const EdgeInsets.only(
-                                  top: AppSpacing.xs,
-                                  left: AppSpacing.xl,
-                                  right: AppSpacing.xl,
-                                ),
-                            child: streamChart,
-                          ),
-                        );
-
-                        return StaggeredEntrance(
-                          scaleFrom: 0.985,
-                          index: index + 1,
-                          child: ResponsiveWidgetWrapper(
-                            mobileWidget: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: StylingHelper.max_width_mobile,
-                              ),
-                              child: chartCard,
-                            ),
-                            tabletWidget: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: StylingHelper.max_width_mobile / 2,
-                              ),
-                              child: chartCard,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                    child: ResponsiveWidgetWrapper(
+                      mobileWidget: StatsChartGrid(charts: streamCharts),
+                      tabletWidget: StatsChartGrid(
+                        charts: streamCharts,
+                        columns: 2,
+                      ),
                     ),
                   ),
                   StaggeredEntrance(
                     scaleFrom: 0.985,
                     index: streamCharts.length + 1,
                     child: StatsContainer(
+                      maxWidth: kWideContentMaxWidth,
                       title: 'Some numbers',
                       child: StatTileGrid(
                         tiles: [
@@ -324,6 +290,67 @@ class _StatisticDetailViewState extends State<StatisticDetailView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The detail's chart cards: [columns] per row, each sized from the
+/// available width (a fixed card width can't know how much room the
+/// constrained column leaves after padding + spacing). Drops to one
+/// column when a card would get narrower than [minChartWidth].
+class StatsChartGrid extends StatelessWidget {
+  static const double minChartWidth = 300.0;
+
+  final List<StatsChart> charts;
+  final int columns;
+
+  const StatsChartGrid({super.key, required this.charts, this.columns = 1});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int columns = this.columns;
+        while (columns > 1 &&
+            (constraints.maxWidth - (columns - 1) * AppSpacing.xl) / columns <
+                minChartWidth) {
+          columns--;
+        }
+        final double width =
+            (constraints.maxWidth - (columns - 1) * AppSpacing.xl) / columns;
+
+        return Wrap(
+          runSpacing: AppSpacing.xl,
+          spacing: AppSpacing.xl,
+          children: this.charts.mapIndexed((chart, index) {
+            return StaggeredEntrance(
+              scaleFrom: 0.985,
+              index: index + 1,
+              child: SizedBox(
+                width: width,
+                child: BaseCard(
+                  constrained: false,
+                  topPadding: 0,
+                  rightPadding: 0,
+                  bottomPadding: 0,
+                  leftPadding: 0,
+                  paddingChild: const EdgeInsets.all(0),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.all(AppSpacing.md) +
+                        const EdgeInsets.only(
+                          top: AppSpacing.xs,
+                          left: AppSpacing.xl,
+                          right: AppSpacing.xl,
+                        ),
+                    child: chart,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

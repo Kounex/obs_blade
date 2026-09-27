@@ -19,7 +19,7 @@ class SavedConnections extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    /// Same 640 content column the ConnectBox card centers itself in -
+    /// Same 720 content column the ConnectBox card centers itself in -
     /// aligns the section (header + cards) on large screens instead of
     /// hugging the left edge
     return Center(

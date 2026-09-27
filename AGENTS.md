@@ -60,7 +60,7 @@ session start):
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
 | Shared design system ("On Air") | `lib/shared/design/` |
 | Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |
-| Content column max width | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **640** |
+| Content column max width | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **720** (text/list screens) · `kWideContentMaxWidth` **1040** (charts / data grids, e.g. statistic detail) |
 
 **Stack:** MobX + GetIt · **Hive CE** · freezed for nested OBS API objects.
 

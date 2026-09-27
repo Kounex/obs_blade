@@ -20,7 +20,7 @@ final Uri _kTermsUri = Uri.parse(
 /// The not-Pro side of the paywall: hero, browsable benefits, pricing,
 /// restore, legal link-outs. Phone and tablet compositions differ via the
 /// design-system seams ([ResponsiveWidgetWrapper] inside the benefit and
-/// pricing widgets, 640 content column here).
+/// pricing widgets, 720 content column here).
 class ProSalesView extends StatelessWidget {
   final ProStore store;
 

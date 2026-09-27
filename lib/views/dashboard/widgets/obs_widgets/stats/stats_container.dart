@@ -16,6 +16,9 @@ class StatsContainer extends StatelessWidget {
 
   final bool wrapWithDescribedBox;
 
+  /// Forwarded to [BaseCard.maxWidth]
+  final double maxWidth;
+
   const StatsContainer({
     super.key,
     required this.title,
@@ -24,12 +27,14 @@ class StatsContainer extends StatelessWidget {
     this.trailing,
     this.titleLeading,
     this.wrapWithDescribedBox = false,
+    this.maxWidth = kBaseCardMaxWidth,
   }) : assert(child != null || children != null),
        super();
 
   @override
   Widget build(BuildContext context) {
     return BaseCard(
+      maxWidth: this.maxWidth,
       topPadding: 0.0,
       rightPadding: AppSpacing.md,
       bottomPadding: 0.0,

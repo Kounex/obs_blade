@@ -40,7 +40,7 @@ customisation in the audit digest §6 is preserved. This is a visual/motion over
 - Rule: every new animation uses these; existing ad-hoc durations migrate when touched.
 
 **`app_spacing.dart`** — 4px grid: `xs` 4, `sm` 8, `md` 12, `lg` 16, `xl` 24, `xxl` 32.
-Section labels get `lg` top rhythm. Existing layout constants (640 max width, 700
+Section labels get `lg` top rhythm. Existing layout constants (720 max width, 700
 breakpoint) stay — see **Responsive layouts** below.
 
 **`app_radius.dart`** — `sm` 8, `md` 12 (BaseCard contract), `lg` 16, `xl` 20, `pill`.
@@ -70,7 +70,8 @@ OBS Blade is a **first-party phone and tablet** app. Prefer great UI on both; ne
 | Breakpoint | `StylingHelper.max_width_mobile` **700** | Width **>** 700 → tablet composition |
 | Override | Settings → **Force Tablet Mode** (`EnforceTabletMode`) | Forces tablet branch even on narrow widths (QA + power users) |
 | Swap widget | `ResponsiveWidgetWrapper` | Pass `mobileWidget` + `tabletWidget`; respects breakpoint + Force Tablet Mode |
-| Content column | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **640** | Keeps readable measure on very wide screens |
+| Content column | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **720** (every `BaseCard`) | Keeps readable measure on very wide screens (text, lists, forms) |
+| Wide column | `kWideContentMaxWidth` **1040** (`BaseCard(maxWidth:)`, `StatsContainer(maxWidth:)`) | Data-dense tablet screens (charts, stat grids) — statistic detail lays charts 2 per row via `StatsChartGrid` |
 
 **Composition patterns (dashboard):**
 - **Phone:** adjacent Scene Items + Audio (and Chat + Stats) compose into one **tabbed** block to save scroll. Separating them in Elements Order stacks them independently.

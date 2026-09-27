@@ -22,7 +22,7 @@ import '../../settings/widgets/support_dialog/support_skeleton.dart';
 ///   explains instead of charging
 /// - priced: live [ProProduct]s
 ///
-/// Same composition on tablet - the card sits in the 640 content column.
+/// Same composition on tablet - the card sits in the 720 content column.
 class ProPricing extends StatefulWidget {
   final ProStore store;
 

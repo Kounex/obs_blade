@@ -25,6 +25,10 @@ class BaseCard extends StatelessWidget {
   final bool constrained;
   final CrossAxisAlignment constrainedAlignment;
 
+  /// Cap when [constrained] - [kBaseCardMaxWidth] unless a screen opts
+  /// into the wide tier ([kWideContentMaxWidth])
+  final double maxWidth;
+
   final Color? backgroundColor;
   final bool paintBorder;
   final Color? borderColor;
@@ -55,6 +59,7 @@ class BaseCard extends StatelessWidget {
     this.centerChild = true,
     this.constrained = true,
     this.constrainedAlignment = CrossAxisAlignment.start,
+    this.maxWidth = kBaseCardMaxWidth,
     this.backgroundColor,
     this.paintBorder = false,
     this.borderColor,
@@ -178,7 +183,7 @@ class BaseCard extends StatelessWidget {
 
     return Center(
       child: BaseConstrainedBox(
-        maxWidth: kBaseCardMaxWidth,
+        maxWidth: this.maxWidth,
         child: Column(
           crossAxisAlignment: this.constrainedAlignment,
           children: [
