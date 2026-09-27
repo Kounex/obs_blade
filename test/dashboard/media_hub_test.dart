@@ -10,6 +10,7 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
+import 'package:obs_blade/types/classes/api/input_channel.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/classes/media/media_status.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -309,6 +310,43 @@ void main() {
     test('other inputs have none', () {
       expect(mediaLiveBehaviorOf('text_ft2_source_v2', {'text': 'x'}), isNull);
     });
+  });
+
+  test('audio meter ticks do not re-notify the media inputs', () {
+    int notified = 0;
+    final dispose = reaction(
+      (_) => dashboardStore.mediaInputs,
+      (_) => notified++,
+    );
+    runInAction(
+      () => dashboardStore.allInputs = ObservableList.of([_media('Clip')]),
+    );
+    expect(notified, 1);
+
+    /// A meter tick: same inputs, new levels, new list
+    runInAction(
+      () => dashboardStore.allInputs = ObservableList.of([
+        _media('Clip').copyWith(
+          inputLevelsMul: [
+            InputChannel(current: 0.5, average: 0.4, potential: 0.5),
+          ],
+        ),
+      ]),
+    );
+    expect(notified, 1);
+
+    runInAction(
+      () => dashboardStore.allInputs = ObservableList.of([
+        _media('Clip'),
+        _media('Jingle'),
+      ]),
+    );
+    expect(notified, 2);
+    expect(dashboardStore.mediaInputs.map((i) => i.inputName), [
+      'Clip',
+      'Jingle',
+    ]);
+    dispose();
   });
 
   testWidgets('empty state explains the Soundboard scene tip', (tester) async {

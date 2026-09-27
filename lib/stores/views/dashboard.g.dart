@@ -17,14 +17,6 @@ mixin _$DashboardStore on _DashboardStore, Store {
         () => super.mediaSceneItems,
         name: '_DashboardStore.mediaSceneItems',
       )).value;
-  Computed<List<Input>>? _$mediaInputsComputed;
-
-  @override
-  List<Input> get mediaInputs =>
-      (_$mediaInputsComputed ??= Computed<List<Input>>(
-        () => super.mediaInputs,
-        name: '_DashboardStore.mediaInputs',
-      )).value;
   Computed<ObservableList<Input>>? _$currentInputsComputed;
 
   @override
@@ -1020,7 +1012,6 @@ studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
 availableRequests: ${availableRequests},
 mediaSceneItems: ${mediaSceneItems},
-mediaInputs: ${mediaInputs},
 currentInputs: ${currentInputs},
 globalInputs: ${globalInputs},
 screenshotPath: ${screenshotPath}

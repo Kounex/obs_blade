@@ -202,11 +202,28 @@ abstract class _DashboardStore with Store {
   @observable
   ObservableMap<String, MediaLiveBehavior> mediaLiveBehavior = ObservableMap();
 
-  /// Every media (ffmpeg / VLC) input of the scene collection, in OBS order
-  @computed
-  List<Input> get mediaInputs => this.allInputs
-      .where((input) => isMediaInputKind(input.inputKind))
-      .toList();
+  /// Every media (ffmpeg / VLC) input of the scene collection, in OBS order.
+  /// Only notifies when the media inputs themselves change (name / kind):
+  /// the audio meters replace [allInputs] ~20x a second, and a plain
+  /// computed re-ran every hub Observer - the whole pad grid - on each tick
+  late final Computed<List<Input>> _mediaInputs = Computed(
+    () => this.allInputs
+        .where((input) => isMediaInputKind(input.inputKind))
+        .toList(),
+    equals: (previous, next) {
+      if (previous == null || next == null) return previous == next;
+      if (previous.length != next.length) return false;
+      for (var i = 0; i < previous.length; i++) {
+        if (previous[i].inputName != next[i].inputName ||
+            previous[i].inputKind != next[i].inputKind) {
+          return false;
+        }
+      }
+      return true;
+    },
+  );
+
+  List<Input> get mediaInputs => _mediaInputs.value;
 
   /// Will contain all inputs returned by [GetInputList] which will even contian
   /// special inputs etc.
