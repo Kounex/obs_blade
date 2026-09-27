@@ -33,6 +33,7 @@ import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/types/extensions/int.dart';
+import 'package:web_socket_channel/io.dart';
 
 import '../../models/enums/log_level.dart';
 import '../../models/past_record_data.dart';
@@ -844,6 +845,10 @@ abstract class _DashboardStore with Store {
   }
 
   void handleStream() {
+    /// A new stream means a screenshot still "in flight" died with the
+    /// old one - don't let it block the preview loop
+    _previewWatchdog?.cancel();
+    _previewInFlight = false;
     _obsStreamSubscription?.cancel();
     _obsStreamSubscription = GetIt.instance<NetworkStore>()
         .watchOBSStream()
@@ -875,23 +880,60 @@ abstract class _DashboardStore with Store {
     _obsStreamSubscription = null;
   }
 
-  void _requestPreviewImage() => NetworkHelper.sendRequest(
-    GetIt.instance<NetworkStore>().activeSession!.socket,
-    RequestType.GetSourceScreenshot,
-    {
-      'sourceName':
-          Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.ExposeStudioControls.name,
-                defaultValue: false,
-              ) &&
-              this.studioMode
-          ? this.studioModePreviewSceneName
-          : this.activeSceneName,
-      'imageFormat': this.previewFileFormat,
-      'imageWidth': _previewImageWidth,
-      'compressionQuality': -1,
-    },
-  );
+  /// The preview loop is response-driven with ONE screenshot in flight.
+  /// A second start while one is out (a preview widget re-created,
+  /// streaming mode toggled, a layout switch) used to add a parallel loop
+  /// that never ended - large frames then queued up on the socket and
+  /// delayed every other response by seconds (e.g. scene items after a
+  /// scene switch).
+  bool _previewInFlight = false;
+
+  /// Frees the in-flight slot when OBS never answers a screenshot
+  Timer? _previewWatchdog;
+
+  void _requestPreviewImage() {
+    if (_previewInFlight) return;
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    _previewInFlight = true;
+    _previewWatchdog?.cancel();
+    _previewWatchdog = Timer(const Duration(seconds: 5), () {
+      _previewInFlight = false;
+      if (this.shouldRequestPreviewImage) _requestPreviewImage();
+    });
+    _sendPreviewImageRequest(session.socket);
+  }
+
+  /// A screenshot answered (or failed): free the slot; a failure retries
+  /// after a moment instead of silently ending the loop
+  void _previewAnswered({required bool succeeded}) {
+    _previewWatchdog?.cancel();
+    _previewInFlight = false;
+    if (!this.shouldRequestPreviewImage) return;
+    if (succeeded) {
+      _requestPreviewImage();
+    } else {
+      _previewWatchdog = Timer(
+        const Duration(seconds: 1),
+        _requestPreviewImage,
+      );
+    }
+  }
+
+  void _sendPreviewImageRequest(IOWebSocketChannel socket) =>
+      NetworkHelper.sendRequest(socket, RequestType.GetSourceScreenshot, {
+        'sourceName':
+            Hive.box(HiveKeys.Settings.name).get(
+                  SettingsKeys.ExposeStudioControls.name,
+                  defaultValue: false,
+                ) &&
+                this.studioMode
+            ? this.studioModePreviewSceneName
+            : this.activeSceneName,
+        'imageFormat': this.previewFileFormat,
+        'imageWidth': _previewImageWidth,
+        'compressionQuality': -1,
+      });
 
   /// Preview screenshot width: the device's physical screen width (short
   /// side), capped at the OBS canvas width - OBS otherwise sends every frame
@@ -1129,6 +1171,7 @@ abstract class _DashboardStore with Store {
   void stopTimers() {
     _getStatsTimer?.cancel();
     _checkConnectionTimer?.cancel();
+    _previewWatchdog?.cancel();
   }
 
   void fetchSceneItemsFilters() => NetworkHelper.sendBatchRequest(
@@ -1795,7 +1838,11 @@ abstract class _DashboardStore with Store {
       GeneralHelper.advLog('Response Incoming: ${(response.requestType)}');
     }
 
-    if (!_obsRequestSucceeded(response)) return;
+    final bool succeeded = _obsRequestSucceeded(response);
+    if (response.requestType == RequestType.GetSourceScreenshot && !succeeded) {
+      _previewAnswered(succeeded: false);
+    }
+    if (!succeeded) return;
 
     switch (response.requestType) {
       case RequestType.GetVersion:
@@ -2271,9 +2318,19 @@ abstract class _DashboardStore with Store {
         final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
         final String? sourceName = requestData?['sourceName'];
         if (sourceName != null) {
-          this.mediaInProgram[sourceName] = GetSourceActiveResponse(
+          final bool active = GetSourceActiveResponse(
             response.jsonRAW,
           ).videoActive;
+          final bool? before = this.mediaInProgram[sourceName];
+          this.mediaInProgram[sourceName] = active;
+
+          /// Entering or leaving the live scene changes playback without
+          /// a media event of its own (a source that doesn't restart on
+          /// activation holds its position while not live, then resumes)
+          /// - re-read so the hub shows the real state and cursor
+          if (before != null && before != active) {
+            requestMediaStatus(sourceName);
+          }
         }
         break;
       case RequestType.GetInputAudioBalance:
@@ -2325,7 +2382,7 @@ abstract class _DashboardStore with Store {
           getSourceScreenshotResponse.imageData.split(',')[1],
         );
 
-        if (this.shouldRequestPreviewImage) _requestPreviewImage();
+        _previewAnswered(succeeded: true);
         break;
       // case RequestType.SaveSourceScreenshot:
       //   SaveSourceScreenshotResponse saveSourceScreenshotResponse =
