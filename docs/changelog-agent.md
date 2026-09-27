@@ -19,6 +19,9 @@ Customer Center (`purchases_ui_flutter`) was considered and skipped:
 heavy native UI dependency, overlaps the plan switch, plan requirement
 unclear. Installed on Kounex iOS (development-signed = sandbox); the
 TestFlight case itself needs the next TestFlight build.
+Dogfood follow-up: lifetime + a still-renewing subscription showed the
+cancel notice's "Open subscriptions" next to "Manage subscription" (same
+action) - lifetime now never shows "Manage subscription".
 
 ## 2026-09-28 - Media outside the live scene, per source (corrects "On hold")
 
