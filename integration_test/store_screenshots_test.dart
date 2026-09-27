@@ -801,8 +801,9 @@ void main() {
       'dashboard_audio',
       settleMs: 1500,
       crops: {
+        // .last: on tablets the scene item list (left) has a 'Music' too
         'fader': [
-          find.text('Music'),
+          find.text('Music').last,
           find.byWidgetPredicate((w) => w is Slider || w is CupertinoSlider),
         ],
       },

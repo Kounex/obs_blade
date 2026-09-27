@@ -18,6 +18,17 @@ emulator (full flow + relaunch) and installed on Kounex iOS. Watch
 first: tablet/landscape on a real iPad, copy wording, and mockup loop
 smoothness on older phones.
 
+**Update 2026-09-27 (late) - store screenshots redesign** (awaiting the
+user's verdict on the composed sets): capture tooling in
+`tool/store_screenshots/` (README there; dedicated sims/AVDs only), composed
+sets live outside the repo (maintainer's store-shots composer). Also
+shipped: statistic detail charts 2-per-row on tablet + `BaseCard` measure
+640 -> 720 + wide tier 1040 (user decision), autodiscover no-WLAN
+unhandled error. Open: whether the Play/F-Droid images
+(`fastlane/metadata/android`) and the iOS sets get committed, and that
+F-Droid would then show Pro-tagged features. Details:
+`changelog-agent.md` 2026-09-27 "Store screenshots".
+
 ## Handoff hygiene (read before editing this file)
 
 - **This is a baton, not a history log.** It holds only what the *next*
