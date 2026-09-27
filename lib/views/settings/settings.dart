@@ -11,6 +11,7 @@ import '../../shared/general/themed/cupertino_sliver_navigation_bar.dart';
 import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
+import '../../utils/legal_links.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';
@@ -287,7 +288,7 @@ class SettingsView extends StatelessWidget {
                     ],
                   ),
                 ),
-                const StaggeredEntrance(
+                StaggeredEntrance(
                   scaleFrom: 0.985,
                   index: 3,
                   child: ActionBlock(
@@ -312,7 +313,12 @@ class SettingsView extends StatelessWidget {
                       BlockEntry(
                         leading: CupertinoIcons.doc_person_fill,
                         title: 'Privacy Policy',
-                        navigateTo: SettingsTabRoutingKeys.PrivacyPolicy,
+                        onTap: () => openLegalPage(context, kPrivacyPolicyUri),
+                      ),
+                      BlockEntry(
+                        leading: CupertinoIcons.doc_text_fill,
+                        title: 'Imprint',
+                        onTap: () => openLegalPage(context, kImprintUri),
                       ),
                       BlockEntry(
                         leading: CupertinoIcons.square_list_fill,

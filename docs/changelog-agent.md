@@ -2,6 +2,18 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-28 - Legal pages live on the website
+
+The bundled privacy policy still said the app sends no data anywhere -
+wrong for 4.0 (RevenueCat, the Kick sign-in relay, chat platforms). The
+website (obs-blade.kounex.com, relaunched by the user with privacy
+policy + imprint) is now the single source of truth: Settings → Misc
+"Privacy Policy" and a new "Imprint" row, and the paywall's Terms /
+Privacy links open the pages in the in-app browser (`openLegalPage` in
+`lib/utils/legal_links.dart`, snackbar when nothing can open them).
+`PrivacyPolicyView` and its route are gone. Neither store requires an
+offline copy - only a link in the app and in the listing.
+
 ## 2026-09-27 - Store screenshots: capture tooling, stats detail on tablet
 
 Redesign of the App Store / Play screenshots (user ask: automated, real

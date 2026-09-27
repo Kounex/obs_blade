@@ -14,7 +14,6 @@ import '../views/settings/data_management/data_management.dart';
 import '../views/settings/faq/faq.dart';
 import '../views/settings/logs/log_detail/log_detail.dart';
 import '../views/settings/logs/logs.dart';
-import '../views/settings/privacy_policy/privacy_policy.dart';
 import '../views/settings/settings.dart';
 import '../views/statistics/statistic_detail/statistic_detail.dart';
 import '../views/statistics/statistics.dart';
@@ -104,7 +103,6 @@ enum StaticticsTabRoutingKeys implements RoutingKeys {
 /// Routing keys for the settings tab
 enum SettingsTabRoutingKeys implements RoutingKeys {
   Landing,
-  PrivacyPolicy,
   About,
   CustomTheme,
   FAQ,
@@ -117,7 +115,7 @@ enum SettingsTabRoutingKeys implements RoutingKeys {
 
   @override
   String get route =>
-      '${AppRoutingKeys.Tabs.route}/settings${{SettingsTabRoutingKeys.Landing: '', SettingsTabRoutingKeys.PrivacyPolicy: '/privacy-policy', SettingsTabRoutingKeys.About: '/about', SettingsTabRoutingKeys.CustomTheme: '/custom-theme', SettingsTabRoutingKeys.FAQ: '/faq', SettingsTabRoutingKeys.DataManagement: '/data-management', SettingsTabRoutingKeys.Logs: '/logs', SettingsTabRoutingKeys.LogDetail: '/logs/detail', SettingsTabRoutingKeys.DashboardCustomisation: '/dashboard-customisation', SettingsTabRoutingKeys.DashboardCustomisationOrder: '/dashboard-customisation/order', SettingsTabRoutingKeys.Pro: '/pro'}[this]!}';
+      '${AppRoutingKeys.Tabs.route}/settings${{SettingsTabRoutingKeys.Landing: '', SettingsTabRoutingKeys.About: '/about', SettingsTabRoutingKeys.CustomTheme: '/custom-theme', SettingsTabRoutingKeys.FAQ: '/faq', SettingsTabRoutingKeys.DataManagement: '/data-management', SettingsTabRoutingKeys.Logs: '/logs', SettingsTabRoutingKeys.LogDetail: '/logs/detail', SettingsTabRoutingKeys.DashboardCustomisation: '/dashboard-customisation', SettingsTabRoutingKeys.DashboardCustomisationOrder: '/dashboard-customisation/order', SettingsTabRoutingKeys.Pro: '/pro'}[this]!}';
 }
 
 /// Used to summarize routing tasks and information at one point
@@ -142,8 +140,6 @@ class RoutingHelper {
 
   static Map<String, Widget Function(BuildContext)> settingsTabRoutes = {
     SettingsTabRoutingKeys.Landing.route: (_) => const SettingsView(),
-    SettingsTabRoutingKeys.PrivacyPolicy.route: (_) =>
-        const PrivacyPolicyView(),
     SettingsTabRoutingKeys.About.route: (_) => const AboutView(),
     SettingsTabRoutingKeys.CustomTheme.route: (_) => const CustomThemeView(),
     SettingsTabRoutingKeys.FAQ.route: (_) => const FAQView(),

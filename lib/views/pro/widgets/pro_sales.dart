@@ -1,21 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/button.dart';
 import '../../../shared/general/base/constrained_box.dart';
 import '../../../stores/pro_store.dart';
 import '../../../utils/styling_helper.dart';
-import '../../settings/privacy_policy/privacy_policy.dart';
+import '../../../utils/legal_links.dart';
 import 'pro_benefits.dart';
 import 'pro_hero.dart';
 import 'pro_pricing.dart';
-
-/// Apple's standard EULA (the app ships no custom terms document)
-final Uri _kTermsUri = Uri.parse(
-  'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/',
-);
 
 /// The not-Pro side of the paywall: hero, browsable benefits, pricing,
 /// restore, legal link-outs. Phone and tablet compositions differ via the
@@ -25,19 +19,6 @@ class ProSalesView extends StatelessWidget {
   final ProStore store;
 
   const ProSalesView({super.key, required this.store});
-
-  Future<void> _openTerms(BuildContext context) async {
-    try {
-      await launchUrl(_kTermsUri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(content: Text('Couldn\'t open the link.')),
-        );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +135,7 @@ class ProSalesView extends StatelessWidget {
                         children: [
                           _LegalLink(
                             text: 'Terms of Use',
-                            onTap: () => this._openTerms(context),
+                            onTap: () => openLegalPage(context, kTermsUri),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
@@ -172,11 +153,8 @@ class ProSalesView extends StatelessWidget {
                           ),
                           _LegalLink(
                             text: 'Privacy Policy',
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const PrivacyPolicyView(),
-                              ),
-                            ),
+                            onTap: () =>
+                                openLegalPage(context, kPrivacyPolicyUri),
                           ),
                         ],
                       ),

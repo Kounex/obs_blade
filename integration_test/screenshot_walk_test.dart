@@ -532,11 +532,8 @@ void main() {
     _popInTab(Tabs.Settings);
     await _pump(tester, 1000);
 
-    // Privacy Policy
-    _pushInTab(Tabs.Settings, SettingsTabRoutingKeys.PrivacyPolicy.route);
-    await _shot(tester, '33_settings_privacy_policy', settleMs: 2200);
-    _popInTab(Tabs.Settings);
-    await _pump(tester, 1200);
+    // Privacy Policy + Imprint open the website in the in-app browser -
+    // nothing in-app to capture
 
     // Support dialog (Tip Jar) - open, capture, dismiss. NO purchase.
     if (settingsScroll != null && settingsScroll.hasClients) {
