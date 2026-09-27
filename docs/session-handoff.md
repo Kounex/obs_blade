@@ -19,12 +19,14 @@ first: tablet/landscape on a real iPad, copy wording, and mockup loop
 smoothness on older phones.
 
 **Update 2026-09-28 - 4.0 release in progress** (`tool/release/`, README
-there; runs on the workstation). Build **4.0.0 (2026092801)** is on
+there; runs on the workstation). Build **4.0.0 (2026092802)** is on
 **TestFlight (internal)** and the **Play internal track** (all Play
 App content declarations done by the user, incl. Data safety + App
 access). Before `submit ios`: App Privacy
 (Apple) form (user), upgrade test over the store
-3.2.0, sandbox purchases. User decisions: internal beta only, release to
+3.2.0, sandbox purchases (iOS monthly bought OK; RevenueCat offering
+`pro` is current), plan switch (monthly -> yearly / lifetime) and the
+media lock on device, Android purchases (Play license tester). User decisions: internal beta only, release to
 everyone at once, F-Droid after the stores. Legal pages now live only on
 obs-blade.kounex.com (privacy policy + imprint).
 
