@@ -14,7 +14,7 @@ import 'media_clock.dart';
 /// plays, the way a soundboard behaves. A long press opens the full
 /// transport ([onOpenTransport]). Playing pads carry an accent ring and a
 /// progress bar; pads that aren't in program are dimmed with a
-/// speaker-slash marker - OBS only plays media in the live scene.
+/// speaker-slash marker - OBS only starts media in the live scene.
 class MediaPad extends StatelessWidget {
   final String inputName;
   final VoidCallback onOpenTransport;
@@ -34,24 +34,20 @@ class MediaPad extends StatelessWidget {
 
     return Observer(
       builder: (context) {
-        final MediaStatus? status = dashboardStore.mediaStatus[this.inputName];
-        final bool playing = status?.playing ?? false;
-        final bool paused = status?.paused ?? false;
-
-        /// Unknown (not read yet) counts as heard - no false alarm
-        final bool inProgram =
-            dashboardStore.mediaInProgram[this.inputName] ?? true;
-
-        /// OBS says playing but the source isn't live: it holds its place
-        final bool onHold = playing && !inProgram;
-        final bool livePlaying = playing && inProgram;
+        final MediaPlayback playback = dashboardStore.mediaPlayback(
+          this.inputName,
+        );
+        final bool inProgram = playback.live;
+        final bool livePlaying = playback.running && inProgram;
         final Color notLive = theme.extension<AppStatusColors>()!.warning;
 
-        final String stateText = onHold
+        final String stateText = playback.restartsWhenLive
+            ? 'restarts when live'
+            : playback.onHold
             ? 'on hold'
-            : playing
+            : playback.running
             ? 'playing'
-            : paused
+            : playback.showsPosition
             ? 'paused'
             : 'stopped';
 
@@ -65,7 +61,7 @@ class MediaPad extends StatelessWidget {
             ].join(', '),
             hint: inProgram
                 ? 'Plays from the start. Long press for more controls'
-                : 'Opens its controls - it only plays in the live scene',
+                : 'Opens its controls - it only starts in the live scene',
             onLongPress: this.onOpenTransport,
             excludeSemantics: true,
             child: GestureDetector(
@@ -135,12 +131,12 @@ class MediaPad extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (playing || paused)
+                        if (playback.showsPosition)
                           Positioned(
                             left: AppSpacing.sm,
                             top: AppSpacing.sm,
                             child: Icon(
-                              livePlaying
+                              playback.running
                                   ? CupertinoIcons.play_fill
                                   : CupertinoIcons.pause_fill,
                               size: 14.0,
@@ -159,17 +155,34 @@ class MediaPad extends StatelessWidget {
                               color: notLive,
                             ),
                           ),
-                        if (status != null && (playing || paused))
+                        if (playback.restartsWhenLive)
+                          Positioned(
+                            left: AppSpacing.sm,
+                            right: AppSpacing.sm,
+                            bottom: AppSpacing.xs,
+                            child: Text(
+                              'Restarts when live',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.labelSmall!.copyWith(
+                                color: textColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        if (playback.showsPosition)
                           Positioned(
                             left: 0,
                             right: 0,
                             bottom: 0,
                             child: MediaClock(
-                              running: playing && inProgram,
+                              running: playback.running,
                               builder: (context, now) {
-                                final double? progress = status.progressAt(now);
-                                final int? cursor = status.cursorAt(now);
-                                final int? duration = status.duration;
+                                final double? progress = playback.progressAt(
+                                  now,
+                                );
+                                final int? cursor = playback.cursorAt(now);
+                                final int? duration = playback.status?.duration;
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [

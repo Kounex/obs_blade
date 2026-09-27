@@ -497,6 +497,24 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$mediaLiveBehaviorAtom = Atom(
+    name: '_DashboardStore.mediaLiveBehavior',
+    context: context,
+  );
+
+  @override
+  ObservableMap<String, MediaLiveBehavior> get mediaLiveBehavior {
+    _$mediaLiveBehaviorAtom.reportRead();
+    return super.mediaLiveBehavior;
+  }
+
+  @override
+  set mediaLiveBehavior(ObservableMap<String, MediaLiveBehavior> value) {
+    _$mediaLiveBehaviorAtom.reportWrite(value, super.mediaLiveBehavior, () {
+      super.mediaLiveBehavior = value;
+    });
+  }
+
   late final _$allInputsAtom = Atom(
     name: '_DashboardStore.allInputs',
     context: context,
@@ -985,6 +1003,7 @@ sceneItemsSceneName: ${sceneItemsSceneName},
 mediaStates: ${mediaStates},
 mediaStatus: ${mediaStatus},
 mediaInProgram: ${mediaInProgram},
+mediaLiveBehavior: ${mediaLiveBehavior},
 allInputs: ${allInputs},
 globalInputNames: ${globalInputNames},
 currentTransition: ${currentTransition},

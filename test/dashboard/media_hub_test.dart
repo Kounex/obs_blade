@@ -158,46 +158,157 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('playing outside the live scene shows as on hold', (
-    tester,
-  ) async {
-    final handle = tester.ensureSemantics();
-    runInAction(() {
-      dashboardStore.allInputs = ObservableList.of([_media('Jingle')]);
+  group('outside the live scene (what OBS 32 does)', () {
+    bool enabled(WidgetTester tester, String label) => tester
+        .getSemantics(find.bySemanticsLabel(label))
+        .flagsCollection
+        .isEnabled
+        .toBoolOrNull()!;
 
-      /// OBS reports "playing" for a source that left the live scene, but
-      /// its cursor doesn't move
+    Future<void> showList(WidgetTester tester) async {
+      await tester.pumpWidget(wrap(const MediaHub()));
+      await settle(tester);
+      await tester.runAsync(() async {
+        await tester.tap(find.byIcon(CupertinoIcons.list_bullet));
+        await tester.pump();
+        await Hive.box(HiveKeys.Settings.name).flush();
+      });
+      await settle(tester);
+    }
+
+    void seed(
+      String state,
+      MediaLiveBehavior behavior, {
+      String kind = 'ffmpeg_source',
+    }) => runInAction(() {
+      dashboardStore.allInputs = ObservableList.of([
+        _media('Jingle', kind: kind),
+      ]);
       dashboardStore.mediaStatus['Jingle'] = MediaStatus(
-        state: kMediaStatePlaying,
+        state: state,
         duration: 30000,
         cursor: 7000,
         receivedAt: DateTime.now().subtract(const Duration(seconds: 20)),
       );
       dashboardStore.mediaInProgram['Jingle'] = false;
+      dashboardStore.mediaLiveBehavior['Jingle'] = behavior;
     });
 
-    await tester.pumpWidget(wrap(const MediaHub()));
-    await settle(tester);
-    expect(
-      find.bySemanticsLabel(
-        RegExp(r'^Jingle, on hold, not in the live scene$'),
-      ),
-      findsOneWidget,
-    );
+    testWidgets('restart off: it keeps playing unheard - time runs', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      seed(kMediaStatePlaying, MediaLiveBehavior.keepsPlaying);
+      await showList(tester);
 
-    await tester.runAsync(() async {
-      await tester.tap(find.byIcon(CupertinoIcons.list_bullet));
-      await tester.pump();
-      await Hive.box(HiveKeys.Settings.name).flush();
+      /// 0:07 + the 20 s since the read - the clip really plays on
+      expect(find.text('0:27 / 0:30'), findsOneWidget);
+      expect(find.text('Not in the live scene'), findsOneWidget);
+      expect(enabled(tester, 'Pause Jingle'), isTrue);
+      expect(enabled(tester, 'Stop Jingle'), isTrue);
+      expect(enabled(tester, 'Restart Jingle'), isFalse);
+
+      await tester.pumpWidget(const SizedBox());
+      handle.dispose();
     });
-    await settle(tester);
 
-    /// The held position - not 0:07 + the 20 s since the read
-    expect(find.text('On hold at 0:07 · resumes when live'), findsOneWidget);
-    expect(find.text('Not in the live scene'), findsOneWidget);
+    testWidgets('restart off: a paused clip can resume unheard', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      seed(kMediaStatePaused, MediaLiveBehavior.keepsPlaying);
+      await showList(tester);
 
-    await tester.pumpWidget(const SizedBox());
-    handle.dispose();
+      expect(find.text('0:07 / 0:30'), findsOneWidget);
+      expect(enabled(tester, 'Play Jingle'), isTrue);
+      expect(enabled(tester, 'Restart Jingle'), isFalse);
+      handle.dispose();
+    });
+
+    testWidgets('restart on: stopped, plays from the start once live', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      seed('OBS_MEDIA_STATE_ENDED', MediaLiveBehavior.restarts);
+      await tester.pumpWidget(wrap(const MediaHub()));
+      await settle(tester);
+
+      expect(
+        find.bySemanticsLabel(
+          RegExp(r'^Jingle, restarts when live, not in the live scene$'),
+        ),
+        findsOneWidget,
+      );
+
+      await showList(tester);
+      expect(find.text('Restarts when live'), findsOneWidget);
+      expect(enabled(tester, 'Play Jingle'), isFalse);
+      expect(enabled(tester, 'Restart Jingle'), isFalse);
+      expect(enabled(tester, 'Stop Jingle'), isFalse);
+      handle.dispose();
+    });
+
+    testWidgets('restart on: a queued play shows no parked cursor', (
+      tester,
+    ) async {
+      seed(kMediaStatePlaying, MediaLiveBehavior.restarts);
+      await tester.pumpWidget(wrap(const MediaHub()));
+      await settle(tester);
+
+      expect(find.text('Restarts when live'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+
+    testWidgets('VLC pause_unpause: on hold at the held position', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      seed(kMediaStatePaused, MediaLiveBehavior.holds, kind: 'vlc_source');
+      await showList(tester);
+
+      expect(find.text('On hold at 0:07 · resumes when live'), findsOneWidget);
+      expect(enabled(tester, 'Play Jingle'), isFalse);
+      expect(enabled(tester, 'Stop Jingle'), isTrue);
+      handle.dispose();
+    });
+  });
+
+  group('mediaLiveBehaviorOf', () {
+    test('ffmpeg: restart_on_activate, missing = OBS default (on)', () {
+      expect(
+        mediaLiveBehaviorOf('ffmpeg_source', {}),
+        MediaLiveBehavior.restarts,
+      );
+      expect(
+        mediaLiveBehaviorOf('ffmpeg_source', {'restart_on_activate': false}),
+        MediaLiveBehavior.keepsPlaying,
+      );
+      expect(
+        mediaLiveBehaviorOf('ffmpeg_source', {'restart_on_activate': true}),
+        MediaLiveBehavior.restarts,
+      );
+    });
+
+    test('VLC: playback_behavior, missing = stop_restart', () {
+      expect(
+        mediaLiveBehaviorOf('vlc_source', null),
+        MediaLiveBehavior.restarts,
+      );
+      expect(
+        mediaLiveBehaviorOf('vlc_source', {'playback_behavior': 'always_play'}),
+        MediaLiveBehavior.keepsPlaying,
+      );
+      expect(
+        mediaLiveBehaviorOf('vlc_source', {
+          'playback_behavior': 'pause_unpause',
+        }),
+        MediaLiveBehavior.holds,
+      );
+    });
+
+    test('other inputs have none', () {
+      expect(mediaLiveBehaviorOf('text_ft2_source_v2', {'text': 'x'}), isNull);
+    });
   });
 
   testWidgets('empty state explains the Soundboard scene tip', (tester) async {

@@ -55,6 +55,8 @@ class _TextSourceSheetState extends State<TextSourceSheet> {
       if (message is BaseResponse &&
           message.requestType == RequestType.GetInputSettings &&
           message.status.result &&
+          /// The Media hub reads media settings on the same stream
+          isTextInputKind(message.json['inputKind'] as String?) &&
           !_loaded &&
           this.mounted) {
         setState(() {

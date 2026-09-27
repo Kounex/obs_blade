@@ -189,12 +189,18 @@ abstract class _DashboardStore with Store {
   ObservableMap<String, MediaStatus> mediaStatus = ObservableMap();
 
   /// Whether a media input is currently in program (GetSourceActive's
-  /// `videoActive`). OBS only plays a media source while it is: a play
-  /// request outside the live scene is accepted and reports "playing",
-  /// but the cursor never moves - so the Media hub locks starting those.
+  /// `videoActive`). OBS only starts a media source while it is: a play
+  /// request outside the live scene is accepted but the clip ends or
+  /// waits for the scene - so the Media hub locks starting those.
   /// Re-read on program scene / transition / scene item visibility changes
   @observable
   ObservableMap<String, bool> mediaInProgram = ObservableMap();
+
+  /// What OBS does with each media input outside the live scene (keeps
+  /// playing unheard / restarts when live / holds), from GetInputSettings.
+  /// Read with the rest of the hub state - OBS has no settings event
+  @observable
+  ObservableMap<String, MediaLiveBehavior> mediaLiveBehavior = ObservableMap();
 
   /// Every media (ffmpeg / VLC) input of the scene collection, in OBS order
   @computed
@@ -1224,14 +1230,32 @@ abstract class _DashboardStore with Store {
     });
   }
 
-  /// Status + in-program state of every media input - the Media hub calls
-  /// this when it shows up; the input list reload keeps it current after
+  /// Status, settings and in-program state of every media input - the
+  /// Media hub calls this when it shows up; the input list reload keeps it
+  /// current after
   void requestAllMediaStatus() {
     for (final input in this.mediaInputs) {
       if (input.inputName == null) continue;
       requestMediaStatus(input.inputName!);
+      requestMediaSettings(input.inputName!);
     }
     requestMediaInProgram();
+  }
+
+  /// The Media hub's view of one media input - read it inside an Observer
+  MediaPlayback mediaPlayback(String inputName) => MediaPlayback(
+    status: this.mediaStatus[inputName],
+    live: this.mediaInProgram[inputName] ?? true,
+    behavior: this.mediaLiveBehavior[inputName],
+  );
+
+  /// Re-reads [mediaLiveBehavior] for one media input
+  void requestMediaSettings(String inputName) {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    NetworkHelper.sendRequest(session.socket, RequestType.GetInputSettings, {
+      'inputName': inputName,
+    });
   }
 
   /// Re-reads GetSourceActive for the media inputs - cheap (one request per
@@ -2078,6 +2102,9 @@ abstract class _DashboardStore with Store {
         this.mediaInProgram.removeWhere(
           (name, _) => !mediaNames.contains(name),
         );
+        this.mediaLiveBehavior.removeWhere(
+          (name, _) => !mediaNames.contains(name),
+        );
         if (this.mediaStatus.isNotEmpty || this.mediaInProgram.isNotEmpty) {
           requestAllMediaStatus();
         }
@@ -2318,13 +2345,27 @@ abstract class _DashboardStore with Store {
           final bool? before = this.mediaInProgram[sourceName];
           this.mediaInProgram[sourceName] = active;
 
-          /// Entering or leaving the live scene changes playback without
-          /// a media event of its own (a source that doesn't restart on
-          /// activation holds its position while not live, then resumes)
-          /// - re-read so the hub shows the real state and cursor
+          /// Entering or leaving the live scene can change playback
+          /// without a media event of its own (a source that restarts on
+          /// activation stops on leaving and starts again once live) -
+          /// re-read so the hub shows the real state and cursor
           if (before != null && before != active) {
             requestMediaStatus(sourceName);
           }
+        }
+        break;
+      case RequestType.GetInputSettings:
+
+        /// Only media inputs are kept - other readers (the text source
+        /// sheet) listen for their own answer
+        final requestData = NetworkHelper.getRequestBodyForUUID(response.uuid);
+        final String? inputName = requestData?['inputName'];
+        final MediaLiveBehavior? behavior = mediaLiveBehaviorOf(
+          response.json['inputKind'] as String?,
+          (response.json['inputSettings'] as Map?)?.cast<String, dynamic>(),
+        );
+        if (inputName != null && behavior != null) {
+          this.mediaLiveBehavior[inputName] = behavior;
         }
         break;
       case RequestType.GetInputAudioBalance:

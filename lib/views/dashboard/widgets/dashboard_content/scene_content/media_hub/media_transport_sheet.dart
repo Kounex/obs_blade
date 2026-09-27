@@ -10,7 +10,6 @@ import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/input.dart';
 import '../../../../../../types/classes/media/media_status.dart';
 import 'media_clock.dart';
-import 'media_list_row.dart';
 
 /// Full transport for one media input: seek, play/pause, restart, stop,
 /// and previous / next for VLC playlists. Opened from a pad (long press)
@@ -32,7 +31,9 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
   @override
   void initState() {
     super.initState();
-    GetIt.instance<DashboardStore>().requestMediaStatus(this.widget.inputName);
+    GetIt.instance<DashboardStore>()
+      ..requestMediaStatus(this.widget.inputName)
+      ..requestMediaSettings(this.widget.inputName);
   }
 
   @override
@@ -43,17 +44,17 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
 
     return Observer(
       builder: (context) {
-        final MediaStatus? status =
-            dashboardStore.mediaStatus[this.widget.inputName];
-        final bool playing = status?.playing ?? false;
-        final bool inProgram =
-            dashboardStore.mediaInProgram[this.widget.inputName] ?? true;
+        final MediaPlayback playback = dashboardStore.mediaPlayback(
+          this.widget.inputName,
+        );
+        final bool playing = playback.playing;
+        final bool inProgram = playback.live;
         Input? input;
         for (final candidate in dashboardStore.mediaInputs) {
           if (candidate.inputName == this.widget.inputName) input = candidate;
         }
         final bool vlc = isVlcInputKind(input?.inputKind);
-        final int? duration = status?.duration;
+        final int? duration = playback.status?.duration;
 
         void action(String mediaAction) => dashboardStore.triggerMediaAction(
           this.widget.inputName,
@@ -86,7 +87,7 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Not in the live scene. OBS only plays media that is in the live scene - switch to its scene first, or put your clips in a scene you nest into your main scenes.',
+                        notLiveExplanation(playback.behavior),
                         style: theme.textTheme.bodySmall!.copyWith(
                           color: theme.extension<AppStatusColors>()!.warning,
                         ),
@@ -99,23 +100,19 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
               const BaseDivider(),
               const SizedBox(height: AppSpacing.md),
               MediaClock(
-                running: playing && inProgram && _draggingCursor == null,
+                running: playback.running && _draggingCursor == null,
                 builder: (context, now) {
                   final int cursor =
-                      _draggingCursor?.round() ?? status?.cursorAt(now) ?? 0;
-                  final bool seekable =
-                      inProgram &&
-                      duration != null &&
-                      duration > 0 &&
-                      (status?.active ?? false);
+                      _draggingCursor?.round() ?? playback.cursorAt(now) ?? 0;
+                  final bool seekable = playback.canSeek;
                   return Column(
                     children: [
                       StaleGuard(
                         child: Slider(
                           min: 0.0,
-                          max: seekable ? duration.toDouble() : 1.0,
+                          max: seekable ? duration!.toDouble() : 1.0,
                           value: seekable
-                              ? cursor.clamp(0, duration).toDouble()
+                              ? cursor.clamp(0, duration!).toDouble()
                               : 0.0,
                           semanticFormatterCallback: (value) =>
                               formatMediaTime(value.round()),
@@ -143,11 +140,7 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                             Text(
                               seekable
                                   ? formatMediaTime(cursor)
-                                  : mediaStatusLine(
-                                      status,
-                                      now,
-                                      live: inProgram,
-                                    ),
+                                  : playback.line(now),
                               style: theme.textTheme.bodySmall!.copyWith(
                                 fontFeatures: kTabularFigures,
                                 color: textColors.textSecondary,
@@ -178,14 +171,14 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                       _SheetButton(
                         icon: CupertinoIcons.backward_end_fill,
                         label: 'Previous',
-                        onTap: inProgram
+                        onTap: playback.canStart
                             ? () => action(kMediaActionPrevious)
                             : null,
                       ),
                     _SheetButton(
                       icon: CupertinoIcons.arrow_counterclockwise,
                       label: 'Restart',
-                      onTap: inProgram
+                      onTap: playback.canStart
                           ? () => action(kMediaActionRestart)
                           : null,
                     ),
@@ -196,9 +189,9 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                       label: playing ? 'Pause' : 'Play',
                       primary: true,
 
-                      /// Starting is locked outside the live scene; pausing a
-                      /// (stuck) playing state stays possible
-                      onTap: inProgram || playing
+                      /// Starting is locked outside the live scene; pausing
+                      /// stays possible, resuming where it plays on unheard
+                      onTap: playback.canPlayPause
                           ? () => action(
                               playing ? kMediaActionPause : kMediaActionPlay,
                             )
@@ -207,7 +200,7 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                     _SheetButton(
                       icon: CupertinoIcons.stop_fill,
                       label: 'Stop',
-                      onTap: (status?.active ?? false)
+                      onTap: playback.canStop
                           ? () => action(kMediaActionStop)
                           : null,
                     ),
@@ -215,7 +208,7 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                       _SheetButton(
                         icon: CupertinoIcons.forward_end_fill,
                         label: 'Next',
-                        onTap: inProgram
+                        onTap: playback.canStart
                             ? () => action(kMediaActionNext)
                             : null,
                       ),
@@ -228,6 +221,23 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
       },
     );
   }
+}
+
+/// Why the controls are locked outside the live scene, and what OBS does
+/// with the source meanwhile
+String notLiveExplanation(MediaLiveBehavior? behavior) {
+  const String fix =
+      'Switch to its scene first, or put your clips in a scene you nest into your main scenes.';
+  return switch (behavior) {
+    MediaLiveBehavior.keepsPlaying =>
+      'Not in the live scene. OBS keeps playing it unheard and carries on from there once its scene is live - starting from the top and seeking only work in the live scene. $fix',
+    MediaLiveBehavior.restarts =>
+      'Not in the live scene. OBS plays it from the start whenever its scene goes live ("Restart playback when source becomes active" in its OBS properties). $fix',
+    MediaLiveBehavior.holds =>
+      'Not in the live scene. OBS holds it and resumes once its scene is live. $fix',
+    null =>
+      'Not in the live scene. OBS only starts media in the live scene. $fix',
+  };
 }
 
 class _SheetButton extends StatelessWidget {
