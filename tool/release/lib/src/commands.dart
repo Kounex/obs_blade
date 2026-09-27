@@ -319,14 +319,40 @@ class Release {
     return 0;
   }
 
-  /// The artifact from `build` must match the current version and commit.
+  /// Commits after a build that can't change the binary: docs, Markdown,
+  /// store listing files and the release tooling itself.
+  static bool _outsideBinary(String path) =>
+      path.startsWith('docs/') ||
+      path.endsWith('.md') ||
+      path.startsWith('fastlane/') ||
+      path.startsWith('tool/');
+
+  /// Whether [built] and [head] build the same binary: the same commit, or
+  /// only non-binary files changed in between.
+  Future<bool> _sameBinaryInputs(String built, String head) async {
+    if (built == head) return true;
+    final r = await Process.run('git', [
+      'diff',
+      '--name-only',
+      built,
+      head,
+    ], workingDirectory: project.root);
+    if (r.exitCode != 0) return false;
+    final changed = (r.stdout as String)
+        .split('\n')
+        .where((l) => l.trim().isNotEmpty);
+    return changed.every(_outsideBinary);
+  }
+
+  /// The artifact from `build` must match the current version, and nothing
+  /// that goes into the binary may have changed since.
   Future<String?> _artifact(String platform) async {
     final s = _readStamp(platform);
     final v = project.version;
     final head = await _out('git', ['rev-parse', 'HEAD']);
     if (s == null ||
         s['build'] != v.build ||
-        s['commit'] != head ||
+        !await _sameBinaryInputs('${s['commit']}', head) ||
         !File('${s['artifact']}').existsSync()) {
       stderr.writeln(
         'No $platform build for ${v.name}+${v.build} at HEAD - run: release build $platform',

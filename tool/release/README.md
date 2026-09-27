@@ -34,8 +34,9 @@ dart run tool/release/bin/release.dart status
 - credentials set, fastlane installed, the app's Kick OAuth client present
 
 Store builds never get `PRO_RELEASE_TEST_UNLOCK` (the dogfood-only Pro
-unlock). `beta` refuses an artifact that doesn't match the current version
-and commit.
+unlock). `beta` refuses an artifact that doesn't match the current version,
+or when anything that goes into the binary changed since it was built
+(commits touching only `docs/`, Markdown, `fastlane/` or `tool/` are fine).
 
 ## Credentials
 
