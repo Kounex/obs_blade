@@ -20,10 +20,10 @@ smoothness on older phones.
 
 **Update 2026-09-28 - 4.0 release in progress** (`tool/release/`, README
 there; runs on the workstation). Build **4.0.0 (2026092801)** is on
-**TestFlight, internal testers**. Play internal upload blocked on the
-console-only **App content -> Financial features** declaration (user);
-then `release beta android --yes`. Before `submit ios`: App Privacy
-(Apple) + Data safety (Play) forms (user), upgrade test over the store
+**TestFlight (internal)** and the **Play internal track** (all Play
+App content declarations done by the user, incl. Data safety + App
+access). Before `submit ios`: App Privacy
+(Apple) form (user), upgrade test over the store
 3.2.0, sandbox purchases. User decisions: internal beta only, release to
 everyone at once, F-Droid after the stores. Legal pages now live only on
 obs-blade.kounex.com (privacy policy + imprint).
