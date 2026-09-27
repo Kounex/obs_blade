@@ -81,14 +81,14 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                     Icon(
                       CupertinoIcons.speaker_slash_fill,
                       size: 16.0,
-                      color: textColors.textSecondary,
+                      color: theme.extension<AppStatusColors>()!.warning,
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         'Not in the live scene. OBS only plays media that is in the live scene - switch to its scene first, or put your clips in a scene you nest into your main scenes.',
                         style: theme.textTheme.bodySmall!.copyWith(
-                          color: textColors.textSecondary,
+                          color: theme.extension<AppStatusColors>()!.warning,
                         ),
                       ),
                     ),
@@ -143,7 +143,11 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                             Text(
                               seekable
                                   ? formatMediaTime(cursor)
-                                  : mediaStatusLine(status, now),
+                                  : mediaStatusLine(
+                                      status,
+                                      now,
+                                      live: inProgram,
+                                    ),
                               style: theme.textTheme.bodySmall!.copyWith(
                                 fontFeatures: kTabularFigures,
                                 color: textColors.textSecondary,

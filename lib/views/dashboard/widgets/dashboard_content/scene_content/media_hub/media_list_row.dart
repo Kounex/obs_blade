@@ -35,18 +35,37 @@ class MediaListRow extends StatelessWidget {
         final bool inProgram =
             dashboardStore.mediaInProgram[this.inputName] ?? true;
 
+        /// OBS says playing but the source isn't live: it holds its
+        /// position (and resumes once live, unless it restarts)
+        final bool onHold = playing && !inProgram;
+
+        /// Not live: everything but the reason fades well past the grey
+        /// of a plain stopped row
+        final double dim = inProgram ? 1.0 : 0.4;
+        final Color notLive = theme.extension<AppStatusColors>()!.warning;
+
         return Pressable(
           onTap: this.onOpenTransport,
           child: ListTile(
             dense: true,
-            leading: Icon(
-              playing ? CupertinoIcons.play_fill : CupertinoIcons.music_note_2,
-              color: playing ? accent : null,
+            leading: Opacity(
+              opacity: dim,
+              child: Icon(
+                onHold
+                    ? CupertinoIcons.pause_fill
+                    : playing
+                    ? CupertinoIcons.play_fill
+                    : CupertinoIcons.music_note_2,
+                color: playing && inProgram ? accent : null,
+              ),
             ),
-            title: Text(
-              this.inputName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            title: Opacity(
+              opacity: dim,
+              child: Text(
+                this.inputName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             subtitle: MediaClock(
               /// Outside the live scene OBS reports "playing" with a frozen
@@ -55,13 +74,16 @@ class MediaListRow extends StatelessWidget {
               builder: (context, now) => Row(
                 children: [
                   Flexible(
-                    child: Text(
-                      mediaStatusLine(status, now),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall!.copyWith(
-                        fontFeatures: kTabularFigures,
-                        color: textColors.textSecondary,
+                    child: Opacity(
+                      opacity: dim,
+                      child: Text(
+                        mediaStatusLine(status, now, live: inProgram),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          fontFeatures: kTabularFigures,
+                          color: textColors.textSecondary,
+                        ),
                       ),
                     ),
                   ),
@@ -70,13 +92,14 @@ class MediaListRow extends StatelessWidget {
                     Icon(
                       CupertinoIcons.speaker_slash_fill,
                       size: 12.0,
-                      color: textColors.textTertiary,
+                      color: notLive,
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
                       'Not in the live scene',
                       style: theme.textTheme.bodySmall!.copyWith(
-                        color: textColors.textTertiary,
+                        color: notLive,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -91,29 +114,39 @@ class MediaListRow extends StatelessWidget {
                   /// elsewhere is accepted but nothing plays, so those
                   /// buttons lock (the row still opens the transport sheet,
                   /// which says why)
-                  _TransportButton(
-                    icon: CupertinoIcons.arrow_counterclockwise,
-                    label: 'Restart ${this.inputName}',
-                    onTap: inProgram
-                        ? () => dashboardStore.triggerMediaAction(
-                            this.inputName,
-                            kMediaActionRestart,
-                          )
-                        : null,
-                  ),
-                  _TransportButton(
-                    icon: playing
-                        ? CupertinoIcons.pause_fill
-                        : CupertinoIcons.play_fill,
-                    label: playing
-                        ? 'Pause ${this.inputName}'
-                        : 'Play ${this.inputName}',
-                    onTap: inProgram || playing
-                        ? () => dashboardStore.triggerMediaAction(
-                            this.inputName,
-                            playing ? kMediaActionPause : kMediaActionPlay,
-                          )
-                        : null,
+                  Opacity(
+                    opacity: dim,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _TransportButton(
+                          icon: CupertinoIcons.arrow_counterclockwise,
+                          label: 'Restart ${this.inputName}',
+                          onTap: inProgram
+                              ? () => dashboardStore.triggerMediaAction(
+                                  this.inputName,
+                                  kMediaActionRestart,
+                                )
+                              : null,
+                        ),
+                        _TransportButton(
+                          icon: playing
+                              ? CupertinoIcons.pause_fill
+                              : CupertinoIcons.play_fill,
+                          label: playing
+                              ? 'Pause ${this.inputName}'
+                              : 'Play ${this.inputName}',
+                          onTap: inProgram || playing
+                              ? () => dashboardStore.triggerMediaAction(
+                                  this.inputName,
+                                  playing
+                                      ? kMediaActionPause
+                                      : kMediaActionPlay,
+                                )
+                              : null,
+                        ),
+                      ],
+                    ),
                   ),
                   _TransportButton(
                     icon: CupertinoIcons.stop_fill,
@@ -136,8 +169,15 @@ class MediaListRow extends StatelessWidget {
 }
 
 /// `0:12 / 0:45`, or the state when nothing is loaded
-String mediaStatusLine(MediaStatus? status, DateTime now) {
+///
+/// [live] false: OBS reports "playing" for a source outside the live scene
+/// but its cursor doesn't move - show the held position, not a running one.
+String mediaStatusLine(MediaStatus? status, DateTime now, {bool live = true}) {
   if (status == null) return '—';
+  if (!live && status.playing) {
+    final int? cursor = status.cursor;
+    return cursor == null ? 'On hold' : 'On hold at ${formatMediaTime(cursor)}';
+  }
   final int? cursor = status.cursorAt(now);
   final int? duration = status.duration;
   if (status.active && cursor != null && duration != null) {

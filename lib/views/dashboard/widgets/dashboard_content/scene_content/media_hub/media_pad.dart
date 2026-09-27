@@ -42,7 +42,14 @@ class MediaPad extends StatelessWidget {
         final bool inProgram =
             dashboardStore.mediaInProgram[this.inputName] ?? true;
 
-        final String stateText = playing
+        /// OBS says playing but the source isn't live: it holds its place
+        final bool onHold = playing && !inProgram;
+        final bool livePlaying = playing && inProgram;
+        final Color notLive = theme.extension<AppStatusColors>()!.warning;
+
+        final String stateText = onHold
+            ? 'on hold'
+            : playing
             ? 'playing'
             : paused
             ? 'paused'
@@ -81,42 +88,49 @@ class MediaPad extends StatelessWidget {
                   duration: AppMotion.fast,
                   decoration: BoxDecoration(
                     color: Color.alphaBlend(
-                      playing
+                      livePlaying
                           ? accent.withValues(alpha: 0.14)
                           : theme.colorScheme.onSurface.withValues(alpha: 0.05),
                       theme.cardColor,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: playing
+                      color: livePlaying
                           ? accent
+                          : !inProgram
+                          ? notLive.withValues(alpha: 0.5)
                           : theme.dividerColor.withValues(alpha: 0.4),
-                      width: playing ? 2.0 : 1.0,
+                      width: livePlaying ? 2.0 : 1.0,
                     ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.md - 1.0),
                     child: Stack(
                       children: [
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.md,
-                              AppSpacing.lg + AppSpacing.xs,
-                              AppSpacing.md,
-                              AppSpacing.lg + AppSpacing.xs,
-                            ),
-                            child: AutoSizeText(
-                              this.inputName,
-                              maxLines: 3,
-                              minFontSize: 10.0,
-                              wrapWords: false,
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.titleSmall!.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: inProgram
-                                    ? null
-                                    : textColors.textTertiary,
+                        /// Not live: the pad fades well past the grey of a
+                        /// plain stopped pad - only the amber marker stays
+                        Opacity(
+                          opacity: inProgram ? 1.0 : 0.4,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppSpacing.md,
+                                AppSpacing.lg + AppSpacing.xs,
+                                AppSpacing.md,
+                                AppSpacing.lg + AppSpacing.xs,
+                              ),
+                              child: AutoSizeText(
+                                this.inputName,
+                                maxLines: 3,
+                                minFontSize: 10.0,
+                                wrapWords: false,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.titleSmall!.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: inProgram
+                                      ? null
+                                      : textColors.textTertiary,
+                                ),
                               ),
                             ),
                           ),
@@ -126,11 +140,11 @@ class MediaPad extends StatelessWidget {
                             left: AppSpacing.sm,
                             top: AppSpacing.sm,
                             child: Icon(
-                              playing
+                              livePlaying
                                   ? CupertinoIcons.play_fill
                                   : CupertinoIcons.pause_fill,
                               size: 14.0,
-                              color: playing
+                              color: livePlaying
                                   ? accent
                                   : textColors.textSecondary,
                             ),
@@ -142,7 +156,7 @@ class MediaPad extends StatelessWidget {
                             child: Icon(
                               CupertinoIcons.speaker_slash_fill,
                               size: 14.0,
-                              color: textColors.textTertiary,
+                              color: notLive,
                             ),
                           ),
                         if (status != null && (playing || paused))

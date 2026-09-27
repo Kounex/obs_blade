@@ -158,6 +158,48 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('playing outside the live scene shows as on hold', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    runInAction(() {
+      dashboardStore.allInputs = ObservableList.of([_media('Jingle')]);
+
+      /// OBS reports "playing" for a source that left the live scene, but
+      /// its cursor doesn't move
+      dashboardStore.mediaStatus['Jingle'] = MediaStatus(
+        state: kMediaStatePlaying,
+        duration: 30000,
+        cursor: 7000,
+        receivedAt: DateTime.now().subtract(const Duration(seconds: 20)),
+      );
+      dashboardStore.mediaInProgram['Jingle'] = false;
+    });
+
+    await tester.pumpWidget(wrap(const MediaHub()));
+    await settle(tester);
+    expect(
+      find.bySemanticsLabel(
+        RegExp(r'^Jingle, on hold, not in the live scene$'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.runAsync(() async {
+      await tester.tap(find.byIcon(CupertinoIcons.list_bullet));
+      await tester.pump();
+      await Hive.box(HiveKeys.Settings.name).flush();
+    });
+    await settle(tester);
+
+    /// The held position - not 0:07 + the 20 s since the read
+    expect(find.text('On hold at 0:07'), findsOneWidget);
+    expect(find.text('Not in the live scene'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    handle.dispose();
+  });
+
   testWidgets('empty state explains the Soundboard scene tip', (tester) async {
     await tester.pumpWidget(wrap(const MediaHub()));
     await settle(tester);
