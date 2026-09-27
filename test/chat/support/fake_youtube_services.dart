@@ -12,7 +12,10 @@ import 'package:obs_blade/utils/youtube_target.dart';
 class FakeYouTubeAuthService extends YouTubeAuthService {
   String clientId = 'client-id';
   YouTubeAuthException? failPollWith;
-  YouTubeAuthException? failRefreshWith;
+
+  /// A [YouTubeAuthException] (HTTP answer) or any other exception
+  /// (no answer at all — offline).
+  Object? failRefreshWith;
   Object? failChannelTitleWith;
   String? channelTitleResult = 'My Channel';
   String channelIdResult = 'UCownchannel000000000000';

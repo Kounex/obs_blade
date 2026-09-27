@@ -84,6 +84,10 @@ void main() {
   late FakeYouTubeAuthService authService;
   late FakeYouTubeLiveChatService chatService;
   late List<Duration> sleepLog;
+
+  /// Runs on every injected sleep — lets a test end a failure streak
+  /// between retries.
+  void Function()? onSleep;
   late YouTubeChatStore store;
 
   Box<YouTubeAuth> authBox() =>
@@ -95,6 +99,7 @@ void main() {
     chatService: chatService,
     sleep: (duration) async {
       sleepLog.add(duration);
+      onSleep?.call();
     },
     isProResolver: () => true,
   );
@@ -129,6 +134,7 @@ void main() {
     authService = FakeYouTubeAuthService();
     chatService = FakeYouTubeLiveChatService();
     sleepLog = <Duration>[];
+    onSleep = null;
     store = newStore();
   });
 
@@ -208,6 +214,57 @@ void main() {
       expect(store.authError, isNotNull);
       expect(authBox().get(YouTubeAuth.kBoxKey), isNull);
     });
+
+    test('dead refresh token still starts reading (API key only)', () async {
+      configure();
+      await seedAuth();
+      authBox().get(YouTubeAuth.kBoxKey)!
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000
+        ..save();
+      authService.failRefreshWith = const YouTubeAuthException(
+        'Token refresh failed (400)',
+        statusCode: 400,
+      );
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+
+      await store.init();
+      await until(() => chatService.listCalls >= 1);
+
+      expect(store.selectedChannelLabel, 'A');
+      expect(chatService.listCalls, 1);
+    });
+
+    for (final (name, failure) in [
+      (
+        '5xx',
+        const YouTubeAuthException(
+          'Token refresh failed (503)',
+          statusCode: 503,
+        ),
+      ),
+      ('offline', const SocketException('Network is unreachable')),
+    ]) {
+      test(
+        '$name refresh on a cold start keeps the session and reads',
+        () async {
+          configure();
+          await seedAuth();
+          authBox().get(YouTubeAuth.kBoxKey)!
+            ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000
+            ..save();
+          authService.failRefreshWith = failure;
+          chatService.liveChatIds['video-a-001'] = 'chat-a';
+
+          await store.init();
+          await until(() => chatService.listCalls >= 1);
+
+          expect(store.authState, YouTubeAuthState.signedIn);
+          expect(store.canWrite, isTrue);
+          expect(authBox().get(YouTubeAuth.kBoxKey), isNotNull);
+          expect(chatService.listCalls, 1);
+        },
+      );
+    }
   });
 
   group('channels from settings', () {
@@ -364,6 +421,164 @@ void main() {
       // elapsed request time.
       expect(sleepLog[4].inMilliseconds, inInclusiveRange(0, 1000));
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
+    });
+
+    for (final (name, failure) in [
+      ('dropped socket', const SocketException('Connection reset by peer')),
+      (
+        '5xx',
+        const YouTubeApiException('Listing chat failed (503)', statusCode: 503),
+      ),
+    ]) {
+      test(
+        '$name mid-poll → reconnecting, resumes on the same cursor',
+        () async {
+          configure();
+          chatService.liveChatIds['video-a-001'] = 'chat-a';
+          chatService.pollResponses.addAll([
+            page([ytMessage('m1')], nextPageToken: 't1'),
+            failure,
+          ]);
+
+          await store.init();
+          await until(() => chatService.isParked);
+
+          // Parked on the third call — the failed one retried in place.
+          expect(chatService.listCalls, 3);
+          expect(chatService.listPageTokens, [null, 't1', 't1']);
+          expect(chatService.resolveCalls, 1);
+          expect(store.chatConnection, YouTubeChatConnectionState.connecting);
+          expect(store.chatError, contains('reconnecting'));
+
+          chatService.pushPollResponse(page([ytMessage('m2')]));
+          await until(
+            () => store.chatConnection == YouTubeChatConnectionState.connected,
+          );
+          expect(store.chatError, isNull);
+          expect(store.messages.map((m) => m.id), ['m1', 'm2']);
+        },
+      );
+    }
+
+    test('4xx mid-poll is definitive → error, polling stops', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        const YouTubeForbiddenException(
+          'Listing chat failed (403)',
+          statusCode: 403,
+        ),
+      );
+
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.error,
+      );
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+
+      expect(store.chatError, 'Lost connection to YouTube chat');
+      expect(chatService.listCalls, 1);
+    });
+
+    test('offline resolve retries with backoff, then attaches', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.resolveThrows = const SocketException('offline');
+      onSleep = () {
+        if (sleepLog.length == 3) chatService.resolveThrows = null;
+      };
+
+      await store.init();
+      await until(
+        () =>
+            store.chatConnection == YouTubeChatConnectionState.connected ||
+            chatService.isParked,
+      );
+
+      expect(sleepLog.take(3), const [
+        Duration(seconds: 2),
+        Duration(seconds: 4),
+        Duration(seconds: 8),
+      ]);
+      expect(chatService.resolveCalls, 4);
+      expect(chatService.listCalls, 1);
+    });
+
+    test('4xx resolve is definitive → error, no retry', () async {
+      configure();
+      chatService.resolveThrows = const YouTubeForbiddenException(
+        'Resolving live chat failed (400: API key not valid)',
+        statusCode: 400,
+      );
+
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.error,
+      );
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+
+      expect(chatService.resolveCalls, 1);
+      expect(sleepLog, isEmpty);
+    });
+  });
+
+  group('reconnectAfterResume', () {
+    test('restarts a failed chat', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        const YouTubeForbiddenException('403', statusCode: 403),
+      );
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.error,
+      );
+
+      store.reconnectAfterResume();
+      await until(() => chatService.isParked);
+
+      expect(chatService.listCalls, 2);
+      expect(store.chatError, isNull);
+    });
+
+    test('leaves quota exhaustion and a paused poll alone', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        const YouTubeQuotaExceededException('quota'),
+      );
+      await store.init();
+      await until(() => store.chatQuotaExhausted);
+
+      store.reconnectAfterResume();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(chatService.listCalls, 1);
+
+      store.connectChat();
+      await until(() => chatService.isParked);
+      store.pausePolling();
+      store.reconnectAfterResume();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+      expect(store.pollingPaused, isTrue);
+      expect(chatService.listCalls, 2);
+    });
+
+    test('a healthy chat is not restarted', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page([ytMessage('m1')]));
+      await store.init();
+      await until(() => chatService.isParked);
+
+      store.reconnectAfterResume();
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      expect(chatService.listCalls, 2);
+      expect(chatService.resolveCalls, 1);
     });
   });
 

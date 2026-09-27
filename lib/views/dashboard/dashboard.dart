@@ -18,6 +18,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../shared/dialogs/confirmation.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/dashboard.dart';
+import '../../stores/views/youtube_chat.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/modal_handler.dart';
@@ -146,6 +147,14 @@ class _DashboardViewState extends State<DashboardView>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       GetIt.instance<DashboardStore>().checkConnectionNow();
+
+      /// Only a YouTube store that already runs — creating it here would
+      /// start a poll nobody opened.
+      final getIt = GetIt.instance;
+      if (getIt.isRegistered<YouTubeChatStore>() &&
+          getIt.checkLazySingletonInstanceExists<YouTubeChatStore>()) {
+        getIt<YouTubeChatStore>().reconnectAfterResume();
+      }
     }
   }
 

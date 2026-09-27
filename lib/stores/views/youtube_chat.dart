@@ -65,6 +65,22 @@ enum _PassOutcome {
 
   /// Terminal (error / quota / superseded) — the loop exits.
   stopped,
+
+  /// Transient failure before the chat attached (network drop, 5xx) —
+  /// the loop backs off and runs the pass again.
+  retry,
+}
+
+/// Whether a read failure clears up on its own: the socket iOS kills
+/// while the app is backgrounded, timeouts, 5xx. A 4xx is YouTube's
+/// definitive answer (bad key, chat disabled, not found) and needs the
+/// user; an [Error] is a bug, not a network state.
+bool _isTransientReadFailure(Object e) {
+  if (e is YouTubeApiException) {
+    final status = e.statusCode;
+    return status == null || status == 408 || status >= 500;
+  }
+  return e is Exception;
 }
 
 /// One entry of the native YouTube channel list — derived from the
@@ -156,9 +172,12 @@ abstract class _YouTubeChatStore with Store {
   static const int kMaxMessages = 500;
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
-  /// Rate-limit backoff ceiling — [YouTubeRateLimitedException] doubles
+  /// Backoff ceiling — rate limiting and transient read failures double
   /// the wait per hit, capped here.
   static const int kMaxBackoffMillis = 60000;
+
+  /// First wait after a transient failure before the chat attached.
+  static const int kInitialRetryMillis = 2000;
 
   final YouTubeAuthService _authService;
   final YouTubeLiveChatService _chatService;
@@ -522,7 +541,7 @@ abstract class _YouTubeChatStore with Store {
       /// Wipe the stored session only on a definitive auth failure — a
       /// 400 (`invalid_grant`) / 401 / 403 on refresh means the refresh
       /// token is dead; a null status is our own pre-flight throw.
-      /// Anything else (transient 5xx, offline) keeps the record.
+      /// Anything else (transient 5xx, offline) keeps the session.
       if (e.statusCode == null ||
           e.statusCode == 400 ||
           e.statusCode == 401 ||
@@ -530,12 +549,19 @@ abstract class _YouTubeChatStore with Store {
         await this._handleInvalidAuth(
           'YouTube session expired - please sign in again',
         );
-      } else {
-        GeneralHelper.advLog('YouTube token refresh on init failed - $e');
-        this.authState = YouTubeAuthState.signedOut;
+
+        /// Reads need only the API key — same as having no session.
+        this._autoSelectChannel();
+        return;
       }
-      this._syncOwnChannel();
-      return;
+
+      /// Transient 5xx: the record stays usable — the next write
+      /// refreshes again — and reads need only the API key.
+      GeneralHelper.advLog('YouTube token refresh on init failed - $e');
+    } catch (e) {
+      /// Offline at launch (no HTTP answer at all) — same as a 5xx.
+      /// Letting it escape left the store `unconfigured` with no poll.
+      GeneralHelper.advLog('YouTube token refresh on init failed - $e');
     }
     this.authState = YouTubeAuthState.signedIn;
     this._syncOwnChannel();
@@ -778,6 +804,7 @@ abstract class _YouTubeChatStore with Store {
         flow != this._pollFlow || label != this.selectedChannelLabel;
 
     var recheck = 0;
+    var retryMillis = 0;
     while (!superseded()) {
       final outcome = await this._attachAndPoll(
         label,
@@ -786,6 +813,13 @@ abstract class _YouTubeChatStore with Store {
         superseded,
       );
       if (superseded()) return;
+      if (outcome == _PassOutcome.retry) {
+        retryMillis = retryMillis == 0 ? kInitialRetryMillis : retryMillis * 2;
+        if (retryMillis > kMaxBackoffMillis) retryMillis = kMaxBackoffMillis;
+        await this._sleep(Duration(milliseconds: retryMillis));
+        continue;
+      }
+      retryMillis = 0;
       if (outcome == _PassOutcome.attached) recheck = 0;
       if (outcome == _PassOutcome.stopped) return;
       if (this._selectedTarget is! YouTubeChannelTarget) {
@@ -814,6 +848,24 @@ abstract class _YouTubeChatStore with Store {
     this.connectChat();
   }
 
+  /// App back in the foreground: a poll that failed or is backing off
+  /// while the app was suspended restarts now instead of waiting out its
+  /// timer, and a channel between streams checks at once. A paused poll
+  /// (combined chat focused elsewhere) stays paused; quota exhaustion
+  /// waits for the daily reset.
+  @action
+  void reconnectAfterResume() {
+    if (this.pollingPaused || this.chatQuotaExhausted) return;
+    final retrying =
+        this.chatConnection == YouTubeChatConnectionState.connecting &&
+        this.chatError != null;
+    if (this.chatConnection == YouTubeChatConnectionState.error ||
+        retrying ||
+        this.awaitingLiveStream) {
+      this.connectChat();
+    }
+  }
+
   /// Resolve the selected entry's `activeLiveChatId` (cached in [buffer])
   /// and poll `liveChatMessages.list`, honoring each page's
   /// `pollingIntervalMillis` (net of the elapsed request duration) and
@@ -824,8 +876,9 @@ abstract class _YouTubeChatStore with Store {
   /// (the caller decides whether to wait for the next stream either way),
   /// and [_PassOutcome.stopped] for terminal states (quota exhausted, API /
   /// channel-not-found errors — [chatConnection] already `error` — or a
-  /// superseded loop). Transient rate limiting backs off and retries in
-  /// place.
+  /// superseded loop). A transient resolve failure returns
+  /// [_PassOutcome.retry]; rate limiting and transient poll failures back
+  /// off and retry in place, the chat showing `connecting` meanwhile.
   Future<_PassOutcome> _attachAndPoll(
     String label,
     _ChannelBuffer buffer,
@@ -845,6 +898,16 @@ abstract class _YouTubeChatStore with Store {
     void failed(String message) {
       runInAction(() {
         this.chatConnection = YouTubeChatConnectionState.error;
+        this.awaitingLiveStream = false;
+        this.chatError = message;
+      });
+    }
+
+    /// Not an error state: the loop retries on its own, the reason stays
+    /// visible while it does.
+    void retrying(String message) {
+      runInAction(() {
+        this.chatConnection = YouTubeChatConnectionState.connecting;
         this.awaitingLiveStream = false;
         this.chatError = message;
       });
@@ -911,6 +974,10 @@ abstract class _YouTubeChatStore with Store {
       } catch (e) {
         if (superseded()) return _PassOutcome.stopped;
         GeneralHelper.advLog('YouTube live chat resolve failed - $e');
+        if (_isTransientReadFailure(e)) {
+          retrying('Could not reach YouTube - retrying');
+          return _PassOutcome.retry;
+        }
         failed('Could not resolve the live chat');
         return _PassOutcome.stopped;
       }
@@ -933,6 +1000,17 @@ abstract class _YouTubeChatStore with Store {
     int lastIntervalMillis = 5000;
     int backoffMillis = 0;
     var attached = false;
+
+    Future<void> backOff() {
+      backoffMillis = backoffMillis == 0
+          ? lastIntervalMillis * 2
+          : backoffMillis * 2;
+      if (backoffMillis > kMaxBackoffMillis) {
+        backoffMillis = kMaxBackoffMillis;
+      }
+      return this._sleep(Duration(milliseconds: backoffMillis));
+    }
+
     final callStopwatch = Stopwatch();
 
     /// Viewer count refresh — resolved once per connect otherwise.
@@ -964,16 +1042,11 @@ abstract class _YouTubeChatStore with Store {
         );
       } on YouTubeRateLimitedException {
         if (superseded()) return _PassOutcome.stopped;
-        backoffMillis = backoffMillis == 0
-            ? lastIntervalMillis * 2
-            : backoffMillis * 2;
-        if (backoffMillis > kMaxBackoffMillis) {
-          backoffMillis = kMaxBackoffMillis;
-        }
+        final wait = backOff();
         GeneralHelper.advLog(
           'YouTube chat rate limited - backing off ${backoffMillis}ms',
         );
-        await this._sleep(Duration(milliseconds: backoffMillis));
+        await wait;
         continue;
       } on YouTubeQuotaExceededException {
         if (superseded()) return _PassOutcome.stopped;
@@ -985,8 +1058,16 @@ abstract class _YouTubeChatStore with Store {
       } catch (e) {
         if (superseded()) return _PassOutcome.stopped;
         GeneralHelper.advLog('YouTube chat poll failed - $e');
-        failed('Lost connection to YouTube chat');
-        return _PassOutcome.stopped;
+        if (!_isTransientReadFailure(e)) {
+          failed('Lost connection to YouTube chat');
+          return _PassOutcome.stopped;
+        }
+
+        /// Cursor and chat id stay — the retry picks up where the
+        /// dropped request left off.
+        retrying('Lost connection to YouTube chat - reconnecting');
+        await backOff();
+        continue;
       }
       if (superseded()) return _PassOutcome.stopped;
 

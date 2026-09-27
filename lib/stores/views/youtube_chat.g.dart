@@ -527,6 +527,18 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   }
 
   @override
+  void reconnectAfterResume() {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.reconnectAfterResume',
+    );
+    try {
+      return super.reconnectAfterResume();
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _applyTombstone(String label, YouTubeChatMessage tombstone) {
     final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
       name: '_YouTubeChatStore._applyTombstone',

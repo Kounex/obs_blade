@@ -2,6 +2,29 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - YouTube chat recovers on its own after background / restart
+
+User report: combined chat, all three platforms live, app backgrounded
+or restarted - Twitch and Kick came back, YouTube sat on "Failed" until
+it was connected again by hand with the key already in place.
+
+- **Poll loop:** any error other than quota / rate limit / chat ended
+  was terminal, including the socket iOS kills while the app is
+  suspended. Transient failures (no HTTP answer, 408, 5xx) now retry:
+  a dropped `liveChatMessages.list` backs off in place on the same
+  cursor, a failed `videos.list` resolve backs off 2s → 60s. The chat
+  shows `connecting` with the reason meanwhile. A 4xx (bad key, chat
+  disabled, not found) is still terminal.
+- **Cold start:** a token refresh that failed without an HTTP answer
+  escaped `init`, leaving the store `unconfigured` ("Needs setup") with
+  no poll - exactly what re-saving the setup sheet fixed. Offline / 5xx
+  refresh failures now keep the session (the next write refreshes
+  again), and a dead refresh token still starts the API-key reads.
+- **Resume nudge:** `reconnectAfterResume` (called from the dashboard's
+  lifecycle hook, only when the store already exists) restarts a failed
+  or backing-off poll and rechecks a channel waiting for its stream.
+  Paused (combined focus elsewhere) and quota-exhausted polls stay put.
+
 ## 2026-09-27 - Chat sign-ins survive an overnight close
 
 User report: after a night the app asked to connect Twitch again, and
