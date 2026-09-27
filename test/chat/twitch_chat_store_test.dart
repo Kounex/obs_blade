@@ -114,6 +114,115 @@ void main() {
       expect(store.user?.login, 'kounex');
     });
 
+    test('expired stored token (app closed overnight) → refreshed, '
+        'logged in', () async {
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'expired',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch - 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(authService.validatedTokens, ['access-1']);
+      expect(authBox().get(TwitchAuth.kBoxKey)?.accessToken, 'access-1');
+    });
+
+    test('stored token rejected by validate → refreshed once, '
+        'logged in', () async {
+      authService.validateResults = [false, true];
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'stale',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(authService.validatedTokens, ['stale', 'access-1']);
+    });
+
+    test('expired stored token with a dead refresh token (400) → wiped + '
+        'logged out', () async {
+      authService.failRefreshWith = const TwitchAuthException(
+        'Token refresh failed (400)',
+        statusCode: 400,
+      );
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'expired',
+          refreshToken: 'dead',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch - 1000,
+          scopes: const ['user:read:chat'],
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(authBox().get(TwitchAuth.kBoxKey), isNull);
+    });
+
+    test('expired stored token with a transient refresh failure keeps the '
+        'record', () async {
+      authService.failRefreshWith = const TwitchAuthException(
+        'Token refresh failed (503)',
+        statusCode: 503,
+      );
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'expired',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch - 1000,
+          scopes: const ['user:read:chat'],
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+    });
+
+    test('concurrent refreshes share one token request', () async {
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'expired',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch - 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
+      authService.refreshGate = Completer<void>();
+
+      final first = store.init();
+      final second = store.init();
+      await pumpEventQueue();
+      authService.refreshGate!.complete();
+      await Future.wait([first, second]);
+
+      expect(authService.refreshCalls, 1);
+    });
+
     test('invalid stored token → wiped + logged out', () async {
       authService.validateResult = false;
       await authBox().put(

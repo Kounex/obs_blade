@@ -160,7 +160,6 @@ abstract class _YouTubeChatStore with Store {
   /// the wait per hit, capped here.
   static const int kMaxBackoffMillis = 60000;
 
-
   final YouTubeAuthService _authService;
   final YouTubeLiveChatService _chatService;
   final YouTubeLiveResolver _liveResolver;
@@ -407,14 +406,15 @@ abstract class _YouTubeChatStore with Store {
   @computed
   bool get isSignedInState => this.authState == YouTubeAuthState.signedIn;
 
-  /// Whether the persisted token is usable for writes: present, not
-  /// expired and carrying the YouTube scope. Deliberately a plain getter
-  /// (not reactive): the token changes only at sign-in/sign-out, which
-  /// flips [authState] and rebuilds observers.
+  /// Whether the persisted token is usable for writes: present, carrying
+  /// the YouTube scope, and either unexpired or backed by a refresh token
+  /// (every write refreshes a due token first). Deliberately a plain
+  /// getter (not reactive): the record changes only at sign-in/sign-out,
+  /// which flips [authState] and rebuilds observers.
   bool get isSignedIn {
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);
     return auth != null &&
-        !auth.isExpired &&
+        (auth.refreshToken.isNotEmpty || !auth.isExpired) &&
         kYouTubeChatScopes.every(auth.scopes.contains);
   }
 

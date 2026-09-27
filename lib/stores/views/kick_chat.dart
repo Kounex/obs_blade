@@ -308,14 +308,15 @@ abstract class _KickChatStore with Store {
   @computed
   bool get isSignedInState => this.authState == KickAuthState.signedIn;
 
-  /// Whether the persisted token is usable for writes: present, not
-  /// expired and carrying the full scope bundle. Deliberately a plain
-  /// getter (not reactive): the token changes only at sign-in/sign-out,
-  /// which flips [authState] and rebuilds observers.
+  /// Whether the persisted token is usable for writes: present, carrying
+  /// the full scope bundle, and either unexpired or backed by a refresh
+  /// token (every write refreshes a due token first). Deliberately a
+  /// plain getter (not reactive): the record changes only at
+  /// sign-in/sign-out, which flips [authState] and rebuilds observers.
   bool get isSignedIn {
     final auth = this._authBox.get(KickAuth.kBoxKey);
     return auth != null &&
-        !auth.isExpired &&
+        (auth.refreshToken.isNotEmpty || !auth.isExpired) &&
         kKickChatScopes.every(auth.scopes.contains);
   }
 
@@ -1189,6 +1190,7 @@ abstract class _KickChatStore with Store {
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick chat send failed - $e');
       this.sendChatError = e.message;
+      await this._endSessionIfDead(e);
       return false;
     } catch (e) {
       GeneralHelper.advLog('Kick chat send failed - $e');
@@ -1227,6 +1229,7 @@ abstract class _KickChatStore with Store {
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick message delete failed - $e');
       this.modActionError = e.message;
+      await this._endSessionIfDead(e);
       return false;
     } catch (e) {
       GeneralHelper.advLog('Kick message delete failed - $e');
@@ -1282,6 +1285,7 @@ abstract class _KickChatStore with Store {
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick ban/timeout failed - $e');
       this.modActionError = e.message;
+      await this._endSessionIfDead(e);
       return false;
     } catch (e) {
       GeneralHelper.advLog('Kick ban/timeout failed - $e');
@@ -1313,6 +1317,7 @@ abstract class _KickChatStore with Store {
     } on KickAuthException catch (e) {
       GeneralHelper.advLog('Kick unban failed - $e');
       this.modActionError = e.message;
+      await this._endSessionIfDead(e);
       return false;
     } catch (e) {
       GeneralHelper.advLog('Kick unban failed - $e');
@@ -1435,6 +1440,17 @@ abstract class _KickChatStore with Store {
       await auth.save();
     }
     return auth.accessToken;
+  }
+
+  /// A write whose token refresh failed definitively (400/401/403: the
+  /// refresh token is dead) signs out, so the UI offers a real sign-in
+  /// instead of a signed-in account that can never write.
+  Future<void> _endSessionIfDead(KickAuthException e) async {
+    if (e.statusCode == 400 || e.statusCode == 401 || e.statusCode == 403) {
+      await this._handleInvalidAuth(
+        'Kick session expired - please sign in again',
+      );
+    }
   }
 
   Future<void> _handleInvalidAuth(String message) async {

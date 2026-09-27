@@ -992,6 +992,43 @@ void main() {
       expect(authBox().get(KickAuth.kBoxKey), isNull);
     });
 
+    test('an access token that expired after restore still allows writes '
+        '(the send refreshes it)', () async {
+      await connectSignedIn();
+      authBox().get(KickAuth.kBoxKey)!
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000
+        ..save();
+
+      expect(store.canWrite, isTrue);
+    });
+
+    test('a write whose refresh is rejected signs out', () async {
+      await connectSignedIn();
+      apiService.sendThrows = const KickAuthException(
+        'Token refresh failed (400)',
+        statusCode: 400,
+      );
+
+      expect(await store.sendChatMessage('hi'), isFalse);
+
+      expect(store.authState, KickAuthState.signedOut);
+      expect(store.authError, isNotNull);
+      expect(authBox().get(KickAuth.kBoxKey), isNull);
+    });
+
+    test('a write whose refresh fails transiently keeps the session', () async {
+      await connectSignedIn();
+      apiService.sendThrows = const KickAuthException(
+        'Token refresh failed (503)',
+        statusCode: 503,
+      );
+
+      expect(await store.sendChatMessage('hi'), isFalse);
+
+      expect(store.authState, KickAuthState.signedIn);
+      expect(authBox().get(KickAuth.kBoxKey), isNotNull);
+    });
+
     test('init keeps the session on a transient refresh failure', () async {
       configure();
       final expired = validAuth()

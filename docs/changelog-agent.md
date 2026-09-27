@@ -2,6 +2,31 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Chat sign-ins survive an overnight close
+
+User report: after a night the app asked to connect Twitch again, and
+Kick showed "signed in" with a read-only chat whose Sign in button
+opened a sheet that showed the account as signed in. Not an install
+issue - access tokens (Twitch ~4h, Kick/YouTube shorter) had expired.
+
+- **Kick / YouTube:** `canWrite` required an unexpired access token, but
+  the token is only refreshed when a write runs, and the input stays
+  locked while `canWrite` is false - so after expiry nothing ever
+  refreshed it. It now accepts an expired token that has a refresh
+  token. A write whose refresh comes back 400/401/403 signs out Kick
+  (`_endSessionIfDead`) instead of leaving a signed-in account that
+  cannot write.
+- **Twitch cold start:** `init` validated the stored access token as is,
+  so an expired one got a 401 and wiped the session. It now refreshes an
+  expired token first, and a token that validate rejects gets one
+  forced refresh before sign-out. A 400 from the token endpoint
+  (Twitch's "invalid refresh token") also counts as a dead session.
+- **Twitch refresh is single-flight** (`_refreshInFlight`), like Kick's.
+- **Twitch EventSub + IRC reconnects** take a fresh token from
+  `tokenProvider`. Before, they reused the token given to `connect`, so
+  a reconnect more than 4h later got a 401 on the subscription POST, and
+  that read as a revoked session and logged the user out.
+
 ## 2026-09-27 - Media hub (soundboard)
 
 A third surface next to Scene Items / Audio for every media source.

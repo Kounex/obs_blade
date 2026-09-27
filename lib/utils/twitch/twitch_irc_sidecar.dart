@@ -61,6 +61,11 @@ class TwitchIrcSidecar {
 
   String? _accessToken;
   String? _login;
+
+  /// Fresh access token for each (re)connect — the one handed to
+  /// [connect] expires (~4h) while the socket reconnects on its own.
+  /// Null keeps the [connect] token.
+  Future<String> Function()? tokenProvider;
   String? _channelLogin;
 
   TwitchIrcSidecar({
@@ -112,6 +117,15 @@ class TwitchIrcSidecar {
 
   Future<void> _open() async {
     if (this._disposed) return;
+    final provider = this.tokenProvider;
+    if (provider != null) {
+      try {
+        this._accessToken = await provider();
+      } catch (e) {
+        GeneralHelper.advLog('Twitch IRC token refresh failed - $e');
+      }
+      if (this._disposed) return;
+    }
     final token = this._accessToken;
     final nick = this._login;
     final room = this._channelLogin;

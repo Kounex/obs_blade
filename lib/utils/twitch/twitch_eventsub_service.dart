@@ -94,6 +94,13 @@ class TwitchEventSubService {
   /// factory seam.
   void Function(bool online)? onStreamStatus;
 
+  /// Fresh access token before subscribing on a new session or channel.
+  /// The token handed to [connect] expires (~4h) while the socket keeps
+  /// reconnecting on its own, and a subscription POST with it would 401
+  /// and read as a revoked session. Settable like [onStreamStatus];
+  /// null keeps the [connect] token.
+  Future<String> Function()? tokenProvider;
+
   final void Function(TwitchEventSubState state) onStateChanged;
 
   /// Subscription revoked by Twitch (e.g. `authorization_revoked`) or
@@ -192,6 +199,7 @@ class TwitchEventSubService {
       }
     }
     this._broadcasterId = broadcasterId;
+    await this._refreshAccessToken();
     final subscribed = await this._createChannelSubscriptions();
 
     /// The store shows a connecting state during the switch — the socket
@@ -264,7 +272,20 @@ class TwitchEventSubService {
     /// A socket opened from `session_reconnect`'s reconnect_url resumes the
     /// session with subscriptions intact — only subscribe on fresh sessions.
     if (!resumed) {
+      await this._refreshAccessToken();
       await this._createSubscriptions();
+    }
+  }
+
+  /// Pull a current token from [tokenProvider]. A failure keeps the one
+  /// we have — if it is really dead, the subscription POST says so.
+  Future<void> _refreshAccessToken() async {
+    final provider = this.tokenProvider;
+    if (provider == null) return;
+    try {
+      this._accessToken = await provider();
+    } catch (e) {
+      GeneralHelper.advLog('Twitch EventSub: token refresh failed - $e');
     }
   }
 

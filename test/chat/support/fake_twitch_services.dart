@@ -29,6 +29,15 @@ import 'package:obs_blade/utils/twitch/twitch_user_service.dart';
 class FakeTwitchAuthService extends TwitchAuthService {
   bool validateResult = true;
 
+  /// Per-call [validate] results, consumed in order before falling back
+  /// to [validateResult].
+  List<bool> validateResults = <bool>[];
+  final List<String> validatedTokens = <String>[];
+  int refreshCalls = 0;
+
+  /// When set, [refreshToken] waits on it — lets a test overlap refreshes.
+  Completer<void>? refreshGate;
+
   /// When set, [validate] throws this error (e.g. a [SocketException] for
   /// offline or a [TwitchAuthException] for a Twitch 5xx).
   Object? validateThrows;
@@ -90,12 +99,18 @@ class FakeTwitchAuthService extends TwitchAuthService {
 
   @override
   Future<bool> validate(String accessToken) async {
+    this.validatedTokens.add(accessToken);
     if (this.validateThrows != null) throw this.validateThrows!;
+    if (this.validateResults.isNotEmpty) {
+      return this.validateResults.removeAt(0);
+    }
     return this.validateResult;
   }
 
   @override
   Future<TwitchToken> refreshToken(String refreshToken) async {
+    this.refreshCalls++;
+    await this.refreshGate?.future;
     if (this.failRefreshWith != null) throw this.failRefreshWith!;
     return TwitchToken(
       accessToken: token.accessToken,

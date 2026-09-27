@@ -103,6 +103,9 @@ abstract class _TwitchChatStore with Store {
   static const int kMaxMessages = 500;
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
+  /// The shared refresh behind [_validAccessToken] while one is running.
+  Future<String>? _refreshInFlight;
+
   final TwitchAuthService _authService;
   final TwitchEventSubService Function(
     void Function(ChatMessageEvent) onChatMessage,
@@ -589,6 +592,9 @@ abstract class _TwitchChatStore with Store {
 
   /// Cold start: validate a stored token (Twitch requires periodic
   /// validation); when still valid, log straight in and connect chat.
+  /// Access tokens live ~4h, so an app closed overnight comes back with
+  /// an expired one: an expired (or rejected) token is refreshed first,
+  /// and only a dead refresh token ends the session.
   @action
   Future<void> init() async {
     this._ensureAuthBoxWatcher();
@@ -597,9 +603,25 @@ abstract class _TwitchChatStore with Store {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     if (auth == null) return;
 
-    late final bool valid;
+    late bool valid;
     try {
-      valid = await this._authService.validate(auth.accessToken);
+      final refreshed = auth.isExpired;
+      valid = await this._authService.validate(
+        refreshed
+            ? await this._validAccessToken(forceRefresh: true)
+            : auth.accessToken,
+      );
+      if (!valid && !refreshed) {
+        valid = await this._authService.validate(
+          await this._validAccessToken(forceRefresh: true),
+        );
+      }
+    } on TwitchAuthException catch (e) {
+      if (!_TwitchChatStore._isDeadRefresh(e)) {
+        GeneralHelper.advLog('Twitch token restore failed - $e');
+        return;
+      }
+      valid = false;
     } catch (e) {
       GeneralHelper.advLog('Twitch token validation failed (offline?) - $e');
       return;
@@ -732,18 +754,21 @@ abstract class _TwitchChatStore with Store {
     try {
       final token = await this._validAccessToken();
       await this._eventSub?.dispose();
-      this._eventSub = this._eventSubFactory(
-        this._appendMessage,
-        this._appendNotification,
-        (event) => this.applyMessageDelete(event),
-        (event) => this.applyClearUserMessages(event.targetUserId),
-        (_) => this.applyChatClear(),
-        (event) => this.applyChannelModerate(event),
-        (event) => this.applyAutoModMessageHold(event),
-        (event) => this.applyAutoModMessageUpdate(event),
-        this._onEventSubState,
-        this._onEventSubRevoked,
-      )..onStreamStatus = this._onStreamStatus;
+      this._eventSub =
+          this._eventSubFactory(
+              this._appendMessage,
+              this._appendNotification,
+              (event) => this.applyMessageDelete(event),
+              (event) => this.applyClearUserMessages(event.targetUserId),
+              (_) => this.applyChatClear(),
+              (event) => this.applyChannelModerate(event),
+              (event) => this.applyAutoModMessageHold(event),
+              (event) => this.applyAutoModMessageUpdate(event),
+              this._onEventSubState,
+              this._onEventSubRevoked,
+            )
+            ..onStreamStatus = this._onStreamStatus
+            ..tokenProvider = this._validAccessToken;
       await this._eventSub!.connect(
         accessToken: token,
         userId: this.user!.id,
@@ -772,7 +797,7 @@ abstract class _TwitchChatStore with Store {
       // status is our own pre-flight "Not logged in" throw. Anything else
       // (e.g. a 5xx during a Twitch incident) is transient — keep the
       // session and surface a generic connection failure instead.
-      if (e.statusCode == null || e.statusCode == 401 || e.statusCode == 403) {
+      if (e.statusCode == null || _TwitchChatStore._isDeadRefresh(e)) {
         await this._handleInvalidAuth(e.message);
       } else {
         GeneralHelper.advLog('Twitch chat connect failed - $e');
@@ -1182,7 +1207,7 @@ abstract class _TwitchChatStore with Store {
     } on TwitchAuthException catch (e) {
       /// Same policy as [connectChat]: a definitively dead token wipes
       /// the session, a transient one is only logged.
-      if (e.statusCode == null || e.statusCode == 401 || e.statusCode == 403) {
+      if (e.statusCode == null || _TwitchChatStore._isDeadRefresh(e)) {
         await this._handleInvalidAuth(e.message);
       } else {
         GeneralHelper.advLog('Twitch token refresh on switch failed - $e');
@@ -1830,21 +1855,37 @@ abstract class _TwitchChatStore with Store {
     this.autoModQueue.removeWhere((held) => held.messageId == event.messageId);
   }
 
-  Future<String> _validAccessToken() async {
+  /// A usable access token — refreshes (and persists the new pair) when
+  /// due or forced. Refresh tokens of device-flow clients are single-use,
+  /// so concurrent callers share one in-flight refresh: a second refresh
+  /// with the same token would be rejected and read as a dead session.
+  Future<String> _validAccessToken({bool forceRefresh = false}) async {
     final auth = this._authBox.get(TwitchAuth.kBoxKey);
     if (auth == null) throw const TwitchAuthException('Not logged in');
 
-    if (auth.expiresWithin(kRefreshWindow)) {
-      final token = await this._authService.refreshToken(auth.refreshToken);
-      auth
-        ..accessToken = token.accessToken
-        ..refreshToken = token.refreshToken ?? auth.refreshToken
-        ..expiresAtMs =
-            DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000;
-      await auth.save();
+    if (!forceRefresh && !auth.expiresWithin(kRefreshWindow)) {
+      return auth.accessToken;
     }
+    return this._refreshInFlight ??= this
+        ._refreshAuth(auth)
+        .whenComplete(() => this._refreshInFlight = null);
+  }
+
+  Future<String> _refreshAuth(TwitchAuth auth) async {
+    final token = await this._authService.refreshToken(auth.refreshToken);
+    auth
+      ..accessToken = token.accessToken
+      ..refreshToken = token.refreshToken ?? auth.refreshToken
+      ..expiresAtMs =
+          DateTime.now().millisecondsSinceEpoch + token.expiresIn * 1000;
+    await auth.save();
     return auth.accessToken;
   }
+
+  /// A 400/401/403 from the token endpoint: the refresh token is dead
+  /// (Twitch answers an invalid one with 400).
+  static bool _isDeadRefresh(TwitchAuthException e) =>
+      e.statusCode == 400 || e.statusCode == 401 || e.statusCode == 403;
 
   Future<void> _persistAuth(TwitchToken token, TwitchUser user) async {
     await this._authBox.put(
@@ -2037,7 +2078,8 @@ abstract class _TwitchChatStore with Store {
     if (login == null || login.isEmpty) return;
     try {
       await this._ircSidecar?.dispose();
-      this._ircSidecar = this._ircSidecarFactory(this.applyIrcFirstMessage);
+      this._ircSidecar = this._ircSidecarFactory(this.applyIrcFirstMessage)
+        ..tokenProvider = this._validAccessToken;
       await this._ircSidecar!.connect(
         accessToken: token,
         login: login,

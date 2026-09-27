@@ -361,6 +361,44 @@ void main() {
     expect(states, contains(TwitchEventSubState.reconnecting));
   });
 
+  test('a fresh session subscribes with the token provider\'s current '
+      'token', () async {
+    final authHeaders = <String?>[];
+    final client = MockClient((request) async {
+      authHeaders.add(request.headers['Authorization']);
+      return http.Response(
+        json.encode({
+          'data': [
+            {'id': 'sub-1'},
+          ],
+        }),
+        202,
+      );
+    });
+
+    var current = 'token-1';
+    final service = serviceWith(client)..tokenProvider = () async => current;
+    await service.connect(
+      accessToken: 'token-1',
+      userId: 'user-1',
+      broadcasterId: 'user-1',
+    );
+    channels.single.incoming.add(welcome('session-1'));
+    await pumpEventQueue();
+
+    /// Hours later the token was refreshed and the socket drops.
+    current = 'token-2';
+    authHeaders.clear();
+    await channels.single.incoming.close();
+    await pumpEventQueue();
+    channels.last.incoming.add(welcome('session-2'));
+    await pumpEventQueue();
+
+    expect(authHeaders, isNotEmpty);
+    expect(authHeaders.toSet(), {'Bearer token-2'});
+    expect(revocations, isEmpty);
+  });
+
   test('revocation is forwarded with its status', () async {
     final client = MockClient(
       (request) async => http.Response(

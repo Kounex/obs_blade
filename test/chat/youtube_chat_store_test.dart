@@ -177,6 +177,19 @@ void main() {
       expect(store.selfChannelTitle, 'My Channel');
     });
 
+    test('an access token that expired after restore still allows '
+        'writes (the write refreshes it)', () async {
+      configure();
+      await seedAuth();
+      await store.init();
+
+      authBox().get(YouTubeAuth.kBoxKey)!
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000
+        ..save();
+
+      expect(store.canWrite, isTrue);
+    });
+
     test('dead refresh token (400) → wiped + signed out', () async {
       configure();
       await seedAuth();
