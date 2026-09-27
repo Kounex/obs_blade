@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:obs_blade/utils/pro_plan.dart';
 import 'package:obs_blade/utils/pro_product.dart';
 import 'package:obs_blade/utils/pro_purchase_backend.dart';
 
@@ -66,9 +67,28 @@ class FakeProPurchaseBackend implements ProPurchaseBackend {
     return this.storeProducts;
   }
 
+  /// What [fetchProPlan] reports; null = backend can't tell.
+  ProPlanState? proPlan;
+
+  final StreamController<ProPlanState> planController =
+      StreamController<ProPlanState>.broadcast();
+
+  /// The replaced subscription each [buy] was asked for (null = none).
+  final List<String?> buyReplacing = [];
+
   @override
-  Future<bool> buy(ProProduct product) async {
+  Future<ProPlanState?> fetchProPlan() async => this.proPlan;
+
+  @override
+  Stream<ProPlanState> get proPlanStream => this.planController.stream;
+
+  @override
+  Future<bool> buy(
+    ProProduct product, {
+    String? replacingSubscriptionStoreId,
+  }) async {
     this.buyCalls++;
+    this.buyReplacing.add(replacingSubscriptionStoreId);
     if (this.buyError != null) throw this.buyError!;
     return this.buyResult;
   }
@@ -80,5 +100,8 @@ class FakeProPurchaseBackend implements ProPurchaseBackend {
     return this.restoreResult;
   }
 
-  Future<void> close() => this.entitlementController.close();
+  Future<void> close() async {
+    await this.entitlementController.close();
+    await this.planController.close();
+  }
 }

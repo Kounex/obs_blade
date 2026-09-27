@@ -15,6 +15,29 @@ const Set<String> kProProductIds = {
 
 bool isProProductId(String productId) => kProProductIds.contains(productId);
 
+/// Play side of the subscription pair: one subscription product with a
+/// base plan per cadence. RevenueCat reports such products as
+/// `<subscription>:<base plan>` (e.g. `pro:pro-yearly`).
+const String kPlayProSubscriptionId = 'pro';
+const Map<String, String> _kPlayProBasePlans = {
+  'pro-yearly': kProYearlyId,
+  'pro-monthly': kProMonthlyId,
+};
+
+/// The app's plan id (`pro_yearly` / `pro_monthly` / `pro_lifetime`) for a
+/// store product identifier, or null when it isn't a Pro product. App
+/// Store ids already are the plan ids; Play subscriptions come as
+/// `pro:pro-yearly`, or as `pro` with the base plan in [planIdentifier].
+String? canonicalProProductId(
+  String storeIdentifier, {
+  String? planIdentifier,
+}) {
+  if (isProProductId(storeIdentifier)) return storeIdentifier;
+  final List<String> parts = storeIdentifier.split(':');
+  if (parts.first != kPlayProSubscriptionId) return null;
+  return _kPlayProBasePlans[parts.length > 1 ? parts[1] : planIdentifier];
+}
+
 /// Release-build testing escape hatch
 /// (`--dart-define=PRO_RELEASE_TEST_UNLOCK=true`): extends the hidden
 /// paywall long-press override ([ProStore.debugOverride]) — normally

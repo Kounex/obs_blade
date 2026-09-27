@@ -53,6 +53,21 @@ mixin _$ProStore on _ProStore, Store {
     });
   }
 
+  late final _$planAtom = Atom(name: '_ProStore.plan', context: context);
+
+  @override
+  ProPlanState get plan {
+    _$planAtom.reportRead();
+    return super.plan;
+  }
+
+  @override
+  set plan(ProPlanState value) {
+    _$planAtom.reportWrite(value, super.plan, () {
+      super.plan = value;
+    });
+  }
+
   late final _$pendingAtom = Atom(name: '_ProStore.pending', context: context);
 
   @override
@@ -104,6 +119,16 @@ mixin _$ProStore on _ProStore, Store {
     });
   }
 
+  late final _$refreshPlanAsyncAction = AsyncAction(
+    '_ProStore.refreshPlan',
+    context: context,
+  );
+
+  @override
+  Future<void> refreshPlan() {
+    return _$refreshPlanAsyncAction.run(() => super.refreshPlan());
+  }
+
   late final _$loadProductsAsyncAction = AsyncAction(
     '_ProStore.loadProducts',
     context: context,
@@ -153,6 +178,7 @@ mixin _$ProStore on _ProStore, Store {
     return '''
 boughtPro: ${boughtPro},
 debugOverride: ${debugOverride},
+plan: ${plan},
 pending: ${pending},
 lastError: ${lastError},
 productsLoaded: ${productsLoaded},

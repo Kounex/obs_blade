@@ -10,6 +10,7 @@ import '../types/enums/hive_keys.dart';
 import '../types/enums/settings_keys.dart';
 import '../utils/general_helper.dart';
 import '../utils/pro_ids.dart';
+import '../utils/pro_plan.dart';
 import '../utils/pro_product.dart';
 import '../utils/pro_purchase_service.dart';
 
@@ -44,6 +45,8 @@ abstract class _ProStore with Store {
 
   StreamSubscription<bool>? _entitlementSubscription;
 
+  StreamSubscription<ProPlanState>? _planSubscription;
+
   _ProStore({ProPurchaseService? service})
     : this._service = service ?? ProPurchaseService();
 
@@ -67,6 +70,12 @@ abstract class _ProStore with Store {
   /// exist store-side (graceful placeholder state), loaded lazily via
   /// [loadProducts].
   final ObservableList<ProProduct> products = ObservableList();
+
+  /// The user's Pro plan (RevenueCat path) - which switches the Pro page
+  /// offers and whether a still-renewing subscription needs cancelling
+  /// after a lifetime purchase. [ProPlanState.none] on the legacy path.
+  @observable
+  ProPlanState plan = ProPlanState.none;
 
   @observable
   bool pending = false;
@@ -114,6 +123,7 @@ abstract class _ProStore with Store {
   void dispose() {
     this._settingsSubscription?.cancel();
     this._entitlementSubscription?.cancel();
+    this._planSubscription?.cancel();
   }
 
   /// RevenueCat path: configure the SDK, then fetch + subscribe the
@@ -125,6 +135,10 @@ abstract class _ProStore with Store {
     try {
       await this._service.init();
       await this._mirrorEntitlement();
+      await this.refreshPlan();
+      this._planSubscription = this._service.proPlanStream.listen(
+        (ProPlanState plan) => runInAction(() => this.plan = plan),
+      );
       this._entitlementSubscription = this._service.proEntitlementStream.listen(
         (bool active) {
           Hive.box<dynamic>(
@@ -153,6 +167,22 @@ abstract class _ProStore with Store {
       /// the last mirrored state, the next update retries.
       GeneralHelper.advLog(
         'RevenueCat entitlement fetch failed - $e',
+        includeInLogs: true,
+        level: LogLevel.Error,
+      );
+    }
+  }
+
+  /// Re-reads the plan (RevenueCat path). Failures keep the last known
+  /// plan - it only decides which switches the Pro page offers.
+  @action
+  Future<void> refreshPlan() async {
+    try {
+      final ProPlanState? plan = await this._service.fetchProPlan();
+      if (plan != null) this.plan = plan;
+    } catch (e) {
+      GeneralHelper.advLog(
+        'Pro plan fetch failed - $e',
         includeInLogs: true,
         level: LogLevel.Error,
       );
@@ -225,7 +255,20 @@ abstract class _ProStore with Store {
     this.pending = true;
     this.lastError = null;
     try {
-      final bool bought = await this._service.buy(product);
+      /// Switching subscription cadence (monthly -> yearly) replaces the
+      /// running subscription; lifetime is a separate one-time purchase
+      /// next to it
+      final bool switchesSubscription =
+          product.id != kProLifetimeId &&
+          this.plan.currentPlan != null &&
+          this.plan.currentPlan != kProLifetimeId;
+      final bool bought = await this._service.buy(
+        product,
+        replacingSubscriptionStoreId: switchesSubscription
+            ? this.plan.renewingSubscriptionStoreId
+            : null,
+      );
+      if (bought) await this.refreshPlan();
 
       /// RevenueCat reports the entitlement synchronously on purchase —
       /// mirror it now instead of waiting for the CustomerInfo listener.

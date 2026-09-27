@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/design/design.dart';
@@ -11,6 +12,7 @@ import '../../../shared/general/base/constrained_box.dart';
 import '../../../stores/pro_store.dart';
 import '../../../utils/pro_ids.dart';
 import '../../../utils/styling_helper.dart';
+import 'pro_plan_switch.dart';
 
 /// Manage-subscription page of the platform the purchase ran through
 /// (lazy - `Platform` must not be touched at class-load time on web)
@@ -133,23 +135,48 @@ class ProUnlockedView extends StatelessWidget {
                   StaggeredEntrance(
                     index: 3,
                     scaleFrom: 0.985,
-                    child: Column(
-                      children: [
-                        BaseButton(
-                          text: 'Manage subscription',
-                          onPressed: () => this._manageSubscription(context),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Text(
-                          'Manage or cancel anytime in your store account - '
-                          'no hoops, no dark patterns.',
-                          textAlign: TextAlign.center,
+                    child: ProCancelSubscriptionNotice(
+                      store: this.store,
+                      onOpenSubscriptions: () =>
+                          this._manageSubscription(context),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  StaggeredEntrance(
+                    index: 4,
+                    scaleFrom: 0.985,
+                    child: ProPlanSwitch(store: this.store),
+                  ),
+                  StaggeredEntrance(
+                    index: 5,
+                    scaleFrom: 0.985,
 
-                          /// Reassurance footnote (token-delta §2.1)
-                          style: Theme.of(context).textTheme.bodySmall!
-                              .copyWith(color: textColors.textTertiary),
-                        ),
-                      ],
+                    /// Lifetime with nothing left renewing has no
+                    /// subscription to manage
+                    child: Observer(
+                      builder: (context) =>
+                          this.store.plan.currentPlan == kProLifetimeId &&
+                              !this.store.plan.subscriptionToCancel
+                          ? const SizedBox()
+                          : Column(
+                              children: [
+                                BaseButton(
+                                  text: 'Manage subscription',
+                                  onPressed: () =>
+                                      this._manageSubscription(context),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Text(
+                                  'Manage or cancel anytime in your store '
+                                  'account - no hoops, no dark patterns.',
+                                  textAlign: TextAlign.center,
+
+                                  /// Reassurance footnote (token-delta §2.1)
+                                  style: Theme.of(context).textTheme.bodySmall!
+                                      .copyWith(color: textColors.textTertiary),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ],

@@ -55,6 +55,10 @@ class _ProPaywallViewState extends State<ProPaywallView> {
       this._store.loadProducts();
     }
 
+    /// Current plan + renewal state for the Pro page's plan switch -
+    /// picks up a cancellation made in the store since the last update
+    this._store.refreshPlan();
+
     /// Celebrate only on the unlock edge (a long-time Pro opening this
     /// page gets the calm thank-you state, not confetti) - and not at all
     /// under reduced motion

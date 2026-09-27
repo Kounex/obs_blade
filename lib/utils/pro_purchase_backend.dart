@@ -1,3 +1,4 @@
+import 'pro_plan.dart';
 import 'pro_product.dart';
 
 /// Platform-neutral seam behind [ProPurchaseService] — implemented by the
@@ -32,7 +33,19 @@ abstract class ProPurchaseBackend {
   /// exist store-side (the expected state until launch).
   Future<List<ProProduct>> queryProProducts();
 
-  Future<bool> buy(ProProduct product);
+  /// [replacingSubscriptionStoreId]: the store id of an active Pro
+  /// subscription this purchase replaces (monthly -> yearly). Play needs
+  /// it to change the subscription instead of adding a second one; the
+  /// App Store switches within the subscription group on its own.
+  Future<bool> buy(ProProduct product, {String? replacingSubscriptionStoreId});
+
+  /// The user's Pro plan (see [ProPlanState]), or null when this backend
+  /// can't tell (legacy path).
+  Future<ProPlanState?> fetchProPlan();
+
+  /// Plan updates (RevenueCat CustomerInfo listener). The legacy path
+  /// never emits.
+  Stream<ProPlanState> get proPlanStream;
 
   /// Returns true when the restore surfaced an active entitlement
   /// (RevenueCat reports it synchronously via CustomerInfo). The legacy

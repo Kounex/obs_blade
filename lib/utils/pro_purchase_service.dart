@@ -1,6 +1,7 @@
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'pro_ids.dart';
+import 'pro_plan.dart';
 import 'pro_product.dart';
 import 'pro_purchase_backend.dart';
 import 'revenuecat_config.dart';
@@ -87,12 +88,24 @@ class InAppPurchaseProBackend implements ProPurchaseBackend {
   /// Both the subscriptions and the lifetime buy-out go through
   /// `buyNonConsumable` (the plugin's documented path for subscriptions on
   /// iOS/Android).
+  /// Plan switches are a RevenueCat-path feature; the legacy path only
+  /// sells to non-Pro users, so there is nothing to replace.
   @override
-  Future<bool> buy(ProProduct product) => this.gateway.buyNonConsumable(
+  Future<bool> buy(
+    ProProduct product, {
+    String? replacingSubscriptionStoreId,
+  }) => this.gateway.buyNonConsumable(
     purchaseParam: PurchaseParam(
       productDetails: product.storeObject! as ProductDetails,
     ),
   );
+
+  /// The legacy path has no view of plans or renewals.
+  @override
+  Future<ProPlanState?> fetchProPlan() async => null;
+
+  @override
+  Stream<ProPlanState> get proPlanStream => const Stream.empty();
 
   /// Restored purchases arrive on the purchase stream with
   /// `PurchaseStatus.restored` — the explicit-vs-silent distinction
@@ -163,7 +176,17 @@ class ProPurchaseService {
   Future<List<ProProduct>> queryProProducts() =>
       this._backend.queryProProducts();
 
-  Future<bool> buy(ProProduct product) => this._backend.buy(product);
+  Future<bool> buy(
+    ProProduct product, {
+    String? replacingSubscriptionStoreId,
+  }) => this._backend.buy(
+    product,
+    replacingSubscriptionStoreId: replacingSubscriptionStoreId,
+  );
+
+  Future<ProPlanState?> fetchProPlan() => this._backend.fetchProPlan();
+
+  Stream<ProPlanState> get proPlanStream => this._backend.proPlanStream;
 
   /// True when the restore surfaced an active entitlement (RevenueCat
   /// only — the legacy path reports via the purchase stream).

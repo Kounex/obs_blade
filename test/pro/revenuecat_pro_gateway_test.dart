@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/pro_ids.dart';
+import 'package:obs_blade/utils/pro_plan.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/utils/revenuecat_config.dart';
 import 'package:obs_blade/utils/revenuecat_pro_gateway.dart';
@@ -75,6 +76,57 @@ CustomerInfo fakeCustomerInfo({required bool proActive}) {
   });
 }
 
+/// `CustomerInfo` for the plan tests: [subs] maps store id -> willRenew,
+/// [lifetime] adds a `pro_lifetime` one-time transaction.
+CustomerInfo planCustomerInfo({
+  Map<String, bool> subs = const {},
+  bool lifetime = false,
+}) {
+  final entitlement = {
+    ..._entitlementJson(active: true),
+    'productIdentifier': lifetime ? kProLifetimeId : subs.keys.first,
+    'willRenew': !lifetime && subs.values.first,
+  };
+  return CustomerInfo.fromJson({
+    'entitlements': {
+      'all': {kProEntitlementId: entitlement},
+      'active': {kProEntitlementId: entitlement},
+    },
+    'allPurchaseDates': const <String, dynamic>{},
+    'activeSubscriptions': subs.keys.toList(),
+    'allPurchasedProductIdentifiers': [
+      ...subs.keys,
+      if (lifetime) kProLifetimeId,
+    ],
+    'nonSubscriptionTransactions': [
+      if (lifetime)
+        {
+          'transactionIdentifier': 't-lifetime',
+          'revenueCatIdentifier': 'rc-lifetime',
+          'productIdentifier': kProLifetimeId,
+          'purchaseDate': '2026-09-02T00:00:00Z',
+        },
+    ],
+    'subscriptionsByProductIdentifier': {
+      for (final e in subs.entries)
+        e.key: {
+          'productIdentifier': e.key,
+          'purchaseDate': '2026-09-01T00:00:00Z',
+          'isSandbox': true,
+          'isActive': true,
+          'willRenew': e.value,
+          'store': 'APP_STORE',
+          'periodType': 'NORMAL',
+          'ownershipType': 'PURCHASED',
+        },
+    },
+    'firstSeen': '2026-09-01T00:00:00Z',
+    'originalAppUserId': 'test-user',
+    'allExpirationDates': const <String, dynamic>{},
+    'requestDate': '2026-09-03T00:00:00Z',
+  });
+}
+
 void main() {
   group('proProductFromPackage', () {
     test(
@@ -131,6 +183,54 @@ void main() {
       });
 
       expect(proEntitlementActive(info), isFalse);
+    });
+  });
+
+  group('Play product ids', () {
+    test('a pro:pro-yearly package is the yearly plan', () {
+      final product = proProductFromPackage(fakePackage('pro:pro-yearly'));
+      expect(product.id, kProYearlyId);
+    });
+
+    test('a pro:pro-monthly package is the monthly plan', () {
+      final product = proProductFromPackage(
+        fakePackage('pro:pro-monthly', subscriptionPeriod: 'P1M'),
+      );
+      expect(product.id, kProMonthlyId);
+    });
+  });
+
+  group('proPlanFromCustomerInfo', () {
+    test('renewing monthly offers yearly and lifetime', () {
+      final plan = proPlanFromCustomerInfo(
+        planCustomerInfo(subs: {kProMonthlyId: true}),
+      );
+      expect(plan.currentPlan, kProMonthlyId);
+      expect(plan.upgrades, [kProYearlyId, kProLifetimeId]);
+      expect(plan.renewingSubscriptionStoreId, kProMonthlyId);
+    });
+
+    test('Play yearly offers only lifetime', () {
+      final plan = proPlanFromCustomerInfo(
+        planCustomerInfo(subs: {'pro:pro-yearly': true}),
+      );
+      expect(plan.currentPlan, kProYearlyId);
+      expect(plan.upgrades, [kProLifetimeId]);
+    });
+
+    test('lifetime next to a renewing monthly asks to cancel it', () {
+      final plan = proPlanFromCustomerInfo(
+        planCustomerInfo(subs: {kProMonthlyId: true}, lifetime: true),
+      );
+      expect(plan.currentPlan, kProLifetimeId);
+      expect(plan.subscriptionToCancel, isTrue);
+    });
+
+    test('lifetime next to a cancelled monthly is settled', () {
+      final plan = proPlanFromCustomerInfo(
+        planCustomerInfo(subs: {kProMonthlyId: false}, lifetime: true),
+      );
+      expect(plan.subscriptionToCancel, isFalse);
     });
   });
 
@@ -211,6 +311,48 @@ void main() {
       if (tempDir.existsSync()) {
         tempDir.deleteSync(recursive: true);
       }
+    });
+
+    test('init loads the plan and follows plan updates', () async {
+      backend.proPlan = const ProPlanState(
+        currentPlan: kProMonthlyId,
+        renewingSubscription: kProMonthlyId,
+        renewingSubscriptionStoreId: kProMonthlyId,
+      );
+      final store = newStore()..init();
+      await pumpEventQueue();
+      expect(store.plan.upgrades, [kProYearlyId, kProLifetimeId]);
+
+      backend.planController.add(const ProPlanState(currentPlan: kProYearlyId));
+      await pumpEventQueue();
+      expect(store.plan.upgrades, [kProLifetimeId]);
+    });
+
+    test('switching monthly -> yearly replaces the running subscription; '
+        'lifetime is bought next to it', () async {
+      backend.proPlan = const ProPlanState(
+        currentPlan: kProMonthlyId,
+        renewingSubscription: kProMonthlyId,
+        renewingSubscriptionStoreId: 'pro:pro-monthly',
+      );
+      final store = newStore()..init();
+      await pumpEventQueue();
+
+      await store.buy(proProductFromPackage(fakePackage('pro:pro-yearly')));
+      await store.buy(
+        proProductFromPackage(
+          fakePackage(kProLifetimeId, subscriptionPeriod: null),
+        ),
+      );
+
+      expect(backend.buyReplacing, ['pro:pro-monthly', null]);
+    });
+
+    test('a first purchase replaces nothing', () async {
+      final store = newStore()..init();
+      await pumpEventQueue();
+      await store.buy(proProductFromPackage(fakePackage(kProYearlyId)));
+      expect(backend.buyReplacing, [null]);
     });
 
     test(
