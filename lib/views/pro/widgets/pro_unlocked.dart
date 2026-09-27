@@ -1,26 +1,16 @@
-import 'dart:io';
-
 import 'package:confetti/confetti.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/button.dart';
 import '../../../shared/general/base/constrained_box.dart';
 import '../../../stores/pro_store.dart';
+import '../../../utils/manage_subscriptions.dart';
 import '../../../utils/pro_ids.dart';
 import '../../../utils/styling_helper.dart';
 import 'pro_plan_switch.dart';
-
-/// Manage-subscription page of the platform the purchase ran through
-/// (lazy - `Platform` must not be touched at class-load time on web)
-Uri get _manageSubscriptionUri => Uri.parse(
-  !kIsWeb && Platform.isIOS
-      ? 'https://apps.apple.com/account/subscriptions'
-      : 'https://play.google.com/store/account/subscriptions',
-);
 
 /// The already-Pro side of the paywall: thank-you + manage subscription.
 /// Doubles as the purchase-success state — the confetti controller plays
@@ -50,21 +40,24 @@ class ProUnlockedView extends StatelessWidget {
       );
   }
 
+  /// StoreKit's sheet on iOS (re-read the plan once it closes - a cancel
+  /// or switch there only shows after a fresh read), the store's page
+  /// elsewhere
   Future<void> _manageSubscription(BuildContext context) async {
-    try {
-      await launchUrl(
-        _manageSubscriptionUri,
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Couldn\'t open the subscription page.'),
-          ),
-        );
+    switch (await openManageSubscriptions()) {
+      case ManageSubscriptionsResult.sheetClosed:
+        await this.store.refreshPlan(fresh: true);
+      case ManageSubscriptionsResult.pageOpened:
+        break;
+      case ManageSubscriptionsResult.failed:
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Couldn\'t open the subscription page.'),
+            ),
+          );
     }
   }
 

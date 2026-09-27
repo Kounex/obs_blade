@@ -123,8 +123,10 @@ class RevenueCatProGateway implements ProPurchaseBackend {
   Stream<ProPlanState> get proPlanStream => this._planController.stream;
 
   @override
-  Future<ProPlanState?> fetchProPlan() async =>
-      proPlanFromCustomerInfo(await Purchases.getCustomerInfo());
+  Future<ProPlanState?> fetchProPlan({bool fresh = false}) async {
+    if (fresh) await Purchases.invalidateCustomerInfoCache();
+    return proPlanFromCustomerInfo(await Purchases.getCustomerInfo());
+  }
 
   /// No dedicated "availability" probe in the SDK — an offerings fetch is
   /// the closest equivalent (also warms the cache the paywall reads next).

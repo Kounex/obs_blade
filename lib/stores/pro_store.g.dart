@@ -125,8 +125,8 @@ mixin _$ProStore on _ProStore, Store {
   );
 
   @override
-  Future<void> refreshPlan() {
-    return _$refreshPlanAsyncAction.run(() => super.refreshPlan());
+  Future<void> refreshPlan({bool fresh = false}) {
+    return _$refreshPlanAsyncAction.run(() => super.refreshPlan(fresh: fresh));
   }
 
   late final _$loadProductsAsyncAction = AsyncAction(

@@ -77,7 +77,13 @@ class FakeProPurchaseBackend implements ProPurchaseBackend {
   final List<String?> buyReplacing = [];
 
   @override
-  Future<ProPlanState?> fetchProPlan() async => this.proPlan;
+  Future<ProPlanState?> fetchProPlan({bool fresh = false}) async {
+    this.freshPlanFetches += fresh ? 1 : 0;
+    return this.proPlan;
+  }
+
+  /// How often [fetchProPlan] was asked to skip the cache
+  int freshPlanFetches = 0;
 
   @override
   Stream<ProPlanState> get proPlanStream => this.planController.stream;

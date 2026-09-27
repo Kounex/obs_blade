@@ -174,11 +174,13 @@ abstract class _ProStore with Store {
   }
 
   /// Re-reads the plan (RevenueCat path). Failures keep the last known
-  /// plan - it only decides which switches the Pro page offers.
+  /// plan - it only decides which switches the Pro page offers. [fresh]
+  /// skips the SDK's cache - after the store's own subscription sheet,
+  /// where a cancel changes nothing the SDK sees by itself
   @action
-  Future<void> refreshPlan() async {
+  Future<void> refreshPlan({bool fresh = false}) async {
     try {
-      final ProPlanState? plan = await this._service.fetchProPlan();
+      final ProPlanState? plan = await this._service.fetchProPlan(fresh: fresh);
       if (plan != null) this.plan = plan;
     } catch (e) {
       GeneralHelper.advLog(

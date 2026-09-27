@@ -41,7 +41,7 @@ abstract class ProPurchaseBackend {
 
   /// The user's Pro plan (see [ProPlanState]), or null when this backend
   /// can't tell (legacy path).
-  Future<ProPlanState?> fetchProPlan();
+  Future<ProPlanState?> fetchProPlan({bool fresh = false});
 
   /// Plan updates (RevenueCat CustomerInfo listener). The legacy path
   /// never emits.

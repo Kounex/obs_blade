@@ -102,7 +102,7 @@ class InAppPurchaseProBackend implements ProPurchaseBackend {
 
   /// The legacy path has no view of plans or renewals.
   @override
-  Future<ProPlanState?> fetchProPlan() async => null;
+  Future<ProPlanState?> fetchProPlan({bool fresh = false}) async => null;
 
   @override
   Stream<ProPlanState> get proPlanStream => const Stream.empty();
@@ -184,7 +184,8 @@ class ProPurchaseService {
     replacingSubscriptionStoreId: replacingSubscriptionStoreId,
   );
 
-  Future<ProPlanState?> fetchProPlan() => this._backend.fetchProPlan();
+  Future<ProPlanState?> fetchProPlan({bool fresh = false}) =>
+      this._backend.fetchProPlan(fresh: fresh);
 
   Stream<ProPlanState> get proPlanStream => this._backend.proPlanStream;
 

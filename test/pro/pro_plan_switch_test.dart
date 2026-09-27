@@ -2,11 +2,14 @@ import 'dart:io';
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/utils/manage_subscriptions.dart';
 import 'package:obs_blade/utils/pro_ids.dart';
 import 'package:obs_blade/utils/pro_plan.dart';
 import 'package:obs_blade/utils/pro_product.dart';
@@ -100,6 +103,37 @@ void main() {
     );
     expect(cancelNotice, findsNothing);
     expect(find.text('Manage subscription'), findsOneWidget);
+  });
+
+  testWidgets('iOS: manage opens the StoreKit sheet, then re-reads fresh', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    final List<String> calls = [];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      kManageSubscriptionsChannel,
+      (call) async {
+        calls.add(call.method);
+        return true;
+      },
+    );
+    final ProStore store = await pumpUnlocked(tester, _monthly);
+
+    /// Cancelled in the sheet: still Pro until the period ends
+    backend.proPlan = const ProPlanState(currentPlan: kProMonthlyId);
+    await tester.ensureVisible(find.text('Manage subscription'));
+    await tester.tap(find.text('Manage subscription'));
+    await tester.pump();
+
+    expect(calls, ['showManageSubscriptions']);
+    expect(backend.freshPlanFetches, 1);
+    expect(store.plan.renewingSubscription, isNull);
+
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      kManageSubscriptionsChannel,
+      null,
+    );
+    debugDefaultTargetPlatformOverride = null;
   });
 
   testWidgets('yearly subscribers can only switch to lifetime', (tester) async {
