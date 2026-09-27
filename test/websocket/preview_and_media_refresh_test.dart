@@ -143,4 +143,48 @@ void main() {
       );
     },
   );
+
+  test(
+    'the in-program state is re-read once OBS settled after a transition',
+    () async {
+      runInAction(
+        () => dashboardStore.allInputs = ObservableList.of([
+          Input(
+            inputKind: 'ffmpeg_source',
+            inputName: 'Clip',
+            unversionedInputKind: 'ffmpeg_source',
+          ),
+        ]),
+      );
+      peer.responseData['GetSourceActive'] = {
+        'videoActive': true,
+        'videoShowing': true,
+      };
+      dashboardStore.requestMediaInProgram();
+      await waitFor(
+        () => dashboardStore.mediaInProgram['Clip'] == true,
+        'initial in-program read',
+      );
+
+      /// OBS deactivates the old scene's sources a frame AFTER the event -
+      /// the read at the event still sees "active"
+      peer.event('SceneTransitionEnded', {'transitionName': 'Fade'});
+      await waitFor(
+        () => requestsOf('GetSourceActive').length == 2,
+        'read at the event',
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(dashboardStore.mediaInProgram['Clip'], isTrue);
+      peer.responseData['GetSourceActive'] = {
+        'videoActive': false,
+        'videoShowing': false,
+      };
+
+      await waitFor(
+        () => dashboardStore.mediaInProgram['Clip'] == false,
+        'settled re-read sees it left the live scene',
+      );
+      expect(requestsOf('GetSourceActive'), hasLength(3));
+    },
+  );
 }

@@ -1172,6 +1172,7 @@ abstract class _DashboardStore with Store {
     _getStatsTimer?.cancel();
     _checkConnectionTimer?.cancel();
     _previewRetry?.cancel();
+    _mediaInProgramSettle?.cancel();
   }
 
   void fetchSceneItemsFilters() => NetworkHelper.sendBatchRequest(
@@ -1271,9 +1272,23 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  /// OBS flips a source's active state on its next video frame, not with
+  /// the program / transition event (measured ~55 ms after
+  /// SceneTransitionEnded, OBS 32) - a read right at the event can still
+  /// see the old state, and nothing would read again. A second read this
+  /// much later catches the settled value
+  static const Duration kMediaInProgramSettle = Duration(milliseconds: 250);
+
+  Timer? _mediaInProgramSettle;
+
   /// Event-driven re-read - only once the hub has asked (no hub, no reads)
   void _refreshMediaInProgram() {
-    if (this.mediaInProgram.isNotEmpty) requestMediaInProgram();
+    if (this.mediaInProgram.isEmpty) return;
+    requestMediaInProgram();
+    _mediaInProgramSettle?.cancel();
+    _mediaInProgramSettle = Timer(kMediaInProgramSettle, () {
+      if (this.mediaInProgram.isNotEmpty) requestMediaInProgram();
+    });
   }
 
   /// Media hub "Stop all": stops every media input that is playing or
