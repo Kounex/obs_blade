@@ -7,7 +7,10 @@
 #   tool/store_screenshots/capture.sh android <emulator-serial> <out-dir>
 #
 # Env: STORE_SHOTS_ONLY=a,b (re-take only these), KEEP_OBS=1 (skip the OBS
-# teardown, e.g. between two devices).
+# teardown, e.g. between two devices), ORIENTATION=landscape (iOS: rotates
+# the simulator through the Simulator app's Device menu - the shell needs
+# macOS Accessibility access - and turns the captures upright; Android
+# tablets capture in landscape on their own).
 #
 # Use dedicated devices only - the test writes settings, stats, a saved
 # connection and the Pro debug override. See README.md in this folder.
@@ -26,6 +29,21 @@ OBS_WS_CONFIG="$HOME/Library/Application Support/obs-studio/plugin_config/obs-we
 OBS_WS_PASSWORD="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("server_password",""))' "$OBS_WS_CONFIG" 2>/dev/null)"
 
 if [ "$PLATFORM" = "android" ]; then OBS_HOST=10.0.2.2; else OBS_HOST=127.0.0.1; fi
+ORIENTATION="${ORIENTATION:-portrait}"
+
+# iOS: simctl has no rotate command - use the Simulator app's menu on this
+# device's window. simctl screenshots stay in the panel's portrait buffer,
+# so landscape captures are rotated upright after each shot.
+sim_rotate() {
+  local name
+  name="$(xcrun simctl list devices | grep "$DEVICE" | sed -E 's/^ *//; s/ \(.*//')"
+  osascript -e 'tell application "Simulator" to activate' \
+    -e 'tell application "System Events" to tell process "Simulator"' \
+    -e "perform action \"AXRaise\" of (first window whose name contains \"$name\")" \
+    -e 'delay 0.5' \
+    -e "click menu item \"Rotate $1\" of menu \"Device\" of menu bar 1" \
+    -e 'end tell' >/dev/null
+}
 
 # ---- OBS demo state (own profile + collection, local RTMP sink) ----
 [ -f build/store_screenshots/media/gameplay.png ] || tool/store_screenshots/prepare_media.sh
@@ -49,6 +67,7 @@ cleanup() {
   kill "$SINK_PID" 2>/dev/null
   if [ "$PLATFORM" = "ios" ]; then
     xcrun simctl status_bar "$DEVICE" clear 2>/dev/null
+    [ "$ORIENTATION" = "landscape" ] && sim_rotate Right
   else
     "$ADB" -s "$DEVICE" shell am broadcast -a com.android.systemui.demo -e command exit >/dev/null 2>&1
     "$ADB" -s "$DEVICE" forward --remove tcp:8977 >/dev/null 2>&1
@@ -58,6 +77,7 @@ trap cleanup EXIT
 
 # ---- clean status bar ----
 if [ "$PLATFORM" = "ios" ]; then
+  [ "$ORIENTATION" = "landscape" ] && sim_rotate Left && sleep 2
   xcrun simctl status_bar "$DEVICE" override --time "9:41" --dataNetwork wifi --wifiMode active \
     --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState discharging --batteryLevel 100
 else
@@ -82,6 +102,8 @@ fi
         [ -z "$name" ] && continue
         if [ "$PLATFORM" = "ios" ]; then
           xcrun simctl io "$DEVICE" screenshot "$OUT_DIR/$name.png" >/dev/null 2>&1
+          # Rotate Left puts the UI's top at the buffer's right edge
+          [ "$ORIENTATION" = "landscape" ] && sips -r 270 "$OUT_DIR/$name.png" >/dev/null 2>&1
         else
           "$ADB" -s "$DEVICE" exec-out screencap -p > "$OUT_DIR/$name.png"
         fi
