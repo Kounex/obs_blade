@@ -68,7 +68,10 @@ class ProUnlockedView extends StatelessWidget {
       context,
     ).extension<AppTextColors>()!;
 
+    /// Expand: a loose Stack lets the scroll view shrink-wrap this short
+    /// page and clip it at its own bottom edge while bouncing
     return Stack(
+      fit: StackFit.expand,
       children: [
         SingleChildScrollView(
           physics: StylingHelper.platformAwareScrollPhysics,

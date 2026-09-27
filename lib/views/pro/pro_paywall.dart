@@ -92,6 +92,14 @@ class _ProPaywallViewState extends State<ProPaywallView> {
           customBody: Observer(
             builder: (context) => AnimatedSwitcher(
               duration: AppMotion.medium,
+
+              /// The default layout is a loose Stack - the scroll views
+              /// would shrink-wrap short content and clip it at their own
+              /// bottom edge while bouncing, above the tab bar
+              layoutBuilder: (current, previous) => Stack(
+                fit: StackFit.expand,
+                children: [...previous, ?current],
+              ),
               child: this._store.isPro
                   ? ProUnlockedView(
                       key: const ValueKey('pro-unlocked'),

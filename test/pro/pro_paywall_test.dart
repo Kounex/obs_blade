@@ -14,6 +14,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/pro_ids.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/views/pro/pro_paywall.dart';
+import 'package:obs_blade/views/pro/widgets/pro_unlocked.dart';
 import 'package:obs_blade/views/pro/widgets/pro_benefits.dart';
 import 'package:obs_blade/views/pro/widgets/pro_hero.dart';
 import 'package:obs_blade/views/settings/widgets/support_dialog/support_skeleton.dart';
@@ -322,6 +323,20 @@ void main() {
 
     expect(find.text('Welcome to Pro'), findsOneWidget);
     expect(find.text('Manage subscription'), findsOneWidget);
+
+    /// The scroll view fills the page: shrink-wrapped to this short
+    /// content it would clip at its own bottom edge while bouncing
+    expect(
+      tester
+          .getSize(
+            find.descendant(
+              of: find.byType(ProUnlockedView),
+              matching: find.byType(SingleChildScrollView),
+            ),
+          )
+          .height,
+      tester.getSize(find.byType(ProPaywallView)).height,
+    );
 
     /// No sales content in the unlocked state
     expect(find.text('Price shown at purchase'), findsNothing);

@@ -162,7 +162,6 @@ class ProSalesView extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.xxl),
             ],
           ),
         ),
