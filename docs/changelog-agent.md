@@ -2,6 +2,34 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-27 - Store screenshots: capture tooling, stats detail on tablet
+
+Redesign of the App Store / Play screenshots (user ask: automated, real
+app, intro style, 5-8 per size). Composition lives outside the repo (the
+maintainer's store-shots composer); the repo holds the capture side.
+
+- **Capture tooling** (`tool/store_screenshots/`, README there): a
+  separate "OBS Blade Store Demo" OBS profile + scene collection with
+  fictional content (synthwave racer, illustrated facecam, overlays,
+  audio beds), streaming to a local ffmpeg RTMP sink; `capture.sh` runs
+  `integration_test/store_screenshots_test.dart` per device with clean
+  status bars. The test seeds stats, a saved connection and combined
+  chat (fake-backed stores, fictional viewers) and prints `SHOT:` /
+  `CROP:` markers. Must run on dedicated sims/AVDs - it writes app data.
+  Gotcha: the chat stores have to be swapped while the intro is the root
+  route; the tab shell (all tabs built eagerly) and a fresh
+  `CombinedChatStore` bind their observers to whatever GetIt returns at
+  that moment.
+- **Statistic detail on tablet** (user report): chart cards had a fixed
+  350 width inside a 640 column (~608 usable), so two never fit a row.
+  `StatsChartGrid` sizes them from the available width (2 per row on
+  tablet, 1 on phone, min 300). New wide tier `kWideContentMaxWidth`
+  1040 for the detail; reading measure `kBaseConstrainedMaxWidth`
+  640 -> 720 (every `BaseCard`, user decision).
+- **Autodiscover without WLAN**: the scan's `NotInWLANException` was an
+  unhandled async error when nothing listened yet (fresh install behind
+  the intro); the stored future is now marked handled.
+
 ## 2026-09-27 - YouTube chat recovers on its own after background / restart
 
 User report: combined chat, all three platforms live, app backgrounded
