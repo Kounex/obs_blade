@@ -237,9 +237,17 @@ Future<void> setup(Obs obs) async {
     final name = (s as Map)['sceneName'] as String;
     if (name != temp) await obs.call('RemoveScene', {'sceneName': name});
   }
-  final inputs = (await obs.call('GetInputList'))!['inputs'] as List;
-  for (final i in inputs) {
-    await obs.call('RemoveInput', {'inputName': (i as Map)['inputName']}, true);
+  // OBS releases removed sources lazily - wait until they're really gone,
+  // or recreating them (a re-run on the staged collection) collides
+  for (var attempt = 0; attempt < 20; attempt++) {
+    final inputs = (await obs.call('GetInputList'))!['inputs'] as List;
+    if (inputs.isEmpty) break;
+    for (final i in inputs) {
+      await obs.call('RemoveInput', {
+        'inputName': (i as Map)['inputName'],
+      }, true);
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 250));
   }
 
   // Inputs are created inside their first scene; later scenes reference them.

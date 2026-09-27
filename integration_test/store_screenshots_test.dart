@@ -602,8 +602,8 @@ void main() {
     if (find.byType(IntroView).evaluate().isEmpty) {
       _log('ERROR: expected a fresh install booting into the intro');
     }
-    // No autodiscover scan: emulators have no WLAN (the scan throws) and the
-    // test connects to its seeded connection directly anyway
+    // The test connects to its seeded connection directly - no need for an
+    // autodiscover scan (and its LAN address) on screen
     GetIt.instance<HomeStore>().setConnectMode(ConnectMode.Manual);
     _seedSettings();
     await _seedStats();
