@@ -181,23 +181,21 @@ List<Widget> _buildStandalone(
       return [
         if (exposeStudioControls) ...[
           const StaleGuard(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                StudioModeCheckbox(),
-                SizedBox(width: AppSpacing.md),
-              ],
+            child: DashboardCardColumn(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [StudioModeCheckbox()],
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.md),
         ],
         const StaleGuard(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TransitionControls(),
-              SizedBox(width: AppSpacing.md),
-            ],
+          child: DashboardCardColumn(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [TransitionControls()],
+            ),
           ),
         ),
       ];

@@ -49,3 +49,27 @@ class DashboardElementCard extends StatelessWidget {
     );
   }
 }
+
+/// Card-less dashboard rows (the studio mode checkbox, the transition
+/// controls) in the same column as [DashboardElementCard]: 12px side
+/// margins, centred and capped at [kBaseCardMaxWidth] - so a right-aligned
+/// row ends at the cards' right edge on wide screens too, not at the
+/// screen edge.
+class DashboardCardColumn extends StatelessWidget {
+  final Widget child;
+
+  const DashboardCardColumn({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+          child: this.child,
+        ),
+      ),
+    );
+  }
+}
