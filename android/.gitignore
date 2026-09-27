@@ -14,3 +14,8 @@ key.properties
 
 # Generated at build time; contains a registration id — never commit.
 app/src/main/assets/adi-registration.properties
+
+# Eclipse / Buildship project files - generated per machine by the IDE
+.project
+.classpath
+.settings/

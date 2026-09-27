@@ -7,7 +7,7 @@ data-safety checks (see `persistence-risk.md`).
 
 | Item | Status |
 |---|---|
-| Flutter on host | **3.47.0** / Dart **3.13.0** (workstation, via dotfiles SDK on PATH), 3.44.8 (maintainer headless host) — machine-local installs since 2026-09-08; the `.flutter` submodule pin (3.13.9) and the `flutterw` wrapper were removed, plain `flutter` from PATH everywhere |
+| Flutter on host | **3.47.2** / Dart **3.13.2** on both maintainer machines (workstation via dotfiles SDK on PATH, headless host aligned 2026-09-28 so `pubspec.lock` resolves identically - store builds and tests share one SDK) — machine-local installs since 2026-09-08; the `.flutter` submodule pin (3.13.9) and the `flutterw` wrapper were removed, plain `flutter` from PATH everywhere |
 | Branch | `chore/flutter-deps-upgrade` **merged to `master` 2026-07-27**, deleted |
 | SDK constraint | `^3.12.0` |
 | Hive → Hive CE | Done + foundation fixtures + open/cold-open tests + **device proof** |
