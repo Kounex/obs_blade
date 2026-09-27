@@ -193,7 +193,7 @@ void main() {
     await settle(tester);
 
     /// The held position - not 0:07 + the 20 s since the read
-    expect(find.text('On hold at 0:07'), findsOneWidget);
+    expect(find.text('On hold at 0:07 · resumes when live'), findsOneWidget);
     expect(find.text('Not in the live scene'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());

@@ -847,7 +847,7 @@ abstract class _DashboardStore with Store {
   void handleStream() {
     /// A new stream means a screenshot still "in flight" died with the
     /// old one - don't let it block the preview loop
-    _previewWatchdog?.cancel();
+    _previewRetry?.cancel();
     _previewInFlight = false;
     _obsStreamSubscription?.cancel();
     _obsStreamSubscription = GetIt.instance<NetworkStore>()
@@ -888,35 +888,29 @@ abstract class _DashboardStore with Store {
   /// scene switch).
   bool _previewInFlight = false;
 
-  /// Frees the in-flight slot when OBS never answers a screenshot
-  Timer? _previewWatchdog;
+  /// Short pause before retrying after a failed screenshot
+  Timer? _previewRetry;
 
   void _requestPreviewImage() {
     if (_previewInFlight) return;
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (session == null) return;
     _previewInFlight = true;
-    _previewWatchdog?.cancel();
-    _previewWatchdog = Timer(const Duration(seconds: 5), () {
-      _previewInFlight = false;
-      if (this.shouldRequestPreviewImage) _requestPreviewImage();
-    });
     _sendPreviewImageRequest(session.socket);
   }
 
   /// A screenshot answered (or failed): free the slot; a failure retries
   /// after a moment instead of silently ending the loop
+  /// (OBS answers every request; a dropped connection resets the slot in
+  /// [handleStream])
   void _previewAnswered({required bool succeeded}) {
-    _previewWatchdog?.cancel();
+    _previewRetry?.cancel();
     _previewInFlight = false;
     if (!this.shouldRequestPreviewImage) return;
     if (succeeded) {
       _requestPreviewImage();
     } else {
-      _previewWatchdog = Timer(
-        const Duration(seconds: 1),
-        _requestPreviewImage,
-      );
+      _previewRetry = Timer(const Duration(seconds: 1), _requestPreviewImage);
     }
   }
 
@@ -1171,7 +1165,7 @@ abstract class _DashboardStore with Store {
   void stopTimers() {
     _getStatsTimer?.cancel();
     _checkConnectionTimer?.cancel();
-    _previewWatchdog?.cancel();
+    _previewRetry?.cancel();
   }
 
   void fetchSceneItemsFilters() => NetworkHelper.sendBatchRequest(

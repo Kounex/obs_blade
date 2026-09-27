@@ -176,7 +176,9 @@ String mediaStatusLine(MediaStatus? status, DateTime now, {bool live = true}) {
   if (status == null) return '—';
   if (!live && status.playing) {
     final int? cursor = status.cursor;
-    return cursor == null ? 'On hold' : 'On hold at ${formatMediaTime(cursor)}';
+    return cursor == null
+        ? 'On hold · resumes when live'
+        : 'On hold at ${formatMediaTime(cursor)} · resumes when live';
   }
   final int? cursor = status.cursorAt(now);
   final int? duration = status.duration;
