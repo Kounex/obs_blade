@@ -67,3 +67,7 @@ docs/redesign/2026-iteration/
 
 # App Review contact details + demo account - personal, never in this public repo
 fastlane/metadata/ios/review_information/
+
+# fastlane run output (regenerated on every run)
+fastlane/README.md
+fastlane/report.xml
