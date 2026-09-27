@@ -2,6 +2,30 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-28 - Pro plan switch, Android subscriptions, media outside the live scene
+
+From the TestFlight sandbox test (monthly bought fine once the RevenueCat
+offering `pro` was made current - the empty `default` offering had
+made the paywall say "Not live yet"):
+
+- **Android paywall:** RevenueCat names Play subscriptions
+  `pro:pro-yearly` / `pro:pro-monthly`; the exact-id filter dropped them,
+  so Play users would only have seen Lifetime. `canonicalProProductId`
+  (pro_ids.dart) maps store ids to plan ids everywhere.
+- **Tiered plan switch** (user design): `ProPlanState` from CustomerInfo
+  (active subscriptions + renewal, lifetime owned). Monthly -> yearly or
+  lifetime, yearly -> lifetime, lifetime -> nothing (and no "Manage
+  subscription"). Monthly -> yearly is a Play product change
+  (`StoreProductChangeInfo`, time proration); the App Store switches
+  within the group at the next renewal (both subscriptions are level 1).
+  Lifetime next to a still-renewing subscription shows a cancel notice
+  with the store's subscription page.
+- **Media hub:** OBS accepts play for a media source outside the live
+  scene and reports PLAYING, but the cursor never moves (checked against
+  OBS 32). Starting (play/restart/prev/next/seek) is locked there in
+  list, pads and transport sheet; stop/pause stay; label "Not in the
+  live scene".
+
 ## 2026-09-28 - Legal pages live on the website
 
 The bundled privacy policy still said the app sends no data anywhere -
