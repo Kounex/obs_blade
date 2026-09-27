@@ -1,0 +1,9 @@
+OBS Blade 4.0 is a complete redesign, built for phone and tablet.
+
+- A new look with smoother, faster controls
+- Media controls, hotkeys, replay buffer and virtual camera
+- Chat gets its own tab: Twitch, YouTube, Kick and Owncast
+- A more reliable connection to OBS
+- New: OBS Blade Pro with native and combined chat, moderation tools, 7TV, BTTV and FFZ emotes, and custom themes
+
+Thanks for all your feedback - keep it coming on GitHub!

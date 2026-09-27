@@ -78,5 +78,7 @@
 		<true/>
 		<key>NSCameraUsageDescription</key>
 		<string>OBS Blade needs camera access to enable the QR code quick connect feature.</string>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 	</dict>
 </plist>

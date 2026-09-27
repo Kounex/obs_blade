@@ -1,0 +1,442 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'project.dart';
+import 'stores.dart';
+
+/// Forbidden in store builds: the Pro test unlock must never ship.
+const String _forbiddenDefine = 'PRO_RELEASE_TEST_UNLOCK';
+
+class Release {
+  Release(this.project, {required this.yes});
+
+  final Project project;
+
+  /// Commands that write to a store only act with --yes; otherwise they
+  /// print what they would do.
+  final bool yes;
+
+  // ------------------------------------------------------------- helpers
+
+  Future<int> _run(
+    String exe,
+    List<String> args, {
+    Map<String, String>? env,
+  }) async {
+    stdout.writeln('\$ $exe ${args.join(' ')}');
+    final p = await Process.start(
+      exe,
+      args,
+      workingDirectory: project.root,
+      environment: env,
+      mode: ProcessStartMode.inheritStdio,
+    );
+    return p.exitCode;
+  }
+
+  Future<String> _out(String exe, List<String> args) async {
+    final r = await Process.run(exe, args, workingDirectory: project.root);
+    return (r.stdout as String).trim();
+  }
+
+  Future<int> _fastlane(
+    String platform,
+    String lane,
+    Map<String, String> options,
+  ) {
+    final args = [
+      'exec',
+      'fastlane',
+      platform,
+      lane,
+      for (final e in options.entries) '${e.key}:${e.value}',
+    ];
+    if (!yes) {
+      stdout.writeln('\nDRY RUN - would run: bundle ${args.join(' ')}');
+      stdout.writeln('Re-run with --yes to do it.');
+      return Future.value(0);
+    }
+    return _run(
+      'bundle',
+      args,
+      env: {'FASTLANE_SKIP_UPDATE_CHECK': '1', 'FASTLANE_OPT_OUT_USAGE': '1'},
+    );
+  }
+
+  void _heading(String text) => stdout.writeln('\n== $text');
+
+  Map<String, Object?>? _readStamp(String platform) {
+    final f = project.stamp(platform);
+    return f.existsSync()
+        ? jsonDecode(f.readAsStringSync()) as Map<String, Object?>
+        : null;
+  }
+
+  // -------------------------------------------------------------- status
+
+  Future<int> status() async {
+    final v = project.version;
+    stdout.writeln(
+      'Local: ${v.name} (${v.build})  HEAD ${await _out('git', ['rev-parse', '--short', 'HEAD'])}',
+    );
+
+    final asc = AppStore.connect();
+    _heading('App Store versions');
+    for (final item in await asc.versions()) {
+      final a = item['attributes'] as Map;
+      stdout.writeln('  ${a['versionString']}  ${a['appStoreState']}');
+    }
+    _heading('App Store builds');
+    for (final item in await asc.builds()) {
+      final a = item['attributes'] as Map;
+      stdout.writeln(
+        '  ${a['version']}  ${a['processingState']}${a['expired'] == true ? '  (expired)' : ''}  uploaded ${a['uploadedDate']}',
+      );
+    }
+    _heading('App Store in-app products');
+    for (final item in [
+      ...await asc.inAppPurchases(),
+      ...await asc.subscriptions(),
+    ]) {
+      final a = item['attributes'] as Map;
+      stdout.writeln('  ${a['productId']}  ${a['state']}');
+    }
+
+    final play = await PlayStore.connect();
+    try {
+      _heading('Google Play tracks');
+      for (final track in await play.tracks()) {
+        final releases = (track['releases'] as List?) ?? const [];
+        if (releases.isEmpty) stdout.writeln('  ${track['track']}: -');
+        for (final r in releases.cast<Map>()) {
+          stdout.writeln(
+            '  ${track['track']}: ${r['name']}  ${r['versionCodes']}  ${r['status']}'
+            '${r['userFraction'] != null ? '  ${r['userFraction']}' : ''}',
+          );
+        }
+      }
+    } finally {
+      play.close();
+    }
+    return 0;
+  }
+
+  // ----------------------------------------------------------- preflight
+
+  /// Checks one or both platforms; prints every check and returns whether
+  /// all passed. [online] also compares build numbers with the stores.
+  Future<bool> preflight(Set<String> platforms, {bool online = true}) async {
+    var ok = true;
+    void check(bool pass, String label, [String? fix]) {
+      stdout.writeln(
+        '  ${pass ? 'ok  ' : 'FAIL'}  $label${!pass && fix != null ? '  -> $fix' : ''}',
+      );
+      if (!pass) ok = false;
+    }
+
+    _heading('Preflight (${platforms.join(' + ')})');
+    final v = project.version;
+    stdout.writeln('  version ${v.name}+${v.build}');
+
+    check(
+      (await _out('git', ['status', '--porcelain'])).isEmpty,
+      'working tree clean',
+      'commit or stash first',
+    );
+    await _out('git', ['fetch', '-q', 'origin']);
+    final branch = await _out('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+    check(
+      await _out('git', ['rev-parse', 'HEAD']) ==
+          await _out('git', ['rev-parse', 'origin/$branch']),
+      'HEAD is pushed (origin/$branch)',
+      'git push',
+    );
+    check(
+      File(project.kickOauthDefines).existsSync(),
+      'app-owned Kick OAuth client present',
+      'docs/private/kick_oauth.json',
+    );
+    check(
+      (await Process.run('bundle', [
+            'exec',
+            'fastlane',
+            '--version',
+          ], workingDirectory: project.root)).exitCode ==
+          0,
+      'fastlane installed',
+      'bundle install',
+    );
+
+    if (platforms.contains('ios')) {
+      final plist = File(
+        project.path('ios/Runner/Info.plist'),
+      ).readAsStringSync();
+      check(
+        RegExp(
+          r'<key>ITSAppUsesNonExemptEncryption</key>\s*<false/>',
+        ).hasMatch(plist),
+        'iOS: export compliance declared (ITSAppUsesNonExemptEncryption)',
+      );
+      final notes = File(project.iosReleaseNotes);
+      check(
+        notes.existsSync() && notes.readAsStringSync().trim().isNotEmpty,
+        'iOS: release notes present',
+      );
+      for (final name in [
+        'OBS_BLADE_ASC_KEY_PATH',
+        'OBS_BLADE_ASC_KEY_ID',
+        'OBS_BLADE_ASC_ISSUER_ID',
+        'OBS_BLADE_ASC_APP_ID',
+      ]) {
+        check((Platform.environment[name] ?? '').isNotEmpty, 'iOS: $name set');
+      }
+    }
+    if (platforms.contains('android')) {
+      check(
+        File(project.path('android/key.properties')).existsSync(),
+        'Android: upload key configured (android/key.properties)',
+      );
+      final notes = File(project.playReleaseNotes);
+      final length = notes.existsSync()
+          ? notes.readAsStringSync().trim().length
+          : 0;
+      check(
+        length > 0 && length <= 500,
+        'Android: what\'s new present, $length/500 chars',
+      );
+      check(
+        (Platform.environment['OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS'] ?? '')
+            .isNotEmpty,
+        'Android: OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS set',
+      );
+    }
+
+    if (online && ok) {
+      if (platforms.contains('ios')) {
+        final latest = (await AppStore.connect().builds())
+            .map(
+              (b) =>
+                  int.tryParse('${(b['attributes'] as Map)['version']}') ?? 0,
+            )
+            .fold(0, (a, b) => a > b ? a : b);
+        check(
+          v.build > latest,
+          'iOS: build ${v.build} is newer than App Store Connect ($latest)',
+          'release bump',
+        );
+      }
+      if (platforms.contains('android')) {
+        final play = await PlayStore.connect();
+        try {
+          final codes = (await play.tracks())
+              .expand((t) => ((t['releases'] as List?) ?? const []).cast<Map>())
+              .expand((r) => ((r['versionCodes'] as List?) ?? const []))
+              .map((c) => int.tryParse('$c') ?? 0);
+          final latest = codes.fold(0, (a, b) => a > b ? a : b);
+          check(
+            v.build > latest,
+            'Android: versionCode ${v.build} is newer than Play ($latest)',
+            'release bump',
+          );
+        } finally {
+          play.close();
+        }
+      }
+    }
+    stdout.writeln(ok ? '\nPreflight passed.' : '\nPreflight failed.');
+    return ok;
+  }
+
+  // ---------------------------------------------------------------- bump
+
+  int bump() {
+    final current = project.version.build;
+    final next = Project.nextBuild(current, DateTime.now());
+    project.setBuild(next);
+    stdout.writeln(
+      'pubspec: ${project.version.name}+$current -> +$next (commit + push before building)',
+    );
+    return 0;
+  }
+
+  // --------------------------------------------------------------- build
+
+  Future<int> build(String platform) async {
+    if (!await preflight({platform})) return 1;
+    final defines = ['--dart-define-from-file=${project.kickOauthDefines}'];
+    if (defines.any((d) => d.contains(_forbiddenDefine)))
+      throw StateError('forbidden define');
+
+    int code;
+    if (platform == 'ios') {
+      final keychainPw = Platform.environment['RELEASE_KEYCHAIN_PASSWORD_FILE'];
+      if (keychainPw != null) {
+        // SSH sessions start with a locked login keychain (maintainer setup)
+        await Process.run('security', [
+          'unlock-keychain',
+          '-p',
+          File(keychainPw).readAsStringSync().trim(),
+          '${Platform.environment['HOME']}/Library/Keychains/login.keychain-db',
+        ]);
+      }
+      code = await _run('flutter', [
+        'build',
+        'ipa',
+        '--release',
+        '--export-options-plist=${project.path('tool/release/ExportOptions.plist')}',
+        ...defines,
+      ]);
+    } else {
+      code = await _run('flutter', [
+        'build',
+        'appbundle',
+        '--release',
+        ...defines,
+      ]);
+    }
+    if (code != 0) return code;
+
+    final v = project.version;
+    final artifact = platform == 'ios'
+        ? Directory(project.ipaDir)
+              .listSync()
+              .whereType<File>()
+              .firstWhere((f) => f.path.endsWith('.ipa'))
+              .path
+        : project.aab;
+    project.stamp(platform)
+      ..createSync(recursive: true)
+      ..writeAsStringSync(
+        jsonEncode({
+          'version': v.name,
+          'build': v.build,
+          'commit': await _out('git', ['rev-parse', 'HEAD']),
+          'artifact': artifact,
+          'builtAt': DateTime.now().toIso8601String(),
+        }),
+      );
+    stdout.writeln('\nBuilt ${v.name} (${v.build}): $artifact');
+    return 0;
+  }
+
+  /// The artifact from `build` must match the current version and commit.
+  Future<String?> _artifact(String platform) async {
+    final s = _readStamp(platform);
+    final v = project.version;
+    final head = await _out('git', ['rev-parse', 'HEAD']);
+    if (s == null ||
+        s['build'] != v.build ||
+        s['commit'] != head ||
+        !File('${s['artifact']}').existsSync()) {
+      stderr.writeln(
+        'No $platform build for ${v.name}+${v.build} at HEAD - run: release build $platform',
+      );
+      return null;
+    }
+    return s['artifact'] as String;
+  }
+
+  // ---------------------------------------------------------------- beta
+
+  Future<int> beta(String platform) async {
+    final artifact = await _artifact(platform);
+    if (artifact == null) return 1;
+    final v = project.version;
+    stdout.writeln(
+      platform == 'ios'
+          ? 'Upload ${v.name} (${v.build}) to TestFlight, internal testers only.'
+          : 'Upload ${v.name} (${v.build}) to the Play internal track (replaces what is there).',
+    );
+    return _fastlane(
+      platform,
+      'beta',
+      platform == 'ios' ? {'ipa': artifact} : {'aab': artifact},
+    );
+  }
+
+  // ------------------------------------------------------------ metadata
+
+  Future<int> metadata(String platform) async {
+    final v = project.version;
+    if (platform == 'ios') {
+      final shots = Directory(
+        project.path('fastlane/screenshots/en-US'),
+      ).listSync().where((f) => f.path.endsWith('.png'));
+      stdout.writeln(
+        'Push to App Store version ${v.name}: listing text from fastlane/metadata/ios, '
+        '${shots.length} screenshots (replacing the current ones).',
+      );
+      return _fastlane('ios', 'metadata', {'version': v.name});
+    }
+    stdout.writeln(
+      'Push to the Play listing: text, feature graphic and screenshots from fastlane/metadata/android.',
+    );
+    return _fastlane('android', 'metadata', {});
+  }
+
+  // -------------------------------------------------------------- submit
+
+  Future<int> submit() async {
+    final v = project.version;
+    final asc = AppStore.connect();
+    final build = (await asc.builds()).firstWhere(
+      (b) => '${(b['attributes'] as Map)['version']}' == '${v.build}',
+      orElse: () => const {},
+    );
+    if (build.isEmpty ||
+        (build['attributes'] as Map)['processingState'] != 'VALID') {
+      stderr.writeln(
+        'Build ${v.build} is not uploaded/processed on App Store Connect yet - run: release beta ios',
+      );
+      return 1;
+    }
+    final pending = (await asc.subscriptions())
+        .where((s) => (s['attributes'] as Map)['state'] == 'READY_TO_SUBMIT')
+        .toList();
+    stdout.writeln(
+      'Submit ${v.name} (${v.build}) for App Review, released automatically to everyone once approved.',
+    );
+    if (pending.isNotEmpty) {
+      stdout.writeln(
+        'Subscriptions submitted with it: '
+        '${pending.map((s) => (s['attributes'] as Map)['productId']).join(', ')}',
+      );
+    }
+    if (!yes)
+      return _fastlane('ios', 'submit', {
+        'version': v.name,
+        'build': '${v.build}',
+      });
+
+    for (final s in pending) {
+      await asc.submitSubscription('${s['id']}');
+      stdout.writeln('  submitted ${(s['attributes'] as Map)['productId']}');
+    }
+    return _fastlane('ios', 'submit', {
+      'version': v.name,
+      'build': '${v.build}',
+    });
+  }
+
+  // ----------------------------------------------------- promote / halt
+
+  Future<int> promote(String rollout) async {
+    final v = project.version;
+    final fraction = double.parse(rollout);
+    stdout.writeln(
+      'Promote Play internal ${v.name} (${v.build}) to production at ${(fraction * 100).round()}% of users.',
+    );
+    return _fastlane('android', 'promote', {
+      'version_code': '${v.build}',
+      'rollout': rollout,
+    });
+  }
+
+  Future<int> halt() async {
+    final v = project.version;
+    stdout.writeln(
+      'Halt the Play production rollout of ${v.name} (${v.build}).',
+    );
+    return _fastlane('android', 'halt', {'version_code': '${v.build}'});
+  }
+}

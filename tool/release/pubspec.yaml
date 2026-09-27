@@ -1,0 +1,18 @@
+name: release
+description: >-
+  Store release tool for OBS Blade: status, preflight, store builds and the
+  fastlane uploads (TestFlight / Play internal, listing, review submission,
+  production promotion) behind dry-run-by-default guardrails.
+publish_to: none
+
+environment:
+  sdk: "^3.8.0"
+
+dependencies:
+  args: ^2.5.0
+  googleapis_auth: ^1.6.0
+  provisioning:
+    path: ../provisioning
+
+dev_dependencies:
+  test: ^1.25.0
