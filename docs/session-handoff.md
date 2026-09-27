@@ -18,8 +18,17 @@ emulator (full flow + relaunch) and installed on Kounex iOS. Watch
 first: tablet/landscape on a real iPad, copy wording, and mockup loop
 smoothness on older phones.
 
+**Open follow-ups (2026-09-28, next session):** media hub "Restarts when
+live" label for sources with *Restart playback when source becomes
+active* on (read `restart_on_activate` via GetInputSettings); optional
+native StoreKit manage-subscriptions sheet (TestFlight can't use the App
+Store subscriptions page - testers cancel via a Sandbox Apple Account or
+wait: TestFlight subs renew daily x6, then stop); App Store listing +
+Play listing already uploaded (Play held by managed publishing - publish
+together with the production release).
+
 **Update 2026-09-28 - 4.0 release in progress** (`tool/release/`, README
-there; runs on the workstation). Build **4.0.0 (2026092802)** is on
+there; runs on the workstation). Build **4.0.0 (2026092803)** is on
 **TestFlight (internal)** and the **Play internal track** (all Play
 App content declarations done by the user, incl. Data safety + App
 access). Before `submit ios`: App Privacy
