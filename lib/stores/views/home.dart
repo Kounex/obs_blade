@@ -53,9 +53,13 @@ abstract class _HomeStore with Store {
   @action
   void updateAutodiscoverConnections() {
     if (ValidationHelper.portValidator(this.autodiscoverPort) == null) {
+      /// Marked handled up front: the scan fails fast when not in a WLAN,
+      /// often before the autodiscover FutureBuilder is mounted (fresh
+      /// install behind the intro) - that surfaced as an unhandled async
+      /// error. The builder still receives the error once it listens.
       this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
         int.tryParse(this.autodiscoverPort) ?? 4455,
-      );
+      )..ignore();
     }
   }
 
