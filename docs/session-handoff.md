@@ -25,10 +25,13 @@ was wrong. Probe table: `changelog-agent.md` 2026-09-28 "Media outside
 the live scene, per source". Awaiting the user's on-device check; VLC
 mapping unprobed.
 
-**Open follow-ups (2026-09-28, next session):** optional
-native StoreKit manage-subscriptions sheet (TestFlight can't use the App
-Store subscriptions page - testers cancel via a Sandbox Apple Account or
-wait: TestFlight subs renew daily x6, then stop); App Store listing +
+**Manage subscription (2026-09-28, later):** iOS opens StoreKit's
+in-app sheet (also lists TestFlight subscriptions), Android opens Play's
+page for the Pro subscription. Installed on Kounex iOS; confirm on the
+next TestFlight build that a TestFlight subscription shows and cancels
+there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
+
+**Open follow-ups (2026-09-28, next session):** App Store listing +
 Play listing already uploaded (Play held by managed publishing - publish
 together with the production release).
 

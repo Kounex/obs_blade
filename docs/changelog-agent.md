@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-28 - Manage subscription: StoreKit sheet in the app
+
+The App Store web page (`apps.apple.com/account/subscriptions`) doesn't
+list sandbox / TestFlight subscriptions, so testers couldn't cancel.
+Neither `purchases_flutter` 10.11 nor `in_app_purchase_storekit` 0.4.11
+exposes `AppStore.showManageSubscriptions(in:)`, so a small method
+channel `com.kounex.obsBlade/subscriptions` lives in `AppDelegate.swift`
+(iOS 15+ = deployment target; answers false for the iPad app on a Mac
+-> web page fallback). Dart side: `lib/utils/manage_subscriptions.dart`.
+After the sheet closes `ProStore.refreshPlan(fresh: true)` invalidates
+RevenueCat's CustomerInfo cache first (a cancel is no transaction, the
+SDK wouldn't notice). Android: Play's documented deep link to the Pro
+subscription (`?sku=pro&package=com.kounex.obsBlade`). RevenueCat
+Customer Center (`purchases_ui_flutter`) was considered and skipped:
+heavy native UI dependency, overlaps the plan switch, plan requirement
+unclear. Installed on Kounex iOS (development-signed = sandbox); the
+TestFlight case itself needs the next TestFlight build.
+
 ## 2026-09-28 - Media outside the live scene, per source (corrects "On hold")
 
 User report: after switching away from a playing clip's scene, the hub
