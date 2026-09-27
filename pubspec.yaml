@@ -132,10 +132,13 @@ flutter_native_splash:
   color: "#101823"
   color_dark: "#101823"
 
+  # Android 12+ scales this into a 240dp slot and masks it to a 160dp
+  # circle - it needs its own 960px canvas with the mark inside the inner
+  # 640px (the edge-to-edge splash.png got cropped into a "morphed O")
   android_12:
-    image: assets/icons/app/splash.png
+    image: assets/icons/app/splash_android12.png
     icon_background_color: "#101823"
-    image_dark: assets/icons/app/splash.png
+    image_dark: assets/icons/app/splash_android12.png
     icon_background_color_dark: "#101823"
 
 flutter:
