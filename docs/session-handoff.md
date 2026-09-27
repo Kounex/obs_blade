@@ -24,9 +24,11 @@ user's verdict on the composed sets): capture tooling in
 sets live outside the repo (maintainer's store-shots composer). Also
 shipped: statistic detail charts 2-per-row on tablet + `BaseCard` measure
 640 -> 720 + wide tier 1040 (user decision), autodiscover no-WLAN
-unhandled error. Open: whether the Play/F-Droid images
-(`fastlane/metadata/android`) and the iOS sets get committed, and that
-F-Droid would then show Pro-tagged features. Details:
+unhandled error; tablet transition row aligned with the cards. The
+composed sets are committed (`fastlane/screenshots/en-US` for App Store,
+`fastlane/metadata/android/en-US/images` for Play + F-Droid, tablets in
+landscape) - F-Droid now shows the Pro-tagged combined chat slide too.
+Details:
 `changelog-agent.md` 2026-09-27 "Store screenshots".
 
 ## Handoff hygiene (read before editing this file)
