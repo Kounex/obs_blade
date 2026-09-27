@@ -18,9 +18,14 @@ emulator (full flow + relaunch) and installed on Kounex iOS. Watch
 first: tablet/landscape on a real iPad, copy wording, and mockup loop
 smoothness on older phones.
 
-**Open follow-ups (2026-09-28, next session):** media hub "Restarts when
-live" label for sources with *Restart playback when source becomes
-active* on (read `restart_on_activate` via GetInputSettings); optional
+**Media hub outside the live scene (2026-09-28, later):** rebuilt on
+what OBS 32 really does per source (`restart_on_activate` off = keeps
+playing unheard, on = "Restarts when live"); the earlier "On hold" model
+was wrong. Probe table: `changelog-agent.md` 2026-09-28 "Media outside
+the live scene, per source". Awaiting the user's on-device check; VLC
+mapping unprobed.
+
+**Open follow-ups (2026-09-28, next session):** optional
 native StoreKit manage-subscriptions sheet (TestFlight can't use the App
 Store subscriptions page - testers cancel via a Sandbox Apple Account or
 wait: TestFlight subs renew daily x6, then stop); App Store listing +

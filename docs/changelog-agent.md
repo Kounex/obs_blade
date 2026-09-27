@@ -2,6 +2,31 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-28 - Media outside the live scene, per source (corrects "On hold")
+
+User report: after switching away from a playing clip's scene, the hub
+showed it locked / "On hold" while its time kept running. Probed OBS 32
+over WebSocket (ffmpeg source, audio file):
+
+| `restart_on_activate` | leaves program | while not live | goes live |
+|---|---|---|---|
+| off | keeps PLAYING, cursor runs (unheard) | pause, resume, stop work; play-from-stopped ends at once; restart parks at 0:00; seek ends the clip | carries on |
+| on (OBS default) | stops (ENDED) | play is queued (PLAYING, cursor frozen) | always plays from the start, even after a manual stop |
+
+So the earlier "On hold" model was wrong for "off" and the frozen-cursor
+observation belonged to "on". The hub now reads each media input's
+settings (`GetInputSettings`; OBS omits defaults, so a missing
+`restart_on_activate` = on) into `DashboardStore.mediaLiveBehavior`, and
+`MediaPlayback` (`media_status.dart`) decides time, label and enabled
+buttons for pads, rows and the transport sheet: "off" keeps the clock
+running with pause/stop/resume enabled; "on" reads "Restarts when live";
+VLC `pause_unpause` reads "On hold at 0:07 · resumes when live" (VLC
+mapping `stop_restart` / `pause_unpause` / `always_play` is from the OBS
+source, **not probed** - no VLC on the workstation). "Stop all" stays
+enabled for clips playing unheard (they really play). No settings event
+exists in OBS WS v5 - re-read on hub open, input list reload and sheet
+open.
+
 ## 2026-09-28 - Pro plan switch, Android subscriptions, media outside the live scene
 
 From the TestFlight sandbox test (monthly bought fine once the RevenueCat
