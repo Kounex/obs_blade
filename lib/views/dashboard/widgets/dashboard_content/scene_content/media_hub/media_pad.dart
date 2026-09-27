@@ -14,7 +14,7 @@ import 'media_clock.dart';
 /// plays, the way a soundboard behaves. A long press opens the full
 /// transport ([onOpenTransport]). Playing pads carry an accent ring and a
 /// progress bar; pads that aren't in program are dimmed with a
-/// speaker-slash marker because OBS would play them unheard.
+/// speaker-slash marker - OBS only plays media in the live scene.
 class MediaPad extends StatelessWidget {
   final String inputName;
   final VoidCallback onOpenTransport;
@@ -54,9 +54,11 @@ class MediaPad extends StatelessWidget {
             label: [
               this.inputName,
               stateText,
-              if (!inProgram) 'not in program',
+              if (!inProgram) 'not in the live scene',
             ].join(', '),
-            hint: 'Plays from the start. Long press for more controls',
+            hint: inProgram
+                ? 'Plays from the start. Long press for more controls'
+                : 'Opens its controls - it only plays in the live scene',
             onLongPress: this.onOpenTransport,
             excludeSemantics: true,
             child: GestureDetector(
@@ -66,10 +68,15 @@ class MediaPad extends StatelessWidget {
               },
               child: Pressable(
                 haptic: true,
-                onTap: () => dashboardStore.triggerMediaAction(
-                  this.inputName,
-                  kMediaActionRestart,
-                ),
+
+                /// Outside the live scene OBS accepts the start but plays
+                /// nothing - open the controls instead, which say why
+                onTap: inProgram
+                    ? () => dashboardStore.triggerMediaAction(
+                        this.inputName,
+                        kMediaActionRestart,
+                      )
+                    : this.onOpenTransport,
                 child: AnimatedContainer(
                   duration: AppMotion.fast,
                   decoration: BoxDecoration(
@@ -144,7 +151,7 @@ class MediaPad extends StatelessWidget {
                             right: 0,
                             bottom: 0,
                             child: MediaClock(
-                              running: playing,
+                              running: playing && inProgram,
                               builder: (context, now) {
                                 final double? progress = status.progressAt(now);
                                 final int? cursor = status.cursorAt(now);

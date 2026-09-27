@@ -99,7 +99,9 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.bySemanticsLabel(RegExp(r'^Playlist, stopped, not in program$')),
+      find.bySemanticsLabel(
+        RegExp(r'^Playlist, stopped, not in the live scene$'),
+      ),
       findsOneWidget,
     );
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
@@ -141,8 +143,18 @@ void main() {
       kMediaHubViewList,
     );
     expect(find.text('0:12 / 1:05'), findsOneWidget);
-    expect(find.text('Not in program'), findsOneWidget);
+    expect(find.text('Not in the live scene'), findsOneWidget);
     expect(find.bySemanticsLabel('Stop Intro'), findsOneWidget);
+
+    /// OBS only plays media in the live scene: starting is locked, stopping
+    /// a stuck state is not
+    bool enabled(String label) => tester
+        .getSemantics(find.bySemanticsLabel(label))
+        .flagsCollection
+        .isEnabled
+        .toBoolOrNull()!;
+    expect(enabled('Play Intro'), isFalse);
+    expect(enabled('Restart Intro'), isFalse);
     handle.dispose();
   });
 

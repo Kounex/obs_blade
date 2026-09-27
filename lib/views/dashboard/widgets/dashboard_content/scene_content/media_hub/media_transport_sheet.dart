@@ -86,7 +86,7 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
-                        'Not in program - OBS plays it, but the stream won\'t hear it until the source is in the live scene.',
+                        'Not in the live scene. OBS only plays media that is in the live scene - switch to its scene first, or put your clips in a scene you nest into your main scenes.',
                         style: theme.textTheme.bodySmall!.copyWith(
                           color: textColors.textSecondary,
                         ),
@@ -99,11 +99,12 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
               const BaseDivider(),
               const SizedBox(height: AppSpacing.md),
               MediaClock(
-                running: playing && _draggingCursor == null,
+                running: playing && inProgram && _draggingCursor == null,
                 builder: (context, now) {
                   final int cursor =
                       _draggingCursor?.round() ?? status?.cursorAt(now) ?? 0;
                   final bool seekable =
+                      inProgram &&
                       duration != null &&
                       duration > 0 &&
                       (status?.active ?? false);
@@ -173,12 +174,16 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                       _SheetButton(
                         icon: CupertinoIcons.backward_end_fill,
                         label: 'Previous',
-                        onTap: () => action(kMediaActionPrevious),
+                        onTap: inProgram
+                            ? () => action(kMediaActionPrevious)
+                            : null,
                       ),
                     _SheetButton(
                       icon: CupertinoIcons.arrow_counterclockwise,
                       label: 'Restart',
-                      onTap: () => action(kMediaActionRestart),
+                      onTap: inProgram
+                          ? () => action(kMediaActionRestart)
+                          : null,
                     ),
                     _SheetButton(
                       icon: playing
@@ -186,9 +191,14 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                           : CupertinoIcons.play_fill,
                       label: playing ? 'Pause' : 'Play',
                       primary: true,
-                      onTap: () => action(
-                        playing ? kMediaActionPause : kMediaActionPlay,
-                      ),
+
+                      /// Starting is locked outside the live scene; pausing a
+                      /// (stuck) playing state stays possible
+                      onTap: inProgram || playing
+                          ? () => action(
+                              playing ? kMediaActionPause : kMediaActionPlay,
+                            )
+                          : null,
                     ),
                     _SheetButton(
                       icon: CupertinoIcons.stop_fill,
@@ -201,7 +211,9 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
                       _SheetButton(
                         icon: CupertinoIcons.forward_end_fill,
                         label: 'Next',
-                        onTap: () => action(kMediaActionNext),
+                        onTap: inProgram
+                            ? () => action(kMediaActionNext)
+                            : null,
                       ),
                   ],
                 ),

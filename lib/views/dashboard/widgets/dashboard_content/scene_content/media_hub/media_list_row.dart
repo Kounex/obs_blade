@@ -49,7 +49,9 @@ class MediaListRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: MediaClock(
-              running: playing,
+              /// Outside the live scene OBS reports "playing" with a frozen
+              /// cursor - don't run the clock on it
+              running: playing && inProgram,
               builder: (context, now) => Row(
                 children: [
                   Flexible(
@@ -72,7 +74,7 @@ class MediaListRow extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     Text(
-                      'Not in program',
+                      'Not in the live scene',
                       style: theme.textTheme.bodySmall!.copyWith(
                         color: textColors.textTertiary,
                       ),
@@ -85,13 +87,19 @@ class MediaListRow extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  /// OBS only plays media in the live scene - starting it
+                  /// elsewhere is accepted but nothing plays, so those
+                  /// buttons lock (the row still opens the transport sheet,
+                  /// which says why)
                   _TransportButton(
                     icon: CupertinoIcons.arrow_counterclockwise,
                     label: 'Restart ${this.inputName}',
-                    onTap: () => dashboardStore.triggerMediaAction(
-                      this.inputName,
-                      kMediaActionRestart,
-                    ),
+                    onTap: inProgram
+                        ? () => dashboardStore.triggerMediaAction(
+                            this.inputName,
+                            kMediaActionRestart,
+                          )
+                        : null,
                   ),
                   _TransportButton(
                     icon: playing
@@ -100,10 +108,12 @@ class MediaListRow extends StatelessWidget {
                     label: playing
                         ? 'Pause ${this.inputName}'
                         : 'Play ${this.inputName}',
-                    onTap: () => dashboardStore.triggerMediaAction(
-                      this.inputName,
-                      playing ? kMediaActionPause : kMediaActionPlay,
-                    ),
+                    onTap: inProgram || playing
+                        ? () => dashboardStore.triggerMediaAction(
+                            this.inputName,
+                            playing ? kMediaActionPause : kMediaActionPlay,
+                          )
+                        : null,
                   ),
                   _TransportButton(
                     icon: CupertinoIcons.stop_fill,

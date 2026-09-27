@@ -188,9 +188,10 @@ abstract class _DashboardStore with Store {
   ObservableMap<String, MediaStatus> mediaStatus = ObservableMap();
 
   /// Whether a media input is currently in program (GetSourceActive's
-  /// `videoActive`) - OBS only outputs a media source's audio while it is,
-  /// so the Media hub marks inputs that would play unheard. Re-read on
-  /// program scene / transition / scene item visibility changes
+  /// `videoActive`). OBS only plays a media source while it is: a play
+  /// request outside the live scene is accepted and reports "playing",
+  /// but the cursor never moves - so the Media hub locks starting those.
+  /// Re-read on program scene / transition / scene item visibility changes
   @observable
   ObservableMap<String, bool> mediaInProgram = ObservableMap();
 
