@@ -26,7 +26,8 @@ and never point it at a device with real data.
 ```bash
 # one device at a time; KEEP_OBS=1 keeps the demo state between devices
 KEEP_OBS=1 tool/store_screenshots/capture.sh ios     <iphone-sim-udid> build/store_screenshots/captures/ios-phone
-KEEP_OBS=1 tool/store_screenshots/capture.sh ios     <ipad-sim-udid>   build/store_screenshots/captures/ios-tablet
+ORIENTATION=landscape KEEP_OBS=1 \
+           tool/store_screenshots/capture.sh ios     <ipad-sim-udid>   build/store_screenshots/captures/ios-tablet
 KEEP_OBS=1 tool/store_screenshots/capture.sh android <phone-serial>    build/store_screenshots/captures/android-phone
            tool/store_screenshots/capture.sh android <tablet-serial>   build/store_screenshots/captures/android-tablet
 ```
