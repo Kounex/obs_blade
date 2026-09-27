@@ -1,0 +1,34 @@
+<!doctype html>
+<!-- Store-screenshot demo art: full-frame interstitial (Starting Soon / BRB /
+     Ending). Query: ?title=...&sub=...  1920x1080. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body { background: radial-gradient(circle at 30% 20%, #4b1d6e 0, #1d0b33 45%, #07020f 100%);
+         font-family: "Avenir Next", "Helvetica Neue", sans-serif; color: #fff; }
+  .ring { position: absolute; border-radius: 50%; border: 3px solid; }
+  h1 { position: absolute; left: 0; right: 0; top: 380px; margin: 0; text-align: center; font-size: 150px;
+       font-weight: 900; letter-spacing: 12px; text-shadow: 0 0 40px rgba(255, 79, 216, .8); }
+  p { position: absolute; left: 0; right: 0; top: 590px; margin: 0; text-align: center; font-size: 44px;
+      font-weight: 600; letter-spacing: 6px; color: #3de8ff; text-shadow: 0 0 24px rgba(61, 232, 255, .7); }
+  .bar { position: absolute; left: 660px; width: 600px; top: 700px; height: 10px; border-radius: 5px;
+         background: rgba(255,255,255,.12); overflow: hidden; }
+  .bar i { display: block; width: 62%; height: 100%; background: linear-gradient(90deg, #ff4fd8, #3de8ff); }
+</style>
+</head>
+<body>
+<div class="ring" style="left:-200px;top:-260px;width:900px;height:900px;border-color:rgba(255,79,216,.25)"></div>
+<div class="ring" style="right:-260px;bottom:-320px;width:1000px;height:1000px;border-color:rgba(61,232,255,.22)"></div>
+<div class="ring" style="right:-120px;bottom:-180px;width:720px;height:720px;border-color:rgba(61,232,255,.14)"></div>
+<h1 id="t"></h1>
+<p id="s"></p>
+<div class="bar"><i></i></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById('t').textContent = q.get('title') || 'STARTING SOON';
+  document.getElementById('s').textContent = q.get('sub') || 'GRAB A SNACK';
+</script>
+</body>
+</html>

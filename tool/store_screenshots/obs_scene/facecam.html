@@ -1,0 +1,70 @@
+<!doctype html>
+<!-- Store-screenshot demo art: illustrated facecam (no real person) used as
+     the "Webcam" image source. 1280x720, rendered opaque. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #150a24; }
+</style>
+</head>
+<body>
+<svg width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <radialGradient id="room" cx=".3" cy=".25" r="1">
+      <stop offset="0" stop-color="#4b1d6e"/>
+      <stop offset=".55" stop-color="#1d0b33"/>
+      <stop offset="1" stop-color="#0a0414"/>
+    </radialGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2c4a4"/>
+      <stop offset="1" stop-color="#c98b6a"/>
+    </linearGradient>
+    <linearGradient id="hoodie" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2d3e"/>
+      <stop offset="1" stop-color="#151722"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="30"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="1280" height="720" fill="url(#room)"/>
+  <!-- LED strip + shelves -->
+  <rect x="0" y="118" width="1280" height="10" fill="#ff4fd8" filter="url(#soft)"/>
+  <rect x="0" y="80" width="1280" height="120" fill="#ff4fd8" opacity=".12" filter="url(#blur)"/>
+  <g opacity=".7">
+    <rect x="70" y="200" width="220" height="12" rx="4" fill="#2b1446"/>
+    <rect x="90" y="150" width="34" height="50" rx="4" fill="#3de8ff" opacity=".6"/>
+    <rect x="132" y="162" width="28" height="38" rx="4" fill="#ffe45c" opacity=".55"/>
+    <rect x="990" y="260" width="220" height="12" rx="4" fill="#2b1446"/>
+    <circle cx="1040" cy="236" r="24" fill="#3de8ff" opacity=".45"/>
+    <rect x="1090" y="214" width="60" height="46" rx="6" fill="#ff4fd8" opacity=".45"/>
+  </g>
+  <!-- rim lights -->
+  <ellipse cx="400" cy="520" rx="220" ry="300" fill="#ff4fd8" opacity=".22" filter="url(#blur)"/>
+  <ellipse cx="880" cy="520" rx="220" ry="300" fill="#3de8ff" opacity=".2" filter="url(#blur)"/>
+  <!-- body -->
+  <path d="M330 720 C 340 560, 460 500, 640 500 C 820 500, 940 560, 950 720 Z" fill="url(#hoodie)"/>
+  <path d="M560 500 L640 600 L720 500" fill="none" stroke="#3b3f55" stroke-width="10"/>
+  <!-- neck + head -->
+  <rect x="598" y="420" width="84" height="100" rx="30" fill="#c98b6a"/>
+  <ellipse cx="640" cy="330" rx="130" ry="155" fill="url(#skin)"/>
+  <!-- hair -->
+  <path d="M505 320 C 490 190, 590 150, 660 160 C 760 170, 790 240, 775 320 C 760 260, 700 230, 640 240 C 580 245, 530 270, 505 320 Z" fill="#2b1a14"/>
+  <!-- face -->
+  <ellipse cx="592" cy="345" rx="12" ry="14" fill="#2b1a14"/>
+  <ellipse cx="688" cy="345" rx="12" ry="14" fill="#2b1a14"/>
+  <path d="M598 410 Q 640 440 682 410" fill="none" stroke="#8a4a3a" stroke-width="8" stroke-linecap="round"/>
+  <!-- headset -->
+  <path d="M495 330 C 490 170, 790 170, 785 330" fill="none" stroke="#12131c" stroke-width="26" stroke-linecap="round"/>
+  <rect x="470" y="300" width="56" height="110" rx="24" fill="#12131c"/>
+  <rect x="754" y="300" width="56" height="110" rx="24" fill="#12131c"/>
+  <rect x="478" y="318" width="10" height="74" rx="5" fill="#ff4fd8"/>
+  <rect x="792" y="318" width="10" height="74" rx="5" fill="#3de8ff"/>
+  <path d="M500 400 C 520 450, 560 460, 600 440" fill="none" stroke="#12131c" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="604" cy="438" r="12" fill="#12131c"/>
+  <!-- mic arm -->
+  <path d="M1180 720 L1010 520 L900 470" fill="none" stroke="#0d0e14" stroke-width="18" stroke-linecap="round"/>
+  <rect x="820" y="430" width="120" height="70" rx="30" fill="#0d0e14" transform="rotate(-20 880 465)"/>
+</svg>
+</body>
+</html>
