@@ -13,84 +13,27 @@
 # tablets capture in landscape on their own).
 #
 # Use dedicated devices only - the test writes settings, stats, a saved
-# connection and the Pro debug override. See README.md in this folder.
+# connection and the Pro debug override. See README.md in this folder
+# (record.sh is the video sibling; both share common.sh).
 set -u
 
-PLATFORM="${1:?ios|android}"
-DEVICE="${2:?device id}"
-OUT_DIR="${3:?out dir}"
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-cd "$REPO_ROOT" || exit 1
-ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
-mkdir -p "$OUT_DIR"
-LOG="$OUT_DIR/flutter_test_output.log"
+. "$(dirname "$0")/common.sh"
+store_init "${1:?ios|android}" "${2:?device id}" "${3:?out dir}"
 
-OBS_WS_CONFIG="$HOME/Library/Application Support/obs-studio/plugin_config/obs-websocket/config.json"
-OBS_WS_PASSWORD="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("server_password",""))' "$OBS_WS_CONFIG" 2>/dev/null)"
-
-if [ "$PLATFORM" = "android" ]; then OBS_HOST=10.0.2.2; else OBS_HOST=127.0.0.1; fi
-ORIENTATION="${ORIENTATION:-portrait}"
-
-# iOS: simctl has no rotate command - use the Simulator app's menu on this
-# device's window. simctl screenshots stay in the panel's portrait buffer,
-# so landscape captures are rotated upright after each shot.
-sim_rotate() {
-  local name
-  name="$(xcrun simctl list devices | grep "$DEVICE" | sed -E 's/^ *//; s/ \(.*//')"
-  osascript -e 'tell application "Simulator" to activate' \
-    -e 'tell application "System Events" to tell process "Simulator"' \
-    -e "perform action \"AXRaise\" of (first window whose name contains \"$name\")" \
-    -e 'delay 0.5' \
-    -e "click menu item \"Rotate $1\" of menu \"Device\" of menu bar 1" \
-    -e 'end tell' >/dev/null
-}
-
-# ---- OBS demo state (own profile + collection, local RTMP sink) ----
-[ -f build/store_screenshots/media/gameplay.png ] || tool/store_screenshots/prepare_media.sh
-dart run tool/store_screenshots/obs_demo.dart setup || exit 1
-pkill -f "ffmpeg -nostdin -loglevel error -listen 1" 2>/dev/null
-nohup ffmpeg -nostdin -loglevel error -listen 1 -i rtmp://127.0.0.1:1935/live/demo -f null - \
-  > "$OUT_DIR/rtmp-sink.log" 2>&1 &
-SINK_PID=$!
-sleep 1
+# ---- OBS demo state (own profile + collection, local RTMP sink), live ----
+obs_demo_up || exit 1
 dart run tool/store_screenshots/obs_demo.dart live || exit 1
 
 cleanup() {
   # the watcher's `tail -f` would outlive the subshell and keep ssh open
   pkill -f "tail .*$LOG" 2>/dev/null
   kill "${WATCHER_PID:-}" 2>/dev/null
-  if [ -z "${KEEP_OBS:-}" ]; then
-    dart run tool/store_screenshots/obs_demo.dart teardown
-  else
-    dart run tool/store_screenshots/obs_demo.dart offline
-  fi
-  kill "$SINK_PID" 2>/dev/null
-  if [ "$PLATFORM" = "ios" ]; then
-    xcrun simctl status_bar "$DEVICE" clear 2>/dev/null
-    [ "$ORIENTATION" = "landscape" ] && sim_rotate Right
-  else
-    "$ADB" -s "$DEVICE" shell am broadcast -a com.android.systemui.demo -e command exit >/dev/null 2>&1
-    "$ADB" -s "$DEVICE" forward --remove tcp:8977 >/dev/null 2>&1
-  fi
+  obs_demo_down
+  device_restore
 }
 trap cleanup EXIT
 
-# ---- clean status bar ----
-if [ "$PLATFORM" = "ios" ]; then
-  [ "$ORIENTATION" = "landscape" ] && sim_rotate Left && sleep 2
-  xcrun simctl status_bar "$DEVICE" override --time "9:41" --dataNetwork wifi --wifiMode active \
-    --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState discharging --batteryLevel 100
-else
-  demo() { "$ADB" -s "$DEVICE" shell am broadcast -a com.android.systemui.demo -e command "$@" >/dev/null; }
-  "$ADB" -s "$DEVICE" shell settings put global sysui_demo_allowed 1
-  demo enter
-  demo clock -e hhmm 0941
-  demo battery -e level 100 -e plugged false
-  demo network -e wifi show -e level 4
-  demo network -e mobile hide
-  demo notifications -e visible false
-  "$ADB" -s "$DEVICE" forward tcp:8977 tcp:8977 >/dev/null
-fi
+device_prepare
 
 # ---- watcher: one capture per marker, then ack ----
 : > "$LOG"
