@@ -1,6 +1,11 @@
 <!doctype html>
 <!-- Store-screenshot demo art: a fictional synthwave racer frame used as the
-     "Game Capture" image source in the demo OBS scene collection. 1920x1080. -->
+     "Game Capture" source in the demo OBS scene collection. 1920x1080.
+     Opened plain it is the still (prepare_media.sh -> gameplay.png). With
+     ?drive the page exposes render(t): a deterministic, seamless
+     kLoop-second loop (grid + road scroll, sun shimmer, speed streaks) that
+     render_loop.py captures frame by frame into gameplay.mp4 for video
+     mode; ?t=<s> shows a single frame of it. -->
 <html>
 <head>
 <meta charset="utf-8">
@@ -60,8 +65,8 @@
     <circle cx="1690" cy="250" r="1.2"/><circle cx="960" cy="40" r="1.5"/><circle cx="1470" cy="300" r="1"/>
   </g>
   <!-- sun -->
-  <circle cx="960" cy="430" r="260" fill="#ff2d8a" opacity=".55" filter="url(#bigglow)"/>
-  <circle cx="960" cy="410" r="220" fill="url(#sun)" clip-path="url(#sunClip)"/>
+  <circle id="sunGlow" cx="960" cy="430" r="260" fill="#ff2d8a" opacity=".55" filter="url(#bigglow)"/>
+  <circle id="sunDisc" cx="960" cy="410" r="220" fill="url(#sun)" clip-path="url(#sunClip)"/>
   <!-- mountains -->
   <path d="M0 600 L0 470 L140 400 L260 470 L420 350 L560 470 L700 420 L820 520 L860 600 Z" fill="#1b0636"/>
   <path d="M1920 600 L1920 450 L1780 380 L1640 470 L1500 330 L1360 460 L1240 420 L1100 520 L1060 600 Z" fill="#1b0636"/>
@@ -69,12 +74,14 @@
   <path d="M1920 450 L1780 380 L1640 470 L1500 330 L1360 460 L1240 420 L1100 520" fill="none" stroke="#3de8ff" stroke-width="3" filter="url(#glow)"/>
   <!-- floor -->
   <rect y="600" width="1920" height="480" fill="url(#floor)"/>
-  <g stroke="#ff3fd0" stroke-width="2.5" opacity=".75" filter="url(#glow)">
+  <g id="hgrid" stroke="#ff3fd0" stroke-width="2.5" opacity=".75" filter="url(#glow)">
     <line x1="0" y1="612" x2="1920" y2="612"/><line x1="0" y1="632" x2="1920" y2="632"/>
     <line x1="0" y1="662" x2="1920" y2="662"/><line x1="0" y1="705" x2="1920" y2="705"/>
     <line x1="0" y1="765" x2="1920" y2="765"/><line x1="0" y1="850" x2="1920" y2="850"/>
     <line x1="0" y1="965" x2="1920" y2="965"/>
   </g>
+  <!-- speed streaks (video loop only) -->
+  <g id="streaks" stroke-linecap="round" filter="url(#glow)"></g>
   <g stroke="#ff3fd0" stroke-width="2.5" opacity=".6" filter="url(#glow)">
     <line x1="960" y1="600" x2="-1400" y2="1080"/><line x1="960" y1="600" x2="-700" y2="1080"/>
     <line x1="960" y1="600" x2="-100" y2="1080"/><line x1="960" y1="600" x2="3320" y2="1080"/>
@@ -83,19 +90,19 @@
   <!-- road -->
   <path d="M930 600 L990 600 L1560 1080 L360 1080 Z" fill="url(#road)"/>
   <path d="M930 600 L360 1080 M990 600 L1560 1080" stroke="#3de8ff" stroke-width="5" filter="url(#glow)"/>
-  <g fill="#ffe45c" filter="url(#glow)">
+  <g id="dashes" fill="#ffe45c" filter="url(#glow)">
     <path d="M957 640 L963 640 L966 680 L954 680 Z"/>
     <path d="M953 730 L967 730 L972 800 L948 800 Z"/>
     <path d="M945 880 L975 880 L985 1000 L935 1000 Z"/>
   </g>
   <!-- rival car far ahead -->
-  <g transform="translate(1010 690)">
+  <g id="rival" transform="translate(1010 690)">
     <rect x="-34" y="-10" width="68" height="22" rx="6" fill="#140726"/>
     <rect x="-30" y="-2" width="14" height="6" rx="2" fill="#ff2d55" filter="url(#glow)"/>
     <rect x="16" y="-2" width="14" height="6" rx="2" fill="#ff2d55" filter="url(#glow)"/>
   </g>
   <!-- player car -->
-  <g transform="translate(960 930)">
+  <g id="car" transform="translate(960 930)">
     <ellipse cx="0" cy="110" rx="300" ry="30" fill="#3de8ff" opacity=".35" filter="url(#bigglow)"/>
     <path d="M-260 90 L-230 10 L-150 -40 L150 -40 L230 10 L260 90 L240 120 L-240 120 Z" fill="#12061f" stroke="#3de8ff" stroke-width="4" filter="url(#glow)"/>
     <path d="M-140 -36 L-100 -95 L100 -95 L140 -36 Z" fill="#1d0b33" stroke="#ff4fd8" stroke-width="3"/>
@@ -111,15 +118,141 @@
 <div class="hud" style="left:60px; top:112px; font-size:30px; opacity:.85; font-weight:600;">1:42.318</div>
 <div class="hud" style="right:60px; top:36px; font-size:96px; text-align:right;">1<span style="font-size:44px">ST</span></div>
 <div class="hud" style="left:64px; bottom:48px; text-align:left;">
-  <div style="font-size:120px; line-height:1;">248</div>
+  <div id="speed" style="font-size:120px; line-height:1;">248</div>
   <div style="font-size:30px; opacity:.8;">KM/H</div>
 </div>
 <div style="position:absolute; right:60px; top:170px; width:260px; height:170px; border-radius:18px;
             background:rgba(10,4,26,.6); border:2px solid rgba(61,232,255,.7); box-shadow:0 0 24px rgba(61,232,255,.4);">
   <svg width="260" height="170" viewBox="0 0 260 170">
-    <path d="M40 130 C 30 60, 90 30, 140 45 S 230 60, 215 110 S 120 150, 40 130 Z" fill="none" stroke="#ff4fd8" stroke-width="6" opacity=".9"/>
-    <circle cx="168" cy="50" r="9" fill="#3de8ff"/><circle cx="205" cy="80" r="7" fill="#ff2d55"/>
+    <path id="track" d="M40 130 C 30 60, 90 30, 140 45 S 230 60, 215 110 S 120 150, 40 130 Z" fill="none" stroke="#ff4fd8" stroke-width="6" opacity=".9"/>
+    <circle id="dotMe" cx="168" cy="50" r="9" fill="#3de8ff"/><circle id="dotRival" cx="205" cy="80" r="7" fill="#ff2d55"/>
   </svg>
 </div>
+<script>
+// Video loop (?drive / ?t=): every moving part is a pure function of t and
+// periodic in kLoop, so frame n of render(n/fps) is repeatable and the
+// last frame runs seamlessly into the first. Without a query the markup
+// above stays untouched - that is the still.
+(function () {
+  const q = new URLSearchParams(location.search);
+  const one = q.get('t');
+  if (!q.has('drive') && one === null) return;
+  const kLoop = 8;
+  const NS = 'http://www.w3.org/2000/svg';
+  const TAU = Math.PI * 2;
+  const frac = (v) => v - Math.floor(v);
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, attrs) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  };
+  // floor perspective: u 0 (horizon, y 600) .. 1 (bottom edge, y 1080)
+  const floorY = (u) => 600 + 480 * Math.pow(u, 2.05);
+  const roadHalf = (y) => 30 + 570 * (y - 600) / 480;
+
+  const grid = $('hgrid');
+  grid.replaceChildren();
+  const kGrid = 8, gridCycles = 24;         // 3 grid spacings per second
+  const gridLines = [];
+  for (let i = 0; i <= kGrid; i++) {
+    gridLines.push(grid.appendChild(el('line', { x1: 0, x2: 1920 })));
+  }
+  const dashes = $('dashes');
+  dashes.replaceChildren();
+  const kDash = 6, dashCycles = 18;          // same ground speed as the grid
+  const dashPaths = [];
+  for (let i = 0; i <= kDash; i++) dashPaths.push(dashes.appendChild(el('path', {})));
+
+  // sun stripes: gaps drift down and widen, rebuilt as the clip's bands
+  const clip = $('sunClip');
+  const kGaps = 6, gapCycles = 4;
+
+  // speed streaks along rays out of the vanishing point, kept to the sides
+  const streaks = $('streaks');
+  const streakDefs = [
+    [3.00, 7, 0.00, '#3de8ff'], [2.88, 9, 0.35, '#ffffff'], [2.72, 6, 0.62, '#ff4fd8'],
+    [2.95, 8, 0.18, '#ffffff'], [2.80, 5, 0.81, '#3de8ff'], [0.14, 7, 0.10, '#ffffff'],
+    [0.26, 9, 0.47, '#3de8ff'], [0.42, 6, 0.73, '#ff4fd8'], [0.20, 8, 0.29, '#ffffff'],
+    [0.35, 5, 0.90, '#3de8ff'],
+  ].map(([angle, cycles, offset, color]) => ({
+    angle, cycles, offset,
+    line: streaks.appendChild(el('line', { stroke: color })),
+  }));
+
+  const track = $('track');
+  const trackLen = track.getTotalLength();
+  const speed = $('speed');
+
+  function apply(t) {
+    t = ((t % kLoop) + kLoop) % kLoop;
+    const p = frac(t * gridCycles / kLoop);
+    gridLines.forEach((line, i) => {
+      const u = (i + p) / kGrid;
+      const y = floorY(Math.min(u, 1.2)).toFixed(2);
+      line.setAttribute('y1', y);
+      line.setAttribute('y2', y);
+      // fade in out of the horizon haze
+      line.setAttribute('opacity', Math.min(1, u * 6).toFixed(3));
+    });
+
+    const d = frac(t * dashCycles / kLoop);
+    dashPaths.forEach((path, i) => {
+      const u1 = (i + d) / kDash, u2 = (i + d + 0.42) / kDash;
+      const y1 = floorY(u1), y2 = floorY(u2);
+      const w1 = 0.035 * roadHalf(y1) + 1.5, w2 = 0.035 * roadHalf(y2) + 1.5;
+      path.setAttribute('d', `M${960 - w1} ${y1}L${960 + w1} ${y1}L${960 + w2} ${y2}L${960 - w2} ${y2}Z`);
+      path.setAttribute('opacity', Math.min(1, u1 * 8).toFixed(3));
+    });
+
+    const g = frac(t * gapCycles / kLoop);
+    const bands = [];
+    let top = 0;
+    for (let k = 0; k < kGaps; k++) {
+      const v = (k + g) / kGaps;
+      const y = 360 + 150 * Math.pow(v, 0.85);
+      const h = 3 + 11 * v;
+      bands.push([top, y]);
+      top = y + h;
+    }
+    bands.push([top, 534]);
+    clip.replaceChildren(...bands.filter(([a, b]) => b > a).map(([a, b]) =>
+      el('rect', { x: 0, y: a.toFixed(2), width: 1920, height: (b - a).toFixed(2) })));
+    const shimmer = Math.sin(TAU * 2 * t / kLoop);
+    $('sunGlow').setAttribute('opacity', (0.55 + 0.1 * shimmer).toFixed(3));
+    $('sunGlow').setAttribute('r', (260 + 14 * Math.sin(TAU * 3 * t / kLoop)).toFixed(2));
+    $('sunDisc').setAttribute('r', (220 + 2.5 * shimmer).toFixed(2));
+
+    streaks.setAttribute('opacity', 1);
+    for (const s of streakDefs) {
+      const f = frac(t * s.cycles / kLoop + s.offset);
+      const r0 = 180 + 1250 * f * f, len = 70 + 330 * f;
+      const cx = Math.cos(s.angle), cy = Math.sin(s.angle);
+      s.line.setAttribute('x1', (960 + cx * r0).toFixed(1));
+      s.line.setAttribute('y1', (600 + cy * r0).toFixed(1));
+      s.line.setAttribute('x2', (960 + cx * (r0 + len)).toFixed(1));
+      s.line.setAttribute('y2', (600 + cy * (r0 + len)).toFixed(1));
+      s.line.setAttribute('stroke-width', (1.5 + 3.5 * f).toFixed(2));
+      s.line.setAttribute('opacity', (0.75 * Math.sin(Math.PI * f)).toFixed(3));
+    }
+
+    const sway = Math.sin(TAU * 2 * t / kLoop);
+    const bob = Math.sin(TAU * 12 * t / kLoop);
+    $('car').setAttribute('transform', `translate(${(960 + 10 * sway).toFixed(2)} ${(930 + 2 * bob).toFixed(2)})`);
+    $('rival').setAttribute('transform', `translate(${(1010 + 16 * Math.sin(TAU * t / kLoop + 1)).toFixed(2)} 690)`);
+    speed.textContent = String(248 + Math.round(3 * Math.sin(TAU * 3 * t / kLoop) + 2 * Math.sin(TAU * 5 * t / kLoop)));
+    const at = (share) => track.getPointAtLength(frac(share) * trackLen);
+    const me = at(t / kLoop + 0.1), rival = at(t / kLoop + 0.18);
+    $('dotMe').setAttribute('cx', me.x.toFixed(2)); $('dotMe').setAttribute('cy', me.y.toFixed(2));
+    $('dotRival').setAttribute('cx', rival.x.toFixed(2)); $('dotRival').setAttribute('cy', rival.y.toFixed(2));
+  }
+
+  const frame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  window.kLoop = kLoop;
+  window.render = async (t) => { apply(t); await frame(); return 1; };
+  window.__ready = document.fonts.ready.then(() => true);
+  if (one !== null) apply(parseFloat(one) || 0);
+})();
+</script>
 </body>
 </html>

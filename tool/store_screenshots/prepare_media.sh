@@ -5,7 +5,12 @@
 # build/store_screenshots/media/ (gitignored), which obs_demo.dart points
 # the demo scene collection at.
 #
-# Needs: Google Chrome, ffmpeg (brew install ffmpeg).
+#   prepare_media.sh           # stills + audio (screenshots)
+#   prepare_media.sh --video   # + seamless gameplay/facecam loops (mp4) for
+#                              #   video mode (obs_demo.dart setup --video)
+#
+# Needs: Google Chrome, ffmpeg (brew install ffmpeg); --video also python3
+# with `websockets` (render_loop.py drives Chrome over DevTools).
 set -eu
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -47,3 +52,12 @@ echo "[media] mic.wav"
 ffmpeg -nostdin -loglevel error -y -f lavfi -i "anoisesrc=color=brown:amplitude=0.8:d=60:r=48000" \
   -af "volume='0.35+0.3*sin(2*PI*0.4*t)':eval=frame" -ac 2 "$OUT/game.wav"
 echo "[media] game.wav"
+
+# Video mode: the same art in motion. render_loop.py seeks each page's
+# render(t) frame by frame (deterministic, no screen recording) into an
+# 8 s loop OBS plays as a looping media source - a still PNG makes the
+# app's scene preview look frozen on camera.
+if [ "${1:-}" = "--video" ]; then
+  python3 "$REPO_ROOT/tool/store_screenshots/render_loop.py" "$SRC/gameplay.html" "$OUT/gameplay.mp4" --w 1920 --h 1080
+  python3 "$REPO_ROOT/tool/store_screenshots/render_loop.py" "$SRC/facecam.html" "$OUT/facecam.mp4" --w 1280 --h 720
+fi
