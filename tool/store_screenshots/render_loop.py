@@ -11,7 +11,9 @@ result is deterministic and frame-exact (no screen recording, no dropped
 frames). Frames run 0 .. kLoop*fps-1, so the last one runs straight into
 the first: every moving part of the page completes a whole number of
 cycles per kLoop. The seam check compares the last -> first step with an
-ordinary step (PSNR of frames N-1/0 vs 0/1) on the encoded file.
+ordinary step (PSNR of frames N-1/0 vs 0/1) on the encoded file. It is
+encoded next to <out.mp4> first and only renamed to it once that check
+passed - a failed run leaves no <out.mp4> behind that looks finished.
 
 Needs Google Chrome, ffmpeg and python3 with `websockets` (macOS).
 Used by prepare_media.sh --video; see README.md.
@@ -63,7 +65,18 @@ class CDP:
                 return ev
 
 
-async def render(a):
+def render(a):
+    out = Path(a.out)
+    part = out.with_name(f'{out.stem}.part{out.suffix}')
+    try:
+        asyncio.run(encode(a, str(part)))
+        check_seam(a, str(part))
+        os.replace(part, out)
+    finally:
+        part.unlink(missing_ok=True)
+
+
+async def encode(a, dest):
     profile = tempfile.mkdtemp(prefix='store-loop-chrome-')
     chrome = subprocess.Popen([
         CHROME, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--mute-audio',
@@ -116,7 +129,7 @@ async def render(a):
                 '-f', 'image2pipe', '-framerate', str(a.fps), '-c:v', 'png', '-i', '-',
                 '-vf', vf, '-c:v', 'libx264', '-preset', 'slow', '-crf', str(a.crf),
                 '-g', str(a.fps), '-r', str(a.fps), '-fps_mode', 'cfr', '-an',
-                '-movflags', '+faststart', a.out], stdin=subprocess.PIPE)
+                '-movflags', '+faststart', dest], stdin=subprocess.PIPE)
             # the first frames after load come out incomplete (filters and
             # the clip path settle over a couple of paints) - warm up first
             for t in (0, loop_s / 2, 0):
@@ -137,9 +150,13 @@ async def render(a):
         chrome.wait(timeout=10)
         subprocess.run(['rm', '-rf', profile])
 
-    seam, step = psnr(a.out, frames - 1, 0), psnr(a.out, 0, 1)
-    print(f'[media] {Path(a.out).name}: {frames} frames, {loop_s}s loop @ {a.fps} fps, '
-          f'{took:.0f}s; seam {seam:.1f} dB vs step {step:.1f} dB')
+    a.frames, a.loop_s, a.took = frames, loop_s, took
+
+
+def check_seam(a, video):
+    seam, step = psnr(video, a.frames - 1, 0), psnr(video, 0, 1)
+    print(f'[media] {Path(a.out).name}: {a.frames} frames, {a.loop_s}s loop @ {a.fps} fps, '
+          f'{a.took:.0f}s; seam {seam:.1f} dB vs step {step:.1f} dB')
     if seam < step - 6:
         sys.exit('render_loop: the last -> first frame step is far larger than a normal one')
 
@@ -166,7 +183,7 @@ def main():
     ap.add_argument('--h', type=int, default=1080)
     ap.add_argument('--fps', type=int, default=30)
     ap.add_argument('--crf', type=int, default=16)
-    asyncio.run(render(ap.parse_args()))
+    render(ap.parse_args())
 
 
 if __name__ == '__main__':

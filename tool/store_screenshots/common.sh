@@ -44,11 +44,14 @@ sim_rotate() {
 # local RTMP sink running. Stays offline - the caller goes live (capture.sh
 # via obs_demo.dart, record.sh through the app). `--video`: moving sources.
 obs_demo_up() {
+  local media=build/store_screenshots/media
   if [ "${1:-}" = "--video" ]; then
-    [ -f build/store_screenshots/media/gameplay.mp4 ] || tool/store_screenshots/prepare_media.sh --video
+    if [ ! -f "$media/gameplay.mp4" ] || [ ! -f "$media/facecam.mp4" ]; then
+      tool/store_screenshots/prepare_media.sh --video || return 1
+    fi
     dart run tool/store_screenshots/obs_demo.dart setup --video || return 1
   else
-    [ -f build/store_screenshots/media/gameplay.png ] || tool/store_screenshots/prepare_media.sh
+    [ -f "$media/gameplay.png" ] || tool/store_screenshots/prepare_media.sh || return 1
     dart run tool/store_screenshots/obs_demo.dart setup || return 1
   fi
   sink_start
