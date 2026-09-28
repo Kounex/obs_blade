@@ -62,11 +62,7 @@ Future<void> _shot(
   }
   await pumpMs(tester, settleMs);
   crops.forEach((key, finders) => _crop(tester, name, key, finders));
-  await _acks.request(
-    'SHOT: $name',
-    name,
-    warning: 'WARN: no capture ack for $name',
-  );
+  await _acks.request('SHOT: $name', name, failure: 'no capture ack for $name');
 }
 
 /// Prints the union rect of [finders] (first match each, missing ones

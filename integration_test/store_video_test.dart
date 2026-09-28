@@ -13,6 +13,13 @@
 //                              wrapper turns it into seconds into the file
 //                              (cues.json) so the edit can cut on it
 //
+// A missed ack fails the test on the spot, and before every step that
+// changes OBS through the app (going live, recording, scene switches, mute,
+// visibility, Studio Mode) the test asks OBS itself - an own obs-websocket
+// connection - whether it still is on the demo profile + scene collection,
+// streaming to the local sink (_requireDemoObs): a test left running after
+// its wrapper died must never act on the user's own OBS profile.
+//
 // Every clip gets about a second of idle lead-in and tail. Two things keep
 // the footage clean: the binding draws every frame the app asks for
 // (`fullyLive` - the default only paints when the test pumps, ~4 fps on a
@@ -20,8 +27,11 @@
 // the live binding does not mark with its debug crosshair.
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -59,6 +69,10 @@ import 'store_capture_support.dart';
 /// runs every step (later clips build on earlier state), only the
 /// recording is skipped.
 const String kOnly = String.fromEnvironment('STORE_VIDEO_ONLY');
+
+/// The profile + scene collection tool/store_screenshots/obs_demo.dart sets
+/// up for the captures.
+const String _kDemoName = 'OBS Blade Store Demo';
 
 /// New fictional chat lines for the live clips (the seeded backlog is
 /// kChatScript).
@@ -120,7 +134,7 @@ class _Recorder {
         'REC_START: $name',
         'start:$name',
         timeout: const Duration(seconds: 30),
-        warning: 'WARN: recorder for $name did not confirm the start',
+        failure: 'recorder for $name did not confirm the start',
       );
       _clip = name;
       _frames.clear();
@@ -139,7 +153,7 @@ class _Recorder {
         'REC_STOP: $name',
         'stop:$name',
         timeout: const Duration(seconds: 90),
-        warning: 'WARN: recorder for $name did not confirm the stop',
+        failure: 'recorder for $name did not confirm the stop',
       );
     }
   }
@@ -227,6 +241,99 @@ void _nameLiveSession() {
   }
 }
 
+/// Fails the test before [action] unless OBS itself - asked over an own
+/// obs-websocket connection, not the app's - is on the demo profile AND
+/// scene collection and streams to the local RTMP sink (127.0.0.1). Runs
+/// at the start and before every step that changes OBS through the app.
+Future<void> _requireDemoObs(String action) async {
+  String? problem;
+  try {
+    problem = await _demoObsProblem().timeout(const Duration(seconds: 10));
+  } catch (e) {
+    problem = 'OBS check failed: $e';
+  }
+  if (problem != null) {
+    storeLog('ERROR: $problem - aborting before $action');
+    fail('$problem - aborting before $action');
+  }
+}
+
+/// What is wrong with the OBS at [kObsHost] for the demo, or null.
+Future<String?> _demoObsProblem() async {
+  final WebSocket socket = await WebSocket.connect('ws://$kObsHost:4455');
+  final StreamIterator<dynamic> messages = StreamIterator<dynamic>(socket);
+  Future<Map<String, dynamic>> next(int op) async {
+    while (await messages.moveNext()) {
+      final Map<String, dynamic> message =
+          jsonDecode(messages.current as String) as Map<String, dynamic>;
+      if (message['op'] == op) return message['d'] as Map<String, dynamic>;
+    }
+    throw 'OBS closed the connection (${socket.closeCode} '
+        '${socket.closeReason})';
+  }
+
+  Future<Map<String, dynamic>> call(String type) async {
+    socket.add(
+      jsonEncode({
+        'op': 6,
+        'd': {'requestType': type, 'requestId': type},
+      }),
+    );
+    final Map<String, dynamic> response = await next(7);
+    final Map<String, dynamic> status =
+        response['requestStatus'] as Map<String, dynamic>;
+    if (status['result'] != true) {
+      throw '$type failed: ${status['code']} ${status['comment'] ?? ''}';
+    }
+    return (response['responseData'] as Map<String, dynamic>?) ?? {};
+  }
+
+  String hash(String text) =>
+      base64.encode(sha256.convert(utf8.encode(text)).bytes);
+
+  try {
+    final Map<String, dynamic> hello = await next(0);
+    final Map<String, dynamic> identify = {
+      'rpcVersion': 1,
+      'eventSubscriptions': 0,
+    };
+    final Map<String, dynamic>? auth =
+        hello['authentication'] as Map<String, dynamic>?;
+    if (auth != null) {
+      identify['authentication'] = hash(
+        '${hash('$kObsWsPassword${auth['salt']}')}${auth['challenge']}',
+      );
+    }
+    socket.add(jsonEncode({'op': 1, 'd': identify}));
+    await next(2);
+    final Object? profile = (await call(
+      'GetProfileList',
+    ))['currentProfileName'];
+    final Object? collection = (await call(
+      'GetSceneCollectionList',
+    ))['currentSceneCollectionName'];
+    if (profile != _kDemoName || collection != _kDemoName) {
+      return 'OBS is on profile "$profile" / collection "$collection", '
+          'not "$_kDemoName"';
+    }
+    final Map<String, dynamic> service = await call('GetStreamServiceSettings');
+    final Object? server =
+        (service['streamServiceSettings'] as Map<String, dynamic>?)?['server'];
+    if (service['streamServiceType'] != 'rtmp_custom' ||
+        server is! String ||
+        Uri.tryParse(server)?.host != '127.0.0.1') {
+      return 'OBS streams to "$server", not the local sink';
+    }
+    return null;
+  } finally {
+    await socket.close().timeout(
+      const Duration(seconds: 2),
+      onTimeout: () => null,
+    );
+    await messages.cancel();
+  }
+}
+
 void main() {
   final IntegrationTestWidgetsFlutterBinding binding =
       IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -249,6 +356,7 @@ void main() {
 
 Future<void> _flow(WidgetTester tester, _Recorder rec) async {
   final _ChatFeeder feeder = _ChatFeeder();
+  await _requireDemoObs('the run');
 
   // ============================ INTRO ============================
   // The binding shows "Test starting..." until the app runs - cover it
@@ -319,6 +427,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
   // ======================= CONNECT (offline) =====================
   switchTab(Tabs.Home);
   await pumpMs(tester, 800);
+  await _requireDemoObs('connecting');
   unawaited(GetIt.instance<NetworkStore>().setOBSWebSocket(connection));
   final bool reached = await waitUntil(
     tester,
@@ -352,6 +461,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
 
   // =========================== GO LIVE ===========================
   final Finder controls = find.text('Exposed Controls');
+  await _requireDemoObs('going live');
   await rec.clip('golive', () async {
     await deviceTap(tester, controls);
     rec.cue('controls_open');
@@ -359,6 +469,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
     await deviceTap(tester, find.text('Go Live'));
     rec.cue('confirm_live');
     await pumpMs(tester, 1500);
+    await _requireDemoObs('going live');
     await deviceTap(tester, find.text('Yes'));
     rec.cue('go_live');
     await waitUntil(tester, () => _dashboard.isLive, stepMs: 16);
@@ -367,6 +478,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
     await deviceTap(tester, find.text('Start'));
     rec.cue('confirm_rec');
     await pumpMs(tester, 1300);
+    await _requireDemoObs('recording');
     await deviceTap(tester, find.text('Yes'));
     rec.cue('start_rec');
     await waitUntil(tester, () => _dashboard.isRecording, stepMs: 16);
@@ -378,6 +490,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
   });
 
   // ============================ SCENES ===========================
+  await _requireDemoObs('switching scenes');
   await rec.clip('scenes', () async {
     for (final String scene in ['Talk', 'BRB', 'Game']) {
       await pumpMs(tester, 1300);
@@ -411,6 +524,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
     position.jumpTo(past.clamp(0.0, position.maxScrollExtent));
   }
   await pumpMs(tester, 1500);
+  await _requireDemoObs('muting / hiding sources');
   await rec.clip('audio', () async {
     rec.cue('meters');
     await pumpMs(tester, 4000);
@@ -573,6 +687,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
   await pumpMs(tester, 1500);
 
   // ========================== CUSTOMISE ==========================
+  await _requireDemoObs('Studio Mode');
   await rec.clip('customise', () async {
     await deviceTap(tester, _settingsSwitch('Studio Mode'));
     rec.cue('studio_mode');
@@ -613,6 +728,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
     await pumpMs(tester, 2500);
   });
   // Back to the plain live dashboard for the rest (off camera)
+  await _requireDemoObs('Studio Mode');
   await _dashboard.sendMutation(
     RequestType.SetStudioModeEnabled,
     fields: {'studioModeEnabled': false},
@@ -637,6 +753,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
   await pumpMs(tester, 1500);
   seedChatAccounts();
   await pumpMs(tester, 2500);
+  await _requireDemoObs('switching scenes');
   await rec.clip('streaming_mode', () async {
     feeder.start();
     rec.cue('cockpit');
@@ -655,6 +772,7 @@ Future<void> _flow(WidgetTester tester, _Recorder rec) async {
   await pumpMs(tester, 1000);
 
   // ========================= STOP STREAM =========================
+  await _requireDemoObs('going offline');
   await rec.clip('stopstream', () async {
     await deviceTap(tester, controls);
     rec.cue('controls_open');

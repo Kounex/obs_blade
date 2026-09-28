@@ -113,28 +113,28 @@ class CaptureAcks {
     await HttpServer.bind(InternetAddress.loopbackIPv4, kAckPort),
   );
 
-  /// Prints [line] and waits for the ack named [key]; logs [warning] (and
-  /// carries on) when none arrives within [timeout]. Returns whether it
-  /// was acked.
-  Future<bool> request(
+  /// Prints [line] and waits for the ack named [key]. No ack within
+  /// [timeout] fails the test on the spot with [failure]: the host wrapper
+  /// is gone or stuck, and a test left running on its own must not go on
+  /// driving the app (and through it OBS - the wrapper's cleanup may have
+  /// switched OBS back to the user's own profile by then).
+  Future<void> request(
     String line,
     String key, {
     Duration timeout = const Duration(seconds: 12),
-    required String warning,
+    required String failure,
   }) async {
     final Completer<void> ack = Completer<void>();
     _pending[key] = ack;
     storeLog(line);
-    bool acked = true;
-    await ack.future.timeout(
-      timeout,
-      onTimeout: () {
-        acked = false;
-        storeLog(warning);
-      },
-    );
-    _pending.remove(key);
-    return acked;
+    try {
+      await ack.future.timeout(timeout);
+    } on TimeoutException {
+      storeLog('ERROR: $failure - aborting');
+      fail(failure);
+    } finally {
+      _pending.remove(key);
+    }
   }
 
   Future<void> close() => _server.close(force: true);
