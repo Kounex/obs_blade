@@ -36,10 +36,15 @@ Play listing already uploaded (Play held by managed publishing - publish
 together with the production release).
 
 **Update 2026-09-28 - 4.0 release in progress** (`tool/release/`, README
-there; runs on the workstation). Build **4.0.0 (2026092804)** is on
-**TestFlight (internal)** and the **Play internal track** (adds the
-media per-source fix, the in-app manage-subscriptions sheet and the
-paywall scroll fix over 2026092803) (all Play
+there; runs on the workstation). Build **4.0.0 (2026092805)** is on
+**TestFlight (internal)** and the **Play internal track** (over
+2026092803: media per-source fix + settled live-state re-read, meter
+ticks no longer rebuild the media hub, in-app manage-subscriptions
+sheet, paywall scroll fix). **Dogfood OBS caveat:** the workstation OBS
+(running since 2026-09-20, Mic/Aux "Shure MV7" disconnected and retried
+every 2 s, MacBook on Wi-Fi) froze its whole outgoing stream ~13 s about
+once a minute - reproduced with no phone involved. Delayed-state reports
+against it are OBS, not the app; the user is restarting / checking OBS (all Play
 App content declarations done by the user, incl. Data safety + App
 access). Before `submit ios`: App Privacy
 (Apple) form (user), upgrade test over the store

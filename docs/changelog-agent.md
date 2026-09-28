@@ -2,6 +2,27 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-28 - Delayed state after scene switches: OBS freezes, two app fixes
+
+Dogfood: after a scene switch / pad tap, scene items, media state and
+even the audio meters arrived seconds late. Measured instead of guessed:
+- App stores (NetworkStore + DashboardStore in a throwaway flutter test)
+  against the real OBS on the workstation, no network hop: scene items
+  apply ~225 ms after the tap, also for a quick switch back - the ack
+  layer and ordering guards add nothing.
+- Raw WebSocket clients on loopback (MacBook) and from the wired NAS at
+  the same time: both saw the same ~13 s silence (no InputVolumeMeters,
+  requests answered in one burst after), about once a minute. OBS had
+  been running 8 days with Mic/Aux "Shure MV7" disconnected, retried
+  every 2 s (4230x `coreaudio_get_device_name failed`). Not proven as the
+  cause, strongest lead. The old 3 s keepalive turned such freezes into
+  reconnects; since f9732f03 (15 s) they show as late state.
+App fixes: the in-program read right at CurrentProgramSceneChanged /
+SceneTransitionEnded raced OBS's next-frame deactivation (~55 ms later)
+- a follow-up read 250 ms later (`kMediaInProgramSettle`); and
+`mediaInputs` is a custom-equality `Computed` so meter ticks (allInputs
+replaced ~20x/s) no longer rebuild the whole media hub.
+
 ## 2026-09-28 - Manage subscription: StoreKit sheet in the app
 
 The App Store web page (`apps.apple.com/account/subscriptions`) doesn't
