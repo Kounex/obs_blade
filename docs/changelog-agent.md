@@ -2,6 +2,24 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-28 - Store captures: video mode for app previews
+
+App Store previews (2.3.4: app captures only) and the Play preview need
+real recordings. `tool/store_screenshots/record.sh` (README "Video mode")
+records `integration_test/store_video_test.dart` per clip on the store
+devices: REC_START / REC_STOP / CUE markers, cues.json, constant 30 fps
+H.264 per clip; seeding shared with the screenshot test
+(`store_capture_support.dart`, `common.sh`; screenshot flow unchanged).
+Findings: the live binding must be `fullyLive` (~4 fps otherwise);
+`tester.tap` paints a crosshair (device pointer events don't); a scene
+tile's label never hit-tests (its ring is stacked on top); iOS keyboard
+is region-specific with a first-use sheet - the reply is typed with the
+fake text input. Android: debug JIT + in-guest `screenrecord` gave ~20
+fps; profile build (`flutter drive`) + the emulator's host-side recorder
+give ~40-49. The demo "Game Capture"/"Webcam" play seamless 8 s loops
+rendered from `render(t)` pages. Clips: store-shots
+`projects/obs-blade/recordings/`.
+
 ## 2026-09-28 - Delayed state after scene switches: OBS freezes, two app fixes
 
 Dogfood: after a scene switch / pad tap, scene items, media state and
