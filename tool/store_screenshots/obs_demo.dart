@@ -3,6 +3,7 @@
 //
 // Run from the repo root on the macOS machine that runs OBS:
 //   dart run tool/store_screenshots/obs_demo.dart setup     # profile + scene collection
+//   dart run tool/store_screenshots/obs_demo.dart setup --video  # same, moving sources
 //   dart run tool/store_screenshots/obs_demo.dart live      # start stream + record
 //   dart run tool/store_screenshots/obs_demo.dart offline   # stop stream + record
 //   dart run tool/store_screenshots/obs_demo.dart teardown  # stop, restore the user's profile/collection
@@ -14,6 +15,9 @@
 // `ffmpeg -listen` receiver), so "live" never reaches a real service.
 //
 // Media comes from prepare_media.sh (build/store_screenshots/media/).
+// `--video` (video mode, record.sh) swaps the Game Capture and Webcam stills
+// for the looping gameplay/facecam clips (prepare_media.sh --video), so the
+// app's scene preview moves on camera.
 // Options: --host 127.0.0.1 --port 4455 --password <pw> (default: read from
 // the local obs-websocket config).
 
@@ -136,6 +140,7 @@ Future<void> main(List<String> args) async {
   var host = '127.0.0.1';
   var port = 4455;
   String? password;
+  var video = false;
   final commands = <String>[];
   for (var i = 0; i < args.length; i++) {
     switch (args[i]) {
@@ -145,12 +150,16 @@ Future<void> main(List<String> args) async {
         port = int.parse(args[++i]);
       case '--password':
         password = args[++i];
+      case '--video':
+        video = true;
       default:
         commands.add(args[i]);
     }
   }
   if (commands.isEmpty) {
-    stderr.writeln('usage: obs_demo.dart setup|live|offline|teardown');
+    stderr.writeln(
+      'usage: obs_demo.dart setup [--video]|live|offline|teardown',
+    );
     exit(2);
   }
 
@@ -159,7 +168,7 @@ Future<void> main(List<String> args) async {
     for (final command in commands) {
       switch (command) {
         case 'setup':
-          await setup(obs);
+          await setup(obs, video: video);
         case 'live':
           await live(obs);
         case 'offline':
@@ -175,9 +184,13 @@ Future<void> main(List<String> args) async {
   }
 }
 
-Future<void> setup(Obs obs) async {
+Future<void> setup(Obs obs, {bool video = false}) async {
   if (!File('$mediaDir/gameplay.png').existsSync()) {
     throw 'media missing - run tool/store_screenshots/prepare_media.sh first';
+  }
+  if (video && !File('$mediaDir/gameplay.mp4').existsSync()) {
+    throw 'video loops missing - run '
+        'tool/store_screenshots/prepare_media.sh --video first';
   }
 
   // Remember what the user had (only the first time — a re-run while the
@@ -195,7 +208,8 @@ Future<void> setup(Obs obs) async {
     );
   }
 
-  // Profile: local RTMP sink, 1080p60, recordings into build/.
+  // Profile: local RTMP sink, 1080p60, OBS recordings into build/ (not
+  // recordings/ - that is where record.sh puts the screen recordings).
   if ((profiles['profiles'] as List).contains(kDemoName)) {
     await obs.call('SetCurrentProfile', {'profileName': kDemoName});
   } else {
@@ -214,7 +228,7 @@ Future<void> setup(Obs obs) async {
     'fpsNumerator': 60,
     'fpsDenominator': 1,
   });
-  final recDir = Directory('$repoRoot/build/store_screenshots/recordings')
+  final recDir = Directory('$repoRoot/build/store_screenshots/obs_recordings')
     ..createSync(recursive: true);
   await obs.call('SetRecordDirectory', {'recordDirectory': recDir.path});
 
@@ -261,6 +275,29 @@ Future<void> setup(Obs obs) async {
             'inputSettings': {'file': '$mediaDir/$file'},
           }))!['sceneItemId']
           as int;
+  // A looping, silent video clip (video mode): never restarts, keeps
+  // playing when its scene is not live - a seamless loop that just runs.
+  Future<int> clip(String scene, String name, String file) async {
+    final id =
+        (await obs.call('CreateInput', {
+              'sceneName': scene,
+              'inputName': name,
+              'inputKind': 'ffmpeg_source',
+              'inputSettings': {
+                'local_file': '$mediaDir/$file',
+                'looping': true,
+                'restart_on_activate': false,
+                'close_when_inactive': false,
+              },
+            }))!['sceneItemId']
+            as int;
+    await obs.call('SetInputAudioMonitorType', {
+      'inputName': name,
+      'monitorType': 'OBS_MONITORING_TYPE_NONE',
+    });
+    return id;
+  }
+
   Future<int> audio(String scene, String name, String file, double db) async {
     final id =
         (await obs.call('CreateInput', {
@@ -317,12 +354,24 @@ Future<void> setup(Obs obs) async {
   }
 
   await scene('Game');
-  await image('Game', 'Game Capture', 'gameplay.png');
-  final cam = await image('Game', 'Webcam', 'facecam.png');
+  if (video) {
+    // The clips are media inputs too, so the app's mixer lists them (in
+    // creation order) - the real audio beds go first, right below Music
+    await audio('Game', 'Game Audio', 'game.wav', -10);
+    await audio('Game', 'Mic', 'mic.wav', -6);
+    await clip('Game', 'Game Capture', 'gameplay.mp4');
+  } else {
+    await image('Game', 'Game Capture', 'gameplay.png');
+  }
+  final cam = video
+      ? await clip('Game', 'Webcam', 'facecam.mp4')
+      : await image('Game', 'Webcam', 'facecam.png');
   await place('Game', cam, 1466, 620, 420 / 1280);
   await image('Game', 'Overlay', 'overlay.png');
-  await audio('Game', 'Game Audio', 'game.wav', -10);
-  await audio('Game', 'Mic', 'mic.wav', -6);
+  if (!video) {
+    await audio('Game', 'Game Audio', 'game.wav', -10);
+    await audio('Game', 'Mic', 'mic.wav', -6);
+  }
   await add('Game', 'Music');
 
   await scene('Talk');
@@ -337,7 +386,10 @@ Future<void> setup(Obs obs) async {
 
   await obs.call('SetCurrentProgramScene', {'sceneName': 'Game'});
   await obs.call('RemoveScene', {'sceneName': temp});
-  print('setup: "$kDemoName" profile + scene collection ready (Gameplay live)');
+  print(
+    'setup: "$kDemoName" profile + scene collection ready (Gameplay live'
+    '${video ? ', moving sources' : ''})',
+  );
 }
 
 Future<void> live(Obs obs) async {
@@ -369,7 +421,7 @@ Future<void> teardown(Obs obs) async {
   await Future<void>.delayed(const Duration(seconds: 2));
   await obs.call('SetCurrentProfile', {'profileName': saved['profile']});
   restore.deleteSync();
-  final recDir = Directory('$repoRoot/build/store_screenshots/recordings');
+  final recDir = Directory('$repoRoot/build/store_screenshots/obs_recordings');
   if (recDir.existsSync()) recDir.deleteSync(recursive: true);
   print(
     'teardown: back on profile "${saved['profile']}" / '

@@ -71,14 +71,17 @@ async def render(a):
         '--allow-file-access-from-files', '--force-color-profile=srgb',
         '--font-render-hinting=none', '--run-all-compositor-stages-before-draw',
         '--no-first-run', '--no-default-browser-check', f'--user-data-dir={profile}',
-        f'--remote-debugging-port={a.port}', 'about:blank'],
+        '--remote-debugging-port=0', 'about:blank'],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     ffmpeg = None
     try:
+        # port 0: Chrome picks a free port and writes it to the profile -
+        # no clash with another Chrome driven over DevTools on this machine
         page = None
         for _ in range(100):
             try:
-                targets = json.load(urllib.request.urlopen(f'http://127.0.0.1:{a.port}/json/list'))
+                port = Path(profile, 'DevToolsActivePort').read_text().split()[0]
+                targets = json.load(urllib.request.urlopen(f'http://127.0.0.1:{port}/json/list'))
                 page = next(t for t in targets if t['type'] == 'page')
                 break
             except Exception:
@@ -163,7 +166,6 @@ def main():
     ap.add_argument('--h', type=int, default=1080)
     ap.add_argument('--fps', type=int, default=30)
     ap.add_argument('--crf', type=int, default=16)
-    ap.add_argument('--port', type=int, default=9333)
     asyncio.run(render(ap.parse_args()))
 
 
