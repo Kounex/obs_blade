@@ -16,8 +16,10 @@ Reads the test's output line by line (echoed to stdout and --log):
                                into that clip's file in <out>/cues.json
 
 iOS records with `simctl io recordVideo --codec=h264` (<clip>.mov), Android
-with `screenrecord` on the device (<clip>.raw.mp4, pulled). Both write
-frames only when the screen changes (variable frame rate); after the test
+with `screenrecord` on the device (<clip>.raw.mp4, pulled) or, with
+--android-recorder emulator, with the emulator's own host-side recorder
+(<clip>.raw.webm). The first two write frames only when the screen
+changes (variable frame rate), the emulator's constant 60 fps; after the test
 every clip is re-encoded to constant 30 fps H.264 at native size
 (<clip>.mp4), and <out>/clips.json summarizes each: duration, size, how
 many frames per second the app really drew while something moved (from the
@@ -44,6 +46,7 @@ from pathlib import Path
 ACK_URL = 'http://127.0.0.1:8977/ack?name='
 MARKER = re.compile(r'(REC_START|REC_STOP): (\w+)')
 CUE = re.compile(r'CUE: (\w+) (\w+) (\d+)')
+FRAMES = re.compile(r'FRAMES: (\w+) (\d+) (\d+) (\d+) (\d+)')
 
 
 def log(message):
@@ -133,7 +136,14 @@ class AndroidRecorder(Recorder):
 
     def start(self):
         super().start()
-        time.sleep(0.2)
+        # the first frame lands a moment after the ready line (longer on a
+        # busy emulator) - the clip's clock starts once the file has it
+        for _ in range(100):
+            size = self.adb('shell', 'stat', '-c', '%s', self.remote).stdout.strip()
+            if size.isdigit() and int(size) > 0:
+                break
+            time.sleep(0.05)
+        self.t0 = time.monotonic()
 
     def stop(self):
         # SIGINT to the local adb does not reach the device process
@@ -150,8 +160,49 @@ class AndroidRecorder(Recorder):
         self.adb('shell', 'rm', '-f', self.remote)
 
 
+class EmulatorRecorder(Recorder):
+    """The emulator's own recorder (`adb emu screenrecord`, Android
+    emulators only): encodes the emulator's display on the host - VP9,
+    constant 60 fps (<clip>.raw.webm) - so no guest virtual display and
+    software encoder compete with the app for the emulator's GPU/CPU."""
+
+    @property
+    def raw(self):
+        return self.args.out / f'{self.clip}.raw.webm'
+
+    def emu(self, *cmd):
+        return subprocess.run([self.args.adb, '-s', self.args.device, 'emu', 'screenrecord', *cmd],
+                              capture_output=True, text=True)
+
+    def _size(self):
+        return self.raw.stat().st_size if self.raw.exists() else 0
+
+    def start(self):
+        self.raw.unlink(missing_ok=True)
+        started = self.emu('start', '--fps', '60', '--bit-rate', '25M', str(self.raw))
+        # it grabs frames from here on (the file only fills ~1 s later - the
+        # encoder buffers), so the clip's clock starts now
+        self.t0 = time.monotonic()
+        if not started.stdout.startswith('OK'):
+            log(f'{self.clip}: emulator recorder: {started.stdout.strip()} {started.stderr.strip()}')
+
+    def stop(self):
+        self.emu('stop')
+        last, stable = -1, 0
+        for _ in range(120):  # finalized: size unchanged for a second
+            size = self._size()
+            stable = stable + 1 if size == last else 0
+            if stable >= 4:
+                break
+            last = size
+            time.sleep(0.25)
+
+
 def run_test(args):
-    recorder_cls = IosRecorder if args.platform == 'ios' else AndroidRecorder
+    emulator = args.android_recorder == 'emulator' or (
+        args.android_recorder == 'auto' and args.device.startswith('emulator-'))
+    recorder_cls = (IosRecorder if args.platform == 'ios'
+                    else EmulatorRecorder if emulator else AndroidRecorder)
     cues_file = args.out / 'cues.json'
     cues = json.loads(cues_file.read_text()) if cues_file.exists() else {}
     active = None
@@ -191,6 +242,11 @@ def run_test(args):
             if active is not None and active.clip == m[2]:
                 stop_active()
             ack(f'stop:{m[2]}')
+        f = FRAMES.search(line)
+        if f and f[1] in cues:
+            # what the app drew itself (vs what the recorder kept)
+            cues[f[1]]['app'] = {'frames': int(f[2]), 'fps': round(int(f[2]) / max(int(f[3]), 1) * 1000, 1),
+                                 'p90_build_ms': int(f[4]), 'p90_raster_ms': int(f[5])}
         c = CUE.search(line)
         if c and c[1] in cues and c[1] in ack_at:
             entry = cues[c[1]]
@@ -214,9 +270,13 @@ def normalize(out, clip, raw_name):
     if not raw.exists() or raw.stat().st_size == 0:
         log(f'{clip}: no raw file')
         return
+    # simctl / screenrecord tag BT.709; the emulator's recorder leaves its
+    # (BT.601) YUV untagged - convert that instead of just relabeling it
+    space = probe(raw, 'stream=color_space').get('streams', [{}])[0].get('color_space', 'unknown')
+    matrix = '' if space == 'bt709' else 'scale=in_color_matrix=bt601:out_color_matrix=bt709,'
     result = subprocess.run([
         'ffmpeg', '-nostdin', '-hide_banner', '-loglevel', 'error', '-y', '-i', str(raw),
-        '-vf', 'fps=30,format=yuv420p,setparams=color_primaries=bt709:color_trc=bt709:'
+        '-vf', f'fps=30,{matrix}format=yuv420p,setparams=color_primaries=bt709:color_trc=bt709:'
                'colorspace=bt709:range=tv',
         '-c:v', 'libx264', '-preset', 'slow', '-crf', '13', '-profile:v', 'high',
         '-fps_mode', 'cfr', '-r', '30', '-an', '-movflags', '+faststart',
@@ -225,6 +285,26 @@ def normalize(out, clip, raw_name):
         log(f'{clip}: normalize failed: {result.stderr.strip()[-400:]}')
     else:
         log(f'{clip}: -> {clip}.mp4')
+
+
+def changed_frame_times(raw):
+    """Times of the frames that differ from the one before. simctl and
+    screenrecord only write changed frames, so those are the packets; the
+    emulator's recorder repeats frames - those are dropped by comparing
+    the decoded frames (framemd5; an unchanged frame decodes identical)."""
+    if raw.suffix == '.webm':
+        out = subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-i', str(raw), '-an',
+                              '-fps_mode', 'passthrough', '-f', 'framemd5', '-'],
+                             capture_output=True, text=True).stdout
+        tb = re.search(r'#tb 0: (\d+)/(\d+)', out)
+        times, previous = [], None
+        for row in (line.split(',') for line in out.splitlines() if line and line[0] != '#'):
+            if row[5].strip() != previous:
+                times.append(int(row[2]) * int(tb[1]) / int(tb[2]))
+            previous = row[5].strip()
+        return times
+    return sorted(float(p['pts_time']) for p in probe(raw, 'packet=pts_time').get('packets', [])
+                  if p.get('pts_time') not in (None, 'N/A'))
 
 
 def probe(path, entries, stream='v:0'):
@@ -246,9 +326,7 @@ def analyze(out, clips=None):
             continue
         fmt = probe(mp4, 'stream=width,height,avg_frame_rate:format=duration')
         stream = fmt.get('streams', [{}])[0]
-        times = [float(p['pts_time']) for p in
-                 probe(raw, 'packet=pts_time').get('packets', []) if p.get('pts_time') not in (None, 'N/A')]
-        times.sort()
+        times = changed_frame_times(raw)
         per_second = {}
         for t in times:
             per_second[int(t)] = per_second.get(int(t), 0) + 1
@@ -268,12 +346,15 @@ def analyze(out, clips=None):
             'motion_fps_median': round(statistics.median(moving), 1) if moving else 0,
             'motion_fps_min': min(moving) if moving else 0,
             'fps_per_second': [per_second.get(s, 0) for s in range(int(times[-1]) + 1)] if times else [],
+            'app': entry.get('app'),
             'cues': [f'{c["label"]}@{c["t"]}' for c in entry.get('cues', [])],
         }
         s = summary[clip]
         log(f'{clip}: {s["duration"]}s {s["size"]} raw {s["raw_frames"]} frames, '
             f'motion {s["motion_seconds"]}s @ median {s["motion_fps_median"]} fps '
-            f'(min {s["motion_fps_min"]})')
+            f'(min {s["motion_fps_min"]})'
+            + (f'; app drew {s["app"]["fps"]} fps (p90 build {s["app"]["p90_build_ms"]} ms, '
+               f'raster {s["app"]["p90_raster_ms"]} ms)' if s['app'] else ''))
         if (s['lost_s'] or 0) > 0.5:
             log(f'{clip}: WARNING the file is {s["lost_s"]}s shorter than the test '
                 'ran it - the device stalled mid-clip; re-take it')
@@ -288,11 +369,21 @@ def main():
     ap.add_argument('--device')
     ap.add_argument('--out', type=Path)
     ap.add_argument('--adb', default='adb')
+    ap.add_argument('--android-recorder', choices=['auto', 'device', 'emulator'], default='auto',
+                    help='device: screenrecord on the device; emulator: the emulator\'s '
+                         'host-side recorder (adb emu screenrecord); auto: emulator for '
+                         'emulator-* serials')
     ap.add_argument('--log')
     ap.add_argument('--analyze', type=Path, metavar='DIR')
+    ap.add_argument('--normalize', action='store_true',
+                    help='with --analyze: re-encode every clip\'s raw file first')
     ap.add_argument('command', nargs=argparse.REMAINDER)
     args = ap.parse_args()
     if args.analyze:
+        if args.normalize:
+            cues = json.loads((args.analyze / 'cues.json').read_text())
+            for clip, entry in cues.items():
+                normalize(args.analyze, clip, entry['raw'])
         analyze(args.analyze)
         return 0
     if args.command and args.command[0] == '--':

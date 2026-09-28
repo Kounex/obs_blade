@@ -22,6 +22,7 @@ and never point it at a device with real data.
 | `common.sh` | Shared by both wrappers: environment, OBS demo state + respawning local `ffmpeg -listen` RTMP sink, clean status bar (iOS `simctl status_bar`, Android demo mode), teardown. |
 | `capture.sh` | Screenshots, one device end to end: OBS demo state (live + recording), runs the test, saves one PNG per `SHOT:` marker. |
 | `record.sh` + `record_watch.py` | Video, one device end to end: OBS demo state with moving sources, **offline**; runs the video test through the watcher, which records per clip and normalizes (see "Video mode"). |
+| `video_driver.dart` | Host side of `flutter drive --profile`, which record.sh uses on Android. |
 | `../../integration_test/store_capture_support.dart` | Shared by both tests: seeding (stats history, saved connection, combined chat via fake-backed chat stores with fictional viewers), the ack server, navigation/scroll helpers, `deviceTap`. |
 | `../../integration_test/store_screenshots_test.dart` | Seeds, connects, walks the screens, prints `SHOT:` and `CROP:` markers. |
 | `../../integration_test/store_video_test.dart` | Seeds, records the intro from launch, goes live through the app, plays out each clip, prints `REC_START:` / `REC_STOP:` / `CUE:` markers. |
@@ -66,8 +67,8 @@ KEEP_OBS=1 tool/store_screenshots/record.sh ios     <iphone-sim-udid> build/stor
            tool/store_screenshots/record.sh android <phone-serial>    build/store_screenshots/recordings/android-phone
 # re-take single clips (the flow still runs every step, only these record):
 STORE_VIDEO_ONLY=scenes,chat tool/store_screenshots/record.sh ios <udid> <out>
-# summary of existing clips again:
-python3 tool/store_screenshots/record_watch.py --analyze <out>
+# summary of existing clips again (--normalize: re-encode the mp4s first):
+python3 tool/store_screenshots/record_watch.py --analyze <out> [--normalize]
 ```
 
 **Clips** (`store_video_test.dart`; each with ~1 s idle lead-in and tail):
@@ -87,21 +88,28 @@ python3 tool/store_screenshots/record_watch.py --analyze <out>
 **Markers** (each waits for the wrapper's ack, like `SHOT:`):
 
 - `REC_START: <clip>` - the watcher starts `xcrun simctl io <udid>
-  recordVideo --codec=h264 --force <clip>.mov` (iOS) or `adb shell
-  screenrecord --bit-rate 20000000` (Android), waits until it really
-  records, then acks `start:<clip>`.
-- `REC_STOP: <clip>` - SIGINT (on the device for Android, then `adb pull`),
-  waits for the finished file, acks `stop:<clip>`.
+  recordVideo --codec=h264 --force <clip>.mov` (iOS), the emulator's own
+  recorder `adb emu screenrecord start --fps 60` (`<clip>.raw.webm`,
+  Android emulators) or `adb shell screenrecord --bit-rate 20000000`
+  (`<clip>.raw.mp4`, a real Android device or `ANDROID_RECORDER=device`),
+  waits until it really records, then acks `start:<clip>`.
+- `REC_STOP: <clip>` - SIGINT / `screenrecord stop` (screenrecord: on the
+  device, then `adb pull`), waits for the finished file, acks
+  `stop:<clip>`.
+- `FRAMES: <clip> <n> <ms> <build> <raster>` - frames the app itself drew
+  during the clip (and p90 build / raster ms), from the engine's frame
+  timings; `clips.json` has it as `app`.
 - `CUE: <clip> <label> <ms>` - a key moment (scene switched, muted, sent,
   page change...), ms since the start ack. `cues.json` has it as `t`,
   seconds into that clip's file.
 
-**Output** per device directory: `<clip>.mov` / `<clip>.raw.mp4` (raw,
-variable frame rate - both recorders only write changed frames),
+**Output** per device directory: `<clip>.mov` / `<clip>.raw.webm` /
+`<clip>.raw.mp4` (raw, variable frame rate),
 `<clip>.mp4` (constant 30 fps H.264, CRF 13, yuv420p BT.709, native
 resolution, no audio), `cues.json`, and `clips.json` - duration, size, the
 frames per second the app really drew while something moved (median / min
-over those seconds, from the raw frame times) and `lost_s`, how much
+over those seconds, from the raw frame times - the frames that changed;
+compare with `app.fps`, what the app drew) and `lost_s`, how much
 shorter the file is than the test's own clock. The simulator runs debug
 builds: re-take a clip whose motion fps sags, and any clip the watcher
 warns about - a simulator that stalls (a busy Mac) drops the stalled time
@@ -111,6 +119,15 @@ from the recording, so the clip jumps.
 
 - `framePolicy = fullyLive`: the live test binding otherwise only paints
   when the test pumps (250 ms steps - about 4 fps on a recording).
+- Android runs a profile build (`flutter drive --profile`, AOT; the debug
+  JIT falls well behind on an emulator) with `PRO_RELEASE_TEST_UNLOCK`
+  for the Pro debug override, after an `adb uninstall` - `flutter drive`
+  keeps an installed app's data, the test needs a fresh boot. The iOS
+  simulator only runs debug builds (`flutter test`).
+- Android emulators record with the emulator's host-side recorder: the
+  device's `screenrecord` (a virtual display plus a software encoder in
+  the guest) takes GPU and CPU from the app - measured on the Store
+  Pixel 7 AVD, 20 recorded / 42 drawn fps with it, 40 / 52 without.
 - `deviceTap` instead of `tester.tap`: test-sourced pointers get a debug
   crosshair painted over the app; device-sourced ones (the test sets
   `shouldPropagateDevicePointerEvents`) are plain taps with the real press

@@ -23,6 +23,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -90,14 +91,19 @@ const List<ChatLine> _liveChat = [
 
 const String _reply = 'Thanks for hanging out, final lap coming up! 🏁';
 
-/// Clip bookkeeping: markers, cues, lead-in and tail.
+/// Clip bookkeeping: markers, cues, lead-in and tail - and the frames the
+/// app itself drew per clip (`FRAMES:`), to tell a janky app from a
+/// recorder that dropped frames.
 class _Recorder {
-  _Recorder(this.tester, this.acks);
+  _Recorder(this.tester, this.acks) {
+    SchedulerBinding.instance.addTimingsCallback(_frames.addAll);
+  }
 
   final WidgetTester tester;
   final CaptureAcks acks;
   String? _clip;
   final Stopwatch _clock = Stopwatch();
+  final List<FrameTiming> _frames = [];
 
   static bool _wanted(String name) =>
       kOnly.isEmpty || kOnly.split(',').map((s) => s.trim()).contains(name);
@@ -117,6 +123,7 @@ class _Recorder {
         warning: 'WARN: recorder for $name did not confirm the start',
       );
       _clip = name;
+      _frames.clear();
       _clock
         ..reset()
         ..start();
@@ -126,6 +133,7 @@ class _Recorder {
     await pumpMs(tester, tailMs);
     if (wanted) {
       cue('end');
+      _reportFrames(name);
       _clip = null;
       await acks.request(
         'REC_STOP: $name',
@@ -139,6 +147,21 @@ class _Recorder {
   void cue(String label) {
     if (_clip == null) return;
     storeLog('CUE: $_clip $label ${_clock.elapsedMilliseconds}');
+  }
+
+  /// `FRAMES: <clip> <frames> <ms> <p90 build ms> <p90 raster ms>`
+  void _reportFrames(String name) {
+    int p90(Duration Function(FrameTiming) of) {
+      if (_frames.isEmpty) return 0;
+      final List<int> ms = _frames.map((t) => of(t).inMilliseconds).toList()
+        ..sort();
+      return ms[(ms.length * 0.9).floor().clamp(0, ms.length - 1)];
+    }
+
+    storeLog(
+      'FRAMES: $name ${_frames.length} ${_clock.elapsedMilliseconds} '
+      '${p90((t) => t.buildDuration)} ${p90((t) => t.rasterDuration)}',
+    );
   }
 }
 
