@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-29 - Store captures: OBS safety review fixes
+
+Review of the video mode found a stray test could go live on the user's
+real OBS profile: record_watch.py dying left the app running the test
+while record.sh's teardown restored the user's profile. Fixed in depth
+(README "OBS safety"): the wrappers stop the app/flutter/recorders
+before the teardown (cleanup trap installed first, runs once, also on
+HUP/TERM); missed acks fail the tests; the video test checks over its
+own obs-websocket connection that OBS is on the demo profile +
+collection with a 127.0.0.1 stream server before every OBS-changing
+step; obs_demo.dart verifies each switch before destructive calls,
+teardown/offline only stop outputs on the demo profile (safe twice,
+before setup, next to a live user stream) and restore Studio Mode;
+record_watch.py stops recorder + test process group when interrupted;
+the sink loop is found by pidfile + name; media loops are renamed into
+place only after the seam check.
+
 ## 2026-09-28 - Store captures: video mode for app previews
 
 App Store previews (2.3.4: app captures only) and the Play preview need

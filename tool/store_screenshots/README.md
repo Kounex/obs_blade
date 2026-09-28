@@ -17,9 +17,9 @@ and never point it at a device with real data.
 |---|---|
 | `prepare_media.sh` | Renders the demo scene art (`obs_scene/*.html`, headless Chrome) and audio beds (ffmpeg) into `build/store_screenshots/media/`. `--video` also renders the gameplay + facecam loops (`render_loop.py`). |
 | `obs_scene/` | Fictional demo content: a synthwave racer "game", an illustrated facecam, overlay, interstitials. No real people, games or brands. Opened plain a page is the still; `?drive` exposes a deterministic `render(t)` loop (gameplay, facecam). |
-| `render_loop.py` | Drives one headless Chrome over DevTools: `render(n/fps)` + screenshot per frame, piped into ffmpeg - a seamless 8 s loop mp4, checked at the seam (PSNR of the wrap step vs a normal step). |
-| `obs_demo.dart` | `setup [--video]` / `live` / `offline` / `teardown` for OBS over WebSocket v5. Creates a separate **"OBS Blade Store Demo"** profile + scene collection (never edits yours), streams to a local RTMP sink, records into `build/store_screenshots/obs_recordings/`. `--video` makes Game Capture and Webcam looping media sources. `teardown` switches back to the profile/collection you had. |
-| `common.sh` | Shared by both wrappers: environment, OBS demo state + respawning local `ffmpeg -listen` RTMP sink, clean status bar (iOS `simctl status_bar`, Android demo mode), teardown. |
+| `render_loop.py` | Drives one headless Chrome over DevTools: `render(n/fps)` + screenshot per frame, piped into ffmpeg - a seamless 8 s loop mp4, checked at the seam (PSNR of the wrap step vs a normal step). Encodes to `<name>.part.mp4` and renames only once the seam check passed. |
+| `obs_demo.dart` | `setup [--video]` / `live` / `offline` / `teardown` for OBS over WebSocket v5. Creates a separate **"OBS Blade Store Demo"** profile + scene collection (never edits yours), streams to a local RTMP sink, records into `build/store_screenshots/obs_recordings/`. `--video` makes Game Capture and Webcam looping media sources. `teardown` switches back to the profile/collection and Studio Mode you had. See "OBS safety". |
+| `common.sh` | Shared by both wrappers: environment, run-once cleanup trap, OBS demo state + respawning local `ffmpeg -listen` RTMP sink (pidfile), clean status bar (iOS `simctl status_bar`, Android demo mode), stopping the app, teardown. |
 | `capture.sh` | Screenshots, one device end to end: OBS demo state (live + recording), runs the test, saves one PNG per `SHOT:` marker. |
 | `record.sh` + `record_watch.py` | Video, one device end to end: OBS demo state with moving sources, **offline**; runs the video test through the watcher, which records per clip and normalizes (see "Video mode"). |
 | `video_driver.dart` | Host side of `flutter drive --profile`, which record.sh uses on Android. |
@@ -47,10 +47,40 @@ KEEP_OBS=1 tool/store_screenshots/capture.sh android <phone-serial>    build/sto
   stores while the intro is still the root route, before the tab shell
   (built eagerly) binds to them.
 
+## OBS safety
+
+The demo runs on the machine's real OBS, next to the user's own profile
+(stream key included). What keeps it there:
+
+- `obs_demo.dart` checks where OBS is before it acts: `setup` refuses an
+  OBS that is live on another profile and re-reads the current
+  profile/collection after each switch before it changes profile settings
+  or removes a scene/source; `live` needs the demo profile + collection
+  and a stream server on `127.0.0.1`; `offline` and `teardown` stop
+  outputs only on the demo profile. `teardown` reads the restore file
+  first and only switches back what is still the demo - running it twice,
+  without a setup, or while the user streams on their own profile is a
+  no-op.
+- The wrappers install their cleanup first; it runs once, on every exit
+  (done, error, Ctrl-C, TERM, HUP from a dropped `ssh -t`). It stops the
+  test before OBS goes back: the app on the device (`simctl terminate` /
+  `am force-stop com.kounex.obsBlade` - flutter leaves it running when it
+  dies), flutter, the watcher and any recorder, then the teardown, the
+  sink and the status bar. Its output lands in `<out>/cleanup.log` first.
+- The tests fail at once on a missed ack (the wrapper is gone), and the
+  video test asks OBS itself (an own obs-websocket connection) for the
+  demo profile + collection and the local stream server at the start and
+  before every step that changes OBS through the app - going live,
+  recording, scene switches, mute, visibility, Studio Mode.
+- `record_watch.py` stops its recorder and the test command's process
+  group when it is interrupted; a lost terminal (broken pipe) only stops
+  its echo.
+
 ## Markers
 
 - `SHOT: <name>` — the wrapper screenshots the device, then acks over
-  loopback (`127.0.0.1:8977`, `adb forward` on Android).
+  loopback (`127.0.0.1:8977`, `adb forward` on Android). No ack within
+  12 s fails the test.
 - `CROP: <shot> <key> l t w h` — a widget's rect as screen fractions, for
   enlarged callout cards in the composed images (e.g. `live_pills`,
   `fader`, `sources`).
@@ -85,7 +115,8 @@ python3 tool/store_screenshots/record_watch.py --analyze <out> [--normalize]
 | `streaming_mode` | The streaming-mode cockpit (preview, scenes, chat feed), BRB and back. |
 | `stopstream` | Go Offline → confirm, recording Stop → confirm. |
 
-**Markers** (each waits for the wrapper's ack, like `SHOT:`):
+**Markers** (each waits for the wrapper's ack, like `SHOT:`; a missed
+ack fails the test):
 
 - `REC_START: <clip>` - the watcher starts `xcrun simctl io <udid>
   recordVideo --codec=h264 --force <clip>.mov` (iOS), the emulator's own
