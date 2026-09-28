@@ -10,9 +10,17 @@
 //
 // `setup` never edits the user's own profile or scene collection: it creates
 // (or reuses) a dedicated "OBS Blade Store Demo" profile + scene collection,
-// remembering the previous ones in build/store_screenshots/obs_restore.json
-// for `teardown`. The stream target is a local RTMP sink (capture.sh runs an
-// `ffmpeg -listen` receiver), so "live" never reaches a real service.
+// remembering the previous ones (and Studio Mode, which is global) in
+// build/store_screenshots/obs_restore.json for `teardown`. The stream target
+// is a local RTMP sink (capture.sh runs an `ffmpeg -listen` receiver), so
+// "live" never reaches a real service.
+//
+// Every command checks where OBS really is first: setup refuses an OBS that
+// is live on another profile and re-reads the current profile/collection
+// after each switch before it changes settings or removes anything; live
+// needs the demo profile + collection streaming to the local sink; offline
+// and teardown only stop outputs on the demo profile - never the user's own
+// stream - so teardown is safe to run any time (twice, before setup, ...).
 //
 // Media comes from prepare_media.sh (build/store_screenshots/media/).
 // `--video` (video mode, record.sh) swaps the Game Capture and Webcam stills
@@ -188,34 +196,64 @@ Future<void> setup(Obs obs, {bool video = false}) async {
   if (!File('$mediaDir/gameplay.png').existsSync()) {
     throw 'media missing - run tool/store_screenshots/prepare_media.sh first';
   }
-  if (video && !File('$mediaDir/gameplay.mp4').existsSync()) {
+  if (video &&
+      !(File('$mediaDir/gameplay.mp4').existsSync() &&
+          File('$mediaDir/facecam.mp4').existsSync())) {
     throw 'video loops missing - run '
         'tool/store_screenshots/prepare_media.sh --video first';
   }
 
-  // Remember what the user had (only the first time — a re-run while the
-  // demo is active must not overwrite the real originals).
   final profiles = (await obs.call('GetProfileList'))!;
   final collections = (await obs.call('GetSceneCollectionList'))!;
+  final String profile = profiles['currentProfileName'] as String? ?? '';
+  final String collection =
+      collections['currentSceneCollectionName'] as String? ?? '';
+
+  // Never take over an OBS that is live on the user's own profile.
+  if (profile != kDemoName) {
+    final active = await activeOutputs(obs);
+    if (active.isNotEmpty) {
+      throw 'setup: OBS is ${active.join(' + ')} on profile "$profile" - '
+          'stop that first, setup never switches a live OBS';
+    }
+  }
+
+  // Remember what the user had - unless the demo is active already (a
+  // re-run: the file holds the real originals).
   final restore = File(restoreFile);
-  if (!restore.existsSync()) {
+  if (profile != kDemoName && collection != kDemoName) {
+    final studio = (await obs.call('GetStudioModeEnabled'))!;
     restore.parent.createSync(recursive: true);
     restore.writeAsStringSync(
       jsonEncode({
-        'profile': profiles['currentProfileName'],
-        'collection': collections['currentSceneCollectionName'],
+        'profile': profile,
+        'collection': collection,
+        'studioMode': studio['studioModeEnabled'] == true,
       }),
+    );
+  } else if (!restore.existsSync()) {
+    print(
+      'setup: OBS is on the demo already but $restoreFile is gone - '
+      'teardown will leave it there',
     );
   }
 
   // Profile: local RTMP sink, 1080p60, OBS recordings into build/ (not
   // recordings/ - that is where record.sh puts the screen recordings).
-  if ((profiles['profiles'] as List).contains(kDemoName)) {
-    await obs.call('SetCurrentProfile', {'profileName': kDemoName});
-  } else {
-    await obs.call('CreateProfile', {'profileName': kDemoName});
+  if (profile != kDemoName) {
+    if ((profiles['profiles'] as List).contains(kDemoName)) {
+      await obs.call('SetCurrentProfile', {'profileName': kDemoName});
+    } else {
+      await obs.call('CreateProfile', {'profileName': kDemoName});
+    }
+    await waitFor(
+      'the switch to the "$kDemoName" profile',
+      () async => (await current(obs)).profile == kDemoName,
+    );
   }
   await Future<void>.delayed(const Duration(seconds: 1));
+  // the calls below change the CURRENT profile's settings
+  await requireDemo(obs, 'setup', collection: false);
   await obs.call('SetStreamServiceSettings', {
     'streamServiceType': 'rtmp_custom',
     'streamServiceSettings': {'server': kRtmpServer, 'key': kRtmpKey},
@@ -233,14 +271,24 @@ Future<void> setup(Obs obs, {bool video = false}) async {
   await obs.call('SetRecordDirectory', {'recordDirectory': recDir.path});
 
   // Scene collection: switch (or create), then clear it for a clean rebuild.
-  if ((collections['sceneCollections'] as List).contains(kDemoName)) {
-    await obs.call('SetCurrentSceneCollection', {
-      'sceneCollectionName': kDemoName,
-    });
-  } else {
-    await obs.call('CreateSceneCollection', {'sceneCollectionName': kDemoName});
+  if (collection != kDemoName) {
+    if ((collections['sceneCollections'] as List).contains(kDemoName)) {
+      await obs.call('SetCurrentSceneCollection', {
+        'sceneCollectionName': kDemoName,
+      });
+    } else {
+      await obs.call('CreateSceneCollection', {
+        'sceneCollectionName': kDemoName,
+      });
+    }
+    await waitFor(
+      'the switch to the "$kDemoName" scene collection',
+      () async => (await current(obs)).collection == kDemoName,
+    );
   }
   await Future<void>.delayed(const Duration(seconds: 2));
+  // everything below removes scenes and sources of the CURRENT collection
+  await requireDemo(obs, 'setup');
   await obs.call('SetStudioModeEnabled', {'studioModeEnabled': false});
 
   const temp = '__store_demo_tmp__';
@@ -251,6 +299,7 @@ Future<void> setup(Obs obs, {bool video = false}) async {
     final name = (s as Map)['sceneName'] as String;
     if (name != temp) await obs.call('RemoveScene', {'sceneName': name});
   }
+  await requireDemo(obs, 'setup');
   // OBS releases removed sources lazily - wait until they're really gone,
   // or recreating them (a re-run on the staged collection) collides
   for (var attempt = 0; attempt < 20; attempt++) {
@@ -393,6 +442,8 @@ Future<void> setup(Obs obs, {bool video = false}) async {
 }
 
 Future<void> live(Obs obs) async {
+  await requireDemo(obs, 'live');
+  await requireLocalSink(obs, 'live');
   final stream = (await obs.call('GetStreamStatus'))!;
   if (stream['outputActive'] != true) await obs.call('StartStream');
   final record = (await obs.call('GetRecordStatus'))!;
@@ -400,31 +451,168 @@ Future<void> live(Obs obs) async {
   print('live: streaming to $kRtmpServer + recording');
 }
 
-Future<void> offline(Obs obs) async {
+/// Stops stream + record - on the demo profile only (they go to the local
+/// sink there); on any other profile they are the user's and stay as they
+/// are. Returns whether it stopped anything.
+Future<bool> offline(Obs obs) async {
+  final String profile = (await current(obs)).profile;
+  if (profile != kDemoName) {
+    print(
+      'offline: OBS is on profile "$profile", not the demo - '
+      'its outputs stay as they are',
+    );
+    return false;
+  }
   await obs.call('StopStream', null, true);
   await obs.call('StopRecord', null, true);
+  await waitFor('stopping stream + record', () async {
+    final stream = (await obs.call('GetStreamStatus'))!;
+    final record = (await obs.call('GetRecordStatus'))!;
+    return stream['outputActive'] != true && record['outputActive'] != true;
+  }, seconds: 30);
   print('offline: stream + record stopped');
+  return true;
 }
 
+/// Back to the user's own profile/collection and Studio Mode. Safe to run
+/// any time: reads the restore file before touching OBS, only acts while
+/// OBS is on the demo, never stops (or switches away from) the user's own
+/// outputs.
 Future<void> teardown(Obs obs) async {
-  await offline(obs);
   final restore = File(restoreFile);
-  if (!restore.existsSync()) {
-    print('teardown: no restore file - nothing to switch back');
+  Map<String, dynamic>? saved;
+  if (restore.existsSync()) {
+    try {
+      saved = jsonDecode(restore.readAsStringSync()) as Map<String, dynamic>;
+    } on FormatException catch (e) {
+      print('teardown: unreadable $restoreFile ($e)');
+    }
+  }
+  final now = await current(obs);
+  final onDemoProfile = now.profile == kDemoName;
+  final onDemoCollection = now.collection == kDemoName;
+  if (!onDemoProfile && !onDemoCollection) {
+    print(
+      'teardown: OBS is on profile "${now.profile}" / collection '
+      '"${now.collection}", not the demo - nothing to do',
+    );
+    if (restore.existsSync()) restore.deleteSync(); // stale
     return;
   }
-  final saved = jsonDecode(restore.readAsStringSync()) as Map<String, dynamic>;
-  await Future<void>.delayed(const Duration(seconds: 2));
-  await obs.call('SetCurrentSceneCollection', {
-    'sceneCollectionName': saved['collection'],
-  });
-  await Future<void>.delayed(const Duration(seconds: 2));
-  await obs.call('SetCurrentProfile', {'profileName': saved['profile']});
+  if (onDemoProfile) {
+    await offline(obs);
+    await Future<void>.delayed(const Duration(seconds: 2));
+  } else {
+    final active = await activeOutputs(obs);
+    if (active.isNotEmpty) {
+      print(
+        'teardown: OBS is ${active.join(' + ')} on profile "${now.profile}" '
+        '- leaving it as it is',
+      );
+      return;
+    }
+  }
+  if (saved == null) {
+    print('teardown: no restore file - OBS stays on the demo');
+    return;
+  }
+  final toCollection = saved['collection'] as String?;
+  final toProfile = saved['profile'] as String?;
+  if (onDemoCollection && toCollection != null && toCollection != kDemoName) {
+    await obs.call('SetCurrentSceneCollection', {
+      'sceneCollectionName': toCollection,
+    });
+    await waitFor(
+      'the switch back to collection "$toCollection"',
+      () async => (await current(obs)).collection == toCollection,
+    );
+    await Future<void>.delayed(const Duration(seconds: 2));
+  }
+  if (onDemoProfile && toProfile != null && toProfile != kDemoName) {
+    await obs.call('SetCurrentProfile', {'profileName': toProfile});
+    await waitFor(
+      'the switch back to profile "$toProfile"',
+      () async => (await current(obs)).profile == toProfile,
+    );
+  }
+  final studioMode = saved['studioMode'];
+  if (studioMode is bool) {
+    await obs.call('SetStudioModeEnabled', {'studioModeEnabled': studioMode});
+  }
   restore.deleteSync();
   final recDir = Directory('$repoRoot/build/store_screenshots/obs_recordings');
   if (recDir.existsSync()) recDir.deleteSync(recursive: true);
+  final back = await current(obs);
   print(
-    'teardown: back on profile "${saved['profile']}" / '
-    'collection "${saved['collection']}"',
+    'teardown: back on profile "${back.profile}" / '
+    'collection "${back.collection}"'
+    '${studioMode is bool ? ', Studio Mode ${studioMode ? 'on' : 'off'}' : ''}',
   );
+}
+
+// ------------------------------------------------------------ guards
+
+Future<({String profile, String collection})> current(Obs obs) async {
+  final profiles = (await obs.call('GetProfileList'))!;
+  final collections = (await obs.call('GetSceneCollectionList'))!;
+  return (
+    profile: profiles['currentProfileName'] as String? ?? '',
+    collection: collections['currentSceneCollectionName'] as String? ?? '',
+  );
+}
+
+/// Throws unless OBS is on the demo profile (and, with [collection], the
+/// demo scene collection) - checked right before every call that changes
+/// profile settings, removes scenes/sources or starts outputs.
+Future<void> requireDemo(
+  Obs obs,
+  String command, {
+  bool collection = true,
+}) async {
+  final now = await current(obs);
+  if (now.profile != kDemoName || (collection && now.collection != kDemoName)) {
+    throw '$command: OBS is on profile "${now.profile}" / collection '
+        '"${now.collection}", not "$kDemoName" - refusing to touch it';
+  }
+}
+
+/// Throws unless the current profile streams to the local sink.
+Future<void> requireLocalSink(Obs obs, String command) async {
+  final service = (await obs.call('GetStreamServiceSettings'))!;
+  final settings = service['streamServiceSettings'] as Map<String, dynamic>?;
+  final server = settings?['server'] as String? ?? '';
+  if (service['streamServiceType'] != 'rtmp_custom' ||
+      Uri.tryParse(server)?.host != '127.0.0.1') {
+    throw '$command: the stream goes to "$server" '
+        '(${service['streamServiceType']}), not the local sink - refusing';
+  }
+}
+
+/// Names of the outputs running right now (stream, record, replay buffer,
+/// virtual camera; the last two fail when not configured - not running).
+Future<List<String>> activeOutputs(Obs obs) async {
+  final active = <String>[];
+  for (final (request, name) in [
+    ('GetStreamStatus', 'streaming'),
+    ('GetRecordStatus', 'recording'),
+    ('GetReplayBufferStatus', 'replay buffering'),
+    ('GetVirtualCamStatus', 'virtual cam'),
+  ]) {
+    final status = await obs.call(request, null, true);
+    if (status?['outputActive'] == true) active.add(name);
+  }
+  return active;
+}
+
+/// Polls [done] for up to [seconds]; throws naming [what] otherwise.
+Future<void> waitFor(
+  String what,
+  Future<bool> Function() done, {
+  int seconds = 10,
+}) async {
+  for (var i = 0; i < seconds * 4; i++) {
+    if (await done()) return;
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+  throw '$what did not take effect';
 }
