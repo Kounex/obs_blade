@@ -3,7 +3,8 @@
 device per clip and normalizes the clips.
 
     record_watch.py --platform ios|android --device <id> --out <dir>
-                    [--adb <path>] [--log <file>] -- <test command ...>
+                    [--adb <path>] [--log <file>] [--pidfile <file>]
+                    -- <test command ...>
     record_watch.py --analyze <dir>      # summary of existing clips only
 
 Reads the test's output line by line (echoed to stdout and --log):
@@ -28,10 +29,18 @@ and `lost_s`: how much shorter the file is than the test's own clock (a
 stalled simulator drops that time from the recording - re-take the clip).
 
 Acks go to the test's server on 127.0.0.1:8977 (adb forward on Android).
+
+Interrupted (Ctrl-C, SIGTERM, SIGHUP, an error) it stops the running
+recorder and the test command (its whole process group) before it exits,
+and skips the normalizing. A terminal that went away (broken pipe) only
+stops the echo - the log keeps every line and the run goes on. --pidfile
+gets the test command's pid (= its process group) while it runs, so
+record.sh can still stop it if this watcher itself was killed hard.
 Stdlib only.
 """
 import argparse
 import json
+import os
 import re
 import signal
 import statistics
@@ -49,8 +58,54 @@ CUE = re.compile(r'CUE: (\w+) (\w+) (\d+)')
 FRAMES = re.compile(r'FRAMES: (\w+) (\d+) (\d+) (\d+) (\d+)')
 
 
+_echo = True
+
+
+def echo(text):
+    """Writes to stdout; once the terminal is gone (ssh dropped: broken
+    pipe / EIO) it only stops echoing - the run itself goes on."""
+    global _echo
+    if not _echo:
+        return
+    try:
+        sys.stdout.write(text)
+        sys.stdout.flush()
+    except OSError:
+        _echo = False
+        try:  # no second error at exit when Python flushes stdout again
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except OSError:
+            pass
+
+
 def log(message):
-    print(f'[record] {message}', flush=True)
+    echo(f'[record] {message}\n')
+
+
+class Interrupted(Exception):
+    pass
+
+
+def _interrupt(signum, _frame):
+    raise Interrupted(signal.Signals(signum).name)
+
+
+def stop_child(child):
+    """Terminates the test command's process group (flutter and what it
+    spawned), killed after 15 s."""
+    try:
+        os.killpg(child.pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        return
+    try:
+        child.wait(15)
+    except subprocess.TimeoutExpired:
+        log('test command did not stop - killing it')
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        child.wait()
 
 
 def ack(key):
@@ -219,44 +274,66 @@ def run_test(args):
         recorded.append(active.clip)
         active = None
 
-    child = subprocess.Popen(args.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    for raw_line in iter(child.stdout.readline, b''):
-        line = raw_line.decode('utf-8', errors='replace')
-        sys.stdout.write(line)
-        sys.stdout.flush()
-        if logf:
-            logf.write(line)
-            logf.flush()
-        m = MARKER.search(line)
-        if m and m[1] == 'REC_START':
-            stop_active()
-            active = recorder_cls(args, m[2])
-            active.start()
-            ack_at[m[2]] = time.monotonic()
-            # t: seconds into the file; lead = where the start ack landed
-            cues[m[2]] = {'file': f'{m[2]}.mp4', 'raw': active.raw.name,
-                          'lead': round(ack_at[m[2]] - active.t0, 3), 'cues': []}
-            log(f'{m[2]}: recording')
-            ack(f'start:{m[2]}')
-        elif m and m[1] == 'REC_STOP':
-            if active is not None and active.clip == m[2]:
+    # its own process group: stop_child() reaches everything flutter
+    # spawned, and a Ctrl-C in the terminal reaches this watcher, which
+    # stops the recorder first
+    child = subprocess.Popen(args.command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                             stdin=subprocess.DEVNULL, start_new_session=True)
+    if args.pidfile:
+        Path(args.pidfile).write_text(f'{child.pid}\n')
+    try:
+        for raw_line in iter(child.stdout.readline, b''):
+            line = raw_line.decode('utf-8', errors='replace')
+            echo(line)
+            if logf:
+                logf.write(line)
+                logf.flush()
+            m = MARKER.search(line)
+            if m and m[1] == 'REC_START':
                 stop_active()
-            ack(f'stop:{m[2]}')
-        f = FRAMES.search(line)
-        if f and f[1] in cues:
-            # what the app drew itself (vs what the recorder kept)
-            cues[f[1]]['app'] = {'frames': int(f[2]), 'fps': round(int(f[2]) / max(int(f[3]), 1) * 1000, 1),
-                                 'p90_build_ms': int(f[4]), 'p90_raster_ms': int(f[5])}
-        c = CUE.search(line)
-        if c and c[1] in cues and c[1] in ack_at:
-            entry = cues[c[1]]
-            entry['cues'].append({'label': c[2], 't': round(entry['lead'] + int(c[3]) / 1000, 3)})
-            cues_file.write_text(json.dumps(cues, indent=1))
-    code = child.wait()
+                active = recorder_cls(args, m[2])
+                active.start()
+                ack_at[m[2]] = time.monotonic()
+                # t: seconds into the file; lead = where the start ack landed
+                cues[m[2]] = {'file': f'{m[2]}.mp4', 'raw': active.raw.name,
+                              'lead': round(ack_at[m[2]] - active.t0, 3), 'cues': []}
+                log(f'{m[2]}: recording')
+                ack(f'start:{m[2]}')
+            elif m and m[1] == 'REC_STOP':
+                if active is not None and active.clip == m[2]:
+                    stop_active()
+                ack(f'stop:{m[2]}')
+            f = FRAMES.search(line)
+            if f and f[1] in cues:
+                # what the app drew itself (vs what the recorder kept)
+                cues[f[1]]['app'] = {'frames': int(f[2]),
+                                     'fps': round(int(f[2]) / max(int(f[3]), 1) * 1000, 1),
+                                     'p90_build_ms': int(f[4]), 'p90_raster_ms': int(f[5])}
+            c = CUE.search(line)
+            if c and c[1] in cues and c[1] in ack_at:
+                entry = cues[c[1]]
+                entry['cues'].append({'label': c[2], 't': round(entry['lead'] + int(c[3]) / 1000, 3)})
+                cues_file.write_text(json.dumps(cues, indent=1))
+        code = child.wait()
+    except BaseException as e:
+        # nothing may cut this short: the recorder has to stop and the test
+        # (which drives OBS) has to be gone before record.sh tears OBS down
+        for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+            signal.signal(sig, signal.SIG_IGN)
+        log(f'interrupted ({type(e).__name__} {e}) - stopping the recorder and the test')
+        try:
+            stop_active()
+        except Exception as stop_error:
+            log(f'stopping the recorder failed: {stop_error}')
+        stop_child(child)
+        raise
+    finally:
+        if args.pidfile:
+            Path(args.pidfile).unlink(missing_ok=True)
+        if logf:
+            logf.close()
+        cues_file.write_text(json.dumps(cues, indent=1))
     stop_active()
-    if logf:
-        logf.close()
-    cues_file.write_text(json.dumps(cues, indent=1))
 
     for clip in recorded:
         normalize(args.out, clip, cues[clip]['raw'])
@@ -374,6 +451,7 @@ def main():
                          'host-side recorder (adb emu screenrecord); auto: emulator for '
                          'emulator-* serials')
     ap.add_argument('--log')
+    ap.add_argument('--pidfile', help='gets the test command\'s pid while it runs')
     ap.add_argument('--analyze', type=Path, metavar='DIR')
     ap.add_argument('--normalize', action='store_true',
                     help='with --analyze: re-encode every clip\'s raw file first')
@@ -391,7 +469,16 @@ def main():
     if not (args.platform and args.device and args.out and args.command):
         ap.error('--platform, --device, --out and the test command are required')
     args.out.mkdir(parents=True, exist_ok=True)
-    return run_test(args)
+    # SIGINT too: record.sh runs this in the background, where the shell
+    # starts it with SIGINT ignored - and the recorders it spawns would
+    # inherit that (simctl stops its recording on SIGINT)
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, _interrupt)
+    try:
+        return run_test(args)
+    except Interrupted as e:
+        log(f'stopped by {e}')
+        return 130
 
 
 if __name__ == '__main__':
