@@ -5,6 +5,7 @@
 #
 #   . "$(dirname "$0")/common.sh"
 #   store_init <ios|android> <device-id> <out-dir>
+#   store_trap <cleanup-function>   # before anything touches OBS
 
 # Sets PLATFORM, DEVICE, OUT_DIR, REPO_ROOT (and cds there), ADB, LOG,
 # OBS_WS_PASSWORD, OBS_HOST, ORIENTATION.
@@ -24,6 +25,57 @@ store_init() {
 
   if [ "$PLATFORM" = "android" ]; then OBS_HOST=10.0.2.2; else OBS_HOST=127.0.0.1; fi
   ORIENTATION="${ORIENTATION:-portrait}"
+}
+
+# Runs <cleanup> exactly once: on a normal exit and on Ctrl-C, TERM, HUP (a
+# dropped ssh -t) or a broken pipe. Install it first - obs_demo.dart
+# teardown is safe before/without setup. Nothing interrupts the cleanup,
+# and its output goes to <out>/cleanup.log first (printed afterwards), so
+# a terminal that went away cannot cut the OBS teardown short.
+store_trap() {
+  STORE_CLEANUP="$1"
+  trap store_cleanup EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  trap 'exit 129' HUP
+  trap 'exit 141' PIPE
+}
+
+store_cleanup() {
+  [ -n "${STORE_CLEANED:-}" ] && return
+  STORE_CLEANED=1
+  trap '' INT TERM HUP PIPE
+  local log="$OUT_DIR/cleanup.log"
+  if : 2>/dev/null > "$log"; then
+    "$STORE_CLEANUP" >> "$log" 2>&1
+    cat "$log" 2>/dev/null
+  else
+    "$STORE_CLEANUP"
+  fi
+}
+
+# The app under test (ios/Runner bundle id = android applicationId).
+APP_ID=com.kounex.obsBlade
+
+# Stops the app on the device. `flutter test` / `flutter drive` leave it
+# running when they die, and the test inside it drives OBS - first thing
+# in every cleanup, before OBS goes back to the user's profile.
+app_stop() {
+  if [ "$PLATFORM" = "ios" ]; then
+    xcrun simctl terminate "$DEVICE" "$APP_ID" >/dev/null 2>&1
+  else
+    "$ADB" -s "$DEVICE" shell am force-stop "$APP_ID" >/dev/null 2>&1
+  fi
+}
+
+# wait_gone <pid> <seconds>: true once <pid> is gone.
+wait_gone() {
+  local i=0
+  while kill -0 "$1" 2>/dev/null; do
+    [ "$i" -ge $(($2 * 4)) ] && return 1
+    sleep 0.25
+    i=$((i + 1))
+  done
 }
 
 # iOS: simctl has no rotate command - use the Simulator app's menu on this
@@ -61,18 +113,23 @@ obs_demo_up() {
 # stops streaming - respawn it, so a stop + start (video mode goes live
 # and offline through the app) finds a sink again. No input probing: the
 # stream goes nowhere, and OBS reports "live" only once the sink took it.
+# The loop is a `bash -c` of its own, named $SINK_NAME: sink_stop finds it
+# by pidfile + name wherever the scripts were started from, and TERM makes
+# it take the ffmpeg it waits on along.
 SINK_CMD="ffmpeg -nostdin -loglevel error -listen 1"
 SINK_ARGS="-probesize 32 -analyzeduration 0 -fflags nobuffer"
+SINK_NAME=obs_blade_store_rtmp_sink
 SINK_PIDFILE=build/store_screenshots/rtmp-sink.pid
 sink_start() {
   sink_stop # a loop left behind by a killed run
   mkdir -p "$(dirname "$SINK_PIDFILE")"
-  (
+  bash -c 'trap "kill \$ff 2>/dev/null; exit 0" TERM
     while :; do
-      $SINK_CMD $SINK_ARGS -i rtmp://127.0.0.1:1935/live/demo -f null -
+      $1 $2 -i rtmp://127.0.0.1:1935/live/demo -f null - &
+      ff=$!
+      wait $ff
       sleep 0.3
-    done
-  ) >> "$OUT_DIR/rtmp-sink.log" 2>&1 &
+    done' "$SINK_NAME" "$SINK_CMD" "$SINK_ARGS" >> "$OUT_DIR/rtmp-sink.log" 2>&1 &
   echo $! > "$SINK_PIDFILE"
   sleep 1
 }
@@ -80,16 +137,21 @@ sink_start() {
 sink_stop() {
   local pid
   pid="$(cat "$SINK_PIDFILE" 2>/dev/null)"
-  # only if that pid still is one of these scripts (pids get reused)
-  if [ -n "$pid" ] && ps -p "$pid" -o command= 2>/dev/null | grep -q store_screenshots; then
+  # only if that pid still is the loop (pids get reused)
+  if [ -n "$pid" ] && ps -p "$pid" -o command= 2>/dev/null | grep -q "$SINK_NAME"; then
     kill "$pid" 2>/dev/null
   fi
   rm -f "$SINK_PIDFILE"
+  sleep 0.3
+  # an ffmpeg left behind - and a loop whose pidfile is gone: it has
+  # $SINK_CMD in its arguments too
   pkill -f "$SINK_CMD" 2>/dev/null
+  return 0
 }
 
 # Stream/record off; KEEP_OBS=1 keeps the demo profile/collection (e.g.
-# between two devices), otherwise teardown restores the user's own.
+# between two devices), otherwise teardown restores the user's own. Both
+# only act while OBS is on the demo (obs_demo.dart) - safe at any point.
 obs_demo_down() {
   if [ -z "${KEEP_OBS:-}" ]; then
     dart run tool/store_screenshots/obs_demo.dart teardown
@@ -102,6 +164,7 @@ obs_demo_down() {
 # Clean status bar (9:41, full battery, Wi-Fi) + orientation + the ack
 # port forward on Android.
 device_prepare() {
+  DEVICE_PREPARED=1
   if [ "$PLATFORM" = "ios" ]; then
     [ "$ORIENTATION" = "landscape" ] && sim_rotate Left && sleep 2
     xcrun simctl status_bar "$DEVICE" override --time "9:41" --dataNetwork wifi --wifiMode active \
@@ -120,6 +183,7 @@ device_prepare() {
 }
 
 device_restore() {
+  [ -n "${DEVICE_PREPARED:-}" ] || return 0 # (a rotation to undo)
   if [ "$PLATFORM" = "ios" ]; then
     xcrun simctl status_bar "$DEVICE" clear 2>/dev/null
     [ "$ORIENTATION" = "landscape" ] && sim_rotate Right

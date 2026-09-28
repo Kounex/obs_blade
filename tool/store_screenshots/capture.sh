@@ -20,25 +20,33 @@ set -u
 . "$(dirname "$0")/common.sh"
 store_init "${1:?ios|android}" "${2:?device id}" "${3:?out dir}"
 
+# However this ends, the test goes first (the app on the device, then
+# flutter), OBS back only after that (see record.sh).
+cleanup() {
+  app_stop
+  if [ -n "${TEST_PID:-}" ] && kill -TERM "$TEST_PID" 2>/dev/null; then
+    wait_gone "$TEST_PID" 15 || kill -KILL "$TEST_PID" 2>/dev/null
+  fi
+  # the watcher's `tail -f` would outlive the subshell and keep ssh open
+  pkill -f "tail .*$LOG" 2>/dev/null
+  [ -n "${WATCHER_PID:-}" ] && kill "$WATCHER_PID" 2>/dev/null
+  app_stop # a launch that was still in flight
+  obs_demo_down
+  device_restore
+}
+store_trap cleanup
+
 # ---- OBS demo state (own profile + collection, local RTMP sink), live ----
 obs_demo_up || exit 1
 dart run tool/store_screenshots/obs_demo.dart live || exit 1
 
-cleanup() {
-  # the watcher's `tail -f` would outlive the subshell and keep ssh open
-  pkill -f "tail .*$LOG" 2>/dev/null
-  kill "${WATCHER_PID:-}" 2>/dev/null
-  obs_demo_down
-  device_restore
-}
-trap cleanup EXIT
-
 device_prepare
 
-# ---- watcher: one capture per marker, then ack ----
+# ---- watcher: echoes the test's output, one capture per marker, then ack ----
 : > "$LOG"
 (
   tail -n +1 -f "$LOG" | while IFS= read -r line; do
+    printf '%s\n' "$line"
     case "$line" in
       *"SHOT: "*)
         name="$(printf '%s' "${line##*SHOT: }" | tr -cd 'A-Za-z0-9_')"
@@ -58,12 +66,16 @@ device_prepare
 ) &
 WATCHER_PID=$!
 
+# in the background + wait: a signal runs the cleanup at once
 flutter test integration_test/store_screenshots_test.dart -d "$DEVICE" \
   --dart-define=OBS_HOST="$OBS_HOST" \
   --dart-define=OBS_WS_PASSWORD="$OBS_WS_PASSWORD" \
   --dart-define=STORE_SHOTS_ONLY="${STORE_SHOTS_ONLY:-}" \
-  2>&1 | tee -a "$LOG"
-TEST_EXIT=${PIPESTATUS[0]}
+  >> "$LOG" 2>&1 &
+TEST_PID=$!
+wait "$TEST_PID"
+TEST_EXIT=$?
+TEST_PID=
 sleep 1
 echo "[capture] $(find "$OUT_DIR" -maxdepth 1 -name '*.png' | wc -l | tr -d ' ') screenshots in $OUT_DIR (test exit $TEST_EXIT)"
 exit "$TEST_EXIT"

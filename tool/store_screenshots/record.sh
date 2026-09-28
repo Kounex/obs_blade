@@ -20,20 +20,59 @@
 #
 # Use dedicated devices only - the test writes settings, stats, a saved
 # connection and the Pro debug override. See README.md in this folder.
+#
+# However this ends (done, Ctrl-C, TERM, a dropped ssh), the cleanup stops
+# the test FIRST - the app on the device, the watcher, the test command
+# and any recorder left running - and only then puts OBS back: a test that
+# kept running would go live on the user's own profile.
 set -u
 
 . "$(dirname "$0")/common.sh"
 store_init "${1:?ios|android}" "${2:?device id}" "${3:?out dir}"
+TEST_PIDFILE=build/store_screenshots/record-test.pid
+
+test_stop() {
+  app_stop
+  # the watcher stops its recorder and the test command on TERM
+  if [ -n "${WATCH_PID:-}" ] && kill -TERM "$WATCH_PID" 2>/dev/null; then
+    wait_gone "$WATCH_PID" 30 || kill -KILL "$WATCH_PID" 2>/dev/null
+  fi
+  # what a watcher killed hard left behind: the test command's process
+  # group (flutter + its children; the pidfile is this run's - a group id
+  # is not reused while the group has members), a recorder still running
+  local pgid i=0
+  pgid="$(cat "$TEST_PIDFILE" 2>/dev/null)"
+  rm -f "$TEST_PIDFILE"
+  if [ -n "$pgid" ] && pgrep -g "$pgid" >/dev/null 2>&1; then
+    kill -TERM -- "-$pgid" 2>/dev/null
+    while pgrep -g "$pgid" >/dev/null 2>&1 && [ "$i" -lt 40 ]; do
+      sleep 0.25
+      i=$((i + 1))
+    done
+    kill -KILL -- "-$pgid" 2>/dev/null
+  fi
+  if [ "$PLATFORM" = "ios" ]; then
+    if pkill -INT -f "simctl io $DEVICE recordVideo" 2>/dev/null; then
+      sleep 2
+      pkill -KILL -f "simctl io $DEVICE recordVideo" 2>/dev/null
+    fi
+  else
+    "$ADB" -s "$DEVICE" emu screenrecord stop >/dev/null 2>&1
+    "$ADB" -s "$DEVICE" shell pkill -INT screenrecord >/dev/null 2>&1
+  fi
+  app_stop # a launch that was still in flight
+}
+
+cleanup() {
+  test_stop
+  obs_demo_down
+  device_restore
+}
+store_trap cleanup
 
 # ---- OBS demo state with moving sources, local RTMP sink, offline ----
 obs_demo_up --video || exit 1
 dart run tool/store_screenshots/obs_demo.dart offline || exit 1
-
-cleanup() {
-  obs_demo_down
-  device_restore
-}
-trap cleanup EXIT
 
 device_prepare
 
@@ -51,11 +90,18 @@ else
   RUN=(flutter test "$TARGET" -d "$DEVICE")
 fi
 
+# in the background + wait: a signal runs the cleanup at once (a
+# foreground command would hold the trap until it ends)
+rm -f "$TEST_PIDFILE" # only ever this run's in there
 python3 tool/store_screenshots/record_watch.py --platform "$PLATFORM" --device "$DEVICE" \
-  --out "$OUT_DIR" --adb "$ADB" --log "$LOG" --android-recorder "${ANDROID_RECORDER:-auto}" -- \
+  --out "$OUT_DIR" --adb "$ADB" --log "$LOG" --android-recorder "${ANDROID_RECORDER:-auto}" \
+  --pidfile "$TEST_PIDFILE" -- \
   "${RUN[@]}" \
   --dart-define=OBS_HOST="$OBS_HOST" \
   --dart-define=OBS_WS_PASSWORD="$OBS_WS_PASSWORD" \
-  --dart-define=STORE_VIDEO_ONLY="${STORE_VIDEO_ONLY:-}"
+  --dart-define=STORE_VIDEO_ONLY="${STORE_VIDEO_ONLY:-}" &
+WATCH_PID=$!
+wait "$WATCH_PID"
 TEST_EXIT=$?
+WATCH_PID=
 exit "$TEST_EXIT"
