@@ -26,6 +26,11 @@ dart run tool/release/bin/release.dart status
 **Every command that writes to a store** (`beta`, `metadata`, `preview`, `submit`,
 `promote`, `halt`) prints what it would do and stops. Add `--yes` to do it.
 
+fastlane needs the Ruby whose bundler matches `Gemfile.lock` (not macOS's
+system Ruby 2.6). A non-interactive SSH shell may not have it on `PATH` -
+put it first (e.g. Homebrew's `/opt/homebrew/opt/ruby/bin` plus its gem
+`bin`) when `bundle` complains about a missing bundler or fastlane.
+
 ## Preflight
 
 - working tree clean and HEAD pushed

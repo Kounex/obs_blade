@@ -9,10 +9,12 @@ The user approved the v2 video cuts (store-shots `out/video/`, rendered
 deliver can't upload previews) uploaded `appstore-iphone.mp4` to 4.0.0's
 en-US `IPHONE_67` set through the ASC API, poster `00:00:05:00` - Apple
 processed it (COMPLETE). deliver's `overwrite_screenshots` leaves
-previews alone. Play: the listing takes a YouTube link only
-(`fastlane/metadata/android/en-US/video.txt`, pushed by `release metadata
-android`); waiting on the user's unlisted YouTube upload of
-`play-phone.mp4`.
+previews alone. Play: the listing takes a YouTube link only - the user uploaded
+`play-phone.mp4` unlisted (YouTube made it a Short; Play Console rejects
+`/shorts/` links, so `video.txt` holds the `watch?v=` form of the same id),
+pushed with `release metadata android`, read back from the listing. The
+YouTube API can't do the upload for us: videos.insert from unaudited
+projects created after 2020-07-28 is locked private.
 
 ## 2026-09-29 - Store captures: OBS safety review fixes
 
