@@ -171,9 +171,24 @@ class HttpApiClient extends ApiClient {
 
   static String? _errorDetail(Object? body) {
     if (body is Map && body['errors'] is List) {
+      // ASC puts the actual reason of a STATE_ERROR in meta.associatedErrors
+      String associated(Map e) {
+        final meta = e['meta'];
+        if (meta is! Map || meta['associatedErrors'] is! Map) return '';
+        final inner = (meta['associatedErrors'] as Map).values
+            .whereType<List>()
+            .expand((l) => l.whereType<Map>())
+            .map((a) => '${a['code']}: ${a['detail'] ?? a['title'] ?? ''}');
+        return inner.isEmpty ? '' : ' [${inner.join('; ')}]';
+      }
+
       return (body['errors'] as List)
           .whereType<Map>()
-          .map((e) => '${e['code'] ?? e['title']}: ${e['detail'] ?? ''}'.trim())
+          .map(
+            (e) =>
+                '${e['code'] ?? e['title']}: ${e['detail'] ?? ''}'.trim() +
+                associated(e),
+          )
           .join('; ');
     }
     if (body is Map && body['error'] is Map) {

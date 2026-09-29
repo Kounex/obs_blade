@@ -103,7 +103,10 @@ class AppStore {
     // relationship ids only come back for included types
     final items = (await _client.get(
       'v1/reviewSubmissions/$submissionId/items',
-      {'include': 'appStoreVersion,subscriptionVersion'},
+      {
+        'include':
+            'appStoreVersion,subscriptionVersion,subscriptionGroupVersion',
+      },
     )).dataList;
     return {
       for (final item in items)
@@ -151,6 +154,53 @@ class AppStore {
     );
     return '${versions.last['id']}';
   }
+
+  /// Subscription groups whose latest version still needs review: a
+  /// group never approved must go into the submission with its plans.
+  Future<List<String>> subscriptionGroupVersionsToSubmit() async {
+    final groups = (await _client.get(
+      'v1/apps/$appId/subscriptionGroups',
+    )).dataList;
+    final ids = <String>[];
+    for (final group in groups) {
+      final versions = (await _client.get(
+        'v1/subscriptionGroups/${group['id']}/versions',
+      )).dataList;
+      if (versions.isEmpty) continue;
+      versions.sort(
+        (a, b) => ((a['attributes'] as Map)['version'] as num? ?? 0).compareTo(
+          (b['attributes'] as Map)['version'] as num? ?? 0,
+        ),
+      );
+      final latest = versions.last;
+      if (const {
+        'PREPARE_FOR_SUBMISSION',
+        'READY_FOR_REVIEW',
+        'DEVELOPER_REJECTED',
+        'REJECTED',
+      }.contains((latest['attributes'] as Map)['state'])) {
+        ids.add('${latest['id']}');
+      }
+    }
+    return ids;
+  }
+
+  Future<void> addSubscriptionGroupToReview(
+    String submissionId,
+    String groupVersionId,
+  ) => _client.post('v1/reviewSubmissionItems', {
+    'data': {
+      'type': 'reviewSubmissionItems',
+      'relationships': {
+        'reviewSubmission': {
+          'data': {'type': 'reviewSubmissions', 'id': submissionId},
+        },
+        'subscriptionGroupVersion': {
+          'data': {'type': 'subscriptionGroupVersions', 'id': groupVersionId},
+        },
+      },
+    },
+  });
 
   Future<void> addSubscriptionToReview(
     String submissionId,

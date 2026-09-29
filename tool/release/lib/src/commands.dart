@@ -515,7 +515,8 @@ class Release {
 
     // Nothing reaches App Review before the last step: build + release
     // type, a draft review submission with the version, the subscriptions
-    // (as their subscription versions), then the submission is sent.
+    // (as their subscription versions, plus the group version while the
+    // group was never approved), then the submission is sent.
     final versionId = '${version['id']}';
     await asc.prepareVersion(versionId, '${build['id']}');
     stdout.writeln('  build ${v.build} attached, manual release');
@@ -537,6 +538,14 @@ class Release {
         await asc.addSubscriptionToReview(submission, subVersion);
       }
       stdout.writeln('  $name in the submission');
+    }
+    if (pending.isNotEmpty) {
+      for (final group in await asc.subscriptionGroupVersionsToSubmit()) {
+        if (!inReview.contains(group)) {
+          await asc.addSubscriptionGroupToReview(submission, group);
+        }
+        stdout.writeln('  subscription group version $group in the submission');
+      }
     }
     await asc.sendReviewSubmission(submission);
     stdout.writeln('  submitted for review');

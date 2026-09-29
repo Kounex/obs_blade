@@ -146,7 +146,8 @@ class AscProductsCommand extends Command<int> {
       )
       ..addOption(
         'key-id',
-        help: 'App Store Connect API key id. Falls back to \$OBS_BLADE_ASC_KEY_ID.',
+        help:
+            'App Store Connect API key id. Falls back to \$OBS_BLADE_ASC_KEY_ID.',
       )
       ..addOption(
         'issuer-id',
@@ -210,7 +211,10 @@ class AscProductsCommand extends Command<int> {
         args['key-path'] as String?,
         env['OBS_BLADE_ASC_KEY_PATH'],
       );
-      final keyId = argOrEnv(args['key-id'] as String?, env['OBS_BLADE_ASC_KEY_ID']);
+      final keyId = argOrEnv(
+        args['key-id'] as String?,
+        env['OBS_BLADE_ASC_KEY_ID'],
+      );
       final issuerId = argOrEnv(
         args['issuer-id'] as String?,
         env['OBS_BLADE_ASC_ISSUER_ID'],
