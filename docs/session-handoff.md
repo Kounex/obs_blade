@@ -34,8 +34,10 @@ there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
 **4.0 in review (2026-09-29):** build 2026092805 submitted on both
 stores, manual release on both. App Store: 4.0.0 + pro_monthly +
 pro_yearly + the Pro group version in one review submission (WAITING_FOR_REVIEW,
-releaseType MANUAL). Play: promoted internal -> production 100%, held by
-managed publishing (with the listing: video, screenshots). When both are
+releaseType MANUAL). Play: promoted internal -> production 100%, **approved by Google
+the same day** and held under "Changes ready to publish" (4 changes:
+production 4.0.0, store listing, Data safety, Health apps) - publish only
+together with the iOS release. When both are
 approved and the user says release: `release publish ios --yes` + Play
 Console > Publishing overview > Publish. Store videos are on both listings;
 age rating answered (4+), App Privacy updated, pre-submit tests passed,
