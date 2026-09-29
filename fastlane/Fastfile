@@ -66,7 +66,7 @@ platform :ios do
       skip_metadata: true,
       skip_screenshots: true,
       submit_for_review: true,
-      automatic_release: true,
+      automatic_release: false, # held after approval: tool/release publish ios
       phased_release: false,
       submission_information: {
         add_id_info_uses_idfa: false,

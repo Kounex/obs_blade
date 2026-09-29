@@ -2,8 +2,8 @@
 //
 //   dart run tool/release/bin/release.dart <command> [platform] [--yes]
 //
-// Commands that write to a store (beta, metadata, preview, submit, promote, halt)
-// print what they would do and stop unless --yes is given.
+// Commands that write to a store (beta, metadata, preview, submit, publish,
+// promote, halt) print what they would do and stop unless --yes is given.
 
 // ignore_for_file: avoid_print - CLI output is the product.
 
@@ -24,6 +24,7 @@ Usage: release <command> [ios|android] [--yes]
   metadata ios|android        listing text + screenshots
   preview ios <file.mp4> [--poster 5]   iPhone App Preview (en-US)
   submit ios                  attach the build (+ subscriptions), submit for review
+  publish ios                 release the approved version (manual release)
   promote android [--rollout 1.0]   internal -> production
   halt android                halt the production rollout
 
@@ -84,6 +85,7 @@ Future<void> main(List<String> argv) async {
             }(),
     ).$2,
     'submit' => (needPlatform({'ios'}), await release.submit()).$2,
+    'publish' => (needPlatform({'ios'}), await release.publish()).$2,
     'promote' => (
       needPlatform({'android'}),
       await release.promote(args['rollout'] as String),

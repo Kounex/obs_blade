@@ -495,7 +495,7 @@ class Release {
         .where((s) => (s['attributes'] as Map)['state'] == 'READY_TO_SUBMIT')
         .toList();
     stdout.writeln(
-      'Submit ${v.name} (${v.build}) for App Review, released automatically to everyone once approved.',
+      'Submit ${v.name} (${v.build}) for App Review. Once approved it waits for: release publish ios',
     );
     if (pending.isNotEmpty) {
       stdout.writeln(
@@ -517,6 +517,31 @@ class Release {
       'version': v.name,
       'build': '${v.build}',
     });
+  }
+
+  /// Releases the approved version (manual release) to everyone.
+  Future<int> publish() async {
+    final v = project.version;
+    final asc = AppStore.connect();
+    final version = await asc.version(v.name);
+    final state = version == null
+        ? null
+        : (version['attributes'] as Map)['appStoreState'];
+    if (state != 'PENDING_DEVELOPER_RELEASE') {
+      stderr.writeln(
+        'App Store version ${v.name} is ${state ?? 'missing'}, not approved '
+        'and waiting (PENDING_DEVELOPER_RELEASE).',
+      );
+      return 1;
+    }
+    stdout.writeln('Release App Store version ${v.name} to everyone now.');
+    if (!yes) {
+      stdout.writeln('\nDRY RUN - re-run with --yes to do it.');
+      return 0;
+    }
+    await asc.releaseVersion('${version!['id']}');
+    stdout.writeln('  release requested');
+    return 0;
   }
 
   // ----------------------------------------------------- promote / halt

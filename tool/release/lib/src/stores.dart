@@ -76,6 +76,21 @@ class AppStore {
       },
     });
   }
+
+  /// Manual release of an approved version (Pending Developer Release).
+  Future<void> releaseVersion(String versionId) async {
+    await _client.post('v1/appStoreVersionReleaseRequests', {
+      'data': {
+        'type': 'appStoreVersionReleaseRequests',
+        'relationships': {
+          'appStoreVersion': {
+            'data': {'type': 'appStoreVersions', 'id': versionId},
+          },
+        },
+      },
+    });
+  }
+
   // ------------------------------------------------------- app previews
 
   /// The iOS App Store version [versionString] (null when there is none).

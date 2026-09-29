@@ -19,11 +19,12 @@ dart run tool/release/bin/release.dart status
 | `beta ios\|android` | TestFlight (internal testers) / Play internal track |
 | `metadata ios\|android` | Listing text + screenshots from `fastlane/metadata` and `fastlane/screenshots` |
 | `preview ios <file.mp4> [--poster 5]` | en-US iPhone App Preview (6.9" slot) of the current version, via the App Store Connect API (fastlane can't); old previews are removed only once the new one is processed |
-| `submit ios` | Submits the uploaded build and any first-time subscriptions for review, released automatically once approved |
+| `submit ios` | Submits the uploaded build and any first-time subscriptions for review; once approved it waits for `publish ios` (manual release) |
+| `publish ios` | Releases the approved version to the App Store (only when it is Pending Developer Release) |
 | `promote android [--rollout 1.0]` | Play internal → production, at the given share of users |
 | `halt android` | Halts the Play production rollout |
 
-**Every command that writes to a store** (`beta`, `metadata`, `preview`, `submit`,
+**Every command that writes to a store** (`beta`, `metadata`, `preview`, `submit`, `publish`,
 `promote`, `halt`) prints what it would do and stops. Add `--yes` to do it.
 
 fastlane needs the Ruby whose bundler matches `Gemfile.lock` (not macOS's
@@ -72,5 +73,7 @@ release build android && release beta android --yes  # Play internal
 release metadata ios --yes && release metadata android --yes
 release preview ios <store-shots out/video/appstore-iphone/appstore-iphone.mp4> --yes
 release submit ios --yes
-release promote android --yes
+release promote android --yes     # managed publishing holds it after review
+# ... both approved ...
+release publish ios --yes         # + Play Console: Publishing overview > Publish
 ```
