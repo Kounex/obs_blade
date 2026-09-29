@@ -19,7 +19,7 @@ dart run tool/release/bin/release.dart status
 | `beta ios\|android` | TestFlight (internal testers) / Play internal track |
 | `metadata ios\|android` | Listing text + screenshots from `fastlane/metadata` and `fastlane/screenshots` |
 | `preview ios <file.mp4> [--poster 5]` | en-US iPhone App Preview (6.9" slot) of the current version, via the App Store Connect API (fastlane can't); old previews are removed only once the new one is processed |
-| `submit ios` | Submits the uploaded build and any first-time subscriptions for review; once approved it waits for `publish ios` (manual release) |
+| `submit ios` | Attaches the uploaded build (manual release) and submits it with any first-time subscriptions in one review submission (App Store Connect API); once approved it waits for `publish ios` |
 | `publish ios` | Releases the approved version to the App Store (only when it is Pending Developer Release) |
 | `promote android [--rollout 1.0]` | Play internal → production, at the given share of users |
 | `halt android` | Halts the Play production rollout |

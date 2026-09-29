@@ -503,20 +503,40 @@ class Release {
         '${pending.map((s) => (s['attributes'] as Map)['productId']).join(', ')}',
       );
     }
-    if (!yes)
-      return _fastlane('ios', 'submit', {
-        'version': v.name,
-        'build': '${v.build}',
-      });
+    final version = await asc.version(v.name);
+    if (version == null) {
+      stderr.writeln('No App Store version ${v.name} on App Store Connect.');
+      return 1;
+    }
+    if (!yes) {
+      stdout.writeln('\nDRY RUN - re-run with --yes to do it.');
+      return 0;
+    }
 
+    // Nothing reaches App Review before the last step: build + release
+    // type, a draft review submission with the version, the subscriptions
+    // (they need that pending version), then the submission is sent.
+    final versionId = '${version['id']}';
+    await asc.prepareVersion(versionId, '${build['id']}');
+    stdout.writeln('  build ${v.build} attached, manual release');
+    final submission = await asc.draftReviewSubmission();
+    final items = await asc.reviewItems(submission);
+    final hasVersion = items.any(
+      (i) =>
+          ((i['relationships'] as Map?)?['appStoreVersion'] as Map?)?['data']
+              is Map &&
+          '${(((i['relationships'] as Map)['appStoreVersion'] as Map)['data'] as Map)['id']}' ==
+              versionId,
+    );
+    if (!hasVersion) await asc.addVersionToReview(submission, versionId);
+    stdout.writeln('  review submission $submission has ${v.name}');
     for (final s in pending) {
       await asc.submitSubscription('${s['id']}');
-      stdout.writeln('  submitted ${(s['attributes'] as Map)['productId']}');
+      stdout.writeln('  added ${(s['attributes'] as Map)['productId']}');
     }
-    return _fastlane('ios', 'submit', {
-      'version': v.name,
-      'build': '${v.build}',
-    });
+    await asc.sendReviewSubmission(submission);
+    stdout.writeln('  submitted for review');
+    return 0;
   }
 
   /// Releases the approved version (manual release) to everyone.

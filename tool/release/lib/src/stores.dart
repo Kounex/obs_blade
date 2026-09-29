@@ -62,8 +62,74 @@ class AppStore {
         'limit': '20',
       })).dataList;
 
-  /// Submits one subscription for review (first subscriptions are reviewed
-  /// together with the app version submitted next).
+  /// Attaches [buildId] to the version and pins manual release.
+  Future<void> prepareVersion(String versionId, String buildId) async {
+    await _client.patch('v1/appStoreVersions/$versionId/relationships/build', {
+      'data': {'type': 'builds', 'id': buildId},
+    });
+    await _client.patch('v1/appStoreVersions/$versionId', {
+      'data': {
+        'type': 'appStoreVersions',
+        'id': versionId,
+        'attributes': {'releaseType': 'MANUAL', 'usesIdfa': false},
+      },
+    });
+  }
+
+  /// The open (not yet submitted) iOS review submission, or a new one.
+  Future<String> draftReviewSubmission() async {
+    final open = (await _client.get('v1/reviewSubmissions', {
+      'filter[app]': appId,
+      'filter[platform]': 'IOS',
+      'filter[state]': 'READY_FOR_REVIEW',
+    })).dataList;
+    if (open.isNotEmpty) return '${open.first['id']}';
+    return '${(await _client.post('v1/reviewSubmissions', {
+      'data': {
+        'type': 'reviewSubmissions',
+        'attributes': {'platform': 'IOS'},
+        'relationships': {
+          'app': {
+            'data': {'type': 'apps', 'id': appId},
+          },
+        },
+      },
+    })).dataObject!['id']}';
+  }
+
+  /// Items already in [submissionId] (to skip re-adding the version).
+  Future<List<Map<String, Object?>>> reviewItems(String submissionId) async =>
+      (await _client.get('v1/reviewSubmissions/$submissionId/items', {
+        'include': 'appStoreVersion',
+      })).dataList;
+
+  Future<void> addVersionToReview(String submissionId, String versionId) =>
+      _client.post('v1/reviewSubmissionItems', {
+        'data': {
+          'type': 'reviewSubmissionItems',
+          'relationships': {
+            'reviewSubmission': {
+              'data': {'type': 'reviewSubmissions', 'id': submissionId},
+            },
+            'appStoreVersion': {
+              'data': {'type': 'appStoreVersions', 'id': versionId},
+            },
+          },
+        },
+      });
+
+  Future<void> sendReviewSubmission(String submissionId) =>
+      _client.patch('v1/reviewSubmissions/$submissionId', {
+        'data': {
+          'type': 'reviewSubmissions',
+          'id': submissionId,
+          'attributes': {'submitted': true},
+        },
+      });
+
+  /// Submits one subscription for review. A first subscription needs its
+  /// app version pending review: add the version to the draft review
+  /// submission first, then this, then send the submission.
   Future<void> submitSubscription(String subscriptionId) async {
     await _client.post('v1/subscriptionSubmissions', {
       'data': {

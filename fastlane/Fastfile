@@ -1,6 +1,7 @@
 # Store lanes for OBS Blade. Run them through tool/release (see its README):
 # it runs the preflight checks, prints what a lane would do and only calls it
-# with --yes. Calling a lane directly skips all of that.
+# with --yes. Calling a lane directly skips all of that. The App Review
+# submission is not a lane: tool/release does it through the ASC API.
 #
 # Credentials are read by path from the environment and never stored here:
 #   OBS_BLADE_ASC_KEY_PATH, OBS_BLADE_ASC_KEY_ID, OBS_BLADE_ASC_ISSUER_ID
@@ -53,26 +54,6 @@ platform :ios do
       submit_for_review: false,
       run_precheck_before_submit: false,
       force: true, # no HTML preview - tool/release shows the plan instead
-    )
-  end
-
-  desc "Attach an uploaded build to the version and submit it for review"
-  lane :submit do |options|
-    deliver(
-      api_key: asc_api_key,
-      app_version: options.fetch(:version),
-      build_number: options.fetch(:build),
-      skip_binary_upload: true,
-      skip_metadata: true,
-      skip_screenshots: true,
-      submit_for_review: true,
-      automatic_release: false, # held after approval: tool/release publish ios
-      phased_release: false,
-      submission_information: {
-        add_id_info_uses_idfa: false,
-      },
-      precheck_include_in_app_purchases: false,
-      force: true,
     )
   end
 end
