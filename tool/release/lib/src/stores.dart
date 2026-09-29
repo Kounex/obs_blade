@@ -79,8 +79,8 @@ class AppStore {
   /// The open (not yet submitted) iOS review submission, or a new one.
   Future<String> draftReviewSubmission() async {
     final open = (await _client.get('v1/reviewSubmissions', {
+      // no platform filter: a fresh draft reports platform null
       'filter[app]': appId,
-      'filter[platform]': 'IOS',
       'filter[state]': 'READY_FOR_REVIEW',
     })).dataList;
     if (open.isNotEmpty) return '${open.first['id']}';
@@ -97,11 +97,18 @@ class AppStore {
     })).dataObject!['id']}';
   }
 
-  /// Items already in [submissionId] (to skip re-adding the version).
-  Future<List<Map<String, Object?>>> reviewItems(String submissionId) async =>
-      (await _client.get('v1/reviewSubmissions/$submissionId/items', {
-        'include': 'appStoreVersion',
-      })).dataList;
+  /// Ids of the app / subscription versions already in [submissionId]
+  /// (App Store Connect adds first subscriptions itself with the version).
+  Future<Set<String>> reviewItemIds(String submissionId) async {
+    final items = (await _client.get(
+      'v1/reviewSubmissions/$submissionId/items',
+    )).dataList;
+    return {
+      for (final item in items)
+        for (final rel in ((item['relationships'] as Map?) ?? const {}).values)
+          if (rel is Map && rel['data'] is Map) '${(rel['data'] as Map)['id']}',
+    };
+  }
 
   Future<void> addVersionToReview(String submissionId, String versionId) =>
       _client.post('v1/reviewSubmissionItems', {
@@ -127,21 +134,38 @@ class AppStore {
         },
       });
 
-  /// Submits one subscription for review. A first subscription needs its
-  /// app version pending review: add the version to the draft review
-  /// submission first, then this, then send the submission.
-  Future<void> submitSubscription(String subscriptionId) async {
-    await _client.post('v1/subscriptionSubmissions', {
-      'data': {
-        'type': 'subscriptionSubmissions',
-        'relationships': {
-          'subscription': {
-            'data': {'type': 'subscriptions', 'id': subscriptionId},
-          },
+  /// The subscription's in-flight version (the highest one), which is what
+  /// a review submission takes - `subscriptionSubmissions` rejects a first
+  /// subscription with "no pending version for submission".
+  Future<String?> subscriptionVersionId(String subscriptionId) async {
+    final versions = (await _client.get(
+      'v1/subscriptions/$subscriptionId/versions',
+    )).dataList;
+    if (versions.isEmpty) return null;
+    versions.sort(
+      (a, b) => ((a['attributes'] as Map)['version'] as num? ?? 0).compareTo(
+        (b['attributes'] as Map)['version'] as num? ?? 0,
+      ),
+    );
+    return '${versions.last['id']}';
+  }
+
+  Future<void> addSubscriptionToReview(
+    String submissionId,
+    String subscriptionVersionId,
+  ) => _client.post('v1/reviewSubmissionItems', {
+    'data': {
+      'type': 'reviewSubmissionItems',
+      'relationships': {
+        'reviewSubmission': {
+          'data': {'type': 'reviewSubmissions', 'id': submissionId},
+        },
+        'subscriptionVersion': {
+          'data': {'type': 'subscriptionVersions', 'id': subscriptionVersionId},
         },
       },
-    });
-  }
+    },
+  });
 
   /// Manual release of an approved version (Pending Developer Release).
   Future<void> releaseVersion(String versionId) async {

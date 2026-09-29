@@ -515,24 +515,28 @@ class Release {
 
     // Nothing reaches App Review before the last step: build + release
     // type, a draft review submission with the version, the subscriptions
-    // (they need that pending version), then the submission is sent.
+    // (as their subscription versions), then the submission is sent.
     final versionId = '${version['id']}';
     await asc.prepareVersion(versionId, '${build['id']}');
     stdout.writeln('  build ${v.build} attached, manual release');
     final submission = await asc.draftReviewSubmission();
-    final items = await asc.reviewItems(submission);
-    final hasVersion = items.any(
-      (i) =>
-          ((i['relationships'] as Map?)?['appStoreVersion'] as Map?)?['data']
-              is Map &&
-          '${(((i['relationships'] as Map)['appStoreVersion'] as Map)['data'] as Map)['id']}' ==
-              versionId,
-    );
-    if (!hasVersion) await asc.addVersionToReview(submission, versionId);
+    final inReview = await asc.reviewItemIds(submission);
+    if (!inReview.contains(versionId)) {
+      await asc.addVersionToReview(submission, versionId);
+      inReview.addAll(await asc.reviewItemIds(submission));
+    }
     stdout.writeln('  review submission $submission has ${v.name}');
     for (final s in pending) {
-      await asc.submitSubscription('${s['id']}');
-      stdout.writeln('  added ${(s['attributes'] as Map)['productId']}');
+      final name = (s['attributes'] as Map)['productId'];
+      final subVersion = await asc.subscriptionVersionId('${s['id']}');
+      if (subVersion == null) {
+        stderr.writeln('$name has no version to submit - nothing was sent.');
+        return 1;
+      }
+      if (!inReview.contains(subVersion)) {
+        await asc.addSubscriptionToReview(submission, subVersion);
+      }
+      stdout.writeln('  $name in the submission');
     }
     await asc.sendReviewSubmission(submission);
     stdout.writeln('  submitted for review');
