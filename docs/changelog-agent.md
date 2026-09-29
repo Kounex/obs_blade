@@ -2,6 +2,21 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-29 - 4.0 submitted to both stores (manual release)
+
+`submit ios` no longer uses deliver: a first subscription can't go through
+`subscriptionSubmissions` (409 "no pending version for submission", also
+with the version in a draft). The ASC review submission takes items: the
+app version, each subscription's `subscriptionVersion`, and - while the
+group was never approved - its `subscriptionGroupVersion`
+(SUBSCRIPTION_SUBMISSION_REQUIRES_GROUP_VERSION, only visible in
+`meta.associatedErrors`, which the API client prints now). ASC added the
+subscription versions to the draft on its own with the app version; item
+relationship ids only come back with `include`. Release type pinned MANUAL,
+`publish ios` releases an approved version. Play: promoted internal ->
+production at 100%, managed publishing holds it. Age rating: the new
+2025 questions answered (UGC + messaging yes, rest no) - still 4+.
+
 ## 2026-09-29 - Store preview videos on the 4.0 listings
 
 The user approved the v2 video cuts (store-shots `out/video/`, rendered

@@ -31,9 +31,15 @@ page for the Pro subscription. Installed on Kounex iOS; confirm on the
 next TestFlight build that a TestFlight subscription shows and cancels
 there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
 
-**Store videos (2026-09-29):** done on both stores - App Preview on
-App Store 4.0.0 (`release preview ios`), Play promo video in the listing
-(`video.txt`; held by managed publishing like the rest of the listing).
+**4.0 in review (2026-09-29):** build 2026092805 submitted on both
+stores, manual release on both. App Store: 4.0.0 + pro_monthly +
+pro_yearly + the Pro group version in one review submission (WAITING_FOR_REVIEW,
+releaseType MANUAL). Play: promoted internal -> production 100%, held by
+managed publishing (with the listing: video, screenshots). When both are
+approved and the user says release: `release publish ios --yes` + Play
+Console > Publishing overview > Publish. Store videos are on both listings;
+age rating answered (4+), App Privacy updated, pre-submit tests passed,
+media hub + intro v2 approved by the user.
 
 **Open follow-ups (2026-09-28, next session):** App Store listing +
 Play listing already uploaded (Play held by managed publishing - publish
