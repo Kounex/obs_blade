@@ -31,6 +31,12 @@ page for the Pro subscription. Installed on Kounex iOS; confirm on the
 next TestFlight build that a TestFlight subscription shows and cancels
 there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
 
+**Store videos (2026-09-29):** App Preview is on App Store 4.0.0
+(`release preview ios`). Play promo video waits for the user's unlisted
+YouTube upload of store-shots `play-phone.mp4`: then put the URL in
+`fastlane/metadata/android/en-US/video.txt` and run `release metadata
+android --yes` (held by managed publishing like the rest of the listing).
+
 **Open follow-ups (2026-09-28, next session):** App Store listing +
 Play listing already uploaded (Play held by managed publishing - publish
 together with the production release).

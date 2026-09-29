@@ -2,6 +2,18 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-29 - Store preview videos on the 4.0 listings
+
+The user approved the v2 video cuts (store-shots `out/video/`, rendered
+2026-09-29). App Store: `release preview ios <mp4>` (new; fastlane's
+deliver can't upload previews) uploaded `appstore-iphone.mp4` to 4.0.0's
+en-US `IPHONE_67` set through the ASC API, poster `00:00:05:00` - Apple
+processed it (COMPLETE). deliver's `overwrite_screenshots` leaves
+previews alone. Play: the listing takes a YouTube link only
+(`fastlane/metadata/android/en-US/video.txt`, pushed by `release metadata
+android`); waiting on the user's unlisted YouTube upload of
+`play-phone.mp4`.
+
 ## 2026-09-29 - Store captures: OBS safety review fixes
 
 Review of the video mode found a stray test could go live on the user's
