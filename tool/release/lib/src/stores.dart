@@ -100,8 +100,10 @@ class AppStore {
   /// Ids of the app / subscription versions already in [submissionId]
   /// (App Store Connect adds first subscriptions itself with the version).
   Future<Set<String>> reviewItemIds(String submissionId) async {
+    // relationship ids only come back for included types
     final items = (await _client.get(
       'v1/reviewSubmissions/$submissionId/items',
+      {'include': 'appStoreVersion,subscriptionVersion'},
     )).dataList;
     return {
       for (final item in items)
