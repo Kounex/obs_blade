@@ -10,7 +10,9 @@ environment:
 
 dependencies:
   args: ^2.5.0
+  crypto: ^3.0.0
   googleapis_auth: ^1.6.0
+  http: ^1.2.0
   provisioning:
     path: ../provisioning
 

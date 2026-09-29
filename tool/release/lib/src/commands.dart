@@ -400,6 +400,81 @@ class Release {
     return _fastlane('android', 'metadata', {});
   }
 
+  // ------------------------------------------------------------- preview
+
+  /// App Store preview type for the 886x1920 cut (6.9" slot; Apple scales
+  /// it down for the smaller iPhones).
+  static const String iphonePreviewType = 'IPHONE_67';
+
+  /// `HH:MM:SS:FF` at 30 fps, the format of `previewFrameTimeCode`.
+  static String timeCode(double seconds) {
+    final frames = (seconds * 30).round();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(frames ~/ 108000)}:${two(frames ~/ 1800 % 60)}:'
+        '${two(frames ~/ 30 % 60)}:${two(frames % 30)}';
+  }
+
+  /// Uploads [file] as the en-US iPhone App Preview of the current version,
+  /// replacing the previews that are there once the new one is processed.
+  /// fastlane (deliver) can't upload previews, so this talks to the API.
+  Future<int> preview(String file, double poster) async {
+    final video = File(file);
+    if (!video.existsSync()) {
+      stderr.writeln('No such file: $file');
+      return 1;
+    }
+    final v = project.version;
+    final asc = AppStore.connect();
+    final version = await asc.version(v.name);
+    if (version == null) {
+      stderr.writeln('No App Store version ${v.name} on App Store Connect.');
+      return 1;
+    }
+    final state = (version['attributes'] as Map)['appStoreState'];
+    final locId = await asc.localizationId('${version['id']}', 'en-US');
+    if (locId == null) {
+      stderr.writeln('Version ${v.name} has no en-US localization.');
+      return 1;
+    }
+    final setId = await asc.previewSetId(locId, iphonePreviewType);
+    final existing = setId == null ? const [] : await asc.previews(setId);
+    final code = timeCode(poster);
+    final mb = (video.lengthSync() / 1e6).toStringAsFixed(1);
+    stdout.writeln(
+      'Upload ${video.uri.pathSegments.last} ($mb MB, poster $code) as the '
+      'en-US $iphonePreviewType App Preview of ${v.name} ($state)'
+      '${existing.isEmpty ? '.' : ', replacing ${existing.length} preview(s) once it is processed.'}',
+    );
+    if (!yes) {
+      stdout.writeln('\nDRY RUN - re-run with --yes to do it.');
+      return 0;
+    }
+
+    final targetSet =
+        setId ?? await asc.createPreviewSet(locId, iphonePreviewType);
+    stdout.writeln('  uploading ...');
+    final result = await asc.uploadPreview(
+      targetSet,
+      video,
+      posterTimeCode: code,
+    );
+    stdout.writeln('  preview ${result.id}: ${result.state}');
+    if (result.state != 'COMPLETE') {
+      if (result.errors.isNotEmpty) stderr.writeln('  ${result.errors}');
+      stderr.writeln(
+        result.state == 'FAILED'
+            ? 'Apple rejected the preview; the old previews stay.'
+            : 'Still processing; check App Store Connect. The old previews stay.',
+      );
+      return 1;
+    }
+    for (final p in existing) {
+      await asc.deletePreview('${p['id']}');
+      stdout.writeln('  removed old preview ${p['id']}');
+    }
+    return 0;
+  }
+
   // -------------------------------------------------------------- submit
 
   Future<int> submit() async {

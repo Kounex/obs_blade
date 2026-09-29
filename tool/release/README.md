@@ -18,11 +18,12 @@ dart run tool/release/bin/release.dart status
 | `build ios\|android` | Preflight, then the store build (`.ipa` / `.aab`) with the store defines |
 | `beta ios\|android` | TestFlight (internal testers) / Play internal track |
 | `metadata ios\|android` | Listing text + screenshots from `fastlane/metadata` and `fastlane/screenshots` |
+| `preview ios <file.mp4> [--poster 5]` | en-US iPhone App Preview (6.9" slot) of the current version, via the App Store Connect API (fastlane can't); old previews are removed only once the new one is processed |
 | `submit ios` | Submits the uploaded build and any first-time subscriptions for review, released automatically once approved |
 | `promote android [--rollout 1.0]` | Play internal → production, at the given share of users |
 | `halt android` | Halts the Play production rollout |
 
-**Every command that writes to a store** (`beta`, `metadata`, `submit`,
+**Every command that writes to a store** (`beta`, `metadata`, `preview`, `submit`,
 `promote`, `halt`) prints what it would do and stops. Add `--yes` to do it.
 
 ## Preflight
@@ -64,6 +65,7 @@ release build ios && release beta ios --yes          # TestFlight
 release build android && release beta android --yes  # Play internal
 # ... test on devices, including an upgrade over the store version ...
 release metadata ios --yes && release metadata android --yes
+release preview ios <store-shots out/video/appstore-iphone/appstore-iphone.mp4> --yes
 release submit ios --yes
 release promote android --yes
 ```

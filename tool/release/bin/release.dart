@@ -2,7 +2,7 @@
 //
 //   dart run tool/release/bin/release.dart <command> [platform] [--yes]
 //
-// Commands that write to a store (beta, metadata, submit, promote, halt)
+// Commands that write to a store (beta, metadata, preview, submit, promote, halt)
 // print what they would do and stop unless --yes is given.
 
 // ignore_for_file: avoid_print - CLI output is the product.
@@ -22,6 +22,7 @@ Usage: release <command> [ios|android] [--yes]
   build ios|android           store build (+ preflight)
   beta ios|android            TestFlight internal / Play internal track
   metadata ios|android        listing text + screenshots
+  preview ios <file.mp4> [--poster 5]   iPhone App Preview (en-US)
   submit ios                  attach the build (+ subscriptions), submit for review
   promote android [--rollout 1.0]   internal -> production
   halt android                halt the production rollout
@@ -33,6 +34,7 @@ Future<void> main(List<String> argv) async {
   final parser = ArgParser()
     ..addFlag('yes', negatable: false)
     ..addOption('rollout', defaultsTo: '1')
+    ..addOption('poster', defaultsTo: '5')
     ..addFlag('help', abbr: 'h', negatable: false);
   final args = parser.parse(argv);
   final rest = args.rest;
@@ -69,6 +71,18 @@ Future<void> main(List<String> argv) async {
     'build' => await release.build(needPlatform({'ios', 'android'})),
     'beta' => await release.beta(needPlatform({'ios', 'android'})),
     'metadata' => await release.metadata(needPlatform({'ios', 'android'})),
+    'preview' => (
+      needPlatform({'ios'}),
+      rest.length > 2
+          ? await release.preview(
+              rest[2],
+              double.parse(args['poster'] as String),
+            )
+          : () {
+              stderr.writeln('preview needs the video file\n\n$usage');
+              return 64;
+            }(),
+    ).$2,
     'submit' => (needPlatform({'ios'}), await release.submit()).$2,
     'promote' => (
       needPlatform({'android'}),
