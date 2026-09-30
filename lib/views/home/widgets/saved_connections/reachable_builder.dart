@@ -21,13 +21,24 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
   late List<Connection> _savedConnections;
   final List<ReactionDisposer> _disposers = [];
 
+  /// Endpoint per saved connection (by Hive key) as of the last check -
+  /// tells [didUpdateWidget] whether a box change needs a new check
+  Map<dynamic, String> _checkedEndpoints = {};
+
+  /// Bumped per check so a slower, older check can't overwrite a newer one
+  int _checkGeneration = 0;
+
+  static String _endpoint(Connection connection) =>
+      '${connection.host}|${connection.port}|${connection.isDomain}';
+
+  static List<Connection> _readBox() =>
+      Hive.box<Connection>(HiveKeys.SavedConnections.name).values.toList();
+
   @override
   void initState() {
     super.initState();
 
-    _savedConnections = Hive.box<Connection>(
-      HiveKeys.SavedConnections.name,
-    ).values.toList();
+    _savedConnections = _readBox();
 
     _checkReachableStatus();
 
@@ -38,17 +49,59 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
     );
   }
 
-  void _checkReachableStatus() async {
-    for (var connection in _savedConnections) {
+  /// The parent [HiveBuilder] rebuilds on every box change (add, delete,
+  /// edit, "Last used" stamp) - the list has to follow it, and only a new
+  /// or changed endpoint needs a new check
+  @override
+  void didUpdateWidget(covariant ReachableBuilder oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    _savedConnections = _readBox();
+
+    final endpointsChanged = _savedConnections.any(
+      (connection) =>
+          _checkedEndpoints[connection.key] != _endpoint(connection),
+    );
+
+    if (endpointsChanged) {
+      /// The build following this call picks up the reset dots
+      _checkReachableStatus(rebuild: false);
+    } else {
+      _sort();
+    }
+  }
+
+  void _sort() {
+    _savedConnections.sort(
+      (c1, c2) => c1.reachable != c2.reachable
+          ? (c1.reachable ?? false)
+                ? -1
+                : 1
+          : (c1.name ?? c1.host).compareTo(c2.name ?? c2.host),
+    );
+  }
+
+  void _checkReachableStatus({bool rebuild = true}) async {
+    final generation = ++_checkGeneration;
+    final connections = List<Connection>.of(_savedConnections);
+
+    for (var connection in connections) {
       connection.reachable = null;
     }
+    _checkedEndpoints = {
+      for (var connection in connections) connection.key: _endpoint(connection),
+    };
 
-    setState(() {});
+    if (rebuild && this.mounted) {
+      setState(() {});
+    }
 
     List<Connection> availableConnections =
-        await NetworkHelper.checkConnectionAvailabilities(_savedConnections);
+        await NetworkHelper.checkConnectionAvailabilities(connections);
 
-    for (var connection in _savedConnections) {
+    if (generation != _checkGeneration) return;
+
+    for (var connection in connections) {
       connection.reachable = availableConnections.any(
         (availableConnection) =>
             availableConnection.host == connection.host &&
@@ -56,13 +109,7 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
             availableConnection.isDomain == connection.isDomain,
       );
     }
-    _savedConnections.sort(
-      (c1, c2) => c1.reachable != c2.reachable
-          ? c1.reachable!
-                ? 0
-                : 1
-          : c1.name!.compareTo(c2.name!),
-    );
+    _sort();
 
     if (this.mounted) {
       setState(() {});
