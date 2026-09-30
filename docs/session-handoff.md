@@ -2,7 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-09-25** (end of
+Read this first after `AGENTS.md`. Last reset: **2026-09-25**, top block
+updated **2026-09-30** (4.0.1 in review) (end of
 the combined-chat session: combined chat waves 1–3, channel mod sheets,
 picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
@@ -31,19 +32,19 @@ page for the Pro subscription. Installed on Kounex iOS; confirm on the
 next TestFlight build that a TestFlight subscription shows and cancels
 there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
 
-**4.0 released (2026-09-30):** build 4.0.0 (2026092805). App Store:
-`release publish ios --yes`, 4.0.0 is READY_FOR_SALE. Play: the user
-published "Changes ready to publish" in the Console at the same time
-(production 100%, listing, Data safety, Health apps). Pre-release check
-all green: every review item APPROVED, subscriptions priced in 175/175
-territories, Apple server notifications V2 -> RevenueCat, RevenueCat
-offering `pro` current on both platforms, Play RTDN test notification
-received (user), no app-code commits since the build. **Watch:** ASC's
-`state` for `pro_monthly` / `pro_yearly` still read IN_REVIEW right after
-the release (their subscription versions are ACCEPTED) - confirm it
-flips to APPROVED; if not, look in App Store Connect > Subscriptions.
-Next per the user's decisions: F-Droid after the stores; watch crash /
-review feedback from the 500k-user rollout.
+**4.0.1 in review (2026-09-30, late):** hotfix for the first 4.0 report
+(saved `ws://` domain-mode connections read offline) plus a connection
+review (QR password decoding, saved cards following edits/deletes, edit
+dialog password trim, autodiscover domain toggle), FAQ/log list sizing and
+iOS body text without Material letter spacing. Build 4.0.1 (2026093001):
+App Store `WAITING_FOR_REVIEW` (manual release), Play production 4.0.1 at
+100% held by managed publishing. **Next: when both stores approved, run
+the `release-publish` skill** (`publish ios`, the user presses Publish in
+the Play Console, tag `4.0.1` on `35a0040f`, changelog, reset this file).
+4.0.0 is live on both stores; `pro_monthly` / `pro_yearly` flipped to
+APPROVED. New: `docs/release-playbook.md` + `.claude/skills/release-*`,
+releases are tagged with the bare version from `4.0.0` on. Details:
+`changelog-agent.md` 2026-09-30 entries.
 
 **Update 2026-09-27 (late) - store screenshots redesign** (awaiting the
 user's verdict on the composed sets): capture tooling in

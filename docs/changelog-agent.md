@@ -2,6 +2,20 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-30 - 4.0.1 submitted to both stores, release skills
+
+4.0.1 (2026093001, release commit `35a0040f`) carries today's fixes (entries
+below). Built on the workstation over SSH: TestFlight (processed, internal
+testers) + Play internal, then `metadata ios` (created the 4.0.1 version:
+notes, the committed screenshots; the App Preview carried over from 4.0.0,
+checked via the ASC API), `submit ios` (manual release) and
+`promote android` at 100% (managed publishing holds it). Same notes on both
+stores, 444/500 chars on Play. The Mac slept between the uploads and the
+submit - SSH timed out until it woke; the release-over-SSH recipe now uses
+`caffeinate`. Also: `docs/release-playbook.md` + project skills
+`release-beta` / `-promote` / `-direct` / `-publish`, tag `4.0.0` added on
+`57af832f` (releases are tagged with the bare version from now on).
+
 ## 2026-09-30 - iOS body text without Material letter spacing
 
 User decision after a side-by-side on the simulator: on iOS / macOS the body
