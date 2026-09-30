@@ -295,6 +295,7 @@ tips/blacksmith).
 | [`docs/upgrade-plan.md`](docs/upgrade-plan.md) | Flutter / package upgrade status |
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
 | [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
+| [`docs/release-playbook.md`](docs/release-playbook.md) | Store releases — versioning, release notes, TestFlight/Play internal → review → publish; entry points are the `release-beta` / `release-promote` / `release-direct` / `release-publish` skills in `.claude/skills/` |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | History of agent changes (not the handoff doc — that's current-state only) |
 | [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
 | [`docs/superpowers/plan-defect-checklist.md`](docs/superpowers/plan-defect-checklist.md) | Running an SDD wave — pre-dispatch plan-verification pass, codegen checklist, named defect probes |
@@ -330,6 +331,11 @@ tips/blacksmith).
   subs + IAP + US pricing via ASC API), `play-products` (Play
   subscription + base plans + one-time product). Usage + creds
   acquisition: `tool/provisioning/README.md`.
+- **Store releases:** `tool/release/` (status, preflight, build, TestFlight
+  / Play internal, submit, promote, publish; every store write is a dry run
+  without `--yes`). Process: `docs/release-playbook.md`; agents start from
+  the `release-*` skills in `.claude/skills/` (agents without skill support:
+  read those `SKILL.md` files as runbooks).
 - **Visual-QA screenshots (macOS, booted sim):**
   `tool/visual_qa/capture_screenshots.sh` — runs
   `integration_test/screenshot_walk_test.dart`, writes PNGs to

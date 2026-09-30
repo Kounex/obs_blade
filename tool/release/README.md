@@ -65,6 +65,9 @@ which is gitignored - keep it on the machine that submits.
 
 ## A release
 
+The process around these commands (versioning, release notes, when to ask,
+tags) is [`docs/release-playbook.md`](../../docs/release-playbook.md).
+
 ```bash
 release bump && git commit -am "release: 4.0.0 build" && git push
 release build ios && release beta ios --yes          # TestFlight
