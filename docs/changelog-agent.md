@@ -2,6 +2,20 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-30 - Saved domain-mode connections always read offline (4.0 bug)
+
+First 4.0 user report: a saved `ws://<IP>` connection (domain mode) connects
+fine but its card says offline; fine on 3.2. Cause: the card probe for domain
+mode read `channel.closeCode` after 5s and counted a *closed* socket as
+reachable. That only worked by accident with web_socket_channel 2.4 - the
+dart:io socket stayed unlistened, pongs were never processed and dart:io
+closed it (1001) after the 500 ms ping. 3.x listens immediately, a live
+socket stays open, closeCode stays null -> offline. Second bug in the same
+path: an unreachable domain host left `ready`'s error unhandled, which killed
+the scan isolate, so every card stayed on "checking". Now the probe awaits
+`ready` (bounded by the 5s connect timeout). Regression test:
+`test/websocket/saved_connection_reachability_test.dart` (local WS server).
+
 ## 2026-09-30 - 4.0 released on both stores
 
 Pre-release check against the live stores first: 4.0.0 PENDING_DEVELOPER_RELEASE

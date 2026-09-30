@@ -331,30 +331,32 @@ class NetworkHelper {
       return null;
     }
 
+    /// Domain mode: a completed WebSocket upgrade means reachable. Never judge
+    /// by [IOWebSocketChannel.closeCode] - web_socket_channel 2.x left the
+    /// socket unlistened, so unanswered pings closed a live one (non-null
+    /// code = "reachable"); 3.x listens right away, a live socket stays open
+    /// and every domain connection read as offline. [ready] must be awaited
+    /// either way: its error is unhandled otherwise and kills this isolate,
+    /// leaving the whole check hanging.
+    IOWebSocketChannel? channel;
     try {
-      IOWebSocketChannel channel = NetworkHelper.establishWebSocket(
+      channel = NetworkHelper.establishWebSocket(
         connectionScan.connection,
-        pingInterval: const Duration(milliseconds: 500),
         connectTimeout: timeout,
       );
 
-      int? res = await Future.delayed(timeout, () => channel.closeCode);
+      await channel.ready;
 
-      channel.sink.close();
-
-      if (res != null) {
-        sendPort?.send(connectionScan);
-        return connectionScan;
-      }
+      sendPort?.send(connectionScan);
+      return connectionScan;
     } catch (e) {
       connectionScan.error = e;
 
       sendPort?.send(connectionScan);
       return connectionScan;
+    } finally {
+      channel?.sink.close();
     }
-
-    sendPort?.send(null);
-    return null;
   }
 
   static Map<String, dynamic>? getRequestBodyForUUID(String uuid) =>
