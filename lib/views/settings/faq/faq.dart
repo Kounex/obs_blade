@@ -67,7 +67,7 @@ class FAQView extends StatelessWidget {
                         ),
                         EnumerationEntry(
                           text:
-                              'On iOS: make sure you enabled the "Local Network Permission" in your phone settings:\nSettings > Privacy > Local Network > OBS Blade',
+                              'On iOS: make sure you enabled the "Local Network Permission" in your phone settings:\nSettings > Privacy & Security > Local Network > OBS Blade',
                         ),
                         EnumerationEntry(
                           text:

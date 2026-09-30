@@ -2,6 +2,19 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-30 - FAQ list sizing, log legend dots
+
+FAQ answers read in two sizes: `EnumerationBlock` set its lead-in in
+`titleSmall` (13/w500) while entries and plain answers are body (15). Title,
+markers and entries (custom ones too) now share `bodyMedium`.
+`EnumerationEntry.marker` replaces the bullet, centered on the first line via
+a middle-aligned `WidgetSpan`; the log explanation used a `LevelDot` inside a
+custom entry next to the default bullet (two dots per type). Nested entries
+get `◦`. FAQ iOS path updated to "Privacy & Security". Checked on the iPhone
+17 Pro simulator (throwaway integration test, removed). Not changed: body
+text keeps Material's letterSpacing (0.25) - on SF Pro it reads airy next
+to the tight headings; app-wide typography call.
+
 ## 2026-09-30 - Connection setup review (autodiscover, modes, saved cards)
 
 Follow-up to the domain-mode bug below: a pass over every connect path. All
