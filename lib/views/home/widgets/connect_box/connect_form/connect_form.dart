@@ -42,20 +42,21 @@ class _ConnectFormState extends State<ConnectForm> {
 
   final StreamController<WebSocketCloseCode> _clodeCode = StreamController();
 
+  /// Domain mode is a Manual-only option - autodiscover results are always
+  /// plain IPs, whatever the IP / Domain toggle was last left on
+  bool get _domainMode =>
+      this.widget.manual && GetIt.instance<HomeStore>().domainMode;
+
   @override
   void initState() {
     super.initState();
 
     _hostDomain = CustomValidationTextEditingController(
-      text: GetIt.instance<HomeStore>().domainMode
-          ? this.widget.connection?.host
-          : null,
+      text: _domainMode ? this.widget.connection?.host : null,
       check: ValidationHelper.minLengthValidator,
     );
     _hostIP = CustomValidationTextEditingController(
-      text: !GetIt.instance<HomeStore>().domainMode
-          ? this.widget.connection?.host
-          : null,
+      text: !_domainMode ? this.widget.connection?.host : null,
       check: ValidationHelper.ipValidator,
     );
 
@@ -69,7 +70,7 @@ class _ConnectFormState extends State<ConnectForm> {
     HomeStore homeStore = GetIt.instance<HomeStore>();
     NetworkStore networkStore = GetIt.instance<NetworkStore>();
 
-    CustomValidationTextEditingController host = homeStore.domainMode
+    CustomValidationTextEditingController host = _domainMode
         ? _hostDomain
         : _hostIP;
     if (_formKey.currentState!.validate() && host.isValid) {
@@ -78,13 +79,10 @@ class _ConnectFormState extends State<ConnectForm> {
       networkStore
           .setOBSWebSocket(
             Connection(
-              (this.widget.manual && homeStore.domainMode
-                      ? homeStore.protocolScheme
-                      : '') +
-                  host.text,
+              (_domainMode ? homeStore.protocolScheme : '') + host.text,
               int.tryParse(_port.text),
               _pw.text,
-              this.widget.manual ? homeStore.domainMode : false,
+              _domainMode,
             ),
           )
           .then((clodeCode) => _clodeCode.add(clodeCode));
@@ -125,7 +123,7 @@ class _ConnectFormState extends State<ConnectForm> {
                 child: Observer(
                   builder: (context) {
                     return ConnectHostInput(
-                      domainMode: homeStore.domainMode,
+                      domainMode: _domainMode,
                       hostDomain: _hostDomain,
                       hostIP: _hostIP,
                       manual: this.widget.manual,
