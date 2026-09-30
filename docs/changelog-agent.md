@@ -2,6 +2,27 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-30 - Connection setup review (autodiscover, modes, saved cards)
+
+Follow-up to the domain-mode bug below: a pass over every connect path. All
+of these predate 4.0 (same code in 3.2):
+- Quick Connect: OBS percent-encodes the password in the Connect QR
+  (`QUrl::toPercentEncoding`, verified in obs-websocket `ConnectInfo.cpp`);
+  it was used encoded, so passwords with special characters failed. Parser
+  moved to `lib/utils/obs_connect_uri.dart` + tests.
+- Saved cards: `ReachableBuilder` read the box once, so deleted cards stayed
+  and edited endpoints kept their old dot. Now follows every box change,
+  re-checks only on new/changed endpoints, drops stale overlapping checks,
+  comparator fixed (0 -> -1). Widget test `test/home/reachable_builder_test.dart`.
+- Edit dialog trimmed the password on save (a rename broke `" pw "`).
+- Autodiscover results inherited the Manual IP/Domain toggle ("Hostname" label,
+  domain validation for a discovered IP).
+Left as is (efficiency is fine): isolates for the scans (async I/O, cheap),
+the saved check waits for all hosts (unreachable ones hold every dot up to
+5s), autodiscover is WLAN + /24 only and doesn't verify the peer is OBS.
+`test/chat/mod_action_sheet_test.dart` + `channel_mod_sheet_test.dart` fail
+already on the 4.0 release commit - unrelated, not investigated.
+
 ## 2026-09-30 - Saved domain-mode connections always read offline (4.0 bug)
 
 First 4.0 user report: a saved `ws://<IP>` connection (domain mode) connects
