@@ -2,6 +2,16 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-30 - iOS body text without Material letter spacing
+
+User decision after a side-by-side on the simulator: on iOS / macOS the body
+slots (bodyLarge / bodyMedium / bodySmall) set letterSpacing 0 so SF Pro
+keeps its own spacing; Android keeps Material's (+0.5 / +0.25 / +0.4) for
+Roboto. Keyed on the device font (`defaultTargetPlatform`), not the
+ForceNonNativeElements widget platform. Note: Material's spacing is merged
+by `Theme.of` from the typography geometry wherever the theme leaves it
+null - `ThemeData.textTheme` itself carries none. Titles / labels unchanged.
+
 ## 2026-09-30 - FAQ list sizing, log legend dots
 
 FAQ answers read in two sizes: `EnumerationBlock` set its lead-in in
