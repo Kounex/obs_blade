@@ -9,7 +9,7 @@ import 'package:obs_blade/shared/overlay/base_result.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
-import '../../../../../models/connection.dart';
+import '../../../../../utils/obs_connect_uri.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
@@ -47,15 +47,9 @@ class _QRScanState extends State<QRScan> {
     super.dispose();
   }
 
-  bool _isObsConnectUri(String? code) {
-    if (code == null) return false;
-    final lower = code.toLowerCase();
-    return lower.startsWith('obsws://') || lower.startsWith('obswss://');
-  }
-
   void _handleScanData(Barcode scanData) {
     if (!_scanLocked && _qrScanState == null || !_qrScanState!) {
-      bool result = _isObsConnectUri(scanData.code);
+      bool result = isObsConnectUri(scanData.code);
       if (result != _qrScanState) {
         setState(() {
           if (scanData.code != null) {
@@ -65,7 +59,9 @@ class _QRScanState extends State<QRScan> {
               HapticFeedback.lightImpact();
               Future.delayed(const Duration(seconds: 1), () {
                 if (!mounted) return;
-                Navigator.of(context).pop(_connectionFromQR(scanData.code!));
+                Navigator.of(
+                  context,
+                ).pop(connectionFromObsConnectUri(scanData.code!));
               });
             } else {
               Future.delayed(const Duration(seconds: 3), () {
@@ -79,34 +75,6 @@ class _QRScanState extends State<QRScan> {
           }
         });
       }
-    }
-  }
-
-  /// Official Connect Info QR: `obsws[s]://host:port/password`
-  Connection? _connectionFromQR(String data) {
-    try {
-      final uri = Uri.parse(data);
-      if (uri.host.isEmpty) return null;
-
-      final port = uri.hasPort ? uri.port : 4455;
-      // Path is `/password` — strip leading slash; empty path → no password.
-      final pw = uri.path.isEmpty || uri.path == '/'
-          ? null
-          : uri.path.startsWith('/')
-          ? uri.path.substring(1)
-          : uri.path;
-
-      final isSecure = uri.scheme.toLowerCase() == 'obswss';
-      final host = isSecure ? 'wss://${uri.host}' : uri.host;
-
-      return Connection(
-        host,
-        port,
-        (pw == null || pw.isEmpty) ? null : pw,
-        isSecure,
-      );
-    } catch (_) {
-      return null;
     }
   }
 
