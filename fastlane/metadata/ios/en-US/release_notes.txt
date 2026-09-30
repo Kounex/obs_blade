@@ -1,9 +1,9 @@
-OBS Blade 4.0 is a complete redesign, built for phone and tablet.
+Thanks for all the feedback on 4.0! This update fixes the first reports:
 
-- A new look with smoother, faster controls
-- Media controls, hotkeys, replay buffer and virtual camera
-- Chat gets its own tab: Twitch, YouTube, Kick and Owncast
-- A more reliable connection to OBS
-- New: OBS Blade Pro with native and combined chat, moderation tools, 7TV, BTTV and FFZ emotes, and custom themes
+- Saved connections using a ws:// or wss:// address no longer show as offline
+- Quick Connect works with passwords that contain special characters
+- Saved connection cards update right away after you edit or delete one
+- Editing a saved connection keeps its password exactly as it was
+- Cleaner, easier to read text in the FAQ and the log view
 
-Thanks for all your feedback - keep it coming on GitHub!
+Keep it coming on GitHub!
