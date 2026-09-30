@@ -315,8 +315,11 @@ tips/blacksmith).
 - **Format:** the tree is `dart format`-clean on the SDK tall style since
   2026-09-10 (one-time 404-file migration) — format changed files freely;
   `tool/*` standalone packages are excluded from that pass.
-- **No agent-side sim verification** (user directive 2026-09-10): ship
-  best-effort code + analyze/test gates; the user runs the simulator.
+- **No agent-side sim verification** (user directive 2026-09-10, confirmed
+  2026-09-30): ship best-effort code + analyze/test gates; the user runs
+  the simulator. For a task where a simulator check or screenshot would
+  really help (e.g. a visual fix), ask the user first - never start one
+  unasked.
 - **Local OBS E2E (macOS):** `tool/obs_local/obs_test_env.sh start` →
   `dart run tool/obs_local/ws_smoke.dart --password <obs-ws-password>` →
   `flutter run -d <sim-id>` → `… stop`. Details: `docs/local-obs-e2e.md`.
