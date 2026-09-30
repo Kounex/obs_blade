@@ -2,6 +2,21 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-09-30 - 4.0 released on both stores
+
+Pre-release check against the live stores first: 4.0.0 PENDING_DEVELOPER_RELEASE
+with every review item APPROVED (version, both subscription versions, the
+group version), subscriptions priced 175/175 territories, Apple server
+notifications V2 pointing at RevenueCat, RevenueCat offering `pro` current
+on iOS and Android (Play packages map to `pro` + base plans), Play
+production 4.0.0 (2026092805) at 100% with all products ACTIVE, Play RTDN
+test notification received by the user, and nothing but
+`integration_test/`, docs, fastlane and tooling changed since the build.
+Then `release publish ios --yes` (4.0.0 READY_FOR_SALE) and the user
+published the held Play changes. ASC still listed `pro_monthly` /
+`pro_yearly` with state IN_REVIEW right after the release although their
+subscription versions were ACCEPTED - expected to follow the version.
+
 ## 2026-09-29 - 4.0 submitted to both stores (manual release)
 
 `submit ios` no longer uses deliver: a first subscription can't go through

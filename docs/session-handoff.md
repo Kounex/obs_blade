@@ -31,40 +31,19 @@ page for the Pro subscription. Installed on Kounex iOS; confirm on the
 next TestFlight build that a TestFlight subscription shows and cancels
 there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
 
-**4.0 in review (2026-09-29):** build 2026092805 submitted on both
-stores, manual release on both. App Store: 4.0.0 + pro_monthly +
-pro_yearly + the Pro group version in one review submission (WAITING_FOR_REVIEW,
-releaseType MANUAL). Play: promoted internal -> production 100%, **approved by Google
-the same day** and held under "Changes ready to publish" (4 changes:
-production 4.0.0, store listing, Data safety, Health apps) - publish only
-together with the iOS release. When both are
-approved and the user says release: `release publish ios --yes` + Play
-Console > Publishing overview > Publish. Store videos are on both listings;
-age rating answered (4+), App Privacy updated, pre-submit tests passed,
-media hub + intro v2 approved by the user.
-
-**Open follow-ups (2026-09-28, next session):** App Store listing +
-Play listing already uploaded (Play held by managed publishing - publish
-together with the production release).
-
-**Update 2026-09-28 - 4.0 release in progress** (`tool/release/`, README
-there; runs on the workstation). Build **4.0.0 (2026092805)** is on
-**TestFlight (internal)** and the **Play internal track** (over
-2026092803: media per-source fix + settled live-state re-read, meter
-ticks no longer rebuild the media hub, in-app manage-subscriptions
-sheet, paywall scroll fix). **Dogfood OBS caveat:** the workstation OBS
-(running since 2026-09-20, Mic/Aux "Shure MV7" disconnected and retried
-every 2 s, MacBook on Wi-Fi) froze its whole outgoing stream ~13 s about
-once a minute - reproduced with no phone involved. Delayed-state reports
-against it are OBS, not the app; the user is restarting / checking OBS (all Play
-App content declarations done by the user, incl. Data safety + App
-access). Before `submit ios`: App Privacy
-(Apple) form (user), upgrade test over the store
-3.2.0, sandbox purchases (iOS monthly bought OK; RevenueCat offering
-`pro` is current), plan switch (monthly -> yearly / lifetime) and the
-media lock on device, Android purchases (Play license tester). User decisions: internal beta only, release to
-everyone at once, F-Droid after the stores. Legal pages now live only on
-obs-blade.kounex.com (privacy policy + imprint).
+**4.0 released (2026-09-30):** build 4.0.0 (2026092805). App Store:
+`release publish ios --yes`, 4.0.0 is READY_FOR_SALE. Play: the user
+published "Changes ready to publish" in the Console at the same time
+(production 100%, listing, Data safety, Health apps). Pre-release check
+all green: every review item APPROVED, subscriptions priced in 175/175
+territories, Apple server notifications V2 -> RevenueCat, RevenueCat
+offering `pro` current on both platforms, Play RTDN test notification
+received (user), no app-code commits since the build. **Watch:** ASC's
+`state` for `pro_monthly` / `pro_yearly` still read IN_REVIEW right after
+the release (their subscription versions are ACCEPTED) - confirm it
+flips to APPROVED; if not, look in App Store Connect > Subscriptions.
+Next per the user's decisions: F-Droid after the stores; watch crash /
+review feedback from the 500k-user rollout.
 
 **Update 2026-09-27 (late) - store screenshots redesign** (awaiting the
 user's verdict on the composed sets): capture tooling in
@@ -164,11 +143,10 @@ docs so far) — watch these first when feedback arrives:
 - Twitch `stream.online` / `stream.offline` EventSub (standard, but first
   use in this app).
 
-**Store/Pro state (unchanged):** products on both stores at **$4.99/mo,
-$49.99/yr, $99.99 lifetime**; ASC products submitted 2026-09-08 — watch
-for approval; Play products ACTIVE; RevenueCat live (`pro`). Open: Play
-RTDN test notification (Pub/Sub perms), sandbox dogfood per
-`revenuecat-setup.md` §5, Apple Small Business Program. Upload key
+**Store/Pro state:** products on both stores at **$4.99/mo,
+$49.99/yr, $99.99 lifetime**; ASC products approved with 4.0 (2026-09-29);
+Play products ACTIVE; RevenueCat live (`pro`); Play RTDN test
+notification received (2026-09-30). Open: Apple Small Business Program. Upload key
 A6:24:44 still "in review" — after it resolves, delete
 `android/app/src/main/assets/adi-registration.properties` and discard
 Play internal-track draft `3.3.0 (2026090701)`.
@@ -185,7 +163,7 @@ Play internal-track draft `3.3.0 (2026090701)`.
    `StreamStateChanged` → immediate re-resolve. Watch Kick's Pusher →
    Centrifugo migration risk (the combined chat's Kick live push rides
    the same socket).
-3. **Finish RevenueCat** (RTDN retry, sandbox dogfood §5, SBP enroll).
+3. **Finish RevenueCat** (SBP enroll).
 4. **Android runtime smoke** + release mechanics (version/changelog,
    `fastlane/metadata`, visual-QA pass) — the combined chat has never
    run on Android.
