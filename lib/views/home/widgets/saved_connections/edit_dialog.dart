@@ -232,7 +232,8 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                 : _hostIP;
             if (_name.isValid && host.isValid && _port.isValid) {
               String newName = _name.text.trim();
-              String newHost = host.text.trim();
+              String newHost =
+                  '${_isDomain ? _protocolScheme : ""}${host.text.trim()}';
 
               /// Since [HiddenScene] and [HiddenSceneItem] elements are based on the
               /// connection name and host, once the user updates the connection, we need
@@ -268,10 +269,12 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
               }
 
               this.widget.connection.name = newName;
-              this.widget.connection.host =
-                  '${_isDomain ? _protocolScheme : ""}$newHost';
+              this.widget.connection.host = newHost;
               this.widget.connection.port = int.tryParse(_port.text);
-              this.widget.connection.pw = _pw.text.trim();
+
+              /// Untrimmed: OBS accepts leading/trailing spaces, and a
+              /// rename alone must not break a working password
+              this.widget.connection.pw = _pw.text;
               this.widget.connection.isDomain = _isDomain;
               this.widget.connection.save();
               Navigator.of(context).pop();
