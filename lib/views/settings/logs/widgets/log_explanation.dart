@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../models/enums/log_level.dart';
-import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../shared/general/enumeration_block/enumeration_block.dart';
@@ -17,27 +16,17 @@ class LogExplanation extends StatelessWidget {
     required LogLevel level,
     required String description,
   }) => EnumerationEntry(
-    customEntry: Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: LevelDot(level: level, size: 8.0),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Flexible(
-          child: ThemedRichText(
-            textSpans: [
-              TextSpan(
-                text: level.name,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: logLevelColor(context, level),
-                ),
-              ),
-              TextSpan(text: description),
-            ],
+    marker: LevelDot(level: level, size: 8.0),
+    customEntry: ThemedRichText(
+      textSpans: [
+        TextSpan(
+          text: level.name,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: logLevelColor(context, level),
           ),
         ),
+        TextSpan(text: description),
       ],
     ),
   );

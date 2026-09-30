@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../design/app_typography.dart';
+
 class EnumerationEntry extends StatelessWidget {
   final String? text;
   final Widget? customEntry;
+
+  /// Replaces the bullet / order number (e.g. a colored dot) - centered on
+  /// the entry's first line. Don't put a marker inside [customEntry] as
+  /// well, or the entry shows two.
+  final Widget? marker;
 
   final double enumerationTopPadding;
   final double? enumerationSize;
@@ -15,6 +22,7 @@ class EnumerationEntry extends StatelessWidget {
     super.key,
     this.text,
     this.customEntry,
+    this.marker,
     this.enumerationTopPadding = 0,
     this.enumerationSize,
     this.order,
@@ -25,9 +33,32 @@ class EnumerationEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double enumerationSize =
-        this.enumerationSize ??
-        Theme.of(context).textTheme.bodyLarge!.fontSize!;
+    /// One body style for marker, text and custom entries alike - every
+    /// line of a list reads at the same size wherever it is used
+    final TextStyle style = Theme.of(context).textTheme.bodyMedium!;
+
+    final Widget marker = this.marker != null
+        ? Text.rich(
+            TextSpan(
+              children: [
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: this.marker!,
+                ),
+              ],
+            ),
+            style: style,
+          )
+        : Text(
+            this.order != null
+                ? '${this.order}.'
+                : this.level > 1
+                ? '◦'
+                : '•',
+            style: this.enumerationSize != null
+                ? style.copyWith(fontSize: this.enumerationSize)
+                : style,
+          );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,22 +69,15 @@ class EnumerationEntry extends StatelessWidget {
             left: this.levelSpacing * this.level,
             right: 12.0,
           ),
-          child: this.order != null
-              ? Text(
-                  '${this.order.toString()}.',
-                  style: TextStyle(fontSize: enumerationSize),
-                )
-              : Text('•', style: TextStyle(fontSize: enumerationSize)),
+          child: marker,
         ),
         Flexible(
           child: this.text != null
               ? Text(
                   this.text!,
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
+                  style: style.copyWith(fontFeatures: kTabularFigures),
                 )
-              : this.customEntry!,
+              : DefaultTextStyle.merge(style: style, child: this.customEntry!),
         ),
       ],
     );
