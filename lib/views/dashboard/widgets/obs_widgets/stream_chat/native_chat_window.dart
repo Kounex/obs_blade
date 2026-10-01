@@ -12,6 +12,7 @@ import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../../../../../utils/twitch/twitch_user_service.dart';
+import 'chat_tts_controls.dart';
 import 'dialogs/chat_user_card_sheet.dart';
 import 'native_chat_chrome.dart';
 
@@ -231,6 +232,9 @@ class NativeChatWindow extends StatelessWidget {
                     NativeChatStatusChip.mod(key: const Key('chat-header-mod')),
                   ],
                   const Spacer(),
+
+                  /// Text-to-speech toggle (tap) / settings (long press)
+                  const ChatTtsButton(),
                   Semantics(
                     key: const Key('chat-header-status'),
                     label: 'Chat $statusLabel',

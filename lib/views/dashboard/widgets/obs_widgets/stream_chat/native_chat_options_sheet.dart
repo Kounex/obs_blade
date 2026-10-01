@@ -15,6 +15,7 @@ import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import 'chat_search_sheet.dart';
+import 'chat_tts_controls.dart';
 import 'debug_chat_samples.dart';
 import 'dialogs/channel_mod_sheet.dart';
 import 'native_chat_appearance.dart';
@@ -115,6 +116,7 @@ enum _OptionsPage {
   eventMessages,
   highlights,
   muteWords,
+  textToSpeech,
   debugSamples,
 }
 
@@ -240,6 +242,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
       ),
       _OptionsPage.highlights => _HighlightsPage(onBack: this._back),
       _OptionsPage.muteWords => _MuteWordsPage(onBack: this._back),
+      _OptionsPage.textToSpeech => _PageScaffold(
+        title: 'Text to speech',
+        description: ChatTtsSettingsRows.intro,
+        onBack: this._back,
+        children: const [ChatTtsSettingsRows(showIntro: false)],
+      ),
       _OptionsPage.debugSamples => _DebugSamplesPage(onBack: this._back),
     };
   }
@@ -278,6 +286,13 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           label: 'Mute words',
           subtitle: 'Hide or censor words, ignore users',
           onTap: () => this._open(_OptionsPage.muteWords),
+        ),
+
+        this._navRow(
+          context,
+          label: 'Text to speech',
+          subtitle: 'Read chat aloud - also: hold the speaker in the header',
+          onTap: () => this._open(_OptionsPage.textToSpeech),
         ),
 
         /// Search reads one engine's buffer - the merged timeline gets
