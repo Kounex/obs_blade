@@ -100,11 +100,18 @@ void main() {
     await tester.pumpAndSettle();
 
     /// The confirm callback clears Hive boxes (real I/O) - run it in a real
-    /// zone so the writes can complete instead of hanging the suite
+    /// zone and poll until the clears landed instead of betting on a fixed
+    /// window (a pending write in the fake zone would hang the suite)
     await tester.runAsync(() async {
       await tester.tap(find.text('Yes'));
       await tester.pump();
-      await Future<void>.delayed(const Duration(milliseconds: 500));
+      for (var i = 0; i < 250; i++) {
+        if (Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).isEmpty &&
+            Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).isEmpty) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
     await tester.pumpAndSettle();
 
@@ -135,11 +142,21 @@ void main() {
     await tester.pumpAndSettle();
 
     /// The confirm callback clears Hive boxes (real I/O) - run it in a real
-    /// zone so the writes can complete instead of hanging the suite
+    /// zone and poll until the clears landed instead of betting on a fixed
+    /// window (a pending write in the fake zone would hang the suite)
     await tester.runAsync(() async {
       await tester.tap(find.text('Yes'));
       await tester.pump();
-      await Future<void>.delayed(const Duration(milliseconds: 500));
+      for (var i = 0; i < 250; i++) {
+        if (Hive.box(
+                  HiveKeys.Settings.name,
+                ).get(SettingsKeys.KickUsernames.name) ==
+                null &&
+            Hive.box<KickAuth>(HiveKeys.KickAuth.name).isEmpty) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
     await tester.pumpAndSettle();
 

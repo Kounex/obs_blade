@@ -106,13 +106,20 @@ void main() {
     expect(switchWidget.value, isTrue);
 
     /// The switch writes to the settings Hive box (real I/O) - run the tap
-    /// in a real zone so the write completes instead of hanging the suite
+    /// in a real zone and poll until the write landed instead of betting
+    /// on a fixed window
     await tester.runAsync(() async {
       await tester.tap(
         find.descendant(of: alertRow(), matching: find.byType(Switch)),
       );
       await tester.pump();
-      await Future<void>.delayed(const Duration(milliseconds: 300));
+      for (var i = 0; i < 250; i++) {
+        if (settingsBox().get(SettingsKeys.CommandFailureToasts.name) ==
+            false) {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
 
     expect(settingsBox().get(SettingsKeys.CommandFailureToasts.name), isFalse);
