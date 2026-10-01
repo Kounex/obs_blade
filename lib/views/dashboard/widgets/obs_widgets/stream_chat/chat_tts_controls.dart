@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -13,6 +16,7 @@ import '../../../../../stores/views/chat_tts.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/chat_tts/chat_tts_utterance.dart';
+import '../../../../../utils/chat_tts/chat_tts_voice.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/overlay_handler.dart';
 import '../../../../../utils/wake_lock_helper.dart';
@@ -367,6 +371,97 @@ class ChatTtsSettingsRows extends StatelessWidget {
               onChanged: (value) =>
                   set(SettingsKeys.ChatTtsMaxLength, value.round()),
             ),
+            section('Voices on this phone'),
+            if (store != null) _InstalledVoices(store: store),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Read-only list of the languages the system can read with (best voice
+/// each) - asks the platform once per sheet. The phone's language is the
+/// one used today; the list is the groundwork for per-message languages.
+class _InstalledVoices extends StatefulWidget {
+  final ChatTtsStore store;
+
+  const _InstalledVoices({required this.store});
+
+  @override
+  State<_InstalledVoices> createState() => _InstalledVoicesState();
+}
+
+class _InstalledVoicesState extends State<_InstalledVoices> {
+  @override
+  void initState() {
+    super.initState();
+    this.widget.store.loadVoices();
+  }
+
+  static String _quality(int rank) => Platform.isIOS
+      ? const ['Default', 'Enhanced', 'Premium'][rank]
+      : const ['Low quality', 'Normal quality', 'High quality'][rank];
+
+  @override
+  Widget build(BuildContext context) {
+    final String phoneLanguage = PlatformDispatcher.instance.locale
+        .toLanguageTag();
+    final String phonePrefix = phoneLanguage.split('-').first;
+
+    return Observer(
+      builder: (context) {
+        final voices = this.widget.store.voices;
+        if (voices == null) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Center(child: CupertinoActivityIndicator()),
+          );
+        }
+        final languages = chatTtsLanguages(voices);
+        final String hint = Platform.isIOS
+            ? 'More voices: Settings → Accessibility → Spoken Content → '
+                  'Voices. Enhanced and Premium voices sound much more '
+                  'natural.'
+            : 'More voices: the text-to-speech settings of your phone.';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              languages.isEmpty
+                  ? 'No voices reported by the system.'
+                  : '${languages.length} languages. Chat is read in your '
+                        "phone's language for now. $hint",
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            for (final language in languages)
+              ListTile(
+                key: ValueKey('tts-language-${language.language}'),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(language.languageName),
+                subtitle: Text(
+                  [
+                    language.best.name,
+                    _quality(language.best.qualityRank),
+                    if (language.best.network) 'needs internet',
+                  ].join(' · '),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                trailing:
+                    language.language == phoneLanguage ||
+                        language.language.split('-').first == phonePrefix &&
+                            !languages.any((l) => l.language == phoneLanguage)
+                    ? Text(
+                        'In use',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    : null,
+              ),
           ],
         );
       },

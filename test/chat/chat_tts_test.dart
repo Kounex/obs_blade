@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_queue.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_utterance.dart';
+import 'package:obs_blade/utils/chat_tts/chat_tts_voice.dart';
 
 ChatTtsMessage _msg(
   String text, {
@@ -306,12 +307,82 @@ void main() {
       expect(speaker.spoken, ['one', 'next']);
     });
 
+    test('a message that never reports "finished" times out, reading '
+        'goes on', () async {
+      queue = ChatTtsQueue(
+        speaker,
+        now: () => now,
+        utteranceTimeout: (_) => const Duration(milliseconds: 30),
+      );
+      queue.add('stuck');
+      queue.add('next');
+      await settle();
+      expect(speaker.spoken, ['stuck']);
+
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      expect(speaker.stops, greaterThanOrEqualTo(1));
+      expect(speaker.spoken, ['stuck', 'next']);
+    });
+
+    test('the default timeout grows with the text', () {
+      expect(
+        ChatTtsQueue.defaultUtteranceTimeout('x' * 200),
+        greaterThan(ChatTtsQueue.defaultUtteranceTimeout('hi')),
+      );
+      expect(
+        ChatTtsQueue.defaultUtteranceTimeout('x' * 150),
+        greaterThanOrEqualTo(const Duration(seconds: 30)),
+      );
+    });
+
     test('notifies on every change', () async {
       var changes = 0;
       queue = ChatTtsQueue(speaker, now: () => now, onChanged: () => changes++);
       queue.add('one');
       await settle();
       expect(changes, greaterThan(0));
+    });
+  });
+
+  group('chatTtsLanguages', () {
+    ChatTtsVoice voice(
+      String id,
+      String language,
+      int quality, {
+      bool network = false,
+    }) => ChatTtsVoice(
+      id: id,
+      name: id,
+      language: language,
+      languageName: language == 'de-DE' ? 'German (Germany)' : 'English (US)',
+      quality: quality,
+      network: network,
+    );
+
+    test('one row per language, best voice first, sorted by name', () {
+      final languages = chatTtsLanguages([
+        voice('Samantha', 'en-US', 1),
+        voice('Ava', 'en-US', 3),
+        voice('Anna', 'de-DE', 2),
+      ]);
+      expect(languages.map((l) => l.languageName), [
+        'English (US)',
+        'German (Germany)',
+      ]);
+      expect(languages.first.best.name, 'Ava');
+      expect(languages.first.voiceCount, 2);
+    });
+
+    test('Android quality scale; offline wins a tie', () {
+      final languages = chatTtsLanguages([
+        voice('net-high', 'en-US', 400, network: true),
+        voice('local-high', 'en-US', 500),
+        voice('local-low', 'en-US', 200),
+      ]);
+      expect(languages.single.best.name, 'local-high');
+      expect(voice('a', 'en-US', 300).qualityRank, 1);
+      expect(voice('a', 'en-US', 3).qualityRank, 2);
+      expect(voice('a', 'en-US', 1).qualityRank, 0);
     });
   });
 }

@@ -63,6 +63,24 @@ mixin _$ChatTtsStore on _ChatTtsStore, Store {
     });
   }
 
+  late final _$voicesAtom = Atom(
+    name: '_ChatTtsStore.voices',
+    context: context,
+  );
+
+  @override
+  List<ChatTtsVoice>? get voices {
+    _$voicesAtom.reportRead();
+    return super.voices;
+  }
+
+  @override
+  set voices(List<ChatTtsVoice>? value) {
+    _$voicesAtom.reportWrite(value, super.voices, () {
+      super.voices = value;
+    });
+  }
+
   late final _$_ChatTtsStoreActionController = ActionController(
     name: '_ChatTtsStore',
     context: context,
@@ -97,7 +115,8 @@ mixin _$ChatTtsStore on _ChatTtsStore, Store {
     return '''
 enabled: ${enabled},
 waiting: ${waiting},
-speaking: ${speaking}
+speaking: ${speaking},
+voices: ${voices}
     ''';
   }
 }

@@ -13,6 +13,7 @@ import '../../utils/chat_highlight_helper.dart';
 import '../../utils/chat_tts/chat_tts_adapters.dart';
 import '../../utils/chat_tts/chat_tts_queue.dart';
 import '../../utils/chat_tts/chat_tts_utterance.dart';
+import '../../utils/chat_tts/chat_tts_voice.dart';
 import '../../utils/general_helper.dart';
 import '../pro_store.dart';
 import 'combined_chat.dart';
@@ -51,6 +52,22 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
   /// [multiplier] 1.0 = normal speed
   Future<void> setSpeed(double multiplier) => _invoke('setRate', multiplier);
 
+  /// Installed voices - empty where the channel doesn't exist
+  Future<List<ChatTtsVoice>> voices() async {
+    try {
+      final raw = await _channel.invokeListMethod<Object?>('voices');
+      return [
+        for (final entry in raw ?? const <Object?>[])
+          if (entry is Map) ChatTtsVoice.fromMap(entry),
+      ];
+    } on MissingPluginException {
+      return const [];
+    } on PlatformException catch (e) {
+      GeneralHelper.advLog('Chat TTS voices failed - $e');
+      return const [];
+    }
+  }
+
   @override
   Future<void> speak(String text) => _invoke('speak', text);
 
@@ -72,7 +89,9 @@ abstract class _ChatTtsStore with Store {
     ChatTtsSpeaker? speaker,
     bool Function()? isProResolver,
     Stream<ChatTtsMessage> Function()? messages,
+    Future<List<ChatTtsVoice>> Function()? voicesLoader,
   }) : _speaker = speaker ?? PlatformTtsSpeaker(),
+       _voicesLoader = voicesLoader,
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
        _messagesFactory = messages {
@@ -84,6 +103,9 @@ abstract class _ChatTtsStore with Store {
 
   /// Test seam - replaces the three platform store streams
   final Stream<ChatTtsMessage> Function()? _messagesFactory;
+
+  /// Test seam - replaces the platform voices query
+  final Future<List<ChatTtsVoice>> Function()? _voicesLoader;
   late final ChatTtsQueue _queue;
   final List<StreamSubscription<dynamic>> _subscriptions = [];
 
@@ -96,6 +118,22 @@ abstract class _ChatTtsStore with Store {
 
   @observable
   bool speaking = false;
+
+  /// Installed system voices - null until [loadVoices] answered
+  @observable
+  List<ChatTtsVoice>? voices;
+
+  /// Asks the platform which voices / languages it can read with
+  Future<void> loadVoices() async {
+    final speaker = _speaker;
+    final loader = _voicesLoader;
+    final List<ChatTtsVoice> loaded = loader != null
+        ? await loader()
+        : speaker is PlatformTtsSpeaker
+        ? await speaker.voices()
+        : const [];
+    runInAction(() => this.voices = loaded);
+  }
 
   Box get _settings => Hive.box(HiveKeys.Settings.name);
 

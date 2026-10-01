@@ -28,8 +28,22 @@ class ChatTtsQueue {
   /// Called whenever [waiting] or [speaking] changes
   final void Function()? onChanged;
 
-  ChatTtsQueue(this._speaker, {DateTime Function()? now, this.onChanged})
-    : _now = now ?? DateTime.now;
+  /// Longest a message may take before the queue gives up on it and
+  /// moves on - a platform that never reports "finished" (e.g. an audio
+  /// interruption) must not stall reading for good
+  final Duration Function(String text) utteranceTimeout;
+
+  ChatTtsQueue(
+    this._speaker, {
+    DateTime Function()? now,
+    this.onChanged,
+    Duration Function(String text)? utteranceTimeout,
+  }) : _now = now ?? DateTime.now,
+       utteranceTimeout = utteranceTimeout ?? defaultUtteranceTimeout;
+
+  /// Generous even at half speed: 10s + 150ms per character
+  static Duration defaultUtteranceTimeout(String text) =>
+      Duration(milliseconds: 10000 + 150 * text.length);
 
   final Queue<_Pending> _pending = Queue();
   bool _speaking = false;
@@ -75,7 +89,12 @@ class ChatTtsQueue {
       _speaking = true;
       this.onChanged?.call();
       try {
-        await _speaker.speak(next.text);
+        await _speaker
+            .speak(next.text)
+            .timeout(
+              this.utteranceTimeout(next.text),
+              onTimeout: () => _speaker.stop(),
+            );
       } catch (_) {
         /// A failing engine must not end the loop for good
       }

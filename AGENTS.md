@@ -269,7 +269,11 @@ Wake Lock is app-wide now (default off). Speaker in the
 `NativeChatWindow` header: tap toggles, long press = settings (also an
 options-sheet page), one-off hint on first enable. Speech runs on the
 app's own `com.kounex.obsBlade/tts` channel (`PlatformTtsSpeaker` →
-`ChatTts` in `AppDelegate.swift` / `MainActivity.kt`) - no plugin:
+`ChatTts` in `AppDelegate.swift` / `MainActivity.kt`; iOS picks the
+best installed voice + stops on audio interruptions, Android ducks via
+transient audio focus + restarts a dead engine once; `voices` lists the
+installed voices for the sheet; the Dart queue has a per-message
+watchdog so a missing "finished" never stalls reading) - no plugin:
 `flutter_tts` is CocoaPods-only and iOS is SPM-only since `81a41a27`, so
 check a new iOS plugin for SPM support before adding it. Feasibility +
 decisions:

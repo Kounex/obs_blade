@@ -32,6 +32,14 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   iOS project is SPM-only (`81a41a27`) - the dogfood build regenerated a
   Podfile and failed `pod install` (stale `RunnerTests` target). Check new
   iOS plugins for `Package.swift` before adding them.
+- TTS bridge hardened after a `flutter_tts` source comparison: per-message
+  watchdog in `ChatTtsQueue` (10 s + 150 ms/char → stop + move on), iOS
+  stops on `AVAudioSession` interruptions and picks the best installed
+  voice (premium > enhanced > default, no novelty / Personal Voice),
+  Android ducks other audio (transient focus) and restarts a dead engine
+  with one retry, input capped at `getMaxSpeechInputLength`. New
+  `voices` channel method + "Voices on this phone" section in the TTS
+  sheet (groundwork for per-message language detection, next).
 - Gotcha: `build_runner build --build-filter` right after a pubspec
   change deleted ~30 committed `.g.dart` files (restored from git) - run
   it without the filter, or check `git status` after.

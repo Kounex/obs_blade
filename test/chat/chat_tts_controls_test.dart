@@ -15,6 +15,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_queue.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_utterance.dart';
+import 'package:obs_blade/utils/chat_tts/chat_tts_voice.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tts_controls.dart';
 
@@ -79,6 +80,22 @@ void main() {
       speaker: speaker,
       isProResolver: () => proStore.isPro,
       messages: () => messages.stream,
+      voicesLoader: () async => const [
+        ChatTtsVoice(
+          id: 'ava',
+          name: 'Ava',
+          language: 'en-US',
+          languageName: 'English (United States)',
+          quality: 3,
+        ),
+        ChatTtsVoice(
+          id: 'anna',
+          name: 'Anna',
+          language: 'de-DE',
+          languageName: 'German (Germany)',
+          quality: 1,
+        ),
+      ],
     );
     GetIt.instance.registerSingleton<ChatTtsStore>(ttsStore);
   });
@@ -166,6 +183,15 @@ void main() {
     expect(find.text('Read chat aloud'), findsOneWidget);
     expect(find.text('Mentions only'), findsOneWidget);
     expect(ttsStore.enabled, isFalse);
+
+    /// The installed voices, one row per language
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tts-language-en-US')),
+      200.0,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.text('English (United States)'), findsOneWidget);
+    expect(find.text('German (Germany)'), findsOneWidget);
   });
 
   testWidgets('the waiting chip jumps to the latest message', (tester) async {
