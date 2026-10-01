@@ -73,6 +73,17 @@ way that regresses tablet. Details: [`docs/redesign/design-system.md`](docs/rede
 `lib/types/` (see architecture doc). `DashboardStore` is a large intentional
 monolith; don't split it unless asked.
 
+**Canvases (OBS 32.1+ / obs-websocket 5.7):** `CanvasViewStore` (per
+dashboard view, next to `DashboardStore`) is a **view-only** switch to a
+non-main canvas (e.g. Aitum Vertical): canvas picker above the scene
+buttons (only with >1 canvas, `ExposeCanvasSwitcher` default on), then
+scene buttons / preview / scene items of that canvas. All its reads go
+through `NetworkHelper.makeScopedRequest` (ack carries `responseData`;
+`DashboardStore._handleResponse` skips scoped responses) and are keyed by
+UUID. Core OBS has no live scene for non-main canvases - picking a scene
+only selects what the app shows; Aitum's vendor requests (live scene,
+vertical stream) are the v2 follow-up. Streaming mode always shows main.
+
 **Chat:** Twitch has a native engine (device-code login + EventSub chat +
 Helix send input — reads AND writes) next to the WebView embeds; a manual
 WebView↔Native switch lives in the chat bar (`SelectedChatEngine`, default
@@ -247,6 +258,18 @@ screen-reader semantics — each row collapses into one
 `Semantics(container: true, excludeSemantics: true, label: ...)` node
 (raw-field label, not the rendered span tree) with `onTap`/`onLongPress`
 as the two exposed actions.
+
+**Chat TTS:** `ChatTtsStore` (startup singleton, Pro) reads the chat the
+Chat tab shows (one native platform or every Combined source) via each
+store's `liveMessages` stream (no backfill / switch restores) →
+`chatTtsUtterance` (audience, skip rules, chat-wide ignore/mute) →
+`ChatTtsQueue` (never drops on its own; "N waiting" + jump to latest;
+stale skip opt-in). Foreground only (no background modes, by decision);
+Wake Lock is app-wide now (default off). Speaker in the
+`NativeChatWindow` header: tap toggles, long press = settings (also an
+options-sheet page), one-off hint on first enable. `flutter_tts`, iOS
+playback + mix/duck. Feasibility + decisions:
+`docs/private/feature-requests-2026-10.md`.
 
 **Monetization (Pro):** native chat engines are gated behind the **Pro
 entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only

@@ -2,6 +2,34 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-01 - Canvas switcher v1, chat text-to-speech, app-wide Wake Lock
+
+From a user's feature request (report + decisions:
+`docs/private/feature-requests-2026-10.md`). Not verified against a real
+OBS 32.1 / device yet - analyze + unit/widget tests only.
+
+- **Wake Lock** applies app-wide (`lib/utils/wake_lock_helper.dart`,
+  startup + resume + Settings), **default off** now (was on, dashboard
+  only). Release note: users who never touched it lose the dashboard
+  default - "turn it on in Settings".
+- **Canvases** (OBS 32.1+): `CanvasViewStore` + `makeScopedRequest`
+  (ack `responseData`, DashboardStore skips scoped responses - a test
+  proves the guard), canvas picker / scene buttons / preview (canvas
+  aspect, clamped) / items (visibility + lock) for a non-main canvas,
+  view-only. `ExposeCanvasSwitcher` (Dashboard customisation, default on);
+  streaming mode resets to main. OBS only emits enable/lock item events
+  for non-main canvases (created/removed are main-only) - 10 s re-read
+  while viewing.
+- **Chat TTS**: `liveMessages` streams on the three native stores, pure
+  `chatTtsUtterance` + `ChatTtsQueue`, `ChatTtsStore` (Pro, persisted
+  on/off), speaker in the `NativeChatWindow` header (tap / long press /
+  waiting chip), settings sheet + options-sheet page, one-off hint.
+  New dep `flutter_tts` (Android `TTS_SERVICE` `<queries>` entry); the
+  workstation needs `pub get` / pods on the next build.
+- Gotcha: `build_runner build --build-filter` right after a pubspec
+  change deleted ~30 committed `.g.dart` files (restored from git) - run
+  it without the filter, or check `git status` after.
+
 ## 2026-10-01 - Test suite de-flaked + sped up, test_gate wrapper
 
 Goal-driven pass over the whole suite (baseline: 368s wall, 4 consistent
