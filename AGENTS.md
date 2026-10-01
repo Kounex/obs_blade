@@ -273,7 +273,12 @@ app's own `com.kounex.obsBlade/tts` channel (`PlatformTtsSpeaker` →
 best installed voice + stops on audio interruptions, Android ducks via
 transient audio focus + restarts a dead engine once; `voices` lists the
 installed voices for the sheet; the Dart queue has a per-message
-watchdog so a missing "finished" never stalls reading) - no plugin:
+watchdog so a missing "finished" never stalls reading). Language: a
+default (`ChatTtsLanguage`, null = phone) + opt-in per-message detection
+(`ChatTtsDetectLanguage`; iOS `NLLanguageRecognizer`, Android 10+
+`TextClassifier`, on the message body only, ≥3 words or ≥12 letters and
+≥60% confidence, else the default) - both done natively, the Dart side
+only sends `setLanguage` + `speak {text, detectionText}`. No plugin:
 `flutter_tts` is CocoaPods-only and iOS is SPM-only since `81a41a27`, so
 check a new iOS plugin for SPM support before adding it. Feasibility +
 decisions:

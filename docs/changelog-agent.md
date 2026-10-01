@@ -40,6 +40,18 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   with one retry, input capped at `getMaxSpeechInputLength`. New
   `voices` channel method + "Voices on this phone" section in the TTS
   sheet (groundwork for per-message language detection, next).
+- TTS language: a default language picker (installed languages, best
+  voice each, "Phone language" default) + an opt-in "Detect each
+  message's language" toggle - native detection on the message body
+  (no username), ≥3 words / ≥12 letters, ≥60% confidence, same base
+  language as the default keeps the default voice, no installed voice →
+  default. iOS prefers the phone's region for a detected language,
+  Android too, offline voices first.
+- Process slips this round (caught by the build, fixed): the iOS bridge
+  rewrite dropped `ManageSubscriptions` (spliced to EOF), and a
+  `dart format lib` touched 5 unrelated files (reverted before commit).
+  Splice native files by exact class boundaries; format changed files
+  only.
 - Gotcha: `build_runner build --build-filter` right after a pubspec
   change deleted ~30 committed `.g.dart` files (restored from git) - run
   it without the filter, or check `git status` after.

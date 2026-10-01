@@ -68,8 +68,14 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
     }
   }
 
+  /// Default language (BCP 47 tag, null = the phone's) and whether each
+  /// message's language is detected - kept natively until changed
+  Future<void> setLanguage({String? language, required bool detect}) =>
+      _invoke('setLanguage', {'language': language, 'detect': detect});
+
   @override
-  Future<void> speak(String text) => _invoke('speak', text);
+  Future<void> speak(String text, {String? detectionText}) =>
+      _invoke('speak', {'text': text, 'detectionText': detectionText});
 
   @override
   Future<void> stop() => _invoke('stop');
@@ -91,10 +97,10 @@ abstract class _ChatTtsStore with Store {
     Stream<ChatTtsMessage> Function()? messages,
     Future<List<ChatTtsVoice>> Function()? voicesLoader,
   }) : _speaker = speaker ?? PlatformTtsSpeaker(),
-       _voicesLoader = voicesLoader,
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
-       _messagesFactory = messages {
+       _messagesFactory = messages,
+       _voicesOverride = voicesLoader {
     _queue = ChatTtsQueue(_speaker, onChanged: _syncQueueState);
   }
 
@@ -105,7 +111,7 @@ abstract class _ChatTtsStore with Store {
   final Stream<ChatTtsMessage> Function()? _messagesFactory;
 
   /// Test seam - replaces the platform voices query
-  final Future<List<ChatTtsVoice>> Function()? _voicesLoader;
+  final Future<List<ChatTtsVoice>> Function()? _voicesOverride;
   late final ChatTtsQueue _queue;
   final List<StreamSubscription<dynamic>> _subscriptions = [];
 
@@ -126,7 +132,7 @@ abstract class _ChatTtsStore with Store {
   /// Asks the platform which voices / languages it can read with
   Future<void> loadVoices() async {
     final speaker = _speaker;
-    final loader = _voicesLoader;
+    final loader = _voicesOverride;
     final List<ChatTtsVoice> loaded = loader != null
         ? await loader()
         : speaker is PlatformTtsSpeaker
@@ -173,6 +179,17 @@ abstract class _ChatTtsStore with Store {
           (_settings.get(SettingsKeys.ChatTtsSpeed.name, defaultValue: 1.0)
                   as num)
               .toDouble(),
+        ),
+      );
+      unawaited(
+        speaker.setLanguage(
+          language: _settings.get(SettingsKeys.ChatTtsLanguage.name) as String?,
+          detect:
+              _settings.get(
+                SettingsKeys.ChatTtsDetectLanguage.name,
+                defaultValue: false,
+              ) ==
+              true,
         ),
       );
     }
@@ -285,8 +302,14 @@ abstract class _ChatTtsStore with Store {
     if (!this.enabled || !_isProResolver()) return;
     if (_messagesFactory == null && !_platformShown(message.platform)) return;
 
-    final text = chatTtsUtterance(message, _readSettings(), _readFilters());
-    if (text != null) _queue.add(text, receivedAt: message.receivedAt);
+    final spoken = chatTtsSpoken(message, _readSettings(), _readFilters());
+    if (spoken != null) {
+      _queue.add(
+        spoken.text,
+        receivedAt: message.receivedAt,
+        detectionText: spoken.body,
+      );
+    }
   }
 
   ChatTtsSettings _readSettings() {

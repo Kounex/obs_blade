@@ -498,7 +498,15 @@ enum SettingsKeys {
   ChatTtsSkipStale,
 
   /// [bool]: The "hold the speaker for settings" hint was shown once
-  HasUserSeenChatTtsHint;
+  HasUserSeenChatTtsHint,
+
+  /// [String?]: TTS default language (BCP 47 tag, e.g. `de-DE`) - null =
+  /// the phone's language. Also the fallback for detection
+  ChatTtsLanguage,
+
+  /// [bool]: TTS detects each message's language and reads it with that
+  /// language's voice when installed (off by default)
+  ChatTtsDetectLanguage;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -626,5 +634,7 @@ enum SettingsKeys {
     SettingsKeys.ChatTtsSpeed: 'chat-tts-speed',
     SettingsKeys.ChatTtsSkipStale: 'chat-tts-skip-stale',
     SettingsKeys.HasUserSeenChatTtsHint: 'has-user-seen-chat-tts-hint',
+    SettingsKeys.ChatTtsLanguage: 'chat-tts-language',
+    SettingsKeys.ChatTtsDetectLanguage: 'chat-tts-detect-language',
   }[this]!;
 }

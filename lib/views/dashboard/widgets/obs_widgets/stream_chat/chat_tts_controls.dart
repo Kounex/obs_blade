@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -371,8 +370,21 @@ class ChatTtsSettingsRows extends StatelessWidget {
               onChanged: (value) =>
                   set(SettingsKeys.ChatTtsMaxLength, value.round()),
             ),
-            section('Voices on this phone'),
-            if (store != null) _InstalledVoices(store: store),
+            section('Language'),
+            toggle(
+              SettingsKeys.ChatTtsDetectLanguage,
+              false,
+              "Detect each message's language",
+              Platform.isAndroid
+                  ? 'Reads a message in its own language when a voice for it '
+                        'is installed (Android 10 or newer), otherwise in the '
+                        'language below. Short messages stay in the language '
+                        'below.'
+                  : 'Reads a message in its own language when a voice for it '
+                        'is installed, otherwise in the language below. Short '
+                        'messages stay in the language below.',
+            ),
+            if (store != null) _LanguagePicker(store: store),
           ],
         );
       },
@@ -380,19 +392,19 @@ class ChatTtsSettingsRows extends StatelessWidget {
   }
 }
 
-/// Read-only list of the languages the system can read with (best voice
-/// each) - asks the platform once per sheet. The phone's language is the
-/// one used today; the list is the groundwork for per-message languages.
-class _InstalledVoices extends StatefulWidget {
+/// The default TTS language: "Phone language" or one of the languages the
+/// system has voices for (best voice each). Also the fallback when
+/// detection finds nothing usable. Asks the platform once per sheet.
+class _LanguagePicker extends StatefulWidget {
   final ChatTtsStore store;
 
-  const _InstalledVoices({required this.store});
+  const _LanguagePicker({required this.store});
 
   @override
-  State<_InstalledVoices> createState() => _InstalledVoicesState();
+  State<_LanguagePicker> createState() => _LanguagePickerState();
 }
 
-class _InstalledVoicesState extends State<_InstalledVoices> {
+class _LanguagePickerState extends State<_LanguagePicker> {
   @override
   void initState() {
     super.initState();
@@ -403,68 +415,104 @@ class _InstalledVoicesState extends State<_InstalledVoices> {
       ? const ['Default', 'Enhanced', 'Premium'][rank]
       : const ['Low quality', 'Normal quality', 'High quality'][rank];
 
+  void _select(Box box, String? language) {
+    if (language == null) {
+      box.delete(SettingsKeys.ChatTtsLanguage.name);
+    } else {
+      box.put(SettingsKeys.ChatTtsLanguage.name, language);
+    }
+    this.widget.store.applySettings();
+  }
+
+  Widget _row(
+    BuildContext context, {
+    required Key key,
+    required String title,
+    required String subtitle,
+    required bool selected,
+    required VoidCallback onTap,
+  }) => PressFlash(
+    key: key,
+    onTap: onTap,
+    child: ListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      title: Text(title),
+      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+      trailing: selected
+          ? Icon(
+              CupertinoIcons.checkmark_alt,
+              color: Theme.of(context).colorScheme.secondary,
+            )
+          : null,
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final String phoneLanguage = PlatformDispatcher.instance.locale
-        .toLanguageTag();
-    final String phonePrefix = phoneLanguage.split('-').first;
+    final String hint = Platform.isIOS
+        ? 'More voices: Settings → Accessibility → Spoken Content → Voices. '
+              'Enhanced and Premium voices sound much more natural.'
+        : 'More voices: the text-to-speech settings of your phone.';
 
-    return Observer(
-      builder: (context) {
-        final voices = this.widget.store.voices;
-        if (voices == null) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-            child: Center(child: CupertinoActivityIndicator()),
-          );
-        }
-        final languages = chatTtsLanguages(voices);
-        final String hint = Platform.isIOS
-            ? 'More voices: Settings → Accessibility → Spoken Content → '
-                  'Voices. Enhanced and Premium voices sound much more '
-                  'natural.'
-            : 'More voices: the text-to-speech settings of your phone.';
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.ChatTtsLanguage],
+      builder: (context, box, child) => Observer(
+        builder: (context) {
+          final voices = this.widget.store.voices;
+          final String? selected =
+              box.get(SettingsKeys.ChatTtsLanguage.name) as String?;
+          final languages = voices == null
+              ? const <ChatTtsLanguage>[]
+              : chatTtsLanguages(voices);
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              languages.isEmpty
-                  ? 'No voices reported by the system.'
-                  : '${languages.length} languages. Chat is read in your '
-                        "phone's language for now. $hint",
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            for (final language in languages)
-              ListTile(
-                key: ValueKey('tts-language-${language.language}'),
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                title: Text(language.languageName),
-                subtitle: Text(
-                  [
-                    language.best.name,
-                    _quality(language.best.qualityRank),
-                    if (language.best.network) 'needs internet',
-                  ].join(' · '),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _row(
+                context,
+                key: const ValueKey('tts-language-phone'),
+                title: 'Phone language',
+                subtitle: 'The language your phone is set to',
+                selected:
+                    selected == null ||
+                    (voices != null &&
+                        !languages.any((l) => l.language == selected)),
+                onTap: () => this._select(box, null),
+              ),
+              if (voices == null)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Center(child: CupertinoActivityIndicator()),
+                )
+              else
+                for (final language in languages)
+                  this._row(
+                    context,
+                    key: ValueKey('tts-language-${language.language}'),
+                    title: language.languageName,
+                    subtitle: [
+                      language.best.name,
+                      _quality(language.best.qualityRank),
+                      if (language.best.network) 'needs internet',
+                    ].join(' · '),
+                    selected: selected == language.language,
+                    onTap: () => this._select(box, language.language),
+                  ),
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Text(
+                  voices != null && languages.isEmpty
+                      ? 'No voices reported by the system. $hint'
+                      : hint,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                trailing:
-                    language.language == phoneLanguage ||
-                        language.language.split('-').first == phonePrefix &&
-                            !languages.any((l) => l.language == phoneLanguage)
-                    ? Text(
-                        'In use',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.secondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                    : null,
               ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 }

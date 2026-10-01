@@ -1,5 +1,6 @@
 import AVFoundation
 import Flutter
+import NaturalLanguage
 import StoreKit
 import UIKit
 
@@ -25,7 +26,11 @@ import UIKit
 /// the current message so the queue never waits on it.
 ///
 /// Voice: the best installed one (premium > enhanced > default) for the
-/// phone's language - iOS alone would use the default ("compact") voice.
+/// default language (the setting, else the phone's) - iOS alone would use
+/// the "compact" voice. With detection on, a message clearly in another
+/// language (3+ words or 12+ letters, 60%+ confidence) is read with that
+/// language's best voice, preferring the phone's region; no voice for it,
+/// or the default's own language → the default voice.
 final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   private static var shared: ChatTts?
 
@@ -35,6 +40,14 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
 
   /// Best voice per language code, rebuilt when the installed voices change
   private var bestVoices: [String: AVSpeechSynthesisVoice?] = [:]
+
+  /// BCP 47 tag from the settings, nil = the phone's language
+  private var defaultLanguage: String?
+  private var detect = false
+
+  private var fallbackLanguage: String {
+    defaultLanguage ?? AVSpeechSynthesisVoice.currentLanguageCode()
+  }
 
   static func register(messenger: FlutterBinaryMessenger) {
     let tts = ChatTts()
@@ -68,7 +81,8 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   private func handle(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
     switch call.method {
     case "speak":
-      guard let text = call.arguments as? String,
+      let args = call.arguments as? [String: Any]
+      guard let text = args?["text"] as? String,
         !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       else {
         result(nil)
@@ -77,7 +91,7 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
       activateSession()
       let utterance = AVSpeechUtterance(string: text)
       utterance.rate = rate
-      if let voice = bestVoice(for: AVSpeechSynthesisVoice.currentLanguageCode()) {
+      if let voice = voice(for: (args?["detectionText"] as? String) ?? text) {
         utterance.voice = voice
       }
       pending[ObjectIdentifier(utterance)] = result
@@ -92,6 +106,11 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
         max(AVSpeechUtteranceDefaultSpeechRate * multiplier, AVSpeechUtteranceMinimumSpeechRate),
         AVSpeechUtteranceMaximumSpeechRate
       )
+      result(nil)
+    case "setLanguage":
+      let args = call.arguments as? [String: Any]
+      defaultLanguage = args?["language"] as? String
+      detect = (args?["detect"] as? Bool) ?? false
       result(nil)
     case "voices":
       result(installedVoices())
@@ -133,6 +152,49 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
     let best = candidates.max { $0.quality.rawValue < $1.quality.rawValue }
     bestVoices[language] = best
     return best
+  }
+
+  private static func baseCode(_ language: String) -> String {
+    (language.split(separator: "-").first.map(String.init) ?? language).lowercased()
+  }
+
+  /// The voice for one message: the default language's best voice, or -
+  /// with detection on - the detected language's when it's a different
+  /// language and installed
+  private func voice(for text: String) -> AVSpeechSynthesisVoice? {
+    let fallback = bestVoice(for: fallbackLanguage)
+    guard detect, let detected = detectLanguage(text),
+      ChatTts.baseCode(detected) != ChatTts.baseCode(fallbackLanguage)
+    else { return fallback }
+    return bestVoice(forDetected: detected) ?? fallback
+  }
+
+  /// Language code of [text] when it's long and clear enough - chat lines
+  /// are short, guessing on "lol" would switch voices at random
+  private func detectLanguage(_ text: String) -> String? {
+    let words = text.split(whereSeparator: { $0.isWhitespace }).count
+    let letters = text.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
+    guard words >= 3 || letters >= 12 else { return nil }
+    let recognizer = NLLanguageRecognizer()
+    recognizer.processString(text)
+    guard let (language, confidence) = recognizer.languageHypotheses(withMaximum: 1).first,
+      confidence >= 0.6
+    else { return nil }
+    return language.rawValue
+  }
+
+  /// Best voice for a detected language (`es`, `zh-Hans`, …): the phone's
+  /// region first (`es-` + region), then any region by quality
+  private func bestVoice(forDetected detected: String) -> AVSpeechSynthesisVoice? {
+    let mapped = ["zh-Hans": "zh-CN", "zh-Hant": "zh-TW"][detected] ?? detected
+    if mapped.contains("-") { return bestVoice(for: mapped) }
+    if let region = Locale.current.regionCode {
+      let regional = "\(mapped)-\(region)"
+      if usableVoices().contains(where: { $0.language == regional }) {
+        return bestVoice(for: regional)
+      }
+    }
+    return bestVoice(for: mapped)
   }
 
   /// One entry per installed voice: identifier, name, language (BCP 47),

@@ -5,16 +5,19 @@ import 'dart:collection';
 /// app, a fake in tests. [speak] completes once the utterance finished (or
 /// was stopped).
 abstract class ChatTtsSpeaker {
-  Future<void> speak(String text);
+  /// [detectionText]: the part language detection should look at (the
+  /// message without the username) - null = [text]
+  Future<void> speak(String text, {String? detectionText});
 
   Future<void> stop();
 }
 
 class _Pending {
   final String text;
+  final String? detectionText;
   final DateTime receivedAt;
 
-  const _Pending(this.text, this.receivedAt);
+  const _Pending(this.text, this.detectionText, this.receivedAt);
 }
 
 /// Reads utterances one after another. Nothing is dropped on its own:
@@ -61,8 +64,8 @@ class ChatTtsQueue {
 
   bool get speaking => _speaking;
 
-  void add(String text, {DateTime? receivedAt}) {
-    _pending.add(_Pending(text, receivedAt ?? _now()));
+  void add(String text, {DateTime? receivedAt, String? detectionText}) {
+    _pending.add(_Pending(text, detectionText, receivedAt ?? _now()));
     this.onChanged?.call();
     if (!_speaking) _next();
   }
@@ -90,7 +93,7 @@ class ChatTtsQueue {
       this.onChanged?.call();
       try {
         await _speaker
-            .speak(next.text)
+            .speak(next.text, detectionText: next.detectionText)
             .timeout(
               this.utteranceTimeout(next.text),
               onTimeout: () => _speaker.stop(),

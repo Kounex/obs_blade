@@ -10,6 +10,11 @@ import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.speech.tts.Voice
+import android.view.textclassifier.TextClassificationManager
+import android.view.textclassifier.TextLanguage
+import java.util.Locale
+import java.util.concurrent.Executors
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -42,8 +47,14 @@ class MainActivity: FlutterActivity() {
  * While a message is read, other apps' audio is lowered (transient audio
  * focus, "may duck") and gets it back afterwards. A failing `speak` (the
  * engine service died, e.g. updated in the background) restarts the
- * engine and retries that message once. The voice stays the one picked in
- * the system TTS settings.
+ * engine and retries that message once.
+ *
+ * Voice: the default language's best installed voice (offline first), or
+ * the system TTS settings' voice when no language is set. With detection
+ * on (Android 10+, on-device TextClassifier), a message clearly in another
+ * language (3+ words or 12+ letters, 60%+ confidence) is read with that
+ * language's best voice, preferring the phone's region; none installed,
+ * or the default's own language → the default voice.
  */
 class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCallHandler {
   private val appContext = context.applicationContext
@@ -61,6 +72,13 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   private val pending = HashMap<String, MethodChannel.Result>()
   private var rate = 1.0f
   private var nextId = 0
+
+  /** BCP 47 tag from the settings, null = the system TTS settings' voice */
+  private var defaultLanguage: String? = null
+  private var detect = false
+
+  /** Language detection blocks - never on the main thread */
+  private val detector = Executors.newSingleThreadExecutor()
 
   private val listener = object : UtteranceProgressListener() {
     override fun onStart(utteranceId: String?) {}
@@ -151,14 +169,78 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     }
   }
 
+  /** Detects (off the main thread when on) and then speaks */
+  private fun speakDetecting(text: String, detectionText: String, result: MethodChannel.Result) {
+    if (!detect || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+      speak(text, null, result, retry = true)
+      return
+    }
+    detector.execute {
+      val language = detectLanguage(detectionText)
+      main.post { speak(text, language, result, retry = true) }
+    }
+  }
+
+  private fun detectLanguage(text: String): String? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+    val words = text.trim().split(Regex("\\s+")).count { it.isNotEmpty() }
+    val letters = text.count { it.isLetter() }
+    if (words < 3 && letters < 12) return null
+    return try {
+      val classifier = appContext
+        .getSystemService(TextClassificationManager::class.java)
+        ?.textClassifier ?: return null
+      val detected = classifier.detectLanguage(TextLanguage.Request.Builder(text).build())
+      if (detected.localeHypothesisCount == 0) return null
+      val locale = detected.getLocale(0)
+      if (detected.getConfidenceScore(locale) < 0.6f) null else locale.toLanguageTag()
+    } catch (e: Exception) {
+      null
+    }
+  }
+
+  private fun baseCode(tag: String): String = Locale.forLanguageTag(tag).language
+
+  private fun installedVoices(): List<Voice> = try {
+    (engine?.voices ?: emptySet())
+      .filter { !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) }
+  } catch (e: Exception) {
+    emptyList()
+  }
+
+  /** Best voice for [tag]: exact locale, else the phone's region, else any region - quality first, offline on ties */
+  private fun bestVoice(tag: String): Voice? {
+    val wanted = Locale.forLanguageTag(tag)
+    val sameLanguage = installedVoices().filter { it.locale.language == wanted.language }
+    if (sameLanguage.isEmpty()) return null
+    val region = wanted.country.ifEmpty { Locale.getDefault().country }
+    val regional = sameLanguage.filter { it.locale.country == region }
+    val pool = regional.ifEmpty { sameLanguage }
+    return pool.sortedWith(
+      compareByDescending<Voice> { it.quality }.thenBy { it.isNetworkConnectionRequired }
+    ).firstOrNull()
+  }
+
+  /** The voice for one message - null keeps the engine's default voice */
+  private fun voiceFor(detected: String?): Voice? {
+    val fallbackTag = defaultLanguage
+    val fallback = fallbackTag?.let { bestVoice(it) }
+    if (detected == null) return fallback
+    val fallbackBase = baseCode(
+      fallbackTag ?: (engine?.defaultVoice?.locale ?: Locale.getDefault()).toLanguageTag()
+    )
+    if (baseCode(detected) == fallbackBase) return fallback
+    return bestVoice(detected) ?: fallback
+  }
+
   /** [retry]: restart the engine and try once more if speaking fails */
-  private fun speak(text: String, result: MethodChannel.Result, retry: Boolean) {
+  private fun speak(text: String, detected: String?, result: MethodChannel.Result, retry: Boolean) {
     whenInitialized {
       val tts = engine
       if (!ready || tts == null) {
         if (retry) {
           createEngine()
-          speak(text, result, retry = false)
+          speak(text, detected, result, retry = false)
         } else {
           result.success(null)
         }
@@ -168,12 +250,18 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
       pending[id] = result
       requestFocus()
       tts.setSpeechRate(rate)
+      val voice = voiceFor(detected)
+      if (voice != null) {
+        tts.voice = voice
+      } else {
+        tts.defaultVoice?.let { tts.voice = it }
+      }
       val capped = text.take(TextToSpeech.getMaxSpeechInputLength())
       if (tts.speak(capped, TextToSpeech.QUEUE_FLUSH, Bundle(), id) != TextToSpeech.SUCCESS) {
         pending.remove(id)
         if (retry) {
           createEngine()
-          speak(text, result, retry = false)
+          speak(text, detected, result, retry = false)
         } else {
           result.success(null)
           if (pending.isEmpty()) releaseFocus()
@@ -206,12 +294,17 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     when (call.method) {
       "speak" -> {
-        val text = call.arguments as? String
+        val text = call.argument<String>("text")
         if (text.isNullOrBlank()) {
           result.success(null)
           return
         }
-        speak(text, result, retry = true)
+        speakDetecting(text, call.argument<String>("detectionText") ?: text, result)
+      }
+      "setLanguage" -> {
+        defaultLanguage = call.argument<String>("language")
+        detect = call.argument<Boolean>("detect") ?: false
+        result.success(null)
       }
       "stop" -> {
         engine?.stop()
@@ -229,6 +322,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   }
 
   fun shutdown() {
+    detector.shutdownNow()
     finishAll()
     engine?.stop()
     engine?.shutdown()

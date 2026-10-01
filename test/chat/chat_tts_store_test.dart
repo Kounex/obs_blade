@@ -14,11 +14,13 @@ import '../persistence/support/hive_test_harness.dart';
 
 class _FakeSpeaker implements ChatTtsSpeaker {
   final List<String> spoken = [];
+  final List<String?> detectionTexts = [];
   final List<Completer<void>> _running = [];
 
   @override
-  Future<void> speak(String text) {
+  Future<void> speak(String text, {String? detectionText}) {
     spoken.add(text);
+    detectionTexts.add(detectionText);
     final done = Completer<void>();
     _running.add(done);
     return done.future;
@@ -162,5 +164,13 @@ void main() {
     await settle();
     expect(speaker.spoken, ['Viewer: one']);
     expect(settings().get(SettingsKeys.ChatTtsEnabled.name), isFalse);
+  });
+
+  test('language detection gets the message alone, not the username', () async {
+    store.setEnabled(true);
+    messages.add(_msg('hola amigos que tal', author: 'EnglishName'));
+    await settle();
+    expect(speaker.spoken, ['EnglishName: hola amigos que tal']);
+    expect(speaker.detectionTexts, ['hola amigos que tal']);
   });
 }

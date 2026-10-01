@@ -27,7 +27,7 @@ class _HangingSpeaker implements ChatTtsSpeaker {
   final List<Completer<void>> _running = [];
 
   @override
-  Future<void> speak(String text) {
+  Future<void> speak(String text, {String? detectionText}) {
     spoken.add(text);
     final done = Completer<void>();
     _running.add(done);
@@ -192,6 +192,27 @@ void main() {
     );
     expect(find.text('English (United States)'), findsOneWidget);
     expect(find.text('German (Germany)'), findsOneWidget);
+    expect(find.text("Detect each message's language"), findsOneWidget);
+
+    /// Phone language is the default pick
+    Finder check(String key) => find.descendant(
+      of: find.byKey(Key(key)),
+      matching: find.byIcon(CupertinoIcons.checkmark_alt),
+    );
+    expect(check('tts-language-phone'), findsOneWidget);
+    expect(check('tts-language-de-DE'), findsNothing);
+
+    /// Picking a language makes it the default (persisted)
+    await tapReal(tester, find.byKey(const Key('tts-language-de-DE')));
+    await tester.pump();
+    expect(settings().get(SettingsKeys.ChatTtsLanguage.name), 'de-DE');
+    expect(check('tts-language-de-DE'), findsOneWidget);
+    expect(check('tts-language-phone'), findsNothing);
+
+    /// And back to the phone's language
+    await tapReal(tester, find.byKey(const Key('tts-language-phone')));
+    await tester.pump();
+    expect(settings().get(SettingsKeys.ChatTtsLanguage.name), isNull);
   });
 
   testWidgets('the waiting chip jumps to the latest message', (tester) async {

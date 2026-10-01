@@ -40,7 +40,7 @@ class _FakeSpeaker implements ChatTtsSpeaker {
   int stops = 0;
 
   @override
-  Future<void> speak(String text) {
+  Future<void> speak(String text, {String? detectionText}) {
     spoken.add(text);
     final done = Completer<void>();
     _running.add(done);

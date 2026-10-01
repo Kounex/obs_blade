@@ -145,6 +145,17 @@ String? chatTtsUtterance(
   ChatTtsMessage message,
   ChatTtsSettings settings,
   ChatTtsFilters filters,
+) => chatTtsSpoken(message, settings, filters)?.text;
+
+/// What TTS reads for one message: [text] is spoken, [body] is the message
+/// alone (no username) - language detection looks at that
+typedef ChatTtsSpoken = ({String text, String body});
+
+/// [chatTtsUtterance] plus the bare message body for language detection
+ChatTtsSpoken? chatTtsSpoken(
+  ChatTtsMessage message,
+  ChatTtsSettings settings,
+  ChatTtsFilters filters,
 ) {
   if (message.isOwn && !settings.readOwnMessages) return null;
 
@@ -213,5 +224,8 @@ String? chatTtsUtterance(
         : cut;
   }
 
-  return settings.readUsernames ? '${message.author}: $text' : text;
+  return (
+    text: settings.readUsernames ? '${message.author}: $text' : text,
+    body: text,
+  );
 }
