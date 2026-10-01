@@ -2,6 +2,46 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-01 - Test suite de-flaked + sped up, test_gate wrapper
+
+Goal-driven pass over the whole suite (baseline: 368s wall, 4 consistent
+failures, several timing races). All changes test/-only plus the tool; no
+lib/ changes.
+
+- **mod_action_sheet_test.dart**: the 4 long-standing hit-test failures were
+  the login pin fetch leaving the sample pin banner over the first chat row
+  (the banner overlays the timeline), so `longPress()` hit the banner. Fixed
+  via a shared `pumpChatView` helper that clears the pin after the fetch
+  flushed.
+- **state_ordering_test.dart** (the intermittent one): rewritten off
+  wall-clock sync (300ms ackDelays, 400-500ms settles, 1s waitFor caps) onto
+  deterministic gates - `FakeObsPeer` can now hold/release acks
+  (`heldRequestTypes`, `holdRequestFor`, `releaseOne`/`releaseAll`,
+  closeSockets purges held acks; it also ignores stray non-WebSocket
+  upgrades), and a `flushPeer()` round-trip
+  (`NetworkHelper.makeRequest(GetVersion)`) proves a released response was
+  processed (single-socket in-order delivery). 10.7s -> ~1s, 15/15 stable.
+- **9 more wall-clock sites hardened** across websocket/home/settings/chat/
+  dashboard (condition-polling with 5s caps replaces fixed settles; two more
+  files onto the hold/flush pattern). 90/90 repeat runs green. Benign sites
+  (real-time ack-timeout test, prove-a-negative drains) documented as left.
+- **twitch_chat_store_test.dart 75s -> ~1s**: all 14 `TwitchChatStore(`
+  sites now inject `FakeSilentIrcSidecar` - every connect had been making a
+  REAL WebSocket attempt to irc-ws.chat.twitch.tv (~600ms, swallowed). Same
+  one-liner applied to the 11 other chat test files that constructed the
+  store without the override (suite rule: no real network in tests). Chat
+  suite 2:58 -> 2:19. native_chat_options_sheet_test ~12s -> ~5s (shorter
+  Hive-close windows).
+- **tool/test_gate.dart** (new, `dart tool/test_gate.dart [--runs=N]
+  [targets]`): serial json-reporter runner that detects the NAS runner load
+  flake ("Unable to connect to flutter_tester process: WebSocketException"
+  on a file's `loading` test), retries just those files (3 attempts), and
+  fails only on real test failures. `--selftest` covers the classifier.
+  Documented in AGENTS.md.
+- Proof: 3 consecutive full-suite gate runs clean (1627/1627 each); the
+  runner flake fired in runs 2 and 3 and was auto-recovered both times.
+  Full suite ~368s -> ~215s per run.
+
 ## 2026-09-30 - 4.0.1 submitted to both stores, release skills
 
 4.0.1 (2026093001, release commit `35a0040f`) carries today's fixes (entries

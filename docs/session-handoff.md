@@ -192,11 +192,17 @@ Play internal-track draft `3.3.0 (2026090701)`.
   403 — use the app's browser UA or `curl -A` for smokes.
 
 Process notes: default process tier **S**; `AGENTS.md` session-start
-checklist is resume-proof (run it anyway). Known flakes (don't chase):
-4 `mod_action_sheet_test.dart` hit-test-offset failures (reproduce on
-the pre-change tree too), `test/websocket/state_ordering_test.dart`
-(intermittent), random single-file "loading" `WebSocketException`s on
-long runs (rerun the file). Full serial chat + persistence gate ≈ 5 min
+checklist is resume-proof (run it anyway). Former known flakes are
+**fixed** (2026-10-01, changelog same date): the 4
+`mod_action_sheet_test.dart` hit-test failures (pin banner overlaying
+the first row — `pumpChatView` clears it) and the intermittent
+`state_ordering_test.dart` (now deterministic via `FakeObsPeer`
+hold/release + a `GetVersion` flush, no wall-clock sync). Random
+single-file "loading" `WebSocketException`s on long runs are the NAS
+runner flake — run gates through **`dart tool/test_gate.dart`**
+(`--runs=N` for consecutive-clean proofs), which auto-retries just
+those files and fails only on real test failures. Full serial chat +
+persistence gate ≈ 5 min
 here (~1150 tests). **Gotchas:** a Hive `put` inside a `testWidgets`
 body hangs the whole file at teardown ("Cannot close sink while adding
 stream") — wrap it in `tester.runAsync` + `flush()`, or use a plain
