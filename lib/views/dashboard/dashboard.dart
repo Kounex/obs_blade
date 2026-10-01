@@ -15,6 +15,7 @@ import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_co
 
 import '../../shared/dialogs/confirmation.dart';
 import '../../stores/shared/network.dart';
+import '../../stores/views/canvas_view.dart';
 import '../../stores/views/dashboard.dart';
 import '../../stores/views/youtube_chat.dart';
 import '../../types/enums/hive_keys.dart';
@@ -82,6 +83,11 @@ class _DashboardViewState extends State<DashboardView>
     /// Initiate the [DashboardStore] object by initiating socket listeners
     /// and first calls etc.
     GetIt.instance<DashboardStore>().init();
+
+    /// Same per-view lifetime for the canvas switch (view-only, reads the
+    /// DashboardStore it was just paired with)
+    GetIt.instance.resetLazySingleton<CanvasViewStore>();
+    GetIt.instance<CanvasViewStore>().init();
 
     when(
       (_) =>
@@ -155,6 +161,7 @@ class _DashboardViewState extends State<DashboardView>
     WidgetsBinding.instance.removeObserver(this);
     _connectivitySubscription?.cancel();
     GetIt.instance<DashboardStore>().disposeListeners();
+    GetIt.instance<CanvasViewStore>().dispose();
     super.dispose();
   }
 

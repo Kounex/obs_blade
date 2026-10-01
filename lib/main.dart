@@ -34,6 +34,7 @@ import 'stores/shared/tabs.dart';
 import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
+import 'stores/views/canvas_view.dart';
 import 'stores/views/combined_chat.dart';
 import 'stores/views/kick_chat.dart';
 import 'stores/views/kick_emotes.dart';
@@ -101,6 +102,10 @@ void _initializeStores() {
   GetIt.instance.registerLazySingleton<DashboardStore>(
     () => DashboardStore(),
     dispose: (store) => store.disposeListeners(),
+  );
+  GetIt.instance.registerLazySingleton<CanvasViewStore>(
+    () => CanvasViewStore(),
+    dispose: (store) => store.dispose(),
   );
   GetIt.instance.registerLazySingleton<StatisticsStore>(
     () => StatisticsStore(),

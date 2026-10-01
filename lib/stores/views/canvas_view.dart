@@ -434,3 +434,10 @@ abstract class _CanvasViewStore with Store {
     return width.round().clamp(160, 1920);
   }
 }
+
+/// The canvas switch for widgets that also render outside a dashboard
+/// session (widget tests, customisation mocks) - null when not registered
+CanvasViewStore? canvasViewStoreOrNull() =>
+    GetIt.instance.isRegistered<CanvasViewStore>()
+    ? GetIt.instance<CanvasViewStore>()
+    : null;

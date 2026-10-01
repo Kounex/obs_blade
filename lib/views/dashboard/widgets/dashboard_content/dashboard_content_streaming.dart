@@ -7,6 +7,7 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/general/responsive_widget_wrapper.dart';
+import 'package:obs_blade/stores/views/canvas_view.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/resizeable_scene_preview.dart';
@@ -63,6 +64,12 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
   @override
   void initState() {
     super.initState();
+
+    /// Streaming mode is the live view - always the main canvas (its fixed
+    /// layout has no room for the canvas picker)
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => canvasViewStoreOrNull()?.viewCanvas(null),
+    );
     final Box<dynamic> settingsBox = Hive.box(HiveKeys.Settings.name);
     this._statsOverlay =
         settingsBox.get(

@@ -12,6 +12,7 @@ import '../../../../../shared/general/base/icon_button.dart';
 import '../../../../../shared/general/custom_expansion_tile.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../../stores/views/canvas_view.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
@@ -22,6 +23,31 @@ import 'preview_warning_dialog.dart';
 /// route - only one [ScenePreview] is mounted at a time (regular vs.
 /// streaming layout), so the tag is unique per HeroController scope
 const String kScenePreviewHeroTag = 'scene-preview-hero';
+
+/// Frames of the viewed canvas: another canvas' scene while one is viewed
+/// ([CanvasViewStore]), the program scene otherwise
+Uint8List? _previewBytes() {
+  final canvasStore = canvasViewStoreOrNull();
+  return canvasStore != null && canvasStore.isViewingOtherCanvas
+      ? canvasStore.previewImageBytes
+      : GetIt.instance<DashboardStore>().scenePreviewImageBytes;
+}
+
+String _headerText() {
+  final canvas = canvasViewStoreOrNull()?.viewedCanvas;
+  return canvas == null
+      ? 'Current OBS scene preview'
+      : 'Preview · ${canvas.name} canvas';
+}
+
+/// 16:9 for the program; another canvas uses its own aspect, clamped so a
+/// vertical canvas doesn't push the dashboard down by a full phone height
+double _previewAspectRatio() {
+  final canvas = canvasViewStoreOrNull()?.viewedCanvas;
+  final aspect = canvas?.aspectRatio;
+  if (aspect == null) return 16.0 / 9.0;
+  return aspect.clamp(0.75, 16.0 / 9.0);
+}
 
 class ScenePreview extends StatefulWidget {
   final bool expandable;
@@ -46,7 +72,7 @@ class _ScenePreviewState extends State<ScenePreview> {
 
     _d.add(
       reaction<bool>(
-        (_) => GetIt.instance<DashboardStore>().scenePreviewImageBytes != null,
+        (_) => _previewBytes() != null,
         (imageAvailable) => setState(() => _imageAvailable = imageAvailable),
       ),
     );
@@ -91,124 +117,131 @@ class _ScenePreviewState extends State<ScenePreview> {
               _handleImageTap();
             }
           : null,
-      child: AspectRatio(
-        /// Fixed 16:9 frame (matches the [ScenePreviewMock] stand-in shown
-        /// in dashboard customisation) instead of sizing from the fetched
-        /// image's own intrinsic height - that made the pane grow from the
-        /// "fetching" placeholder's arbitrary 150px up to the real image's
-        /// natural size once decoded, visibly ballooning open before
-        /// settling. A stable aspect keeps the expand animation's target
-        /// size constant from the first frame
-        aspectRatio: 16.0 / 9.0,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(width: double.infinity, color: Colors.black),
-            AnimatedSwitcher(
-              duration: AppMotion.slow,
-              child: _imageAvailable
-                  ? Hero(
-                      tag: kScenePreviewHeroTag,
-                      child: Observer(
-                        builder: (context) {
-                          /// This Observer reacts to the same field as the
-                          /// [_imageAvailable] reaction that gates this
-                          /// branch, so a re-request nulling the bytes can
-                          /// be observed here a frame before that reaction's
-                          /// setState swaps the branch away - null-safe
-                          /// instead of force-unwrapping
-                          final Uint8List? bytes =
-                              dashboardStore.scenePreviewImageBytes;
-                          if (bytes == null) return const SizedBox.shrink();
+      child: Observer(
+        builder: (context) => AspectRatio(
+          /// Fixed 16:9 frame (matches the [ScenePreviewMock] stand-in shown
+          /// in dashboard customisation) instead of sizing from the fetched
+          /// image's own intrinsic height - that made the pane grow from the
+          /// "fetching" placeholder's arbitrary 150px up to the real image's
+          /// natural size once decoded, visibly ballooning open before
+          /// settling. A stable aspect keeps the expand animation's target
+          /// size constant from the first frame
+          aspectRatio: _previewAspectRatio(),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(width: double.infinity, color: Colors.black),
+              AnimatedSwitcher(
+                duration: AppMotion.slow,
+                child: _imageAvailable
+                    ? Hero(
+                        tag: kScenePreviewHeroTag,
+                        child: Observer(
+                          builder: (context) {
+                            /// This Observer reacts to the same field as the
+                            /// [_imageAvailable] reaction that gates this
+                            /// branch, so a re-request nulling the bytes can
+                            /// be observed here a frame before that reaction's
+                            /// setState swaps the branch away - null-safe
+                            /// instead of force-unwrapping
+                            final Uint8List? bytes = _previewBytes();
+                            if (bytes == null) return const SizedBox.shrink();
 
-                          return Image.memory(
-                            bytes,
+                            return Image.memory(
+                              bytes,
 
-                            /// Might reduce the memory used and therefore
-                            /// the performance of the frequently changing
-                            /// image - a multiplicator is used since
-                            /// using the original size would decrease the
-                            /// quality significantly
-                            // cacheHeight: (maxImageHeight * 1.5).toInt(),
-                            fit: BoxFit.contain,
-                            gaplessPlayback: true,
-                          );
-                        },
-                      ),
-                    )
-                  : Center(
-                      key: const ValueKey('fetching-preview'),
-                      child: BaseProgressIndicator(text: 'Fetching preview...'),
-                    ),
-            ),
-            if (_imageAvailable)
-              AnimatedOpacity(
-                duration: AppMotion.medium,
-                opacity: _uiVisible ? 1.0 : 0.0,
-                child: IgnorePointer(
-                  ignoring: !_uiVisible,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      height: 64.0,
-                      alignment: Alignment.bottomRight,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.7),
-                          ],
+                              /// Might reduce the memory used and therefore
+                              /// the performance of the frequently changing
+                              /// image - a multiplicator is used since
+                              /// using the original size would decrease the
+                              /// quality significantly
+                              // cacheHeight: (maxImageHeight * 1.5).toInt(),
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                            );
+                          },
+                        ),
+                      )
+                    : Center(
+                        key: const ValueKey('fetching-preview'),
+                        child: BaseProgressIndicator(
+                          text: 'Fetching preview...',
                         ),
                       ),
-                      child: IconButton(
-                        onPressed: _uiVisible
-                            ? () {
-                                _handleImageTap();
+              ),
+              if (_imageAvailable)
+                AnimatedOpacity(
+                  duration: AppMotion.medium,
+                  opacity: _uiVisible ? 1.0 : 0.0,
+                  child: IgnorePointer(
+                    ignoring: !_uiVisible,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        height: 64.0,
+                        alignment: Alignment.bottomRight,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.7),
+                            ],
+                          ),
+                        ),
+                        child: IconButton(
+                          onPressed: _uiVisible
+                              ? () {
+                                  _handleImageTap();
 
-                                /// Root navigator so the lightbox covers the
-                                /// tab shell (app / tab bar) as well - costs
-                                /// the [Hero] flight (different
-                                /// [HeroController] scope), accepted tradeoff
-                                Navigator.of(context, rootNavigator: true).push(
-                                  PageRouteBuilder<void>(
-                                    opaque: true,
-                                    transitionDuration: AppMotion.medium,
-                                    reverseTransitionDuration: AppMotion.medium,
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => const _ScenePreviewFullscreen(),
-                                    transitionsBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                          child,
-                                        ) => FadeTransition(
-                                          opacity: animation,
-                                          child: child,
-                                        ),
-                                  ),
-                                );
-                              }
-                            : null,
-                        icon: const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: Icon(
-                            CupertinoIcons.fullscreen,
-                            color: Colors.white,
+                                  /// Root navigator so the lightbox covers the
+                                  /// tab shell (app / tab bar) as well - costs
+                                  /// the [Hero] flight (different
+                                  /// [HeroController] scope), accepted tradeoff
+                                  Navigator.of(
+                                    context,
+                                    rootNavigator: true,
+                                  ).push(
+                                    PageRouteBuilder<void>(
+                                      opaque: true,
+                                      transitionDuration: AppMotion.medium,
+                                      reverseTransitionDuration:
+                                          AppMotion.medium,
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) => const _ScenePreviewFullscreen(),
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) => FadeTransition(
+                                            opacity: animation,
+                                            child: child,
+                                          ),
+                                    ),
+                                  );
+                                }
+                              : null,
+                          icon: const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Icon(
+                              CupertinoIcons.fullscreen,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -228,38 +261,40 @@ class _ScenePreviewState extends State<ScenePreview> {
             SettingsKeys.ExposeScenePreview.name,
             defaultValue: true,
           )
-          ? CustomExpansionTile(
-              headerText: 'Current OBS scene preview',
-              manualExpand: (expandFunction, expanded) {
-                // ignore: prefer_function_declarations_over_variables
-                VoidCallback onExpand = () {
-                  expandFunction();
-                  dashboardStore.setShouldRequestPreviewImage(
-                    !dashboardStore.shouldRequestPreviewImage,
-                  );
-                };
-                !settingsBox.get(
-                          SettingsKeys.DontShowPreviewWarning.name,
-                          defaultValue: false,
-                        ) &&
-                        !expanded
-                    ? ModalHandler.showBaseDialog(
-                        context: context,
-                        dialogWidget: PreviewWarningDialog(
-                          onOk: (checked) {
-                            settingsBox.put(
-                              SettingsKeys.DontShowPreviewWarning.name,
-                              checked,
-                            );
-                            onExpand();
-                          },
-                        ),
-                      )
-                    : onExpand();
-              },
-              expandedBody: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: preview,
+          ? Observer(
+              builder: (context) => CustomExpansionTile(
+                headerText: _headerText(),
+                manualExpand: (expandFunction, expanded) {
+                  // ignore: prefer_function_declarations_over_variables
+                  VoidCallback onExpand = () {
+                    expandFunction();
+                    dashboardStore.setShouldRequestPreviewImage(
+                      !dashboardStore.shouldRequestPreviewImage,
+                    );
+                  };
+                  !settingsBox.get(
+                            SettingsKeys.DontShowPreviewWarning.name,
+                            defaultValue: false,
+                          ) &&
+                          !expanded
+                      ? ModalHandler.showBaseDialog(
+                          context: context,
+                          dialogWidget: PreviewWarningDialog(
+                            onOk: (checked) {
+                              settingsBox.put(
+                                SettingsKeys.DontShowPreviewWarning.name,
+                                checked,
+                              );
+                              onExpand();
+                            },
+                          ),
+                        )
+                      : onExpand();
+                },
+                expandedBody: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: preview,
+                ),
               ),
             )
           : const SizedBox(),
@@ -277,8 +312,6 @@ class _ScenePreviewFullscreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
-
     return Material(
       color: Colors.black,
       child: Stack(
@@ -287,11 +320,15 @@ class _ScenePreviewFullscreen extends StatelessWidget {
           Hero(
             tag: kScenePreviewHeroTag,
             child: Observer(
-              builder: (context) => Image.memory(
-                dashboardStore.scenePreviewImageBytes!,
-                fit: BoxFit.contain,
-                gaplessPlayback: true,
-              ),
+              builder: (context) {
+                final Uint8List? bytes = _previewBytes();
+                if (bytes == null) return const SizedBox.shrink();
+                return Image.memory(
+                  bytes,
+                  fit: BoxFit.contain,
+                  gaplessPlayback: true,
+                );
+              },
             ),
           ),
           Positioned(

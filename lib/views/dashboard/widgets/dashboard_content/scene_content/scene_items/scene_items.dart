@@ -4,7 +4,9 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/nested_list_manager.dart';
+import '../../../../../../stores/views/canvas_view.dart';
 import '../../../../../../stores/views/dashboard.dart';
+import '../../canvas/canvas_scene_items.dart';
 import '../placeholder_scene_item.dart';
 import '../visibility_slide_wrapper.dart';
 import 'scene_item_tile.dart';
@@ -30,6 +32,11 @@ class _SceneItemsState extends State<SceneItems>
 
     return Observer(
       builder: (context) {
+        /// Another OBS canvas is viewed: the items of its picked scene
+        final CanvasViewStore? canvasStore = canvasViewStoreOrNull();
+        final bool otherCanvas =
+            canvasStore != null && canvasStore.isViewingOtherCanvas;
+
         return Column(
           children: [
             const StaleStateBadge(),
@@ -41,79 +48,85 @@ class _SceneItemsState extends State<SceneItems>
                 child: Scrollbar(
                   controller: _controller,
                   thumbVisibility: true,
-                  child: ListView(
-                    controller: _controller,
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.only(top: AppSpacing.md),
-                    children: [
-                      ...dashboardStore.currentSceneItems.isNotEmpty
-                          ? dashboardStore.currentSceneItems.indexed.map((
-                              entry,
-                            ) {
-                              final int index = entry.$1;
-                              final sceneItem = entry.$2;
+                  child: otherCanvas
+                      ? CanvasSceneItems(
+                          canvasStore: canvasStore,
+                          controller: _controller,
+                        )
+                      : ListView(
+                          controller: _controller,
+                          physics: const ClampingScrollPhysics(),
+                          padding: const EdgeInsets.only(top: AppSpacing.md),
+                          children: [
+                            ...dashboardStore.currentSceneItems.isNotEmpty
+                                ? dashboardStore.currentSceneItems.indexed.map((
+                                    entry,
+                                  ) {
+                                    final int index = entry.$1;
+                                    final sceneItem = entry.$2;
 
-                              /// Keyed per scene: a switch between two
-                              /// scenes that both have items remounts the
-                              /// rows so the entrance replays (it only ran
-                              /// from an empty list before). Fade only - a
-                              /// rise on every switch reads as jumpy
-                              final Key entranceKey = ValueKey((
-                                dashboardStore.sceneItemsSceneName,
-                                sceneItem.parentGroupName,
-                                sceneItem.sceneItemId,
-                              ));
+                                    /// Keyed per scene: a switch between two
+                                    /// scenes that both have items remounts the
+                                    /// rows so the entrance replays (it only ran
+                                    /// from an empty list before). Fade only - a
+                                    /// rise on every switch reads as jumpy
+                                    final Key entranceKey = ValueKey((
+                                      dashboardStore.sceneItemsSceneName,
+                                      sceneItem.parentGroupName,
+                                      sceneItem.sceneItemId,
+                                    ));
 
-                              if (sceneItem.parentGroupName == null) {
-                                return StaggeredEntrance(
-                                  key: entranceKey,
-                                  index: index,
-                                  rise: 0.0,
-                                  child: StaleGuard(
-                                    child: VisibilitySlideWrapper(
-                                      sceneItem: sceneItem,
-                                      child: SceneItemTile(
-                                        sceneItem: sceneItem,
+                                    if (sceneItem.parentGroupName == null) {
+                                      return StaggeredEntrance(
+                                        key: entranceKey,
+                                        index: index,
+                                        rise: 0.0,
+                                        child: StaleGuard(
+                                          child: VisibilitySlideWrapper(
+                                            sceneItem: sceneItem,
+                                            child: SceneItemTile(
+                                              sceneItem: sceneItem,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    /// Children of groups stay in the tree so collapsing
+                                    /// / expanding the group animates - visibility is
+                                    /// still driven by the parents [SceneItem.displayGroup]
+                                    return StaggeredEntrance(
+                                      key: entranceKey,
+                                      index: index,
+                                      rise: 0.0,
+                                      child: _AnimatedGroupChild(
+                                        visible: dashboardStore
+                                            .currentSceneItems
+                                            .firstWhere(
+                                              (parentSceneItem) =>
+                                                  parentSceneItem.sourceName ==
+                                                  sceneItem.parentGroupName,
+                                            )
+                                            .displayGroup,
+                                        child: StaleGuard(
+                                          child: VisibilitySlideWrapper(
+                                            sceneItem: sceneItem,
+                                            child: SceneItemTile(
+                                              sceneItem: sceneItem,
+                                            ),
+                                          ),
+                                        ),
                                       ),
+                                    );
+                                  })
+                                : [
+                                    const SizedBox(height: AppSpacing.md),
+                                    const PlaceholderSceneItem(
+                                      text: 'No Scene Items available...',
                                     ),
-                                  ),
-                                );
-                              }
-
-                              /// Children of groups stay in the tree so collapsing
-                              /// / expanding the group animates - visibility is
-                              /// still driven by the parents [SceneItem.displayGroup]
-                              return StaggeredEntrance(
-                                key: entranceKey,
-                                index: index,
-                                rise: 0.0,
-                                child: _AnimatedGroupChild(
-                                  visible: dashboardStore.currentSceneItems
-                                      .firstWhere(
-                                        (parentSceneItem) =>
-                                            parentSceneItem.sourceName ==
-                                            sceneItem.parentGroupName,
-                                      )
-                                      .displayGroup,
-                                  child: StaleGuard(
-                                    child: VisibilitySlideWrapper(
-                                      sceneItem: sceneItem,
-                                      child: SceneItemTile(
-                                        sceneItem: sceneItem,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            })
-                          : [
-                              const SizedBox(height: AppSpacing.md),
-                              const PlaceholderSceneItem(
-                                text: 'No Scene Items available...',
-                              ),
-                            ],
-                    ],
-                  ),
+                                  ],
+                          ],
+                        ),
                 ),
               ),
             ),

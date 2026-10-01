@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
 
 import '../../../shared/design/design.dart';
 import '../../../shared/general/base/adaptive_switch.dart';
 import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../stores/views/canvas_view.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
 import '../widgets/action_block.dart/action_block.dart';
@@ -78,6 +80,37 @@ class DashboardCustomisationView extends StatelessWidget {
                           SettingsKeys.ExposeSceneCollection.name,
                           exposeSceneCollection,
                         );
+                      },
+                    ),
+                  ),
+                  BlockEntry(
+                    leading: CupertinoIcons.rectangle_on_rectangle,
+                    leadingSize: 26.0,
+                    title: 'Canvases',
+                    help:
+                        'Shows a canvas picker above the scenes when OBS has more than one canvas (e.g. a vertical one from Aitum Vertical, OBS 32.1 or newer). Picking another canvas shows its scenes, preview and scene items - view only, the live scene of that canvas is still set in OBS.',
+                    trailing: BaseAdaptiveSwitch(
+                      value: settingsBox.get(
+                        SettingsKeys.ExposeCanvasSwitcher.name,
+                        defaultValue: true,
+                      ),
+                      onChanged: (exposeCanvasSwitcher) {
+                        settingsBox.put(
+                          SettingsKeys.ExposeCanvasSwitcher.name,
+                          exposeCanvasSwitcher,
+                        );
+
+                        /// Hidden picker = no way back from another
+                        /// canvas, so return to the main one
+                        final getIt = GetIt.instance;
+                        if (!exposeCanvasSwitcher &&
+                            getIt.isRegistered<CanvasViewStore>() &&
+                            getIt
+                                .checkLazySingletonInstanceExists<
+                                  CanvasViewStore
+                                >()) {
+                          getIt<CanvasViewStore>().viewCanvas(null);
+                        }
                       },
                     ),
                   ),

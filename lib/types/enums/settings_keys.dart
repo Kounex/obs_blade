@@ -301,6 +301,11 @@ enum SettingsKeys {
   /// change it should be shown in the dashboard
   ExposeProfile,
 
+  /// [bool]: If the canvas dropdown (view another OBS canvas, e.g. a
+  /// vertical one) should be shown in the dashboard - on by default, it
+  /// only appears when OBS reports more than one canvas
+  ExposeCanvasSwitcher,
+
   /// [bool]: If the replay buffer functions (start/stop/save) should be shown in the
   /// dashboard instead of in the menu action list of the app bar
   ExposeReplayBufferControls,
@@ -535,6 +540,7 @@ enum SettingsKeys {
     SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
     SettingsKeys.ExposeSceneCollection: 'expose-scene-collection',
     SettingsKeys.ExposeProfile: 'expose-profile',
+    SettingsKeys.ExposeCanvasSwitcher: 'expose-canvas-switcher',
     SettingsKeys.ExposeReplayBufferControls: 'expose-replay-buffer-collection',
     SettingsKeys.ExposeHotkeys: 'expose-hotkeys',
     SettingsKeys.ExposeInputAudioSyncOffset: 'expose-input-audio-sync-offset',
