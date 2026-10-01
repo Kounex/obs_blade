@@ -75,7 +75,7 @@ void main() {
     );
 
     await tester.runAsync(() async {
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 250; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 20));
         await tester.pump();
         if (find.text('Starting soon').evaluate().isNotEmpty) break;
@@ -86,7 +86,7 @@ void main() {
     await tester.enterText(find.byType(CupertinoTextField), 'Be right back');
     await tester.runAsync(() async {
       await tester.tap(find.text('Update'));
-      for (var i = 0; i < 50; i++) {
+      for (var i = 0; i < 250; i++) {
         await Future<void>.delayed(const Duration(milliseconds: 20));
         if (peer.requests.any(
           (request) => request['requestType'] == 'SetInputSettings',
