@@ -463,7 +463,42 @@ enum SettingsKeys {
 
   /// [String]: Raw newline/comma-separated usernames whose messages are
   /// hidden from the timeline (all engines) — see [parseChatUserList]
-  ChatIgnoredUsers;
+  ChatIgnoredUsers,
+
+  /// [bool]: Chat text-to-speech reads live messages of the native chat
+  /// out loud (off by default)
+  ChatTtsEnabled,
+
+  /// [String]: [ChatTtsAudience] name - who TTS reads
+  ChatTtsAudience,
+
+  /// [bool]: TTS says the author's name before the message (on by default)
+  ChatTtsReadUsernames,
+
+  /// [bool]: TTS leaves emotes out (on by default)
+  ChatTtsSkipEmotes,
+
+  /// [bool]: TTS leaves links out (on by default)
+  ChatTtsSkipLinks,
+
+  /// [bool]: TTS skips `!command` messages (on by default)
+  ChatTtsSkipCommands,
+
+  /// [bool]: TTS also reads the signed-in account's own messages (off)
+  ChatTtsReadOwnMessages,
+
+  /// [int]: TTS characters per message, 0 = no limit
+  ChatTtsMaxLength,
+
+  /// [double]: TTS speed multiplier (1.0 = normal)
+  ChatTtsSpeed,
+
+  /// [bool]: TTS skips messages older than [kChatTtsStaleAfter] when their
+  /// turn comes (off by default - nothing is dropped otherwise)
+  ChatTtsSkipStale,
+
+  /// [bool]: The "hold the speaker for settings" hint was shown once
+  HasUserSeenChatTtsHint;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -580,5 +615,16 @@ enum SettingsKeys {
     SettingsKeys.ChatMuteReplace: 'chat-mute-replace',
     SettingsKeys.ChatHighlightUsers: 'chat-highlight-users',
     SettingsKeys.ChatIgnoredUsers: 'chat-ignored-users',
+    SettingsKeys.ChatTtsEnabled: 'chat-tts-enabled',
+    SettingsKeys.ChatTtsAudience: 'chat-tts-audience',
+    SettingsKeys.ChatTtsReadUsernames: 'chat-tts-read-usernames',
+    SettingsKeys.ChatTtsSkipEmotes: 'chat-tts-skip-emotes',
+    SettingsKeys.ChatTtsSkipLinks: 'chat-tts-skip-links',
+    SettingsKeys.ChatTtsSkipCommands: 'chat-tts-skip-commands',
+    SettingsKeys.ChatTtsReadOwnMessages: 'chat-tts-read-own-messages',
+    SettingsKeys.ChatTtsMaxLength: 'chat-tts-max-length',
+    SettingsKeys.ChatTtsSpeed: 'chat-tts-speed',
+    SettingsKeys.ChatTtsSkipStale: 'chat-tts-skip-stale',
+    SettingsKeys.HasUserSeenChatTtsHint: 'has-user-seen-chat-tts-hint',
   }[this]!;
 }

@@ -35,6 +35,7 @@ import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
 import 'stores/views/canvas_view.dart';
+import 'stores/views/chat_tts.dart';
 import 'stores/views/combined_chat.dart';
 import 'stores/views/kick_chat.dart';
 import 'stores/views/kick_emotes.dart';
@@ -137,6 +138,10 @@ void _initializeStores() {
     /// Fire-and-forget [init] — cold-start channel restore must not
     /// block store creation.
     () => KickChatStore()..init(),
+    dispose: (store) => store.dispose(),
+  );
+  GetIt.instance.registerLazySingleton<ChatTtsStore>(
+    () => ChatTtsStore(),
     dispose: (store) => store.dispose(),
   );
   GetIt.instance.registerLazySingleton<CombinedChatStore>(
@@ -310,6 +315,9 @@ void main() async {
       /// restored Combined selection re-activates its sources) - after
       /// Hive, it watches the settings box.
       GetIt.instance<CombinedChatStore>();
+
+      /// Chat text-to-speech resumes when it was left on
+      GetIt.instance<ChatTtsStore>().init();
 
       runApp(const LifecycleWatcher(app: PurchaseBase(child: App())));
     },
