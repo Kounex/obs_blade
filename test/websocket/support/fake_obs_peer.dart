@@ -16,6 +16,9 @@ import 'package:obs_blade/models/connection.dart';
 /// - [ackDelay]: postpone every ack (late-ack / slow-peer scenarios)
 /// - [ackDelayFor]: per-request delay - answers out of send order, like
 ///   real OBS, which processes requests on a thread pool
+/// - [heldRequestTypes] / [holdRequestFor]: the ack is queued instead of
+///   sent until [releaseOne] / [releaseAll] - a deterministic "still in
+///   flight" window with no wall-clock dependency
 /// - [closeSockets]: kill the connection mid-flight (disconnect scenarios)
 ///
 /// Everything the client sent is recorded in [requests] / [batches] so tests
@@ -23,7 +26,14 @@ import 'package:obs_blade/models/connection.dart';
 class FakeObsPeer {
   FakeObsPeer._(this._server) {
     _server.listen((request) async {
-      final socket = await WebSocketTransformer.upgrade(request);
+      /// A stray non-WebSocket request hitting the ephemeral port (local
+      /// port probe etc.) must not fail the test with an unhandled error
+      final WebSocket socket;
+      try {
+        socket = await WebSocketTransformer.upgrade(request);
+      } catch (_) {
+        return;
+      }
       sockets.add(socket);
       socket.add(
         jsonEncode({
@@ -58,6 +68,18 @@ class FakeObsPeer {
 
   /// Per-request ack delay (wins over [ackDelay] when it returns non-null)
   Duration? Function(Map<String, dynamic> request)? ackDelayFor;
+
+  /// requestTypes whose ack is queued instead of sent until released via
+  /// [releaseOne] / [releaseAll]
+  final Set<String> heldRequestTypes = {};
+
+  /// Per-request hold predicate (adds to [heldRequestTypes]) - e.g. hold
+  /// GetSceneItemList only for one sceneName so reads for other scenes
+  /// answer immediately
+  bool Function(Map<String, dynamic> request)? holdRequestFor;
+
+  /// Acks currently held, per requestType, in arrival order
+  final Map<String, List<_HeldAck>> _heldAcks = {};
 
   /// requestType → responseData merged into the success ack
   final Map<String, Map<String, dynamic>> responseData = {};
@@ -106,10 +128,19 @@ class FakeObsPeer {
   Future<void> _ackRequest(WebSocket socket, Map<String, dynamic> data) async {
     final type = data['requestType'] as String;
     if (droppedRequestTypes.contains(type)) return;
+    if (heldRequestTypes.contains(type) ||
+        (holdRequestFor?.call(data) ?? false)) {
+      (_heldAcks[type] ??= []).add(_HeldAck(socket, data));
+      return;
+    }
     final delay = ackDelayFor?.call(data) ?? ackDelay;
     if (delay != null) await Future<void>.delayed(delay);
     if (socket.closeCode != null) return;
+    _sendRequestAck(socket, data);
+  }
 
+  void _sendRequestAck(WebSocket socket, Map<String, dynamic> data) {
+    final type = data['requestType'] as String;
     final rejectionCode = rejections[type];
     _safeAdd(
       socket,
@@ -132,6 +163,26 @@ class FakeObsPeer {
         },
       }),
     );
+  }
+
+  /// Sends the ack for the oldest held request of [requestType]. The ack
+  /// payload is built now (current [rejections] / [responseData] /
+  /// [responseDataFor]), like a delayed ack at send time. Acks whose
+  /// socket has since closed are discarded - the same guard delayed acks
+  /// have. Returns false when nothing was queued.
+  bool releaseOne(String requestType) {
+    final queue = _heldAcks[requestType];
+    if (queue == null || queue.isEmpty) return false;
+    final held = queue.removeAt(0);
+    if (held.socket.closeCode == null) {
+      _sendRequestAck(held.socket, held.data);
+    }
+    return true;
+  }
+
+  /// Releases every held ack of [requestType], oldest first
+  void releaseAll(String requestType) {
+    while (releaseOne(requestType)) {}
   }
 
   /// Adding races with teardown closes - a dead peer socket must never fail
@@ -200,10 +251,14 @@ class FakeObsPeer {
     }
   }
 
-  /// Kills every open socket without answering anything first
+  /// Kills every open socket without answering anything first - held acks
+  /// for the dead sockets are dropped, they must never land afterwards
   Future<void> closeSockets() async {
     for (final socket in List.of(sockets)) {
       await socket.close();
+    }
+    for (final queue in _heldAcks.values) {
+      queue.removeWhere((held) => held.socket.closeCode != null);
     }
   }
 
@@ -211,4 +266,13 @@ class FakeObsPeer {
     await closeSockets();
     await _server.close(force: true);
   }
+}
+
+/// A request ack queued by the hold mechanism: the socket it must go out
+/// on plus the original request payload (the ack is built at release time)
+class _HeldAck {
+  _HeldAck(this.socket, this.data);
+
+  final WebSocket socket;
+  final Map<String, dynamic> data;
 }

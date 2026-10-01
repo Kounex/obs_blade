@@ -20,6 +20,11 @@ import 'support/fake_obs_peer.dart';
 /// arrives while a GetSceneList re-read is in flight must survive the
 /// (older) response - per field, so an event for one field never blocks
 /// the other halves of the read.
+///
+/// Synchronization is fully deterministic: the peer holds the re-read's
+/// ack (no wall-clock delays), the test fires the mid-flight event, then
+/// releases the stale ack and proves it was fully processed via the
+/// flushPeer gate before asserting.
 void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
@@ -32,7 +37,7 @@ void main() {
       .toList();
 
   Future<void> waitFor(bool Function() condition, String description) async {
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 500; i++) {
       if (condition()) return;
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
@@ -44,6 +49,17 @@ void main() {
     expect(closeCode, WebSocketCloseCode.DontClose);
   }
 
+  /// Deterministic "everything sent before was processed" gate: the peer
+  /// answers this benign request immediately (it is never held), and the
+  /// WebSocket delivers server→client messages in order on the single
+  /// socket - so once this ack's future completes, every earlier message
+  /// (a released stale response included) has been fully handled
+  /// client-side
+  Future<void> flushPeer() => NetworkHelper.makeRequest(
+    networkStore.activeSession!.socket,
+    RequestType.GetVersion,
+  );
+
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('state_ordering');
     harness = HiveTestHarness(tempDir);
@@ -51,6 +67,14 @@ void main() {
     await harness.openAllBoxes();
 
     peer = await FakeObsPeer.start();
+
+    /// [flushPeer] / initialRequests GetVersion responses run through the
+    /// dashboard's GetVersion handler - they must parse cleanly
+    peer.responseData['GetVersion'] = {
+      'availableRequests': <String>[],
+      'supportedImageFormats': ['jpg', 'png'],
+    };
+
     networkStore = NetworkStore();
     dashboardStore = DashboardStore();
     GetIt.instance.registerSingleton<NetworkStore>(networkStore);
@@ -83,10 +107,11 @@ void main() {
       await connect();
       dashboardStore.handleStream();
 
-      // drive a GetSceneList re-read via the ack layer's failure path
+      // drive a GetSceneList re-read via the ack layer's failure path; its
+      // ack is held so the re-read stays in flight until released below
       peer.rejections['SetCurrentProgramScene'] =
           RequestStatus.InvalidResourceType.identifier;
-      peer.ackDelay = const Duration(milliseconds: 300);
+      peer.heldRequestTypes.add('GetSceneList');
       final ackFuture = dashboardStore.sendMutation(
         RequestType.SetCurrentProgramScene,
         fields: {'sceneName': 'Nope'},
@@ -99,13 +124,15 @@ void main() {
 
       // event arrives AFTER the read was sent, carrying newer state
       peer.event('CurrentProgramSceneChanged', {'sceneName': 'Break'});
-      await ackFuture; // mutation rejected; re-read resolves with stale data
-
       await waitFor(
         () => dashboardStore.activeSceneName == 'Break',
-        'event value survives the stale read',
+        'event value applied',
       );
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await ackFuture; // mutation rejected
+
+      // the stale read resolves now - it must not overwrite the event value
+      peer.releaseOne('GetSceneList');
+      await flushPeer();
       expect(dashboardStore.activeSceneName, 'Break'); // never regressed
     },
   );
@@ -128,19 +155,20 @@ void main() {
     dashboardStore.setActiveSceneName('Nope');
     peer.rejections['SetCurrentProgramScene'] =
         RequestStatus.InvalidResourceType.identifier;
-    peer.ackDelay = const Duration(milliseconds: 300);
+    peer.heldRequestTypes.add('GetSceneList');
     final ack = await dashboardStore.sendMutation(
       RequestType.SetCurrentProgramScene,
       fields: {'sceneName': 'Nope'},
       label: 'Scene switch',
     );
     expect(ack.success, isFalse);
-
     await waitFor(
-      () => dashboardStore.activeSceneName == 'Camera',
-      're-read applies the confirmed program scene',
+      () => requestsOf('GetSceneList').isNotEmpty,
+      'GetSceneList re-read in flight',
     );
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+
+    peer.releaseOne('GetSceneList');
+    await flushPeer();
     expect(dashboardStore.activeSceneName, 'Camera');
   });
 
@@ -165,7 +193,7 @@ void main() {
       dashboardStore.setActiveSceneName('Nope');
       peer.rejections['SetCurrentProgramScene'] =
           RequestStatus.InvalidResourceType.identifier;
-      peer.ackDelay = const Duration(milliseconds: 300);
+      peer.heldRequestTypes.add('GetSceneList');
       final ackFuture = dashboardStore.sendMutation(
         RequestType.SetCurrentProgramScene,
         fields: {'sceneName': 'Nope'},
@@ -177,17 +205,15 @@ void main() {
       );
 
       peer.event('CurrentPreviewSceneChanged', {'sceneName': 'Break'});
-      await ackFuture;
-
       await waitFor(
         () => dashboardStore.studioModePreviewSceneName == 'Break',
         'preview event applied',
       );
-      await waitFor(
-        () => dashboardStore.activeSceneName == 'Camera',
-        'program half of the stale read applied',
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      await ackFuture;
+
+      // the stale read resolves now - only its program half may apply
+      peer.releaseOne('GetSceneList');
+      await flushPeer();
       expect(dashboardStore.activeSceneName, 'Camera');
       expect(dashboardStore.studioModePreviewSceneName, 'Break');
     },
@@ -246,7 +272,7 @@ void main() {
         setupItemListPeer();
         await applyInitialItemList();
 
-        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.heldRequestTypes.add('GetSceneItemList');
         peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
         await waitFor(
           () => requestsOf('GetSceneItemList').length == 2,
@@ -267,7 +293,8 @@ void main() {
 
         /// the stale read (enabled: true) resolves now - it must not
         /// overwrite the event value
-        await Future<void>.delayed(const Duration(milliseconds: 500));
+        peer.releaseOne('GetSceneItemList');
+        await flushPeer();
         expect(
           dashboardStore.currentSceneItems.single.sceneItemEnabled,
           isFalse,
@@ -287,18 +314,15 @@ void main() {
         ),
       ]);
 
-      peer.ackDelay = const Duration(milliseconds: 300);
+      peer.heldRequestTypes.add('GetSceneItemList');
       peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
       await waitFor(
         () => requestsOf('GetSceneItemList').length == 2,
         'GetSceneItemList re-read in flight',
       );
 
-      await waitFor(
-        () => dashboardStore.currentSceneItems.single.sceneItemEnabled == true,
-        're-read applies the confirmed visibility',
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      peer.releaseOne('GetSceneItemList');
+      await flushPeer();
       expect(dashboardStore.currentSceneItems.single.sceneItemEnabled, isTrue);
     });
 
@@ -346,18 +370,17 @@ void main() {
     test('a late item list for a scene the dashboard already left does not '
         'replace the current scene\'s items', () async {
       /// OBS answers from a thread pool: the Camera read (sent first)
-      /// answers AFTER the Break read
+      /// answers AFTER the Break read - simulated by holding only the
+      /// Camera ack until the Break state has fully landed
       peer.responseDataFor = (request) =>
           request['requestType'] == 'GetSceneItemList'
           ? (request['requestData']['sceneName'] == 'Camera'
                 ? itemsFor('webcam', 1)
                 : itemsFor('brb-slate', 2))
           : null;
-      peer.ackDelayFor = (request) =>
+      peer.holdRequestFor = (request) =>
           request['requestType'] == 'GetSceneItemList' &&
-              request['requestData']['sceneName'] == 'Camera'
-          ? const Duration(milliseconds: 300)
-          : null;
+          request['requestData']['sceneName'] == 'Camera';
       peer.droppedRequestTypes.add('GetSourceFilterList');
       NetworkHelper.requestAckTimeout = const Duration(milliseconds: 300);
       addTearDown(
@@ -382,7 +405,8 @@ void main() {
       );
 
       /// the late Camera response lands now - it must be dropped
-      await Future<void>.delayed(const Duration(milliseconds: 500));
+      peer.releaseOne('GetSceneItemList');
+      await flushPeer();
       expect(dashboardStore.activeSceneName, 'Break');
       expect(dashboardStore.currentSceneItems.single.sourceName, 'brb-slate');
       expect(dashboardStore.sceneItemsSceneName, 'Break');
@@ -420,8 +444,8 @@ void main() {
         'inputAudioSyncOffset': 0,
       };
 
-      /// ackDelay must stay strictly below the ack timeout so the timeout
-      /// can never fire coincident with a delayed response
+      /// Kept short so dropped requests can never outlive a test - with
+      /// held (not delayed) acks the timeout can no longer race a response
       NetworkHelper.requestAckTimeout = const Duration(milliseconds: 800);
       addTearDown(
         () => NetworkHelper.requestAckTimeout = const Duration(seconds: 35),
@@ -453,7 +477,7 @@ void main() {
 
         peer.rejections['SetInputVolume'] =
             RequestStatus.GenericError.identifier;
-        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.heldRequestTypes.add('GetInputVolume');
         final ackFuture = dashboardStore.sendMutation(
           RequestType.SetInputVolume,
           fields: {'inputName': 'Mic', 'inputVolumeMul': 0.8},
@@ -470,14 +494,14 @@ void main() {
           'inputVolumeMul': 0.9,
           'inputVolumeDb': -0.9,
         });
+        await waitFor(() => mic().inputVolumeMul == 0.9, 'event value applied');
         final ack = await ackFuture;
         expect(ack.success, isFalse);
 
-        await waitFor(() => mic().inputVolumeMul == 0.9, 'event value applied');
-
         /// the stale re-read (0.5) resolves now - it must not overwrite the
         /// event value
-        await Future<void>.delayed(const Duration(milliseconds: 500));
+        peer.releaseOne('GetInputVolume');
+        await flushPeer();
         expect(mic().inputVolumeMul, 0.9);
         expect(mic().inputVolumeDb, -0.9);
       },
@@ -501,21 +525,22 @@ void main() {
       );
 
       peer.rejections['SetInputVolume'] = RequestStatus.GenericError.identifier;
-      peer.ackDelay = const Duration(milliseconds: 300);
+      peer.heldRequestTypes.add('GetInputVolume');
       final ack = await dashboardStore.sendMutation(
         RequestType.SetInputVolume,
         fields: {'inputName': 'Mic', 'inputVolumeMul': 0.8},
         label: 'Volume',
       );
       expect(ack.success, isFalse);
+      await waitFor(
+        () => requestsOf('GetInputVolume').isNotEmpty,
+        'GetInputVolume re-read in flight',
+      );
 
       /// no event during the re-read - it must apply and roll the value back
       /// to the confirmed 0.5 (no over-blocking)
-      await waitFor(
-        () => mic().inputVolumeMul == 0.5,
-        're-read applies the confirmed volume',
-      );
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      peer.releaseOne('GetInputVolume');
+      await flushPeer();
       expect(mic().inputVolumeMul, 0.5);
       expect(mic().inputVolumeDb, -9.0);
     });
@@ -527,7 +552,7 @@ void main() {
         await applyInitialInputState();
 
         peer.rejections['SetInputMute'] = RequestStatus.GenericError.identifier;
-        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.heldRequestTypes.add('GetInputMute');
         final ackFuture = dashboardStore.sendMutation(
           RequestType.SetInputMute,
           fields: {'inputName': 'Mic', 'inputMuted': true},
@@ -543,14 +568,14 @@ void main() {
           'inputName': 'Mic',
           'inputMuted': true,
         });
+        await waitFor(() => mic().inputMuted, 'event value applied');
         final ack = await ackFuture;
         expect(ack.success, isFalse);
 
-        await waitFor(() => mic().inputMuted, 'event value applied');
-
         /// the stale re-read (false) resolves now - it must not overwrite
         /// the event value
-        await Future<void>.delayed(const Duration(milliseconds: 500));
+        peer.releaseOne('GetInputMute');
+        await flushPeer();
         expect(mic().inputMuted, isTrue);
       },
     );
@@ -560,8 +585,8 @@ void main() {
   /// session re-attach burst invalidate in-flight read tags wholesale, so a
   /// stale response resolving afterwards must not apply
   group('epoch resets', () {
-    /// ackDelay must stay strictly below the ack timeout so the timeout can
-    /// never fire coincident with a delayed response
+    /// Kept short so dropped requests can never outlive a test - with held
+    /// (not delayed) acks the timeout can no longer race a response
     void setupShortAckTimeout() {
       NetworkHelper.requestAckTimeout = const Duration(milliseconds: 800);
       addTearDown(
@@ -596,44 +621,44 @@ void main() {
 
         peer.rejections['SetCurrentProgramScene'] =
             RequestStatus.InvalidResourceType.identifier;
-        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.heldRequestTypes.add('GetSceneList');
         final ackFuture = dashboardStore.sendMutation(
           RequestType.SetCurrentProgramScene,
           fields: {'sceneName': 'Nope'},
           label: 'Scene switch',
         );
         await waitFor(
-          () => requestsOf('GetSceneList').isNotEmpty,
+          () => requestsOf('GetSceneList').length == 1,
           'GetSceneList re-read in flight',
         );
 
-        /// Structural change lands while the re-read is in flight (delayed
-        /// so the fresh tracked re-read it triggers acks well after the
-        /// stale one - the responseData swap below must land between the
-        /// two acks). The event handler also sends a fresh GetSceneList.
-        await Future<void>.delayed(const Duration(milliseconds: 200));
+        /// Structural change lands while the re-read is in flight. The event
+        /// handler resets the epoch and sends a fresh tracked GetSceneList -
+        /// its ack is held too, so both responses stay queued until the test
+        /// releases them in order below
         peer.event('SceneListChanged', {
           'scenes': [
             {'sceneName': 'Camera', 'sceneIndex': 0},
             {'sceneName': 'Break', 'sceneIndex': 1},
           ],
         });
+        await waitFor(
+          () => requestsOf('GetSceneList').length == 2,
+          'fresh GetSceneList re-read in flight',
+        );
         await ackFuture;
 
         /// The stale response still carries 'Camera'; once it has been
         /// processed (its item-refresh chain request is the signal), swap
         /// the map so the fresh re-read's response carries 'Break'
+        peer.releaseOne('GetSceneList');
         await waitFor(
           () => requestsOf('GetSceneItemList').isNotEmpty,
           'stale GetSceneList response processed',
         );
         peer.responseData['GetSceneList']!['currentProgramSceneName'] = 'Break';
-
-        await waitFor(
-          () => dashboardStore.activeSceneName == 'Break',
-          'fresh re-read applies the post-change state',
-        );
-        await Future<void>.delayed(const Duration(milliseconds: 400));
+        peer.releaseOne('GetSceneList');
+        await flushPeer();
 
         /// The epoch reset gated the stale response: 'Camera' must never
         /// have landed after the SceneListChanged event
@@ -696,7 +721,7 @@ void main() {
           'event value applied',
         );
 
-        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.heldRequestTypes.add('GetSceneItemList');
         peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
         await waitFor(
           () => requestsOf('GetSceneItemList').length == 2,
@@ -704,16 +729,24 @@ void main() {
         );
 
         /// Rename lands while the re-read is in flight (wire shape per the
-        /// obs-websocket protocol: sceneUuid / oldSceneName / sceneName)
+        /// obs-websocket protocol: sceneUuid / oldSceneName / sceneName).
+        /// Its handler resets the item-journal epoch and re-reads the scene
+        /// list - that (dropped) request appearing is the signal the rename
+        /// was fully processed
         peer.event('SceneNameChanged', {
           'sceneUuid': 'uuid-camera',
           'oldSceneName': 'Camera',
           'sceneName': 'Cam',
         });
+        await waitFor(
+          () => requestsOf('GetSceneList').isNotEmpty,
+          'rename processed (scene-list re-read sent)',
+        );
 
         /// The stale re-read (enabled: true) resolves now - the item-journal
         /// epoch reset must gate it
-        await Future<void>.delayed(const Duration(milliseconds: 500));
+        peer.releaseOne('GetSceneItemList');
+        await flushPeer();
         expect(
           dashboardStore.currentSceneItems.single.sceneItemEnabled,
           isFalse,
@@ -742,12 +775,12 @@ void main() {
           'initial burst applied the program scene',
         );
 
-        /// A re-read goes out (tag queued) but the socket dies before its
-        /// delayed response arrives - the peer discards the pending ack via
-        /// its closeCode check
+        /// A re-read goes out (tag queued) but the socket dies while its ack
+        /// is held - the peer drops the held ack on close, it must never
+        /// land on the new session
         peer.rejections['SetCurrentProgramScene'] =
             RequestStatus.InvalidResourceType.identifier;
-        peer.ackDelay = const Duration(milliseconds: 300);
+        peer.heldRequestTypes.add('GetSceneList');
         await dashboardStore.sendMutation(
           RequestType.SetCurrentProgramScene,
           fields: {'sceneName': 'Nope'},
@@ -762,7 +795,7 @@ void main() {
         /// Reconnect on a fresh socket (the _checkOBSConnection success seam:
         /// handleStream + initialRequests). The confirmed value differs so a
         /// gated burst response is observable.
-        peer.ackDelay = null;
+        peer.heldRequestTypes.remove('GetSceneList');
         peer.responseData['GetSceneList']!['currentProgramSceneName'] = 'Break';
         await connect();
         dashboardStore.handleStream();
