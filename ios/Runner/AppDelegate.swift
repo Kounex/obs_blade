@@ -48,6 +48,10 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   private var defaultLanguage: String?
   private var detect = false
 
+  /// The user's voice per language (tag → identifier); a missing or
+  /// uninstalled pick means the automatic best voice
+  private var voicePicks: [String: String] = [:]
+
   private var fallbackLanguage: String {
     defaultLanguage ?? AVSpeechSynthesisVoice.currentLanguageCode()
   }
@@ -119,7 +123,32 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
       let args = call.arguments as? [String: Any]
       defaultLanguage = args?["language"] as? String
       detect = (args?["detect"] as? Bool) ?? false
+      voicePicks = (args?["voices"] as? [String: String]) ?? [:]
+      bestVoices.removeAll()
       result(nil)
+    case "preview":
+      /// A short sample with one voice - interrupts whatever is read
+      let args = call.arguments as? [String: Any]
+      guard let text = args?["text"] as? String else {
+        result(nil)
+        return
+      }
+      stopAll()
+      activateSession()
+      let utterance = AVSpeechUtterance(string: text)
+      utterance.rate = rate
+      utterance.volume = volume
+      if let id = args?["voiceId"] as? String,
+        let voice = AVSpeechSynthesisVoice(identifier: id)
+      {
+        utterance.voice = voice
+      } else if let language = args?["language"] as? String,
+        let voice = bestVoice(for: language)
+      {
+        utterance.voice = voice
+      }
+      pending[ObjectIdentifier(utterance)] = result
+      synthesizer.speak(utterance)
     case "voices":
       result(installedVoices())
     default:
@@ -150,6 +179,13 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   /// premium (3) > enhanced (2) > default (1) - raw values, so it also
   /// compiles against iOS 15 where `.premium` doesn't exist yet
   private func bestVoice(for language: String) -> AVSpeechSynthesisVoice? {
+    /// The user's pick: for this exact language, else one for the same
+    /// language in another region
+    let pickId = voicePicks[language]
+      ?? voicePicks.first { ChatTts.baseCode($0.key) == ChatTts.baseCode(language) }?.value
+    if let id = pickId, let picked = AVSpeechSynthesisVoice(identifier: id) {
+      return picked
+    }
     if let cached = bestVoices[language] { return cached }
     let voices = usableVoices()
     let exact = voices.filter { $0.language == language }

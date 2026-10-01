@@ -111,6 +111,55 @@ class ChatTtsPhrases {
   /// Base language codes the table covers (tests / diagnostics)
   static Iterable<String> get languages => _byLanguage.keys;
 
+  /// What a voice preview says, per base language
+  static const Map<String, String> _samples = {
+    'en': 'Hi chat, this is how I sound.',
+    'de': 'Hallo Chat, so klinge ich.',
+    'es': 'Hola chat, así sueno yo.',
+    'fr': 'Salut le chat, voici ma voix.',
+    'pt': 'Olá chat, esta é a minha voz.',
+    'it': 'Ciao chat, questa è la mia voce.',
+    'nl': 'Hallo chat, zo klink ik.',
+    'pl': 'Cześć czacie, tak brzmię.',
+    'tr': 'Merhaba sohbet, sesim böyle.',
+    'ru': 'Привет, чат, вот как я звучу.',
+    'ja': 'こんにちは、チャットの皆さん。これが私の声です。',
+    'ko': '안녕하세요 채팅 여러분, 제 목소리예요.',
+    'zh': '大家好，这是我的声音。',
+    'ar': 'مرحبًا بالدردشة، هذا هو صوتي.',
+    'bg': 'Здравей, чат, така звучи гласът ми.',
+    'bn': 'হ্যালো চ্যাট, এটা আমার কণ্ঠ।',
+    'ca': 'Hola xat, així sona la meva veu.',
+    'cs': 'Ahoj chate, takhle zním.',
+    'da': 'Hej chat, sådan lyder jeg.',
+    'el': 'Γεια σου chat, έτσι ακούγομαι.',
+    'fi': 'Hei chat, tältä kuulostan.',
+    'he': 'שלום צ׳אט, ככה אני נשמע.',
+    'hi': 'नमस्ते चैट, मेरी आवाज़ ऐसी है।',
+    'hr': 'Bok chate, ovako zvučim.',
+    'hu': 'Szia chat, így szólok.',
+    'id': 'Halo chat, beginilah suaraku.',
+    'kn': 'ಹಲೋ ಚಾಟ್, ನನ್ನ ಧ್ವನಿ ಹೀಗಿದೆ.',
+    'ms': 'Hai chat, beginilah suara saya.',
+    'nb': 'Hei chat, sånn høres jeg ut.',
+    'ro': 'Salut chat, așa sună vocea mea.',
+    'sk': 'Ahoj chat, takto znie môj hlas.',
+    'sl': 'Živjo klepet, tako zvenim.',
+    'sv': 'Hej chatten, så här låter jag.',
+    'ta': 'வணக்கம் சாட், என் குரல் இப்படித்தான்.',
+    'te': 'హలో చాట్, నా గొంతు ఇలా ఉంటుంది.',
+    'th': 'สวัสดีแชท นี่คือเสียงของฉัน',
+    'uk': 'Привіт, чате, ось так я звучу.',
+    'vi': 'Xin chào chat, đây là giọng của tôi.',
+    'yue': '大家好，呢個係我嘅聲音。',
+  };
+
+  /// The preview sentence for a BCP 47 tag - English when not covered
+  static String sample(String? languageTag) {
+    final base = (languageTag ?? '').split(RegExp('[-_]')).first.toLowerCase();
+    return _samples[_aliases[base] ?? base] ?? _samples['en']!;
+  }
+
   /// "A", "A and B", "A, B and C", "A and 13 others"
   String names(List<String> names, int others) {
     final parts = [...names, if (others > 0) this.others(others)];

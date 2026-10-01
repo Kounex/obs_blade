@@ -35,6 +35,15 @@ class _HangingSpeaker implements ChatTtsSpeaker {
     return done.future;
   }
 
+  final List<({String? voiceId, String? language, String text})> previews = [];
+
+  @override
+  Future<void> preview({
+    String? voiceId,
+    String? language,
+    required String text,
+  }) async => previews.add((voiceId: voiceId, language: language, text: text));
+
   @override
   Future<void> stop() async {
     for (final running in _running) {
@@ -141,7 +150,12 @@ void main() {
   Future<void> pickLanguage(WidgetTester tester, String value) =>
       tester.runAsync(() async {
         tester
-            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+            .widget<DropdownButton<String>>(
+              find.descendant(
+                of: find.byKey(const Key('tts-language-dropdown')),
+                matching: find.byType(DropdownButton<String>),
+              ),
+            )
             .onChanged!(value);
         await Future<void>.delayed(const Duration(milliseconds: 50));
       });
@@ -211,7 +225,7 @@ void main() {
     );
     expect(find.text("Detect each message's language"), findsOneWidget);
     expect(find.text('Phone language'), findsOneWidget);
-    expect(find.textContaining('Voice: Ava'), findsOneWidget);
+    expect(find.textContaining('Automatic (Ava'), findsOneWidget);
     expect(find.text('Volume'), findsOneWidget);
 
     /// The menu lists every installed language
@@ -228,7 +242,7 @@ void main() {
     await pickLanguage(tester, 'de-DE');
     await tester.pumpAndSettle();
     expect(settings().get(SettingsKeys.ChatTtsLanguage.name), 'de-DE');
-    expect(find.textContaining('Voice: Anna'), findsOneWidget);
+    expect(find.textContaining('Automatic (Anna'), findsOneWidget);
 
     /// And back to the phone's language
     await pickLanguage(tester, '');
@@ -278,6 +292,58 @@ void main() {
       await tester.pump();
       expect(switchOf().value, !before, reason: '"$title" did not flip');
     }
+  });
+
+  testWidgets('voice: preview, pick, and the other-languages sheet', (
+    tester,
+  ) async {
+    setPro(true);
+    await tester.pumpWidget(app());
+    await tester.longPress(find.byKey(const Key('chat-tts-button')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tts-voice-picker')),
+      200.0,
+      scrollable: find.byType(Scrollable).last,
+    );
+
+    /// Preview: the sample of the language read, automatic voice
+    await tester.tap(find.byKey(const Key('tts-voice-preview-en-US')));
+    await tester.pump();
+    expect(speaker.previews.single.language, 'en-US');
+    expect(speaker.previews.single.voiceId, isNull);
+
+    /// Picking a voice (through the dropdown's callback in a real zone -
+    /// see pickLanguage)
+    await tester.runAsync(() async {
+      tester
+          .widget<DropdownButton<String>>(
+            find.descendant(
+              of: find.byKey(const Key('tts-voice-picker')),
+              matching: find.byType(DropdownButton<String>),
+            ),
+          )
+          .onChanged!('ava');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+    expect(ttsStore.voicePicks, {'en-US': 'ava'});
+
+    /// Other languages: only offered with detection on
+    expect(find.byKey(const Key('tts-voices-other-languages')), findsNothing);
+    await tester.runAsync(
+      () => settings().put(SettingsKeys.ChatTtsDetectLanguage.name, true),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('tts-voices-other-languages')),
+      200.0,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(const Key('tts-voices-other-languages')));
+    await tester.pumpAndSettle();
+    expect(find.text('Voices per language'), findsOneWidget);
+    expect(find.byKey(const Key('tts-voice-picker-de-DE')), findsOneWidget);
   });
 
   testWidgets('the waiting chip jumps to the latest message', (tester) async {

@@ -612,10 +612,6 @@ class _LanguagePickerState extends State<_LanguagePicker> {
     this.widget.store.loadVoices();
   }
 
-  static String _quality(int rank) => Platform.isIOS
-      ? const ['Default', 'Enhanced', 'Premium'][rank]
-      : const ['Low quality', 'Normal quality', 'High quality'][rank];
-
   void _select(Box box, String? language) {
     if (language == null || language == _kPhoneLanguage) {
       box.delete(SettingsKeys.ChatTtsLanguage.name);
@@ -642,14 +638,13 @@ class _LanguagePickerState extends State<_LanguagePicker> {
 
   @override
   Widget build(BuildContext context) {
-    final String hint = Platform.isIOS
-        ? 'More voices: Settings → Accessibility → Spoken Content → Voices. '
-              'Enhanced and Premium voices sound much more natural.'
-        : 'More voices: the text-to-speech settings of your phone.';
-
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [SettingsKeys.ChatTtsLanguage],
+      rebuildKeys: const [
+        SettingsKeys.ChatTtsLanguage,
+        SettingsKeys.ChatTtsVoices,
+        SettingsKeys.ChatTtsDetectLanguage,
+      ],
       builder: (context, box, child) => Observer(
         builder: (context) {
           final voices = this.widget.store.voices;
@@ -687,26 +682,245 @@ class _LanguagePickerState extends State<_LanguagePicker> {
                 ],
                 onChanged: (value) => this._select(box, value),
               ),
+              if (reading != null)
+                ChatTtsVoicePicker(
+                  key: const Key('tts-voice-picker'),
+                  store: this.widget.store,
+                  language: reading,
+                  label: 'Voice',
+                ),
+              if (voices != null &&
+                  languages.length > 1 &&
+                  box.get(
+                        SettingsKeys.ChatTtsDetectLanguage.name,
+                        defaultValue: false,
+                      ) ==
+                      true)
+                PressFlash(
+                  key: const Key('tts-voices-other-languages'),
+                  onTap: () =>
+                      showChatTtsVoicesSheet(context, store: this.widget.store),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text('Voices for other languages'),
+                    subtitle: Text(
+                      'Which voice detected languages are read with',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    trailing: const Icon(
+                      CupertinoIcons.chevron_forward,
+                      size: 16.0,
+                    ),
+                  ),
+                ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 voices == null
                     ? 'Looking up voices…'
                     : languages.isEmpty
-                    ? 'No voices reported by the system. $hint'
-                    : [
-                        if (reading != null)
-                          'Voice: ${[reading.best.name, _quality(reading.best.qualityRank), if (reading.best.network) 'needs internet'].join(' · ')}. '
-                        else
-                          '',
-                        '${languages.length} languages installed. $hint',
-                      ].join(),
+                    ? 'No voices reported by the system.'
+                    : '${languages.length} languages installed.',
                 key: const Key('tts-language-voice'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              ChatTtsMoreVoicesHelp(store: this.widget.store),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+/// Opens the voice choice for every installed language - the ones
+/// detection may switch to
+void showChatTtsVoicesSheet(
+  BuildContext context, {
+  required ChatTtsStore store,
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (context) => NativeChatSheetScaffold(
+    header: Text(
+      'Voices per language',
+      style: nativeChatSheetTitleStyle(context),
+    ),
+    body: Observer(
+      builder: (context) {
+        final languages = chatTtsLanguages(store.voices ?? const []);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Messages detected in another language are read with the '
+              'voice picked here. Automatic picks the best installed one.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            for (final language in languages)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.md),
+                child: ChatTtsVoicePicker(
+                  key: ValueKey('tts-voice-picker-${language.language}'),
+                  store: store,
+                  language: language,
+                  label: language.languageName,
+                ),
+              ),
+            const SizedBox(height: AppSpacing.md),
+            ChatTtsMoreVoicesHelp(store: store),
+          ],
+        );
+      },
+    ),
+  ),
+);
+
+/// Voice dropdown for one language ("Automatic" or one of its voices) and
+/// a preview button that reads a short sample with the chosen voice
+class ChatTtsVoicePicker extends StatelessWidget {
+  final ChatTtsStore store;
+  final ChatTtsLanguage language;
+  final String label;
+
+  const ChatTtsVoicePicker({
+    super.key,
+    required this.store,
+    required this.language,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool ios = Platform.isIOS;
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.ChatTtsVoices],
+      builder: (context, box, child) {
+        final String? pick = this.store.voicePicks[this.language.language];
+        final bool installed =
+            pick != null && this.language.voices.any((v) => v.id == pick);
+        final voices = [...this.language.voices]
+          ..sort(
+            (a, b) => chatTtsVoiceLabel(
+              a,
+              ios: ios,
+            ).compareTo(chatTtsVoiceLabel(b, ios: ios)),
+          );
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: BaseDropdown<String>(
+                label: this.label,
+                value: installed ? pick : _kAutomaticVoice,
+                menuMaxHeight: kChatChannelMenuMaxHeight,
+                items: [
+                  BaseDropdownItem(
+                    value: _kAutomaticVoice,
+                    text: installed
+                        ? 'Automatic'
+                        : 'Automatic (${chatTtsVoiceLabel(this.language.best, ios: ios)})',
+                  ),
+                  for (final voice in voices)
+                    BaseDropdownItem(
+                      value: voice.id,
+                      text: chatTtsVoiceLabel(voice, ios: ios),
+                    ),
+                ],
+                onChanged: (value) => this.store.setVoicePick(
+                  this.language.language,
+                  value == _kAutomaticVoice ? null : value,
+                ),
+              ),
+            ),
+            Semantics(
+              button: true,
+              label: 'Preview the ${this.language.languageName} voice',
+              excludeSemantics: true,
+              child: Pressable(
+                key: Key('tts-voice-preview-${this.language.language}'),
+                haptic: true,
+                springy: false,
+                onTap: () => this.store.previewVoice(
+                  language: this.language.language,
+                  voiceId: installed ? pick : null,
+                ),
+                child: SizedBox(
+                  width: kMinInteractiveDimensionCupertino,
+                  height: kMinInteractiveDimensionCupertino,
+                  child: Center(
+                    child: Icon(
+                      CupertinoIcons.play_circle,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Dropdown value for "pick the best installed voice"
+const String _kAutomaticVoice = '';
+
+/// Where better / more voices come from, per platform. iOS can't link
+/// into its voice settings (only private URLs exist), so it's directions;
+/// Android opens the text-to-speech settings / voice data download.
+class ChatTtsMoreVoicesHelp extends StatelessWidget {
+  final ChatTtsStore store;
+
+  const ChatTtsMoreVoicesHelp({super.key, required this.store});
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle? style = Theme.of(context).textTheme.bodySmall;
+    if (Platform.isIOS) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.xs),
+        child: Text(
+          'More and better voices: Settings → Accessibility → Spoken '
+          'Content → Voices. Enhanced and Premium voices are a download but '
+          'sound much more natural - they show up here afterwards and are '
+          'picked automatically.',
+          key: const Key('tts-voices-help'),
+          style: style,
+        ),
+      );
+    }
+    return Column(
+      key: const Key('tts-voices-help'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Voices come from your phone\'s speech engine (e.g. Google). Voice '
+          'data for more languages and higher quality voices is installed '
+          'there; voices marked "needs internet" use mobile data while '
+          'reading.',
+          style: style,
+        ),
+        Wrap(
+          spacing: AppSpacing.sm,
+          children: [
+            TextButton(
+              onPressed: this.store.openTtsSettings,
+              child: const Text('Text-to-speech settings'),
+            ),
+            TextButton(
+              onPressed: this.store.installVoiceData,
+              child: const Text('Install voice data'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -516,7 +516,11 @@ enum SettingsKeys {
   ChatTtsCombineRepeats,
 
   /// [bool]: TTS drops messages with nothing but emotes (off by default)
-  ChatTtsSkipEmoteOnly;
+  ChatTtsSkipEmoteOnly,
+
+  /// [String]: JSON map language tag → voice id - the user's TTS voice per
+  /// language; missing = automatic (best installed)
+  ChatTtsVoices;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -649,5 +653,6 @@ enum SettingsKeys {
     SettingsKeys.ChatTtsVolume: 'chat-tts-volume',
     SettingsKeys.ChatTtsCombineRepeats: 'chat-tts-combine-repeats',
     SettingsKeys.ChatTtsSkipEmoteOnly: 'chat-tts-skip-emote-only',
+    SettingsKeys.ChatTtsVoices: 'chat-tts-voices',
   }[this]!;
 }

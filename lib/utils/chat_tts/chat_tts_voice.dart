@@ -53,19 +53,50 @@ class ChatTtsVoice {
       : 0;
 }
 
-/// One row per language: its best voice, how many voices it has
+/// One row per language: the voice TTS uses for it, all its voices
 class ChatTtsLanguage {
   final String language;
   final String languageName;
   final ChatTtsVoice best;
-  final int voiceCount;
+  final List<ChatTtsVoice> voices;
 
   const ChatTtsLanguage({
     required this.language,
     required this.languageName,
     required this.best,
-    required this.voiceCount,
+    required this.voices,
   });
+
+  int get voiceCount => this.voices.length;
+}
+
+/// A voice's name for pickers. iOS: the name plus what sets it apart
+/// (Siri, Enhanced / Premium, robotic Eloquence). Android names are ids
+/// (`de-de-x-deb-local`) - shown as "Voice DEB" with quality and whether
+/// it needs internet.
+String chatTtsVoiceLabel(ChatTtsVoice voice, {required bool ios}) {
+  if (ios) {
+    final id = voice.id.toLowerCase();
+    return [
+      voice.name,
+      if (voice.qualityRank == 2) 'Premium',
+      if (voice.qualityRank == 1) 'Enhanced',
+      if (id.contains('siri')) 'Siri',
+      if (id.contains('eloquence')) 'robotic',
+    ].join(' · ');
+  }
+  final variant = voice.name.contains('-x-')
+      ? voice.name
+            .split('-x-')
+            .last
+            .replaceAll(RegExp(r'-(local|network)$'), '')
+            .toUpperCase()
+      : null;
+  return [
+    variant != null ? 'Voice $variant' : voice.name,
+    const ['low quality', 'normal quality', 'high quality'][voice.qualityRank],
+    if (voice.network) 'needs internet',
+  ].join(' · ');
 }
 
 /// Groups [voices] by language - shown voice: the one the bridge marks as
@@ -89,7 +120,7 @@ List<ChatTtsLanguage> chatTtsLanguages(List<ChatTtsVoice> voices) {
                   return (a.network ? 1 : 0).compareTo(b.network ? 1 : 0);
                 }))
                 .first,
-        voiceCount: entry.value.length,
+        voices: List.unmodifiable(entry.value),
       ),
   ];
   languages.sort(

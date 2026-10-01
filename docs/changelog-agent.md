@@ -73,9 +73,16 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   marks its pick (`preferred`) so the sheet shows exactly that voice.
   Phrase table grown from 13 to all 39 languages (+ `no`/`iw`/`in`
   aliases).
+- Voice per language: "Voice" dropdown (Automatic + the language's
+  voices, readable labels - Siri / Enhanced / Premium / robotic on iOS,
+  "Voice DEB · high quality · needs internet" for Android ids) with a ▶
+  preview reading a per-language sample; "Voices for other languages"
+  sheet when detection is on; per-platform help (iOS directions,
+  Android buttons for the TTS settings / voice data install).
 - Process slips this round (caught by the build, fixed): the iOS bridge
   rewrite dropped `ManageSubscriptions` (spliced to EOF), and a
-  `dart format lib` touched 5 unrelated files (reverted before commit).
+  `dart format lib` touched 5 unrelated files (reverted before commit -
+  happened twice; format the changed files by path only).
   Splice native files by exact class boundaries; format changed files
   only.
 - Gotcha: `build_runner build --build-filter` right after a pubspec

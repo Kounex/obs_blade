@@ -1,6 +1,7 @@
 package com.kounex.obsBlade
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -79,6 +80,20 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   /** BCP 47 tag from the settings, null = the system TTS settings' voice */
   private var defaultLanguage: String? = null
   private var detect = false
+
+  /** The user's voice per language (tag → voice name); missing / uninstalled = automatic */
+  private var voicePicks: Map<String, String> = emptyMap()
+
+  /** One-off voice for the next `speak` (a preview) */
+  private var previewVoice: String? = null
+  private var previewLanguage: String? = null
+
+  private fun startSettings(intent: Intent): Boolean = try {
+    appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    true
+  } catch (e: Exception) {
+    false
+  }
 
   /** Language detection blocks - never on the main thread */
   private val detector = Executors.newSingleThreadExecutor()
@@ -211,10 +226,20 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     emptyList()
   }
 
-  /** Best voice for [tag]: exact locale, else the phone's region, else any region - quality first, offline on ties */
+  /** The user's pick for [tag] (exact, else one for the same language) if it's installed */
+  private fun pickedVoice(tag: String, installed: List<Voice>): Voice? {
+    val name = voicePicks[tag]
+      ?: voicePicks.entries.firstOrNull { baseCode(it.key) == baseCode(tag) }?.value
+      ?: return null
+    return installed.firstOrNull { it.name == name }
+  }
+
+  /** The user's pick for [tag], else the best: exact locale, else the phone's region, else any region - quality first, offline on ties */
   private fun bestVoice(tag: String): Voice? {
+    val installed = installedVoices()
+    pickedVoice(tag, installed)?.let { return it }
     val wanted = Locale.forLanguageTag(tag)
-    val sameLanguage = installedVoices().filter { it.locale.language == wanted.language }
+    val sameLanguage = installed.filter { it.locale.language == wanted.language }
     if (sameLanguage.isEmpty()) return null
     val region = wanted.country.ifEmpty { Locale.getDefault().country }
     val regional = sameLanguage.filter { it.locale.country == region }
@@ -226,13 +251,17 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
 
   /** The voice for one message - null keeps the engine's default voice */
   private fun voiceFor(detected: String?): Voice? {
-    val fallbackTag = defaultLanguage
-    val fallback = fallbackTag?.let { bestVoice(it) }
+    val defaultTag = defaultLanguage
+      ?: (engine?.defaultVoice?.locale ?: Locale.getDefault()).toLanguageTag()
+
+    // No language set and no pick for the phone's: the system settings' voice
+    val fallback = if (defaultLanguage != null || pickedVoice(defaultTag, installedVoices()) != null) {
+      bestVoice(defaultTag)
+    } else {
+      null
+    }
     if (detected == null) return fallback
-    val fallbackBase = baseCode(
-      fallbackTag ?: (engine?.defaultVoice?.locale ?: Locale.getDefault()).toLanguageTag()
-    )
-    if (baseCode(detected) == fallbackBase) return fallback
+    if (baseCode(detected) == baseCode(defaultTag)) return fallback
     return bestVoice(detected) ?: fallback
   }
 
@@ -253,7 +282,15 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
       pending[id] = result
       requestFocus()
       tts.setSpeechRate(rate)
-      val voice = voiceFor(detected)
+      val previewId = previewVoice
+      val previewTag = previewLanguage
+      previewVoice = null
+      previewLanguage = null
+      val voice = when {
+        previewId != null -> installedVoices().firstOrNull { it.name == previewId }
+        previewTag != null -> bestVoice(previewTag)
+        else -> voiceFor(detected)
+      }
       if (voice != null) {
         tts.voice = voice
       } else {
@@ -319,8 +356,30 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
       "setLanguage" -> {
         defaultLanguage = call.argument<String>("language")
         detect = call.argument<Boolean>("detect") ?: false
+        voicePicks = call.argument<Map<String, String>>("voices") ?: emptyMap()
         result.success(null)
       }
+      "preview" -> {
+        // A short sample with one voice - interrupts whatever is read
+        val text = call.argument<String>("text")
+        if (text.isNullOrBlank()) {
+          result.success(null)
+          return
+        }
+        engine?.stop()
+        finishAll()
+        previewVoice = call.argument<String>("voiceId")
+        previewLanguage = call.argument<String>("language")
+        speak(text, null, result, retry = true)
+      }
+      "openTtsSettings" -> result.success(startSettings(Intent("com.android.settings.TTS_SETTINGS")))
+      "installVoiceData" -> result.success(
+        startSettings(
+          Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).apply {
+            engine?.defaultEngine?.let { setPackage(it) }
+          }
+        )
+      )
       "stop" -> {
         engine?.stop()
         finishAll()

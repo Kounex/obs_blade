@@ -28,6 +28,15 @@ class _FakeSpeaker implements ChatTtsSpeaker {
 
   void finish() => _running.removeAt(0).complete();
 
+  final List<({String? voiceId, String? language, String text})> previews = [];
+
+  @override
+  Future<void> preview({
+    String? voiceId,
+    String? language,
+    required String text,
+  }) async => previews.add((voiceId: voiceId, language: language, text: text));
+
   @override
   Future<void> stop() async {
     for (final running in _running) {
@@ -198,5 +207,21 @@ void main() {
     speaker.finish();
     await settle();
     expect(speaker.spoken.skip(2), ['Viewer: one', 'A: W', 'B: W']);
+  });
+
+  test('voice picks per language persist; automatic removes the pick', () {
+    store.setVoicePick('de-DE', 'helena');
+    store.setVoicePick('en-US', 'ava');
+    expect(store.voicePicks, {'de-DE': 'helena', 'en-US': 'ava'});
+    store.setVoicePick('de-DE', null);
+    expect(store.voicePicks, {'en-US': 'ava'});
+    expect(settings().get(SettingsKeys.ChatTtsVoices.name), '{"en-US":"ava"}');
+  });
+
+  test('preview reads the language sample with the chosen voice', () async {
+    await store.previewVoice(language: 'de-DE', voiceId: 'helena');
+    expect(speaker.previews.single.voiceId, 'helena');
+    expect(speaker.previews.single.language, 'de-DE');
+    expect(speaker.previews.single.text, 'Hallo Chat, so klinge ich.');
   });
 }

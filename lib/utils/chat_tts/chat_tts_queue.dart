@@ -9,6 +9,14 @@ abstract class ChatTtsSpeaker {
   /// message without the username) - null = [text]
   Future<void> speak(String text, {String? detectionText});
 
+  /// Reads [text] once with [voiceId] (else [language]'s voice), cutting
+  /// off whatever is being read - the voice picker's preview
+  Future<void> preview({
+    String? voiceId,
+    String? language,
+    required String text,
+  });
+
   Future<void> stop();
 }
 

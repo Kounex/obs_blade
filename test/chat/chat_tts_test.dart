@@ -52,6 +52,15 @@ class _FakeSpeaker implements ChatTtsSpeaker {
   /// Finish the utterance currently being read
   void finish() => _running.removeAt(0).complete();
 
+  final List<({String? voiceId, String? language, String text})> previews = [];
+
+  @override
+  Future<void> preview({
+    String? voiceId,
+    String? language,
+    required String text,
+  }) async => previews.add((voiceId: voiceId, language: language, text: text));
+
   @override
   Future<void> stop() async {
     stops++;
@@ -393,6 +402,54 @@ void main() {
       expect(languages.single.best.name, 'Helena');
     });
 
+    test('voice labels: iOS names with what sets them apart', () {
+      ChatTtsVoice ios(String id, String name, int quality) => ChatTtsVoice(
+        id: id,
+        name: name,
+        language: 'de-DE',
+        languageName: 'German',
+        quality: quality,
+      );
+      expect(
+        chatTtsVoiceLabel(
+          ios('com.apple.ttsbundle.siri_Helena_de-DE_compact', 'Helena', 1),
+          ios: true,
+        ),
+        'Helena · Siri',
+      );
+      expect(
+        chatTtsVoiceLabel(
+          ios('com.apple.eloquence.de-DE.Grandpa', 'Grandpa', 1),
+          ios: true,
+        ),
+        'Grandpa · robotic',
+      );
+      expect(
+        chatTtsVoiceLabel(
+          ios('com.apple.voice.premium.de-DE.Anna', 'Anna', 3),
+          ios: true,
+        ),
+        'Anna · Premium',
+      );
+    });
+
+    test('voice labels: Android ids become readable', () {
+      expect(
+        chatTtsVoiceLabel(
+          const ChatTtsVoice(
+            id: 'de-de-x-deb-network',
+            name: 'de-de-x-deb-network',
+            language: 'de-DE',
+            languageName: 'German',
+            quality: 400,
+            network: true,
+          ),
+          ios: false,
+        ),
+        'Voice DEB · high quality · needs internet',
+      );
+    });
+
     test('Android quality scale; offline wins a tie', () {
       final languages = chatTtsLanguages([
         voice('net-high', 'en-US', 400, network: true),
@@ -532,6 +589,21 @@ void main() {
           );
         }
       }
+    });
+
+    test('a preview sample for every phrase language, English fallback', () {
+      for (final language in ChatTtsPhrases.languages) {
+        expect(ChatTtsPhrases.sample(language), isNotEmpty, reason: language);
+        if (language != 'en') {
+          expect(
+            ChatTtsPhrases.sample(language),
+            isNot(ChatTtsPhrases.sample('en')),
+            reason: 'no own sample for $language',
+          );
+        }
+      }
+      expect(ChatTtsPhrases.sample('xx'), ChatTtsPhrases.sample('en'));
+      expect(ChatTtsPhrases.sample('de-AT'), 'Hallo Chat, so klinge ich.');
     });
 
     test('old Android codes resolve', () {

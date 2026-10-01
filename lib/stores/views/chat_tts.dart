@@ -80,8 +80,43 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
 
   /// Default language (BCP 47 tag, null = the phone's) and whether each
   /// message's language is detected - kept natively until changed
-  Future<void> setLanguage({String? language, required bool detect}) =>
-      _invoke('setLanguage', {'language': language, 'detect': detect});
+  Future<void> setLanguage({
+    String? language,
+    required bool detect,
+    Map<String, String> voices = const {},
+  }) => _invoke('setLanguage', {
+    'language': language,
+    'detect': detect,
+    'voices': voices,
+  });
+
+  @override
+  Future<void> preview({
+    String? voiceId,
+    String? language,
+    required String text,
+  }) => _invoke('preview', {
+    'voiceId': voiceId,
+    'language': language,
+    'text': text,
+  });
+
+  /// Android: the phone's text-to-speech settings / the engine's voice data
+  /// download - false where that isn't possible (iOS has no such link)
+  Future<bool> openTtsSettings() => _invokeBool('openTtsSettings');
+
+  Future<bool> installVoiceData() => _invokeBool('installVoiceData');
+
+  Future<bool> _invokeBool(String method) async {
+    try {
+      return await _channel.invokeMethod<bool>(method) ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException catch (e) {
+      GeneralHelper.advLog('Chat TTS $method failed - $e');
+      return false;
+    }
+  }
 
   @override
   Future<void> speak(String text, {String? detectionText}) =>
@@ -234,6 +269,7 @@ abstract class _ChatTtsStore with Store {
                 defaultValue: false,
               ) ==
               true,
+          voices: this.voicePicks,
         ),
       );
     }
@@ -371,6 +407,58 @@ abstract class _ChatTtsStore with Store {
       author: spoken.author,
       notable: spoken.notable,
     );
+  }
+
+  /// The user's voice per language (tag → voice id)
+  Map<String, String> get voicePicks {
+    final raw = _settings.get(SettingsKeys.ChatTtsVoices.name) as String?;
+    if (raw == null || raw.isEmpty) return const {};
+    try {
+      return (jsonDecode(raw) as Map<String, dynamic>).map(
+        (key, value) => MapEntry(key, value as String),
+      );
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  /// Pick [voiceId] for [language] - null goes back to automatic
+  void setVoicePick(String language, String? voiceId) {
+    final picks = Map<String, String>.of(this.voicePicks);
+    if (voiceId == null || voiceId.isEmpty) {
+      picks.remove(language);
+    } else {
+      picks[language] = voiceId;
+    }
+    _settings.put(SettingsKeys.ChatTtsVoices.name, jsonEncode(picks));
+    applySettings();
+
+    /// The bridge marks its pick as preferred - the list shows it after a
+    /// re-read (channel calls run in order, the new picks are there first)
+    unawaited(loadVoices());
+  }
+
+  /// Plays a short sample in [language] with [voiceId] (null = the voice
+  /// TTS would use) - what's waiting to be read is dropped, the sample
+  /// interrupts it anyway
+  Future<void> previewVoice({required String language, String? voiceId}) async {
+    await _queue.clear();
+    await _speaker.preview(
+      voiceId: voiceId,
+      language: language,
+      text: ChatTtsPhrases.sample(language),
+    );
+  }
+
+  /// Android shortcuts for more voices - false where not possible
+  Future<bool> openTtsSettings() async {
+    final speaker = _speaker;
+    return speaker is PlatformTtsSpeaker ? speaker.openTtsSettings() : false;
+  }
+
+  Future<bool> installVoiceData() async {
+    final speaker = _speaker;
+    return speaker is PlatformTtsSpeaker ? speaker.installVoiceData() : false;
   }
 
   /// The language TTS reads in by default - the setting, else the phone's
