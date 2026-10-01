@@ -39,15 +39,23 @@ class ObsRequestAck {
   /// OBS `requestStatus.comment` when provided
   final String? statusComment;
 
+  /// OBS `responseData` of a confirmed request - lets one-off reads
+  /// ([NetworkHelper.makeScopedRequest]) use the answer without a stream
+  /// listener. Empty map when OBS sent none, null on failures
+  final Map<String, dynamic>? responseData;
+
   const ObsRequestAck._(
     this.requestType,
     this.failureKind,
     this.statusCode,
-    this.statusComment,
-  );
+    this.statusComment, [
+    this.responseData,
+  ]);
 
-  const ObsRequestAck.success(RequestType? requestType)
-    : this._(requestType, null, null, null);
+  const ObsRequestAck.success(
+    RequestType? requestType, [
+    Map<String, dynamic>? responseData,
+  ]) : this._(requestType, null, null, null, responseData);
 
   const ObsRequestAck.rejected(
     RequestType? requestType,

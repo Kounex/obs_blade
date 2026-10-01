@@ -914,8 +914,20 @@ abstract class _DashboardStore with Store {
   /// Short pause before retrying after a failed screenshot
   Timer? _previewRetry;
 
+  /// Set while the dashboard shows a non-main OBS canvas
+  /// ([CanvasViewStore]) - that canvas runs its own preview loop, the
+  /// program-scene one pauses meanwhile instead of fetching unseen frames
+  bool _previewSuspended = false;
+
+  /// Pause / resume the program-scene preview loop (see [_previewSuspended])
+  void setPreviewSuspended(bool suspended) {
+    if (_previewSuspended == suspended) return;
+    _previewSuspended = suspended;
+    if (!suspended && this.shouldRequestPreviewImage) _requestPreviewImage();
+  }
+
   void _requestPreviewImage() {
-    if (_previewInFlight) return;
+    if (_previewInFlight || _previewSuspended) return;
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (session == null) return;
     _previewInFlight = true;
@@ -1884,6 +1896,10 @@ abstract class _DashboardStore with Store {
 
   @action
   void _handleResponse(BaseResponse response) {
+    /// One-off reads of other components (e.g. a non-main canvas' scenes or
+    /// screenshots) - applying them here would overwrite the program state
+    if (NetworkHelper.isScopedResponse(response.uuid)) return;
+
     if (response.requestType != RequestType.GetSourceScreenshot) {
       GeneralHelper.advLog('Response Incoming: ${(response.requestType)}');
     }

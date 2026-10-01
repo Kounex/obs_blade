@@ -114,4 +114,13 @@ enum EventType {
 
   /// A source filter's enable state has changed.
   SourceFilterEnableStateChanged,
+
+  /// A new canvas has been created (obs-websocket 5.7+).
+  CanvasCreated,
+
+  /// A canvas has been removed (obs-websocket 5.7+).
+  CanvasRemoved,
+
+  /// The name of a canvas has changed (obs-websocket 5.7+).
+  CanvasNameChanged,
 }

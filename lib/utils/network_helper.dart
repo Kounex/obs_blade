@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -61,6 +62,12 @@ class NetworkHelper {
   static Map<String, List<RequestBatchObject>> _requestBatchByUUID = {};
   static Map<String, _PendingRequestAck> _pendingRequestByUUID = {};
   static Map<String, _PendingBatchAck> _pendingBatchByUUID = {};
+
+  /// Request ids sent through [makeScopedRequest] - their responses belong
+  /// to the caller only, the shared stream listeners skip them (see
+  /// [isScopedResponse]). Bounded: ids of answered requests age out
+  static final LinkedHashSet<String> _scopedRequestIds = LinkedHashSet();
+  static const int _scopedRequestIdsCap = 256;
 
   /// WebSocket keepalive: a ping goes out after this much quiet and the
   /// socket counts as dead when its pong doesn't arrive within the same
@@ -410,12 +417,50 @@ class NetworkHelper {
     return pending.completer.future;
   }
 
+  /// [makeRequest] for one-off reads/writes whose answer only the caller
+  /// uses (e.g. scenes of a non-main OBS canvas): the response data comes
+  /// with the ack, and stores listening on the shared stream
+  /// (DashboardStore) ignore the response instead of applying it to their
+  /// own state.
+  static Future<ObsRequestAck> makeScopedRequest(
+    IOWebSocketChannel channel,
+    RequestType request, [
+    Map<String, dynamic>? fields,
+  ]) {
+    String requestUUID = const Uuid().v4();
+    NetworkHelper._scopedRequestIds.add(requestUUID);
+    while (NetworkHelper._scopedRequestIds.length > _scopedRequestIdsCap) {
+      NetworkHelper._scopedRequestIds.remove(
+        NetworkHelper._scopedRequestIds.first,
+      );
+    }
+    final pending = _trackRequestAck(channel, requestUUID, request);
+
+    try {
+      _addRequest(channel, requestUUID, request, fields, storeBody: false);
+    } catch (e) {
+      _completeAckOnSendFailure(
+        requestUUID,
+        pending,
+        ObsRequestAck.connectionLost(request),
+      );
+    }
+
+    return pending.completer.future;
+  }
+
+  /// Whether [uuid] belongs to a [makeScopedRequest] - shared stream
+  /// listeners must not apply such a response
+  static bool isScopedResponse(String uuid) =>
+      NetworkHelper._scopedRequestIds.contains(uuid);
+
   static void _addRequest(
     IOWebSocketChannel channel,
     String requestUUID,
     RequestType request,
-    Map<String, dynamic>? fields,
-  ) {
+    Map<String, dynamic>? fields, {
+    bool storeBody = true,
+  }) {
     if (request != RequestType.GetSourceScreenshot) {
       GeneralHelper.advLog('Outgoing: $request');
     }
@@ -425,7 +470,7 @@ class NetworkHelper {
     /// information we sent initially (like input name etc.) since
     /// in the new protocol (>= 5.X) we don't get this information
     /// in the response anymore
-    if (fields != null && request.name.startsWith('Get')) {
+    if (storeBody && fields != null && request.name.startsWith('Get')) {
       NetworkHelper._requestBodyByUUID[requestUUID] = fields;
     }
 
@@ -603,7 +648,7 @@ class NetworkHelper {
     final status = response.status;
     pending.completer.complete(
       status.result
-          ? ObsRequestAck.success(pending.requestType)
+          ? ObsRequestAck.success(pending.requestType, response.json)
           : ObsRequestAck.rejected(
               pending.requestType,
               status.code,

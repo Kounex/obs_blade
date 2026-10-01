@@ -17,6 +17,11 @@ enum RequestType {
   /// No specified parameters
   GetSceneList,
 
+  /// Gets an array of canvases in OBS (obs-websocket 5.7+ / OBS 32.1+).
+  ///
+  /// No specified parameters
+  GetCanvasList,
+
   /// Gets an array of all inputs in OBS.
   ///
   /// (Optional) {'inputKind': String } - Restrict the array to only inputs of the specified kind
