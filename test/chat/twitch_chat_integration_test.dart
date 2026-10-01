@@ -224,11 +224,18 @@ void main() {
     /// Dart-level continuations were captured by the test's FakeAsync
     /// zone and only resume on the next pump. (pumpAndSettle can't be
     /// used while the dialog's progress spinner is animating — it never
-    /// settles.)
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 500)),
-    );
-    await tester.pump();
+    /// settles.) Alternate real-time windows and pumps until the state
+    /// lands instead of betting on a single fixed window.
+    for (
+      var i = 0;
+      i < 100 && store.authState != TwitchAuthState.loggedIn;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
     expect(store.authState, TwitchAuthState.loggedIn);
 
     /// Observer rebuild registers the auto-close post-frame callback →

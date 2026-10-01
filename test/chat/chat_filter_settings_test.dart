@@ -70,9 +70,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Highlight viewer'), findsOneWidget);
 
+    /// Tapping persists to the settings box (real I/O) - poll until the
+    /// write landed instead of betting on a fixed window
     await tester.runAsync(() async {
       await tester.tap(find.text('Ignore viewer'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      for (var i = 0; i < 250; i++) {
+        if (box().get(SettingsKeys.ChatIgnoredUsers.name) == 'viewer') break;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
     await tester.pumpAndSettle();
 

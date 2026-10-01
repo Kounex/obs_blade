@@ -16,6 +16,7 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/combined_chat_picker.dart';
 
@@ -194,10 +195,19 @@ void main() {
     expect(find.textContaining('…'), findsNothing);
 
     /// Selecting persists to Hive — real I/O must run outside the
-    /// fake-async zone or the suite hangs at shutdown.
+    /// fake-async zone or the suite hangs at shutdown. Poll until the
+    /// write landed instead of betting on a fixed window.
     await tester.runAsync(() async {
       await tester.tap(find.byKey(const Key('combined-combo-tile-c1')));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      for (var i = 0; i < 250; i++) {
+        if (Hive.box(
+              HiveKeys.Settings.name,
+            ).get(SettingsKeys.SelectedCombinedCombo.name) ==
+            'c1') {
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
     });
     await tester.pumpAndSettle();
 
