@@ -267,7 +267,9 @@ store's `liveMessages` stream (no backfill / switch restores) →
 stale skip opt-in). Foreground only (no background modes, by decision);
 Wake Lock is app-wide now (default off). Speaker in the
 `NativeChatWindow` header: tap toggles, long press = settings (also an
-options-sheet page), one-off hint on first enable. Speech runs on the
+options-sheet page), one-off hint on first enable (a speech bubble
+anchored to the speaker via `LayerLink` in a root-overlay `OverlayPortal`;
+tap = open settings, 5 s auto-close). Speech runs on the
 app's own `com.kounex.obsBlade/tts` channel (`PlatformTtsSpeaker` →
 `ChatTts` in `AppDelegate.swift` / `MainActivity.kt`; iOS picks the
 best installed voice + stops on audio interruptions, Android ducks via

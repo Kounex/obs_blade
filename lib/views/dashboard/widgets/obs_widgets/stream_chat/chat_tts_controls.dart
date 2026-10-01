@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -11,7 +12,6 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../shared/general/base/dropdown.dart';
 import '../../../../../shared/general/hive_builder.dart';
-import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/pro_store.dart';
 import '../../../../../stores/views/chat_tts.dart';
 import '../../../../../types/enums/hive_keys.dart';
@@ -19,7 +19,6 @@ import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/chat_tts/chat_tts_utterance.dart';
 import '../../../../../utils/chat_tts/chat_tts_voice.dart';
 import '../../../../../utils/modal_handler.dart';
-import '../../../../../utils/overlay_handler.dart';
 import '../../../../../utils/wake_lock_helper.dart';
 import 'native_chat_chrome.dart';
 
@@ -42,15 +41,43 @@ void showChatTtsSheet(BuildContext context) => ModalHandler.showBaseBottomSheet(
 
 /// Speaker toggle in the native chat header: tap = read chat aloud on /
 /// off, long-press = settings. While reading falls behind, a "N waiting"
-/// chip next to it jumps to the latest message. The first switch-on tells
-/// once that holding the speaker opens the settings. Pro only (the native
+/// chip next to it jumps to the latest message. The first switch-on shows
+/// a speech bubble anchored above the speaker (tail pointing at it) saying
+/// that holding it opens the settings - tapping the bubble opens them too,
+/// it closes on its own after [kChatTtsHintDuration]. Pro only (the native
 /// engines it reads are).
-class ChatTtsButton extends StatelessWidget {
+class ChatTtsButton extends StatefulWidget {
   const ChatTtsButton({super.key});
 
-  void _toggle(BuildContext context, ChatTtsStore store) {
+  @override
+  State<ChatTtsButton> createState() => _ChatTtsButtonState();
+}
+
+/// How long the one-off "hold for settings" bubble stays
+const Duration kChatTtsHintDuration = Duration(seconds: 5);
+
+class _ChatTtsButtonState extends State<ChatTtsButton> {
+  final LayerLink _anchor = LayerLink();
+  final OverlayPortalController _hint = OverlayPortalController();
+  Timer? _hintTimer;
+
+  @override
+  void dispose() {
+    _hintTimer?.cancel();
+    super.dispose();
+  }
+
+  void _hideHint() {
+    _hintTimer?.cancel();
+    if (this.mounted && _hint.isShowing) _hint.hide();
+  }
+
+  void _toggle(ChatTtsStore store) {
     store.toggle();
-    if (!store.enabled) return;
+    if (!store.enabled) {
+      _hideHint();
+      return;
+    }
     final box = Hive.box(HiveKeys.Settings.name);
     if (box.get(
           SettingsKeys.HasUserSeenChatTtsHint.name,
@@ -60,13 +87,107 @@ class ChatTtsButton extends StatelessWidget {
       return;
     }
     box.put(SettingsKeys.HasUserSeenChatTtsHint.name, true);
-    OverlayHandler.showStatusOverlay(
-      context: context,
-      replaceIfActive: true,
-      showDuration: const Duration(seconds: 4),
-      content: const BaseResult(
-        icon: BaseResultIcon.Positive,
-        text: 'Reading chat aloud\nHold the speaker for settings',
+    _hint.show();
+    _hintTimer?.cancel();
+    _hintTimer = Timer(kChatTtsHintDuration, _hideHint);
+  }
+
+  /// The bubble: right edges aligned with the speaker (it sits at the
+  /// header's right end, a centred bubble would leave the screen), tail
+  /// under the speaker's centre
+  Widget _hintBubble(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color fill = theme.colorScheme.secondary;
+    final Color text = theme.colorScheme.onSecondary;
+    const double tailWidth = 14.0;
+    const double tailHeight = 7.0;
+
+    return Align(
+      alignment: Alignment.topLeft,
+      child: CompositedTransformFollower(
+        link: _anchor,
+        showWhenUnlinked: false,
+        targetAnchor: Alignment.topRight,
+        followerAnchor: Alignment.bottomRight,
+        offset: const Offset(0.0, -2.0),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: AppMotion.medium,
+          curve: AppMotion.standard,
+          builder: (context, t, child) => Opacity(
+            opacity: t,
+            child: Transform.scale(
+              scale: 0.9 + 0.1 * t,
+              alignment: Alignment.bottomRight,
+              child: child,
+            ),
+          ),
+          child: Semantics(
+            liveRegion: true,
+            button: true,
+            label: 'Reading chat aloud. Hold the speaker for settings.',
+            hint: 'Opens text to speech settings',
+            excludeSemantics: true,
+            child: GestureDetector(
+              key: const Key('chat-tts-hint'),
+              onTap: () {
+                _hideHint();
+                showChatTtsSheet(context);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 220.0),
+                    child: Material(
+                      color: fill,
+                      elevation: 6.0,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Reading chat aloud\n',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: text,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Hold the speaker for settings',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: text,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  /// Tail centred under the 44pt speaker
+                  Padding(
+                    padding: EdgeInsets.only(
+                      right:
+                          kMinInteractiveDimensionCupertino / 2 - tailWidth / 2,
+                    ),
+                    child: CustomPaint(
+                      size: const Size(tailWidth, tailHeight),
+                      painter: _BubbleTailPainter(fill),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -78,84 +199,125 @@ class ChatTtsButton extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Observer(
-      builder: (context) {
-        if (!GetIt.instance<ProStore>().isPro) return const SizedBox.shrink();
-        final bool on = store.enabled;
-        final int waiting = store.waiting;
-        final Color accent = Theme.of(context).colorScheme.secondary;
+    /// Root overlay: the bubble sits above the tab shell, never clipped by
+    /// the chat pane
+    return OverlayPortal(
+      controller: _hint,
+      overlayLocation: OverlayChildLocation.rootOverlay,
+      overlayChildBuilder: this._hintBubble,
+      child: Observer(
+        builder: (context) {
+          if (!GetIt.instance<ProStore>().isPro) {
+            return const SizedBox.shrink();
+          }
+          final bool on = store.enabled;
+          final int waiting = store.waiting;
+          final Color accent = Theme.of(context).colorScheme.secondary;
 
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (on && waiting > 0)
-              Semantics(
-                button: true,
-                label: '$waiting waiting, jump to the latest message',
-                excludeSemantics: true,
-                child: Pressable(
-                  haptic: true,
-                  springy: false,
-                  onTap: store.jumpToLatest,
-                  child: Container(
-                    key: const Key('chat-tts-waiting'),
-                    height: 24.0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.14),
-                      borderRadius: AppRadius.pill,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$waiting',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(width: 2.0),
-                        const Icon(CupertinoIcons.forward_end_fill, size: 12.0),
-                      ],
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (on && waiting > 0)
+                Semantics(
+                  button: true,
+                  label: '$waiting waiting, jump to the latest message',
+                  excludeSemantics: true,
+                  child: Pressable(
+                    haptic: true,
+                    springy: false,
+                    onTap: store.jumpToLatest,
+                    child: Container(
+                      key: const Key('chat-tts-waiting'),
+                      height: 24.0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.14),
+                        borderRadius: AppRadius.pill,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$waiting',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(width: 2.0),
+                          const Icon(
+                            CupertinoIcons.forward_end_fill,
+                            size: 12.0,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            Semantics(
-              button: true,
-              toggled: on,
-              label: 'Read chat aloud',
-              hint: 'Long press for text to speech settings',
-              excludeSemantics: true,
-              child: GestureDetector(
-                onLongPress: () => showChatTtsSheet(context),
-                child: Pressable(
-                  haptic: true,
-                  springy: false,
-                  onTap: () => this._toggle(context, store),
-                  child: SizedBox(
-                    key: const Key('chat-tts-button'),
-                    width: kMinInteractiveDimensionCupertino,
-                    height: kMinInteractiveDimensionCupertino,
-                    child: Center(
-                      child: Icon(
-                        on
-                            ? CupertinoIcons.speaker_2_fill
-                            : CupertinoIcons.speaker_slash,
-                        size: 20.0,
-                        color: on ? accent : Theme.of(context).disabledColor,
+              Semantics(
+                button: true,
+                toggled: on,
+                label: 'Read chat aloud',
+                hint: 'Long press for text to speech settings',
+                excludeSemantics: true,
+                child: GestureDetector(
+                  onLongPress: () {
+                    _hideHint();
+                    showChatTtsSheet(context);
+                  },
+                  child: Pressable(
+                    haptic: true,
+                    springy: false,
+                    onTap: () => this._toggle(store),
+                    child: CompositedTransformTarget(
+                      link: _anchor,
+                      child: SizedBox(
+                        key: const Key('chat-tts-button'),
+                        width: kMinInteractiveDimensionCupertino,
+                        height: kMinInteractiveDimensionCupertino,
+                        child: Center(
+                          child: Icon(
+                            on
+                                ? CupertinoIcons.speaker_2_fill
+                                : CupertinoIcons.speaker_slash,
+                            size: 20.0,
+                            color: on
+                                ? accent
+                                : Theme.of(context).disabledColor,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
+}
+
+/// Downward triangle under the hint bubble
+class _BubbleTailPainter extends CustomPainter {
+  final Color color;
+
+  const _BubbleTailPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0.0, 0.0)
+      ..lineTo(size.width, 0.0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, Paint()..color = this.color);
+  }
+
+  @override
+  bool shouldRepaint(_BubbleTailPainter oldDelegate) =>
+      oldDelegate.color != this.color;
 }
 
 /// The text-to-speech settings - the sheet body and the options-sheet page

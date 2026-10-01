@@ -47,6 +47,14 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   language as the default keeps the default voice, no installed voice →
   default. iOS prefers the phone's region for a detected language,
   Android too, offline voices first.
+- TTS sheet polish: the language list is a "Read in" dropdown (new
+  optional `BaseDropdown.menuMaxHeight`), new Volume slider (10-100 %,
+  iOS `utterance.volume`, Android `KEY_PARAM_VOLUME`), and the first-enable
+  hint is a speech bubble anchored above the speaker (tail on it, right
+  edges aligned) instead of the fullscreen status overlay. Test gotcha:
+  `DropdownButton` reports a pick after its close animation on the fake
+  clock - a Hive write from `onChanged` then never finishes and teardown
+  hangs; pick through `onChanged` inside `runAsync`.
 - Process slips this round (caught by the build, fixed): the iOS bridge
   rewrite dropped `ManageSubscriptions` (spliced to EOF), and a
   `dart format lib` touched 5 unrelated files (reverted before commit).

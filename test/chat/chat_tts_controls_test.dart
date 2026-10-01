@@ -152,19 +152,25 @@ void main() {
     await tester.pumpWidget(app());
 
     await tapReal(tester, find.byKey(const Key('chat-tts-button')));
-
-    /// The overlay was scheduled from the real zone (250ms delay)
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 500)),
-    );
     await tester.pump(const Duration(milliseconds: 400));
     expect(ttsStore.enabled, isTrue);
     expect(find.textContaining('Hold the speaker'), findsOneWidget);
     expect(settings().get(SettingsKeys.HasUserSeenChatTtsHint.name), isTrue);
 
-    /// Let the overlay run out
-    await tester.pump(const Duration(seconds: 6));
-    await tester.pump(const Duration(seconds: 1));
+    /// A bubble anchored right above the speaker, right edges aligned
+    final Rect bubble = tester.getRect(find.byKey(const Key('chat-tts-hint')));
+    final Rect speaker = tester.getRect(
+      find.byKey(const Key('chat-tts-button')),
+    );
+    expect(bubble.bottom, lessThanOrEqualTo(speaker.top));
+    expect(speaker.top - bubble.bottom, lessThan(8.0));
+    expect((bubble.right - speaker.right).abs(), lessThan(1.0));
+
+    /// Tapping it opens the settings and closes it
+    await tester.tap(find.byKey(const Key('chat-tts-hint')));
+    await tester.pumpAndSettle();
+    expect(find.text('Text to speech'), findsOneWidget);
+    expect(find.byKey(const Key('chat-tts-hint')), findsNothing);
   });
 
   testWidgets('hint already seen: tap just toggles', (tester) async {
@@ -212,6 +218,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('German (Germany)'), findsWidgets);
     expect(find.text('English (United States)'), findsWidgets);
+
     /// Dismiss via the barrier - no pick, no settings write
     await tester.tapAt(const Offset(4.0, 4.0));
     await tester.pumpAndSettle();
