@@ -1,10 +1,13 @@
 import 'dart:async';
-import 'dart:ui';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../models/enums/chat_engine.dart';
 import '../../models/enums/chat_type.dart';
@@ -18,6 +21,7 @@ import '../../utils/chat_tts/chat_tts_queue.dart';
 import '../../utils/chat_tts/chat_tts_utterance.dart';
 import '../../utils/chat_tts/chat_tts_voice.dart';
 import '../../utils/general_helper.dart';
+import '../../utils/pro_ids.dart';
 import '../pro_store.dart';
 import 'combined_chat.dart';
 import 'kick_chat.dart';
@@ -145,6 +149,33 @@ abstract class _ChatTtsStore with Store {
         ? await speaker.voices()
         : const [];
     runInAction(() => this.voices = loaded);
+    if (loader == null && (kDebugMode || kProReleaseTestUnlock)) {
+      unawaited(_exportVoices(loaded));
+    }
+  }
+
+  /// Dogfood / debug builds only: the device's voice list as
+  /// `Documents/tts-voices.json`, pulled off the phone (devicectl / adb) to
+  /// see which languages people really have - e.g. for [ChatTtsPhrases]
+  Future<void> _exportVoices(List<ChatTtsVoice> voices) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      await File('${directory.path}/tts-voices.json').writeAsString(
+        const JsonEncoder.withIndent('  ').convert([
+          for (final voice in voices)
+            {
+              'id': voice.id,
+              'name': voice.name,
+              'language': voice.language,
+              'languageName': voice.languageName,
+              'quality': voice.quality,
+              'network': voice.network,
+            },
+        ]),
+      );
+    } catch (e) {
+      GeneralHelper.advLog('Chat TTS voice export failed - $e');
+    }
   }
 
   Box get _settings => Hive.box(HiveKeys.Settings.name);
