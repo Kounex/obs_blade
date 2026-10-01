@@ -65,6 +65,7 @@ void main() {
 
     store = TwitchChatStore(
       authService: authService,
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       eventSubFactory:
           (
             _,

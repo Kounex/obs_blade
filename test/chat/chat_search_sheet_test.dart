@@ -94,7 +94,9 @@ void main() {
   testWidgets('typing nothing shows the empty prompt, not results', (
     tester,
   ) async {
-    final store = TwitchChatStore();
+    final store = TwitchChatStore(
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
+    );
     store.messages.add(twitchMessage('1', 'Viewer', 'hello world'));
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
 
@@ -113,7 +115,9 @@ void main() {
   testWidgets('Twitch: matches content and author, case-insensitively', (
     tester,
   ) async {
-    final store = TwitchChatStore();
+    final store = TwitchChatStore(
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
+    );
     store.messages.addAll([
       twitchMessage('1', 'Viewer', 'check out my GIVEAWAY'),
       twitchMessage('2', 'Other', 'just saying hi'),
@@ -135,7 +139,9 @@ void main() {
   });
 
   testWidgets('no matches shows the empty state', (tester) async {
-    final store = TwitchChatStore();
+    final store = TwitchChatStore(
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
+    );
     store.messages.add(twitchMessage('1', 'Viewer', 'hello world'));
     GetIt.instance.registerSingleton<TwitchChatStore>(store);
 

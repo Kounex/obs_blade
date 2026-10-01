@@ -58,6 +58,7 @@ void main() {
     channelService = FakeTwitchChannelService();
     store = TwitchChatStore(
       authService: authService,
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       isProResolver: () => true,
       eventSubFactory:
           (

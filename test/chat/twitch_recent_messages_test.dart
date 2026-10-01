@@ -163,6 +163,7 @@ void main() {
 
     TwitchChatStore newStore() => TwitchChatStore(
       authService: FakeTwitchAuthService(),
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       eventSubFactory:
           (
             onMessage,

@@ -91,6 +91,7 @@ void main() {
     moderationService = FakeTwitchModerationService();
     store = TwitchChatStore(
       authService: authService,
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       isProResolver: () => true,
       eventSubFactory:
           (

@@ -51,7 +51,9 @@ void main() {
     /// The picker reads the viewed channel's id off the chat store — a
     /// logged-out store falls back to the global catalog (which is what
     /// these tests seed).
-    GetIt.instance.registerSingleton<TwitchChatStore>(TwitchChatStore());
+    GetIt.instance.registerSingleton<TwitchChatStore>(
+      TwitchChatStore(ircSidecarFactory: (_) => FakeSilentIrcSidecar()),
+    );
     controller = TextEditingController();
   });
 

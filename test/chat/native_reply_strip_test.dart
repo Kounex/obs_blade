@@ -46,6 +46,7 @@ void main() {
     authService.tokenScopes = const ['user:read:chat', 'user:write:chat'];
     store = TwitchChatStore(
       authService: authService,
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       eventSubFactory:
           (
             _,

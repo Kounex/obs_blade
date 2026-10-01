@@ -40,6 +40,7 @@ void main() {
       await harness.init();
       store = TwitchChatStore(
         authService: FakeTwitchAuthService(),
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         eventSubFactory:
             (
               _,
