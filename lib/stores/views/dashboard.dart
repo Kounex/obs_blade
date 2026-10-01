@@ -461,14 +461,6 @@ abstract class _DashboardStore with Store {
     _sendGetStudioModeEnabled();
     NetworkHelper.sendRequest(
       GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetRecordStatus,
-    );
-    NetworkHelper.sendRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
-      RequestType.GetStreamStatus,
-    );
-    NetworkHelper.sendRequest(
-      GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetReplayBufferStatus,
     );
     NetworkHelper.sendRequest(
@@ -1584,6 +1576,17 @@ abstract class _DashboardStore with Store {
             CurrentProfileChangedEvent(event.jsonRAW);
 
         this.currentProfileName = currentProfileChangedEvent.profileName;
+
+        /// Video settings and the record directory are per-profile in OBS -
+        /// they changed with the switch and have no own events
+        NetworkHelper.sendRequest(
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestType.GetVideoSettings,
+        );
+        NetworkHelper.sendRequest(
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestType.GetRecordDirectory,
+        );
         break;
       case EventType.ProfileListChanged:
         ProfileListChangedEvent profileListChangedEvent =
@@ -1686,6 +1689,17 @@ abstract class _DashboardStore with Store {
         /// input reads keyed by the old name must not apply
         _audioOrdering.newEpoch();
         _sceneCollectionRequests();
+        break;
+
+      /// Inputs created / removed without a scene-item change (global audio
+      /// devices, unplaced sources) fire no scene event - re-read the list
+      /// (its response chains the per-input audio re-read)
+      case EventType.InputCreated:
+      case EventType.InputRemoved:
+        NetworkHelper.sendRequest(
+          GetIt.instance<NetworkStore>().activeSession!.socket,
+          RequestType.GetInputList,
+        );
         break;
       case EventType.SceneItemListReindexed:
         _sceneCollectionRequests();
@@ -1882,6 +1896,16 @@ abstract class _DashboardStore with Store {
             return sceneItem;
           }),
         );
+        break;
+
+      /// Structural filter changes (add / remove / rename / reorder /
+      /// settings) - re-read the filters of the shown scene's items
+      case EventType.SourceFilterCreated:
+      case EventType.SourceFilterRemoved:
+      case EventType.SourceFilterNameChanged:
+      case EventType.SourceFilterListReindexed:
+      case EventType.SourceFilterSettingsChanged:
+        this.fetchSceneItemsFilters();
         break;
       case EventType.ExitStarted:
         await _finishPastStreamData();

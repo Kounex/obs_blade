@@ -123,4 +123,25 @@ enum EventType {
 
   /// The name of a canvas has changed (obs-websocket 5.7+).
   CanvasNameChanged,
+
+  /// An input has been created.
+  InputCreated,
+
+  /// An input has been removed.
+  InputRemoved,
+
+  /// A source filter has been created.
+  SourceFilterCreated,
+
+  /// A source filter has been removed.
+  SourceFilterRemoved,
+
+  /// The name of a source filter has changed.
+  SourceFilterNameChanged,
+
+  /// A source's filter list has been reindexed.
+  SourceFilterListReindexed,
+
+  /// The settings of a source filter have changed.
+  SourceFilterSettingsChanged,
 }
