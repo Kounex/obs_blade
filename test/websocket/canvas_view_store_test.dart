@@ -357,4 +357,50 @@ void main() {
     expect(canvasStore.isViewingOtherCanvas, isFalse);
     expect(canvasStore.viewedCanvasUuid, isNull);
   });
+
+  test(
+    'a reconnect rewires the canvas view: list re-read, events live again',
+    () async {
+      await connectWithCanvases();
+      canvasStore.viewCanvas(_verticalUuid);
+      await waitFor(
+        () => canvasStore.sceneItems.isNotEmpty,
+        'vertical scene items loaded',
+      );
+
+      /// Socket dies, fresh session attaches (the _checkOBSConnection
+      /// success seam). availableRequests still holds GetCanvasList from
+      /// the previous session, so a support-only reaction never refires
+      await peer.closeSockets();
+      expect(
+        await networkStore.setOBSWebSocket(peer.connection),
+        WebSocketCloseCode.DontClose,
+      );
+      dashboardStore.handleStream();
+
+      await waitFor(
+        () => requestsOf('GetCanvasList').length == 2,
+        'canvas list re-read on the new session',
+      );
+      await waitFor(
+        () => canvasStore.sceneItems.isNotEmpty,
+        'viewed scene reloaded on the new session',
+      );
+
+      /// Events on the NEW socket must be handled - before the fix the
+      /// subscription still listened on the dead socket's stream
+      peer.event('SceneItemLockStateChanged', {
+        'sceneName': 'V Main',
+        'sceneUuid': 'v-main',
+        'sceneItemId': 1,
+        'sceneItemLocked': true,
+      });
+      await waitFor(
+        () => canvasStore.sceneItems
+            .firstWhere((item) => item.sceneItemId == 1)
+            .sceneItemLocked!,
+        'event on the new socket applied',
+      );
+    },
+  );
 }

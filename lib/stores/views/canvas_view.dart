@@ -9,6 +9,7 @@ import 'package:mobx/mobx.dart';
 import '../../types/classes/api/obs_canvas.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/obs_request_ack.dart';
+import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
@@ -106,17 +107,28 @@ abstract class _CanvasViewStore with Store {
   /// list whenever GetVersion reports `GetCanvasList` (initial connect and
   /// every reconnect), and runs this canvas' preview loop instead of the
   /// program one while a non-main canvas is viewed with the preview open.
+  ///
+  /// The reaction tracks the session identity, not just canvas support:
+  /// [DashboardStore.availableRequests] is never cleared, so across a
+  /// reconnect the support bool stays true and would never re-fire - the
+  /// event subscription would keep listening on the dead socket's stream
+  /// and the canvas list would go stale until the view is re-entered.
   void init() {
     _disposers.add(
-      reaction<bool>(
-        (_) => _dashboardStore.availableRequests.contains(
-          RequestType.GetCanvasList.name,
+      reaction<(bool, Session?)>(
+        (_) => (
+          _dashboardStore.availableRequests.contains(
+            RequestType.GetCanvasList.name,
+          ),
+          GetIt.instance<NetworkStore>().activeSession,
         ),
-        (supported) {
-          if (supported) {
+        (state) {
+          if (state.$1 && state.$2 != null) {
+            /// New session (reconnect): the old stream ended with the old
+            /// socket - re-listen and re-read
             _listen();
             this.loadCanvases();
-          } else {
+          } else if (!state.$1) {
             _clearCanvases();
           }
         },
