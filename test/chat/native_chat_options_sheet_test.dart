@@ -24,10 +24,10 @@ void main() {
   Future<void> closeHiveInZone(WidgetTester tester) async {
     var closed = false;
     unawaited(harness.close().then((_) => closed = true));
-    for (var i = 0; i < 30 && !closed; i++) {
+    for (var i = 0; i < 150 && !closed; i++) {
       await tester.pump();
       await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );
     }
     await tester.pump();
