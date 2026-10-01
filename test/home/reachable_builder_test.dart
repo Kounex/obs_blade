@@ -54,12 +54,23 @@ void main() {
     ),
   );
 
-  /// Lets the isolate-based check finish and the resulting rebuild land
-  Future<void> settleCheck(WidgetTester tester) async {
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 500)),
-    );
-    await tester.pump();
+  /// The reachability check runs on a real isolate with real socket I/O -
+  /// poll (a real-time window plus a pump per round, so the check can
+  /// finish and the rebuild can land) until the result is visible instead
+  /// of betting on a fixed settle window
+  Future<void> pumpUntil(
+    WidgetTester tester,
+    bool Function() condition,
+    String description,
+  ) async {
+    for (var i = 0; i < 250; i++) {
+      if (condition()) return;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
+    fail('Timed out waiting for: $description');
   }
 
   testWidgets('a deleted connection disappears, an added one appears', (
@@ -73,18 +84,31 @@ void main() {
     });
 
     await tester.pumpWidget(subject());
-    await settleCheck(tester);
+    await pumpUntil(
+      tester,
+      () =>
+          find.text('Alpha').evaluate().isNotEmpty &&
+          find.text('Beta').evaluate().isNotEmpty,
+      'initial check resolves',
+    );
     expect(find.text('Alpha'), findsOneWidget);
     expect(find.text('Beta'), findsOneWidget);
 
     await tester.runAsync(() => alpha.delete());
-    await tester.pump();
+    await pumpUntil(
+      tester,
+      () => find.text('Alpha').evaluate().isEmpty,
+      'deletion lands',
+    );
     expect(find.text('Alpha'), findsNothing);
     expect(find.text('Beta'), findsOneWidget);
 
     await tester.runAsync(() => box.add(saved('Gamma')));
-    await tester.pump();
-    await settleCheck(tester);
+    await pumpUntil(
+      tester,
+      () => find.text('Gamma').evaluate().isNotEmpty,
+      'addition lands',
+    );
     expect(find.text('Gamma'), findsOneWidget);
   });
 
@@ -96,18 +120,28 @@ void main() {
     });
 
     await tester.pumpWidget(subject());
-    await settleCheck(tester);
+    await pumpUntil(
+      tester,
+      () => alpha.reachable == false,
+      'initial check resolves',
+    );
     expect(alpha.reachable, isFalse);
 
     await tester.runAsync(() async {
       alpha.port = deadPort + 1;
       await alpha.save();
     });
-    await tester.pump();
 
-    /// Reset to "checking" for the new endpoint, then resolved again
+    /// Reset to "checking" for the new endpoint (set during the rebuild,
+    /// so it is always observed before the next real-time window lets the
+    /// re-check resolve), then resolved again
+    await pumpUntil(tester, () => alpha.reachable == null, 're-check starts');
     expect(alpha.reachable, isNull);
-    await settleCheck(tester);
+    await pumpUntil(
+      tester,
+      () => alpha.reachable == false,
+      're-check resolves',
+    );
     expect(alpha.reachable, isFalse);
   });
 
@@ -119,7 +153,11 @@ void main() {
     });
 
     await tester.pumpWidget(subject());
-    await settleCheck(tester);
+    await pumpUntil(
+      tester,
+      () => alpha.reachable == false,
+      'initial check resolves',
+    );
 
     await tester.runAsync(() async {
       alpha.lastConnectedMs = 1;
