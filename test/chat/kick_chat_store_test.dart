@@ -344,6 +344,27 @@ void main() {
       expect(store.messages.map((m) => m.id), ['m1', 'm2', 'm3']);
     });
 
+    test('liveMessages carries live rows only, never the backfill', () async {
+      configure();
+      channelService.backfills[101] = [
+        KickChatMessage.fromJson(messageData('m1')),
+      ];
+      final live = <String>[];
+      final sub = store.liveMessages.listen((m) => live.add(m.id));
+
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+      await until(() => store.messages.isNotEmpty);
+
+      pusher().emitEvent(messageEvent('m1'));
+      pusher().emitEvent(messageEvent('m2'));
+      await until(() => live.isNotEmpty);
+      expect(live, ['m2']);
+      await sub.cancel();
+    });
+
     test(
       'the buffer caps at kMaxMessages (500), dropping the oldest',
       () async {

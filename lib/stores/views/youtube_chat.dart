@@ -1151,6 +1151,13 @@ abstract class _YouTubeChatStore with Store {
   /// the buffer, everything else appends as a row (deduped by message id —
   /// a local send's [YouTubeChatMessage] is already buffered when its poll
   /// echo arrives).
+  /// Live rows of the selected chat as they arrive - no first-page
+  /// history, no lifecycle events (text-to-speech listens here)
+  final StreamController<YouTubeChatMessage> _liveMessages =
+      StreamController.broadcast();
+
+  Stream<YouTubeChatMessage> get liveMessages => this._liveMessages.stream;
+
   void _applyPageMessages(String label, List<YouTubeChatMessage> items) {
     for (final item in items) {
       switch (item.type) {
@@ -1165,6 +1172,11 @@ abstract class _YouTubeChatStore with Store {
           this.messages.add(item);
           while (this.messages.length > kMaxMessages) {
             this.messages.removeAt(0);
+          }
+          if (!item.isHistorical &&
+              this.selectedChannelLabel == label &&
+              !this._liveMessages.isClosed) {
+            this._liveMessages.add(item);
           }
       }
     }
@@ -1786,5 +1798,6 @@ abstract class _YouTubeChatStore with Store {
     this._pollFlow++;
     this._loginFlow++;
     await this._authBoxSub?.cancel();
+    await this._liveMessages.close();
   }
 }

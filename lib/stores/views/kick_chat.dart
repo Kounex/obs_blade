@@ -900,6 +900,13 @@ abstract class _KickChatStore with Store {
   /// modes update) mutate the buffer, messages append as rows (deduped by
   /// id). A malformed payload is logged and skipped — one bad event must
   /// not break the socket loop.
+  /// Live chat rows of the selected channel as they arrive - no join
+  /// backfill (text-to-speech listens here)
+  final StreamController<KickChatMessage> _liveMessages =
+      StreamController.broadcast();
+
+  Stream<KickChatMessage> get liveMessages => this._liveMessages.stream;
+
   void _applyEvent(String slug, KickPusherEvent event) {
     try {
       switch (event.kind) {
@@ -915,6 +922,7 @@ abstract class _KickChatStore with Store {
           this._sentMessageIds.remove(message.id);
           this.messages.add(message);
           this._trimMessages();
+          if (!this._liveMessages.isClosed) this._liveMessages.add(message);
         case KickChatroomEventKind.messageDeleted:
           this._applyMessageDeleted(event);
         case KickChatroomEventKind.userBanned:
@@ -1654,5 +1662,6 @@ abstract class _KickChatStore with Store {
     final pusher = this._pusher;
     this._pusher = null;
     if (pusher != null) await pusher.dispose();
+    await this._liveMessages.close();
   }
 }

@@ -326,6 +326,25 @@ void main() {
       expect(chatService.listPageTokens, [null, 't1', null]);
     });
 
+    test('liveMessages skips the first (history) page', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.addAll([
+        page([ytMessage('m1'), ytMessage('m2')], nextPageToken: 't1'),
+        page([ytMessage('m3')]),
+      ]);
+      final live = <String>[];
+      final sub = store.liveMessages.listen((m) => live.add(m.id));
+
+      await store.init();
+      await until(() => chatService.listCalls >= 3);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(store.messages.map((m) => m.id), ['m1', 'm2', 'm3']);
+      expect(live, ['m3']);
+      await sub.cancel();
+    });
+
     test('video without an active chat → offline, no error', () async {
       configure();
       // No liveChatIds entry → resolves null (not live).

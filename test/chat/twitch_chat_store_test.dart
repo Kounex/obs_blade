@@ -516,6 +516,16 @@ void main() {
       ),
     );
 
+    test('liveMessages carries each appended live row', () async {
+      final live = <String>[];
+      final sub = store.liveMessages.listen((m) => live.add(m.messageId));
+      store.appendChatMessageForTest(event('1'));
+      store.appendChatMessageForTest(event('2'));
+      await Future<void>.delayed(Duration.zero);
+      expect(live, ['1', '2']);
+      await sub.cancel();
+    });
+
     test('appends via the exposed action and trims at 500', () {
       for (var i = 0; i < 505; i++) {
         store.appendChatMessageForTest(event('$i'));

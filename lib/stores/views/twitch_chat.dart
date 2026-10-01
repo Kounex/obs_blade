@@ -1903,11 +1903,21 @@ abstract class _TwitchChatStore with Store {
     );
   }
 
+  /// Live rows of the selected channel as they arrive - no history
+  /// backfill, no channel-switch restores (text-to-speech listens here)
+  final StreamController<ChatMessageEvent> _liveMessages =
+      StreamController.broadcast();
+
+  Stream<ChatMessageEvent> get liveMessages => this._liveMessages.stream;
+
   @action
   void _appendMessage(ChatMessageEvent event) {
     if (this._channelSwitchInProgress) {
       this._bufferMessageDuringSwitch(event);
       return;
+    }
+    if (!event.isHistorical && !this._liveMessages.isClosed) {
+      this._liveMessages.add(event);
     }
     final color = event.color;
     if (color != null && color.isNotEmpty) {
@@ -2521,5 +2531,6 @@ abstract class _TwitchChatStore with Store {
     await this._authBoxSub?.cancel();
     this._stopLivePoll();
     await this._disconnectChat();
+    await this._liveMessages.close();
   }
 }
