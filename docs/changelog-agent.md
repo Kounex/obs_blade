@@ -79,6 +79,16 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   preview reading a per-language sample; "Voices for other languages"
   sheet when detection is on; per-platform help (iOS directions,
   Android buttons for the TTS settings / voice data install).
+- Sheet freeze fixed at the source: listing voices resolved each
+  voice's "preferred" flag through the best-voice lookup, which re-read
+  the system voice list per uncached language (iOS
+  `speechVoices()` ~49x, Android `engine.voices` IPC per call) on the
+  main thread - and detection re-read it per message. Both bridges now
+  cache the list (iOS: refreshed on `availableVoicesDidChange`; Android:
+  on engine restart / each listing) and build the listing on a
+  background queue. Help text no longer hard-codes menu paths ("search
+  Settings for Voices" / "text-to-speech" - Apple moved it to Live
+  Speech on iOS 27).
 - Process slips this round (caught by the build, fixed): the iOS bridge
   rewrite dropped `ManageSubscriptions` (spliced to EOF), and a
   `dart format lib` touched 5 unrelated files (reverted before commit -

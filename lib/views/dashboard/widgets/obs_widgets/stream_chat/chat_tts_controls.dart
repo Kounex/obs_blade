@@ -886,10 +886,11 @@ class ChatTtsMoreVoicesHelp extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(top: AppSpacing.xs),
         child: Text(
-          'More and better voices: Settings → Accessibility → Spoken '
-          'Content → Voices. Enhanced and Premium voices are a download but '
-          'sound much more natural - they show up here afterwards and are '
-          'picked automatically.',
+          'More and better voices: open the Settings app and search for '
+          '"Voices" - the menu moves between iOS versions (it has been under '
+          'Accessibility, e.g. Spoken Content or Live Speech). Enhanced and '
+          'Premium voices are a download but sound much more natural; they '
+          'show up here afterwards and are picked automatically.',
           key: const Key('tts-voices-help'),
           style: style,
         ),
@@ -903,8 +904,9 @@ class ChatTtsMoreVoicesHelp extends StatelessWidget {
         Text(
           'Voices come from your phone\'s speech engine (e.g. Google). Voice '
           'data for more languages and higher quality voices is installed '
-          'there; voices marked "needs internet" use mobile data while '
-          'reading.',
+          'there - use the buttons below, or search the Settings app for '
+          '"text-to-speech" (menus differ between phones). Voices marked '
+          '"needs internet" use mobile data while reading.',
           style: style,
         ),
         Wrap(

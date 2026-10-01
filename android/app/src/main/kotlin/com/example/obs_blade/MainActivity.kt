@@ -124,6 +124,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     ready = false
     engine?.shutdown()
     val generation = ++engineGeneration
+    installedCache = null
     engine = TextToSpeech(appContext) { status ->
       main.post {
         if (generation != engineGeneration) return@post
@@ -219,12 +220,19 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
 
   private fun baseCode(tag: String): String = Locale.forLanguageTag(tag).language
 
-  private fun installedVoices(): List<Voice> = try {
+  /** The engine's voice list is an IPC round trip - read once, refreshed with [voices] and on engine restarts */
+  @Volatile
+  private var installedCache: List<Voice>? = null
+
+  private fun loadInstalledVoices(): List<Voice> = try {
     (engine?.voices ?: emptySet())
       .filter { !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) }
   } catch (e: Exception) {
     emptyList()
   }
+
+  private fun installedVoices(): List<Voice> =
+    installedCache ?: loadInstalledVoices().also { installedCache = it }
 
   /** The user's pick for [tag] (exact, else one for the same language) if it's installed */
   private fun pickedVoice(tag: String, installed: List<Voice>): Voice? {
@@ -235,8 +243,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   }
 
   /** The user's pick for [tag], else the best: exact locale, else the phone's region, else any region - quality first, offline on ties */
-  private fun bestVoice(tag: String): Voice? {
-    val installed = installedVoices()
+  private fun bestVoice(tag: String, installed: List<Voice> = installedVoices()): Voice? {
     pickedVoice(tag, installed)?.let { return it }
     val wanted = Locale.forLanguageTag(tag)
     val sameLanguage = installed.filter { it.locale.language == wanted.language }
@@ -312,15 +319,12 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   }
 
   /** Installed (downloaded) voices: id, language tag + display name, quality, network */
+  /** Fresh list (also refreshes the cache) - call off the main thread */
   private fun voices(): List<Map<String, Any>> {
-    val voices = try {
-      engine?.voices ?: emptySet()
-    } catch (e: Exception) {
-      emptySet()
-    }
-    val bestByTag = HashMap<String, String?>()
-    return voices
-      .filter { !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) }
+    val installed = loadInstalledVoices()
+    installedCache = installed
+    val bestByTag = HashMap<String, String>()
+    return installed
       .map { voice ->
         mapOf(
           "id" to voice.name,
@@ -332,7 +336,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
           // The voice this bridge reads that language with
           "preferred" to (
             bestByTag.getOrPut(voice.locale.toLanguageTag()) {
-              bestVoice(voice.locale.toLanguageTag())?.name
+              bestVoice(voice.locale.toLanguageTag(), installed)?.name ?: ""
             } == voice.name
           ),
         )
@@ -390,7 +394,12 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
         rate = ((call.arguments as? Number)?.toFloat() ?: 1.0f).coerceIn(0.25f, 3.0f)
         result.success(null)
       }
-      "voices" -> whenInitialized { result.success(voices()) }
+      "voices" -> whenInitialized {
+        detector.execute {
+          val list = voices()
+          main.post { result.success(list) }
+        }
+      }
       else -> result.notImplemented()
     }
   }

@@ -150,7 +150,7 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
       pending[ObjectIdentifier(utterance)] = result
       synthesizer.speak(utterance)
     case "voices":
-      result(installedVoices())
+      listVoices(result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -164,9 +164,13 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
     releaseSession()
   }
 
+  /// The system's voice list is expensive to read (every call rebuilds
+  /// it) - read once, refreshed when the installed voices change
+  private var usableCache: [AVSpeechSynthesisVoice]?
+
   /// Voices that read chat sensibly - no novelty ("Bad News", "Bells")
   /// and no Personal Voice (needs its own authorization)
-  private func usableVoices() -> [AVSpeechSynthesisVoice] {
+  private static func loadUsableVoices() -> [AVSpeechSynthesisVoice] {
     AVSpeechSynthesisVoice.speechVoices().filter { voice in
       if #available(iOS 17.0, *) {
         return !voice.voiceTraits.contains(.isNoveltyVoice)
@@ -176,24 +180,38 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
     }
   }
 
-  /// premium (3) > enhanced (2) > default (1) - raw values, so it also
-  /// compiles against iOS 15 where `.premium` doesn't exist yet
-  private func bestVoice(for language: String) -> AVSpeechSynthesisVoice? {
-    /// The user's pick: for this exact language, else one for the same
-    /// language in another region
-    let pickId = voicePicks[language]
-      ?? voicePicks.first { ChatTts.baseCode($0.key) == ChatTts.baseCode(language) }?.value
-    if let id = pickId, let picked = AVSpeechSynthesisVoice(identifier: id) {
+  private func usableVoices() -> [AVSpeechSynthesisVoice] {
+    if let cached = usableCache { return cached }
+    let voices = ChatTts.loadUsableVoices()
+    usableCache = voices
+    return voices
+  }
+
+  /// The user's pick for [language] (exact, else the same language in
+  /// another region) when it's installed, else the best of [voices] -
+  /// premium (3) > enhanced (2) > default (1), raw values so it also
+  /// compiles against iOS 15. Pure: runs off the main thread too
+  private static func best(
+    for language: String,
+    in voices: [AVSpeechSynthesisVoice],
+    picks: [String: String]
+  ) -> AVSpeechSynthesisVoice? {
+    let pickId = picks[language]
+      ?? picks.first { baseCode($0.key) == baseCode(language) }?.value
+    if let id = pickId, let picked = voices.first(where: { $0.identifier == id }) {
       return picked
     }
-    if let cached = bestVoices[language] { return cached }
-    let voices = usableVoices()
     let exact = voices.filter { $0.language == language }
     let prefix = language.split(separator: "-").first.map(String.init) ?? language
     let candidates = exact.isEmpty
       ? voices.filter { $0.language.hasPrefix(prefix + "-") }
       : exact
-    let best = candidates.max { ChatTts.rank($0) < ChatTts.rank($1) }
+    return candidates.max { rank($0) < rank($1) }
+  }
+
+  private func bestVoice(for language: String) -> AVSpeechSynthesisVoice? {
+    if let cached = bestVoices[language] { return cached }
+    let best = ChatTts.best(for: language, in: usableVoices(), picks: voicePicks)
     bestVoices[language] = best
     return best
   }
@@ -251,25 +269,48 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   }
 
   /// One entry per installed voice: identifier, name, language (BCP 47),
-  /// the language's name in the phone's language, quality
-  private func installedVoices() -> [[String: Any]] {
-    usableVoices().map { voice in
-      [
-        "id": voice.identifier,
-        "name": voice.name,
-        "language": voice.language,
-        "languageName": Locale.current.localizedString(forIdentifier: voice.language)
-          ?? voice.language,
-        "quality": voice.quality.rawValue,
-        /// The voice this bridge reads that language with - the sheet
-        /// shows exactly that one
-        "preferred": bestVoice(for: voice.language)?.identifier == voice.identifier,
-      ]
+  /// the language's name in the phone's language, quality, and whether
+  /// it's the one this bridge reads that language with. Built on a
+  /// background queue (the system list takes a while), answered on main
+  private func listVoices(_ result: @escaping FlutterResult) {
+    let picks = voicePicks
+    DispatchQueue.global(qos: .userInitiated).async {
+      let voices = ChatTts.loadUsableVoices()
+      /// Language → identifier of its voice ("" = none), resolved once each
+      var bestByLanguage: [String: String] = [:]
+      var names: [String: String] = [:]
+      let list: [[String: Any]] = voices.map { voice in
+        let language = voice.language
+        if bestByLanguage[language] == nil {
+          bestByLanguage[language] =
+            ChatTts.best(for: language, in: voices, picks: picks)?.identifier ?? ""
+        }
+        if names[language] == nil {
+          names[language] = Locale.current.localizedString(forIdentifier: language)
+            ?? language
+        }
+        return [
+          "id": voice.identifier,
+          "name": voice.name,
+          "language": language,
+          "languageName": names[language] ?? language,
+          "quality": voice.quality.rawValue,
+          "preferred": bestByLanguage[language] == voice.identifier,
+        ]
+      }
+      DispatchQueue.main.async {
+        self.usableCache = voices
+        self.bestVoices.removeAll()
+        result(list)
+      }
     }
   }
 
   @objc private func voicesChanged() {
-    DispatchQueue.main.async { self.bestVoices.removeAll() }
+    DispatchQueue.main.async {
+      self.usableCache = nil
+      self.bestVoices.removeAll()
+    }
   }
 
   @objc private func audioInterrupted(_ notification: Notification) {
