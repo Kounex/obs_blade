@@ -636,7 +636,7 @@ enum SettingsKeys {
     SettingsKeys.ChatTtsMaxLength: 'chat-tts-max-length',
     SettingsKeys.ChatTtsSpeed: 'chat-tts-speed',
     SettingsKeys.ChatTtsSkipStale: 'chat-tts-skip-stale',
-    SettingsKeys.HasUserSeenChatTtsHint: 'has-user-seen-chat-tts-hint',
+    SettingsKeys.HasUserSeenChatTtsHint: 'has-user-seen-chat-tts-hint-bubble',
     SettingsKeys.ChatTtsLanguage: 'chat-tts-language',
     SettingsKeys.ChatTtsDetectLanguage: 'chat-tts-detect-language',
     SettingsKeys.ChatTtsVolume: 'chat-tts-volume',
