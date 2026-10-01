@@ -267,8 +267,12 @@ store's `liveMessages` stream (no backfill / switch restores) →
 stale skip opt-in). Foreground only (no background modes, by decision);
 Wake Lock is app-wide now (default off). Speaker in the
 `NativeChatWindow` header: tap toggles, long press = settings (also an
-options-sheet page), one-off hint on first enable. `flutter_tts`, iOS
-playback + mix/duck. Feasibility + decisions:
+options-sheet page), one-off hint on first enable. Speech runs on the
+app's own `com.kounex.obsBlade/tts` channel (`PlatformTtsSpeaker` →
+`ChatTts` in `AppDelegate.swift` / `MainActivity.kt`) - no plugin:
+`flutter_tts` is CocoaPods-only and iOS is SPM-only since `81a41a27`, so
+check a new iOS plugin for SPM support before adding it. Feasibility +
+decisions:
 `docs/private/feature-requests-2026-10.md`.
 
 **Monetization (Pro):** native chat engines are gated behind the **Pro

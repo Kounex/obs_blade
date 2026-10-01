@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:collection';
 
-/// The speech engine behind [ChatTtsQueue] - `flutter_tts` in the app, a
-/// fake in tests. [speak] completes once the utterance finished (or was
-/// stopped).
+/// The speech engine behind [ChatTtsQueue] - the platform channel in the
+/// app, a fake in tests. [speak] completes once the utterance finished (or
+/// was stopped).
 abstract class ChatTtsSpeaker {
   Future<void> speak(String text);
 

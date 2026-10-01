@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
@@ -28,41 +27,35 @@ part 'chat_tts.g.dart';
 /// [SettingsKeys.ChatTtsSkipStale] on (off by default)
 const Duration kChatTtsStaleAfter = Duration(seconds: 15);
 
-/// [ChatTtsSpeaker] on the system voices (`flutter_tts`). iOS: playback
-/// category so it speaks with the silent switch on, mixing with other
-/// apps' audio and briefly lowering it (voice-prompt mode).
-class FlutterTtsSpeaker implements ChatTtsSpeaker {
-  final FlutterTts _tts = FlutterTts();
-  Future<void>? _setup;
+/// [ChatTtsSpeaker] on the system voices through the app's own platform
+/// channel (iOS `AVSpeechSynthesizer` in `AppDelegate.swift`, Android
+/// `TextToSpeech` in `MainActivity.kt`). [speak] completes when the
+/// message was read or stopped. iOS speaks with the silent switch on and
+/// lowers other apps' audio while reading.
+class PlatformTtsSpeaker implements ChatTtsSpeaker {
+  static const MethodChannel _channel = MethodChannel(
+    'com.kounex.obsBlade/tts',
+  );
 
-  Future<void> _ensureSetup() => _setup ??= () async {
-    await _tts.awaitSpeakCompletion(true);
-    if (Platform.isIOS) {
-      await _tts.setSharedInstance(true);
-      await _tts.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
-        IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-        IosTextToSpeechAudioCategoryOptions.duckOthers,
-      ], IosTextToSpeechAudioMode.voicePrompt);
+  /// Platforms without the channel (desktop, tests) stay silent
+  Future<void> _invoke(String method, [Object? arguments]) async {
+    try {
+      await _channel.invokeMethod<void>(method, arguments);
+    } on MissingPluginException {
+      return;
+    } on PlatformException catch (e) {
+      GeneralHelper.advLog('Chat TTS $method failed - $e');
     }
-  }();
-
-  /// [multiplier] 1.0 = normal speed (flutter_tts: 0.5 is normal on both
-  /// platforms, 1.0 the fastest)
-  Future<void> setSpeed(double multiplier) async {
-    await _ensureSetup();
-    await _tts.setSpeechRate((0.5 * multiplier).clamp(0.1, 1.0));
   }
+
+  /// [multiplier] 1.0 = normal speed
+  Future<void> setSpeed(double multiplier) => _invoke('setRate', multiplier);
 
   @override
-  Future<void> speak(String text) async {
-    await _ensureSetup();
-    await _tts.speak(text);
-  }
+  Future<void> speak(String text) => _invoke('speak', text);
 
   @override
-  Future<void> stop() async {
-    await _tts.stop();
-  }
+  Future<void> stop() => _invoke('stop');
 }
 
 /// Chat text-to-speech: reads live messages of the chat the Chat tab shows
@@ -79,7 +72,7 @@ abstract class _ChatTtsStore with Store {
     ChatTtsSpeaker? speaker,
     bool Function()? isProResolver,
     Stream<ChatTtsMessage> Function()? messages,
-  }) : _speaker = speaker ?? FlutterTtsSpeaker(),
+  }) : _speaker = speaker ?? PlatformTtsSpeaker(),
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
        _messagesFactory = messages {
@@ -136,17 +129,13 @@ abstract class _ChatTtsStore with Store {
   /// Re-read speed / stale skip after the settings sheet changed them
   void applySettings() {
     final speaker = _speaker;
-    if (speaker is FlutterTtsSpeaker) {
+    if (speaker is PlatformTtsSpeaker) {
       unawaited(
-        speaker
-            .setSpeed(
-              (_settings.get(SettingsKeys.ChatTtsSpeed.name, defaultValue: 1.0)
-                      as num)
-                  .toDouble(),
-            )
-            .catchError(
-              (Object e) => GeneralHelper.advLog('TTS speed failed - $e'),
-            ),
+        speaker.setSpeed(
+          (_settings.get(SettingsKeys.ChatTtsSpeed.name, defaultValue: 1.0)
+                  as num)
+              .toDouble(),
+        ),
       );
     }
     _queue.skipStaleAfter =

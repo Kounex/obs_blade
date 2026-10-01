@@ -24,8 +24,14 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   `chatTtsUtterance` + `ChatTtsQueue`, `ChatTtsStore` (Pro, persisted
   on/off), speaker in the `NativeChatWindow` header (tap / long press /
   waiting chip), settings sheet + options-sheet page, one-off hint.
-  New dep `flutter_tts` (Android `TTS_SERVICE` `<queries>` entry); the
-  workstation needs `pub get` / pods on the next build.
+  Speech is the app's own platform channel (`com.kounex.obsBlade/tts`:
+  `AVSpeechSynthesizer` in `AppDelegate.swift` - playback, voicePrompt,
+  mix + duck, session released after each message; `TextToSpeech` in
+  `MainActivity.kt`; Android `TTS_SERVICE` `<queries>` entry).
+  `flutter_tts` was tried first and dropped: it's CocoaPods-only, the
+  iOS project is SPM-only (`81a41a27`) - the dogfood build regenerated a
+  Podfile and failed `pod install` (stale `RunnerTests` target). Check new
+  iOS plugins for `Package.swift` before adding them.
 - Gotcha: `build_runner build --build-filter` right after a pubspec
   change deleted ~30 committed `.g.dart` files (restored from git) - run
   it without the filter, or check `git status` after.

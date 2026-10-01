@@ -15,7 +15,7 @@
       <action android:name="android.intent.action.SENDTO" />
       <data android:scheme="mailto" />
     </intent>
-    <!-- Chat text-to-speech (flutter_tts) finds the system TTS engine -->
+    <!-- Chat text-to-speech (MainActivity ChatTts) finds the system TTS engine -->
     <intent>
       <action android:name="android.intent.action.TTS_SERVICE" />
     </intent>
