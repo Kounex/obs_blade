@@ -369,6 +369,14 @@ tips/blacksmith).
   other Flutter processes (they starve each other and can look hung), and
   never do real I/O (e.g. a Hive `save()`) inside `testWidgets`' fake-async
   zone — it never completes and hangs the suite at shutdown.
+- **Test gate wrapper:** `dart tool/test_gate.dart [test targets...]`
+  (default `test/`) wraps `flutter test -j 1 --reporter json`, transparently
+  re-runs files that fail to *load* with the flutter_tester
+  `WebSocketException` runner flake (up to 3 attempts per file) and exits
+  non-zero only on real failures — use it for full-suite gates so the load
+  flake doesn't force manual babysitting. `--runs=N` repeats the whole gate
+  N times, failing fast. It prefers `~/flutter/bin/flutter` and falls back
+  to `flutter` on PATH, so it works on any machine.
 - **Process tiers (default S):** size the process to the change — S:
   implement directly in-session (no subagents/plan doc), TDD + gates
   once at the end; M: 1 implementer subagent + 1 end reviewer, prose
