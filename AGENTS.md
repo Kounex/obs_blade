@@ -304,6 +304,7 @@ tips/blacksmith).
 | [`docs/redesign-astra-audit.md`](docs/redesign-astra-audit.md) | Astra first-principles redesign (branch `redesign-astra`): audit + ratified progressive-adoption verdict, verified master defects, harvest list |
 | [`docs/private/monetization-strategy.md`](docs/private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored — not public.** |
 | [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — hosting, build order, open decisions. **Gitignored — not public.** |
+| [`docs/private/feature-requests-2026-10.md`](docs/private/feature-requests-2026-10.md) | User requests 2026-10 (chat TTS, in-app web pages, TikTok chat, OBS canvases): feasibility, store-rating impact, decisions + plan. **Gitignored — not public.** |
 | [`docs/private/maintainer-workflow.md`](docs/private/maintainer-workflow.md) | Maintainer-only machine setup + dogfood/private-doc sync workflow. **Gitignored — not public; contributors can ignore.** |
 
 ## Tooling
