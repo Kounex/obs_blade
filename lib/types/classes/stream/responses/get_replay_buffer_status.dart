@@ -4,6 +4,6 @@ import 'base.dart';
 class GetReplayBufferStatusResponse extends BaseResponse {
   GetReplayBufferStatusResponse(super.json);
 
-  /// Current recording status
-  bool? get isReplayBufferActive => this.json['isReplayBufferActive'];
+  /// Whether the replay buffer output is active
+  bool? get isReplayBufferActive => this.json['outputActive'];
 }
