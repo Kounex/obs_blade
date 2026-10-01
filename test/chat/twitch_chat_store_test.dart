@@ -75,6 +75,7 @@ void main() {
             __________,
           ) => eventSubService,
       badgeStoreResolver: () => badgeStore,
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       isProResolver: () => true,
     );
   });
@@ -624,6 +625,7 @@ void main() {
                 __________,
               ) => eventSubService,
           badgeStoreResolver: () => badgeStore,
+          ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
           isProResolver: () => false,
         );
         await seedValidAuth();
@@ -676,6 +678,7 @@ void main() {
               return eventSubService;
             },
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
       );
       await store.startLogin();
@@ -743,6 +746,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         messageService: messageService,
       );
@@ -996,6 +1000,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         emoteStoreResolver: () => emoteStore,
       );
@@ -1067,6 +1072,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         userEmoteStoreResolver: () => userEmoteStore,
       );
@@ -1402,6 +1408,7 @@ void main() {
               return eventSubService;
             },
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
       );
       await store.startLogin();
@@ -1515,6 +1522,7 @@ void main() {
               return eventSubService;
             },
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         messageService: messageService,
         channelService: channelService,
@@ -1568,6 +1576,7 @@ void main() {
                 __________,
               ) => eventSubService,
           badgeStoreResolver: () => badgeStore,
+          ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
           isProResolver: () => true,
           channelService: channelService,
         );
@@ -1918,6 +1927,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         moderationService: moderationService,
       );
@@ -2065,6 +2075,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         moderationService: moderationService,
       );
@@ -2246,6 +2257,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         moderationService: moderationService,
       );
@@ -2404,6 +2416,7 @@ void main() {
               return eventSubService;
             },
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         moderationService: moderationService,
       );
@@ -2649,6 +2662,7 @@ void main() {
               __________,
             ) => eventSubService,
         badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
         isProResolver: () => true,
         moderationService: moderationService,
       );
