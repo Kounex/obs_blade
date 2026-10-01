@@ -953,7 +953,7 @@ abstract class _DashboardStore with Store {
             : this.activeSceneName,
         'imageFormat': this.previewFileFormat,
         'imageWidth': _previewImageWidth,
-        'compressionQuality': -1,
+        'imageCompressionQuality': -1,
       });
 
   /// Preview screenshot width: the device's physical screen width (short

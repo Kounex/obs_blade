@@ -208,7 +208,7 @@ class GeneralActions extends StatelessWidget {
                                 : dashboardStore.activeSceneName,
                             'imageFilePath': dashboardStore.screenshotPath,
                             'imageFormat': dashboardStore.previewFileFormat,
-                            'compressionQuality': -1,
+                            'imageCompressionQuality': -1,
                           }),
                           RequestBatchObject(RequestType.GetSourceScreenshot, {
                             'sourceName':
@@ -220,7 +220,7 @@ class GeneralActions extends StatelessWidget {
                                 ? dashboardStore.studioModePreviewSceneName
                                 : dashboardStore.activeSceneName,
                             'imageFormat': dashboardStore.previewFileFormat,
-                            'compressionQuality': -1,
+                            'imageCompressionQuality': -1,
                           }),
                         ],
                       );

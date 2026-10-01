@@ -409,7 +409,7 @@ abstract class _CanvasViewStore with Store {
       'sourceUuid': sceneUuid,
       'imageFormat': _dashboardStore.previewFileFormat,
       'imageWidth': _previewImageWidth,
-      'compressionQuality': -1,
+      'imageCompressionQuality': -1,
     });
     if (generation != _viewGeneration) return;
     _previewInFlight = false;
