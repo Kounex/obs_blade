@@ -2,6 +2,53 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Replay buffer connect fix + OBS↔app sync audit
+
+From a store review: connecting to a running OBS never detected an
+already-running replay buffer (Save button greyed out until the buffer
+was toggled in OBS). Root cause + a full sync-state audit against the
+obs-websocket v5 spec:
+
+- **The reported bug:** `GetReplayBufferStatusResponse` read a v4-era
+  `isReplayBufferActive` key - v5's field is `outputActive`, so the
+  initial read always landed `false` and only the
+  `ReplayBufferStateChanged` event (correct key) fixed the state.
+  Regression tests drive the initial burst against the loopback fake OBS
+  (`test/websocket/replay_buffer_status_test.dart`).
+- **Audit result:** no other wrong-key DTO in any live path (every
+  response/event/batch DTO checked against generated `protocol.md`).
+  Found and fixed instead:
+  - **Canvas view broke after a reconnect** - the `CanvasViewStore` init
+    reaction only tracked `availableRequests.contains(GetCanvasList)`,
+    which never flips across a reconnect (the set is never cleared), so
+    the store kept listening on the dead socket: no canvas events, stale
+    list, until the dashboard was re-entered. The reaction now tracks the
+    session identity too.
+  - **Inputs created/removed outside a scene** (global audio devices,
+    unplaced sources) never refreshed `allInputs` - `InputCreated` /
+    `InputRemoved` are now in `EventType` and re-read the input list.
+  - **Structural filter changes** (add/remove/rename/reorder/settings)
+    went stale until the next scene-item re-read - those events now
+    re-read the shown scene's filters.
+  - **Profile switch** only updated the name - video settings and the
+    record directory are per-profile in OBS and are now re-read.
+  - Screenshot requests sent a nonexistent `compressionQuality` key
+    (v5: `imageCompressionQuality`) - silently ignored, default happened
+    to match; aligned.
+  - Dropped the dead initial `GetStreamStatus`/`GetRecordStatus` sends
+    (responses discarded by design since the 1s stats batch owns
+    stream/record state).
+- **Known, not fixed (protocol limits):** record directory / video
+  settings / hotkey list / transition list have no change events in v5
+  (initial-read only; profile switch now covered); `SceneListChanged`
+  doesn't fire on reorder (spec's own TODO); main-canvas item events
+  match by scene name, so a same-named non-main canvas scene could
+  cross-patch (canvas view itself matches by UUID).
+- Tests: `replay_buffer_status_test.dart`, `event_driven_refresh_test.dart`,
+  canvas reconnect case in `canvas_view_store_test.dart` - each verified
+  to fail against the pre-fix code. Gates: websocket + dashboard suites
+  clean, analyze 0 errors.
+
 ## 2026-10-01 - Canvas switcher v1, chat text-to-speech, app-wide Wake Lock
 
 From a user's feature request (report + decisions:
