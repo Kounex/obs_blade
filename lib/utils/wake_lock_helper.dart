@@ -10,6 +10,6 @@ import '../types/enums/settings_keys.dart';
 void applyWakeLockSetting() {
   final bool enabled = Hive.box(
     HiveKeys.Settings.name,
-  ).get(SettingsKeys.WakeLock.name, defaultValue: true);
+  ).get(SettingsKeys.WakeLock.name, defaultValue: false);
   WakelockPlus.toggle(enable: enabled);
 }

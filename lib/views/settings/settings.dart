@@ -50,7 +50,7 @@ class SettingsView extends StatelessWidget {
                         trailing: BaseAdaptiveSwitch(
                           value: settingsBox.get(
                             SettingsKeys.WakeLock.name,
-                            defaultValue: true,
+                            defaultValue: false,
                           ),
                           onChanged: (wakeLock) {
                             settingsBox.put(
