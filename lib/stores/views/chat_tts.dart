@@ -52,6 +52,9 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
   /// [multiplier] 1.0 = normal speed
   Future<void> setSpeed(double multiplier) => _invoke('setRate', multiplier);
 
+  /// [volume] 0.0 … 1.0, relative to the device volume
+  Future<void> setVolume(double volume) => _invoke('setVolume', volume);
+
   /// Installed voices - empty where the channel doesn't exist
   Future<List<ChatTtsVoice>> voices() async {
     try {
@@ -177,6 +180,13 @@ abstract class _ChatTtsStore with Store {
       unawaited(
         speaker.setSpeed(
           (_settings.get(SettingsKeys.ChatTtsSpeed.name, defaultValue: 1.0)
+                  as num)
+              .toDouble(),
+        ),
+      );
+      unawaited(
+        speaker.setVolume(
+          (_settings.get(SettingsKeys.ChatTtsVolume.name, defaultValue: 1.0)
                   as num)
               .toDouble(),
         ),

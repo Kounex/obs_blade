@@ -21,6 +21,9 @@ class BaseDropdown<T> extends StatelessWidget {
   final String? label;
   final double? minWidth;
 
+  /// Long lists scroll inside this height instead of filling the screen
+  final double? menuMaxHeight;
+
   const BaseDropdown({
     super.key,
     required this.value,
@@ -30,6 +33,7 @@ class BaseDropdown<T> extends StatelessWidget {
     this.isDense,
     this.label,
     this.minWidth,
+    this.menuMaxHeight,
   });
 
   @override
@@ -50,6 +54,7 @@ class BaseDropdown<T> extends StatelessWidget {
               DropdownButton<T>(
                 value: this.value,
                 isDense: true,
+                menuMaxHeight: this.menuMaxHeight,
 
                 /// Rule 8: the stock underline is a hardcoded framework gray
                 /// (#BDBDBD) - resolve the divider group token instead (same

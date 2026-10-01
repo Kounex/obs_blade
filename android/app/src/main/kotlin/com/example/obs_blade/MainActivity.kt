@@ -71,6 +71,9 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   private val afterInit = mutableListOf<() -> Unit>()
   private val pending = HashMap<String, MethodChannel.Result>()
   private var rate = 1.0f
+
+  /** 0 … 1, relative to the device volume */
+  private var volume = 1.0f
   private var nextId = 0
 
   /** BCP 47 tag from the settings, null = the system TTS settings' voice */
@@ -257,7 +260,8 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
         tts.defaultVoice?.let { tts.voice = it }
       }
       val capped = text.take(TextToSpeech.getMaxSpeechInputLength())
-      if (tts.speak(capped, TextToSpeech.QUEUE_FLUSH, Bundle(), id) != TextToSpeech.SUCCESS) {
+      val params = Bundle().apply { putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, volume) }
+      if (tts.speak(capped, TextToSpeech.QUEUE_FLUSH, params, id) != TextToSpeech.SUCCESS) {
         pending.remove(id)
         if (retry) {
           createEngine()
@@ -300,6 +304,10 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
           return
         }
         speakDetecting(text, call.argument<String>("detectionText") ?: text, result)
+      }
+      "setVolume" -> {
+        volume = ((call.arguments as? Number)?.toFloat() ?: 1.0f).coerceIn(0.0f, 1.0f)
+        result.success(null)
       }
       "setLanguage" -> {
         defaultLanguage = call.argument<String>("language")

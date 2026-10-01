@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/adaptive_switch.dart';
+import '../../../../../shared/general/base/dropdown.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/pro_store.dart';
@@ -177,6 +179,7 @@ class ChatTtsSettingsRows extends StatelessWidget {
     SettingsKeys.ChatTtsReadOwnMessages,
     SettingsKeys.ChatTtsMaxLength,
     SettingsKeys.ChatTtsSpeed,
+    SettingsKeys.ChatTtsVolume,
     SettingsKeys.ChatTtsSkipStale,
     SettingsKeys.WakeLock,
   ];
@@ -217,6 +220,9 @@ class ChatTtsSettingsRows extends StatelessWidget {
         );
         final double speed =
             (box.get(SettingsKeys.ChatTtsSpeed.name, defaultValue: 1.0) as num)
+                .toDouble();
+        final double volume =
+            (box.get(SettingsKeys.ChatTtsVolume.name, defaultValue: 1.0) as num)
                 .toDouble();
         final int maxLength =
             (box.get(
@@ -361,6 +367,15 @@ class ChatTtsSettingsRows extends StatelessWidget {
               onChanged: (value) => set(SettingsKeys.ChatTtsSpeed, value),
             ),
             _TtsSlider(
+              label: 'Volume',
+              valueLabel: '${(volume * 100).round()}%',
+              value: volume,
+              min: 0.1,
+              max: 1.0,
+              divisions: 9,
+              onChanged: (value) => set(SettingsKeys.ChatTtsVolume, value),
+            ),
+            _TtsSlider(
               label: 'Max length',
               valueLabel: maxLength == 0 ? 'No limit' : '$maxLength chars',
               value: maxLength.toDouble(),
@@ -392,9 +407,13 @@ class ChatTtsSettingsRows extends StatelessWidget {
   }
 }
 
-/// The default TTS language: "Phone language" or one of the languages the
-/// system has voices for (best voice each). Also the fallback when
-/// detection finds nothing usable. Asks the platform once per sheet.
+/// Dropdown value for "the phone's language" (no setting)
+const String _kPhoneLanguage = '';
+
+/// The default TTS language as a dropdown: "Phone language" or one of the
+/// languages the system has voices for. Also the fallback when detection
+/// finds nothing usable. The voice it reads with shows underneath. Asks
+/// the platform for its voices once per sheet.
 class _LanguagePicker extends StatefulWidget {
   final ChatTtsStore store;
 
@@ -416,7 +435,7 @@ class _LanguagePickerState extends State<_LanguagePicker> {
       : const ['Low quality', 'Normal quality', 'High quality'][rank];
 
   void _select(Box box, String? language) {
-    if (language == null) {
+    if (language == null || language == _kPhoneLanguage) {
       box.delete(SettingsKeys.ChatTtsLanguage.name);
     } else {
       box.put(SettingsKeys.ChatTtsLanguage.name, language);
@@ -424,29 +443,20 @@ class _LanguagePickerState extends State<_LanguagePicker> {
     this.widget.store.applySettings();
   }
 
-  Widget _row(
-    BuildContext context, {
-    required Key key,
-    required String title,
-    required String subtitle,
-    required bool selected,
-    required VoidCallback onTap,
-  }) => PressFlash(
-    key: key,
-    onTap: onTap,
-    child: ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
-      title: Text(title),
-      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-      trailing: selected
-          ? Icon(
-              CupertinoIcons.checkmark_alt,
-              color: Theme.of(context).colorScheme.secondary,
-            )
-          : null,
-    ),
-  );
+  /// The language row the phone's own language reads with
+  static ChatTtsLanguage? _phoneLanguage(List<ChatTtsLanguage> languages) {
+    final locale = PlatformDispatcher.instance.locale;
+    final tag = locale.toLanguageTag();
+    for (final language in languages) {
+      if (language.language == tag) return language;
+    }
+    for (final language in languages) {
+      if (language.language.split('-').first == locale.languageCode) {
+        return language;
+      }
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -461,53 +471,55 @@ class _LanguagePickerState extends State<_LanguagePicker> {
       builder: (context, box, child) => Observer(
         builder: (context) {
           final voices = this.widget.store.voices;
-          final String? selected =
-              box.get(SettingsKeys.ChatTtsLanguage.name) as String?;
           final languages = voices == null
               ? const <ChatTtsLanguage>[]
               : chatTtsLanguages(voices);
+          final String? stored =
+              box.get(SettingsKeys.ChatTtsLanguage.name) as String?;
+
+          /// A stored language without voices anymore reads as the phone's
+          final ChatTtsLanguage? picked = stored == null
+              ? null
+              : languages.where((l) => l.language == stored).firstOrNull;
+          final ChatTtsLanguage? reading = picked ?? _phoneLanguage(languages);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _row(
-                context,
-                key: const ValueKey('tts-language-phone'),
-                title: 'Phone language',
-                subtitle: 'The language your phone is set to',
-                selected:
-                    selected == null ||
-                    (voices != null &&
-                        !languages.any((l) => l.language == selected)),
-                onTap: () => this._select(box, null),
-              ),
-              if (voices == null)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  child: Center(child: CupertinoActivityIndicator()),
-                )
-              else
-                for (final language in languages)
-                  this._row(
-                    context,
-                    key: ValueKey('tts-language-${language.language}'),
-                    title: language.languageName,
-                    subtitle: [
-                      language.best.name,
-                      _quality(language.best.qualityRank),
-                      if (language.best.network) 'needs internet',
-                    ].join(' · '),
-                    selected: selected == language.language,
-                    onTap: () => this._select(box, language.language),
+              const SizedBox(height: AppSpacing.sm),
+              BaseDropdown<String>(
+                key: const Key('tts-language-dropdown'),
+                label: 'Read in',
+                value: picked?.language ?? _kPhoneLanguage,
+                menuMaxHeight: kChatChannelMenuMaxHeight,
+                items: [
+                  BaseDropdownItem(
+                    value: _kPhoneLanguage,
+                    text: 'Phone language',
                   ),
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Text(
-                  voices != null && languages.isEmpty
-                      ? 'No voices reported by the system. $hint'
-                      : hint,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                  for (final language in languages)
+                    BaseDropdownItem(
+                      value: language.language,
+                      text: language.languageName,
+                    ),
+                ],
+                onChanged: (value) => this._select(box, value),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                voices == null
+                    ? 'Looking up voices…'
+                    : languages.isEmpty
+                    ? 'No voices reported by the system. $hint'
+                    : [
+                        if (reading != null)
+                          'Voice: ${[reading.best.name, _quality(reading.best.qualityRank), if (reading.best.network) 'needs internet'].join(' · ')}. '
+                        else
+                          '',
+                        '${languages.length} languages installed. $hint',
+                      ].join(),
+                key: const Key('tts-language-voice'),
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           );

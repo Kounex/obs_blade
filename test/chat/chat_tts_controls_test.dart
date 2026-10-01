@@ -134,6 +134,17 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       });
 
+  /// A dropdown reports a pick only after its menu's close animation, on
+  /// the fake clock - the settings write would land in the fake zone and
+  /// never finish. Pick through the dropdown's own callback in a real zone
+  Future<void> pickLanguage(WidgetTester tester, String value) =>
+      tester.runAsync(() async {
+        tester
+            .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+            .onChanged!(value);
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+
   testWidgets('first switch-on: reading starts + the one-off hint', (
     tester,
   ) async {
@@ -184,34 +195,36 @@ void main() {
     expect(find.text('Mentions only'), findsOneWidget);
     expect(ttsStore.enabled, isFalse);
 
-    /// The installed voices, one row per language
+    /// Language: a dropdown, phone language preselected, the voice it
+    /// reads with underneath
     await tester.scrollUntilVisible(
-      find.byKey(const Key('tts-language-en-US')),
+      find.byKey(const Key('tts-language-dropdown')),
       200.0,
       scrollable: find.byType(Scrollable).last,
     );
-    expect(find.text('English (United States)'), findsOneWidget);
-    expect(find.text('German (Germany)'), findsOneWidget);
     expect(find.text("Detect each message's language"), findsOneWidget);
+    expect(find.text('Phone language'), findsOneWidget);
+    expect(find.textContaining('Voice: Ava'), findsOneWidget);
+    expect(find.text('Volume'), findsOneWidget);
 
-    /// Phone language is the default pick
-    Finder check(String key) => find.descendant(
-      of: find.byKey(Key(key)),
-      matching: find.byIcon(CupertinoIcons.checkmark_alt),
-    );
-    expect(check('tts-language-phone'), findsOneWidget);
-    expect(check('tts-language-de-DE'), findsNothing);
+    /// The menu lists every installed language
+    await tester.tap(find.byKey(const Key('tts-language-dropdown')));
+    await tester.pumpAndSettle();
+    expect(find.text('German (Germany)'), findsWidgets);
+    expect(find.text('English (United States)'), findsWidgets);
+    /// Dismiss via the barrier - no pick, no settings write
+    await tester.tapAt(const Offset(4.0, 4.0));
+    await tester.pumpAndSettle();
 
     /// Picking a language makes it the default (persisted)
-    await tapReal(tester, find.byKey(const Key('tts-language-de-DE')));
-    await tester.pump();
+    await pickLanguage(tester, 'de-DE');
+    await tester.pumpAndSettle();
     expect(settings().get(SettingsKeys.ChatTtsLanguage.name), 'de-DE');
-    expect(check('tts-language-de-DE'), findsOneWidget);
-    expect(check('tts-language-phone'), findsNothing);
+    expect(find.textContaining('Voice: Anna'), findsOneWidget);
 
     /// And back to the phone's language
-    await tapReal(tester, find.byKey(const Key('tts-language-phone')));
-    await tester.pump();
+    await pickLanguage(tester, '');
+    await tester.pumpAndSettle();
     expect(settings().get(SettingsKeys.ChatTtsLanguage.name), isNull);
   });
 

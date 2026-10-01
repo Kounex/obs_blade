@@ -506,7 +506,10 @@ enum SettingsKeys {
 
   /// [bool]: TTS detects each message's language and reads it with that
   /// language's voice when installed (off by default)
-  ChatTtsDetectLanguage;
+  ChatTtsDetectLanguage,
+
+  /// [double]: TTS volume 0.1 … 1.0 relative to the device volume (1.0)
+  ChatTtsVolume;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -636,5 +639,6 @@ enum SettingsKeys {
     SettingsKeys.HasUserSeenChatTtsHint: 'has-user-seen-chat-tts-hint',
     SettingsKeys.ChatTtsLanguage: 'chat-tts-language',
     SettingsKeys.ChatTtsDetectLanguage: 'chat-tts-detect-language',
+    SettingsKeys.ChatTtsVolume: 'chat-tts-volume',
   }[this]!;
 }

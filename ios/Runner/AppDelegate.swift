@@ -38,6 +38,9 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   private var pending: [ObjectIdentifier: FlutterResult] = [:]
   private var rate: Float = AVSpeechUtteranceDefaultSpeechRate
 
+  /// 0 … 1, relative to the device volume
+  private var volume: Float = 1.0
+
   /// Best voice per language code, rebuilt when the installed voices change
   private var bestVoices: [String: AVSpeechSynthesisVoice?] = [:]
 
@@ -91,6 +94,7 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
       activateSession()
       let utterance = AVSpeechUtterance(string: text)
       utterance.rate = rate
+      utterance.volume = volume
       if let voice = voice(for: (args?["detectionText"] as? String) ?? text) {
         utterance.voice = voice
       }
@@ -106,6 +110,10 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
         max(AVSpeechUtteranceDefaultSpeechRate * multiplier, AVSpeechUtteranceMinimumSpeechRate),
         AVSpeechUtteranceMaximumSpeechRate
       )
+      result(nil)
+    case "setVolume":
+      let value = (call.arguments as? NSNumber)?.floatValue ?? 1.0
+      volume = min(max(value, 0.0), 1.0)
       result(nil)
     case "setLanguage":
       let args = call.arguments as? [String: Any]
