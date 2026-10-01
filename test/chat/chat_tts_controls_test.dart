@@ -9,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/shared/general/base/adaptive_switch.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/chat_tts.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -233,6 +234,48 @@ void main() {
     await pickLanguage(tester, '');
     await tester.pumpAndSettle();
     expect(settings().get(SettingsKeys.ChatTtsLanguage.name), isNull);
+  });
+
+  testWidgets('every settings switch flips when tapped', (tester) async {
+    setPro(true);
+    await tester.pumpWidget(app());
+    await tester.longPress(find.byKey(const Key('chat-tts-button')));
+    await tester.pumpAndSettle();
+
+    for (final title in const [
+      'Read usernames',
+      'Skip emotes',
+      'Skip links',
+      'Skip !commands',
+      'Read my own messages',
+      'Skip old messages',
+      "Detect each message's language",
+    ]) {
+      final row = find.ancestor(
+        of: find.text(title),
+        matching: find.byType(ListTile),
+      );
+      await tester.scrollUntilVisible(
+        row,
+        200.0,
+        scrollable: find.byType(Scrollable).last,
+      );
+      BaseAdaptiveSwitch switchOf() => tester.widget<BaseAdaptiveSwitch>(
+        find.descendant(of: row, matching: find.byType(BaseAdaptiveSwitch)),
+      );
+      final bool before = switchOf().value;
+
+      /// The switch writes the settings box (real I/O) - real zone
+      await tester.runAsync(() async {
+        await tester.tap(
+          find.descendant(of: row, matching: find.byType(BaseAdaptiveSwitch)),
+        );
+        await tester.pump();
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pump();
+      expect(switchOf().value, !before, reason: '"$title" did not flip');
+    }
   });
 
   testWidgets('the waiting chip jumps to the latest message', (tester) async {

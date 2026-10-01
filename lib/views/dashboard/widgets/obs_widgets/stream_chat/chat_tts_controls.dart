@@ -332,6 +332,8 @@ class ChatTtsSettingsRows extends StatelessWidget {
       'Reads new messages of the native chat out loud while OBS Blade is '
       'open. It stops when the screen locks.';
 
+  /// Every key a row below reads - a missing one leaves its switch stuck
+  /// (the write lands, the row never rebuilds)
   static const List<SettingsKeys> _keys = [
     SettingsKeys.ChatTtsAudience,
     SettingsKeys.ChatTtsReadUsernames,
@@ -343,6 +345,7 @@ class ChatTtsSettingsRows extends StatelessWidget {
     SettingsKeys.ChatTtsSpeed,
     SettingsKeys.ChatTtsVolume,
     SettingsKeys.ChatTtsSkipStale,
+    SettingsKeys.ChatTtsDetectLanguage,
     SettingsKeys.WakeLock,
   ];
 
