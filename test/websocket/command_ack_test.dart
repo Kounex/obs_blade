@@ -100,7 +100,7 @@ void main() {
       () async {
         await connect();
         NetworkHelper.requestAckTimeout = shortAckTimeout;
-        peer.ackDelay = const Duration(milliseconds: 600);
+        peer.heldRequestTypes.add('SetInputVolume');
 
         final timedOutAck = await NetworkHelper.makeRequest(
           networkStore.activeSession!.socket,
@@ -110,18 +110,28 @@ void main() {
         expect(timedOutAck.failureKind, ObsRequestFailureKind.timeout);
         expect(NetworkHelper.pendingAckCount, 0);
 
-        /// The delayed ack for the first request arrives while a second one
-        /// is in flight - it must be dropped, not complete the second one
-        peer.ackDelay = null;
+        /// Back to the default so the second request cannot time out while
+        /// its ack is still held
+        NetworkHelper.requestAckTimeout = const Duration(seconds: 35);
+
+        /// The held ack for the first request is released while a second
+        /// one is in flight - it must be dropped, not complete the second
+        /// one. Both acks go out in request order, so the client processes
+        /// the stale one strictly before the second request's own ack.
         final secondAckFuture = NetworkHelper.makeRequest(
           networkStore.activeSession!.socket,
           RequestType.SetInputVolume,
           {'inputName': 'Mic', 'inputVolumeMul': 0.8},
         );
 
-        /// Wait until the late ack of the first request had its chance to
-        /// (wrongly) complete something
-        await Future<void>.delayed(const Duration(milliseconds: 700));
+        /// Both requests must be queued at the peer before the releases
+        for (var i = 0; i < 500 && peer.requests.length < 2; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+        }
+        expect(peer.requests, hasLength(2));
+
+        peer.releaseOne('SetInputVolume'); // stale ack of the first request
+        peer.releaseOne('SetInputVolume'); // the second request's own ack
 
         final secondAck = await secondAckFuture;
         expect(secondAck.success, isTrue);

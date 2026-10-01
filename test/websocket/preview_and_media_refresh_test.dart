@@ -6,8 +6,10 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/types/classes/api/input.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'package:obs_blade/utils/network_helper.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_obs_peer.dart';
@@ -28,12 +30,22 @@ void main() {
       .toList();
 
   Future<void> waitFor(bool Function() condition, String description) async {
-    for (var i = 0; i < 200; i++) {
+    for (var i = 0; i < 500; i++) {
       if (condition()) return;
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     fail('Timed out waiting for: $description');
   }
+
+  /// Deterministic "everything sent before was processed" gate: the peer
+  /// answers this benign request immediately (it is never held), and the
+  /// WebSocket delivers messages in order on the single socket - so once
+  /// this ack's future completes, every earlier message in both
+  /// directions has been fully handled
+  Future<void> flushPeer() => NetworkHelper.makeRequest(
+    networkStore.activeSession!.socket,
+    RequestType.GetVersion,
+  );
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('preview_media_refresh');
@@ -46,6 +58,13 @@ void main() {
     GetIt.instance.registerSingleton<NetworkStore>(networkStore);
     GetIt.instance.registerSingleton<DashboardStore>(dashboardStore);
     peer.responseData['GetSourceScreenshot'] = {'imageData': _png};
+
+    /// flushPeer's GetVersion responses run through the dashboard's
+    /// GetVersion handler - they must parse cleanly
+    peer.responseData['GetVersion'] = {
+      'availableRequests': <String>[],
+      'supportedImageFormats': ['jpg', 'png'],
+    };
     expect(
       await networkStore.setOBSWebSocket(peer.connection),
       WebSocketCloseCode.DontClose,
@@ -65,20 +84,26 @@ void main() {
 
   group('scene preview loop', () {
     test('repeated starts keep ONE screenshot in flight', () async {
-      /// Slow answers: every extra start used to open another loop
-      peer.ackDelayFor = (request) =>
-          request['requestType'] == 'GetSourceScreenshot'
-          ? const Duration(milliseconds: 200)
-          : null;
+      /// Held answers: the first screenshot stays in flight until the test
+      /// releases it - every extra start used to open another loop
+      peer.heldRequestTypes.add('GetSourceScreenshot');
 
       dashboardStore.setShouldRequestPreviewImage(true);
       dashboardStore.setShouldRequestPreviewImage(true);
       dashboardStore.setShouldRequestPreviewImage(true);
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await flushPeer();
       expect(requestsOf('GetSourceScreenshot'), hasLength(1));
 
       /// After the answer, exactly one follow-up (not three)
-      await Future<void>.delayed(const Duration(milliseconds: 250));
+      peer.releaseOne('GetSourceScreenshot');
+      await waitFor(
+        () => requestsOf('GetSourceScreenshot').length == 2,
+        'follow-up after the answer',
+      );
+      await waitFor(
+        () => dashboardStore.scenePreviewImageBytes != null,
+        'preview applied',
+      );
       expect(requestsOf('GetSourceScreenshot'), hasLength(2));
       expect(dashboardStore.scenePreviewImageBytes, isNotNull);
     });
