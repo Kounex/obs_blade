@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -11,6 +12,8 @@ import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/chat_highlight_helper.dart';
 import '../../utils/chat_tts/chat_tts_adapters.dart';
+import '../../utils/chat_tts/chat_tts_combine.dart';
+import '../../utils/chat_tts/chat_tts_phrases.dart';
 import '../../utils/chat_tts/chat_tts_queue.dart';
 import '../../utils/chat_tts/chat_tts_utterance.dart';
 import '../../utils/chat_tts/chat_tts_voice.dart';
@@ -312,15 +315,37 @@ abstract class _ChatTtsStore with Store {
     if (!this.enabled || !_isProResolver()) return;
     if (_messagesFactory == null && !_platformShown(message.platform)) return;
 
-    final spoken = chatTtsSpoken(message, _readSettings(), _readFilters());
-    if (spoken != null) {
-      _queue.add(
-        spoken.text,
-        receivedAt: message.receivedAt,
-        detectionText: spoken.body,
-      );
-    }
+    final settings = _readSettings();
+    final spoken = chatTtsSpoken(message, settings, _readFilters());
+    if (spoken == null) return;
+
+    /// Re-read per message - the switch applies to what's waiting right away
+    _queue.combine =
+        _settings.get(
+              SettingsKeys.ChatTtsCombineRepeats.name,
+              defaultValue: true,
+            ) ==
+            true
+        ? (group) => chatTtsCombinedLine(
+            group,
+            readUsernames: settings.readUsernames,
+            phrases: settings.phrases,
+          )
+        : null;
+    _queue.add(
+      spoken.text,
+      receivedAt: message.receivedAt,
+      detectionText: spoken.body,
+      combineKey: spoken.combineKey,
+      author: spoken.author,
+      notable: spoken.notable,
+    );
   }
+
+  /// The language TTS reads in by default - the setting, else the phone's
+  String get _defaultLanguage =>
+      (_settings.get(SettingsKeys.ChatTtsLanguage.name) as String?) ??
+      PlatformDispatcher.instance.locale.toLanguageTag();
 
   ChatTtsSettings _readSettings() {
     final box = _settings;
@@ -335,6 +360,8 @@ abstract class _ChatTtsStore with Store {
       skipLinks: flag(SettingsKeys.ChatTtsSkipLinks, true),
       skipCommands: flag(SettingsKeys.ChatTtsSkipCommands, true),
       readOwnMessages: flag(SettingsKeys.ChatTtsReadOwnMessages, false),
+      skipEmoteOnly: flag(SettingsKeys.ChatTtsSkipEmoteOnly, false),
+      phrases: ChatTtsPhrases.of(_defaultLanguage),
       maxLength:
           (box.get(
                     SettingsKeys.ChatTtsMaxLength.name,

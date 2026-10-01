@@ -12,12 +12,29 @@ abstract class ChatTtsSpeaker {
   Future<void> stop();
 }
 
-class _Pending {
+/// One message waiting to be read
+class ChatTtsQueueItem {
   final String text;
   final String? detectionText;
   final DateTime receivedAt;
 
-  const _Pending(this.text, this.detectionText, this.receivedAt);
+  /// Identical short messages share this key and may be read once together
+  /// - null = never combined
+  final String? combineKey;
+
+  /// Who sent it and whether they're worth naming in a combined line
+  /// (highlighted user, mod, streamer)
+  final String? author;
+  final bool notable;
+
+  const ChatTtsQueueItem({
+    required this.text,
+    required this.receivedAt,
+    this.detectionText,
+    this.combineKey,
+    this.author,
+    this.notable = false,
+  });
 }
 
 /// Reads utterances one after another. Nothing is dropped on its own:
@@ -48,7 +65,12 @@ class ChatTtsQueue {
   static Duration defaultUtteranceTimeout(String text) =>
       Duration(milliseconds: 10000 + 150 * text.length);
 
-  final Queue<_Pending> _pending = Queue();
+  final Queue<ChatTtsQueueItem> _pending = Queue();
+
+  /// Builds the line for a group of identical messages (first one first) -
+  /// null = never combine. Only messages already waiting are combined, so
+  /// a quiet chat reads exactly as before; nothing is held back to collect
+  String Function(List<ChatTtsQueueItem> group)? combine;
   bool _speaking = false;
 
   /// Bumped by [clear] - a [speak] that returns afterwards must not start
@@ -64,8 +86,24 @@ class ChatTtsQueue {
 
   bool get speaking => _speaking;
 
-  void add(String text, {DateTime? receivedAt, String? detectionText}) {
-    _pending.add(_Pending(text, detectionText, receivedAt ?? _now()));
+  void add(
+    String text, {
+    DateTime? receivedAt,
+    String? detectionText,
+    String? combineKey,
+    String? author,
+    bool notable = false,
+  }) {
+    _pending.add(
+      ChatTtsQueueItem(
+        text: text,
+        receivedAt: receivedAt ?? _now(),
+        detectionText: detectionText,
+        combineKey: combineKey,
+        author: author,
+        notable: notable,
+      ),
+    );
     this.onChanged?.call();
     if (!_speaking) _next();
   }
@@ -80,22 +118,41 @@ class ChatTtsQueue {
     await _speaker.stop();
   }
 
+  bool _stale(ChatTtsQueueItem item) {
+    final staleAfter = this.skipStaleAfter;
+    return staleAfter != null &&
+        _now().difference(item.receivedAt) > staleAfter;
+  }
+
+  /// [next]'s text, or one line for it plus every waiting message with the
+  /// same combine key (those leave the queue)
+  String _textFor(ChatTtsQueueItem next) {
+    final combine = this.combine;
+    final key = next.combineKey;
+    if (combine == null || key == null) return next.text;
+    final group = [
+      next,
+      for (final item in _pending)
+        if (item.combineKey == key && !_stale(item)) item,
+    ];
+    if (group.length == 1) return next.text;
+    _pending.removeWhere((item) => item.combineKey == key);
+    return combine(group);
+  }
+
   Future<void> _next() async {
     final generation = _generation;
     while (_pending.isNotEmpty) {
       final next = _pending.removeFirst();
-      final staleAfter = this.skipStaleAfter;
-      if (staleAfter != null &&
-          _now().difference(next.receivedAt) > staleAfter) {
-        continue;
-      }
+      if (_stale(next)) continue;
+      final text = _textFor(next);
       _speaking = true;
       this.onChanged?.call();
       try {
         await _speaker
-            .speak(next.text, detectionText: next.detectionText)
+            .speak(text, detectionText: next.detectionText)
             .timeout(
-              this.utteranceTimeout(next.text),
+              this.utteranceTimeout(text),
               onTimeout: () => _speaker.stop(),
             );
       } catch (_) {

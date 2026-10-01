@@ -346,6 +346,8 @@ class ChatTtsSettingsRows extends StatelessWidget {
     SettingsKeys.ChatTtsVolume,
     SettingsKeys.ChatTtsSkipStale,
     SettingsKeys.ChatTtsDetectLanguage,
+    SettingsKeys.ChatTtsCombineRepeats,
+    SettingsKeys.ChatTtsSkipEmoteOnly,
     SettingsKeys.WakeLock,
   ];
 
@@ -507,6 +509,21 @@ class ChatTtsSettingsRows extends StatelessWidget {
             section('What'),
             toggle(SettingsKeys.ChatTtsReadUsernames, true, 'Read usernames'),
             toggle(SettingsKeys.ChatTtsSkipEmotes, true, 'Skip emotes'),
+            toggle(
+              SettingsKeys.ChatTtsSkipEmoteOnly,
+              false,
+              'Skip emote-only messages',
+              'For when emotes are read: drops messages that are nothing '
+                  'but emotes.',
+            ),
+            toggle(
+              SettingsKeys.ChatTtsCombineRepeats,
+              true,
+              'Combine repeated messages',
+              'When reading falls behind, identical short messages waiting '
+                  'in line are read once - e.g. "Viewer, a mod and 13 others: '
+                  'KEKW".',
+            ),
             toggle(SettingsKeys.ChatTtsSkipLinks, true, 'Skip links'),
             toggle(SettingsKeys.ChatTtsSkipCommands, true, 'Skip !commands'),
             toggle(

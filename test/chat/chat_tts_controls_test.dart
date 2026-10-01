@@ -245,6 +245,8 @@ void main() {
     for (final title in const [
       'Read usernames',
       'Skip emotes',
+      'Skip emote-only messages',
+      'Combine repeated messages',
       'Skip links',
       'Skip !commands',
       'Read my own messages',

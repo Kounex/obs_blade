@@ -1,6 +1,7 @@
 import '../../models/enums/chat_type.dart';
 import '../chat_highlight_helper.dart';
 import '../chat_mute_helper.dart';
+import 'chat_tts_phrases.dart';
 
 /// Who text-to-speech reads out loud
 enum ChatTtsAudience {
@@ -90,6 +91,13 @@ class ChatTtsSettings {
   /// Characters per message, cut at a word boundary - 0 = no limit
   final int maxLength;
 
+  /// Drop messages with nothing but emotes (only matters while emotes are
+  /// read - skipped emotes leave such messages empty anyway)
+  final bool skipEmoteOnly;
+
+  /// The filler words TTS adds ("5 times"), in the voice's language
+  final ChatTtsPhrases phrases;
+
   const ChatTtsSettings({
     this.audience = ChatTtsAudience.everyone,
     this.readUsernames = true,
@@ -98,6 +106,8 @@ class ChatTtsSettings {
     this.skipCommands = true,
     this.readOwnMessages = false,
     this.maxLength = kChatTtsDefaultMaxLength,
+    this.skipEmoteOnly = false,
+    this.phrases = ChatTtsPhrases.english,
   });
 }
 
@@ -137,6 +147,39 @@ final RegExp _kShortcode = RegExp(r'^:[\w-]+:$');
 /// Spam runs ("aaaaaaaa", "!!!!!!") - 4+ of the same character
 final RegExp _kCharRun = RegExp(r'(.)\1{3,}');
 
+/// A run of this many identical words ("KEKW KEKW KEKW") is read once with
+/// a count - two stay ("no no" is just speech)
+const int kChatTtsWordRunMin = 3;
+
+/// Messages up to this many words can be combined with identical ones
+/// waiting in the queue (emote waves, "W", "gg")
+const int kChatTtsCombineMaxWords = 3;
+
+/// [words] with every run of [kChatTtsWordRunMin]+ identical words
+/// (case-insensitive) replaced by the word plus "N times"
+List<String> collapseChatTtsWordRuns(
+  List<String> words,
+  ChatTtsPhrases phrases,
+) {
+  final List<String> collapsed = [];
+  var i = 0;
+  while (i < words.length) {
+    var j = i + 1;
+    final lower = words[i].toLowerCase();
+    while (j < words.length && words[j].toLowerCase() == lower) {
+      j++;
+    }
+    final run = j - i;
+    if (run >= kChatTtsWordRunMin) {
+      collapsed.add('${words[i]} ${phrases.times(run)}');
+    } else {
+      collapsed.addAll(words.sublist(i, j));
+    }
+    i = j;
+  }
+  return collapsed;
+}
+
 /// The text TTS speaks for [message], or null when it's skipped. Applies,
 /// in order: own messages, ignored users / mute words (same as the
 /// timeline), the audience, `!commands`, then builds the text without
@@ -148,8 +191,17 @@ String? chatTtsUtterance(
 ) => chatTtsSpoken(message, settings, filters)?.text;
 
 /// What TTS reads for one message: [text] is spoken, [body] is the message
-/// alone (no username) - language detection looks at that
-typedef ChatTtsSpoken = ({String text, String body});
+/// alone (no username) - language detection looks at that. [author] and
+/// [notable] (highlighted user, mod, streamer) name people when identical
+/// messages get combined; [combineKey] is set for short messages that may
+/// be combined (null = never).
+typedef ChatTtsSpoken = ({
+  String text,
+  String body,
+  String author,
+  bool notable,
+  String? combineKey,
+});
 
 /// [chatTtsUtterance] plus the bare message body for language detection
 ChatTtsSpoken? chatTtsSpoken(
@@ -188,7 +240,8 @@ ChatTtsSpoken? chatTtsSpoken(
 
   if (settings.skipCommands && plain.trimLeft().startsWith('!')) return null;
 
-  final List<String> words = [];
+  List<String> words = [];
+  var hasText = false;
   for (final part in message.parts) {
     if (part.isEmote) {
       if (!settings.skipEmotes) words.add(part.text);
@@ -196,14 +249,19 @@ ChatTtsSpoken? chatTtsSpoken(
     }
     for (final word in part.text.split(_kWhitespace)) {
       if (word.isEmpty) continue;
-      if (settings.skipEmotes &&
-          (message.isThirdPartyEmote(word) || _kShortcode.hasMatch(word))) {
-        continue;
-      }
+      final bool emote =
+          message.isThirdPartyEmote(word) || _kShortcode.hasMatch(word);
+      if (emote && settings.skipEmotes) continue;
       if (settings.skipLinks && _kLink.hasMatch(word)) continue;
+      if (!emote) hasText = true;
       words.add(word);
     }
   }
+  if (settings.skipEmoteOnly && !hasText) return null;
+  words = collapseChatTtsWordRuns(words, settings.phrases);
+
+  /// After the collapse: "KEKW KEKW KEKW KEKW" is one entry
+  final int wordCount = words.length;
 
   String text = words.join(' ');
   if (muted) {
@@ -227,5 +285,13 @@ ChatTtsSpoken? chatTtsSpoken(
   return (
     text: settings.readUsernames ? '${message.author}: $text' : text,
     body: text,
+    author: message.author,
+    notable:
+        message.isModerator ||
+        message.isBroadcaster ||
+        chatAuthorInList(filters.highlightUsers, message.authorNames),
+    combineKey: wordCount <= kChatTtsCombineMaxWords
+        ? text.toLowerCase()
+        : null,
   );
 }

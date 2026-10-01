@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
+import 'package:obs_blade/utils/chat_tts/chat_tts_combine.dart';
+import 'package:obs_blade/utils/chat_tts/chat_tts_phrases.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_queue.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_utterance.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_voice.dart';
@@ -139,13 +141,15 @@ void main() {
     });
 
     test('long messages are cut at a word boundary', () {
-      final text = List.filled(60, 'word').join(' ');
+      /// Distinct words - identical ones would collapse into "word 60 times"
+      final text = List.generate(60, (i) => 'word$i').join(' ');
       final said = _say(
         _msg(text),
         settings: const ChatTtsSettings(readUsernames: false, maxLength: 30),
       )!;
       expect(said.length, lessThanOrEqualTo(30));
-      expect(said.endsWith('word'), isTrue);
+      expect(said, matches(RegExp(r'word\d+$')));
+      expect(text.startsWith('$said '), isTrue);
       expect(
         _say(
           _msg(text),
@@ -383,6 +387,248 @@ void main() {
       expect(voice('a', 'en-US', 300).qualityRank, 1);
       expect(voice('a', 'en-US', 3).qualityRank, 2);
       expect(voice('a', 'en-US', 1).qualityRank, 0);
+    });
+  });
+
+  group('spam shortening', () {
+    test('3+ identical words in a row are read once with a count', () {
+      expect(
+        _say(
+          _msg('KEKW kekw KEKW KEKW gg no no'),
+          settings: const ChatTtsSettings(readUsernames: false),
+        ),
+        'KEKW 4 times gg no no',
+      );
+    });
+
+    test('the count follows the reading language', () {
+      expect(
+        _say(
+          _msg('W W W'),
+          settings: ChatTtsSettings(
+            readUsernames: false,
+            phrases: ChatTtsPhrases.of('de-DE'),
+          ),
+        ),
+        'W 3 mal',
+      );
+    });
+
+    test('emote runs collapse too while emotes are read', () {
+      final message = _msg(
+        '',
+        parts: const [
+          ChatTtsPart.emote('Kappa'),
+          ChatTtsPart.text(' '),
+          ChatTtsPart.emote('Kappa'),
+          ChatTtsPart.text(' '),
+          ChatTtsPart.emote('Kappa'),
+        ],
+      );
+      expect(
+        _say(
+          message,
+          settings: const ChatTtsSettings(
+            readUsernames: false,
+            skipEmotes: false,
+          ),
+        ),
+        'Kappa 3 times',
+      );
+    });
+
+    test('skip emote-only messages: only when nothing but emotes', () {
+      const settings = ChatTtsSettings(
+        readUsernames: false,
+        skipEmotes: false,
+        skipEmoteOnly: true,
+      );
+      final emoteOnly = _msg(
+        '',
+        parts: const [
+          ChatTtsPart.emote('Kappa'),
+          ChatTtsPart.text(' OMEGALUL :hand-pink-waving:'),
+        ],
+        thirdParty: (word) => word == 'OMEGALUL',
+      );
+      expect(_say(emoteOnly, settings: settings), isNull);
+      final mixed = _msg(
+        '',
+        parts: const [ChatTtsPart.emote('Kappa'), ChatTtsPart.text(' nice')],
+      );
+      expect(_say(mixed, settings: settings), 'Kappa nice');
+    });
+
+    test('combine key: short messages only, counted after the collapse', () {
+      ChatTtsSpoken? spoken(String text) => chatTtsSpoken(
+        _msg(text),
+        const ChatTtsSettings(),
+        const ChatTtsFilters(),
+      );
+      expect(spoken('KEKW')!.combineKey, 'kekw');
+      expect(spoken('KEKW KEKW KEKW KEKW KEKW')!.combineKey, isNotNull);
+      expect(spoken('this is a longer message')!.combineKey, isNull);
+    });
+
+    test('notable: mods, the streamer and highlighted users', () {
+      ChatTtsSpoken? spoken(ChatTtsMessage message) => chatTtsSpoken(
+        message,
+        const ChatTtsSettings(),
+        const ChatTtsFilters(highlightUsers: {'friend'}),
+      );
+      expect(spoken(_msg('hi'))!.notable, isFalse);
+      expect(spoken(_msg('hi', mod: true))!.notable, isTrue);
+      expect(spoken(_msg('hi', broadcaster: true))!.notable, isTrue);
+      expect(spoken(_msg('hi', author: 'Friend'))!.notable, isTrue);
+    });
+  });
+
+  group('ChatTtsPhrases', () {
+    test('by base language, English fallback', () {
+      expect(ChatTtsPhrases.of('pt-BR').times(2), '2 vezes');
+      expect(ChatTtsPhrases.of('zh-Hans').times(3), '3次');
+      expect(ChatTtsPhrases.of('xx-YY').times(2), '2 times');
+      expect(ChatTtsPhrases.of(null).times(2), '2 times');
+    });
+
+    test('names', () {
+      const en = ChatTtsPhrases.english;
+      expect(en.names(['A'], 0), 'A');
+      expect(en.names(['A', 'B'], 0), 'A and B');
+      expect(en.names(['A', 'B', 'C'], 0), 'A, B and C');
+      expect(en.names(['A'], 1), 'A and one other');
+      expect(en.names(['A', 'B'], 13), 'A, B and 13 others');
+    });
+  });
+
+  group('chatTtsCombinedLine', () {
+    ChatTtsQueueItem item(String author, {bool notable = false}) =>
+        ChatTtsQueueItem(
+          text: '$author: KEKW',
+          detectionText: 'KEKW',
+          receivedAt: DateTime(2026),
+          combineKey: 'kekw',
+          author: author,
+          notable: notable,
+        );
+
+    test('usernames off: the message and how often', () {
+      expect(
+        chatTtsCombinedLine(
+          [item('A'), item('B'), item('C')],
+          readUsernames: false,
+          phrases: ChatTtsPhrases.english,
+        ),
+        'KEKW 3 times',
+      );
+    });
+
+    test('one person repeating', () {
+      expect(
+        chatTtsCombinedLine(
+          [item('A'), item('A'), item('A')],
+          readUsernames: true,
+          phrases: ChatTtsPhrases.english,
+        ),
+        'A: KEKW 3 times',
+      );
+    });
+
+    test('first author + notable people by name, the rest counted', () {
+      expect(
+        chatTtsCombinedLine(
+          [
+            item('First'),
+            item('x1'),
+            item('Mod', notable: true),
+            item('x2'),
+            item('x1'),
+          ],
+          readUsernames: true,
+          phrases: ChatTtsPhrases.english,
+        ),
+        'First, Mod and 2 others: KEKW',
+      );
+    });
+
+    test('at most three names', () {
+      expect(
+        chatTtsCombinedLine(
+          [
+            item('First'),
+            item('M1', notable: true),
+            item('M2', notable: true),
+            item('M3', notable: true),
+          ],
+          readUsernames: true,
+          phrases: ChatTtsPhrases.of('de'),
+        ),
+        'First, M1, M2 und eine weitere Person: KEKW',
+      );
+    });
+  });
+
+  group('ChatTtsQueue combining', () {
+    late _FakeSpeaker speaker;
+    late ChatTtsQueue queue;
+
+    Future<void> settle() => Future<void>.delayed(Duration.zero);
+
+    setUp(() {
+      speaker = _FakeSpeaker();
+      queue = ChatTtsQueue(speaker)
+        ..combine = (group) => '${group.length}x ${group.first.combineKey}';
+    });
+
+    void add(String text, {String? key}) =>
+        queue.add(text, combineKey: key, author: text);
+
+    test(
+      'waiting identical messages are read once, others keep their turn',
+      () async {
+        add('first');
+        add('kekw a', key: 'kekw');
+        add('other');
+        add('kekw b', key: 'kekw');
+        add('kekw c', key: 'kekw');
+        await settle();
+        expect(speaker.spoken, ['first']);
+        expect(queue.waiting, 4);
+
+        speaker.finish();
+        await settle();
+        expect(speaker.spoken, ['first', '3x kekw']);
+        expect(queue.waiting, 1);
+
+        speaker.finish();
+        await settle();
+        expect(speaker.spoken, ['first', '3x kekw', 'other']);
+      },
+    );
+
+    test('nothing is held back: a lone message reads as is', () async {
+      add('kekw a', key: 'kekw');
+      await settle();
+      expect(speaker.spoken, ['kekw a']);
+
+      /// Arrives while the first is read - combined with nothing waiting
+      add('kekw b', key: 'kekw');
+      speaker.finish();
+      await settle();
+      expect(speaker.spoken, ['kekw a', 'kekw b']);
+    });
+
+    test('switched off: every message reads on its own', () async {
+      queue.combine = null;
+      add('first');
+      add('kekw a', key: 'kekw');
+      add('kekw b', key: 'kekw');
+      await settle();
+      speaker.finish();
+      await settle();
+      speaker.finish();
+      await settle();
+      expect(speaker.spoken, ['first', 'kekw a', 'kekw b']);
     });
   });
 }

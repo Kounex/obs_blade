@@ -173,4 +173,30 @@ void main() {
     expect(speaker.spoken, ['EnglishName: hola amigos que tal']);
     expect(speaker.detectionTexts, ['hola amigos que tal']);
   });
+
+  test('identical waiting messages are combined (switchable)', () async {
+    store.setEnabled(true);
+    messages
+      ..add(_msg('first'))
+      ..add(_msg('KEKW', author: 'A'))
+      ..add(_msg('KEKW', author: 'B'))
+      ..add(_msg('KEKW', author: 'C'));
+    await settle();
+    speaker.finish();
+    await settle();
+    expect(speaker.spoken, ['Viewer: first', 'A and 2 others: KEKW']);
+
+    speaker.finish();
+    await settings().put(SettingsKeys.ChatTtsCombineRepeats.name, false);
+    messages
+      ..add(_msg('one'))
+      ..add(_msg('W', author: 'A'))
+      ..add(_msg('W', author: 'B'));
+    await settle();
+    speaker.finish();
+    await settle();
+    speaker.finish();
+    await settle();
+    expect(speaker.spoken.skip(2), ['Viewer: one', 'A: W', 'B: W']);
+  });
 }

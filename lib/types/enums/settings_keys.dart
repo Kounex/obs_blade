@@ -509,7 +509,14 @@ enum SettingsKeys {
   ChatTtsDetectLanguage,
 
   /// [double]: TTS volume 0.1 … 1.0 relative to the device volume (1.0)
-  ChatTtsVolume;
+  ChatTtsVolume,
+
+  /// [bool]: TTS reads identical short messages that are waiting in the
+  /// queue once ("Viewer and 14 others: KEKW") - on by default
+  ChatTtsCombineRepeats,
+
+  /// [bool]: TTS drops messages with nothing but emotes (off by default)
+  ChatTtsSkipEmoteOnly;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -640,5 +647,7 @@ enum SettingsKeys {
     SettingsKeys.ChatTtsLanguage: 'chat-tts-language',
     SettingsKeys.ChatTtsDetectLanguage: 'chat-tts-detect-language',
     SettingsKeys.ChatTtsVolume: 'chat-tts-volume',
+    SettingsKeys.ChatTtsCombineRepeats: 'chat-tts-combine-repeats',
+    SettingsKeys.ChatTtsSkipEmoteOnly: 'chat-tts-skip-emote-only',
   }[this]!;
 }

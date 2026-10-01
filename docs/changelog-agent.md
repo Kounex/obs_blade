@@ -55,6 +55,15 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   `DropdownButton` reports a pick after its close animation on the fake
   clock - a Hive write from `onChanged` then never finishes and teardown
   hangs; pick through `onChanged` inside `runAsync`.
+- Spammy chat: repeated words collapse ("KEKW 5 times"), identical short
+  messages waiting in the queue are combined ("Viewer, ModName and 13
+  others: KEKW"; one person → "Viewer: KEKW 5 times"; on by default,
+  only ever merges what's already waiting), "Skip emote-only messages"
+  toggle. Filler words from `ChatTtsPhrases` (en, de, es, fr, pt, it,
+  nl, pl, tr, ru, ja, ko, zh; by the default TTS language) - a
+  translation service was considered and rejected for four fixed
+  phrases (offline, instant, no keys, no chat content leaves the phone).
+  The non-English phrases are my translations - worth a native check.
 - Process slips this round (caught by the build, fixed): the iOS bridge
   rewrite dropped `ManageSubscriptions` (spliced to EOF), and a
   `dart format lib` touched 5 unrelated files (reverted before commit).
