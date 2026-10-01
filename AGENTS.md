@@ -286,8 +286,9 @@ identical words collapse to "KEKW 5 times"; "Combine repeated messages"
 in the queue once - first author + notable (highlighted/mod/streamer)
 names, max 3, rest counted (`chatTtsCombinedLine`), never holds a
 message back; "Skip emote-only messages" (opt-in). Filler words come
-from the built-in `ChatTtsPhrases` table (13 languages, by the default
-TTS language, English fallback) - no translation service on purpose.
+from the built-in `ChatTtsPhrases` table (all 39 base languages iOS
+ships voices for + old Android aliases, by the default TTS language,
+English fallback) - no translation service on purpose.
 No plugin:
 `flutter_tts` is CocoaPods-only and iOS is SPM-only since `81a41a27`, so
 check a new iOS plugin for SPM support before adding it. Feasibility +

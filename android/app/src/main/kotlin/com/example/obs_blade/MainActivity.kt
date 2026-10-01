@@ -281,6 +281,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     } catch (e: Exception) {
       emptySet()
     }
+    val bestByTag = HashMap<String, String?>()
     return voices
       .filter { !it.features.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) }
       .map { voice ->
@@ -291,6 +292,12 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
           "languageName" to voice.locale.displayName,
           "quality" to voice.quality,
           "network" to voice.isNetworkConnectionRequired,
+          // The voice this bridge reads that language with
+          "preferred" to (
+            bestByTag.getOrPut(voice.locale.toLanguageTag()) {
+              bestVoice(voice.locale.toLanguageTag())?.name
+            } == voice.name
+          ),
         )
       }
   }

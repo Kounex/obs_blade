@@ -19,6 +19,9 @@ class ChatTtsVoice {
   /// Android: needs a network connection to speak
   final bool network;
 
+  /// The voice the native bridge actually reads this language with
+  final bool preferred;
+
   const ChatTtsVoice({
     required this.id,
     required this.name,
@@ -26,6 +29,7 @@ class ChatTtsVoice {
     required this.languageName,
     required this.quality,
     this.network = false,
+    this.preferred = false,
   });
 
   factory ChatTtsVoice.fromMap(Map<Object?, Object?> map) => ChatTtsVoice(
@@ -36,6 +40,7 @@ class ChatTtsVoice {
         map['languageName'] as String? ?? map['language'] as String? ?? '',
     quality: (map['quality'] as num?)?.toInt() ?? 0,
     network: map['network'] == true,
+    preferred: map['preferred'] == true,
   );
 
   /// Quality on a shared 0 (lowest) … 2 (best) scale
@@ -63,8 +68,9 @@ class ChatTtsLanguage {
   });
 }
 
-/// Groups [voices] by language, best voice first per language (offline
-/// before network-only on ties), sorted by language name
+/// Groups [voices] by language - shown voice: the one the bridge marks as
+/// [ChatTtsVoice.preferred], else the best quality (offline first) -
+/// sorted by language name
 List<ChatTtsLanguage> chatTtsLanguages(List<ChatTtsVoice> voices) {
   final byLanguage = <String, List<ChatTtsVoice>>{};
   for (final voice in voices) {
@@ -76,6 +82,7 @@ List<ChatTtsLanguage> chatTtsLanguages(List<ChatTtsVoice> voices) {
         language: entry.key,
         languageName: entry.value.first.languageName,
         best:
+            entry.value.where((voice) => voice.preferred).firstOrNull ??
             (entry.value.toList()..sort((a, b) {
                   final rank = b.qualityRank.compareTo(a.qualityRank);
                   if (rank != 0) return rank;

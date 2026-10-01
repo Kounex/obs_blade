@@ -377,6 +377,22 @@ void main() {
       expect(languages.first.voiceCount, 2);
     });
 
+    test('the voice the bridge marks as preferred is the one shown', () {
+      final languages = chatTtsLanguages([
+        voice('Grandpa', 'de-DE', 1),
+        ChatTtsVoice(
+          id: 'helena',
+          name: 'Helena',
+          language: 'de-DE',
+          languageName: 'German (Germany)',
+          quality: 1,
+          preferred: true,
+        ),
+        voice('Anna', 'de-DE', 1),
+      ]);
+      expect(languages.single.best.name, 'Helena');
+    });
+
     test('Android quality scale; offline wins a tie', () {
       final languages = chatTtsLanguages([
         voice('net-high', 'en-US', 400, network: true),
@@ -489,6 +505,39 @@ void main() {
       expect(ChatTtsPhrases.of('zh-Hans').times(3), '3次');
       expect(ChatTtsPhrases.of('xx-YY').times(2), '2 times');
       expect(ChatTtsPhrases.of(null).times(2), '2 times');
+    });
+
+    test('every language iOS ships voices for has its own phrases', () {
+      /// Base codes of the 49 voice locales on a real iPhone (2026-10)
+      const iosVoiceLanguages = [
+        'ar', 'bg', 'bn', 'ca', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi', //
+        'fr', 'he', 'hi', 'hr', 'hu', 'id', 'it', 'ja', 'kn', 'ko', 'ms', //
+        'nb', 'nl', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'sv', 'ta', 'te', //
+        'th', 'tr', 'uk', 'vi', 'yue', 'zh',
+      ];
+      for (final language in iosVoiceLanguages) {
+        expect(
+          ChatTtsPhrases.languages,
+          contains(language),
+          reason: 'no phrases for $language',
+        );
+        final phrases = ChatTtsPhrases.of(language);
+        expect(phrases.times(7), contains('7'), reason: language);
+        expect(phrases.others(9), contains('9'), reason: language);
+        if (language != 'en') {
+          expect(
+            phrases,
+            isNot(same(ChatTtsPhrases.english)),
+            reason: language,
+          );
+        }
+      }
+    });
+
+    test('old Android codes resolve', () {
+      expect(ChatTtsPhrases.of('no-NO').times(2), '2 ganger');
+      expect(ChatTtsPhrases.of('iw-IL'), same(ChatTtsPhrases.of('he')));
+      expect(ChatTtsPhrases.of('in-ID').times(2), '2 kali');
     });
 
     test('names', () {

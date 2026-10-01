@@ -157,9 +157,18 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
     let candidates = exact.isEmpty
       ? voices.filter { $0.language.hasPrefix(prefix + "-") }
       : exact
-    let best = candidates.max { $0.quality.rawValue < $1.quality.rawValue }
+    let best = candidates.max { ChatTts.rank($0) < ChatTts.rank($1) }
     bestVoices[language] = best
     return best
+  }
+
+  /// Quality first; on a tie (most phones only have compact voices) Siri's
+  /// voices > Apple's regular ones > Eloquence (Eddy, Grandpa, … - robotic,
+  /// yet not flagged as novelty)
+  private static func rank(_ voice: AVSpeechSynthesisVoice) -> (Int, Int) {
+    let id = voice.identifier.lowercased()
+    let family = id.contains("siri") ? 2 : id.contains("eloquence") ? 0 : 1
+    return (voice.quality.rawValue, family)
   }
 
   private static func baseCode(_ language: String) -> String {
@@ -216,6 +225,9 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
         "languageName": Locale.current.localizedString(forIdentifier: voice.language)
           ?? voice.language,
         "quality": voice.quality.rawValue,
+        /// The voice this bridge reads that language with - the sheet
+        /// shows exactly that one
+        "preferred": bestVoice(for: voice.language)?.identifier == voice.identifier,
       ]
     }
   }

@@ -64,6 +64,15 @@ OBS 32.1 / device yet - analyze + unit/widget tests only.
   translation service was considered and rejected for four fixed
   phrases (offline, instant, no keys, no chat content leaves the phone).
   The non-English phrases are my translations - worth a native check.
+- Crawled the real iPhone voice list (dogfood-only export
+  `Documents/tts-voices.json`, pulled with `devicectl device copy from
+  --domain-type appDataContainer`): 178 voices, 49 locales, 39 base
+  languages, **all quality 1** (no enhanced/premium downloaded), 112 of
+  them Eloquence (Eddy, Grandpa, … - robotic, not flagged novelty).
+  Tie-break on iOS now Siri > Apple regular > Eloquence; the bridge
+  marks its pick (`preferred`) so the sheet shows exactly that voice.
+  Phrase table grown from 13 to all 39 languages (+ `no`/`iw`/`in`
+  aliases).
 - Process slips this round (caught by the build, fixed): the iOS bridge
   rewrite dropped `ManageSubscriptions` (spliced to EOF), and a
   `dart format lib` touched 5 unrelated files (reverted before commit).
