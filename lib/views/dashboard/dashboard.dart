@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
@@ -13,7 +12,6 @@ import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content_streaming.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../shared/dialogs/confirmation.dart';
 import '../../stores/shared/network.dart';
@@ -84,12 +82,6 @@ class _DashboardViewState extends State<DashboardView>
     /// Initiate the [DashboardStore] object by initiating socket listeners
     /// and first calls etc.
     GetIt.instance<DashboardStore>().init();
-
-    if (Hive.box(
-      HiveKeys.Settings.name,
-    ).get(SettingsKeys.WakeLock.name, defaultValue: true)) {
-      WakelockPlus.enable();
-    }
 
     when(
       (_) =>
@@ -162,10 +154,6 @@ class _DashboardViewState extends State<DashboardView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _connectivitySubscription?.cancel();
-
-    /// Disable [Wakelock] - does not need to check whether this is active
-    /// since calling disable is idempotent
-    WakelockPlus.disable();
     GetIt.instance<DashboardStore>().disposeListeners();
     super.dispose();
   }

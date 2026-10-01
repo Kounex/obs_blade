@@ -43,6 +43,7 @@ import 'stores/views/twitch_chat.dart';
 import 'stores/views/youtube_chat.dart';
 import 'types/enums/hive_keys.dart';
 import 'utils/general_helper.dart';
+import 'utils/wake_lock_helper.dart';
 
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
@@ -61,6 +62,7 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    applyWakeLockSetting();
   }
 
   @override
@@ -73,6 +75,9 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _lastLifecycleState = state;
     GeneralHelper.advLog(_lastLifecycleState);
+
+    /// The OS may drop the wake lock while the app is in the background
+    if (state == AppLifecycleState.resumed) applyWakeLockSetting();
   }
 
   @override

@@ -1,17 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get_it/get_it.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../shared/design/design.dart';
 import '../../shared/general/base/adaptive_switch.dart';
 import '../../shared/general/custom_sliver_list.dart';
 import '../../shared/general/hive_builder.dart';
 import '../../shared/general/themed/cupertino_sliver_navigation_bar.dart';
-import '../../stores/shared/tabs.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/legal_links.dart';
+import '../../utils/wake_lock_helper.dart';
 import '../../utils/modal_handler.dart';
 import '../../utils/routing_helper.dart';
 import '../../utils/styling_helper.dart';
@@ -48,7 +46,7 @@ class SettingsView extends StatelessWidget {
                         leading: CupertinoIcons.device_phone_portrait,
                         title: 'Wake Lock',
                         help:
-                            'This option will keep the screen active while connected to an OBS instance. If you are not connected to an OBS instance, the time set in your phone settings will be used as usual.',
+                            'Keeps the screen on while OBS Blade is open, so the dashboard and chat stay visible. When off, the auto-lock time from your phone settings applies as usual.',
                         trailing: BaseAdaptiveSwitch(
                           value: settingsBox.get(
                             SettingsKeys.WakeLock.name,
@@ -59,19 +57,7 @@ class SettingsView extends StatelessWidget {
                               SettingsKeys.WakeLock.name,
                               wakeLock,
                             );
-                            if (wakeLock) {
-                              /// Check if user is currently in the [DashboardView], therefore
-                              /// connected to an OBS instance, we will then activate [Wakelock]
-                              /// now since otherwise it won't affect the current connection because
-                              /// it will only trigger when entereing the [DashboardView]
-                              if (GetIt.instance<TabsStore>()
-                                      .activeRoutePerNavigator[Tabs.Home] ==
-                                  HomeTabRoutingKeys.Dashboard.route) {
-                                WakelockPlus.enable();
-                              }
-                            } else {
-                              WakelockPlus.disable();
-                            }
+                            applyWakeLockSetting();
                           },
                         ),
                       ),
