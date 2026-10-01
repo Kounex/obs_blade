@@ -61,6 +61,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Pumps the chat view for long-press tests. The login pin fetch leaves
+  /// the sample pin banner over the first row (it overlays the timeline),
+  /// so the pin is cleared once the fetch has flushed — otherwise the
+  /// banner swallows the long-press and the hit-test fails.
+  Future<void> pumpChatView(WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
+    );
+    await tester.pumpAndSettle();
+    store.pinnedMessage = null;
+    await tester.pump();
+  }
+
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('mod_action_sheet_test');
     harness = HiveTestHarness(tempDir);
@@ -277,10 +290,7 @@ void main() {
       'the sheet', (tester) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
-    );
-    await tester.pumpAndSettle();
+    await pumpChatView(tester);
 
     await tester.longPress(find.textContaining('text m1'));
     await tester.pumpAndSettle();
@@ -293,10 +303,7 @@ void main() {
   ) async {
     store.appendChatMessageForTest(chatMessage('m1', 'u1'));
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
-    );
-    await tester.pumpAndSettle();
+    await pumpChatView(tester);
 
     await tester.longPress(find.textContaining('text m1'));
     await tester.pumpAndSettle();
@@ -320,10 +327,7 @@ void main() {
     /// Selected channel the user does not moderate.
     store.selectedChannelId = 'chan-other';
 
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
-    );
-    await tester.pumpAndSettle();
+    await pumpChatView(tester);
 
     await tester.longPress(find.textContaining('text m1'));
     await tester.pumpAndSettle();
@@ -357,10 +361,7 @@ void main() {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.selectedChannelId = 'chan-other';
 
-      await tester.pumpWidget(
-        const MaterialApp(home: Scaffold(body: NativeTwitchChatView())),
-      );
-      await tester.pumpAndSettle();
+      await pumpChatView(tester);
 
       await tester.longPress(find.textContaining('text m1'));
       await tester.pumpAndSettle();
