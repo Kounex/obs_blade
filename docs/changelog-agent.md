@@ -2,6 +2,29 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Canvas user-flow sweep (final)
+
+Walked the canvas journeys (no extra canvas, Aitum + TikTok, Twitch Dual
+Format, landscape Aitum canvas, hiding, groups, reconnect / profile /
+collection switches, streaming mode) against the code and
+obs-websocket's source; rendered the new states as throwaway goldens.
+Fixed:
+- **Group lookups were main-canvas only:** obs-websocket resolves names
+  inside the given `canvasUuid` (main when absent) - canvas group
+  children loaded / toggled against main. Requests carry the canvas,
+  child events match the group by `sourceUuid` (new optional
+  `SceneItem.sourceUuid`).
+- **Canvas resized in Aitum's dock** (no OBS event): stale dimensions
+  misdirected Aitum requests and dropped its events. Size-mismatched
+  Aitum event → canvas re-read; the 10 s viewed-canvas refresh re-reads
+  the canvas list (chains scenes, Aitum state, Dual Format).
+- Scene collection switch → canvas re-read; `EPHEMERAL` canvases hidden.
+- Dual Format card: status line instead of a caption next to "Start";
+  Aitum's own row reads "Separate stream".
+Known limits (unchanged): Dual Format on OBS 32.0 (no canvas API in its
+websocket) shows nothing extra; shared don't-ask-again for stream /
+recording confirmations.
+
 ## 2026-10-02 - Twitch Dual Format awareness + shape-aware canvas labels
 
 Research (any-size canvases): OBS has the canvas API (libobs, frontend
