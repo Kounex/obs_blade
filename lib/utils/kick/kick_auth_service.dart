@@ -38,13 +38,12 @@ const List<String> kKickChatScopes = <String>[
 /// picks up the tokens. A bring-your-own app that still uses the paste
 /// flow registers `https://localhost/kick-callback` instead.
 ///
-/// Still the kounex.com host: app versions in the stores send it, and it
-/// only ever sees the user's browser (Cloudflare's bot check there only
-/// stops servers). The exchange host serves both callbacks - switch this
-/// to `kick-auth.obs-blade.com` once that URL is registered on the Kick
-/// app too.
+/// Both `kick-auth.obs-blade.com` and the older `kick-auth.kounex.com`
+/// callbacks are registered on the Kick app (versions in the stores send
+/// the kounex.com one); the exchange host serves both and exchanges with
+/// whichever the browser came back to.
 const String kKickOAuthRedirectUri =
-    'https://kick-auth.kounex.com/oauth/callback';
+    'https://kick-auth.obs-blade.com/oauth/callback';
 
 const String _kAuthorizeUrl = 'https://id.kick.com/oauth/authorize';
 const String _kTokenUrl = 'https://id.kick.com/oauth/token';

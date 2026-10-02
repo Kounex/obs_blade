@@ -18,9 +18,18 @@ check, verified from Hetzner):
   New builds post there (`kKickTokenProxyUrl`). The proxy accepts both
   callback URLs (`KICK_OAUTH_REDIRECT_URIS`) and picks the one matching
   the callback's Host header (cloudflared passes it through - checked
-  with a temporary echo route). The app's redirect stays on kounex.com
-  until `kick-auth.obs-blade.com/oauth/callback` is registered on the
-  Kick app too.
+  with a temporary echo route). Both callbacks are registered on the
+  Kick app (it allows several); new builds use the obs-blade.com one.
+  Kick only checks the redirect after the login form, so the first real
+  sign-in with a new build is the proof.
+- Delivery verified with temporary subscriptions on a big live channel
+  (removed after): 1,143 deliveries in a minute, all signature-checked.
+  Fixed on the way: the webhook handler read the body with
+  `content.read(n)`, which returns only what has arrived - deliveries
+  split over network chunks failed their signature (regression test).
+  The KickDevDocs key stays as a fallback after the live one. An
+  off-by-default `KICK_EVENTS_DEBUG_DIR` keeps the first 10 rejected
+  deliveries for diagnosis.
 
 ## 2026-10-03 - Activity feed v1 + Kick events relay
 

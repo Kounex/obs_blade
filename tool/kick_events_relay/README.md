@@ -18,6 +18,11 @@ The user's Kick token is used once to look up who they are and is never
 stored. Kick calls go through curl (Kick's Cloudflare), secrets via
 files in a private temp dir, never argv.
 
+Diagnosing rejected webhooks: set `KICK_EVENTS_DEBUG_DIR` (a directory
+writable by uid 65531) in the quadlet; the first 10 rejected deliveries
+are kept there as received. Remove it again afterwards - they contain
+chat payloads.
+
 Run the tests (needs aiohttp + cryptography, so in the image):
 
 ```bash

@@ -171,7 +171,13 @@ async def handle_webhook(request: web.Request) -> web.Response:
         return _json(400, {"error": "invalid_headers"})
     if request.content_length is not None and request.content_length > MAX_WEBHOOK_BODY:
         return _json(413, {"error": "too_large"})
-    body = await request.content.read(MAX_WEBHOOK_BODY + 1)
+    # The whole body: content.read(n) returns what has arrived so far, and
+    # a delivery split over network chunks then failed its signature.
+    # client_max_size (MAX_WEBHOOK_BODY) caps it.
+    try:
+        body = await request.read()
+    except web.HTTPRequestEntityTooLarge:
+        return _json(413, {"error": "too_large"})
     if len(body) > MAX_WEBHOOK_BODY:
         return _json(413, {"error": "too_large"})
 
@@ -180,6 +186,7 @@ async def handle_webhook(request: web.Request) -> web.Response:
         signature.verify(key, message_id, timestamp, body, signature_b64)
         for key in keys
     ):
+        _debug_dump(request, body)
         return _json(403, {"error": "bad_signature"})
 
     sent_at = _parse_time(timestamp)
@@ -209,6 +216,28 @@ async def handle_webhook(request: web.Request) -> web.Response:
     if stored is not None:
         request.app[KEY_HUB].publish(user_id, {"type": "event", **stored.to_wire()})
     return _json(200, {"status": "ok"})
+
+
+def _debug_dump(request: web.Request, body: bytes) -> None:
+    """Diagnosis only (KICK_EVENTS_DEBUG_DIR, off by default): keep the
+    first few rejected deliveries as received."""
+    directory = os.environ.get("KICK_EVENTS_DEBUG_DIR", "")
+    if not directory:
+        return
+    try:
+        existing = len(os.listdir(directory))
+        if existing >= 10:
+            return
+        with open(os.path.join(directory, f"rejected-{existing}.json"), "w") as out:
+            json.dump(
+                {
+                    "headers": dict(request.headers),
+                    "body": body.decode("utf-8", "replace"),
+                },
+                out,
+            )
+    except OSError:
+        pass
 
 
 # App API
@@ -423,7 +452,13 @@ async def refresh_keys(app: web.Application) -> None:
         key = signature.load_public_key(pem)
     except ValueError:
         return
-    app[KEY_KEYS][:] = [key]
+    # The live key first; the one printed in KickDevDocs stays as a
+    # fallback (it differs - a rotation in either direction must not
+    # drop deliveries)
+    app[KEY_KEYS][:] = [
+        key,
+        signature.load_public_key(signature.KICK_PUBLIC_KEY_PEM),
+    ]
 
 
 async def _every(seconds: float, job, app: web.Application, first_delay: float):

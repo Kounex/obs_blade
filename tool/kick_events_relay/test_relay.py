@@ -249,6 +249,31 @@ class WebhookTest(RelayTestBase):
         self.assertEqual(event["payload"]["follower"]["username"], "fan")
         self.assertEqual(body["latest_seq"], event["seq"])
 
+    async def test_large_chunked_body_verifies(self):
+        await self.register()
+        payload = follow()
+        payload["padding"] = "x" * 40000
+        body = json.dumps(payload).encode()
+        stamp = _now_text()
+
+        async def chunks():
+            for start in range(0, len(body), 1000):
+                yield body[start : start + 1000]
+
+        response = await self.client.post(
+            "/kick/webhook",
+            data=chunks(),
+            headers={
+                "Kick-Event-Message-Id": "big",
+                "Kick-Event-Message-Timestamp": stamp,
+                "Kick-Event-Signature": self.sign("big", stamp, body),
+                "Kick-Event-Type": "channel.followed",
+                "Kick-Event-Version": "1",
+            },
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(len(self.store.events_after(BROADCASTER, 0)), 1)
+
     async def test_bad_or_foreign_signature_is_403(self):
         await self.register()
         self.assertEqual((await self.deliver(follow(), tamper=True)).status, 403)
