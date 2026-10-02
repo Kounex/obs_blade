@@ -32,7 +32,8 @@ channel or channels you moderate.
   1. existing events + Twitch follows, persisted,
   2. Twitch cheers / channel points / hype train (scope upgrade),
   3. per-stream sessions,
-  4. third-party donations (Streamlabs / StreamElements).
+  4. third-party donations: StreamElements first, Streamlabs next
+     (proposal in "Third-party sources" below).
 
   That is large. When it's planned, split it into shippable sub-waves in
   roughly that order.
@@ -83,9 +84,119 @@ so follow `persistence-risk.md`.
   (`channel:read:redemptions`), hype train `channel.hype_train.*`
   (`channel:read:hype_train`). Request these as one silent scope-upgrade
   bundle, same pattern as `kTwitchManageModToolingScopes`.
-- Streamlabs / StreamElements: each has its own OAuth app registration
-  plus a realtime socket. Check terms, whether app review is needed, and
-  whether a mobile client can hold the socket without our own backend.
+- Third-party sources: researched 2026-10-02, see the next section.
+
+## Third-party sources (researched 2026-10-02)
+
+Checked against the live developer docs (sources at the end of this
+section). "Unverified" marks what the docs didn't settle.
+
+### Options
+
+| Service | Realtime | Auth / registration | Without our backend? |
+|---|---|---|---|
+| StreamElements | Astro: plain WebSocket `wss://astro.streamelements.com`, JSON subscribe, server PING every 30 s, `reconnect` message with a resume token | OAuth2 code grant. Client id/secret by **request form** (manual approval). Secret needed for exchange **and refresh**; access tokens last 7-30 days. Alternative: the user's own JWT ("Show secrets" on the SE account page), which SE says is for personal use and must not go in front-end code | Yes with a token-exchange host (same pattern as `tool/kick_auth_proxy/`, which already does refresh). Socket: `web_socket_channel` is enough |
+| Streamlabs | Socket.IO `sockets.streamlabs.com?token=` (socket token from `GET /socket/token`, scope `socket.token`) | Self-serve OAuth app; **only 10 whitelisted users until Streamlabs approves it**. Secret in the code exchange; tokens don't expire | Needs the exchange host + a Socket.IO client (none in `pubspec.yaml`; server protocol version unverified) |
+| Streamer.bot | WebSocket server on the streaming PC, port 8080, `127.0.0.1` by default (user must switch to `0.0.0.0` for LAN), optional password with salt/challenge SHA-256 | None, no app review | Yes, LAN only, Windows only. Brings Ko-fi, Fourthwall, Throne, TipeeeStream, DonorDrive, Streamlabs, StreamElements |
+| TipeeeStream | Socket.IO, user API key or OAuth | User key | Yes. Mostly a French-speaking user base |
+| DonationAlerts | Centrifugo WebSocket, scope `oauth-donation-subscribe`, private channels signed via their REST API | OAuth | Yes. Mostly a Russian/CIS user base |
+| Ko-fi, Fourthwall, Patreon, Throne | Webhooks only (Ko-fi verified; the rest not checked one by one) | - | No. Needs the relay from `docs/private/` backend plan, or reach them through SE (lists `fourthwall`) / Streamer.bot |
+
+Streamlabs Desktop is not a target here: it has its own remote API
+(port 59650) instead of obs-websocket, so its users can't use OBS Blade
+anyway. Our users run OBS Studio and can pick either cloud, which makes
+SE (free, browser-source based, no cut on tips) a good first fit. Streamlabs
+still has the larger registered base (~30M vs ~1M+ monthly active on SE,
+vendor/blog figures), so its tip page is the biggest gap after SE.
+
+### Proposed first version: native + StreamElements
+
+Native stays the primary source. SE only adds what native can't get, plus
+history. One optional SE login per "My chats" channel.
+
+**What SE adds over native** (types from `channel.activities`; per-type
+coverage on Kick and YouTube unverified until a live capture):
+
+- **Tips** from the SE tip page (`channel.tips`, scope `tips:read`):
+  amount, ISO currency, message, PayPal/transaction id. Nothing native
+  has this.
+- **Merch** (SE merch, Fourthwall, Represent providers).
+- **Kick:** follows and KICKs gifts (SE added KICKs on 2026-09-13).
+  Natively both are webhook-only for us.
+- **YouTube new channel subscribers**, which the live chat API never
+  sends. SE notes these can lag by hours.
+- **History / backfill:** `GET /kappa/v2/activities/{channel}` (scope
+  `activities:read`) with `after`/`before`/`limit`/`types` (v3 has
+  cursor paging). This is SE's own stored activity feed, so it covers
+  time the app was closed, on every platform SE sees.
+
+**Ownership rule (live events).** Every (platform, kind) pair has exactly
+one owning source, so live duplicates never happen and no fuzzy matching
+is needed live:
+
+| Kind | Owner |
+|---|---|
+| Twitch sub / resub / gift / raid / charity / cheer / follow / points / hype train | Native |
+| YouTube superchat / sticker / member / milestone / gifting | Native |
+| Kick sub / gifted subs / host | Native |
+| Kick follow, KICKs | SE |
+| YouTube new subscriber | SE |
+| Tips, merch | SE |
+
+SE events of a natively owned kind are dropped while the native
+connection for that channel is up.
+
+**Crosscheck (backfill only).** Record per channel when the native
+connection was actually live (coverage windows). On SE backfill:
+
+1. Kind owned by SE: insert if its SE `_id` is new.
+2. Kind owned by native, timestamp **outside** a coverage window: the
+   app missed it, so insert it with source = SE.
+3. Kind owned by native, **inside** a window: drop it. Near a window
+   edge (± ~2 min), match against stored events on platform + kind +
+   actor (`providerId` when present, else lowercased username) + amount,
+   and merge (store the SE `_id` on the native row) instead of inserting.
+
+Every stored event keeps its source ids (native message/event id, SE
+`_id`), so a second backfill over the same range is a no-op. Gift bombs:
+SE flags them with `bulkGifted` / `isCommunityGift` (widget docs); how
+that shows up in the activities payload is unverified, so group them on
+the actor + time like the native `community_sub_gift`.
+
+**Costs and risks**
+
+- SE OAuth approval is manual: send the request early, it's the long pole.
+- Token refresh needs the secret: another client on the exchange host.
+  Never ship the JWT path as the default (full account access).
+- How SE maps several platforms is unclear: tokens are per SE channel,
+  the WebSocket docs say multi-platform users must "switch to the correct
+  account", but SE also has a "Multiplatform Activity Feed". Capture this
+  with a real Twitch + YouTube + Kick account before designing the login
+  UI.
+- Payload shapes for anything but follow and tip are only documented by
+  example (and an unofficial OpenAPI spec). Plan a live capture into
+  `docs/fixtures/` first, like the Kick payloads.
+- SE doesn't see Streamlabs tips. Streamlabs is the natural next source
+  (same exchange host; needs approval past 10 users).
+
+### Sources
+
+- StreamElements: [WebSockets](https://docs.streamelements.com/websockets),
+  [topics](https://docs.streamelements.com/websockets/topics),
+  [channel.activities](https://docs.streamelements.com/websockets/topics/channel-activities),
+  [channel.tips](https://docs.streamelements.com/websockets/topics/channel-tips),
+  [OAuth2 + personal access](https://github.com/StreamElements/api-docs/tree/main/docs),
+  [KICKs support](https://docs.streamelements.com/changelog/post/2026-09-13-kicks-support),
+  unofficial [activities OpenAPI](https://github.com/c4ldas/streamelements-api)
+- Streamlabs: [Socket API](https://dev.streamlabs.com/docs/socket-api),
+  [register app](https://dev.streamlabs.com/docs/register-your-application),
+  [scopes](https://dev.streamlabs.com/docs/scopes),
+  [OAuth 2](https://dev.streamlabs.com/docs/oauth-2)
+- Streamer.bot: [configuration](https://docs.streamer.bot/api/websocket/guide/configuration),
+  [auth](https://docs.streamer.bot/api/websocket/guide/authentication),
+  [events](https://docs.streamer.bot/api/websocket/events)
+- [TipeeeStream API](https://api.tipeeestream.com/api-doc/),
+  [DonationAlerts API](https://www.donationalerts.com/apidoc)
 
 ## Open questions for planning
 
@@ -94,3 +205,7 @@ so follow `persistence-risk.md`.
 - Retention: how many streams/days of events to keep on device?
 - An end-of-stream recap card (floated as a Pro fit, not decided yet)?
 - Haptic or notification on big events while the app is in the foreground?
+- SE login: per "My chats" channel or one per SE account? Depends on the
+  multi-platform capture.
+- Do SE-only kinds (tips, merch) also count for the to-thank queue by
+  default? Likely yes, they're the money events.
