@@ -41,27 +41,49 @@ class AitumOutputStatus {
   /// Aitum's replay buffer
   final bool backtrack;
 
+  final bool virtualCamera;
+
+  /// The vendor neither reports nor announces a pause - tracked from the
+  /// app's own pause / resume answers (see
+  /// [CanvasViewStore.setAitumRecordingPaused])
+  final bool recordingPaused;
+
   const AitumOutputStatus({
     this.streaming = false,
     this.recording = false,
     this.backtrack = false,
+    this.virtualCamera = false,
+    this.recordingPaused = false,
   });
 
-  factory AitumOutputStatus.fromJson(Map<String, dynamic> json) =>
-      AitumOutputStatus(
-        streaming: json['streaming'] == true,
-        recording: json['recording'] == true,
-        backtrack: json['backtrack'] == true,
-      );
+  /// A `status` answer - [recordingPaused] isn't part of it, so the known
+  /// pause carries over while the recording keeps running
+  factory AitumOutputStatus.fromJson(
+    Map<String, dynamic> json, {
+    bool recordingPaused = false,
+  }) {
+    final bool recording = json['recording'] == true;
+    return AitumOutputStatus(
+      streaming: json['streaming'] == true,
+      recording: recording,
+      backtrack: json['backtrack'] == true,
+      virtualCamera: json['virtual_camera'] == true,
+      recordingPaused: recording && recordingPaused,
+    );
+  }
 
   AitumOutputStatus copyWith({
     bool? streaming,
     bool? recording,
     bool? backtrack,
+    bool? virtualCamera,
+    bool? recordingPaused,
   }) => AitumOutputStatus(
     streaming: streaming ?? this.streaming,
     recording: recording ?? this.recording,
     backtrack: backtrack ?? this.backtrack,
+    virtualCamera: virtualCamera ?? this.virtualCamera,
+    recordingPaused: recordingPaused ?? this.recordingPaused,
   );
 }
 

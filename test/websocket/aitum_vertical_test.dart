@@ -298,6 +298,104 @@ void main() {
     );
   });
 
+  test('virtual camera: status, events, explicit start / stop', () async {
+    vendorResponses['status'] = {
+      'streaming': false,
+      'recording': false,
+      'backtrack': false,
+      'virtual_camera': true,
+      'success': true,
+    };
+    await connect();
+    await waitFor(
+      () => canvasStore.aitumStatus.virtualCamera,
+      'virtual camera read from status',
+    );
+    canvasStore.viewCanvas(_verticalUuid);
+
+    await canvasStore.setAitumVirtualCamera(false);
+    expect(vendorCalls('stop_virtual_camera').single, {
+      'width': 1080,
+      'height': 1920,
+    });
+    aitumEvent('virtual_camera_stopped');
+    await waitFor(
+      () => !canvasStore.aitumStatus.virtualCamera,
+      'virtual camera stop applied',
+    );
+  });
+
+  test('recording pause: tracked from the answers, a refusal while '
+      'recording tells the real state, a stop clears it', () async {
+    vendorResponses['status'] = {
+      'streaming': false,
+      'recording': true,
+      'backtrack': false,
+      'virtual_camera': false,
+      'success': true,
+    };
+    await connect();
+    await waitFor(() => canvasStore.aitumStatus.recording, 'recording');
+    canvasStore.viewCanvas(_verticalUuid);
+
+    await canvasStore.setAitumRecordingPaused(true);
+    expect(vendorCalls('pause_recording'), hasLength(1));
+    expect(canvasStore.aitumStatus.recordingPaused, isTrue);
+
+    /// A status answer can't say "paused" - the known pause carries over
+    /// while the recording runs, never past its end
+    final statusJson = {'recording': true, 'success': true};
+    expect(
+      AitumOutputStatus.fromJson(
+        statusJson,
+        recordingPaused: true,
+      ).recordingPaused,
+      isTrue,
+    );
+    expect(
+      AitumOutputStatus.fromJson({
+        'recording': false,
+      }, recordingPaused: true).recordingPaused,
+      isFalse,
+    );
+
+    await canvasStore.setAitumRecordingPaused(false);
+    expect(canvasStore.aitumStatus.recordingPaused, isFalse);
+
+    /// Paused from the plugin's dock in OBS: the app's pause is refused -
+    /// that's the real state, no failure toast
+    vendorResponses['pause_recording'] = {'success': false};
+    await canvasStore.setAitumRecordingPaused(true);
+    expect(canvasStore.aitumStatus.recordingPaused, isTrue);
+    expect(dashboardStore.commandFailureNotice, isNull);
+
+    aitumEvent('recording_stopped', {'code': 0, 'last_error': ''});
+    await waitFor(
+      () => !canvasStore.aitumStatus.recording,
+      'recording stop applied',
+    );
+    expect(canvasStore.aitumStatus.recordingPaused, isFalse);
+  });
+
+  test('chapter: applied = true, refused (no Hybrid MP4) = toast', () async {
+    await connect();
+    await waitFor(
+      () => canvasStore.aitumSupport == AitumSupport.available,
+      'vendor detected',
+    );
+    canvasStore.viewCanvas(_verticalUuid);
+
+    expect(await canvasStore.addAitumChapter(), isTrue);
+    expect(vendorCalls('add_chapter'), hasLength(1));
+
+    vendorResponses['add_chapter'] = {'success': false};
+    expect(await canvasStore.addAitumChapter(), isFalse);
+    expect(
+      dashboardStore.commandFailureNotice?.message,
+      contains('Hybrid MP4 only'),
+    );
+  });
+
   test('without the plugin: missing, view-only, nothing is sent', () async {
     /// obs-websocket rejects calls to an unknown vendor
     peer.rejections['CallVendorRequest'] = 600;

@@ -190,8 +190,48 @@ class CanvasOutputControls extends StatelessWidget {
                     _OutputRow(
                       label: 'Recording',
                       active: live && status.recording,
-                      activeColor: statusColors.recording,
+                      activeColor: status.recordingPaused
+                          ? statusColors.warning
+                          : statusColors.recording,
+                      paused: live && status.recordingPaused,
                       actions: [
+                        /// Icon-only: three labelled buttons don't fit a
+                        /// phone row next to the label
+                        if (live && status.recording) ...[
+                          _OutputButton(
+                            icon: status.recordingPaused
+                                ? CupertinoIcons.play_fill
+                                : CupertinoIcons.pause_fill,
+                            semanticsLabel: status.recordingPaused
+                                ? 'Resume $canvasName recording'
+                                : 'Pause $canvasName recording',
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              canvasStore.setAitumRecordingPaused(
+                                !status.recordingPaused,
+                              );
+                            },
+                          ),
+                          _OutputButton(
+                            icon: CupertinoIcons.bookmark_fill,
+                            semanticsLabel:
+                                'Add a chapter marker to the $canvasName '
+                                'recording',
+                            onPressed: () async {
+                              HapticFeedback.lightImpact();
+                              if (await canvasStore.addAitumChapter() &&
+                                  context.mounted) {
+                                OverlayHandler.showStatusOverlay(
+                                  context: context,
+                                  replaceIfActive: true,
+                                  content: const BaseResult(
+                                    text: 'Chapter added',
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
                         _OutputButton(
                           text: status.recording && live ? 'Stop' : 'Start',
                           semanticsLabel: status.recording && live
@@ -227,6 +267,27 @@ class CanvasOutputControls extends StatelessWidget {
                         ),
                       ],
                     ),
+                    _OutputRow(
+                      label: 'Virtual camera',
+
+                      /// Not "on air" - live green is reserved for that
+                      active: live && status.virtualCamera,
+                      activeColor: Theme.of(context).colorScheme.secondary,
+                      actions: [
+                        _OutputButton(
+                          text: status.virtualCamera && live ? 'Stop' : 'Start',
+                          semanticsLabel: status.virtualCamera && live
+                              ? 'Stop $canvasName virtual camera'
+                              : 'Start $canvasName virtual camera',
+                          onPressed: guarded(() {
+                            HapticFeedback.mediumImpact();
+                            canvasStore.setAitumVirtualCamera(
+                              !status.virtualCamera,
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -245,11 +306,15 @@ class _OutputRow extends StatelessWidget {
   final Color activeColor;
   final List<Widget> actions;
 
+  /// Paused output (recording): a pause glyph instead of the pulsing dot
+  final bool paused;
+
   const _OutputRow({
     required this.label,
     required this.active,
     required this.activeColor,
     required this.actions,
+    this.paused = false,
   });
 
   @override
@@ -263,7 +328,13 @@ class _OutputRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 12.0,
-            child: this.active
+            child: this.paused
+                ? Icon(
+                    CupertinoIcons.pause_fill,
+                    size: 10.0,
+                    color: this.activeColor,
+                  )
+                : this.active
                 ? StatusDot(
                     size: 8.0,
                     horizontalSpacing: 0.0,
@@ -299,15 +370,18 @@ class _OutputRow extends StatelessWidget {
 }
 
 class _OutputButton extends StatelessWidget {
-  final String text;
+  /// Label - or [icon] for a compact icon-only button
+  final String? text;
+  final IconData? icon;
   final String semanticsLabel;
   final VoidCallback onPressed;
 
   const _OutputButton({
-    required this.text,
+    this.text,
+    this.icon,
     required this.semanticsLabel,
     required this.onPressed,
-  });
+  }) : assert(text != null || icon != null);
 
   @override
   Widget build(BuildContext context) {
@@ -318,8 +392,11 @@ class _OutputButton extends StatelessWidget {
       child: BaseButton(
         secondary: true,
         shrinkWidth: true,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        padding: EdgeInsets.symmetric(
+          horizontal: this.text != null ? AppSpacing.lg : AppSpacing.md,
+        ),
         text: this.text,
+        child: this.icon != null ? Icon(this.icon, size: 18.0) : null,
         onPressed: this.onPressed,
       ),
     );

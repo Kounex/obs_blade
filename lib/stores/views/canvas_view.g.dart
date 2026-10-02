@@ -423,6 +423,18 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
   }
 
   @override
+  void _setRecordingPaused(bool paused) {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore._setRecordingPaused',
+    );
+    try {
+      return super._setRecordingPaused(paused);
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _setPreview(Uint8List bytes) {
     final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
       name: '_CanvasViewStore._setPreview',

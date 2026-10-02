@@ -598,7 +598,12 @@ abstract class _CanvasViewStore with Store {
   @action
   void _applyAitumState({String? scene, Map<String, dynamic>? status}) {
     if (this.aitumSupport != AitumSupport.available) return;
-    if (status != null) this.aitumStatus = AitumOutputStatus.fromJson(status);
+    if (status != null) {
+      this.aitumStatus = AitumOutputStatus.fromJson(
+        status,
+        recordingPaused: this.aitumStatus.recordingPaused,
+      );
+    }
     if (scene != null) {
       this.aitumLiveSceneName = scene.isEmpty ? null : scene;
       _followLiveScene();
@@ -655,9 +660,19 @@ abstract class _CanvasViewStore with Store {
       case 'streaming_stopped':
         this.aitumStatus = this.aitumStatus.copyWith(streaming: false);
       case 'recording_started':
-        this.aitumStatus = this.aitumStatus.copyWith(recording: true);
+        this.aitumStatus = this.aitumStatus.copyWith(
+          recording: true,
+          recordingPaused: false,
+        );
       case 'recording_stopped':
-        this.aitumStatus = this.aitumStatus.copyWith(recording: false);
+        this.aitumStatus = this.aitumStatus.copyWith(
+          recording: false,
+          recordingPaused: false,
+        );
+      case 'virtual_camera_started':
+        this.aitumStatus = this.aitumStatus.copyWith(virtualCamera: true);
+      case 'virtual_camera_stopped':
+        this.aitumStatus = this.aitumStatus.copyWith(virtualCamera: false);
       case 'backtrack_started':
         this.aitumStatus = this.aitumStatus.copyWith(backtrack: true);
       case 'backtrack_stopped':
@@ -698,13 +713,55 @@ abstract class _CanvasViewStore with Store {
     start ? 'Start backtrack' : 'Stop backtrack',
   );
 
-  Future<void> saveAitumBacktrack() =>
+  Future<bool> saveAitumBacktrack() =>
       _aitumOutput('save_backtrack', 'Save backtrack');
 
-  /// The output state itself arrives through Aitum's events once the
-  /// output really started / stopped
-  Future<void> _aitumOutput(String requestType, String label) async {
+  Future<void> setAitumVirtualCamera(bool start) => _aitumOutput(
+    start ? 'start_virtual_camera' : 'stop_virtual_camera',
+    start ? 'Start vertical virtual camera' : 'Stop vertical virtual camera',
+  );
+
+  /// Chapter marker in the running vertical recording - OBS only writes
+  /// them into Hybrid MP4 recordings, the plugin answers `success: false`
+  /// otherwise
+  Future<bool> addAitumChapter() =>
+      _aitumOutput('add_chapter', 'Chapter marker (Hybrid MP4 only)');
+
+  /// Pause / resume the vertical recording. Aitum neither reports nor
+  /// announces a pause, so the answers are the source of truth: it refuses
+  /// a pause of a paused recording (and a resume of a running one) - with
+  /// the recording running, that refusal tells the real state, which is
+  /// applied silently instead of a failure toast (e.g. paused from the
+  /// plugin's dock in OBS)
+  Future<void> setAitumRecordingPaused(bool pause) async {
     if (!this.canControlViewedCanvas) return;
+    final (ack, data) = await _vendorRequest(
+      pause ? 'pause_recording' : 'unpause_recording',
+      aitumCanvasTarget(this.viewedCanvas),
+    );
+
+    /// Applied, or refused because it already is that way - either way the
+    /// recording now is what was asked for
+    if (data != null ||
+        (ack != null && ack.success && this.aitumStatus.recording)) {
+      _setRecordingPaused(pause);
+    } else {
+      _reportFailure(
+        ack,
+        pause ? 'Pause vertical recording' : 'Resume vertical recording',
+      );
+      _loadAitumState();
+    }
+  }
+
+  @action
+  void _setRecordingPaused(bool paused) => this.aitumStatus = this.aitumStatus
+      .copyWith(recordingPaused: this.aitumStatus.recording && paused);
+
+  /// The output state itself arrives through Aitum's events once the
+  /// output really started / stopped - true when the plugin applied it
+  Future<bool> _aitumOutput(String requestType, String label) async {
+    if (!this.canControlViewedCanvas) return false;
     final (ack, data) = await _vendorRequest(
       requestType,
       aitumCanvasTarget(this.viewedCanvas),
@@ -713,6 +770,7 @@ abstract class _CanvasViewStore with Store {
       _reportFailure(ack, label);
       _loadAitumState();
     }
+    return data != null;
   }
 
   /// Same toast as failed program commands - an answer with

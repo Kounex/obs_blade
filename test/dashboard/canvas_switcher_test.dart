@@ -306,6 +306,34 @@ void main() {
       findsOneWidget,
     );
 
+    expect(find.text('Virtual camera'), findsOneWidget);
+
+    /// Pause + chapter only while the vertical recording runs
+    expect(
+      find.bySemanticsLabel('Pause $kAitumCanvasName recording'),
+      findsNothing,
+    );
+    aitumAnswers(
+      liveScene: 'Vertical Main',
+      status: const AitumOutputStatus(
+        streaming: true,
+        backtrack: true,
+        recording: true,
+        recordingPaused: true,
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.bySemanticsLabel('Resume $kAitumCanvasName recording'),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        'Add a chapter marker to the $kAitumCanvasName recording',
+      ),
+      findsOneWidget,
+    );
+
     /// Stop asks first, naming the canvas
     await tester.tap(find.bySemanticsLabel('Stop $kAitumCanvasName stream'));
     await tester.pump();
