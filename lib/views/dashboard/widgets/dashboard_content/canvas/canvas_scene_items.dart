@@ -9,9 +9,9 @@ import '../../../../../types/classes/api/scene_item.dart';
 import '../scene_content/animated_toggle_icon.dart';
 import '../scene_content/placeholder_scene_item.dart';
 
-/// Items of the scene picked on another canvas: visibility + lock, the two
-/// toggles that work by scene UUID. Groups show as one row (their children
-/// aren't expanded in this view).
+/// Items of the scene picked on another canvas: visibility + lock. Groups
+/// expand like the main scene items (tap the row) - their children toggle
+/// in the group's own scene.
 class CanvasSceneItems extends StatelessWidget {
   final CanvasViewStore canvasStore;
   final ScrollController controller;
@@ -26,7 +26,16 @@ class CanvasSceneItems extends StatelessWidget {
   Widget build(BuildContext context) {
     return Observer(
       builder: (context) {
-        final items = this.canvasStore.sceneItems;
+        /// A group's children only while it's expanded
+        final items = this.canvasStore.sceneItems
+            .where(
+              (item) =>
+                  item.parentGroupName == null ||
+                  this.canvasStore.expandedGroups.contains(
+                    item.parentGroupName,
+                  ),
+            )
+            .toList();
         final sceneName = this.canvasStore.selectedScene?.name;
 
         return ListView(
@@ -53,6 +62,7 @@ class CanvasSceneItems extends StatelessWidget {
                 (entry) => StaggeredEntrance(
                   key: ValueKey((
                     this.canvasStore.selectedSceneUuid,
+                    entry.$2.parentGroupName,
                     entry.$2.sceneItemId,
                   )),
                   index: entry.$1,
@@ -88,13 +98,35 @@ class _CanvasSceneItemTile extends StatelessWidget {
     final bool enabled = this.sceneItem.sceneItemEnabled ?? false;
     final bool? locked = this.sceneItem.sceneItemLocked;
     final bool isGroup = this.sceneItem.isGroup ?? false;
+    final bool expanded =
+        isGroup && this.canvasStore.expandedGroups.contains(name);
+    final IconData typeIcon = isGroup
+        ? expanded
+              ? CupertinoIcons.folder
+              : CupertinoIcons.folder_solid
+        : CupertinoIcons.photo_on_rectangle;
 
-    return ListTile(
+    final Widget tile = ListTile(
       dense: true,
-      leading: Icon(
-        isGroup
-            ? CupertinoIcons.folder_solid
-            : CupertinoIcons.photo_on_rectangle,
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (this.sceneItem.parentGroupName != null) ...[
+            const SizedBox(width: 4.0),
+            Icon(
+              Icons.subdirectory_arrow_right_sharp,
+              size: 18.0,
+              color: theme.textTheme.bodySmall!.color,
+            ),
+            const SizedBox(width: 16.0),
+          ],
+          AnimatedSwitcher(
+            duration: AppMotion.fast,
+            switchInCurve: AppMotion.standard,
+            switchOutCurve: AppMotion.exit,
+            child: Icon(typeIcon, key: ValueKey(typeIcon)),
+          ),
+        ],
       ),
       title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: Row(
@@ -149,6 +181,19 @@ class _CanvasSceneItemTile extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+
+    if (!isGroup) return tile;
+
+    /// The whole group row toggles its children, like the main items
+    return Semantics(
+      button: true,
+      expanded: expanded,
+      label: expanded ? 'Collapse group $name' : 'Expand group $name',
+      child: Pressable(
+        onTap: () => this.canvasStore.toggleGroup(this.sceneItem),
+        child: tile,
       ),
     );
   }

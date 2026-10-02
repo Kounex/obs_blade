@@ -155,6 +155,24 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
     });
   }
 
+  late final _$expandedGroupsAtom = Atom(
+    name: '_CanvasViewStore.expandedGroups',
+    context: context,
+  );
+
+  @override
+  ObservableSet<String> get expandedGroups {
+    _$expandedGroupsAtom.reportRead();
+    return super.expandedGroups;
+  }
+
+  @override
+  set expandedGroups(ObservableSet<String> value) {
+    _$expandedGroupsAtom.reportWrite(value, super.expandedGroups, () {
+      super.expandedGroups = value;
+    });
+  }
+
   late final _$previewImageBytesAtom = Atom(
     name: '_CanvasViewStore.previewImageBytes',
     context: context,
@@ -311,24 +329,46 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
   }
 
   @override
-  void _applyItems(Map<String, dynamic>? data) {
+  void _applyItems(List<SceneItem> items) {
     final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
       name: '_CanvasViewStore._applyItems',
     );
     try {
-      return super._applyItems(data);
+      return super._applyItems(items);
     } finally {
       _$_CanvasViewStoreActionController.endAction(_$actionInfo);
     }
   }
 
   @override
-  void _patchItem(int sceneItemId, {bool? enabled, bool? locked}) {
+  void toggleGroup(SceneItem group) {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore.toggleGroup',
+    );
+    try {
+      return super.toggleGroup(group);
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void _patchItem(
+    int sceneItemId, {
+    String? group,
+    bool? enabled,
+    bool? locked,
+  }) {
     final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
       name: '_CanvasViewStore._patchItem',
     );
     try {
-      return super._patchItem(sceneItemId, enabled: enabled, locked: locked);
+      return super._patchItem(
+        sceneItemId,
+        group: group,
+        enabled: enabled,
+        locked: locked,
+      );
     } finally {
       _$_CanvasViewStoreActionController.endAction(_$actionInfo);
     }
@@ -402,6 +442,7 @@ viewedCanvasUuid: ${viewedCanvasUuid},
 scenes: ${scenes},
 selectedSceneUuid: ${selectedSceneUuid},
 sceneItems: ${sceneItems},
+expandedGroups: ${expandedGroups},
 previewImageBytes: ${previewImageBytes},
 loadingScenes: ${loadingScenes},
 aitumSupport: ${aitumSupport},

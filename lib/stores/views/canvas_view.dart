@@ -62,8 +62,15 @@ abstract class _CanvasViewStore with Store {
   @observable
   String? selectedSceneUuid;
 
+  /// Items of [selectedSceneUuid], top of the OBS list first - a group's
+  /// children follow it directly (with [SceneItem.parentGroupName] set)
   @observable
   ObservableList<SceneItem> sceneItems = ObservableList();
+
+  /// Groups (by source name) whose children are shown - kept across
+  /// re-reads and scene switches, group names are unique in OBS
+  @observable
+  ObservableSet<String> expandedGroups = ObservableSet();
 
   /// Latest screenshot of [selectedSceneUuid] while the preview runs
   @observable
@@ -352,6 +359,9 @@ abstract class _CanvasViewStore with Store {
     }
   }
 
+  /// The scene's items plus every group's children (groups are sources,
+  /// their names are unique across OBS - so the group's own scene is
+  /// addressed by name, whatever canvas it sits in)
   Future<void> _loadItems() async {
     final sceneUuid = this.selectedSceneUuid;
     if (sceneUuid == null) return;
@@ -360,28 +370,67 @@ abstract class _CanvasViewStore with Store {
       'sceneUuid': sceneUuid,
     });
     if (generation != _viewGeneration || ack == null || !ack.success) return;
-    _applyItems(ack.responseData);
-  }
+    final items = _parseItems(ack.responseData);
 
-  @action
-  void _applyItems(Map<String, dynamic>? data) {
-    final items = (data?['sceneItems'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>()
-        .map(SceneItem.fromJson)
+    final groups = items
+        .where((item) => item.isGroup == true && item.sourceName != null)
+        .map((item) => item.sourceName!)
         .toList();
-
-    /// Top of the OBS list first, like the main scene items
-    items.sort(
-      (a, b) => (b.sceneItemIndex ?? 0).compareTo(a.sceneItemIndex ?? 0),
+    final childAcks = await Future.wait(
+      groups.map(
+        (group) =>
+            _request(RequestType.GetGroupSceneItemList, {'sceneName': group}),
+      ),
     );
-    this.sceneItems = ObservableList.of(items);
+    if (generation != _viewGeneration) return;
+
+    final Map<String, List<SceneItem>> children = {
+      for (final (index, group) in groups.indexed)
+        if (childAcks[index]?.success == true)
+          group: _parseItems(
+            childAcks[index]!.responseData,
+          ).map((child) => child.copyWith(parentGroupName: group)).toList(),
+    };
+    _applyItems([
+      for (final item in items) ...[item, ...?children[item.sourceName]],
+    ]);
   }
 
+  /// Top of the OBS list first, like the main scene items
+  List<SceneItem> _parseItems(Map<String, dynamic>? data) =>
+      (data?['sceneItems'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(SceneItem.fromJson)
+          .toList()
+        ..sort(
+          (a, b) => (b.sceneItemIndex ?? 0).compareTo(a.sceneItemIndex ?? 0),
+        );
+
   @action
-  void _patchItem(int sceneItemId, {bool? enabled, bool? locked}) {
+  void _applyItems(List<SceneItem> items) =>
+      this.sceneItems = ObservableList.of(items);
+
+  /// Show / hide a group's children in the list
+  @action
+  void toggleGroup(SceneItem group) {
+    final name = group.sourceName;
+    if (name == null) return;
+    if (!this.expandedGroups.remove(name)) this.expandedGroups.add(name);
+  }
+
+  /// Item ids are only unique within a scene - [group] tells a group's
+  /// child apart from a top-level item with the same id
+  @action
+  void _patchItem(
+    int sceneItemId, {
+    String? group,
+    bool? enabled,
+    bool? locked,
+  }) {
     this.sceneItems = ObservableList.of(
       this.sceneItems.map(
-        (item) => item.sceneItemId == sceneItemId
+        (item) =>
+            item.sceneItemId == sceneItemId && item.parentGroupName == group
             ? item.copyWith(
                 sceneItemEnabled: enabled ?? item.sceneItemEnabled,
                 sceneItemLocked: locked ?? item.sceneItemLocked,
@@ -391,15 +440,36 @@ abstract class _CanvasViewStore with Store {
     );
   }
 
+  /// Where an item lives for Set* requests: a group child in its group's
+  /// scene (by name), anything else in the viewed scene (by UUID)
+  Map<String, dynamic> _itemScene(SceneItem item, String sceneUuid) =>
+      item.parentGroupName != null
+      ? {'sceneName': item.parentGroupName}
+      : {'sceneUuid': sceneUuid};
+
+  /// Where a scene-item event lands: `(group: null)` for the viewed scene
+  /// itself, `(group: name)` for one of its groups, null for anything else
+  ({String? group})? _eventTarget(BaseEvent event) {
+    if (!this.isViewingOtherCanvas) return null;
+    if (event.json['sceneUuid'] == this.selectedSceneUuid) {
+      return (group: null);
+    }
+    final sceneName = event.json['sceneName'];
+    final isOwnGroup = this.sceneItems.any(
+      (item) => item.isGroup == true && item.sourceName == sceneName,
+    );
+    return isOwnGroup ? (group: sceneName as String) : null;
+  }
+
   /// Show / hide an item of the viewed scene - optimistic, re-read on
   /// failure
   Future<void> setItemEnabled(SceneItem item, bool enabled) async {
     final sceneUuid = this.selectedSceneUuid;
     final id = item.sceneItemId;
     if (sceneUuid == null || id == null) return;
-    _patchItem(id, enabled: enabled);
+    _patchItem(id, group: item.parentGroupName, enabled: enabled);
     final ack = await _request(RequestType.SetSceneItemEnabled, {
-      'sceneUuid': sceneUuid,
+      ..._itemScene(item, sceneUuid),
       'sceneItemId': id,
       'sceneItemEnabled': enabled,
     });
@@ -412,9 +482,9 @@ abstract class _CanvasViewStore with Store {
     final sceneUuid = this.selectedSceneUuid;
     final id = item.sceneItemId;
     if (sceneUuid == null || id == null) return;
-    _patchItem(id, locked: locked);
+    _patchItem(id, group: item.parentGroupName, locked: locked);
     final ack = await _request(RequestType.SetSceneItemLocked, {
-      'sceneUuid': sceneUuid,
+      ..._itemScene(item, sceneUuid),
       'sceneItemId': id,
       'sceneItemLocked': locked,
     });
@@ -438,21 +508,23 @@ abstract class _CanvasViewStore with Store {
         break;
 
       /// Enable / lock events are not limited to the main canvas (created /
-      /// removed ones are) - match by scene UUID
+      /// removed ones are) - the viewed scene by UUID, its groups by name
       case EventType.SceneItemEnableStateChanged:
-        if (this.isViewingOtherCanvas &&
-            event.json['sceneUuid'] == this.selectedSceneUuid) {
+        final target = _eventTarget(event);
+        if (target != null) {
           _patchItem(
             (event.json['sceneItemId'] as num).toInt(),
+            group: target.group,
             enabled: event.json['sceneItemEnabled'] as bool?,
           );
         }
         break;
       case EventType.SceneItemLockStateChanged:
-        if (this.isViewingOtherCanvas &&
-            event.json['sceneUuid'] == this.selectedSceneUuid) {
+        final target = _eventTarget(event);
+        if (target != null) {
           _patchItem(
             (event.json['sceneItemId'] as num).toInt(),
+            group: target.group,
             locked: event.json['sceneItemLocked'] as bool?,
           );
         }

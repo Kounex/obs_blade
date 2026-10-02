@@ -368,6 +368,36 @@ void main() {
     await drainOverlay(tester);
   });
 
+  testWidgets('canvas groups expand on tap', (tester) async {
+    await tester.pumpWidget(app(const SceneItems()));
+    await viewVertical(tester);
+    runInAction(() {
+      canvasStore.sceneItems = ObservableList.of([
+        _item(5, 'Overlay Group').copyWith(isGroup: true),
+        _item(1, 'Alert box').copyWith(parentGroupName: 'Overlay Group'),
+        _item(2, 'vertical-cam'),
+      ]);
+    });
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('Overlay Group'), findsOneWidget);
+    expect(find.text('Alert box'), findsNothing);
+
+    await tester.tap(find.text('Overlay Group'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Alert box'), findsOneWidget);
+
+    await tester.tap(find.text('Overlay Group'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Alert box'), findsNothing);
+
+    canvasStore.viewCanvas(null);
+    await tester.pump();
+  });
+
   testWidgets('scene items show the picked canvas scene', (tester) async {
     await tester.pumpWidget(app(const SceneItems()));
     await tester.pump();

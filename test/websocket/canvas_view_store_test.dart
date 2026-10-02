@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/canvas_view.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/utils/network_helper.dart';
@@ -336,6 +337,80 @@ void main() {
           .sceneItemEnabled,
       isTrue,
     );
+  });
+
+  test('groups: children load with the scene, toggle in the group\'s own '
+      'scene, events patch the right row despite repeated ids', () async {
+    final group = {
+      ..._item(5, 'Overlay Group'),
+      'isGroup': true,
+      'sourceType': 'OBS_SOURCE_TYPE_SCENE',
+    };
+    final previous = peer.responseDataFor!;
+    peer.responseDataFor = (request) {
+      final data = request['requestData'] as Map<String, dynamic>? ?? {};
+      if (request['requestType'] == 'GetSceneItemList' &&
+          data['sceneUuid'] == 'v-main') {
+        return {
+          'sceneItems': [_item(1, 'Cam'), group],
+        };
+      }
+      if (request['requestType'] == 'GetGroupSceneItemList') {
+        return data['sceneName'] == 'Overlay Group'
+            ? {
+                'sceneItems': [_item(1, 'Alert box'), _item(2, 'Ticker')],
+              }
+            : null;
+      }
+      return previous(request);
+    };
+
+    await connectWithCanvases();
+    canvasStore.viewCanvas(_verticalUuid);
+    await waitFor(
+      () => canvasStore.sceneItems.length == 4,
+      'scene + group children loaded',
+    );
+
+    /// Group follows its children, top of the OBS list first
+    expect(
+      canvasStore.sceneItems.map((i) => (i.sourceName, i.parentGroupName)),
+      [
+        ('Overlay Group', null),
+        ('Ticker', 'Overlay Group'),
+        ('Alert box', 'Overlay Group'),
+        ('Cam', null),
+      ],
+    );
+    expect(canvasStore.expandedGroups, isEmpty);
+    canvasStore.toggleGroup(canvasStore.sceneItems.first);
+    expect(canvasStore.expandedGroups, {'Overlay Group'});
+
+    /// Child id 1 lives in the group's scene - not the top-level "Cam" (1)
+    final alertBox = canvasStore.sceneItems.firstWhere(
+      (i) => i.sourceName == 'Alert box',
+    );
+    await canvasStore.setItemEnabled(alertBox, false);
+    final sent = requestsOf('SetSceneItemEnabled').single['requestData'] as Map;
+    expect(sent['sceneName'], 'Overlay Group');
+    expect(sent.containsKey('sceneUuid'), isFalse);
+    SceneItem byName(String name) =>
+        canvasStore.sceneItems.firstWhere((i) => i.sourceName == name);
+    expect(byName('Alert box').sceneItemEnabled, isFalse);
+    expect(byName('Cam').sceneItemEnabled, isTrue);
+
+    /// An OBS-side lock inside the group patches the child only
+    peer.event('SceneItemLockStateChanged', {
+      'sceneName': 'Overlay Group',
+      'sceneUuid': 'group-uuid',
+      'sceneItemId': 1,
+      'sceneItemLocked': true,
+    });
+    await waitFor(
+      () => byName('Alert box').sceneItemLocked == true,
+      'group child lock applied',
+    );
+    expect(byName('Cam').sceneItemLocked, isFalse);
   });
 
   test('a removed canvas falls back to the main view', () async {
