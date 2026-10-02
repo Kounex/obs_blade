@@ -490,16 +490,20 @@ void main() {
     runInAction(() => canvasStore.dualFormatCanvasUuid = _aitum.uuid);
     await tester.pump();
     expect(
-      find.text('Goes live with the main stream (Dual Format)'),
+      find.text('Goes live with the main stream (Twitch Dual Format)'),
       findsOneWidget,
     );
 
     runInAction(() => dashboardStore.isLive = true);
     await tester.pump();
     expect(
-      find.text('Live with the main stream (Dual Format)'),
+      find.text('Live with the main stream (Twitch Dual Format)'),
       findsOneWidget,
     );
+
+    /// Aitum's own stream is named as the extra one it is
+    expect(find.text('Separate stream'), findsOneWidget);
+    expect(find.text('Stream'), findsNothing);
 
     await tester.tap(find.bySemanticsLabel('Start $kAitumCanvasName stream'));
     await tester.pump();

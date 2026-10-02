@@ -203,16 +203,55 @@ class CanvasOutputControls extends StatelessWidget {
                           ],
                         ),
                       ),
+
+                    /// Dual Format is a state of the main stream, not one of
+                    /// the rows below - a status line, so it never sits
+                    /// next to a "Start" that means Aitum's own stream
+                    if (dualFormat)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: AppSpacing.xs,
+                          bottom: AppSpacing.sm,
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 12.0,
+                              child: mainLive
+                                  ? StatusDot(
+                                      size: 8.0,
+                                      horizontalSpacing: 0.0,
+                                      verticalSpacing: 0.0,
+                                      color: statusColors.live,
+                                    )
+                                  : Icon(
+                                      CupertinoIcons.link,
+                                      size: 12.0,
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall?.color,
+                                    ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                mainLive
+                                    ? 'Live with the main stream (Twitch '
+                                          'Dual Format)'
+                                    : 'Goes live with the main stream '
+                                          '(Twitch Dual Format)',
+                                maxLines: 2,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     _OutputRow(
-                      label: 'Stream',
-                      caption: dualFormat
-                          ? mainLive
-                                ? 'Live with the main stream (Dual Format)'
-                                : 'Goes live with the main stream (Dual Format)'
-                          : null,
-                      active:
-                          (live && status.streaming) ||
-                          (dualFormat && mainLive),
+                      /// Aitum's own stream - a second one next to Dual
+                      /// Format (e.g. to TikTok)
+                      label: dualFormat ? 'Separate stream' : 'Stream',
+                      active: live && status.streaming,
                       activeColor: statusColors.live,
                       actions: [
                         _OutputButton(
@@ -346,16 +385,12 @@ class _OutputRow extends StatelessWidget {
   /// Paused output (recording): a pause glyph instead of the pulsing dot
   final bool paused;
 
-  /// Second line under [label] (e.g. how the output goes live)
-  final String? caption;
-
   const _OutputRow({
     required this.label,
     required this.active,
     required this.activeColor,
     required this.actions,
     this.paused = false,
-    this.caption,
   });
 
   @override
@@ -393,19 +428,11 @@ class _OutputRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  this.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodyMedium,
-                ),
-                if (this.caption != null)
-                  Text(this.caption!, maxLines: 2, style: textTheme.bodySmall),
-              ],
+            child: Text(
+              this.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodyMedium,
             ),
           ),
           for (final (index, action) in this.actions.indexed) ...[
@@ -445,8 +472,8 @@ class _OutputButton extends StatelessWidget {
           horizontal: this.text != null ? AppSpacing.lg : AppSpacing.md,
         ),
         text: this.text,
-        child: this.icon != null ? Icon(this.icon, size: 18.0) : null,
         onPressed: this.onPressed,
+        child: this.icon != null ? Icon(this.icon, size: 18.0) : null,
       ),
     );
   }
