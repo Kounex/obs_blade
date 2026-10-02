@@ -1,0 +1,27 @@
+FROM python:3.12-alpine AS base
+
+RUN apk add --no-cache curl \
+    && adduser -D -H -u 65531 relay
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY signature.py store.py kick.py relay.py ./
+
+# `podman build --target test .` runs the suite; the default target does not.
+FROM base AS test
+COPY test_relay.py ./
+RUN python3 -m unittest -v test_relay
+
+FROM base
+USER 65531:65531
+EXPOSE 8423
+
+# The quadlet overrides nothing here: loopback only (Network=host), the
+# Cloudflare tunnel is the only public door. The database lives on a
+# volume so a rebuilt image keeps sessions and subscriptions.
+ENV KICK_EVENTS_LISTEN=127.0.0.1
+ENV KICK_EVENTS_PORT=8423
+ENV KICK_EVENTS_DB=/var/lib/kick-events/relay.db
+
+CMD ["python3", "/app/relay.py"]

@@ -1,0 +1,22 @@
+[Unit]
+Description=Kick events relay (OBS Blade activity feed)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=localhost/kick-events:latest
+ContainerName=kick-events
+Network=host
+# Same Kick app as kick-auth: client credentials for the app token.
+EnvironmentFile=/etc/kick-auth.env
+Volume=/var/lib/kick-events:/var/lib/kick-events:Z
+Exec=python3 /app/relay.py
+
+[Service]
+Restart=on-failure
+MemoryMax=192M
+CPUQuota=50%
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target
