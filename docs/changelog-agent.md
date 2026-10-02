@@ -2,6 +2,44 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Native chat review fixes
+
+A `/code-review high` of native chat (Twitch / YouTube / Kick stores,
+sockets, settings, mod sheets, combined chat) reported 10 issues; 8 were
+real and are fixed, each with a test that fails on the old code:
+- **Twitch overlapping switches:** `selectChannel` runs one switch at a
+  time and the latest pick wins (`_activeChannelSwitch`). Two at once
+  filed one channel's messages under the other and leaked an EventSub
+  subscription (fast dropdown taps, leaving Combined mid-switch).
+- **Twitch room mod state:** a switch drops chat settings / Shield Mode /
+  ban inbox of the previous channel; reads that come back for another
+  channel are ignored, so the mod sheet never shows or patches channel
+  A's modes on channel B.
+- **Twitch live status:** `/streams` asks for `first=100` - Helix pages 20
+  by default, so live channels past 20 read OFFLINE.
+- **Cold start offline:** Twitch and Kick keep the stored session on a
+  transient failure (offline, 5xx) instead of a login prompt. Twitch:
+  EventSub retries the socket on its own, a failed refresh offers retry,
+  the moderated-channel list refetches on connect. Kick: an offline
+  refresh used to throw out of `init`, so even anonymous reads never
+  started.
+- **Kick socket:** one socket at a time - a failure fired both onError
+  and onDone (two reconnects, notices doubled, an older socket + ping
+  timer leaked), and a reconnect pending from before `disconnect` opened
+  a second socket after the next `connect` (`_session`).
+- **Combined restore race:** leaving drops each restore point only after
+  its platform is back, and a new `activate` stops the old restore loop.
+  Before, coming back mid-restore saved the combo's channel as the
+  channel to return to.
+- **YouTube after sign-out:** logout / dead token / wiped box restart
+  reading an added channel (only the API key is needed); it stayed idle.
+- **Silent sends:** Kick sends no longer wait for the socket (REST); Kick
+  and YouTube say why a send can't go out (not resolved / not attached /
+  no live stream) and clear that once the chat connects.
+Not real: the Kick refresh race (`KickAuthService.refreshToken` already
+shares one refresh), and the Twitch dead-session chat wipe (the auth-box
+watcher already wipes it; the wipe is now also explicit).
+
 ## 2026-10-02 - Chat TTS review fixes
 
 A `/code-review high` of the whole TTS feature (Dart + both bridges + the
