@@ -48,6 +48,10 @@ class KickPusherService {
   int _reconnectAttempts = 0;
   bool _disposed = false;
 
+  /// Bumped by [connect] and [disconnect] — a reconnect scheduled under
+  /// an older session must not open a socket into the new one.
+  int _session = 0;
+
   KickPusherService({
     required this.onEvent,
     required this.onStateChanged,
@@ -60,6 +64,7 @@ class KickPusherService {
   /// opens the socket. Returns once the socket is initiated; the
   /// connection result arrives via [onStateChanged].
   Future<void> connect({required int chatroomId, int? channelId}) async {
+    this._session++;
     this._disposed = false;
     this._chatroomId = chatroomId;
     this._channelId = channelId;
@@ -70,6 +75,9 @@ class KickPusherService {
   void _openSocket() {
     final chatroomId = this._chatroomId;
     if (chatroomId == null || this._disposed) return;
+
+    /// Never two sockets side by side — every event would arrive twice.
+    this._dropSocket();
     this.onStateChanged(
       this._reconnectAttempts == 0
           ? KickPusherConnectionState.connecting
@@ -90,13 +98,35 @@ class KickPusherService {
     }
     this._channel = channel;
     this._socketSub = channel.stream.listen(
-      this._onData,
+      (raw) {
+        if (identical(this._channel, channel)) this._onData(raw);
+      },
       onError: (Object error) {
         GeneralHelper.advLog('Kick pusher socket error - $error');
-        this._onSocketClosed();
+        this._onSocketClosed(channel);
       },
-      onDone: this._onSocketClosed,
+      onDone: () => this._onSocketClosed(channel),
     );
+  }
+
+  /// Closes the current socket (if any) without scheduling a reconnect.
+  void _dropSocket() {
+    this._pingTimer?.cancel();
+    this._pingTimer = null;
+    final sub = this._socketSub;
+    final channel = this._channel;
+    this._socketSub = null;
+    this._channel = null;
+    unawaited(sub?.cancel());
+    if (channel != null) {
+      unawaited(() async {
+        try {
+          await channel.sink.close();
+        } catch (_) {
+          // already gone
+        }
+      }());
+    }
   }
 
   void _onData(dynamic raw) {
@@ -152,15 +182,18 @@ class KickPusherService {
     }
   }
 
-  void _onSocketClosed() {
-    this._pingTimer?.cancel();
-    this._pingTimer = null;
+  /// A failed socket reports both onError and onDone — only the first
+  /// report of the current socket schedules a reconnect.
+  void _onSocketClosed(WebSocketChannel channel) {
+    if (!identical(this._channel, channel)) return;
+    this._dropSocket();
     if (this._disposed) return;
     this._scheduleReconnect();
   }
 
   void _scheduleReconnect() {
     if (this._disposed) return;
+    final session = this._session;
     this._reconnectAttempts++;
     final seconds = 1 << (this._reconnectAttempts - 1);
     final delay = seconds > _maxBackoff.inSeconds
@@ -168,7 +201,7 @@ class KickPusherService {
         : Duration(seconds: seconds);
     unawaited(
       this._sleep(delay).then((_) {
-        if (!this._disposed) this._openSocket();
+        if (!this._disposed && session == this._session) this._openSocket();
       }),
     );
   }
@@ -176,6 +209,7 @@ class KickPusherService {
   /// Tears the session down permanently (no reconnect) — channel switch
   /// and store disposal both go through here.
   Future<void> disconnect() async {
+    this._session++;
     this._disposed = true;
     this._pingTimer?.cancel();
     this._pingTimer = null;

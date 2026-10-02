@@ -690,6 +690,10 @@ class FakeTwitchModerationService extends TwitchModerationService {
 
   bool shieldModeActive = false;
 
+  /// When set, [getChatSettings] waits on it (a read still out while
+  /// the store switches channel).
+  Completer<void>? getSettingsGate;
+
   @override
   Future<void> deleteChatMessage({
     required String accessToken,
@@ -741,6 +745,7 @@ class FakeTwitchModerationService extends TwitchModerationService {
     this.getSettingsCalls++;
     this.lastSettingsBroadcasterId = broadcasterId;
     this.lastSettingsModeratorId = moderatorId;
+    if (this.getSettingsGate case final gate?) await gate.future;
     if (this.getSettingsThrows != null) throw this.getSettingsThrows!;
     return this.chatSettings;
   }

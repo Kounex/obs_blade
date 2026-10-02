@@ -814,6 +814,30 @@ void main() {
       },
     );
 
+    test('not attached to a live chat → the refusal says why, and clears '
+        'once the chat attaches', () async {
+      configure();
+      await seedAuth();
+      // No liveChatIds entry → resolves null (not live).
+
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.offline,
+      );
+
+      expect(await store.sendChatMessage('hello'), isFalse);
+      expect(chatService.insertCalls, 0);
+      expect(store.sendChatError, contains('not connected'));
+
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page(const []));
+      store.connectChat();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+      expect(store.sendChatError, isNull);
+    });
+
     test('API failure surfaces in sendChatError', () async {
       configure();
       await seedAuth();
@@ -1164,7 +1188,8 @@ void main() {
   });
 
   group('logout', () {
-    test('wipes the session, revokes and stops polling', () async {
+    test('wipes the session and revokes; an added channel keeps reading '
+        '(the API key is enough)', () async {
       configure();
       await seedAuth();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
@@ -1172,13 +1197,16 @@ void main() {
       await store.init();
       await until(() => store.messages.isNotEmpty);
 
+      chatService.pollResponses.add(page([ytMessage('m2')]));
       await store.logout();
 
       expect(store.authState, YouTubeAuthState.signedOut);
       expect(authBox().get(YouTubeAuth.kBoxKey), isNull);
-      expect(store.messages, isEmpty);
-      expect(store.chatConnection, YouTubeChatConnectionState.idle);
       expect(authService.revokedToken, 'access-1');
+      expect(store.selectedChannelLabel, 'A');
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
     });
 
     test('logout clears stale error state', () async {
@@ -1217,7 +1245,8 @@ void main() {
       expect(store.authState, YouTubeAuthState.signedOut);
       expect(store.chatError, isNull);
       expect(store.chatQuotaExhausted, isFalse);
-      expect(store.chatConnection, YouTubeChatConnectionState.idle);
+      // Reading needs only the API key — the selected chat starts over.
+      expect(store.chatConnection, YouTubeChatConnectionState.connecting);
     });
   });
 

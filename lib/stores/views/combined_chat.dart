@@ -658,12 +658,16 @@ abstract class _CombinedChatStore with Store {
     this.focusedPlatform = null;
     this._youTube().resumePolling();
     if (!this.active && this._restore.isEmpty) return;
-    this._generation++;
+    final generation = ++this._generation;
     this.active = false;
+
+    /// Each restore point is dropped only once its platform is back. An
+    /// [activate] while this loop still awaits stops it, and finds the
+    /// platforms not restored yet still remembered — otherwise it would
+    /// remember their combo channel as the selection to come back to.
     final restore = Map<ChatType, String?>.of(this._restore);
-    this._restore.clear();
-    this._persistRestore();
     for (final entry in restore.entries) {
+      if (generation != this._generation) return;
       try {
         switch (entry.key) {
           case ChatType.Twitch:
@@ -679,6 +683,9 @@ abstract class _CombinedChatStore with Store {
       } catch (e) {
         GeneralHelper.advLog('Combined chat restore failed - $e');
       }
+      if (generation != this._generation) return;
+      this._restore.remove(entry.key);
+      this._persistRestore();
     }
   }
 

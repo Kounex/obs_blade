@@ -53,6 +53,10 @@ enum KickAuthState {
   error,
 }
 
+/// Send refusal before the channel resolved — cleared once it does.
+const String _kSendNotResolvedText =
+    'Chat is still connecting - try again in a moment';
+
 class KickChatStore = _KickChatStore with _$KickChatStore;
 
 /// In-memory per-channel chat snapshot — swapped in/out of the live
@@ -534,11 +538,16 @@ abstract class _KickChatStore with Store {
         await this._handleInvalidAuth(
           'Kick session expired - please sign in again',
         );
-      } else {
-        GeneralHelper.advLog('Kick token refresh on init failed - $e');
-        this.authState = KickAuthState.signedOut;
+        return;
       }
-      return;
+
+      /// Transient (Kick 5xx): keep the session — the next write refreshes
+      /// again, and a dead token still ends it then.
+      GeneralHelper.advLog('Kick token refresh on init failed - $e');
+    } catch (e) {
+      /// Offline: same — and init must go on to start the (anonymous)
+      /// chat reads.
+      GeneralHelper.advLog('Kick token refresh on init failed (offline?) - $e');
     }
     this.authState = KickAuthState.signedIn;
     if (auth.channelSlug == null && auth.userId != null) {
@@ -836,7 +845,12 @@ abstract class _KickChatStore with Store {
       }
       buffer.channelInfo = info;
     }
-    runInAction(() => this.channelInfo = info);
+    runInAction(() {
+      this.channelInfo = info;
+      if (this.sendChatError == _kSendNotResolvedText) {
+        this.sendChatError = null;
+      }
+    });
     this._refetchThirdPartyEmotes(info.userId);
     this._refetchChannelEmotes(slug);
 
@@ -1167,14 +1181,17 @@ abstract class _KickChatStore with Store {
   @action
   Future<bool> sendChatMessage(String text, {String? replyToMessageId}) async {
     final trimmed = text.trim();
-    if (!this.canWrite ||
-        trimmed.isEmpty ||
-        this.sendingChat ||
-        this.chatConnection != KickChatConnectionState.connected) {
+    if (!this.canWrite || trimmed.isEmpty || this.sendingChat) {
       return false;
     }
+
+    /// Sends are REST calls — a reconnecting socket doesn't block them,
+    /// only a channel that never resolved (no broadcaster id yet).
     final broadcasterUserId = this.channelInfo?.userId;
-    if (broadcasterUserId == null) return false;
+    if (broadcasterUserId == null) {
+      this.sendChatError = _kSendNotResolvedText;
+      return false;
+    }
     final reply = this.replyTarget;
     final replyId = replyToMessageId ?? reply?.id;
     this.sendingChat = true;

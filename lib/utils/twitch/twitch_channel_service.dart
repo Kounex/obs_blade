@@ -113,7 +113,9 @@ class TwitchChannelService {
       final response = await this._client.get(
         Uri.parse('$kTwitchHelixBase/streams').replace(
           /// Iterable value → repeated `user_id=` (Helix batch form).
-          queryParameters: {'user_id': chunk},
+          /// `first` defaults to 20 — a full chunk of 100 live channels
+          /// needs the max page size to come back in one page.
+          queryParameters: {'user_id': chunk, 'first': '100'},
         ),
         headers: TwitchAuthService.helixHeaders(accessToken),
       );

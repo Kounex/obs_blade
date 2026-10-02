@@ -247,6 +247,8 @@ void main() {
             'chan-2',
             'chan-3',
           ]);
+          // Helix pages 20 by default — a full chunk needs the max page.
+          expect(request.url.queryParameters['first'], '100');
           return http.Response(
             json.encode({
               'data': [

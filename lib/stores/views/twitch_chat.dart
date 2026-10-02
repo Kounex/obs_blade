@@ -320,6 +320,11 @@ abstract class _TwitchChatStore with Store {
   /// login) — gates dropdown Mod chips and the mod action sheet.
   final ObservableSet<String> moderatedChannelIds = ObservableSet<String>();
 
+  /// Whether [moderatedChannelIds] loaded this session — a cold start
+  /// offline retries it once chat connects.
+  bool _moderatedChannelsFetched = false;
+  bool _moderatedChannelsFetching = false;
+
   /// Per-channel chat snapshots keyed by broadcaster id (in-memory only).
   final Map<String, _ChannelBuffer> _channelBuffers =
       <String, _ChannelBuffer>{};
@@ -328,6 +333,18 @@ abstract class _TwitchChatStore with Store {
   /// restore — [_appendMessage] routes into [_channelBuffers] by
   /// `broadcasterUserId` so the clear cannot drop mid-switch arrivals.
   bool _channelSwitchInProgress = false;
+
+  /// The [selectChannel] switch currently running, if any. Switches run
+  /// one at a time: each saves the visible chat as the previous channel's
+  /// buffer and moves the EventSub subscriptions, so two overlapping ones
+  /// would file one channel's messages under the other and leak a
+  /// subscription.
+  Future<void>? _activeChannelSwitch;
+
+  /// Bumped by every [selectChannel] call; a call that was overtaken by
+  /// a newer one while it waited for the running switch is skipped
+  /// (latest pick wins).
+  int _channelSwitchRequest = 0;
 
   /// Recently applied moderation keys (deletes / purges / clears) — local
   /// mod actions tombstone immediately and the EventSub echo must not
@@ -619,12 +636,21 @@ abstract class _TwitchChatStore with Store {
     } on TwitchAuthException catch (e) {
       if (!_TwitchChatStore._isDeadRefresh(e)) {
         GeneralHelper.advLog('Twitch token restore failed - $e');
-        return;
+        if (auth.userId == null) return;
+        valid = true;
+      } else {
+        valid = false;
       }
-      valid = false;
     } catch (e) {
+      /// A transient failure (offline, Twitch 5xx) keeps the stored
+      /// session instead of showing a login prompt for the whole run:
+      /// chat shows its connection state (EventSub retries the socket on
+      /// its own, a failed refresh offers retry), and a dead token still
+      /// ends the session on its first 401. A record without the user id
+      /// can't be restored blind.
       GeneralHelper.advLog('Twitch token validation failed (offline?) - $e');
-      return;
+      if (auth.userId == null) return;
+      valid = true;
     }
     if (!valid) {
       await this._handleInvalidAuth(
@@ -987,6 +1013,7 @@ abstract class _TwitchChatStore with Store {
   /// to a chat error.
   void _fetchModeratedChannels() {
     if (!this.canReadModeratedChannels || this.user == null) return;
+    this._moderatedChannelsFetching = true;
     unawaited(() async {
       try {
         final token = await this._validAccessToken();
@@ -994,6 +1021,7 @@ abstract class _TwitchChatStore with Store {
           accessToken: token,
           userId: this.user!.id,
         );
+        this._moderatedChannelsFetched = true;
         runInAction(() {
           this.moderatedChannelIds
             ..clear()
@@ -1001,6 +1029,8 @@ abstract class _TwitchChatStore with Store {
         });
       } catch (e) {
         GeneralHelper.advLog('Twitch moderated-channels fetch failed - $e');
+      } finally {
+        this._moderatedChannelsFetching = false;
       }
     }());
   }
@@ -1114,11 +1144,31 @@ abstract class _TwitchChatStore with Store {
   /// snapshot is buffered in memory and restored on switch-back.
   @action
   Future<void> selectChannel(String? id) async {
+    final request = ++this._channelSwitchRequest;
+    while (this._activeChannelSwitch != null) {
+      await this._activeChannelSwitch!.catchError((Object _) {});
+      if (request != this._channelSwitchRequest) return;
+    }
+    final run = this._switchChannel(id);
+    this._activeChannelSwitch = run;
+    try {
+      await run;
+    } finally {
+      if (identical(this._activeChannelSwitch, run)) {
+        this._activeChannelSwitch = null;
+      }
+    }
+  }
+
+  Future<void> _switchChannel(String? id) async {
     if (id == this.selectedChannelId ||
         this.authState != TwitchAuthState.loggedIn ||
         this.user == null) {
       return;
     }
+    final userId = this.user!.id;
+    bool sameSession() =>
+        this.authState == TwitchAuthState.loggedIn && this.user?.id == userId;
     final previousBroadcasterId = this.effectiveBroadcasterId;
     final newBroadcasterId = id ?? this.user!.id;
 
@@ -1146,6 +1196,14 @@ abstract class _TwitchChatStore with Store {
     // Feedback belongs to the conversation that initiated the send.
     this.sendChatError = null;
 
+    /// Room mod state is the previous channel's — the mod sheets must not
+    /// show (or patch on top of) it here. They re-fetch on open.
+    this.roomChatSettings = null;
+    this.roomShieldModeActive = null;
+    this.bannedUsers.clear();
+    this.unbanRequests.clear();
+    this.banInboxError = null;
+
     this.chatConnection = TwitchChatConnectionState.connecting;
     this._channelSwitchInProgress = true;
     try {
@@ -1166,6 +1224,10 @@ abstract class _TwitchChatStore with Store {
         /// broadcaster.
         await this.connectChat();
       }
+
+      /// Logged out (or the session died) while the switch awaited: the
+      /// reset already wiped the chat, don't restore a buffer into it.
+      if (!sameSession()) return;
 
       this._pendingFirstMessageIds.clear();
       final buffer = this._channelBuffers[newBroadcasterId];
@@ -1203,6 +1265,7 @@ abstract class _TwitchChatStore with Store {
 
     try {
       final token = await this._validAccessToken();
+      if (!sameSession()) return;
       this._refetchCatalogs(token, newBroadcasterId);
     } on TwitchAuthException catch (e) {
       /// Same policy as [connectChat]: a definitively dead token wipes
@@ -1430,11 +1493,12 @@ abstract class _TwitchChatStore with Store {
         this.user == null) {
       return false;
     }
+    final broadcasterId = this.effectiveBroadcasterId;
     try {
       final token = await this._validAccessToken();
       await this._moderationService.updateChatSettings(
         accessToken: token,
-        broadcasterId: this.effectiveBroadcasterId,
+        broadcasterId: broadcasterId,
         moderatorId: this.user!.id,
         emoteMode: emoteMode,
         followerMode: followerMode,
@@ -1448,6 +1512,7 @@ abstract class _TwitchChatStore with Store {
       GeneralHelper.advLog('Twitch chat settings update failed - $e');
       return false;
     }
+    if (this.effectiveBroadcasterIdSafe != broadcasterId) return true;
     final base =
         this.roomChatSettings ??
         const TwitchChatSettings(
@@ -1481,11 +1546,12 @@ abstract class _TwitchChatStore with Store {
         this.user == null) {
       return false;
     }
+    final broadcasterId = this.effectiveBroadcasterId;
     try {
       final token = await this._validAccessToken();
       await this._moderationService.updateShieldModeStatus(
         accessToken: token,
-        broadcasterId: this.effectiveBroadcasterId,
+        broadcasterId: broadcasterId,
         moderatorId: this.user!.id,
         isActive: isActive,
       );
@@ -1493,6 +1559,7 @@ abstract class _TwitchChatStore with Store {
       GeneralHelper.advLog('Twitch Shield Mode update failed - $e');
       return false;
     }
+    if (this.effectiveBroadcasterIdSafe != broadcasterId) return true;
     this.roomShieldModeActive = isActive;
     return true;
   }
@@ -1529,24 +1596,32 @@ abstract class _TwitchChatStore with Store {
     if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
       return;
     }
+    final broadcasterId = this.effectiveBroadcasterId;
+    final moderatorId = this.user!.id;
+
+    /// A switch while a read is out: its answer is the old channel's.
+    bool sameChannel() =>
+        this.user?.id == moderatorId &&
+        this.effectiveBroadcasterIdSafe == broadcasterId;
     try {
       final token = await this._validAccessToken();
-      final broadcasterId = this.effectiveBroadcasterId;
-      final moderatorId = this.user!.id;
       if (this.canManageChatSettings) {
-        this.roomChatSettings = await this._moderationService.getChatSettings(
+        final settings = await this._moderationService.getChatSettings(
           accessToken: token,
           broadcasterId: broadcasterId,
           moderatorId: moderatorId,
         );
+        if (!sameChannel()) return;
+        this.roomChatSettings = settings;
       }
       if (this.canManageShieldMode) {
-        this.roomShieldModeActive = await this._moderationService
-            .getShieldModeStatus(
-              accessToken: token,
-              broadcasterId: broadcasterId,
-              moderatorId: moderatorId,
-            );
+        final shield = await this._moderationService.getShieldModeStatus(
+          accessToken: token,
+          broadcasterId: broadcasterId,
+          moderatorId: moderatorId,
+        );
+        if (!sameChannel()) return;
+        this.roomShieldModeActive = shield;
       }
     } catch (e) {
       GeneralHelper.advLog('Twitch room mod state refresh failed - $e');
@@ -1660,16 +1735,21 @@ abstract class _TwitchChatStore with Store {
       return;
     }
     final fetchBans = this.selectedChannelId == null && this.canModerateChats;
+    final broadcasterId = this.effectiveBroadcasterId;
+    final moderatorId = this.user!.id;
+    bool sameChannel() =>
+        this.user?.id == moderatorId &&
+        this.effectiveBroadcasterIdSafe == broadcasterId;
     this.banInboxLoading = true;
     this.banInboxError = null;
     try {
       final token = await this._validAccessToken();
-      final broadcasterId = this.effectiveBroadcasterId;
       if (fetchBans) {
         final bans = await this._moderationService.getBannedUsers(
           accessToken: token,
           broadcasterId: broadcasterId,
         );
+        if (!sameChannel()) return;
         this.bannedUsers
           ..clear()
           ..addAll(bans);
@@ -1679,14 +1759,17 @@ abstract class _TwitchChatStore with Store {
       final requests = await this._moderationService.getPendingUnbanRequests(
         accessToken: token,
         broadcasterId: broadcasterId,
-        moderatorId: this.user!.id,
+        moderatorId: moderatorId,
       );
+      if (!sameChannel()) return;
       this.unbanRequests
         ..clear()
         ..addAll(requests);
     } catch (e) {
       GeneralHelper.advLog('Twitch ban inbox refresh failed - $e');
-      this.banInboxError = 'Could not load bans and requests';
+      if (sameChannel()) {
+        this.banInboxError = 'Could not load bans and requests';
+      }
     } finally {
       this.banInboxLoading = false;
     }
@@ -2433,6 +2516,7 @@ abstract class _TwitchChatStore with Store {
     this._channelBuffers.clear();
     this._backfilledBroadcasters.clear();
     this.moderatedChannelIds.clear();
+    this._moderatedChannelsFetched = false;
     this._appliedModerationKeys.clear();
     this._appliedModerationOrder.clear();
     this.selectedChannelId = null;
@@ -2457,6 +2541,10 @@ abstract class _TwitchChatStore with Store {
           }
           this.chatConnection = TwitchChatConnectionState.live;
           this._startLivePoll();
+          if (!this._moderatedChannelsFetched &&
+              !this._moderatedChannelsFetching) {
+            this._fetchModeratedChannels();
+          }
           break;
         case TwitchEventSubState.connecting:
           this.chatConnection = TwitchChatConnectionState.connecting;
@@ -2493,6 +2581,10 @@ abstract class _TwitchChatStore with Store {
     await this._disconnectChat();
     await this._authBox.delete(TwitchAuth.kBoxKey);
     runInAction(() {
+      /// Same chat wipe as [logout] — the next login (maybe another
+      /// account) must not open on this session's messages.
+      this.messages.clear();
+      this._clearLifecycle();
       this.user = null;
       this.authState = TwitchAuthState.loggedOut;
       this.authError = message;

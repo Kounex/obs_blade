@@ -242,59 +242,73 @@ void main() {
       expect(authBox().get(TwitchAuth.kBoxKey), isNull);
     });
 
-    test(
-      'validate throwing (offline) keeps the record, stays logged out',
-      () async {
-        authService.validateThrows = const SocketException(
-          'Network unreachable',
-        );
-        await authBox().put(
-          TwitchAuth.kBoxKey,
-          TwitchAuth(
-            accessToken: 'access-1',
-            refreshToken: 'refresh-1',
-            expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
-            scopes: const ['user:read:chat'],
-            userId: 'user-1',
-            userLogin: 'kounex',
-          ),
-        );
+    test('validate throwing (offline) keeps the session: logged in with the '
+        'stored identity, chat connects', () async {
+      authService.validateThrows = const SocketException('Network unreachable');
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
 
-        await store.init();
+      await store.init();
 
-        expect(store.authState, TwitchAuthState.loggedOut);
-        expect(store.isLoggedIn, isFalse);
-        expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
-        expect(eventSubService.connectCalled, isFalse);
-      },
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(store.user?.id, 'user-1');
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+      expect(eventSubService.connectCalled, isTrue);
+    });
+
+    test('validate throwing a Twitch 5xx keeps the session: logged in, chat '
+        'connects', () async {
+      authService.validateThrows = const TwitchAuthException(
+        'Token validation failed (status 500)',
+      );
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+          userLogin: 'kounex',
+        ),
+      );
+
+      await store.init();
+
+      expect(store.authState, TwitchAuthState.loggedIn);
+      expect(store.user?.id, 'user-1');
+      expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+      expect(eventSubService.connectCalled, isTrue);
+    });
+  });
+
+  test('init: a transient failure with a record lacking the user id '
+      'stays logged out (nothing to restore blind)', () async {
+    authService.validateThrows = const SocketException('Network unreachable');
+    await authBox().put(
+      TwitchAuth.kBoxKey,
+      TwitchAuth(
+        accessToken: 'access-1',
+        refreshToken: 'refresh-1',
+        expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+        scopes: const ['user:read:chat'],
+      ),
     );
 
-    test(
-      'validate throwing a Twitch 5xx keeps the record, stays logged out',
-      () async {
-        authService.validateThrows = const TwitchAuthException(
-          'Token validation failed (status 500)',
-        );
-        await authBox().put(
-          TwitchAuth.kBoxKey,
-          TwitchAuth(
-            accessToken: 'access-1',
-            refreshToken: 'refresh-1',
-            expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
-            scopes: const ['user:read:chat'],
-            userId: 'user-1',
-            userLogin: 'kounex',
-          ),
-        );
+    await store.init();
 
-        await store.init();
-
-        expect(store.authState, TwitchAuthState.loggedOut);
-        expect(store.isLoggedIn, isFalse);
-        expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
-        expect(eventSubService.connectCalled, isFalse);
-      },
-    );
+    expect(store.authState, TwitchAuthState.loggedOut);
+    expect(authBox().get(TwitchAuth.kBoxKey), isNotNull);
+    expect(eventSubService.connectCalled, isFalse);
   });
 
   group('startLogin', () {
@@ -730,6 +744,22 @@ void main() {
       emitRevoked('subscription_failed:500');
       expect(store.chatConnection, TwitchChatConnectionState.failed);
       expect(store.chatConnectedAt, isNull);
+    });
+
+    test('revoked access wipes the chat like logout does', () async {
+      await loginWithCapturedCallbacks();
+      emitState(TwitchEventSubState.connected);
+      store.appendChatMessageForTest(chatMessage('m1', 'u1'));
+      store.applyChatClear();
+      expect(store.systemNotices, isNotEmpty);
+
+      emitRevoked('authorization_revoked');
+      await pumpEventQueue();
+
+      expect(store.authState, TwitchAuthState.loggedOut);
+      expect(store.messages, isEmpty);
+      expect(store.systemNotices, isEmpty);
+      expect(store.isMessageDeleted('m1'), isFalse);
     });
   });
 
@@ -1650,6 +1680,35 @@ void main() {
 
       await store.selectChannel('chan-1');
       expect(store.replyTarget, isNull);
+    });
+
+    test('overlapping switches run one at a time and the latest pick '
+        'wins - no buffer filed under the wrong channel', () async {
+      await login();
+      store.appendChatMessageForTest(chatMessage('own-1', 'u1'));
+      final gate = Completer<void>();
+      final switched = <String>[];
+      eventSubService.onSwitchChannel = (broadcasterId) async {
+        switched.add(broadcasterId);
+        if (switched.length == 1) await gate.future;
+      };
+
+      final first = store.selectChannel('chan-1');
+      final skipped = store.selectChannel('chan-2');
+      final last = store.selectChannel(null);
+      await pumpEventQueue();
+      expect(switched, ['chan-1']);
+
+      gate.complete();
+      await Future.wait([first, skipped, last]);
+      eventSubService.onSwitchChannel = null;
+
+      expect(switched, ['chan-1', 'user-1']);
+      expect(store.selectedChannelId, isNull);
+      expect(store.messages.map((message) => message.messageId), ['own-1']);
+
+      await store.selectChannel('chan-1');
+      expect(store.messages, isEmpty);
     });
 
     test('selectChannel keeps mid-switch arrivals for both channels', () async {
@@ -2681,6 +2740,36 @@ void main() {
 
     setUp(() {
       moderationService = FakeTwitchModerationService();
+    });
+
+    test('a channel switch drops the previous room state; a read still '
+        'out for the old channel does not land on the new one', () async {
+      await login();
+      moderationService.chatSettings = const TwitchChatSettings(
+        emoteMode: true,
+        followerMode: false,
+        followerModeDurationMinutes: null,
+        subscriberMode: false,
+        slowMode: false,
+        slowModeWaitTimeSeconds: null,
+        uniqueChatMode: false,
+      );
+      moderationService.shieldModeActive = true;
+      await store.refreshRoomModState();
+      expect(store.roomChatSettings?.emoteMode, isTrue);
+      expect(store.roomShieldModeActive, isTrue);
+
+      moderationService.getSettingsGate = Completer<void>();
+      final stale = store.refreshRoomModState();
+      await pumpEventQueue();
+      await store.selectChannel('chan-1');
+      expect(store.roomChatSettings, isNull);
+      expect(store.roomShieldModeActive, isNull);
+
+      moderationService.getSettingsGate!.complete();
+      await stale;
+      expect(store.roomChatSettings, isNull);
+      expect(store.roomShieldModeActive, isNull);
     });
 
     test('capability getters reflect the persisted scopes', () async {

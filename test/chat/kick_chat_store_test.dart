@@ -1062,8 +1062,23 @@ void main() {
 
       await store.init();
 
-      expect(store.authState, KickAuthState.signedOut);
+      expect(store.authState, KickAuthState.signedIn);
       expect(authBox().get(KickAuth.kBoxKey), isNotNull);
+    });
+
+    test('init offline (refresh throws a socket error) keeps the session '
+        'and still starts reading', () async {
+      configure();
+      final expired = validAuth()
+        ..expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000;
+      await authBox().put(KickAuth.kBoxKey, expired);
+      authService.refreshThrows = const SocketException('Network unreachable');
+
+      await store.init();
+
+      expect(store.authState, KickAuthState.signedIn);
+      expect(authBox().get(KickAuth.kBoxKey), isNotNull);
+      expect(store.selectedChannelSlug, isNotNull);
     });
 
     test('beginLogin returns the authorize URL for the app client', () async {
@@ -1187,6 +1202,18 @@ void main() {
       expect(store.chatConnection, KickChatConnectionState.idle);
       expect(await store.sendChatMessage('hi'), isFalse);
       expect(apiService.sendCalls, isEmpty);
+      expect(store.sendChatError, contains('still connecting'));
+    });
+
+    test('sends while the socket reconnects - sends are REST calls', () async {
+      await connectSignedIn();
+      pusher().emitState(KickPusherConnectionState.reconnecting);
+      await until(
+        () => store.chatConnection == KickChatConnectionState.reconnecting,
+      );
+
+      expect(await store.sendChatMessage('still here'), isTrue);
+      expect(apiService.sendCalls.single.content, 'still here');
     });
 
     test('sends to the channel owner id and renders via the Pusher echo '

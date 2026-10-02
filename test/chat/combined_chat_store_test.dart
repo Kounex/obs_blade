@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -314,6 +315,73 @@ void main() {
         );
       },
     );
+
+    test('coming back while the restore still runs keeps the original '
+        'selections as the restore point', () async {
+      /// Signed in on Twitch, watching an added channel; its switches
+      /// really await (EventSub), unlike Kick / YouTube.
+      final eventSub = FakeTwitchEventSubService();
+      await twitch.dispose();
+      twitch = TwitchChatStore(
+        authService: FakeTwitchAuthService(),
+        isProResolver: () => true,
+        channelService: FakeTwitchChannelService(),
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSub,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
+      );
+      await twitch.startLogin();
+      await twitch.addChannel(
+        TwitchChannelRef(
+          id: 'chan-1',
+          login: 'chan1',
+          displayName: 'Chan 1',
+          addedAt: DateTime.utc(2026, 10, 2),
+        ),
+      );
+      expect(twitch.selectedChannelId, 'chan-1');
+
+      await store.activate();
+      expect(twitch.selectedChannelId, isNull);
+      expect(kick.selectedChannelSlug, 'kicker');
+
+      /// Leave: the Twitch restore hangs on its EventSub switch ...
+      final gate = Completer<void>();
+      eventSub.onSwitchChannel = (_) => gate.future;
+      final leaving = store.deactivate();
+      await pumpEventQueue();
+
+      /// ... and the user comes back before it finished — with Twitch
+      /// switched off in "My chats", so the activation reaches YouTube /
+      /// Kick while their restores still wait behind Twitch's.
+      await store.setPlatformEnabled(ChatType.Twitch, false);
+      final back = store.activate();
+      await pumpEventQueue();
+      gate.complete();
+      await Future.wait([leaving, back]);
+      eventSub.onSwitchChannel = null;
+
+      /// The stale restore loop stopped: Combined shows the combo.
+      expect(store.active, isTrue);
+      expect(kick.selectedChannelSlug, 'kicker');
+      expect(youTube.selectedChannelLabel, kYouTubeOwnChannelLabel);
+
+      await store.deactivate();
+      expect(twitch.selectedChannelId, 'chan-1');
+      expect(kick.selectedChannelSlug, 'aaa');
+      expect(youTube.selectedChannelLabel, 'A');
+    });
 
     test('leaving mid-activation stops selecting and restores', () async {
       /// Deactivate before the first select resolves: no source may be

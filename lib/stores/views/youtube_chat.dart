@@ -131,6 +131,12 @@ const String kYouTubeOwnChannelLabel = '\u0000own';
 /// so the LIVE chips follow the stream.
 const Duration kViewerRefreshInterval = Duration(seconds: 30);
 
+/// Send refusals while not attached to a live chat — cleared again once
+/// the chat attaches.
+const String _kSendNoStreamText = 'No live stream to send to right now';
+const String _kSendNotConnectedText =
+    'Chat is not connected - try again in a moment';
+
 /// In-memory per-channel chat snapshot — swapped in/out of the live
 /// [messages] list on selectChannel so switching back restores recent
 /// history and the poll resumes from [nextPageToken] without re-resolving
@@ -550,8 +556,9 @@ abstract class _YouTubeChatStore with Store {
           'YouTube session expired - please sign in again',
         );
 
-        /// Reads need only the API key — same as having no session.
-        this._autoSelectChannel();
+        /// Reads need only the API key — same as having no session. A
+        /// kept selection already started reading again.
+        if (this.selectedChannelLabel == null) this._autoSelectChannel();
         return;
       }
 
@@ -723,7 +730,9 @@ abstract class _YouTubeChatStore with Store {
     this.authState = this.isConfigured
         ? YouTubeAuthState.signedOut
         : YouTubeAuthState.unconfigured;
+    final wasOwn = this.selectedChannelLabel == kYouTubeOwnChannelLabel;
     this._syncOwnChannel();
+    this._resumeReadingSignedOut(wasOwn: wasOwn);
     await this._authBox.delete(YouTubeAuth.kBoxKey);
     if (auth != null) {
       await this._authService.revoke(auth.accessToken);
@@ -1084,6 +1093,10 @@ abstract class _YouTubeChatStore with Store {
         this.chatConnection = YouTubeChatConnectionState.connected;
         this.awaitingLiveStream = false;
         this.chatError = null;
+        if (this.sendChatError == _kSendNoStreamText ||
+            this.sendChatError == _kSendNotConnectedText) {
+          this.sendChatError = null;
+        }
         final poll = page.activePollItem;
         buffer.activePoll = poll;
         if (this.selectedChannelLabel == label) this.activePoll = poll;
@@ -1423,20 +1436,24 @@ abstract class _YouTubeChatStore with Store {
   @action
   Future<bool> sendChatMessage(String text) async {
     final trimmed = text.trim();
-    if (!this.canWrite ||
-        trimmed.isEmpty ||
-        this.sendingChat ||
-        this.chatConnection != YouTubeChatConnectionState.connected) {
+    if (!this.canWrite || trimmed.isEmpty || this.sendingChat) {
       return false;
     }
     final label = this.selectedChannelLabel;
     final buffer = this._channelBuffers[label];
     final liveChatId = buffer?.liveChatId;
     final targetKey = this._selectedTarget?.key;
-    if (label == null ||
+
+    /// Only a chat we are attached to takes messages — say why instead of
+    /// a send that silently does nothing.
+    if (this.chatConnection != YouTubeChatConnectionState.connected ||
+        label == null ||
         buffer == null ||
         liveChatId == null ||
         targetKey == null) {
+      this.sendChatError = this.awaitingLiveStream
+          ? _kSendNoStreamText
+          : _kSendNotConnectedText;
       return false;
     }
     final loginFlow = this._loginFlow;
@@ -1777,7 +1794,9 @@ abstract class _YouTubeChatStore with Store {
       this.authState = YouTubeAuthState.signedOut;
       this.authError = message;
     });
+    final wasOwn = this.selectedChannelLabel == kYouTubeOwnChannelLabel;
     this._syncOwnChannel();
+    this._resumeReadingSignedOut(wasOwn: wasOwn);
   }
 
   void _resetToSignedOut() {
@@ -1791,7 +1810,17 @@ abstract class _YouTubeChatStore with Store {
           ? YouTubeAuthState.signedOut
           : YouTubeAuthState.unconfigured;
     });
+    final wasOwn = this.selectedChannelLabel == kYouTubeOwnChannelLabel;
     this._syncOwnChannel();
+    this._resumeReadingSignedOut(wasOwn: wasOwn);
+  }
+
+  /// A session end stops the poll, but reading needs only the API key:
+  /// an added channel starts reading again right away. [wasOwn] = the
+  /// own entry was showing — [_syncOwnChannel]'s fallback switch already
+  /// started the next channel's poll.
+  void _resumeReadingSignedOut({required bool wasOwn}) {
+    if (!wasOwn && !this.pollingPaused) this.connectChat();
   }
 
   Future<void> dispose() async {

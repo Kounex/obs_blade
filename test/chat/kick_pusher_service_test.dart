@@ -102,4 +102,67 @@ void main() {
     );
     await service.disconnect();
   });
+
+  test('a failed socket (onError + onDone) reconnects once - one new '
+      'socket, events not doubled', () async {
+    final sockets = <_FakeChannel>[];
+    final events = <KickPusherEvent>[];
+    final service = KickPusherService(
+      onEvent: events.add,
+      onStateChanged: (_) {},
+      channelFactory: (_) {
+        final socket = _FakeChannel();
+        sockets.add(socket);
+        return socket;
+      },
+      sleep: (_) async {},
+    );
+
+    await service.connect(chatroomId: 42);
+    final first = sockets.single;
+    first.incoming.addError(Exception('network blip'));
+    unawaited(first.incoming.close());
+    await pumpEventQueue();
+
+    expect(sockets, hasLength(2));
+    sockets.last.incoming.add(
+      json.encode({
+        'event': 'App\\Events\\StopStreamBroadcast',
+        'channel': 'channel.101',
+        'data': '{}',
+      }),
+    );
+    await pumpEventQueue();
+    expect(events, hasLength(1));
+    await service.disconnect();
+  });
+
+  test('a reconnect pending from before disconnect does not open a '
+      'second socket after the next connect', () async {
+    final sockets = <_FakeChannel>[];
+    final gate = Completer<void>();
+    final service = KickPusherService(
+      onEvent: (_) {},
+      onStateChanged: (_) {},
+      channelFactory: (_) {
+        final socket = _FakeChannel();
+        sockets.add(socket);
+        return socket;
+      },
+      sleep: (_) => gate.future,
+    );
+
+    await service.connect(chatroomId: 42);
+    unawaited(sockets.single.incoming.close());
+    await pumpEventQueue();
+    await service.disconnect();
+    await service.connect(chatroomId: 43);
+    expect(sockets, hasLength(2));
+
+    gate.complete();
+    await pumpEventQueue();
+
+    expect(sockets, hasLength(2));
+    await service.disconnect();
+  });
 }
