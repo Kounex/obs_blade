@@ -69,8 +69,8 @@ canvas by `width`/`height` (0 = any), every handler answers
   reconnect test was de-raced (event vs in-flight item re-read). Gates:
   websocket + dashboard suites clean, analyze 0 errors. **Not verified
   against a real OBS 32.1 + Aitum Vertical yet.**
-- `docs/private/feature-requests-2026-10.md` status not updated yet - the
-  workstation was unreachable for the same-turn mirror.
+- `docs/private/feature-requests-2026-10.md` status updated (and
+  mirrored) later the same day, once the workstation was reachable.
 - **User-flow review (same day)** - walked every dashboard path with a
   canvas viewed; fixed: Settings → Canvases help still said "view only";
   the studio-mode Transition button (main canvas) now hides while another
