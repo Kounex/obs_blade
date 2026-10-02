@@ -22,6 +22,11 @@ class ChatTtsVoice {
   /// The voice the native bridge actually reads this language with
   final bool preferred;
 
+  /// The voice the bridge reads the default language with (the setting,
+  /// else the phone's - Android: the speech engine's own default) - one
+  /// per list at most
+  final bool isDefault;
+
   const ChatTtsVoice({
     required this.id,
     required this.name,
@@ -30,6 +35,7 @@ class ChatTtsVoice {
     required this.quality,
     this.network = false,
     this.preferred = false,
+    this.isDefault = false,
   });
 
   factory ChatTtsVoice.fromMap(Map<Object?, Object?> map) => ChatTtsVoice(
@@ -41,6 +47,7 @@ class ChatTtsVoice {
     quality: (map['quality'] as num?)?.toInt() ?? 0,
     network: map['network'] == true,
     preferred: map['preferred'] == true,
+    isDefault: map['default'] == true,
   );
 
   /// Quality on a shared 0 (lowest) … 2 (best) scale

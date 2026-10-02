@@ -144,8 +144,9 @@ final RegExp _kLink = RegExp(
 /// YouTube custom emoji shortcodes (`:hand-pink-waving:`)
 final RegExp _kShortcode = RegExp(r'^:[\w-]+:$');
 
-/// Spam runs ("aaaaaaaa", "!!!!!!") - 4+ of the same character
-final RegExp _kCharRun = RegExp(r'(.)\1{3,}');
+/// Spam runs ("aaaaaaaa", "!!!!!!") - 4+ of the same character. Digits
+/// stay: "10000 bits" must not turn into "1000"
+final RegExp _kCharRun = RegExp(r'(\D)\1{3,}');
 
 /// A run of this many identical words ("KEKW KEKW KEKW") is read once with
 /// a count - two stay ("no no" is just speech)
@@ -194,13 +195,18 @@ String? chatTtsUtterance(
 /// alone (no username) - language detection looks at that. [author] and
 /// [notable] (highlighted user, mod, streamer) name people when identical
 /// messages get combined; [combineKey] is set for short messages that may
-/// be combined (null = never).
+/// be combined (null = never). A combined line reads [combineText] and
+/// counts [repeats] per message: a message that is one word repeated
+/// ("KEKW KEKW KEKW") combines as that word, 3 times - never as "KEKW 3
+/// times" counted again.
 typedef ChatTtsSpoken = ({
   String text,
   String body,
   String author,
   bool notable,
   String? combineKey,
+  String combineText,
+  int repeats,
 });
 
 /// [chatTtsUtterance] plus the bare message body for language detection
@@ -258,10 +264,15 @@ ChatTtsSpoken? chatTtsSpoken(
     }
   }
   if (settings.skipEmoteOnly && !hasText) return null;
+  final List<String> uncollapsed = words;
   words = collapseChatTtsWordRuns(words, settings.phrases);
 
   /// After the collapse: "KEKW KEKW KEKW KEKW" is one entry
   final int wordCount = words.length;
+  final bool collapsed = words.length != uncollapsed.length;
+
+  /// The whole message is one word repeated - combined as that word
+  final bool singleRun = collapsed && wordCount == 1;
 
   String text = words.join(' ');
   if (muted) {
@@ -282,6 +293,17 @@ ChatTtsSpoken? chatTtsSpoken(
         : cut;
   }
 
+  /// A count inside a longer message ("KEKW 3 times nice") can't be
+  /// combined without reading two counts; censored runs neither
+  final String? unit = singleRun && !muted
+      ? uncollapsed.first
+            .replaceAllMapped(_kCharRun, (match) => match[1]! * 3)
+            .trim()
+      : null;
+  final bool combinable = singleRun
+      ? unit != null && unit.isNotEmpty
+      : !collapsed && wordCount <= kChatTtsCombineMaxWords;
+
   return (
     text: settings.readUsernames ? '${message.author}: $text' : text,
     body: text,
@@ -290,8 +312,8 @@ ChatTtsSpoken? chatTtsSpoken(
         message.isModerator ||
         message.isBroadcaster ||
         chatAuthorInList(filters.highlightUsers, message.authorNames),
-    combineKey: wordCount <= kChatTtsCombineMaxWords
-        ? text.toLowerCase()
-        : null,
+    combineKey: combinable ? (unit ?? text).toLowerCase() : null,
+    combineText: unit ?? text,
+    repeats: unit != null ? uncollapsed.length : 1,
   );
 }

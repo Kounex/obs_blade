@@ -592,10 +592,12 @@ class ChatTtsSettingsRows extends StatelessWidget {
 /// Dropdown value for "the phone's language" (no setting)
 const String _kPhoneLanguage = '';
 
-/// The default TTS language as a dropdown: "Phone language" or one of the
-/// languages the system has voices for. Also the fallback when detection
-/// finds nothing usable. The voice it reads with shows underneath. Asks
-/// the platform for its voices once per sheet.
+/// The default TTS language as a dropdown: "Phone language" (Android: the
+/// speech engine's default - it reads in that, not the phone's language)
+/// or one of the languages the system has voices for. Also the fallback
+/// when detection finds nothing usable. The voice it reads with shows
+/// underneath. Asks the platform for its voices once per sheet and after
+/// each change (the bridge reports which voice it reads with).
 class _LanguagePicker extends StatefulWidget {
   final ChatTtsStore store;
 
@@ -618,10 +620,13 @@ class _LanguagePickerState extends State<_LanguagePicker> {
     } else {
       box.put(SettingsKeys.ChatTtsLanguage.name, language);
     }
-    this.widget.store.applySettings();
+    this.widget.store
+      ..applySettings()
+      ..loadVoices();
   }
 
-  /// The language row the phone's own language reads with
+  /// The language row the phone's own language reads with - only used
+  /// while the bridge hasn't said which voice it reads with
   static ChatTtsLanguage? _phoneLanguage(List<ChatTtsLanguage> languages) {
     final locale = PlatformDispatcher.instance.locale;
     final tag = locale.toLanguageTag();
@@ -654,11 +659,22 @@ class _LanguagePickerState extends State<_LanguagePicker> {
           final String? stored =
               box.get(SettingsKeys.ChatTtsLanguage.name) as String?;
 
-          /// A stored language without voices anymore reads as the phone's
+          /// A stored language without voices anymore reads with whatever
+          /// the bridge falls back to - the row of its default voice
           final ChatTtsLanguage? picked = stored == null
               ? null
               : languages.where((l) => l.language == stored).firstOrNull;
-          final ChatTtsLanguage? reading = picked ?? _phoneLanguage(languages);
+          final String? defaultLanguage =
+              this.widget.store.defaultVoice?.language;
+          final ChatTtsLanguage? reading =
+              picked ??
+              languages
+                  .where((l) => l.language == defaultLanguage)
+                  .firstOrNull ??
+              _phoneLanguage(languages);
+          final String automatic = Platform.isAndroid
+              ? 'Text-to-speech default'
+              : 'Phone language';
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,7 +688,9 @@ class _LanguagePickerState extends State<_LanguagePicker> {
                 items: [
                   BaseDropdownItem(
                     value: _kPhoneLanguage,
-                    text: 'Phone language',
+                    text: picked == null && reading != null
+                        ? '$automatic (${reading.languageName})'
+                        : automatic,
                   ),
                   for (final language in languages)
                     BaseDropdownItem(

@@ -118,9 +118,23 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
     }
   }
 
+  /// The bridges answer false when the audio is taken (phone call,
+  /// another app's audio focus) and nothing was read
   @override
-  Future<void> speak(String text, {String? detectionText}) =>
-      _invoke('speak', {'text': text, 'detectionText': detectionText});
+  Future<bool> speak(String text, {String? detectionText}) async {
+    try {
+      return await _channel.invokeMethod<Object?>('speak', {
+            'text': text,
+            'detectionText': detectionText,
+          }) !=
+          false;
+    } on MissingPluginException {
+      return true;
+    } on PlatformException catch (e) {
+      GeneralHelper.advLog('Chat TTS speak failed - $e');
+      return true;
+    }
+  }
 
   @override
   Future<void> stop() => _invoke('stop');
@@ -160,6 +174,12 @@ abstract class _ChatTtsStore with Store {
   late final ChatTtsQueue _queue;
   final List<StreamSubscription<dynamic>> _subscriptions = [];
 
+  /// Platform chat stores [_subscriptions] already listens to
+  final Set<ChatType> _attached = {};
+
+  /// Bumped per [loadVoices] - an older answer arriving late is dropped
+  int _voicesRequest = 0;
+
   @observable
   bool enabled = false;
 
@@ -174,8 +194,14 @@ abstract class _ChatTtsStore with Store {
   @observable
   List<ChatTtsVoice>? voices;
 
+  /// The voice the bridge reads the default language with - null until
+  /// [loadVoices] answered (or the platform has none)
+  ChatTtsVoice? get defaultVoice =>
+      this.voices?.where((voice) => voice.isDefault).firstOrNull;
+
   /// Asks the platform which voices / languages it can read with
   Future<void> loadVoices() async {
+    final request = ++_voicesRequest;
     final speaker = _speaker;
     final loader = _voicesOverride;
     final List<ChatTtsVoice> loaded = loader != null
@@ -183,6 +209,7 @@ abstract class _ChatTtsStore with Store {
         : speaker is PlatformTtsSpeaker
         ? await speaker.voices()
         : const [];
+    if (request != _voicesRequest) return;
     runInAction(() => this.voices = loaded);
     if (loader == null && (kDebugMode || kProReleaseTestUnlock)) {
       unawaited(_exportVoices(loaded));
@@ -231,6 +258,9 @@ abstract class _ChatTtsStore with Store {
     if (on) {
       applySettings();
       _listen();
+
+      /// The default voice tells which language the filler words are in
+      if (this.voices == null) unawaited(loadVoices());
     } else {
       _cancel();
       unawaited(_queue.clear());
@@ -296,63 +326,142 @@ abstract class _ChatTtsStore with Store {
       subscription.cancel();
     }
     _subscriptions.clear();
+    _attached.clear();
   }
 
   void _listen() {
     _cancel();
+    _subscriptions.add(_watchChatSelection());
     final factory = _messagesFactory;
     if (factory != null) {
       _subscriptions.add(factory().listen(_onMessage));
       return;
     }
+    _attachChatStores();
+  }
+
+  /// A platform chat store was just created (`main.dart` registers this as
+  /// its `onCreated`) - read it too while text-to-speech is on
+  void chatStoreCreated() {
+    if (this.enabled && _messagesFactory == null) _attachChatStores();
+  }
+
+  /// Whether [T]'s lazy singleton exists already - never creates it
+  static bool _created<T extends Object>() {
     final getIt = GetIt.instance;
-    final emotes = getIt<ThirdPartyEmoteStore>();
+    if (!getIt.isRegistered<T>()) return false;
+    try {
+      return getIt.checkLazySingletonInstanceExists<T>();
+    } on StateError {
+      /// Registered as a plain singleton (tests) - it exists
+      return true;
+    }
+  }
 
-    final twitch = getIt<TwitchChatStore>();
-    _subscriptions.add(
-      twitch.liveMessages.listen(
-        (event) => _onMessage(
-          chatTtsFromTwitch(
-            event,
-            selfUserId: twitch.user?.id,
-            selfNames: [twitch.user?.login, twitch.user?.displayName],
-            isThirdPartyEmote: (word) =>
-                emotes.emote(word, broadcasterId: event.broadcasterUserId) !=
-                null,
-          ),
-        ),
-      ),
-    );
+  /// Listens to the platform stores that exist. Creating one here would
+  /// start its sign-in / connection work (a YouTube poll that spends quota)
+  /// for a chat nobody opened - the rest attach via [chatStoreCreated].
+  void _attachChatStores() {
+    final getIt = GetIt.instance;
 
-    final youTube = getIt<YouTubeChatStore>();
-    _subscriptions.add(
-      youTube.liveMessages.listen((message) {
-        final tts = chatTtsFromYouTube(
-          message,
-          selfChannelId: youTube.selfChannelId,
-          selfNames: [youTube.selfChannelTitle],
-        );
-        if (tts != null) _onMessage(tts);
-      }),
-    );
+    if (!_attached.contains(ChatType.Twitch) && _created<TwitchChatStore>()) {
+      _attached.add(ChatType.Twitch);
+      final twitch = getIt<TwitchChatStore>();
+      _subscriptions.add(
+        twitch.liveMessages.listen((event) {
+          final channel = twitch.selectedChannelId;
+          _onMessage(
+            chatTtsFromTwitch(
+              event,
+              selfUserId: twitch.user?.id,
+              selfNames: [twitch.user?.login, twitch.user?.displayName],
+              isThirdPartyEmote: (word) =>
+                  getIt<ThirdPartyEmoteStore>().emote(
+                    word,
+                    broadcasterId: event.broadcasterUserId,
+                  ) !=
+                  null,
+            ),
+            isCurrent: () =>
+                _platformShown(ChatType.Twitch) &&
+                twitch.selectedChannelId == channel,
+          );
+        }),
+      );
+    }
 
-    final kick = getIt<KickChatStore>();
-    _subscriptions.add(
-      kick.liveMessages.listen((message) {
-        final broadcasterId = kick.channelInfo?.userId?.toString();
-        _onMessage(
-          chatTtsFromKick(
+    if (!_attached.contains(ChatType.YouTube) && _created<YouTubeChatStore>()) {
+      _attached.add(ChatType.YouTube);
+      final youTube = getIt<YouTubeChatStore>();
+      _subscriptions.add(
+        youTube.liveMessages.listen((message) {
+          final tts = chatTtsFromYouTube(
             message,
-            selfUserId: kick.selfUserId,
-            selfNames: [kick.selfUsername],
-            isThirdPartyEmote: broadcasterId == null
-                ? null
-                : (word) =>
-                      emotes.emote(word, broadcasterId: broadcasterId) != null,
-          ),
-        );
-      }),
-    );
+            selfChannelId: youTube.selfChannelId,
+            selfNames: [youTube.selfChannelTitle],
+          );
+          final channel = youTube.selectedChannelLabel;
+          if (tts != null) {
+            _onMessage(
+              tts,
+              isCurrent: () =>
+                  _platformShown(ChatType.YouTube) &&
+                  youTube.selectedChannelLabel == channel,
+            );
+          }
+        }),
+      );
+    }
+
+    if (!_attached.contains(ChatType.Kick) && _created<KickChatStore>()) {
+      _attached.add(ChatType.Kick);
+      final kick = getIt<KickChatStore>();
+      _subscriptions.add(
+        kick.liveMessages.listen((message) {
+          final broadcasterId = kick.channelInfo?.userId?.toString();
+          final channel = kick.selectedChannelSlug;
+          _onMessage(
+            chatTtsFromKick(
+              message,
+              selfUserId: kick.selfUserId,
+              selfNames: [kick.selfUsername],
+              isThirdPartyEmote: broadcasterId == null
+                  ? null
+                  : (word) =>
+                        getIt<ThirdPartyEmoteStore>().emote(
+                          word,
+                          broadcasterId: broadcasterId,
+                        ) !=
+                        null,
+            ),
+            isCurrent: () =>
+                _platformShown(ChatType.Kick) &&
+                kick.selectedChannelSlug == channel,
+          );
+        }),
+      );
+    }
+  }
+
+  /// Switching the chat type or engine stops reading right away - what's
+  /// waiting belongs to the chat that was on screen (a channel switch
+  /// skips the old channel's messages when their turn comes, see
+  /// [ChatTtsQueueItem.isCurrent])
+  StreamSubscription<BoxEvent> _watchChatSelection() {
+    Object? type = _settings.get(SettingsKeys.SelectedChatType.name);
+    Object? engine = _settings.get(SettingsKeys.SelectedChatEngine.name);
+    return _settings.watch().listen((event) {
+      if (event.key == SettingsKeys.SelectedChatType.name) {
+        if (event.value == type) return;
+        type = event.value;
+      } else if (event.key == SettingsKeys.SelectedChatEngine.name) {
+        if (event.value == engine) return;
+        engine = event.value;
+      } else {
+        return;
+      }
+      unawaited(_queue.clear());
+    });
   }
 
   /// Whether the Chat tab currently shows [platform]'s native chat - alone
@@ -378,7 +487,7 @@ abstract class _ChatTtsStore with Store {
         engine == ChatEngine.native;
   }
 
-  void _onMessage(ChatTtsMessage message) {
+  void _onMessage(ChatTtsMessage message, {bool Function()? isCurrent}) {
     if (!this.enabled || !_isProResolver()) return;
     if (_messagesFactory == null && !_platformShown(message.platform)) return;
 
@@ -404,8 +513,11 @@ abstract class _ChatTtsStore with Store {
       receivedAt: message.receivedAt,
       detectionText: spoken.body,
       combineKey: spoken.combineKey,
+      combineText: spoken.combineText,
+      repeats: spoken.repeats,
       author: spoken.author,
       notable: spoken.notable,
+      isCurrent: isCurrent,
     );
   }
 
@@ -440,13 +552,16 @@ abstract class _ChatTtsStore with Store {
 
   /// Plays a short sample in [language] with [voiceId] (null = the voice
   /// TTS would use) - what's waiting to be read is dropped, the sample
-  /// interrupts it anyway
-  Future<void> previewVoice({required String language, String? voiceId}) async {
-    await _queue.clear();
-    await _speaker.preview(
-      voiceId: voiceId,
-      language: language,
-      text: ChatTtsPhrases.sample(language),
+  /// interrupts it anyway, and new messages wait until it's over
+  Future<void> previewVoice({required String language, String? voiceId}) {
+    final text = ChatTtsPhrases.sample(language);
+    return _queue.hold(
+      () => _speaker
+          .preview(voiceId: voiceId, language: language, text: text)
+          .timeout(
+            _queue.utteranceTimeout(text),
+            onTimeout: () => _speaker.stop(),
+          ),
     );
   }
 
@@ -461,9 +576,12 @@ abstract class _ChatTtsStore with Store {
     return speaker is PlatformTtsSpeaker ? speaker.installVoiceData() : false;
   }
 
-  /// The language TTS reads in by default - the setting, else the phone's
+  /// The language TTS reads in by default - the setting, else the default
+  /// voice's (Android: the speech engine's language, not the phone's),
+  /// else the phone's
   String get _defaultLanguage =>
       (_settings.get(SettingsKeys.ChatTtsLanguage.name) as String?) ??
+      this.defaultVoice?.language ??
       PlatformDispatcher.instance.locale.toLanguageTag();
 
   ChatTtsSettings _readSettings() {

@@ -127,18 +127,21 @@ void _initializeStores() {
     /// block store creation.
     () => TwitchChatStore()..init(),
     dispose: (store) => store.dispose(),
+    onCreated: (_) => _chatStoreCreated(),
   );
   GetIt.instance.registerLazySingleton<YouTubeChatStore>(
     /// Fire-and-forget [init] — cold-start session pickup must not
     /// block store creation.
     () => YouTubeChatStore()..init(),
     dispose: (store) => store.dispose(),
+    onCreated: (_) => _chatStoreCreated(),
   );
   GetIt.instance.registerLazySingleton<KickChatStore>(
     /// Fire-and-forget [init] — cold-start channel restore must not
     /// block store creation.
     () => KickChatStore()..init(),
     dispose: (store) => store.dispose(),
+    onCreated: (_) => _chatStoreCreated(),
   );
   GetIt.instance.registerLazySingleton<ChatTtsStore>(
     () => ChatTtsStore(),
@@ -150,6 +153,15 @@ void _initializeStores() {
     () => CombinedChatStore()..bindToChatType(),
     dispose: (store) => store.dispose(),
   );
+}
+
+/// Chat text-to-speech listens to the platform chat stores that exist -
+/// it never creates one itself (that would start its sign-in / polling)
+void _chatStoreCreated() {
+  final getIt = GetIt.instance;
+  if (getIt.checkLazySingletonInstanceExists<ChatTtsStore>()) {
+    getIt<ChatTtsStore>().chatStoreCreated();
+  }
 }
 
 Future<void> _initializeHive() async {

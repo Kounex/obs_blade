@@ -4,7 +4,8 @@ import 'chat_tts_queue.dart';
 /// Most names read for a combined line - the rest become "N others"
 const int kChatTtsCombineMaxNames = 3;
 
-/// One line for a [group] of identical short messages (first one first):
+/// One line for a [group] of identical short messages (first one first),
+/// counting each message's [ChatTtsQueueItem.repeats]:
 /// - usernames off: "KEKW 15 times"
 /// - one person repeating: "Viewer: KEKW 5 times"
 /// - several people: the first author plus highlighted users / mods / the
@@ -16,8 +17,9 @@ String chatTtsCombinedLine(
   required ChatTtsPhrases phrases,
 }) {
   final first = group.first;
-  final String body = first.detectionText ?? first.text;
-  if (!readUsernames) return '$body ${phrases.times(group.length)}';
+  final String body = first.combineText ?? first.detectionText ?? first.text;
+  final int count = group.fold(0, (sum, item) => sum + item.repeats);
+  if (!readUsernames) return '$body ${phrases.times(count)}';
 
   final List<String> authors = [];
   final Set<String> notable = {};
@@ -27,7 +29,7 @@ String chatTtsCombinedLine(
     if (item.notable) notable.add(author);
   }
   if (authors.length == 1) {
-    return '${authors.single}: $body ${phrases.times(group.length)}';
+    return '${authors.single}: $body ${phrases.times(count)}';
   }
 
   final List<String> names = [authors.first];

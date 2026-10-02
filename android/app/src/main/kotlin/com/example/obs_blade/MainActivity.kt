@@ -46,7 +46,11 @@ class MainActivity: FlutterActivity() {
  * waits for its init; an engine that failed to init answers right away.
  *
  * While a message is read, other apps' audio is lowered (transient audio
- * focus, "may duck") and gets it back afterwards. A failing `speak` (the
+ * focus, "may duck") and gets it back afterwards. When the focus is
+ * denied (a phone call) or lost mid-message, `speak` answers false and
+ * nothing more is read - the Dart queue keeps the message and tries again.
+ * `stop` also cancels messages still waiting for language detection or
+ * the engine's init. A failing `speak` (the
  * engine service died, e.g. updated in the background) restarts the
  * engine and retries that message once.
  *
@@ -87,6 +91,10 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   /** One-off voice for the next `speak` (a preview) */
   private var previewVoice: String? = null
   private var previewLanguage: String? = null
+
+  /** Bumped by `stop`, `preview` and [shutdown] - a `speak` still in detection / init from before answers without reading */
+  private var speakGeneration = 0
+  private var shutDown = false
 
   private fun startSettings(intent: Intent): Boolean = try {
     appContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -160,23 +168,39 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     releaseFocus()
   }
 
-  private fun requestFocus() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+  /** A call or another app took the audio: cut off what's read, the Dart queue reads it again later */
+  private val focusListener = AudioManager.OnAudioFocusChangeListener { change ->
+    if (change == AudioManager.AUDIOFOCUS_LOSS || change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+      main.post {
+        if (pending.isEmpty()) return@post
+        val results = pending.values.toList()
+        pending.clear()
+        engine?.stop()
+        results.forEach { it.success(false) }
+        releaseFocus()
+      }
+    }
+  }
+
+  /** False when the focus is denied (e.g. during a phone call) */
+  private fun requestFocus(): Boolean {
+    val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       val request = focusRequest ?: AudioFocusRequest
         .Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
         .setAudioAttributes(audioAttributes)
-        .setOnAudioFocusChangeListener { }
+        .setOnAudioFocusChangeListener(focusListener, main)
         .build()
         .also { focusRequest = it }
       audioManager.requestAudioFocus(request)
     } else {
       @Suppress("DEPRECATION")
       audioManager.requestAudioFocus(
-        null,
+        focusListener,
         AudioManager.STREAM_MUSIC,
         AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK,
       )
     }
+    return granted == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
   }
 
   private fun releaseFocus() {
@@ -184,19 +208,24 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
       focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
     } else {
       @Suppress("DEPRECATION")
-      audioManager.abandonAudioFocus(null)
+      audioManager.abandonAudioFocus(focusListener)
     }
   }
 
   /** Detects (off the main thread when on) and then speaks */
   private fun speakDetecting(text: String, detectionText: String, result: MethodChannel.Result) {
+    val generation = speakGeneration
     if (!detect || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-      speak(text, null, result, retry = true)
+      speak(text, null, result, retry = true, generation = generation)
       return
     }
-    detector.execute {
-      val language = detectLanguage(detectionText)
-      main.post { speak(text, language, result, retry = true) }
+    try {
+      detector.execute {
+        val language = detectLanguage(detectionText)
+        main.post { speak(text, language, result, retry = true, generation = generation) }
+      }
+    } catch (e: Exception) {
+      result.success(null)
     }
   }
 
@@ -234,10 +263,17 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   private fun installedVoices(): List<Voice> =
     installedCache ?: loadInstalledVoices().also { installedCache = it }
 
-  /** The user's pick for [tag] (exact, else one for the same language) if it's installed */
+  /**
+   * The user's pick for [tag] if it's installed. A pick for another region
+   * of the language only counts when [tag] has no voices of its own (a
+   * detected `es`, a default region without voices) - the picker shows one
+   * row per installed region, so that's the pick it shows. Several: the
+   * first by tag.
+   */
   private fun pickedVoice(tag: String, installed: List<Voice>): Voice? {
+    val hasOwn = installed.any { it.locale.toLanguageTag() == tag }
     val name = voicePicks[tag]
-      ?: voicePicks.entries.firstOrNull { baseCode(it.key) == baseCode(tag) }?.value
+      ?: (if (hasOwn) null else voicePicks.keys.sorted().firstOrNull { baseCode(it) == baseCode(tag) }?.let { voicePicks[it] })
       ?: return null
     return installed.firstOrNull { it.name == name }
   }
@@ -272,22 +308,44 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     return bestVoice(detected) ?: fallback
   }
 
-  /** [retry]: restart the engine and try once more if speaking fails */
-  private fun speak(text: String, detected: String?, result: MethodChannel.Result, retry: Boolean) {
+  /** [retry]: restart the engine and try once more if speaking fails; [generation]: [speakGeneration] when the call came in */
+  private fun speak(
+    text: String,
+    detected: String?,
+    result: MethodChannel.Result,
+    retry: Boolean,
+    generation: Int,
+  ) {
+    if (shutDown || generation != speakGeneration) {
+      result.success(null)
+      return
+    }
     whenInitialized {
+      // Stopped while waiting for the engine's init
+      if (shutDown || generation != speakGeneration) {
+        result.success(null)
+        return@whenInitialized
+      }
       val tts = engine
       if (!ready || tts == null) {
         if (retry) {
           createEngine()
-          speak(text, detected, result, retry = false)
+          speak(text, detected, result, retry = false, generation = generation)
         } else {
           result.success(null)
         }
         return@whenInitialized
       }
+      if (!requestFocus()) {
+        // The audio is taken (phone call) - the Dart queue tries again
+        previewVoice = null
+        previewLanguage = null
+        result.success(false)
+        if (pending.isEmpty()) releaseFocus()
+        return@whenInitialized
+      }
       val id = "chat-${nextId++}"
       pending[id] = result
-      requestFocus()
       tts.setSpeechRate(rate)
       val previewId = previewVoice
       val previewTag = previewLanguage
@@ -309,7 +367,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
         pending.remove(id)
         if (retry) {
           createEngine()
-          speak(text, detected, result, retry = false)
+          speak(text, detected, result, retry = false, generation = generation)
         } else {
           result.success(null)
           if (pending.isEmpty()) releaseFocus()
@@ -318,11 +376,21 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
     }
   }
 
-  /** Installed (downloaded) voices: id, language tag + display name, quality, network */
-  /** Fresh list (also refreshes the cache) - call off the main thread */
+  /**
+   * Installed (downloaded) voices: id, language tag + display name,
+   * quality, network, whether it's the one this bridge reads that language
+   * with, and whether it reads the default language (no setting: the
+   * engine's own default voice). Fresh list (also refreshes the cache) -
+   * call off the main thread
+   */
   private fun voices(): List<Map<String, Any>> {
     val installed = loadInstalledVoices()
     installedCache = installed
+    val defaultName = try {
+      (voiceFor(null) ?: engine?.defaultVoice)?.name
+    } catch (e: Exception) {
+      null
+    }
     val bestByTag = HashMap<String, String>()
     return installed
       .map { voice ->
@@ -339,6 +407,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
               bestVoice(voice.locale.toLanguageTag(), installed)?.name ?: ""
             } == voice.name
           ),
+          "default" to (voice.name == defaultName),
         )
       }
   }
@@ -370,11 +439,12 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
           result.success(null)
           return
         }
+        speakGeneration++
         engine?.stop()
         finishAll()
         previewVoice = call.argument<String>("voiceId")
         previewLanguage = call.argument<String>("language")
-        speak(text, null, result, retry = true)
+        speak(text, null, result, retry = true, generation = speakGeneration)
       }
       "openTtsSettings" -> result.success(startSettings(Intent("com.android.settings.TTS_SETTINGS")))
       "installVoiceData" -> result.success(
@@ -385,6 +455,7 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
         )
       )
       "stop" -> {
+        speakGeneration++
         engine?.stop()
         finishAll()
         result.success(null)
@@ -405,6 +476,8 @@ class ChatTts(context: Context, channel: MethodChannel) : MethodChannel.MethodCa
   }
 
   fun shutdown() {
+    shutDown = true
+    speakGeneration++
     detector.shutdownNow()
     finishAll()
     engine?.stop()

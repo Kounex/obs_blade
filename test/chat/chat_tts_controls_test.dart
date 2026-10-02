@@ -28,11 +28,11 @@ class _HangingSpeaker implements ChatTtsSpeaker {
   final List<Completer<void>> _running = [];
 
   @override
-  Future<void> speak(String text, {String? detectionText}) {
+  Future<bool> speak(String text, {String? detectionText}) {
     spoken.add(text);
     final done = Completer<void>();
     _running.add(done);
-    return done.future;
+    return done.future.then((_) => true);
   }
 
   final List<({String? voiceId, String? language, String text})> previews = [];
@@ -224,7 +224,10 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(find.text("Detect each message's language"), findsOneWidget);
-    expect(find.text('Phone language'), findsOneWidget);
+    expect(
+      find.text('Phone language (English (United States))'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Automatic (Ava'), findsOneWidget);
     expect(find.text('Volume'), findsOneWidget);
 

@@ -6,11 +6,14 @@ import 'dart:collection';
 /// was stopped).
 abstract class ChatTtsSpeaker {
   /// [detectionText]: the part language detection should look at (the
-  /// message without the username) - null = [text]
-  Future<void> speak(String text, {String? detectionText});
+  /// message without the username) - null = [text]. False: the audio is
+  /// taken (phone call, another app holding audio focus) and the message
+  /// wasn't read (or was cut off) - the queue tries it again later.
+  Future<bool> speak(String text, {String? detectionText});
 
   /// Reads [text] once with [voiceId] (else [language]'s voice), cutting
-  /// off whatever is being read - the voice picker's preview
+  /// off whatever is being read - the voice picker's preview. Completes
+  /// once the sample finished or was stopped
   Future<void> preview({
     String? voiceId,
     String? language,
@@ -30,18 +33,30 @@ class ChatTtsQueueItem {
   /// - null = never combined
   final String? combineKey;
 
+  /// What a combined line reads for it and how often it counts - a
+  /// message that is one word repeated combines as that word ("KEKW", 3)
+  final String? combineText;
+  final int repeats;
+
   /// Who sent it and whether they're worth naming in a combined line
   /// (highlighted user, mod, streamer)
   final String? author;
   final bool notable;
+
+  /// Whether it still belongs to the chat on screen - false (the user
+  /// switched platform, channel or engine) skips it when its turn comes
+  final bool Function()? isCurrent;
 
   const ChatTtsQueueItem({
     required this.text,
     required this.receivedAt,
     this.detectionText,
     this.combineKey,
+    this.combineText,
+    this.repeats = 1,
     this.author,
     this.notable = false,
+    this.isCurrent,
   });
 }
 
@@ -61,11 +76,16 @@ class ChatTtsQueue {
   /// interruption) must not stall reading for good
   final Duration Function(String text) utteranceTimeout;
 
+  /// How long to wait before trying again while the audio is taken
+  /// (phone call, another app's audio focus)
+  final Duration busyRetry;
+
   ChatTtsQueue(
     this._speaker, {
     DateTime Function()? now,
     this.onChanged,
     Duration Function(String text)? utteranceTimeout,
+    this.busyRetry = const Duration(seconds: 2),
   }) : _now = now ?? DateTime.now,
        utteranceTimeout = utteranceTimeout ?? defaultUtteranceTimeout;
 
@@ -85,6 +105,10 @@ class ChatTtsQueue {
   /// the next pending one of the old run
   int _generation = 0;
 
+  /// Bumped per [hold] - only the latest one resumes reading
+  int _holdGeneration = 0;
+  bool _held = false;
+
   /// Skip messages older than this when their turn comes - null = read
   /// everything (default)
   Duration? skipStaleAfter;
@@ -99,8 +123,11 @@ class ChatTtsQueue {
     DateTime? receivedAt,
     String? detectionText,
     String? combineKey,
+    String? combineText,
+    int repeats = 1,
     String? author,
     bool notable = false,
+    bool Function()? isCurrent,
   }) {
     _pending.add(
       ChatTtsQueueItem(
@@ -108,12 +135,32 @@ class ChatTtsQueue {
         receivedAt: receivedAt ?? _now(),
         detectionText: detectionText,
         combineKey: combineKey,
+        combineText: combineText,
+        repeats: repeats,
         author: author,
         notable: notable,
+        isCurrent: isCurrent,
       ),
     );
     this.onChanged?.call();
-    if (!_speaking) _next();
+    if (!_speaking && !_held) _next();
+  }
+
+  /// Drops what's waiting, stops the current message and runs [action]
+  /// (the voice preview) with reading paused - new messages wait behind it
+  /// instead of cutting it off, and are read once it completes
+  Future<void> hold(Future<void> Function() action) async {
+    final hold = ++_holdGeneration;
+    _held = true;
+    await clear();
+    try {
+      await action();
+    } finally {
+      if (hold == _holdGeneration) {
+        _held = false;
+        if (!_speaking && _pending.isNotEmpty) _next();
+      }
+    }
   }
 
   /// Drops everything waiting and stops the current message - the next
@@ -126,47 +173,70 @@ class ChatTtsQueue {
     await _speaker.stop();
   }
 
-  bool _stale(ChatTtsQueueItem item) {
+  /// Too old (opt-in) or no longer the chat on screen
+  bool _skip(ChatTtsQueueItem item) {
+    if (item.isCurrent?.call() == false) return true;
     final staleAfter = this.skipStaleAfter;
     return staleAfter != null &&
         _now().difference(item.receivedAt) > staleAfter;
   }
 
-  /// [next]'s text, or one line for it plus every waiting message with the
-  /// same combine key (those leave the queue)
-  String _textFor(ChatTtsQueueItem next) {
-    final combine = this.combine;
+  /// [next] alone, or with every waiting message of the same combine key
+  /// (those leave the queue)
+  List<ChatTtsQueueItem> _groupFor(ChatTtsQueueItem next) {
     final key = next.combineKey;
-    if (combine == null || key == null) return next.text;
+    if (this.combine == null || key == null) return [next];
     final group = [
       next,
       for (final item in _pending)
-        if (item.combineKey == key && !_stale(item)) item,
+        if (item.combineKey == key && !_skip(item)) item,
     ];
-    if (group.length == 1) return next.text;
-    _pending.removeWhere((item) => item.combineKey == key);
-    return combine(group);
+    if (group.length > 1) {
+      _pending.removeWhere((item) => item.combineKey == key);
+    }
+    return group;
   }
 
   Future<void> _next() async {
     final generation = _generation;
     while (_pending.isNotEmpty) {
       final next = _pending.removeFirst();
-      if (_stale(next)) continue;
-      final text = _textFor(next);
+      if (_skip(next)) {
+        this.onChanged?.call();
+        continue;
+      }
+      final group = _groupFor(next);
+      final combine = this.combine;
+      final text = group.length > 1 && combine != null
+          ? combine(group)
+          : next.text;
       _speaking = true;
       this.onChanged?.call();
+      var spoken = true;
       try {
-        await _speaker
+        spoken = await _speaker
             .speak(text, detectionText: next.detectionText)
             .timeout(
               this.utteranceTimeout(text),
-              onTimeout: () => _speaker.stop(),
+              onTimeout: () async {
+                await _speaker.stop();
+                return true;
+              },
             );
       } catch (_) {
         /// A failing engine must not end the loop for good
       }
       if (generation != _generation) return;
+      if (!spoken) {
+        /// The audio is taken (phone call) - the message keeps its place
+        /// and is tried again, nothing is dropped meanwhile
+        for (final item in group.reversed) {
+          _pending.addFirst(item);
+        }
+        this.onChanged?.call();
+        await Future<void>.delayed(this.busyRetry);
+        if (generation != _generation) return;
+      }
     }
     _speaking = false;
     this.onChanged?.call();

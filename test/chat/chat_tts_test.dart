@@ -41,12 +41,16 @@ class _FakeSpeaker implements ChatTtsSpeaker {
   final List<Completer<void>> _running = [];
   int stops = 0;
 
+  /// The audio is taken (phone call) - every speak answers false
+  bool busy = false;
+
   @override
-  Future<void> speak(String text, {String? detectionText}) {
+  Future<bool> speak(String text, {String? detectionText}) {
     spoken.add(text);
+    if (busy) return Future.value(false);
     final done = Completer<void>();
     _running.add(done);
-    return done.future;
+    return done.future.then((_) => true);
   }
 
   /// Finish the utterance currently being read
@@ -147,6 +151,14 @@ void main() {
 
     test('spam runs collapse to three', () {
       expect(_say(_msg('noooooooo!!!!!!')), 'Viewer: nooo!!!');
+    });
+
+    test('numbers are never shortened', () {
+      expect(
+        _say(_msg('thanks for the 10000 bits, goal 1000000')),
+        'Viewer: thanks for the 10000 bits, goal 1000000',
+      );
+      expect(_say(_msg('1111')), 'Viewer: 1111');
     });
 
     test('long messages are cut at a word boundary', () {
@@ -335,6 +347,105 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 80));
       expect(speaker.stops, greaterThanOrEqualTo(1));
       expect(speaker.spoken, ['stuck', 'next']);
+    });
+
+    test('busy audio (phone call): the message keeps its place and is '
+        'tried again', () async {
+      queue = ChatTtsQueue(
+        speaker,
+        now: () => now,
+        busyRetry: const Duration(milliseconds: 20),
+      );
+      speaker.busy = true;
+      queue.add('one');
+      queue.add('two');
+      await settle();
+      expect(speaker.spoken, ['one']);
+      expect(queue.waiting, 2);
+      expect(queue.speaking, isTrue);
+
+      /// Still taken on the next tries - nothing dropped
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(speaker.spoken.length, greaterThanOrEqualTo(2));
+      expect(speaker.spoken.toSet(), {'one'});
+      expect(queue.waiting, 2);
+
+      /// The call ended - "one" is read now
+      speaker.busy = false;
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(speaker.spoken.last, 'one');
+      expect(queue.waiting, 1);
+      speaker.finish();
+      await settle();
+      expect(speaker.spoken.last, 'two');
+      expect(queue.waiting, 0);
+    });
+
+    test('jump to latest ends the retrying', () async {
+      queue = ChatTtsQueue(
+        speaker,
+        now: () => now,
+        busyRetry: const Duration(milliseconds: 20),
+      );
+      speaker.busy = true;
+      queue.add('one');
+      await settle();
+      await queue.clear();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(speaker.spoken, ['one']);
+      expect(queue.speaking, isFalse);
+    });
+
+    test('a hold (voice preview) pauses reading, new messages wait for '
+        'it', () async {
+      queue.add('old');
+      await settle();
+      final preview = Completer<void>();
+      final held = queue.hold(() => preview.future);
+      await settle();
+      expect(queue.waiting, 0);
+
+      queue.add('new');
+      await settle();
+      expect(speaker.spoken, ['old']);
+      expect(queue.waiting, 1);
+
+      preview.complete();
+      await held;
+      await settle();
+      expect(speaker.spoken, ['old', 'new']);
+    });
+
+    test('only the latest hold resumes reading', () async {
+      final first = Completer<void>();
+      final second = Completer<void>();
+      final firstHeld = queue.hold(() => first.future);
+      await settle();
+      final secondHeld = queue.hold(() => second.future);
+      await settle();
+      queue.add('waits');
+      first.complete();
+      await firstHeld;
+      await settle();
+      expect(speaker.spoken, isEmpty);
+
+      second.complete();
+      await secondHeld;
+      await settle();
+      expect(speaker.spoken, ['waits']);
+    });
+
+    test('messages of a chat no longer on screen are skipped', () async {
+      var current = true;
+      queue.add('first');
+      queue.add('old channel', isCurrent: () => current);
+      queue.add('new channel', isCurrent: () => true);
+      await settle();
+      current = false;
+      speaker.finish();
+      await settle();
+      expect(speaker.spoken, ['first', 'new channel']);
+      expect(queue.waiting, 0);
     });
 
     test('the default timeout grows with the text', () {
@@ -539,8 +650,17 @@ void main() {
         const ChatTtsFilters(),
       );
       expect(spoken('KEKW')!.combineKey, 'kekw');
-      expect(spoken('KEKW KEKW KEKW KEKW KEKW')!.combineKey, isNotNull);
       expect(spoken('this is a longer message')!.combineKey, isNull);
+
+      /// One word repeated combines as that word, counted per repeat
+      final run = spoken('KEKW KEKW KEKW KEKW KEKW')!;
+      expect(run.text, 'Viewer: KEKW 5 times');
+      expect(run.combineKey, 'kekw');
+      expect(run.combineText, 'KEKW');
+      expect(run.repeats, 5);
+
+      /// A count inside a longer message can't be counted again
+      expect(spoken('KEKW KEKW KEKW nice')!.combineKey, isNull);
     });
 
     test('notable: mods, the streamer and highlighted users', () {
@@ -669,6 +789,42 @@ void main() {
           phrases: ChatTtsPhrases.english,
         ),
         'First, Mod and 2 others: KEKW',
+      );
+    });
+
+    test('one-word runs add up instead of counting twice', () {
+      ChatTtsQueueItem run(String author, int repeats) => ChatTtsQueueItem(
+        text: '$author: KEKW $repeats times',
+        detectionText: 'KEKW $repeats times',
+        receivedAt: DateTime(2026),
+        combineKey: 'kekw',
+        combineText: 'KEKW',
+        repeats: repeats,
+        author: author,
+      );
+      expect(
+        chatTtsCombinedLine(
+          [run('A', 3), item('A'), run('A', 4)],
+          readUsernames: true,
+          phrases: ChatTtsPhrases.english,
+        ),
+        'A: KEKW 8 times',
+      );
+      expect(
+        chatTtsCombinedLine(
+          [run('A', 3), run('B', 3)],
+          readUsernames: false,
+          phrases: ChatTtsPhrases.english,
+        ),
+        'KEKW 6 times',
+      );
+      expect(
+        chatTtsCombinedLine(
+          [run('A', 3), run('B', 3)],
+          readUsernames: true,
+          phrases: ChatTtsPhrases.english,
+        ),
+        'A and one other: KEKW',
       );
     });
 

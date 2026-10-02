@@ -9,6 +9,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_queue.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_utterance.dart';
+import 'package:obs_blade/utils/chat_tts/chat_tts_voice.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 
@@ -18,24 +19,31 @@ class _FakeSpeaker implements ChatTtsSpeaker {
   final List<Completer<void>> _running = [];
 
   @override
-  Future<void> speak(String text, {String? detectionText}) {
+  Future<bool> speak(String text, {String? detectionText}) {
     spoken.add(text);
     detectionTexts.add(detectionText);
     final done = Completer<void>();
     _running.add(done);
-    return done.future;
+    return done.future.then((_) => true);
   }
 
   void finish() => _running.removeAt(0).complete();
 
   final List<({String? voiceId, String? language, String text})> previews = [];
 
+  /// On: a preview lasts until [previewRunning] completes (or [stop])
+  bool holdPreviews = false;
+  Completer<void>? previewRunning;
+
   @override
   Future<void> preview({
     String? voiceId,
     String? language,
     required String text,
-  }) async => previews.add((voiceId: voiceId, language: language, text: text));
+  }) async {
+    previews.add((voiceId: voiceId, language: language, text: text));
+    if (holdPreviews) await (previewRunning = Completer<void>()).future;
+  }
 
   @override
   Future<void> stop() async {
@@ -43,6 +51,8 @@ class _FakeSpeaker implements ChatTtsSpeaker {
       if (!running.isCompleted) running.complete();
     }
     _running.clear();
+    final preview = previewRunning;
+    if (preview != null && !preview.isCompleted) preview.complete();
   }
 }
 
@@ -67,6 +77,7 @@ void main() {
   late StreamController<ChatTtsMessage> messages;
   late bool isPro;
   late ChatTtsStore store;
+  late Future<List<ChatTtsVoice>> Function() voicesLoader;
 
   Box<dynamic> settings() => Hive.box(HiveKeys.Settings.name);
 
@@ -80,10 +91,12 @@ void main() {
     speaker = _FakeSpeaker();
     messages = StreamController.broadcast();
     isPro = true;
+    voicesLoader = () async => const [];
     store = ChatTtsStore(
       speaker: speaker,
       isProResolver: () => isPro,
       messages: () => messages.stream,
+      voicesLoader: () => voicesLoader(),
     );
   });
 
@@ -223,5 +236,86 @@ void main() {
     expect(speaker.previews.single.voiceId, 'helena');
     expect(speaker.previews.single.language, 'de-DE');
     expect(speaker.previews.single.text, 'Hallo Chat, so klinge ich.');
+  });
+
+  test('a preview pauses reading - new messages wait until it ends', () async {
+    store.setEnabled(true);
+    messages.add(_msg('before'));
+    await settle();
+    speaker.holdPreviews = true;
+    final preview = store.previewVoice(language: 'en-US');
+    await settle();
+    messages.add(_msg('during'));
+    await settle();
+    expect(speaker.spoken, ['Viewer: before']);
+    expect(store.waiting, 1);
+
+    speaker.previewRunning!.complete();
+    await preview;
+    await settle();
+    expect(speaker.spoken, ['Viewer: before', 'Viewer: during']);
+  });
+
+  test('switching the chat type or engine stops reading', () async {
+    store.setEnabled(true);
+    messages
+      ..add(_msg('one'))
+      ..add(_msg('two'));
+    await settle();
+    expect(store.waiting, 1);
+
+    /// The same value again changes nothing
+    await settings().put(
+      SettingsKeys.SelectedChatType.name,
+      settings().get(SettingsKeys.SelectedChatType.name),
+    );
+    await settle();
+    expect(store.waiting, 1);
+
+    await settings().put(SettingsKeys.SelectedChatType.name, ChatType.Kick);
+    await settle();
+    expect(store.waiting, 0);
+    expect(store.speaking, isFalse);
+  });
+
+  test('an older voice list answering late is dropped', () async {
+    final slow = Completer<List<ChatTtsVoice>>();
+    const fresh = [
+      ChatTtsVoice(
+        id: 'daniel',
+        name: 'Daniel',
+        language: 'en-GB',
+        languageName: 'English (United Kingdom)',
+        quality: 1,
+        preferred: true,
+      ),
+    ];
+    voicesLoader = () => slow.future;
+    final first = store.loadVoices();
+    voicesLoader = () async => fresh;
+    await store.loadVoices();
+    slow.complete(const []);
+    await first;
+    expect(store.voices, fresh);
+  });
+
+  test('filler words follow the default voice (Android: the engine '
+      'language, not the phone)', () async {
+    voicesLoader = () async => const [
+      ChatTtsVoice(
+        id: 'anna',
+        name: 'Anna',
+        language: 'de-DE',
+        languageName: 'Deutsch (Deutschland)',
+        quality: 1,
+        isDefault: true,
+      ),
+    ];
+    store.setEnabled(true);
+    await settle();
+    expect(store.defaultVoice?.id, 'anna');
+    messages.add(_msg('W W W'));
+    await settle();
+    expect(speaker.spoken, ['Viewer: W 3 mal']);
   });
 }

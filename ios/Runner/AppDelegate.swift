@@ -23,7 +23,9 @@ import UIKit
 /// the silent switch on) mixing with other apps and lowering them while a
 /// message is read; it's released after each one so they return to full
 /// volume between messages. An audio interruption (phone call, Siri) stops
-/// the current message so the queue never waits on it.
+/// the current message and answers `speak` with false until it's over
+/// (or the session can't be activated) - the Dart queue keeps the message
+/// and tries again, so nothing is read over a call.
 ///
 /// Voice: the best installed one (premium > enhanced > default) for the
 /// default language (the setting, else the phone's) - iOS alone would use
@@ -47,6 +49,13 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   /// BCP 47 tag from the settings, nil = the phone's language
   private var defaultLanguage: String?
   private var detect = false
+
+  /// An audio interruption began and hasn't ended - `speak` answers false
+  private var interrupted = false
+
+  /// The app went to the background during the interruption - its "ended"
+  /// may never arrive then, coming back clears it
+  private var backgroundedWhileInterrupted = false
 
   /// The user's voice per language (tag → identifier); a missing or
   /// uninstalled pick means the automatic best voice
@@ -75,6 +84,18 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
       name: AVAudioSession.interruptionNotification,
       object: nil
     )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(didEnterBackground),
+      name: UIApplication.didEnterBackgroundNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(didBecomeActive),
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil
+    )
     if #available(iOS 17.0, *) {
       NotificationCenter.default.addObserver(
         self,
@@ -95,7 +116,11 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
         result(nil)
         return
       }
-      activateSession()
+      /// The audio is taken - the Dart queue keeps the message
+      guard !interrupted, activateSession() else {
+        result(false)
+        return
+      }
       let utterance = AVSpeechUtterance(string: text)
       utterance.rate = rate
       utterance.volume = volume
@@ -134,7 +159,10 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
         return
       }
       stopAll()
-      activateSession()
+      guard !interrupted, activateSession() else {
+        result(nil)
+        return
+      }
       let utterance = AVSpeechUtterance(string: text)
       utterance.rate = rate
       utterance.volume = volume
@@ -156,11 +184,13 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
     }
   }
 
-  private func stopAll() {
-    synthesizer.stopSpeaking(at: .immediate)
+  /// [answer]: what the stopped `speak` calls get - false = cut off by an
+  /// interruption, read it again later
+  private func stopAll(answer: Any? = nil) {
     let results = pending.values
     pending.removeAll()
-    results.forEach { $0(nil) }
+    synthesizer.stopSpeaking(at: .immediate)
+    results.forEach { $0(answer) }
     releaseSession()
   }
 
@@ -187,21 +217,27 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
     return voices
   }
 
-  /// The user's pick for [language] (exact, else the same language in
-  /// another region) when it's installed, else the best of [voices] -
-  /// premium (3) > enhanced (2) > default (1), raw values so it also
-  /// compiles against iOS 15. Pure: runs off the main thread too
+  /// The user's pick for [language] when it's installed, else the best of
+  /// [voices] - premium (3) > enhanced (2) > default (1), raw values so it
+  /// also compiles against iOS 15. A pick for another region of the
+  /// language only counts when [language] has no voices of its own (a
+  /// detected `es`, a default region without voices) - the picker shows
+  /// one row per installed region, so that's the pick it shows. Several of
+  /// them: the first by tag, never dictionary order. Pure: runs off the
+  /// main thread too
   private static func best(
     for language: String,
     in voices: [AVSpeechSynthesisVoice],
     picks: [String: String]
   ) -> AVSpeechSynthesisVoice? {
+    let exact = voices.filter { $0.language == language }
     let pickId = picks[language]
-      ?? picks.first { baseCode($0.key) == baseCode(language) }?.value
+      ?? (exact.isEmpty
+        ? picks.keys.sorted().first { baseCode($0) == baseCode(language) }.flatMap { picks[$0] }
+        : nil)
     if let id = pickId, let picked = voices.first(where: { $0.identifier == id }) {
       return picked
     }
-    let exact = voices.filter { $0.language == language }
     let prefix = language.split(separator: "-").first.map(String.init) ?? language
     let candidates = exact.isEmpty
       ? voices.filter { $0.language.hasPrefix(prefix + "-") }
@@ -269,13 +305,17 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
   }
 
   /// One entry per installed voice: identifier, name, language (BCP 47),
-  /// the language's name in the phone's language, quality, and whether
-  /// it's the one this bridge reads that language with. Built on a
-  /// background queue (the system list takes a while), answered on main
+  /// the language's name in the phone's language, quality, whether it's
+  /// the one this bridge reads that language with, and whether it reads
+  /// the default language. Built on a background queue (the system list
+  /// takes a while), answered on main - the Dart side drops an answer
+  /// that a newer request overtook
   private func listVoices(_ result: @escaping FlutterResult) {
     let picks = voicePicks
+    let defaultTag = fallbackLanguage
     DispatchQueue.global(qos: .userInitiated).async {
       let voices = ChatTts.loadUsableVoices()
+      let defaultId = ChatTts.best(for: defaultTag, in: voices, picks: picks)?.identifier
       /// Language → identifier of its voice ("" = none), resolved once each
       var bestByLanguage: [String: String] = [:]
       var names: [String: String] = [:]
@@ -296,6 +336,7 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
           "languageName": names[language] ?? language,
           "quality": voice.quality.rawValue,
           "preferred": bestByLanguage[language] == voice.identifier,
+          "default": voice.identifier == defaultId,
         ]
       }
       DispatchQueue.main.async {
@@ -315,19 +356,55 @@ final class ChatTts: NSObject, AVSpeechSynthesizerDelegate {
 
   @objc private func audioInterrupted(_ notification: Notification) {
     guard let raw = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-      AVAudioSession.InterruptionType(rawValue: raw) == .began
+      let type = AVAudioSession.InterruptionType(rawValue: raw)
     else { return }
-    DispatchQueue.main.async { self.stopAll() }
+    DispatchQueue.main.async {
+      switch type {
+      case .began:
+        /// Also posted for a session that wasn't active (another app's
+        /// audio) - only a real interruption blocks reading
+        if #available(iOS 14.5, *),
+          let reasonRaw = notification.userInfo?[AVAudioSessionInterruptionReasonKey] as? UInt,
+          AVAudioSession.InterruptionReason(rawValue: reasonRaw) == .appWasSuspended
+        {
+          return
+        }
+        self.interrupted = true
+        self.backgroundedWhileInterrupted = false
+        self.stopAll(answer: false)
+      case .ended:
+        self.interrupted = false
+      @unknown default:
+        break
+      }
+    }
   }
 
-  private func activateSession() {
+  @objc private func didEnterBackground() {
+    if interrupted { backgroundedWhileInterrupted = true }
+  }
+
+  @objc private func didBecomeActive() {
+    if backgroundedWhileInterrupted {
+      backgroundedWhileInterrupted = false
+      interrupted = false
+    }
+  }
+
+  /// False when the session can't be activated (the audio is taken)
+  private func activateSession() -> Bool {
     let session = AVAudioSession.sharedInstance()
     try? session.setCategory(
       .playback,
       mode: .voicePrompt,
       options: [.mixWithOthers, .duckOthers]
     )
-    try? session.setActive(true)
+    do {
+      try session.setActive(true)
+      return true
+    } catch {
+      return false
+    }
   }
 
   private func releaseSession() {
