@@ -21,6 +21,7 @@ _SceneItem _$SceneItemFromJson(Map<String, dynamic> json) => _SceneItem(
         ),
   sourceName: json['sourceName'] as String?,
   sourceType: json['sourceType'] as String?,
+  sourceUuid: json['sourceUuid'] as String?,
   filters:
       (json['filters'] as List<dynamic>?)
           ?.map((e) => Filter.fromJson(e as Map<String, dynamic>))
@@ -45,6 +46,7 @@ Map<String, dynamic> _$SceneItemToJson(_SceneItem instance) =>
       'sceneItemTransform': instance.sceneItemTransform,
       'sourceName': instance.sourceName,
       'sourceType': instance.sourceType,
+      'sourceUuid': instance.sourceUuid,
       'filters': instance.filters,
       'parentGroupName': instance.parentGroupName,
       'groupChildren': instance.groupChildren,

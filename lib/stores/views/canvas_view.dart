@@ -292,6 +292,7 @@ abstract class _CanvasViewStore with Store {
       (ack.responseData?['canvases'] as List<dynamic>? ?? const [])
           .cast<Map<String, dynamic>>()
           .map(ObsCanvas.fromJson)
+          .where((canvas) => !canvas.isEphemeral)
           .toList(),
     );
     if (this.canvases.any((canvas) => !canvas.isMain)) {
@@ -344,10 +345,12 @@ abstract class _CanvasViewStore with Store {
     if (target == null) return;
     this.loadingScenes = true;
     _loadScenes();
+
+    /// The whole picture: OBS announces neither a canvas' resolution change
+    /// (e.g. set in Aitum's dock) nor Dual Format settings - the canvas
+    /// list re-read chains scenes, Aitum's state and Dual Format
     _refreshTimer = Timer.periodic(kCanvasRefreshInterval, (_) {
-      _loadScenes();
-      _loadDualFormat();
-      if (this.canControlViewedCanvas) _loadAitumState();
+      this.loadCanvases();
     });
     if (this.canControlViewedCanvas) _loadAitumState();
   }
@@ -428,8 +431,10 @@ abstract class _CanvasViewStore with Store {
         .toList();
     final childAcks = await Future.wait(
       groups.map(
-        (group) =>
-            _request(RequestType.GetGroupSceneItemList, {'sceneName': group}),
+        (group) => _request(RequestType.GetGroupSceneItemList, {
+          'sceneName': group,
+          'canvasUuid': this.viewedCanvasUuid,
+        }),
       ),
     );
     if (generation != _viewGeneration) return;
@@ -492,9 +497,12 @@ abstract class _CanvasViewStore with Store {
 
   /// Where an item lives for Set* requests: a group child in its group's
   /// scene (by name), anything else in the viewed scene (by UUID)
+  ///
+  /// By name, obs-websocket only looks in the canvas it's told (main
+  /// otherwise) - a group of another canvas needs its `canvasUuid`
   Map<String, dynamic> _itemScene(SceneItem item, String sceneUuid) =>
       item.parentGroupName != null
-      ? {'sceneName': item.parentGroupName}
+      ? {'sceneName': item.parentGroupName, 'canvasUuid': this.viewedCanvasUuid}
       : {'sceneUuid': sceneUuid};
 
   /// Where a scene-item event lands: `(group: null)` for the viewed scene
@@ -504,11 +512,19 @@ abstract class _CanvasViewStore with Store {
     if (event.json['sceneUuid'] == this.selectedSceneUuid) {
       return (group: null);
     }
+
+    /// A group by its UUID (a same-named group of the main canvas must
+    /// not count), by name only when OBS sent no UUIDs
+    final sceneUuid = event.json['sceneUuid'];
     final sceneName = event.json['sceneName'];
-    final isOwnGroup = this.sceneItems.any(
-      (item) => item.isGroup == true && item.sourceName == sceneName,
-    );
-    return isOwnGroup ? (group: sceneName as String) : null;
+    for (final item in this.sceneItems) {
+      if (item.isGroup != true || item.sourceName == null) continue;
+      final bool matches = item.sourceUuid != null && sceneUuid != null
+          ? item.sourceUuid == sceneUuid
+          : item.sourceName == sceneName;
+      if (matches) return (group: item.sourceName);
+    }
+    return null;
   }
 
   /// Show / hide an item of the viewed scene - optimistic, re-read on
@@ -555,6 +571,9 @@ abstract class _CanvasViewStore with Store {
           _loadDualFormat();
         }
         break;
+
+      /// Another collection brings its own canvas scenes
+      case EventType.CurrentSceneCollectionChanged:
       case EventType.CanvasCreated:
       case EventType.CanvasRemoved:
       case EventType.CanvasNameChanged:
@@ -737,7 +756,9 @@ abstract class _CanvasViewStore with Store {
     final canvas = this.aitumCanvas;
     if (eventType == null || canvas == null) return;
 
-    /// Aitum tags its events with the canvas resolution
+    /// Aitum tags its events with the canvas resolution - a different one
+    /// means it was changed in Aitum's dock (OBS announces no resolution
+    /// change): re-read the canvases, which re-reads Aitum's state too
     final width = (data['width'] as num?)?.toInt();
     final height = (data['height'] as num?)?.toInt();
     if ((width != null &&
@@ -746,6 +767,7 @@ abstract class _CanvasViewStore with Store {
         (height != null &&
             canvas.baseHeight != null &&
             height != canvas.baseHeight)) {
+      this.loadCanvases();
       return;
     }
     _applyAitumEvent(eventType, data);

@@ -19,6 +19,10 @@ abstract class SceneItem with _$SceneItem {
     required SceneItemTransform? sceneItemTransform,
     required String? sourceName,
     required String? sourceType,
+
+    /// UUID of the item's source (a group's own scene for groups) - source
+    /// names can repeat across canvases (OBS 32.1+), the UUID can't
+    String? sourceUuid,
     @Default([]) List<Filter> filters,
 
     /// OPTIONAL - Name of the item's parent (if this item belongs to a group)

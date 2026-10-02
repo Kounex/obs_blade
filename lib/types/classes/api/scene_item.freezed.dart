@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SceneItem {
 
- String? get inputKind; bool? get isGroup; String? get sceneItemBlendMode; bool? get sceneItemEnabled; int? get sceneItemId; int? get sceneItemIndex; bool? get sceneItemLocked; SceneItemTransform? get sceneItemTransform; String? get sourceName; String? get sourceType; List<Filter> get filters;/// OPTIONAL - Name of the item's parent (if this item belongs to a group)
+ String? get inputKind; bool? get isGroup; String? get sceneItemBlendMode; bool? get sceneItemEnabled; int? get sceneItemId; int? get sceneItemIndex; bool? get sceneItemLocked; SceneItemTransform? get sceneItemTransform; String? get sourceName; String? get sourceType;/// UUID of the item's source (a group's own scene for groups) - source
+/// names can repeat across canvases (OBS 32.1+), the UUID can't
+ String? get sourceUuid; List<Filter> get filters;/// OPTIONAL - Name of the item's parent (if this item belongs to a group)
  String? get parentGroupName;/// OPTIONAL - List of children (if this item is a group)
  List<SceneItem>? get groupChildren;/// CUSTOM - added myself to handle stuff internally
 /// Indicate whether we want to display the children of this group
@@ -33,16 +35,16 @@ $SceneItemCopyWith<SceneItem> get copyWith => _$SceneItemCopyWithImpl<SceneItem>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SceneItem&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.isGroup, isGroup) || other.isGroup == isGroup)&&(identical(other.sceneItemBlendMode, sceneItemBlendMode) || other.sceneItemBlendMode == sceneItemBlendMode)&&(identical(other.sceneItemEnabled, sceneItemEnabled) || other.sceneItemEnabled == sceneItemEnabled)&&(identical(other.sceneItemId, sceneItemId) || other.sceneItemId == sceneItemId)&&(identical(other.sceneItemIndex, sceneItemIndex) || other.sceneItemIndex == sceneItemIndex)&&(identical(other.sceneItemLocked, sceneItemLocked) || other.sceneItemLocked == sceneItemLocked)&&(identical(other.sceneItemTransform, sceneItemTransform) || other.sceneItemTransform == sceneItemTransform)&&(identical(other.sourceName, sourceName) || other.sourceName == sourceName)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&const DeepCollectionEquality().equals(other.filters, filters)&&(identical(other.parentGroupName, parentGroupName) || other.parentGroupName == parentGroupName)&&const DeepCollectionEquality().equals(other.groupChildren, groupChildren)&&(identical(other.displayGroup, displayGroup) || other.displayGroup == displayGroup));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SceneItem&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.isGroup, isGroup) || other.isGroup == isGroup)&&(identical(other.sceneItemBlendMode, sceneItemBlendMode) || other.sceneItemBlendMode == sceneItemBlendMode)&&(identical(other.sceneItemEnabled, sceneItemEnabled) || other.sceneItemEnabled == sceneItemEnabled)&&(identical(other.sceneItemId, sceneItemId) || other.sceneItemId == sceneItemId)&&(identical(other.sceneItemIndex, sceneItemIndex) || other.sceneItemIndex == sceneItemIndex)&&(identical(other.sceneItemLocked, sceneItemLocked) || other.sceneItemLocked == sceneItemLocked)&&(identical(other.sceneItemTransform, sceneItemTransform) || other.sceneItemTransform == sceneItemTransform)&&(identical(other.sourceName, sourceName) || other.sourceName == sourceName)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.sourceUuid, sourceUuid) || other.sourceUuid == sourceUuid)&&const DeepCollectionEquality().equals(other.filters, filters)&&(identical(other.parentGroupName, parentGroupName) || other.parentGroupName == parentGroupName)&&const DeepCollectionEquality().equals(other.groupChildren, groupChildren)&&(identical(other.displayGroup, displayGroup) || other.displayGroup == displayGroup));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,inputKind,isGroup,sceneItemBlendMode,sceneItemEnabled,sceneItemId,sceneItemIndex,sceneItemLocked,sceneItemTransform,sourceName,sourceType,const DeepCollectionEquality().hash(filters),parentGroupName,const DeepCollectionEquality().hash(groupChildren),displayGroup);
+int get hashCode => Object.hash(runtimeType,inputKind,isGroup,sceneItemBlendMode,sceneItemEnabled,sceneItemId,sceneItemIndex,sceneItemLocked,sceneItemTransform,sourceName,sourceType,sourceUuid,const DeepCollectionEquality().hash(filters),parentGroupName,const DeepCollectionEquality().hash(groupChildren),displayGroup);
 
 @override
 String toString() {
-  return 'SceneItem(inputKind: $inputKind, isGroup: $isGroup, sceneItemBlendMode: $sceneItemBlendMode, sceneItemEnabled: $sceneItemEnabled, sceneItemId: $sceneItemId, sceneItemIndex: $sceneItemIndex, sceneItemLocked: $sceneItemLocked, sceneItemTransform: $sceneItemTransform, sourceName: $sourceName, sourceType: $sourceType, filters: $filters, parentGroupName: $parentGroupName, groupChildren: $groupChildren, displayGroup: $displayGroup)';
+  return 'SceneItem(inputKind: $inputKind, isGroup: $isGroup, sceneItemBlendMode: $sceneItemBlendMode, sceneItemEnabled: $sceneItemEnabled, sceneItemId: $sceneItemId, sceneItemIndex: $sceneItemIndex, sceneItemLocked: $sceneItemLocked, sceneItemTransform: $sceneItemTransform, sourceName: $sourceName, sourceType: $sourceType, sourceUuid: $sourceUuid, filters: $filters, parentGroupName: $parentGroupName, groupChildren: $groupChildren, displayGroup: $displayGroup)';
 }
 
 
@@ -53,7 +55,7 @@ abstract mixin class $SceneItemCopyWith<$Res>  {
   factory $SceneItemCopyWith(SceneItem value, $Res Function(SceneItem) _then) = _$SceneItemCopyWithImpl;
 @useResult
 $Res call({
- String? inputKind, bool? isGroup, String? sceneItemBlendMode, bool? sceneItemEnabled, int? sceneItemId, int? sceneItemIndex, bool? sceneItemLocked, SceneItemTransform? sceneItemTransform, String? sourceName, String? sourceType, List<Filter> filters, String? parentGroupName, List<SceneItem>? groupChildren, bool displayGroup
+ String? inputKind, bool? isGroup, String? sceneItemBlendMode, bool? sceneItemEnabled, int? sceneItemId, int? sceneItemIndex, bool? sceneItemLocked, SceneItemTransform? sceneItemTransform, String? sourceName, String? sourceType, String? sourceUuid, List<Filter> filters, String? parentGroupName, List<SceneItem>? groupChildren, bool displayGroup
 });
 
 
@@ -70,7 +72,7 @@ class _$SceneItemCopyWithImpl<$Res>
 
 /// Create a copy of SceneItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? inputKind = freezed,Object? isGroup = freezed,Object? sceneItemBlendMode = freezed,Object? sceneItemEnabled = freezed,Object? sceneItemId = freezed,Object? sceneItemIndex = freezed,Object? sceneItemLocked = freezed,Object? sceneItemTransform = freezed,Object? sourceName = freezed,Object? sourceType = freezed,Object? filters = null,Object? parentGroupName = freezed,Object? groupChildren = freezed,Object? displayGroup = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? inputKind = freezed,Object? isGroup = freezed,Object? sceneItemBlendMode = freezed,Object? sceneItemEnabled = freezed,Object? sceneItemId = freezed,Object? sceneItemIndex = freezed,Object? sceneItemLocked = freezed,Object? sceneItemTransform = freezed,Object? sourceName = freezed,Object? sourceType = freezed,Object? sourceUuid = freezed,Object? filters = null,Object? parentGroupName = freezed,Object? groupChildren = freezed,Object? displayGroup = null,}) {
   return _then(_self.copyWith(
 inputKind: freezed == inputKind ? _self.inputKind : inputKind // ignore: cast_nullable_to_non_nullable
 as String?,isGroup: freezed == isGroup ? _self.isGroup : isGroup // ignore: cast_nullable_to_non_nullable
@@ -82,6 +84,7 @@ as int?,sceneItemLocked: freezed == sceneItemLocked ? _self.sceneItemLocked : sc
 as bool?,sceneItemTransform: freezed == sceneItemTransform ? _self.sceneItemTransform : sceneItemTransform // ignore: cast_nullable_to_non_nullable
 as SceneItemTransform?,sourceName: freezed == sourceName ? _self.sourceName : sourceName // ignore: cast_nullable_to_non_nullable
 as String?,sourceType: freezed == sourceType ? _self.sourceType : sourceType // ignore: cast_nullable_to_non_nullable
+as String?,sourceUuid: freezed == sourceUuid ? _self.sourceUuid : sourceUuid // ignore: cast_nullable_to_non_nullable
 as String?,filters: null == filters ? _self.filters : filters // ignore: cast_nullable_to_non_nullable
 as List<Filter>,parentGroupName: freezed == parentGroupName ? _self.parentGroupName : parentGroupName // ignore: cast_nullable_to_non_nullable
 as String?,groupChildren: freezed == groupChildren ? _self.groupChildren : groupChildren // ignore: cast_nullable_to_non_nullable
@@ -183,10 +186,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? inputKind,  bool? isGroup,  String? sceneItemBlendMode,  bool? sceneItemEnabled,  int? sceneItemId,  int? sceneItemIndex,  bool? sceneItemLocked,  SceneItemTransform? sceneItemTransform,  String? sourceName,  String? sourceType,  List<Filter> filters,  String? parentGroupName,  List<SceneItem>? groupChildren,  bool displayGroup)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? inputKind,  bool? isGroup,  String? sceneItemBlendMode,  bool? sceneItemEnabled,  int? sceneItemId,  int? sceneItemIndex,  bool? sceneItemLocked,  SceneItemTransform? sceneItemTransform,  String? sourceName,  String? sourceType,  String? sourceUuid,  List<Filter> filters,  String? parentGroupName,  List<SceneItem>? groupChildren,  bool displayGroup)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SceneItem() when $default != null:
-return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sceneItemEnabled,_that.sceneItemId,_that.sceneItemIndex,_that.sceneItemLocked,_that.sceneItemTransform,_that.sourceName,_that.sourceType,_that.filters,_that.parentGroupName,_that.groupChildren,_that.displayGroup);case _:
+return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sceneItemEnabled,_that.sceneItemId,_that.sceneItemIndex,_that.sceneItemLocked,_that.sceneItemTransform,_that.sourceName,_that.sourceType,_that.sourceUuid,_that.filters,_that.parentGroupName,_that.groupChildren,_that.displayGroup);case _:
   return orElse();
 
 }
@@ -204,10 +207,10 @@ return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sce
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? inputKind,  bool? isGroup,  String? sceneItemBlendMode,  bool? sceneItemEnabled,  int? sceneItemId,  int? sceneItemIndex,  bool? sceneItemLocked,  SceneItemTransform? sceneItemTransform,  String? sourceName,  String? sourceType,  List<Filter> filters,  String? parentGroupName,  List<SceneItem>? groupChildren,  bool displayGroup)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? inputKind,  bool? isGroup,  String? sceneItemBlendMode,  bool? sceneItemEnabled,  int? sceneItemId,  int? sceneItemIndex,  bool? sceneItemLocked,  SceneItemTransform? sceneItemTransform,  String? sourceName,  String? sourceType,  String? sourceUuid,  List<Filter> filters,  String? parentGroupName,  List<SceneItem>? groupChildren,  bool displayGroup)  $default,) {final _that = this;
 switch (_that) {
 case _SceneItem():
-return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sceneItemEnabled,_that.sceneItemId,_that.sceneItemIndex,_that.sceneItemLocked,_that.sceneItemTransform,_that.sourceName,_that.sourceType,_that.filters,_that.parentGroupName,_that.groupChildren,_that.displayGroup);case _:
+return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sceneItemEnabled,_that.sceneItemId,_that.sceneItemIndex,_that.sceneItemLocked,_that.sceneItemTransform,_that.sourceName,_that.sourceType,_that.sourceUuid,_that.filters,_that.parentGroupName,_that.groupChildren,_that.displayGroup);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -224,10 +227,10 @@ return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sce
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? inputKind,  bool? isGroup,  String? sceneItemBlendMode,  bool? sceneItemEnabled,  int? sceneItemId,  int? sceneItemIndex,  bool? sceneItemLocked,  SceneItemTransform? sceneItemTransform,  String? sourceName,  String? sourceType,  List<Filter> filters,  String? parentGroupName,  List<SceneItem>? groupChildren,  bool displayGroup)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? inputKind,  bool? isGroup,  String? sceneItemBlendMode,  bool? sceneItemEnabled,  int? sceneItemId,  int? sceneItemIndex,  bool? sceneItemLocked,  SceneItemTransform? sceneItemTransform,  String? sourceName,  String? sourceType,  String? sourceUuid,  List<Filter> filters,  String? parentGroupName,  List<SceneItem>? groupChildren,  bool displayGroup)?  $default,) {final _that = this;
 switch (_that) {
 case _SceneItem() when $default != null:
-return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sceneItemEnabled,_that.sceneItemId,_that.sceneItemIndex,_that.sceneItemLocked,_that.sceneItemTransform,_that.sourceName,_that.sourceType,_that.filters,_that.parentGroupName,_that.groupChildren,_that.displayGroup);case _:
+return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sceneItemEnabled,_that.sceneItemId,_that.sceneItemIndex,_that.sceneItemLocked,_that.sceneItemTransform,_that.sourceName,_that.sourceType,_that.sourceUuid,_that.filters,_that.parentGroupName,_that.groupChildren,_that.displayGroup);case _:
   return null;
 
 }
@@ -239,7 +242,7 @@ return $default(_that.inputKind,_that.isGroup,_that.sceneItemBlendMode,_that.sce
 @JsonSerializable()
 
 class _SceneItem implements SceneItem {
-  const _SceneItem({required this.inputKind, required this.isGroup, required this.sceneItemBlendMode, required this.sceneItemEnabled, required this.sceneItemId, required this.sceneItemIndex, required this.sceneItemLocked, required this.sceneItemTransform, required this.sourceName, required this.sourceType, final  List<Filter> filters = const [], this.parentGroupName, final  List<SceneItem>? groupChildren, this.displayGroup = false}): _filters = filters,_groupChildren = groupChildren;
+  const _SceneItem({required this.inputKind, required this.isGroup, required this.sceneItemBlendMode, required this.sceneItemEnabled, required this.sceneItemId, required this.sceneItemIndex, required this.sceneItemLocked, required this.sceneItemTransform, required this.sourceName, required this.sourceType, this.sourceUuid, final  List<Filter> filters = const [], this.parentGroupName, final  List<SceneItem>? groupChildren, this.displayGroup = false}): _filters = filters,_groupChildren = groupChildren;
   factory _SceneItem.fromJson(Map<String, dynamic> json) => _$SceneItemFromJson(json);
 
 @override final  String? inputKind;
@@ -252,6 +255,9 @@ class _SceneItem implements SceneItem {
 @override final  SceneItemTransform? sceneItemTransform;
 @override final  String? sourceName;
 @override final  String? sourceType;
+/// UUID of the item's source (a group's own scene for groups) - source
+/// names can repeat across canvases (OBS 32.1+), the UUID can't
+@override final  String? sourceUuid;
  final  List<Filter> _filters;
 @override@JsonKey() List<Filter> get filters {
   if (_filters is EqualUnmodifiableListView) return _filters;
@@ -290,16 +296,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SceneItem&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.isGroup, isGroup) || other.isGroup == isGroup)&&(identical(other.sceneItemBlendMode, sceneItemBlendMode) || other.sceneItemBlendMode == sceneItemBlendMode)&&(identical(other.sceneItemEnabled, sceneItemEnabled) || other.sceneItemEnabled == sceneItemEnabled)&&(identical(other.sceneItemId, sceneItemId) || other.sceneItemId == sceneItemId)&&(identical(other.sceneItemIndex, sceneItemIndex) || other.sceneItemIndex == sceneItemIndex)&&(identical(other.sceneItemLocked, sceneItemLocked) || other.sceneItemLocked == sceneItemLocked)&&(identical(other.sceneItemTransform, sceneItemTransform) || other.sceneItemTransform == sceneItemTransform)&&(identical(other.sourceName, sourceName) || other.sourceName == sourceName)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&const DeepCollectionEquality().equals(other._filters, _filters)&&(identical(other.parentGroupName, parentGroupName) || other.parentGroupName == parentGroupName)&&const DeepCollectionEquality().equals(other._groupChildren, _groupChildren)&&(identical(other.displayGroup, displayGroup) || other.displayGroup == displayGroup));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SceneItem&&(identical(other.inputKind, inputKind) || other.inputKind == inputKind)&&(identical(other.isGroup, isGroup) || other.isGroup == isGroup)&&(identical(other.sceneItemBlendMode, sceneItemBlendMode) || other.sceneItemBlendMode == sceneItemBlendMode)&&(identical(other.sceneItemEnabled, sceneItemEnabled) || other.sceneItemEnabled == sceneItemEnabled)&&(identical(other.sceneItemId, sceneItemId) || other.sceneItemId == sceneItemId)&&(identical(other.sceneItemIndex, sceneItemIndex) || other.sceneItemIndex == sceneItemIndex)&&(identical(other.sceneItemLocked, sceneItemLocked) || other.sceneItemLocked == sceneItemLocked)&&(identical(other.sceneItemTransform, sceneItemTransform) || other.sceneItemTransform == sceneItemTransform)&&(identical(other.sourceName, sourceName) || other.sourceName == sourceName)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.sourceUuid, sourceUuid) || other.sourceUuid == sourceUuid)&&const DeepCollectionEquality().equals(other._filters, _filters)&&(identical(other.parentGroupName, parentGroupName) || other.parentGroupName == parentGroupName)&&const DeepCollectionEquality().equals(other._groupChildren, _groupChildren)&&(identical(other.displayGroup, displayGroup) || other.displayGroup == displayGroup));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,inputKind,isGroup,sceneItemBlendMode,sceneItemEnabled,sceneItemId,sceneItemIndex,sceneItemLocked,sceneItemTransform,sourceName,sourceType,const DeepCollectionEquality().hash(_filters),parentGroupName,const DeepCollectionEquality().hash(_groupChildren),displayGroup);
+int get hashCode => Object.hash(runtimeType,inputKind,isGroup,sceneItemBlendMode,sceneItemEnabled,sceneItemId,sceneItemIndex,sceneItemLocked,sceneItemTransform,sourceName,sourceType,sourceUuid,const DeepCollectionEquality().hash(_filters),parentGroupName,const DeepCollectionEquality().hash(_groupChildren),displayGroup);
 
 @override
 String toString() {
-  return 'SceneItem(inputKind: $inputKind, isGroup: $isGroup, sceneItemBlendMode: $sceneItemBlendMode, sceneItemEnabled: $sceneItemEnabled, sceneItemId: $sceneItemId, sceneItemIndex: $sceneItemIndex, sceneItemLocked: $sceneItemLocked, sceneItemTransform: $sceneItemTransform, sourceName: $sourceName, sourceType: $sourceType, filters: $filters, parentGroupName: $parentGroupName, groupChildren: $groupChildren, displayGroup: $displayGroup)';
+  return 'SceneItem(inputKind: $inputKind, isGroup: $isGroup, sceneItemBlendMode: $sceneItemBlendMode, sceneItemEnabled: $sceneItemEnabled, sceneItemId: $sceneItemId, sceneItemIndex: $sceneItemIndex, sceneItemLocked: $sceneItemLocked, sceneItemTransform: $sceneItemTransform, sourceName: $sourceName, sourceType: $sourceType, sourceUuid: $sourceUuid, filters: $filters, parentGroupName: $parentGroupName, groupChildren: $groupChildren, displayGroup: $displayGroup)';
 }
 
 
@@ -310,7 +316,7 @@ abstract mixin class _$SceneItemCopyWith<$Res> implements $SceneItemCopyWith<$Re
   factory _$SceneItemCopyWith(_SceneItem value, $Res Function(_SceneItem) _then) = __$SceneItemCopyWithImpl;
 @override @useResult
 $Res call({
- String? inputKind, bool? isGroup, String? sceneItemBlendMode, bool? sceneItemEnabled, int? sceneItemId, int? sceneItemIndex, bool? sceneItemLocked, SceneItemTransform? sceneItemTransform, String? sourceName, String? sourceType, List<Filter> filters, String? parentGroupName, List<SceneItem>? groupChildren, bool displayGroup
+ String? inputKind, bool? isGroup, String? sceneItemBlendMode, bool? sceneItemEnabled, int? sceneItemId, int? sceneItemIndex, bool? sceneItemLocked, SceneItemTransform? sceneItemTransform, String? sourceName, String? sourceType, String? sourceUuid, List<Filter> filters, String? parentGroupName, List<SceneItem>? groupChildren, bool displayGroup
 });
 
 
@@ -327,7 +333,7 @@ class __$SceneItemCopyWithImpl<$Res>
 
 /// Create a copy of SceneItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? inputKind = freezed,Object? isGroup = freezed,Object? sceneItemBlendMode = freezed,Object? sceneItemEnabled = freezed,Object? sceneItemId = freezed,Object? sceneItemIndex = freezed,Object? sceneItemLocked = freezed,Object? sceneItemTransform = freezed,Object? sourceName = freezed,Object? sourceType = freezed,Object? filters = null,Object? parentGroupName = freezed,Object? groupChildren = freezed,Object? displayGroup = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? inputKind = freezed,Object? isGroup = freezed,Object? sceneItemBlendMode = freezed,Object? sceneItemEnabled = freezed,Object? sceneItemId = freezed,Object? sceneItemIndex = freezed,Object? sceneItemLocked = freezed,Object? sceneItemTransform = freezed,Object? sourceName = freezed,Object? sourceType = freezed,Object? sourceUuid = freezed,Object? filters = null,Object? parentGroupName = freezed,Object? groupChildren = freezed,Object? displayGroup = null,}) {
   return _then(_SceneItem(
 inputKind: freezed == inputKind ? _self.inputKind : inputKind // ignore: cast_nullable_to_non_nullable
 as String?,isGroup: freezed == isGroup ? _self.isGroup : isGroup // ignore: cast_nullable_to_non_nullable
@@ -339,6 +345,7 @@ as int?,sceneItemLocked: freezed == sceneItemLocked ? _self.sceneItemLocked : sc
 as bool?,sceneItemTransform: freezed == sceneItemTransform ? _self.sceneItemTransform : sceneItemTransform // ignore: cast_nullable_to_non_nullable
 as SceneItemTransform?,sourceName: freezed == sourceName ? _self.sourceName : sourceName // ignore: cast_nullable_to_non_nullable
 as String?,sourceType: freezed == sourceType ? _self.sourceType : sourceType // ignore: cast_nullable_to_non_nullable
+as String?,sourceUuid: freezed == sourceUuid ? _self.sourceUuid : sourceUuid // ignore: cast_nullable_to_non_nullable
 as String?,filters: null == filters ? _self._filters : filters // ignore: cast_nullable_to_non_nullable
 as List<Filter>,parentGroupName: freezed == parentGroupName ? _self.parentGroupName : parentGroupName // ignore: cast_nullable_to_non_nullable
 as String?,groupChildren: freezed == groupChildren ? _self._groupChildren : groupChildren // ignore: cast_nullable_to_non_nullable

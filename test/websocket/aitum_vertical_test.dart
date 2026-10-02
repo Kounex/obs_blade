@@ -271,7 +271,12 @@ void main() {
     );
     expect(canvasStore.aitumStatus.backtrack, isTrue);
 
-    /// A different-size Aitum canvas and another vendor: not ours
+    /// A different size: resized in Aitum's dock (no OBS event for that) -
+    /// re-read the canvases instead of applying it to stale dimensions;
+    /// another vendor: not ours
+    final canvasReads = peer.requests
+        .where((r) => r['requestType'] == 'GetCanvasList')
+        .length;
     peer.event('VendorEvent', {
       'vendorName': kAitumVendorName,
       'eventType': 'recording_stopped',
@@ -284,6 +289,10 @@ void main() {
     });
     await flushPeer();
     expect(canvasStore.aitumStatus.recording, isTrue);
+    expect(
+      peer.requests.where((r) => r['requestType'] == 'GetCanvasList').length,
+      greaterThan(canvasReads),
+    );
   });
 
   test('outputs send explicit start / stop; a refusal from the plugin '

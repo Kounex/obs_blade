@@ -8,6 +8,10 @@ class ObsCanvas {
   /// The main canvas (the regular OBS program output)
   final bool isMain;
 
+  /// Temporary canvas a plugin uses internally - never shown (OBS' own
+  /// settings skip them too)
+  final bool isEphemeral;
+
   /// Base (canvas) resolution - null when OBS has no video info for it
   final int? baseWidth;
   final int? baseHeight;
@@ -16,6 +20,7 @@ class ObsCanvas {
     required this.uuid,
     required this.name,
     required this.isMain,
+    this.isEphemeral = false,
     this.baseWidth,
     this.baseHeight,
   });
@@ -28,6 +33,7 @@ class ObsCanvas {
       uuid: json['canvasUuid'] as String,
       name: json['canvasName'] as String? ?? '',
       isMain: flags['MAIN'] == true,
+      isEphemeral: flags['EPHEMERAL'] == true,
       baseWidth: (video['baseWidth'] as num?)?.toInt(),
       baseHeight: (video['baseHeight'] as num?)?.toInt(),
     );

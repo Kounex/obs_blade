@@ -50,6 +50,9 @@ Map<String, dynamic> _item(int id, String name, {bool enabled = true}) => {
 /// through scoped requests, so the program state in [DashboardStore] stays
 /// untouched while a vertical canvas is viewed.
 void main() {
+  /// The main store's own collection-switch handling needs a binding
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late Directory tempDir;
   late HiveTestHarness harness;
   late FakeObsPeer peer;
@@ -345,6 +348,7 @@ void main() {
       ..._item(5, 'Overlay Group'),
       'isGroup': true,
       'sourceType': 'OBS_SOURCE_TYPE_SCENE',
+      'sourceUuid': 'group-uuid',
     };
     final previous = peer.responseDataFor!;
     peer.responseDataFor = (request) {
@@ -382,6 +386,12 @@ void main() {
         ('Cam', null),
       ],
     );
+
+    /// By name, obs-websocket only searches the canvas it's told
+    expect((requestsOf('GetGroupSceneItemList').last['requestData'] as Map), {
+      'sceneName': 'Overlay Group',
+      'canvasUuid': _verticalUuid,
+    });
     expect(canvasStore.expandedGroups, isEmpty);
     canvasStore.toggleGroup(canvasStore.sceneItems.first);
     expect(canvasStore.expandedGroups, {'Overlay Group'});
@@ -393,11 +403,20 @@ void main() {
     await canvasStore.setItemEnabled(alertBox, false);
     final sent = requestsOf('SetSceneItemEnabled').single['requestData'] as Map;
     expect(sent['sceneName'], 'Overlay Group');
+    expect(sent['canvasUuid'], _verticalUuid);
     expect(sent.containsKey('sceneUuid'), isFalse);
     SceneItem byName(String name) =>
         canvasStore.sceneItems.firstWhere((i) => i.sourceName == name);
     expect(byName('Alert box').sceneItemEnabled, isFalse);
     expect(byName('Cam').sceneItemEnabled, isTrue);
+
+    /// A same-named group of the main canvas: not ours
+    peer.event('SceneItemLockStateChanged', {
+      'sceneName': 'Overlay Group',
+      'sceneUuid': 'main-group-uuid',
+      'sceneItemId': 2,
+      'sceneItemLocked': true,
+    });
 
     /// An OBS-side lock inside the group patches the child only
     peer.event('SceneItemLockStateChanged', {
@@ -411,6 +430,40 @@ void main() {
       'group child lock applied',
     );
     expect(byName('Cam').sceneItemLocked, isFalse);
+    expect(byName('Ticker').sceneItemLocked, isFalse);
+  });
+
+  test('ephemeral canvases (plugin internals) never show', () async {
+    peer.responseData['GetCanvasList'] = {
+      'canvases': [
+        _canvas(_mainUuid, 'Main', main: true),
+        {
+          ..._canvas('scratch', 'Plugin scratch', main: false),
+          'canvasFlags': {'MAIN': false, 'EPHEMERAL': true},
+        },
+      ],
+    };
+    NetworkHelper.sendRequest(
+      networkStore.activeSession!.socket,
+      RequestType.GetVersion,
+    );
+    await waitFor(
+      () => requestsOf('GetCanvasList').isNotEmpty,
+      'canvas list requested',
+    );
+    await flushPeer();
+    expect(canvasStore.canvases.map((c) => c.name), ['Main']);
+    expect(canvasStore.hasMultipleCanvases, isFalse);
+  });
+
+  test('a scene collection switch re-reads the canvases', () async {
+    await connectWithCanvases();
+    final before = requestsOf('GetCanvasList').length;
+    peer.event('CurrentSceneCollectionChanged', {'sceneCollectionName': 'B'});
+    await waitFor(
+      () => requestsOf('GetCanvasList').length > before,
+      'canvas list re-read',
+    );
   });
 
   test('a removed canvas falls back to the main view', () async {
