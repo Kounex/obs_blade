@@ -2,6 +2,32 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Twitch Dual Format awareness + shape-aware canvas labels
+
+Research (any-size canvases): OBS has the canvas API (libobs, frontend
+`obs_frontend_add_canvas`, multitrack "additional canvas" - one only)
+but still **no UI to create canvases** (checked OBS master 2026-10-01);
+the only creator in the wild is Aitum Vertical, whose canvas can be any
+size (720×1280, 1080×1920, 1080×1350, 1280×720 … 3840×2160, editable)
+and is always named "Aitum Vertical". Twitch Dual Format (GA June 2026)
+uses Aitum's canvas but sends it with the **main** Start Streaming via
+Enhanced Broadcasting.
+
+- Store reads `Stream1/EnableMultitrackVideo` + `MultitrackExtraCanvas`
+  (`GetProfileParameter`) and the stream service (`GetStreamServiceSettings`;
+  counts only with a `multitrack_video_configuration_url` or
+  `rtmp_custom` - OBS's own condition in `BasicOutputHandler`) on
+  connect, profile switch, stream start, viewed-canvas refresh.
+- Outputs card: Stream row caption "Goes live / Live with the main
+  stream (Dual Format)"; starting Aitum's own stream on that canvas asks
+  first ("Separate Stream").
+- App bar pill → `ExtraCanvasOnAirPill` (Dual Format while main is live,
+  or Aitum's own outputs); phone glyph only for portrait canvases.
+- `ObsCanvas.outputLabel`: "vertical" for portrait, the canvas name
+  otherwise (failure toasts etc.).
+- Tests: Dual Format cases in `aitum_vertical_test.dart`, pill / caption
+  / dialog / label cases in `canvas_switcher_test.dart`.
+
 ## 2026-10-02 - Canvas v2 follow-ups: vertical pill, groups, hiding, more Aitum
 
 - **Vertical on-air pill** in the app bar status row while Aitum's own

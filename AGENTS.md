@@ -87,8 +87,12 @@ detected per connection (`version` vendor call → `aitumSupport`), drives
 only the canvas named `Aitum Vertical` (requests target it by
 width/height) - live scene switch (by name) + its stream / record /
 backtrack / virtual camera (+ record pause, chapter) in
-`CanvasOutputControls`, state from `VendorEvent`s; the app bar shows a
-`VerticalOnAirPill` while its stream / recording runs. Without it
+`CanvasOutputControls`, state from `VendorEvent`s. **Twitch Dual
+Format** sends a canvas through the *main* stream (profile
+`Stream1/EnableMultitrackVideo` + `MultitrackExtraCanvas`, read into
+`dualFormatCanvasUuid`). The app bar's `ExtraCanvasOnAirPill` shows
+either. Canvases can be any size - labels say "vertical" only for
+portrait (`ObsCanvas.outputLabel`). Without it
 everything stays view-only and gated taps explain why
 (`aitumBlockedReason`). Canvas groups expand (children addressed by the
 group's name), hidden scenes / items are stored per canvas
