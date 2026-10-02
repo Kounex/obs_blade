@@ -17,7 +17,9 @@ mixin _$Scene {
 
 /// Name of the currently active scene
  String get sceneName;/// Ordered list of the current scene's source items
- int get sceneIndex;
+ int get sceneIndex;/// UUID of the scene (obs-websocket 5.x) - scene names can repeat across
+/// canvases (OBS 32.1+), the UUID can't
+ String? get sceneUuid;
 /// Create a copy of Scene
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,16 +32,16 @@ $SceneCopyWith<Scene> get copyWith => _$SceneCopyWithImpl<Scene>(this as Scene, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Scene&&(identical(other.sceneName, sceneName) || other.sceneName == sceneName)&&(identical(other.sceneIndex, sceneIndex) || other.sceneIndex == sceneIndex));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Scene&&(identical(other.sceneName, sceneName) || other.sceneName == sceneName)&&(identical(other.sceneIndex, sceneIndex) || other.sceneIndex == sceneIndex)&&(identical(other.sceneUuid, sceneUuid) || other.sceneUuid == sceneUuid));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,sceneName,sceneIndex);
+int get hashCode => Object.hash(runtimeType,sceneName,sceneIndex,sceneUuid);
 
 @override
 String toString() {
-  return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex)';
+  return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex, sceneUuid: $sceneUuid)';
 }
 
 
@@ -50,7 +52,7 @@ abstract mixin class $SceneCopyWith<$Res>  {
   factory $SceneCopyWith(Scene value, $Res Function(Scene) _then) = _$SceneCopyWithImpl;
 @useResult
 $Res call({
- String sceneName, int sceneIndex
+ String sceneName, int sceneIndex, String? sceneUuid
 });
 
 
@@ -67,11 +69,12 @@ class _$SceneCopyWithImpl<$Res>
 
 /// Create a copy of Scene
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? sceneName = null,Object? sceneIndex = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? sceneName = null,Object? sceneIndex = null,Object? sceneUuid = freezed,}) {
   return _then(_self.copyWith(
 sceneName: null == sceneName ? _self.sceneName : sceneName // ignore: cast_nullable_to_non_nullable
 as String,sceneIndex: null == sceneIndex ? _self.sceneIndex : sceneIndex // ignore: cast_nullable_to_non_nullable
-as int,
+as int,sceneUuid: freezed == sceneUuid ? _self.sceneUuid : sceneUuid // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -156,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String sceneName,  int sceneIndex)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String sceneName,  int sceneIndex,  String? sceneUuid)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Scene() when $default != null:
-return $default(_that.sceneName,_that.sceneIndex);case _:
+return $default(_that.sceneName,_that.sceneIndex,_that.sceneUuid);case _:
   return orElse();
 
 }
@@ -177,10 +180,10 @@ return $default(_that.sceneName,_that.sceneIndex);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String sceneName,  int sceneIndex)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String sceneName,  int sceneIndex,  String? sceneUuid)  $default,) {final _that = this;
 switch (_that) {
 case _Scene():
-return $default(_that.sceneName,_that.sceneIndex);case _:
+return $default(_that.sceneName,_that.sceneIndex,_that.sceneUuid);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +200,10 @@ return $default(_that.sceneName,_that.sceneIndex);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String sceneName,  int sceneIndex)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String sceneName,  int sceneIndex,  String? sceneUuid)?  $default,) {final _that = this;
 switch (_that) {
 case _Scene() when $default != null:
-return $default(_that.sceneName,_that.sceneIndex);case _:
+return $default(_that.sceneName,_that.sceneIndex,_that.sceneUuid);case _:
   return null;
 
 }
@@ -212,13 +215,16 @@ return $default(_that.sceneName,_that.sceneIndex);case _:
 @JsonSerializable()
 
 class _Scene implements Scene {
-  const _Scene({required this.sceneName, required this.sceneIndex});
+  const _Scene({required this.sceneName, required this.sceneIndex, this.sceneUuid});
   factory _Scene.fromJson(Map<String, dynamic> json) => _$SceneFromJson(json);
 
 /// Name of the currently active scene
 @override final  String sceneName;
 /// Ordered list of the current scene's source items
 @override final  int sceneIndex;
+/// UUID of the scene (obs-websocket 5.x) - scene names can repeat across
+/// canvases (OBS 32.1+), the UUID can't
+@override final  String? sceneUuid;
 
 /// Create a copy of Scene
 /// with the given fields replaced by the non-null parameter values.
@@ -233,16 +239,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Scene&&(identical(other.sceneName, sceneName) || other.sceneName == sceneName)&&(identical(other.sceneIndex, sceneIndex) || other.sceneIndex == sceneIndex));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Scene&&(identical(other.sceneName, sceneName) || other.sceneName == sceneName)&&(identical(other.sceneIndex, sceneIndex) || other.sceneIndex == sceneIndex)&&(identical(other.sceneUuid, sceneUuid) || other.sceneUuid == sceneUuid));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,sceneName,sceneIndex);
+int get hashCode => Object.hash(runtimeType,sceneName,sceneIndex,sceneUuid);
 
 @override
 String toString() {
-  return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex)';
+  return 'Scene(sceneName: $sceneName, sceneIndex: $sceneIndex, sceneUuid: $sceneUuid)';
 }
 
 
@@ -253,7 +259,7 @@ abstract mixin class _$SceneCopyWith<$Res> implements $SceneCopyWith<$Res> {
   factory _$SceneCopyWith(_Scene value, $Res Function(_Scene) _then) = __$SceneCopyWithImpl;
 @override @useResult
 $Res call({
- String sceneName, int sceneIndex
+ String sceneName, int sceneIndex, String? sceneUuid
 });
 
 
@@ -270,11 +276,12 @@ class __$SceneCopyWithImpl<$Res>
 
 /// Create a copy of Scene
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? sceneName = null,Object? sceneIndex = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? sceneName = null,Object? sceneIndex = null,Object? sceneUuid = freezed,}) {
   return _then(_Scene(
 sceneName: null == sceneName ? _self.sceneName : sceneName // ignore: cast_nullable_to_non_nullable
 as String,sceneIndex: null == sceneIndex ? _self.sceneIndex : sceneIndex // ignore: cast_nullable_to_non_nullable
-as int,
+as int,sceneUuid: freezed == sceneUuid ? _self.sceneUuid : sceneUuid // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

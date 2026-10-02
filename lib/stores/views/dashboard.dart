@@ -508,6 +508,21 @@ abstract class _DashboardStore with Store {
     return this.activeSceneName;
   }
 
+  /// Whether a scene-item event belongs to the displayed (main canvas)
+  /// scene. The name alone isn't enough: a scene of another canvas (OBS
+  /// 32.1+) can have the same name - its UUID tells them apart. Falls back
+  /// to the name when either side has no UUID (older obs-websocket)
+  bool _isDisplayedScene(String sceneName, String? sceneUuid) {
+    final displayed = _displayedSceneName;
+    if (sceneName != displayed) return false;
+    if (sceneUuid == null) return true;
+    final String? displayedUuid = this.scenes
+        ?.where((scene) => scene.sceneName == displayed)
+        .firstOrNull
+        ?.sceneUuid;
+    return displayedUuid == null || displayedUuid == sceneUuid;
+  }
+
   /// Refresh only scene items for the displayed scene (not full collection).
   void _requestDisplayedSceneItems() {
     final sceneName = _displayedSceneName;
@@ -1785,8 +1800,12 @@ abstract class _DashboardStore with Store {
         /// without touching the displayed scene
         _refreshMediaInProgram();
 
-        /// sceneItemId is only unique within a scene — ignore other scenes.
-        if (sceneItemEnableStateChangedEvent.sceneName != _displayedSceneName) {
+        /// sceneItemId is only unique within a scene — ignore other scenes
+        /// (incl. same-named scenes of other canvases)
+        if (!_isDisplayedScene(
+          sceneItemEnableStateChangedEvent.sceneName,
+          sceneItemEnableStateChangedEvent.sceneUuid,
+        )) {
           break;
         }
 
@@ -1815,7 +1834,10 @@ abstract class _DashboardStore with Store {
         /// Same per-scene id scoping as the enable state. Lock state isn't
         /// ordering-journaled: nothing optimistic writes it and every
         /// GetSceneItemList re-read carries the confirmed value anyway
-        if (sceneItemLockStateChangedEvent.sceneName != _displayedSceneName) {
+        if (!_isDisplayedScene(
+          sceneItemLockStateChangedEvent.sceneName,
+          sceneItemLockStateChangedEvent.sceneUuid,
+        )) {
           break;
         }
 

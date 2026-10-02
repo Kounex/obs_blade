@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/types/classes/api/scene.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/stores/shared/network.dart';
@@ -301,6 +302,47 @@ void main() {
         );
       },
     );
+
+    test('a same-named scene of another canvas never patches the displayed '
+        'items (UUID decides)', () async {
+      setupItemListPeer();
+      await applyInitialItemList();
+      dashboardStore.scenes = ObservableList.of(const [
+        Scene(sceneName: 'Camera', sceneIndex: 0, sceneUuid: 'cam-main'),
+      ]);
+
+      /// Vertical canvas scene, also called "Camera", same item id
+      peer.event('SceneItemEnableStateChanged', {
+        'sceneName': 'Camera',
+        'sceneUuid': 'cam-vertical',
+        'sceneItemId': 7,
+        'sceneItemEnabled': false,
+      });
+      peer.event('SceneItemLockStateChanged', {
+        'sceneName': 'Camera',
+        'sceneUuid': 'cam-vertical',
+        'sceneItemId': 7,
+        'sceneItemLocked': true,
+      });
+      await flushPeer();
+      expect(dashboardStore.currentSceneItems.single.sceneItemEnabled, isTrue);
+      expect(
+        dashboardStore.currentSceneItems.single.sceneItemLocked,
+        isNot(true),
+      );
+
+      /// The displayed scene's own event still applies
+      peer.event('SceneItemEnableStateChanged', {
+        'sceneName': 'Camera',
+        'sceneUuid': 'cam-main',
+        'sceneItemId': 7,
+        'sceneItemEnabled': false,
+      });
+      await waitFor(
+        () => dashboardStore.currentSceneItems.single.sceneItemEnabled == false,
+        'main scene event applied',
+      );
+    });
 
     test('no mid-flight event: the item re-read applies normally', () async {
       setupItemListPeer();
