@@ -249,29 +249,6 @@ void main() {
     await drainOverlay(tester);
   });
 
-  testWidgets('scene visibility editing never switches a canvas live', (
-    tester,
-  ) async {
-    await tester.pumpWidget(app(const SceneButtons()));
-    await viewVertical(tester, canvas: _aitum);
-    aitumAnswers(liveScene: 'Vertical Main');
-    dashboardStore.setEditSceneVisibility(true);
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-
-    await tester.tap(find.text('Vertical BRB'));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(canvasStore.aitumLiveSceneName, 'Vertical Main');
-    expect(
-      find.text('Hiding scenes only works on the main canvas'),
-      findsOneWidget,
-    );
-
-    dashboardStore.setEditSceneVisibility(false);
-    canvasStore.viewCanvas(null);
-    await drainOverlay(tester);
-  });
-
   test(
     'the studio-mode transition hides while another canvas is shown',
     () async {

@@ -50,6 +50,12 @@ class HiddenSceneItem extends HiveObject {
   @HiveField(6)
   String? host;
 
+  /// Name of the OBS canvas (OBS 32.1+) [sceneName] belongs to - null for
+  /// the main canvas, which is what every entry written before canvases
+  /// means. Scene names can repeat across canvases, this keeps them apart
+  @HiveField(7)
+  String? canvasName;
+
   HiddenSceneItem(
     this.sceneName,
     this.type,
@@ -57,8 +63,9 @@ class HiddenSceneItem extends HiveObject {
     this.name,
     this.sourceType,
     this.connectionName,
-    this.host,
-  );
+    this.host, [
+    this.canvasName,
+  ]);
 
   bool isSceneItem(
     String sceneName,
@@ -66,9 +73,11 @@ class HiddenSceneItem extends HiveObject {
     int? id,
     String sourceName,
     String? connectionName,
-    String? host,
-  ) =>
+    String? host, {
+    String? canvasName,
+  }) =>
       this.sceneName == sceneName &&
+      this.canvasName == canvasName &&
       this.type == type &&
       this.id == id &&
       this.name == sourceName &&

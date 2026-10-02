@@ -193,40 +193,9 @@ class SceneButton extends StatelessWidget {
                           ),
                         ),
                         child: dashboardStore.editSceneVisibility
-                            ? Container(
+                            ? SceneVisibilityBadge(
                                 key: const ValueKey('visibility-badge'),
-                                height: 28.0,
-                                width: 28.0,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).cardColor.withValues(alpha: 0.92),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).dividerColor.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: AppMotion.fast,
-                                  child: Icon(
-                                    this.visible
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    key: ValueKey(this.visible),
-                                    size: 16.0,
-
-                                    /// Hidden scene = dim glyph (neutral) - red
-                                    /// stays exclusive to recording/program
-                                    /// (rule 7)
-                                    color: this.visible
-                                        ? null
-                                        : Theme.of(context)
-                                              .extension<AppTextColors>()!
-                                              .textTertiary,
-                                  ),
-                                ),
+                                visible: this.visible,
                               )
                             : const SizedBox(key: ValueKey('no-badge')),
                       ),
@@ -237,6 +206,43 @@ class SceneButton extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Eye badge on a scene button while scene visibility is edited - shown /
+/// hidden in the app (shared by the program and the canvas scene buttons)
+class SceneVisibilityBadge extends StatelessWidget {
+  final bool visible;
+
+  const SceneVisibilityBadge({super.key, required this.visible});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 28.0,
+      width: 28.0,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withValues(alpha: 0.92),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
+        ),
+      ),
+      child: AnimatedSwitcher(
+        duration: AppMotion.fast,
+        child: Icon(
+          this.visible ? Icons.visibility : Icons.visibility_off,
+          key: ValueKey(this.visible),
+          size: 16.0,
+
+          /// Hidden scene = dim glyph (neutral) - red stays exclusive to
+          /// recording/program (rule 7)
+          color: this.visible
+              ? null
+              : Theme.of(context).extension<AppTextColors>()!.textTertiary,
+        ),
       ),
     );
   }

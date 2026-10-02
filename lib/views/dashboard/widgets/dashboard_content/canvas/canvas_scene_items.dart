@@ -8,10 +8,12 @@ import '../../../../../stores/views/canvas_view.dart';
 import '../../../../../types/classes/api/scene_item.dart';
 import '../scene_content/animated_toggle_icon.dart';
 import '../scene_content/placeholder_scene_item.dart';
+import '../scene_content/visibility_slide_wrapper.dart';
 
 /// Items of the scene picked on another canvas: visibility + lock. Groups
 /// expand like the main scene items (tap the row) - their children toggle
-/// in the group's own scene.
+/// in the group's own scene. Edit Scene Visibility hides rows like it does
+/// for the main items.
 class CanvasSceneItems extends StatelessWidget {
   final CanvasViewStore canvasStore;
   final ScrollController controller;
@@ -68,9 +70,16 @@ class CanvasSceneItems extends StatelessWidget {
                   index: entry.$1,
                   rise: 0.0,
                   child: StaleGuard(
-                    child: _CanvasSceneItemTile(
-                      canvasStore: this.canvasStore,
+                    /// Edit Scene Visibility hides / shows the row in the
+                    /// app, stored per canvas
+                    child: VisibilitySlideWrapper(
                       sceneItem: entry.$2,
+                      sceneName: sceneName,
+                      canvasName: this.canvasStore.viewedCanvas?.name,
+                      child: _CanvasSceneItemTile(
+                        canvasStore: this.canvasStore,
+                        sceneItem: entry.$2,
+                      ),
                     ),
                   ),
                 ),

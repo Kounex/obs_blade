@@ -20,19 +20,22 @@ class HiddenSceneAdapter extends TypeAdapter<HiddenScene> {
       fields[0] as String,
       fields[1] as String?,
       fields[2] as String,
+      fields[3] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HiddenScene obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.sceneName)
       ..writeByte(1)
       ..write(obj.connectionName)
       ..writeByte(2)
-      ..write(obj.host);
+      ..write(obj.host)
+      ..writeByte(3)
+      ..write(obj.canvasName);
   }
 
   @override
