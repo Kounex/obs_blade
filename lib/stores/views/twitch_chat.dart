@@ -316,6 +316,10 @@ abstract class _TwitchChatStore with Store {
   final ObservableMap<String, int> channelLiveViewers =
       ObservableMap<String, int>();
 
+  /// When each live channel's stream started (Helix `started_at`), same
+  /// poll as [channelLiveViewers] - activity sessions start there.
+  final ObservableMap<String, DateTime> channelLiveSince = ObservableMap();
+
   Timer? _livePollTimer;
 
   /// Ids of channels the user moderates (from Get Moderated Channels on
@@ -856,6 +860,7 @@ abstract class _TwitchChatStore with Store {
     this._livePollTimer = null;
     runInAction(() {
       this.channelLiveViewers.clear();
+      this.channelLiveSince.clear();
       this.liveCheckedIds.clear();
       this.selectedChannelIsLive = false;
       this.selectedChannelViewerCount = null;
@@ -869,6 +874,7 @@ abstract class _TwitchChatStore with Store {
   Future<void> refreshSelectedChannelLive() async {
     if (this.authState != TwitchAuthState.loggedIn || this.user == null) {
       this.channelLiveViewers.clear();
+      this.channelLiveSince.clear();
       this.liveCheckedIds.clear();
       this.selectedChannelIsLive = false;
       this.selectedChannelViewerCount = null;
@@ -880,10 +886,15 @@ abstract class _TwitchChatStore with Store {
         this.user!.id,
         for (final ref in this.channels) ref.id,
       ];
+      final since = <String, DateTime>{};
       final live = await this._channelService.getLiveBroadcasterIds(
         accessToken: token,
         broadcasterIds: ids,
+        startedAt: since,
       );
+      this.channelLiveSince
+        ..clear()
+        ..addAll(since);
       this.channelLiveViewers
         ..clear()
         ..addAll(live);

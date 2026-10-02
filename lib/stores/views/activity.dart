@@ -499,9 +499,12 @@ abstract class _ActivityStore with Store {
         ),
       )
       ..add(
-        reaction<bool>(
-          (_) => twitch.user != null && twitch.isChannelLive(null),
-          (live) => this._setLive('twitch', live),
+        reaction<(bool, DateTime?)>(
+          (_) => (
+            twitch.user != null && twitch.isChannelLive(null),
+            twitch.channelLiveSince[twitch.user?.id],
+          ),
+          (state) => this._setLive('twitch', state.$1, since: state.$2),
           fireImmediately: true,
         ),
       );
@@ -625,12 +628,23 @@ abstract class _ActivityStore with Store {
 
   // Sessions
 
-  void _setLive(String source, bool live) => runInAction(() {
-    final changed = live
+  /// [since]: when the platform says the stream started (Twitch Helix
+  /// `started_at`, Kick relay `started_at`) - a session opened mid-stream
+  /// (app started late) reaches back to it.
+  void _setLive(String source, bool live, {DateTime? since}) => runInAction(() {
+    var changed = live
         ? this.liveSources.add(source)
         : this.liveSources.remove(source);
+    if (live && since != null && this._liveSince[source] != since) {
+      this._liveSince[source] = since.toUtc();
+      changed = true;
+    }
+    if (!live) this._liveSince.remove(source);
     if (changed) this._syncSession();
   });
+
+  /// Platform-reported stream start per live source
+  final Map<String, DateTime> _liveSince = {};
 
   @action
   void _syncSession() {
@@ -645,19 +659,34 @@ abstract class _ActivityStore with Store {
         },
     };
     final last = this.sessions.isEmpty ? null : this.sessions.first;
+
+    /// Earliest platform-reported start, never in the future
+    DateTime? since;
+    for (final value in this._liveSince.values) {
+      if (since == null || value.isBefore(since)) since = value;
+    }
+    if (since != null && since.isAfter(now)) since = now;
     if (this.liveSources.isNotEmpty) {
       if (last != null &&
           (last.isOpen || now.difference(last.end!) <= sessionGrace)) {
         this.sessions[0] = last.copyWith(
           clearEnd: true,
           platforms: {...last.platforms, ...platforms},
+          start: since != null && since.isBefore(last.start) ? since : null,
         );
       } else {
+        /// Reaching back is only for the stream that is live now - a start
+        /// before the previous session's end would swallow it
+        final previousEnd = last?.end;
+        final start =
+            since != null && (previousEnd == null || since.isAfter(previousEnd))
+            ? since
+            : now;
         this.sessions.insert(
           0,
           ActivitySession(
             id: 's${now.millisecondsSinceEpoch}',
-            start: now,
+            start: start,
             platforms: platforms,
           ),
         );
@@ -784,11 +813,12 @@ abstract class _ActivityStore with Store {
         : null;
     final selfId = kick?.selfUserId?.toString();
 
-    /// Signed out of Kick (or another account): the relay may forget
-    /// the old channel's data
+    /// Signed out of Kick, another account, or the setting turned off:
+    /// the relay forgets that channel's data
     if (this._relayToken != null &&
-        (kick != null && kick.ownChannelSlug == null ||
-            (selfId != null && selfId != this._relayUserId))) {
+        ((kick != null && kick.ownChannelSlug == null) ||
+            (selfId != null && selfId != this._relayUserId) ||
+            !this._relayEnabled())) {
       final token = this._relayToken!;
       unawaited(this._relayClient.unregister(token));
       this._forgetRelaySession();
@@ -910,8 +940,10 @@ abstract class _ActivityStore with Store {
     }
     final status = kickRelayLiveStatus(frame);
     if (status != null) {
-      final (channel, live, _) = status;
-      if (channel == this._relayUserId) this._setLive('kick-relay', live);
+      final (channel, live, at) = status;
+      if (channel == this._relayUserId) {
+        this._setLive('kick-relay', live, since: live ? at : null);
+      }
       return;
     }
     final event = kickActivityFromRelay(frame);
@@ -974,7 +1006,8 @@ abstract class _ActivityStore with Store {
   // Test seams
 
   /// Live flag of one source (tests: drive sessions without stores).
-  void setLiveForTest(String source, bool live) => this._setLive(source, live);
+  void setLiveForTest(String source, bool live, {DateTime? since}) =>
+      this._setLive(source, live, since: since);
 
   void setNativeCoverageForTest(ActivityPlatform platform, String? channel) =>
       this._setNativeCoverage(platform, channel);

@@ -225,6 +225,49 @@ void main() {
       expect(store.sessions.single.end, DateTime.utc(2026, 10, 2, 20, 42));
     });
 
+    test('opened mid-stream: the session reaches back to the stream start', () {
+      store.ingest(
+        _event('early', at: now.subtract(const Duration(minutes: 40))),
+      );
+      store.setLiveForTest(
+        'twitch',
+        true,
+        since: now.subtract(const Duration(hours: 1)),
+      );
+      expect(
+        store.currentSession!.start,
+        now.subtract(const Duration(hours: 1)),
+      );
+      expect(store.groups.single.session, isNotNull);
+    });
+
+    test('a later-reported earlier start moves an open session back', () {
+      store.setLiveForTest('kick', true);
+      store.setLiveForTest(
+        'twitch',
+        true,
+        since: now.subtract(const Duration(minutes: 30)),
+      );
+      expect(
+        store.currentSession!.start,
+        now.subtract(const Duration(minutes: 30)),
+      );
+    });
+
+    test('a stale start never swallows the previous session', () {
+      store.setLiveForTest('kick', true);
+      now = now.add(const Duration(hours: 1));
+      store.setLiveForTest('kick', false);
+      now = now.add(const Duration(hours: 3));
+      store.setLiveForTest(
+        'twitch',
+        true,
+        since: now.subtract(const Duration(hours: 10)),
+      );
+      expect(store.sessions, hasLength(2));
+      expect(store.currentSession!.start, now);
+    });
+
     test('rows outside sessions group by day', () {
       store.ingest(_event('a', at: now));
       store.ingest(

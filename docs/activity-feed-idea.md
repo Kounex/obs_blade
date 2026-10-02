@@ -1,8 +1,13 @@
-# Activity feed — parked idea (post-4.0)
+# Activity feed — idea, decisions and third-party plan
 
-Status: **parked 2026-09-27**, nothing built. Decisions below come from the
-user; everything marked *verify* still needs checking against live docs
-before planning.
+Status: **v1 built 2026-10-03** (native sources + Kick events relay +
+the third-party seam) - design and facts:
+[`superpowers/specs/2026-10-02-activity-feed-design.md`](superpowers/specs/2026-10-02-activity-feed-design.md),
+history: `changelog-agent.md` 2026-10-03. Open: StreamElements /
+Streamlabs clients once their API access is approved (ownership rows
+and the `ActivityLedger` gap-fill rules are already in place - a client
+is a provider + a mapper). The sections below are the original notes
+from 2026-09-27 / 10-02.
 
 ## The idea
 

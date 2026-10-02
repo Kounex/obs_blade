@@ -523,6 +523,7 @@ class FakeTwitchChannelService extends TwitchChannelService {
   Future<Map<String, int>> getLiveBroadcasterIds({
     required String accessToken,
     required Iterable<String> broadcasterIds,
+    Map<String, DateTime>? startedAt,
   }) async {
     this.liveCalls++;
     this.lastLiveBroadcasterIds = broadcasterIds.toList();

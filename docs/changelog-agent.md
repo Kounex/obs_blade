@@ -2,6 +2,74 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - Activity feed v1 + Kick events relay
+
+Everything that happens on the user's own channels in one feed, with
+seen + thanked tracking. Spec:
+`superpowers/specs/2026-10-02-activity-feed-design.md`, background and
+the third-party plan: `activity-feed-idea.md`. Pro (the native engines
+behind it are).
+
+- **Surfaces:** Chat tab gets a Chat | Activity segment (phone; the chat
+  stays mounted offstage, the choice persists in
+  `ActivityChatTabSegment`), tablet Pro shows both side by side; a bell
+  with the unseen count in every native chat header (switches the
+  segment in the Chat tab, opens a sheet elsewhere, hidden when the feed
+  is beside it); "N new" chip on the streaming-mode preview.
+- **Feed:** grouped by stream session ("Live now" / past streams, totals
+  per currency / bits / KICKs, never converted) and by day outside
+  sessions; filters All / Money / Subs / Follows / Raids / Points;
+  "To thank" toggle; swipe = thanked; tap = the person's history with
+  "mark all thanked"; "New since you last looked" divider (frozen while
+  on screen, everything shown is seen on leave). Options: mark all seen,
+  Kick relay switch, clear history.
+- **Store:** `ActivityStore` + `ActivityLedger` (`lib/utils/activity/`).
+  Two untyped JSON boxes (`activity-events`, `activity-meta`) - no new
+  TypeID or adapter. 30 days / 5,000 rows. Sessions from Twitch / YouTube
+  / Kick / relay / OBS live signals, start at the platform's own stream
+  start (Helix `started_at`, relay `started_at`), 10 min grace, a killed
+  app's open session ends at the last heartbeat.
+- **Dedup:** each (platform, kind) has a source priority (native, Kick
+  relay, StreamElements, Streamlabs - the last two are seams only, ready
+  for their API approval). Same id → update; same person + kind + amount
+  within 2 min from another source → merge (better source's payload
+  wins); a better source covering the channel at that time → drop.
+- **Twitch:** own-channel EventSub `channel.follow` v2, `channel.cheer`,
+  points redemption add, hype train v2 begin/progress/end - each only
+  with its scope. New `kTwitchActivityScopes` (bits:read,
+  channel:read:redemptions, channel:read:hype_train) in the device flow;
+  older tokens get a "sign in again" notice in the feed. Own chat notices
+  (subs, gifts, raids, charity) also while another channel is viewed:
+  an own-scoped `channel.chat.notification` sub, created only while away
+  (same condition = 409) and dropped before switching back; those
+  notices never land in the viewed channel's chat. Follower backfill
+  (Helix `channels/followers`, never older than the feed's first run).
+  Pro + signed-in users get the Twitch / Kick stores at launch so the
+  feed collects without opening chat (YouTube stays lazy - quota).
+- **YouTube:** super chats / stickers / memberships / milestones /
+  gifting of the own broadcast.
+- **Kick:** Pusher sub / gift / host on the own channel (lowest
+  priority), plus the relay below for follows, KICKs, subs, gifts,
+  redemptions and stream status.
+- **Kick events relay** (`tool/kick_events_relay/`, deployed at
+  `kick-events.kounex.com` on the Hetzner host, quadlet next to
+  `kick-auth`): verifies Kick's RSA signatures (the live public key
+  differs from the one printed in KickDevDocs - fetched at start and
+  every 6 h), dedupes on message id, keeps 7 days for channels with an
+  app session, WebSocket + catch-up GET with a cursor, app-token
+  subscriptions (no new user scope), reconcile every 15 min, channels
+  without a check-in for 30 days are unsubscribed and deleted. The
+  user's Kick token is only used once to look up their channel. 21
+  Python tests run in the image (`podman build --target test`). On the
+  fleet board with kick-auth. Kick's developer settings must point the
+  webhook URL at `https://kick-events.kounex.com/kick/webhook` (user
+  action).
+
+Tests: `test/activity/` (ledger, mappers, store, EventSub routing, relay
+client, UI), shots in `tool/widget_shots/activity_shots_test.dart`.
+Not built: StreamElements / Streamlabs clients (API approval pending),
+push notifications while closed, end-of-stream recap.
+
 ## 2026-10-02 - Native chat review fixes
 
 A `/code-review high` of native chat (Twitch / YouTube / Kick stores,

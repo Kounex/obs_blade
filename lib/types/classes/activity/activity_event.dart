@@ -420,12 +420,13 @@ class ActivitySession {
   bool get isOpen => this.end == null;
 
   ActivitySession copyWith({
+    DateTime? start,
     DateTime? end,
     bool clearEnd = false,
     Set<ActivityPlatform>? platforms,
   }) => ActivitySession(
     id: this.id,
-    start: this.start,
+    start: start ?? this.start,
     end: clearEnd ? null : (end ?? this.end),
     platforms: platforms ?? this.platforms,
   );

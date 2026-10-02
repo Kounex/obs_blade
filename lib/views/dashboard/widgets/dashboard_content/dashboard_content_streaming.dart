@@ -13,6 +13,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/resizeable_scene_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_buttons/scene_buttons.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/stream_health_pill.dart';
+import '../../../chat/widgets/activity/activity_entry_points.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/chat_username_bar.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 
@@ -120,6 +121,13 @@ class _DashboardContentStreamingState extends State<DashboardContentStreaming> {
               left: AppSpacing.sm,
               child: StreamHealthPill(),
             ),
+
+          /// Unseen activity (Pro) - opens the feed sheet
+          const Positioned(
+            bottom: AppSpacing.sm,
+            left: AppSpacing.sm,
+            child: ActivityNewChip(),
+          ),
           Positioned(
             top: AppSpacing.sm,
             right: AppSpacing.sm,

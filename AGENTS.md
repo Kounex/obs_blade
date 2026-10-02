@@ -77,6 +77,7 @@ assumptions. Put the reminder at the end of the final report.
 | Protocol DTOs | `lib/types/classes/stream/` |
 | Persisted models | `lib/models/` + `TypeIDs` |
 | Stream chat (WebView + native Twitch) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
+| Activity feed (own-channel events, seen / thanked) | `lib/stores/views/activity.dart`, `lib/utils/activity/`, `lib/views/chat/widgets/activity/`; Kick webhook relay `tool/kick_events_relay/` |
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
 | Shared design system ("On Air") | `lib/shared/design/` |
 | Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |

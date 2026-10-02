@@ -85,3 +85,23 @@ location in a comment where the fake models a non-obvious behavior.
   `isReplayBufferActive`; `imageCompressionQuality`, not
   `compressionQuality`) - check every DTO key against the generated
   `docs/generated/protocol.md`.
+
+## Platform event APIs (activity feed)
+
+Not OBS, but the same kind of trap - verified 2026-10-02, details in
+`superpowers/specs/2026-10-02-activity-feed-design.md`:
+
+- Twitch EventSub: a second subscription with the same type + condition
+  is a 409. The own channel's `channel.chat.notification` sub may only
+  exist while ANOTHER channel is viewed - delete it before switching
+  back. `channel.hype_train.*` v1 is deprecated (use v2), `channel.follow`
+  is v2 with a moderator condition.
+- Twitch `shared_chat_*` notices come from other channels of a shared
+  chat - never count them as the own channel's subs / raids.
+- Kick webhooks: one URL per app; app tokens can subscribe any channel
+  (no user scope). The public key at `api.kick.com/public/v1/public-key`
+  is NOT the one printed in KickDevDocs - fetch it. Failing deliveries
+  for a day unsubscribes the app from that event.
+- Helix `streams` pages 20 by default (`first=100`), and its
+  `started_at` is when the stream started - use it, not "when the app
+  noticed".

@@ -103,6 +103,10 @@ class TwitchChannelService {
   Future<Map<String, int>> getLiveBroadcasterIds({
     required String accessToken,
     required Iterable<String> broadcasterIds,
+
+    /// Filled with each live stream's `started_at` when passed (activity
+    /// feed sessions start when the stream did, not when the app saw it)
+    Map<String, DateTime>? startedAt,
   }) async {
     final ids = broadcasterIds.toList();
     if (ids.isEmpty) return <String, int>{};
@@ -134,6 +138,10 @@ class TwitchChannelService {
         if (userId == null) continue;
         final viewers = (map['viewer_count'] as num?)?.toInt() ?? 0;
         live[userId] = viewers;
+        final started = DateTime.tryParse('${map['started_at']}');
+        if (startedAt != null && started != null) {
+          startedAt[userId] = started.toUtc();
+        }
       }
     }
     return live;
