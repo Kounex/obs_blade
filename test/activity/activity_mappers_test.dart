@@ -383,17 +383,15 @@ void main() {
     });
 
     test('redemption updates key on the redemption id', () {
-      Map<String, Object?> redemption(String status) => _kick(
-        'channel.reward.redemption.updated',
-        {
-          'id': '01KBHE78QE4HZY1617DK5FC7YD',
-          'user_input': 'unban me',
-          'status': status,
-          'redeemed_at': '2025-12-02T22:54:19.323Z',
-          'reward': {'id': 'r', 'title': 'Unban Request', 'cost': 1000},
-          'redeemer': {'user_id': 123, 'username': 'naughty-user'},
-        },
-      );
+      Map<String, Object?> redemption(String status) =>
+          _kick('channel.reward.redemption.updated', {
+            'id': '01KBHE78QE4HZY1617DK5FC7YD',
+            'user_input': 'unban me',
+            'status': status,
+            'redeemed_at': '2025-12-02T22:54:19.323Z',
+            'reward': {'id': 'r', 'title': 'Unban Request', 'cost': 1000},
+            'redeemer': {'user_id': 123, 'username': 'naughty-user'},
+          });
       final pending = kickActivityFromRelay(redemption('pending'))!;
       final accepted = kickActivityFromRelay(redemption('accepted'))!;
       expect(pending.id, accepted.id);

@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
+import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/classes/twitch/chat_settings.dart';
 import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/automod_events.dart';
@@ -26,6 +27,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_warning.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/activity/activity_mappers.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:obs_blade/utils/twitch/twitch_channel_service.dart';
@@ -794,7 +796,9 @@ abstract class _TwitchChatStore with Store {
               this._onEventSubRevoked,
             )
             ..onStreamStatus = this._onStreamStatus
-            ..tokenProvider = this._validAccessToken;
+            ..tokenProvider = this._validAccessToken
+            ..onActivity = this._onActivity
+            ..activityTypes = this.activityEventSubTypes;
       await this._eventSub!.connect(
         accessToken: token,
         userId: this.user!.id,
@@ -1993,6 +1997,70 @@ abstract class _TwitchChatStore with Store {
 
   Stream<ChatMessageEvent> get liveMessages => this._liveMessages.stream;
 
+  /// Activity feed rows for the user's OWN channel (follows, cheers,
+  /// points, hype trains, subs / gifts / raids from chat notices) -
+  /// whichever channel the chat shows. `ActivityStore` listens.
+  final StreamController<ActivityEvent> _activityEvents =
+      StreamController.broadcast();
+
+  Stream<ActivityEvent> get activityEvents => this._activityEvents.stream;
+
+  /// Activity scopes the token lacks (empty once signed in after the
+  /// activity upgrade) - the feed offers a new sign-in for them.
+  List<String> get missingActivityScopes {
+    final scopes = this._authBox.get(TwitchAuth.kBoxKey)?.scopes ?? const [];
+    return [
+      for (final scope in kTwitchActivityScopes)
+        if (!scopes.contains(scope)) scope,
+    ];
+  }
+
+  /// EventSub activity types the token can subscribe.
+  Set<String> get activityEventSubTypes {
+    final scopes = this._authBox.get(TwitchAuth.kBoxKey)?.scopes ?? const [];
+    return {
+      for (final entry in TwitchEventSubService.kActivityTypes.entries)
+        if (scopes.contains(entry.value.scope)) entry.key,
+    };
+  }
+
+  void _onActivity(
+    String type,
+    Map<String, Object?> event,
+    String messageId,
+    DateTime sentAt,
+  ) {
+    final ownId = this.user?.id;
+    if (ownId == null || this._activityEvents.isClosed) return;
+    final activity = twitchActivityFromEventSub(
+      type: type,
+      event: event,
+      channelId: ownId,
+      messageId: messageId,
+      sentAt: sentAt,
+    );
+    if (activity != null) this._activityEvents.add(activity);
+  }
+
+  /// Newest followers of the own channel as feed rows (fills the gap
+  /// while the app was closed). Empty on any failure.
+  Future<List<ActivityEvent>> recentFollowerActivity() async {
+    final ownId = this.user?.id;
+    if (ownId == null || this.authState != TwitchAuthState.loggedIn) {
+      return const [];
+    }
+    try {
+      final rows = await this._channelService.getRecentFollowers(
+        accessToken: await this._validAccessToken(),
+        broadcasterId: ownId,
+      );
+      return [for (final row in rows) ?twitchActivityFromFollower(row, ownId)];
+    } catch (e) {
+      GeneralHelper.advLog('Twitch follower backfill failed - $e');
+      return const [];
+    }
+  }
+
   @action
   void _appendMessage(ChatMessageEvent event) {
     if (this._channelSwitchInProgress) {
@@ -2624,5 +2692,6 @@ abstract class _TwitchChatStore with Store {
     this._stopLivePoll();
     await this._disconnectChat();
     await this._liveMessages.close();
+    await this._activityEvents.close();
   }
 }

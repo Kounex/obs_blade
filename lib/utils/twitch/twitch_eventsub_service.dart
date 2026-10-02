@@ -64,6 +64,41 @@ class TwitchEventSubService {
   static const String _kAutoModHoldType = 'automod.message.hold';
   static const String _kAutoModUpdateType = 'automod.message.update';
 
+  /// Activity feed types, always for the user's OWN channel (never follow
+  /// [switchChannel]): version, the scope the token must carry, and
+  /// whether the condition needs the moderator slot. Twitch EventSub
+  /// reference (2026-10): follow is v2, hype train v2 (v1 deprecated).
+  static const Map<String, ({String version, String scope, bool moderator})>
+  kActivityTypes = {
+    'channel.follow': (
+      version: '2',
+      scope: 'moderator:read:followers',
+      moderator: true,
+    ),
+    'channel.cheer': (version: '1', scope: 'bits:read', moderator: false),
+    'channel.channel_points_custom_reward_redemption.add': (
+      version: '1',
+      scope: 'channel:read:redemptions',
+      moderator: false,
+    ),
+    'channel.hype_train.begin': (
+      version: '2',
+      scope: 'channel:read:hype_train',
+      moderator: false,
+    ),
+    'channel.hype_train.progress': (
+      version: '2',
+      scope: 'channel:read:hype_train',
+      moderator: false,
+    ),
+    'channel.hype_train.end': (
+      version: '2',
+      scope: 'channel:read:hype_train',
+      moderator: false,
+    ),
+  };
+  static const String _kNotificationType = 'channel.chat.notification';
+
   final http.Client _client;
   final WebSocketChannel Function(Uri) _channelFactory;
   final Future<void> Function(Duration) _sleep;
@@ -100,6 +135,22 @@ class TwitchEventSubService {
   /// and read as a revoked session. Settable like [onStreamStatus];
   /// null keeps the [connect] token.
   Future<String> Function()? tokenProvider;
+
+  /// Activity feed: every own-channel delivery of [activityTypes] plus
+  /// the own channel's chat notifications (subs, gifts, raids), raw. Null
+  /// skips the activity subscriptions entirely. Settable like
+  /// [onStreamStatus].
+  void Function(
+    String type,
+    Map<String, Object?> event,
+    String messageId,
+    DateTime sentAt,
+  )?
+  onActivity;
+
+  /// Subset of [kActivityTypes] to subscribe (the store passes the ones
+  /// its token has scopes for).
+  Set<String> activityTypes = const <String>{};
 
   final void Function(TwitchEventSubState state) onStateChanged;
 
@@ -139,6 +190,15 @@ class TwitchEventSubService {
   /// The own-channel `channel.moderate` v2 subscription id — untouched by
   /// [switchChannel], deleted on [dispose].
   String? _moderateSubscriptionId;
+
+  /// Own-channel activity subscriptions - like the moderate sub, untouched
+  /// by [switchChannel].
+  List<String> _activitySubscriptionIds = <String>[];
+
+  /// Own-channel `channel.chat.notification`, only while ANOTHER channel
+  /// is viewed (the channel-scoped one covers the own channel otherwise;
+  /// a second sub with the same condition is a 409).
+  String? _ownNotificationSubscriptionId;
   int _reconnectAttempts = 0;
   bool _disposed = false;
 
@@ -200,7 +260,14 @@ class TwitchEventSubService {
     }
     this._broadcasterId = broadcasterId;
     await this._refreshAccessToken();
+
+    /// Back on the own channel: its channel-scoped notification sub takes
+    /// over - the own-scoped one has the same condition (409) and goes.
+    if (broadcasterId == this._userId) {
+      await this._deleteOwnNotificationSubscription();
+    }
     final subscribed = await this._createChannelSubscriptions();
+    if (subscribed) await this._ensureOwnNotificationSubscription();
 
     /// The store shows a connecting state during the switch — the socket
     /// never left the session, so a successful re-subscription is the live
@@ -300,11 +367,25 @@ class TwitchEventSubService {
             ).copyWith(receivedAt: envelope.metadata.messageTimestamp),
           );
         case 'channel.chat.notification':
-          final callback = this.onChatNotification;
-          if (callback != null) {
-            final eventJson = Map<String, dynamic>.from(
-              envelope.payload['event'] as Map,
+          final eventJson = Map<String, dynamic>.from(
+            envelope.payload['event'] as Map,
+          );
+          final noticeBroadcaster = '${eventJson['broadcaster_user_id']}';
+          final activity = this.onActivity;
+          if (activity != null && noticeBroadcaster == this._userId) {
+            activity(
+              _kNotificationType,
+              Map<String, Object?>.from(eventJson),
+              envelope.metadata.messageId,
+              envelope.metadata.messageTimestamp ?? DateTime.now(),
             );
+          }
+
+          /// The own-scoped sub delivers the own channel's notices while
+          /// another channel is viewed - those are feed-only, never rows
+          /// in the viewed channel's chat.
+          final callback = this.onChatNotification;
+          if (callback != null && noticeBroadcaster == this._broadcasterId) {
             final event = ChatNotificationEvent.fromJson(
               Map<String, Object?>.from(eventJson),
             );
@@ -354,6 +435,13 @@ class TwitchEventSubService {
               ),
             );
           }
+        case final activityType? when kActivityTypes.containsKey(activityType):
+          this.onActivity?.call(
+            activityType,
+            Map<String, Object?>.from(envelope.payload['event'] as Map),
+            envelope.metadata.messageId,
+            envelope.metadata.messageTimestamp ?? DateTime.now(),
+          );
         case 'stream.online':
           this.onStreamStatus?.call(true);
         case 'stream.offline':
@@ -503,8 +591,103 @@ class TwitchEventSubService {
   }
 
   Future<void> _createSubscriptions() async {
-    await this._createChannelSubscriptions();
+    final subscribed = await this._createChannelSubscriptions();
     if (this._includeModeration) await this._createModerateSubscription();
+    if (this.onActivity != null) {
+      /// A fresh session: whatever ids the old one had are gone with it
+      this._ownNotificationSubscriptionId = null;
+      this._activitySubscriptionIds = await this._createActivitySubscriptions();
+      if (subscribed) await this._ensureOwnNotificationSubscription();
+    }
+  }
+
+  /// One best-effort subscription POST; the created id or null.
+  Future<String?> _subscribe(
+    String type,
+    String version,
+    Map<String, String> condition,
+  ) async {
+    final token = this._accessToken;
+    final sessionId = this._sessionId;
+    if (token == null || sessionId == null) return null;
+    try {
+      final response = await this._client.post(
+        Uri.parse(_subscriptionsUrl),
+        headers: {
+          ...TwitchAuthService.helixHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'type': type,
+          'version': version,
+          'condition': condition,
+          'transport': {'method': 'websocket', 'session_id': sessionId},
+        }),
+      );
+      if (response.statusCode == 202) {
+        final data =
+            (json.decode(response.body) as Map<String, dynamic>)['data'];
+        return (data as List).first['id'] as String?;
+      }
+      GeneralHelper.advLog(
+        'Twitch EventSub: activity subscription $type failed '
+        '(${response.statusCode}) - the feed misses it this session',
+      );
+    } catch (e) {
+      GeneralHelper.advLog(
+        'Twitch EventSub: activity subscription $type failed - $e',
+      );
+    }
+    return null;
+  }
+
+  /// [activityTypes] for the own channel. Best-effort per type.
+  Future<List<String>> _createActivitySubscriptions() async {
+    final userId = this._userId;
+    if (userId == null) return const [];
+    final created = <String>[];
+    for (final type in this.activityTypes) {
+      final spec = kActivityTypes[type];
+      if (spec == null) continue;
+      final id = await this._subscribe(type, spec.version, {
+        'broadcaster_user_id': userId,
+        if (spec.moderator) 'moderator_user_id': userId,
+      });
+      if (id != null) created.add(id);
+    }
+    return created;
+  }
+
+  /// While another channel is viewed, the own channel's chat notices
+  /// (subs, gifts, raids) still reach the feed through an own-scoped sub.
+  Future<void> _ensureOwnNotificationSubscription() async {
+    final userId = this._userId;
+    if (this.onActivity == null ||
+        userId == null ||
+        this._broadcasterId == userId ||
+        this._ownNotificationSubscriptionId != null) {
+      return;
+    }
+    this._ownNotificationSubscriptionId = await this._subscribe(
+      _kNotificationType,
+      '1',
+      {'broadcaster_user_id': userId, 'user_id': userId},
+    );
+  }
+
+  Future<void> _deleteOwnNotificationSubscription() async {
+    final id = this._ownNotificationSubscriptionId;
+    final token = this._accessToken;
+    this._ownNotificationSubscriptionId = null;
+    if (id == null || token == null) return;
+    try {
+      await this._client.delete(
+        Uri.parse('$_subscriptionsUrl?id=$id'),
+        headers: TwitchAuthService.helixHeaders(token),
+      );
+    } catch (_) {
+      // best effort - it would only duplicate notices the feed dedupes
+    }
   }
 
   /// The channel-scoped subs (message + notification + lifecycle) for the
@@ -769,11 +952,15 @@ class TwitchEventSubService {
 
     final subscriptionIds = <String>[
       ...this._subscriptionIds,
-      if (this._moderateSubscriptionId != null) this._moderateSubscriptionId!,
+      ?this._moderateSubscriptionId,
+      ...this._activitySubscriptionIds,
+      ?this._ownNotificationSubscriptionId,
     ];
     final token = this._accessToken;
     this._subscriptionIds = <String>[];
     this._moderateSubscriptionId = null;
+    this._activitySubscriptionIds = <String>[];
+    this._ownNotificationSubscriptionId = null;
     if (token != null) {
       for (final id in subscriptionIds) {
         try {

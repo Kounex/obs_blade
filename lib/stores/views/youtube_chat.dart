@@ -6,11 +6,13 @@ import 'package:mobx/mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/activity/activity_mappers.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
@@ -1171,6 +1173,25 @@ abstract class _YouTubeChatStore with Store {
 
   Stream<YouTubeChatMessage> get liveMessages => this._liveMessages.stream;
 
+  /// Activity feed rows (super chats, stickers, memberships, gifting) of
+  /// the user's OWN broadcast, history page included - the poll re-sends
+  /// the backlog after a reconnect and the feed dedupes by message id.
+  final StreamController<ActivityEvent> _activityEvents =
+      StreamController.broadcast();
+
+  Stream<ActivityEvent> get activityEvents => this._activityEvents.stream;
+
+  void _emitActivity(String label, YouTubeChatMessage item) {
+    final ownId = this.selfChannelId;
+    if (ownId == null ||
+        !this.isOwnChannel(label) ||
+        this._activityEvents.isClosed) {
+      return;
+    }
+    final activity = youTubeActivityFromMessage(item, ownId);
+    if (activity != null) this._activityEvents.add(activity);
+  }
+
   void _applyPageMessages(String label, List<YouTubeChatMessage> items) {
     for (final item in items) {
       switch (item.type) {
@@ -1186,6 +1207,7 @@ abstract class _YouTubeChatStore with Store {
           while (this.messages.length > kMaxMessages) {
             this.messages.removeAt(0);
           }
+          this._emitActivity(label, item);
           if (!item.isHistorical &&
               this.selectedChannelLabel == label &&
               !this._liveMessages.isClosed) {
@@ -1828,5 +1850,6 @@ abstract class _YouTubeChatStore with Store {
     this._loginFlow++;
     await this._authBoxSub?.cancel();
     await this._liveMessages.close();
+    await this._activityEvents.close();
   }
 }

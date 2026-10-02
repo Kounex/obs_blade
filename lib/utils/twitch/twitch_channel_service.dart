@@ -139,6 +139,36 @@ class TwitchChannelService {
     return live;
   }
 
+  /// The newest followers of [broadcasterId] (`channels/followers`, scope
+  /// `moderator:read:followers`), newest first - one page of up to 100,
+  /// enough to fill the activity feed's gap after the app was closed.
+  /// Rows are the raw Helix objects (`user_id`, `user_login`,
+  /// `user_name`, `followed_at`).
+  Future<List<Map<String, Object?>>> getRecentFollowers({
+    required String accessToken,
+    required String broadcasterId,
+  }) async {
+    final response = await this._client.get(
+      Uri.parse('$kTwitchHelixBase/channels/followers').replace(
+        queryParameters: {'broadcaster_id': broadcasterId, 'first': '100'},
+      ),
+      headers: TwitchAuthService.helixHeaders(accessToken),
+    );
+    if (response.statusCode != 200) {
+      throw TwitchAuthException(
+        'Fetching followers failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    final data = (json.decode(response.body) as Map<String, dynamic>)['data'];
+    if (data is! List) return const [];
+    return [
+      for (final row in data)
+        if (row is Map) Map<String, Object?>.from(row),
+    ];
+  }
+
   /// Channels the user moderates (`moderation/channels`). Follows at most
   /// one `pagination.cursor` — a single extra page covers realistic mod
   /// lists without an unbounded fetch on chat connect.

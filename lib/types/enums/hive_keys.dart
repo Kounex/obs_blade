@@ -38,6 +38,14 @@ enum HiveKeys {
 
   /// Returns the single [KickAuth] record (key: KickAuth.kBoxKey)
   KickAuth,
+
+  /// Activity feed rows - JSON strings keyed by event id, no adapter
+  /// (see `ActivityEvent.toJson`)
+  ActivityEvents,
+
+  /// Activity feed bookkeeping (seen marks, sessions, coverage, relay
+  /// session) - JSON strings, no adapter
+  ActivityMeta,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -55,5 +63,7 @@ extension HiveKeysFunctions on HiveKeys {
     HiveKeys.TwitchAuth: 'twitch-auth',
     HiveKeys.YouTubeAuth: 'youtube-auth',
     HiveKeys.KickAuth: 'kick-auth',
+    HiveKeys.ActivityEvents: 'activity-events',
+    HiveKeys.ActivityMeta: 'activity-meta',
   }[this]!;
 }

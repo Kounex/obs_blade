@@ -35,7 +35,8 @@ void main() {
           'moderator:read:blocked_terms moderator:read:chat_settings '
           'moderator:read:unban_requests moderator:read:banned_users '
           'moderator:read:chat_messages moderator:read:warnings '
-          'moderator:read:moderators moderator:read:vips',
+          'moderator:read:moderators moderator:read:vips '
+          'bits:read channel:read:redemptions channel:read:hype_train',
         );
         return http.Response(
           json.encode({

@@ -7,12 +7,14 @@ import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
+import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/activity/activity_mappers.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/kick/kick_api_service.dart';
 import 'package:obs_blade/types/classes/kick/kick_token.dart';
@@ -921,6 +923,46 @@ abstract class _KickChatStore with Store {
 
   Stream<KickChatMessage> get liveMessages => this._liveMessages.stream;
 
+  /// Activity feed rows from Pusher for the user's OWN channel while it is
+  /// the selected one. Payloads are guessed (see
+  /// [KickChatroomEventKind.subscription]), so the feed ranks these below
+  /// the events relay's webhook copies.
+  final StreamController<ActivityEvent> _activityEvents =
+      StreamController.broadcast();
+
+  Stream<ActivityEvent> get activityEvents => this._activityEvents.stream;
+
+  void _emitPusherActivity(String slug, String kind, KickPusherEvent event) {
+    final ownId = this.selfUserId;
+    if (ownId == null ||
+        !this.isOwnChannel(slug) ||
+        this._activityEvents.isClosed) {
+      return;
+    }
+    final username = switch (kind) {
+      'subscription' => event.subscriberUsername,
+      'gift' => event.gifterUsername,
+      _ => event.hostUsername,
+    };
+    final now = DateTime.now();
+    final activity = kickActivityFromPusher(
+      kind: kind,
+      channelId: '$ownId',
+      eventId: '$kind-${username ?? 'anon'}-${now.microsecondsSinceEpoch}',
+      at: now,
+      username: username,
+      months: event.subscriptionMonths,
+      recipients: kind == 'gift' ? event.giftedUsernames : const [],
+      viewers: event.hostViewerCount,
+    );
+    if (activity != null) this._activityEvents.add(activity);
+  }
+
+  /// A current Kick access token for the events relay to check which
+  /// channel this is (refreshed when close to expiry). Throws when signed
+  /// out.
+  Future<String> relayAccessToken() => this._validAccessToken();
+
   void _applyEvent(String slug, KickPusherEvent event) {
     try {
       switch (event.kind) {
@@ -954,10 +996,13 @@ abstract class _KickChatStore with Store {
           this._applyPinned(slug, event);
         case KickChatroomEventKind.subscription:
           this._applySubscription(event);
+          this._emitPusherActivity(slug, 'subscription', event);
         case KickChatroomEventKind.giftedSubscriptions:
           this._applyGiftedSubscriptions(event);
+          this._emitPusherActivity(slug, 'gift', event);
         case KickChatroomEventKind.streamHost:
           this._applyStreamHost(event);
+          this._emitPusherActivity(slug, 'host', event);
         case KickChatroomEventKind.streamStarted:
           this._applyStreamStatus(slug, online: true);
         case KickChatroomEventKind.streamStopped:
@@ -1680,5 +1725,6 @@ abstract class _KickChatStore with Store {
     this._pusher = null;
     if (pusher != null) await pusher.dispose();
     await this._liveMessages.close();
+    await this._activityEvents.close();
   }
 }

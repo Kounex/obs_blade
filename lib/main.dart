@@ -37,6 +37,7 @@ import 'stores/views/intro.dart';
 import 'stores/views/canvas_view.dart';
 import 'stores/views/chat_tts.dart';
 import 'stores/views/combined_chat.dart';
+import 'stores/views/activity.dart';
 import 'stores/views/kick_chat.dart';
 import 'stores/views/kick_emotes.dart';
 import 'stores/views/logs.dart';
@@ -147,6 +148,10 @@ void _initializeStores() {
     () => ChatTtsStore(),
     dispose: (store) => store.dispose(),
   );
+  GetIt.instance.registerLazySingleton<ActivityStore>(
+    () => ActivityStore(),
+    dispose: (store) => store.dispose(),
+  );
   GetIt.instance.registerLazySingleton<CombinedChatStore>(
     /// Follows the persisted chat type on its own - created at startup
     /// (below) so a restored Combined selection re-activates.
@@ -161,6 +166,9 @@ void _chatStoreCreated() {
   final getIt = GetIt.instance;
   if (getIt.checkLazySingletonInstanceExists<ChatTtsStore>()) {
     getIt<ChatTtsStore>().chatStoreCreated();
+  }
+  if (getIt.checkLazySingletonInstanceExists<ActivityStore>()) {
+    getIt<ActivityStore>().chatStoreCreated();
   }
 }
 
@@ -330,6 +338,10 @@ void main() async {
 
       /// Chat text-to-speech resumes when it was left on
       GetIt.instance<ChatTtsStore>().init();
+
+      /// Activity feed: restores its rows and starts collecting for Pro
+      /// users who are signed in (fire-and-forget, never blocks start)
+      unawaited(GetIt.instance<ActivityStore>().init());
 
       runApp(const LifecycleWatcher(app: PurchaseBase(child: App())));
     },

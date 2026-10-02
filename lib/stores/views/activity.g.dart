@@ -1,0 +1,286 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'activity.dart';
+
+// **************************************************************************
+// StoreGenerator
+// **************************************************************************
+
+// ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
+
+mixin _$ActivityStore on _ActivityStore, Store {
+  Computed<List<ActivityEvent>>? _$allEventsComputed;
+
+  @override
+  List<ActivityEvent> get allEvents =>
+      (_$allEventsComputed ??= Computed<List<ActivityEvent>>(
+        () => super.allEvents,
+        name: '_ActivityStore.allEvents',
+      )).value;
+  Computed<int>? _$unseenCountComputed;
+
+  @override
+  int get unseenCount => (_$unseenCountComputed ??= Computed<int>(
+    () => super.unseenCount,
+    name: '_ActivityStore.unseenCount',
+  )).value;
+  Computed<int>? _$toThankCountComputed;
+
+  @override
+  int get toThankCount => (_$toThankCountComputed ??= Computed<int>(
+    () => super.toThankCount,
+    name: '_ActivityStore.toThankCount',
+  )).value;
+  Computed<List<ActivityEvent>>? _$visibleEventsComputed;
+
+  @override
+  List<ActivityEvent> get visibleEvents =>
+      (_$visibleEventsComputed ??= Computed<List<ActivityEvent>>(
+        () => super.visibleEvents,
+        name: '_ActivityStore.visibleEvents',
+      )).value;
+  Computed<List<ActivityGroup>>? _$groupsComputed;
+
+  @override
+  List<ActivityGroup> get groups =>
+      (_$groupsComputed ??= Computed<List<ActivityGroup>>(
+        () => super.groups,
+        name: '_ActivityStore.groups',
+      )).value;
+
+  late final _$revisionAtom = Atom(
+    name: '_ActivityStore.revision',
+    context: context,
+  );
+
+  @override
+  int get revision {
+    _$revisionAtom.reportRead();
+    return super.revision;
+  }
+
+  @override
+  set revision(int value) {
+    _$revisionAtom.reportWrite(value, super.revision, () {
+      super.revision = value;
+    });
+  }
+
+  late final _$loadedAtom = Atom(
+    name: '_ActivityStore.loaded',
+    context: context,
+  );
+
+  @override
+  bool get loaded {
+    _$loadedAtom.reportRead();
+    return super.loaded;
+  }
+
+  @override
+  set loaded(bool value) {
+    _$loadedAtom.reportWrite(value, super.loaded, () {
+      super.loaded = value;
+    });
+  }
+
+  late final _$visitMarksAtom = Atom(
+    name: '_ActivityStore.visitMarks',
+    context: context,
+  );
+
+  @override
+  ObservableMap<String, int>? get visitMarks {
+    _$visitMarksAtom.reportRead();
+    return super.visitMarks;
+  }
+
+  @override
+  set visitMarks(ObservableMap<String, int>? value) {
+    _$visitMarksAtom.reportWrite(value, super.visitMarks, () {
+      super.visitMarks = value;
+    });
+  }
+
+  late final _$filterAtom = Atom(
+    name: '_ActivityStore.filter',
+    context: context,
+  );
+
+  @override
+  ActivityFilter get filter {
+    _$filterAtom.reportRead();
+    return super.filter;
+  }
+
+  @override
+  set filter(ActivityFilter value) {
+    _$filterAtom.reportWrite(value, super.filter, () {
+      super.filter = value;
+    });
+  }
+
+  late final _$toThankOnlyAtom = Atom(
+    name: '_ActivityStore.toThankOnly',
+    context: context,
+  );
+
+  @override
+  bool get toThankOnly {
+    _$toThankOnlyAtom.reportRead();
+    return super.toThankOnly;
+  }
+
+  @override
+  set toThankOnly(bool value) {
+    _$toThankOnlyAtom.reportWrite(value, super.toThankOnly, () {
+      super.toThankOnly = value;
+    });
+  }
+
+  late final _$relayStateAtom = Atom(
+    name: '_ActivityStore.relayState',
+    context: context,
+  );
+
+  @override
+  KickRelayState get relayState {
+    _$relayStateAtom.reportRead();
+    return super.relayState;
+  }
+
+  @override
+  set relayState(KickRelayState value) {
+    _$relayStateAtom.reportWrite(value, super.relayState, () {
+      super.relayState = value;
+    });
+  }
+
+  late final _$clearHistoryAsyncAction = AsyncAction(
+    '_ActivityStore.clearHistory',
+    context: context,
+  );
+
+  @override
+  Future<void> clearHistory() {
+    return _$clearHistoryAsyncAction.run(() => super.clearHistory());
+  }
+
+  late final _$_ActivityStoreActionController = ActionController(
+    name: '_ActivityStore',
+    context: context,
+  );
+
+  @override
+  void ingest(ActivityEvent event) {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.ingest',
+    );
+    try {
+      return super.ingest(event);
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void _syncSession() {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore._syncSession',
+    );
+    try {
+      return super._syncSession();
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void markAllSeen() {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.markAllSeen',
+    );
+    try {
+      return super.markAllSeen();
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void beginVisit() {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.beginVisit',
+    );
+    try {
+      return super.beginVisit();
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void endVisit() {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.endVisit',
+    );
+    try {
+      return super.endVisit();
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setThanked(ActivityEvent event, bool thanked) {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.setThanked',
+    );
+    try {
+      return super.setThanked(event, thanked);
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setFilter(ActivityFilter filter) {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.setFilter',
+    );
+    try {
+      return super.setFilter(filter);
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setToThankOnly(bool value) {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.setToThankOnly',
+    );
+    try {
+      return super.setToThankOnly(value);
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  String toString() {
+    return '''
+revision: ${revision},
+loaded: ${loaded},
+visitMarks: ${visitMarks},
+filter: ${filter},
+toThankOnly: ${toThankOnly},
+relayState: ${relayState},
+allEvents: ${allEvents},
+unseenCount: ${unseenCount},
+toThankCount: ${toThankCount},
+visibleEvents: ${visibleEvents},
+groups: ${groups}
+    ''';
+  }
+}

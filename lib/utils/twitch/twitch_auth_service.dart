@@ -35,6 +35,17 @@ const List<String> kTwitchManageModToolingScopes = <String>[
   'moderator:manage:automod',
 ];
 
+/// Activity feed bundle — cheers, channel point redemptions and hype
+/// trains on the user's own channel (follows ride the existing
+/// `moderator:read:followers`). One deliberate scope upgrade like
+/// [kTwitchManageModToolingScopes]: older tokens keep the rest of the
+/// feed and get a sign-in-again hint for these three.
+const List<String> kTwitchActivityScopes = <String>[
+  'bits:read',
+  'channel:read:redemptions',
+  'channel:read:hype_train',
+];
+
 /// Chat scopes requested in the device flow — read incoming chat, send
 /// messages as the authenticated user, list the emotes they can use
 /// (emote picker), and read their own channel's moderation actions
@@ -56,6 +67,7 @@ const List<String> kTwitchChatScopes = <String>[
   'moderator:manage:announcements',
   ...kTwitchManageModToolingScopes,
   ...kTwitchModerationScopes,
+  ...kTwitchActivityScopes,
 ];
 
 const String _kIdBase = 'https://id.twitch.tv/oauth2';

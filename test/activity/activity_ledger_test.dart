@@ -37,7 +37,12 @@ void main() {
     test('inserts with increasing seq', () {
       final ledger = ActivityLedger();
       final a = ledger.ingest(_event(id: 'a'));
-      final b = ledger.ingest(_event(id: 'b', actor: const ActivityActor(name: 'Other')));
+      final b = ledger.ingest(
+        _event(
+          id: 'b',
+          actor: const ActivityActor(name: 'Other'),
+        ),
+      );
       expect(a.outcome, ActivityIngestOutcome.inserted);
       expect(b.outcome, ActivityIngestOutcome.inserted);
       expect(a.event!.seq, 1);
@@ -70,27 +75,32 @@ void main() {
       expect(merged.thanked, isTrue);
     });
 
-    test('Twitch gift bomb: community notice + per-recipient notices are one row', () {
-      final ledger = ActivityLedger();
-      ActivityEvent gift({ActivityAmount? amount, List<String> to = const []}) =>
-          _event(
-            id: 'twitch:1:gift:cg-1',
-            platform: ActivityPlatform.twitch,
-            channel: '1',
-            kind: ActivityKind.giftSub,
-            amount: amount,
-            recipients: to,
-            sourceId: 'msg-${to.isEmpty ? 'bomb' : to.first}',
-          );
-      ledger.ingest(gift(to: ['a']));
-      ledger.ingest(gift(amount: const ActivityAmount(3, ActivityUnit.subs)));
-      ledger.ingest(gift(to: ['b']));
-      final row = ledger.ingest(gift(to: ['c'])).event!;
-      expect(ledger.events, hasLength(1));
-      expect(row.recipients, ['a', 'b', 'c']);
-      expect(row.amount!.value, 3);
-      expect(row.amount!.unit, ActivityUnit.subs);
-    });
+    test(
+      'Twitch gift bomb: community notice + per-recipient notices are one row',
+      () {
+        final ledger = ActivityLedger();
+        ActivityEvent gift({
+          ActivityAmount? amount,
+          List<String> to = const [],
+        }) => _event(
+          id: 'twitch:1:gift:cg-1',
+          platform: ActivityPlatform.twitch,
+          channel: '1',
+          kind: ActivityKind.giftSub,
+          amount: amount,
+          recipients: to,
+          sourceId: 'msg-${to.isEmpty ? 'bomb' : to.first}',
+        );
+        ledger.ingest(gift(to: ['a']));
+        ledger.ingest(gift(amount: const ActivityAmount(3, ActivityUnit.subs)));
+        ledger.ingest(gift(to: ['b']));
+        final row = ledger.ingest(gift(to: ['c'])).event!;
+        expect(ledger.events, hasLength(1));
+        expect(row.recipients, ['a', 'b', 'c']);
+        expect(row.amount!.value, 3);
+        expect(row.amount!.unit, ActivityUnit.subs);
+      },
+    );
   });
 
   group('cross-source matching (Kick: relay first, Pusher second)', () {
@@ -117,10 +127,7 @@ void main() {
         '42',
         _t0.subtract(const Duration(minutes: 5)),
       );
-      expect(
-        ledger.ingest(pusherSub()).outcome,
-        ActivityIngestOutcome.dropped,
-      );
+      expect(ledger.ingest(pusherSub()).outcome, ActivityIngestOutcome.dropped);
       expect(ledger.ingest(relaySub()).outcome, ActivityIngestOutcome.inserted);
       expect(ledger.events, hasLength(1));
     });
@@ -128,13 +135,14 @@ void main() {
     test('relay first, Pusher later: merged, relay payload stays', () {
       final ledger = ActivityLedger();
       ledger.ingest(relaySub());
-      final merged = ledger.ingest(
-        pusherSub(at: const Duration(seconds: 3)),
-      );
+      final merged = ledger.ingest(pusherSub(at: const Duration(seconds: 3)));
       expect(merged.outcome, ActivityIngestOutcome.merged);
       expect(merged.event!.primarySource, ActivitySource.kickRelay);
       expect(merged.event!.title, 'from relay');
-      expect(merged.event!.sources.keys, containsAll(ActivitySource.values.take(2)));
+      expect(
+        merged.event!.sources.keys,
+        containsAll(ActivitySource.values.take(2)),
+      );
     });
 
     test('relay offline: Pusher row kept, relay backfill upgrades it', () {
@@ -186,7 +194,10 @@ void main() {
         amount: const ActivityAmount(100, ActivityUnit.bits),
       );
       ledger.ingest(cheer('c1'));
-      expect(ledger.ingest(cheer('c2')).outcome, ActivityIngestOutcome.inserted);
+      expect(
+        ledger.ingest(cheer('c2')).outcome,
+        ActivityIngestOutcome.inserted,
+      );
     });
   });
 
@@ -336,7 +347,9 @@ void main() {
         recipients: const ['x'],
         title: 'Rage Quit',
       ).copyWith(seq: 9, thanked: true, message: 'w', tier: 'MID');
-      final back = ActivityEvent.fromJson(jsonDecode(jsonEncode(event.toJson())))!;
+      final back = ActivityEvent.fromJson(
+        jsonDecode(jsonEncode(event.toJson())),
+      )!;
       expect(back.id, event.id);
       expect(back.platform, event.platform);
       expect(back.kind, ActivityKind.kicks);

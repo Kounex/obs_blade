@@ -139,7 +139,13 @@ ActivityEvent? twitchActivityFromEventSub({
       );
 
     case 'channel.chat.notification':
-      return _twitchChatNotification(event, channelId, messageId, sentAt, build);
+      return _twitchChatNotification(
+        event,
+        channelId,
+        messageId,
+        sentAt,
+        build,
+      );
   }
   return null;
 }
@@ -209,9 +215,7 @@ ActivityEvent? _twitchChatNotification(
       return build(
         /// Part of a bomb: lands on the community gift's row as one more
         /// recipient (the ledger merges recipients by id)
-        id: communityId != null
-            ? 'gift:$communityId'
-            : 'gift:$chatMessageId',
+        id: communityId != null ? 'gift:$communityId' : 'gift:$chatMessageId',
         kind: ActivityKind.giftSub,
         actor: chatter,
         tier: _tier(block),
@@ -297,7 +301,11 @@ ActivityEvent? twitchActivityFromFollower(
     platform: ActivityPlatform.twitch,
     channelId: channelId,
     kind: ActivityKind.follow,
-    actor: ActivityActor(id: userId, login: _str(row['user_login']), name: name),
+    actor: ActivityActor(
+      id: userId,
+      login: _str(row['user_login']),
+      name: name,
+    ),
     timestamp: at.toUtc(),
     sources: {ActivitySource.native: 'follow:$userId'},
     primarySource: ActivitySource.native,

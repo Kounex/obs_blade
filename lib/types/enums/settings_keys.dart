@@ -520,7 +520,14 @@ enum SettingsKeys {
 
   /// [String]: JSON map language tag → voice id - the user's TTS voice per
   /// language; missing = automatic (best installed)
-  ChatTtsVoices;
+  ChatTtsVoices,
+
+  /// [bool]: activity feed collects Kick follows / KICKs / subs through
+  /// OBS Blade's events relay (default true)
+  ActivityKickRelay,
+
+  /// [String]: Chat tab segment last shown - 'chat' or 'activity'
+  ActivityChatTabSegment;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -654,5 +661,7 @@ enum SettingsKeys {
     SettingsKeys.ChatTtsCombineRepeats: 'chat-tts-combine-repeats',
     SettingsKeys.ChatTtsSkipEmoteOnly: 'chat-tts-skip-emote-only',
     SettingsKeys.ChatTtsVoices: 'chat-tts-voices',
+    SettingsKeys.ActivityKickRelay: 'activity-kick-relay',
+    SettingsKeys.ActivityChatTabSegment: 'activity-chat-tab-segment',
   }[this]!;
 }
