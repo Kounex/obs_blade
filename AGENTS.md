@@ -81,8 +81,14 @@ scene buttons / preview / scene items of that canvas. All its reads go
 through `NetworkHelper.makeScopedRequest` (ack carries `responseData`;
 `DashboardStore._handleResponse` skips scoped responses) and are keyed by
 UUID. Core OBS has no live scene for non-main canvases - picking a scene
-only selects what the app shows; Aitum's vendor requests (live scene,
-vertical stream) are the v2 follow-up. Streaming mode always shows main.
+only selects what the app shows. **Aitum Vertical** (vendor
+`aitum-vertical-canvas`, `lib/types/classes/api/aitum_vertical.dart`):
+detected per connection (`version` vendor call → `aitumSupport`), drives
+only the canvas named `Aitum Vertical` (requests target it by
+width/height) - live scene switch (by name) + its stream / record /
+backtrack (`CanvasOutputControls`), state from `VendorEvent`s. Without
+it everything stays view-only and gated taps explain why
+(`aitumBlockedReason`). Streaming mode always shows main.
 
 **Chat:** Twitch has a native engine (device-code login + EventSub chat +
 Helix send input — reads AND writes) next to the WebView embeds; a manual

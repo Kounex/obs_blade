@@ -2,6 +2,47 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Canvas v2: Aitum Vertical live control
+
+The v2 follow-up of the canvas switcher (`docs/private/feature-requests-2026-10.md`
+§ 4). Vendor API read from the plugin source (`Aitum/obs-vertical-canvas`,
+`vertical-canvas.cpp`): vendor `aitum-vertical-canvas`, requests pick their
+canvas by `width`/`height` (0 = any), every handler answers
+`success: true|false`, events carry the canvas size too.
+
+- **Detection:** `CallVendorRequest` `version` after every canvas-list
+  read (connect, reconnect, canvas events) when a non-main canvas exists.
+  Only an OBS rejection (no such vendor) or a non-`success` answer counts
+  as missing; a timeout keeps the old verdict; any Aitum `VendorEvent`
+  flips it to available.
+- **Which canvas:** the plugin finds its canvas by the fixed name
+  `Aitum Vertical` (`CANVAS_NAME`), so the app does too.
+- **Live scene:** `current_scene` / `switch_scene` (names - unique within
+  a canvas) + the `switch_scene` vendor event. With control, scene taps
+  switch live (optimistic, re-read on failure), the live scene gets the
+  program tally and the shown scene follows it.
+- **Outputs:** `CanvasOutputControls` under the picker - stream /
+  recording / backtrack (+ save), explicit start/stop vendor requests,
+  confirmation dialogs reused (they now name the canvas, same don't-show
+  settings), state from `status` (read on detect + the 10 s refresh while
+  viewed) and `streaming_*` / `recording_*` / `backtrack_*` events. Not
+  wired: virtual camera, record pause, chapters, stream key/server.
+- **Gating:** without control the rows stay visible but muted with a
+  "View only - live controls need Aitum Vertical" line; a tap shows why
+  (`aitumBlockedReason`: plugin missing / restart OBS - the plugin's
+  fresh-install bug, Aitum PR #30 / only the Aitum canvas / still
+  checking). The first view-only scene tap per session says the pick is
+  "Shown in the app only".
+- Plugin refusals go through the command-failure toast
+  (`DashboardStore.reportCommandFailure`).
+- Tests: `test/websocket/aitum_vertical_test.dart` (fake OBS + fake
+  vendor), Aitum / gating cases in `canvas_switcher_test.dart`; the canvas
+  reconnect test was de-raced (event vs in-flight item re-read). Gates:
+  websocket + dashboard suites clean, analyze 0 errors. **Not verified
+  against a real OBS 32.1 + Aitum Vertical yet.**
+- `docs/private/feature-requests-2026-10.md` status not updated yet - the
+  workstation was unreachable for the same-turn mirror.
+
 ## 2026-10-02 - Replay buffer connect fix + OBS↔app sync audit
 
 From a store review: connecting to a running OBS never detected an
