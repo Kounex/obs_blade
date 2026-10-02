@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Text emphasis levels + derived `…Text` color variants for the "On Air"
 /// design system (token-delta §2.1 / §2.3).
 ///
-/// Registered as a [ThemeExtension] in `App._getCurrentTheme` (lib/app.dart),
+/// Registered as a [ThemeExtension] in `App.buildTheme` (lib/app.dart),
 /// so consumers can read:
 ///
 /// ```dart

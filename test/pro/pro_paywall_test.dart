@@ -36,7 +36,7 @@ ThemeData _testTheme() => ThemeData(
   dividerTheme: const DividerThemeData(color: Colors.grey),
 
   /// Design-system extensions the migrated widgets force-unwrap
-  /// (registered by `App._getCurrentTheme` in real runs)
+  /// (registered by `App.buildTheme` in real runs)
   extensions: const [AppStatusColors.standard, AppTextColors.standard],
 );
 

@@ -147,113 +147,114 @@ class ExtraCanvasOnAirPill extends StatelessWidget {
         SettingsKeys.StreamingMode,
         SettingsKeys.ExposeCanvasSwitcher,
       ],
-      builder: (context, settingsBox, child) => Observer(
-        builder: (context) {
-          final status = this.onAir;
-          final bool recordingActive =
-              status.recording && !status.recordingPaused;
 
-          /// Streaming leads (green), else the recording's red / paused
-          /// amber - same signal grammar as the main pills
-          final Color color = status.streaming
-              ? statusColors.live
-              : recordingActive
-              ? statusColors.recording
-              : statusColors.warning;
-          final Color textColor = !status.streaming && recordingActive
-              ? statusColors.recordingText
-              : color;
+      /// No Observer of its own - [onAir] comes from the cluster's, which
+      /// rebuilds this pill whenever the state changes
+      builder: (context, settingsBox, child) {
+        final status = this.onAir;
+        final bool recordingActive =
+            status.recording && !status.recordingPaused;
 
-          /// Each part in its own signal color - REC stays red / amber
-          /// next to a green LIVE
-          final Color recColor = recordingActive
-              ? statusColors.recordingText
-              : statusColors.warning;
+        /// Streaming leads (green), else the recording's red / paused
+        /// amber - same signal grammar as the main pills
+        final Color color = status.streaming
+            ? statusColors.live
+            : recordingActive
+            ? statusColors.recording
+            : statusColors.warning;
+        final Color textColor = !status.streaming && recordingActive
+            ? statusColors.recordingText
+            : color;
 
-          final bool canJump =
-              !(settingsBox.get(
-                    SettingsKeys.StreamingMode.name,
-                    defaultValue: false,
-                  )
-                  as bool) &&
-              (settingsBox.get(
-                    SettingsKeys.ExposeCanvasSwitcher.name,
-                    defaultValue: true,
-                  )
-                  as bool);
-          final ObsCanvas canvas = status.canvas;
+        /// Each part in its own signal color - REC stays red / amber
+        /// next to a green LIVE
+        final Color recColor = recordingActive
+            ? statusColors.recordingText
+            : statusColors.warning;
 
-          final Widget pill = Container(
-            height: 28.0,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.pill,
-              color: color.withValues(alpha: 0.14),
-              border: Border.all(color: color.withValues(alpha: 0.45)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  canvas.isPortrait
-                      ? CupertinoIcons.device_phone_portrait
-                      : CupertinoIcons.rectangle_on_rectangle,
-                  size: 13.0,
-                  color: textColor,
+        final bool canJump =
+            !(settingsBox.get(
+                  SettingsKeys.StreamingMode.name,
+                  defaultValue: false,
+                )
+                as bool) &&
+            (settingsBox.get(
+                  SettingsKeys.ExposeCanvasSwitcher.name,
+                  defaultValue: true,
+                )
+                as bool);
+        final ObsCanvas canvas = status.canvas;
+
+        final Widget pill = Container(
+          height: 28.0,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.pill,
+            color: color.withValues(alpha: 0.14),
+            border: Border.all(color: color.withValues(alpha: 0.45)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                canvas.isPortrait
+                    ? CupertinoIcons.device_phone_portrait
+                    : CupertinoIcons.rectangle_on_rectangle,
+                size: 13.0,
+                color: textColor,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              status.recording && status.recordingPaused && !status.streaming
+                  ? Icon(CupertinoIcons.pause_fill, size: 10.0, color: color)
+                  : StatusDot(size: 8.0, color: color),
+              const SizedBox(width: AppSpacing.sm),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    if (status.streaming)
+                      TextSpan(
+                        text: 'LIVE',
+                        style: TextStyle(color: statusColors.live),
+                      ),
+                    if (status.streaming && status.recording)
+                      TextSpan(
+                        text: ' · ',
+                        style: TextStyle(color: textTheme.bodySmall?.color),
+                      ),
+                    if (status.recording)
+                      TextSpan(
+                        text: 'REC',
+                        style: TextStyle(color: recColor),
+                      ),
+                  ],
                 ),
-                const SizedBox(width: AppSpacing.xs),
-                status.recording && status.recordingPaused && !status.streaming
-                    ? Icon(CupertinoIcons.pause_fill, size: 10.0, color: color)
-                    : StatusDot(size: 8.0, color: color),
-                const SizedBox(width: AppSpacing.sm),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      if (status.streaming)
-                        TextSpan(
-                          text: 'LIVE',
-                          style: TextStyle(color: statusColors.live),
-                        ),
-                      if (status.streaming && status.recording)
-                        TextSpan(
-                          text: ' · ',
-                          style: TextStyle(color: textTheme.bodySmall?.color),
-                        ),
-                      if (status.recording)
-                        TextSpan(
-                          text: 'REC',
-                          style: TextStyle(color: recColor),
-                        ),
-                    ],
-                  ),
-                  style: textTheme.labelSmall,
-                ),
-              ],
-            ),
-          );
+                style: textTheme.labelSmall,
+              ),
+            ],
+          ),
+        );
 
-          final String states = [
-            if (status.streaming)
-              status.viaMainStream ? 'live with the main stream' : 'live',
-            if (status.recording)
-              status.recordingPaused ? 'recording paused' : 'recording',
-          ].join(', ');
+        final String states = [
+          if (status.streaming)
+            status.viaMainStream ? 'live with the main stream' : 'live',
+          if (status.recording)
+            status.recordingPaused ? 'recording paused' : 'recording',
+        ].join(', ');
 
-          return Semantics(
-            button: canJump,
-            label: '${canvas.name}: $states',
-            hint: canJump ? 'Shows the ${canvas.name} canvas' : null,
-            excludeSemantics: true,
-            child: canJump
-                ? Pressable(
-                    haptic: true,
-                    onTap: () => this.canvasStore.viewCanvas(canvas.uuid),
-                    child: pill,
-                  )
-                : pill,
-          );
-        },
-      ),
+        return Semantics(
+          button: canJump,
+          label: '${canvas.name}: $states',
+          hint: canJump ? 'Shows the ${canvas.name} canvas' : null,
+          excludeSemantics: true,
+          child: canJump
+              ? Pressable(
+                  haptic: true,
+                  onTap: () => this.canvasStore.viewCanvas(canvas.uuid),
+                  child: pill,
+                )
+              : pill,
+        );
+      },
     );
   }
 }

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 /// the `GlassBar` widget (glass_bar.dart), which every floating bar goes
 /// through.
 ///
-/// Registered as a [ThemeExtension] in `App._getCurrentTheme` (lib/app.dart),
+/// Registered as a [ThemeExtension] in `App.buildTheme` (lib/app.dart),
 /// so consumers can read:
 ///
 /// ```dart

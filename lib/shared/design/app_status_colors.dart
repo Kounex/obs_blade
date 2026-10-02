@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Semantic status colors (live, recording, warnings, reachability) for the
 /// "On Air" design system.
 ///
-/// Registered as a [ThemeExtension] in `App._getCurrentTheme` (lib/app.dart),
+/// Registered as a [ThemeExtension] in `App.buildTheme` (lib/app.dart),
 /// so consumers can read:
 ///
 /// ```dart

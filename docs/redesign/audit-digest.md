@@ -43,7 +43,7 @@ pops in-tab or jumps to Home.
 ## 2. Global styling facts
 
 ### Theme factory (single source)
-- `lib/app.dart` → `App._getCurrentTheme(Box settingsBox)` builds ONE `ThemeData`
+- `lib/app.dart` → `App.buildTheme(Box settingsBox)` builds ONE `ThemeData`
   (`ThemeData.dark()` base by default, `light()` when custom theme has `useLightBrightness`),
   then a long `copyWith`. **No** `darkTheme`/`themeMode` (no OS auto dark/light), no `title`,
   no `pageTransitionsTheme`, no `scrollBehavior`, no localizations.

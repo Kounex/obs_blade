@@ -20,7 +20,10 @@ import 'utils/styling_helper.dart';
 class App extends StatelessWidget {
   const App({super.key});
 
-  ThemeData _getCurrentTheme(Box settingsBox) {
+  /// The app's theme for the current settings (custom theme, True Dark,
+  /// ...) - static so tooling can render widgets exactly as the app does
+  /// (`tool/widget_shots/`)
+  static ThemeData buildTheme(Box settingsBox) {
     Brightness? brightness;
     Color? scaffoldBackgroundColor;
     Color? accentColor;
@@ -411,7 +414,7 @@ class App extends StatelessWidget {
           return MaterialApp(
             // navigatorKey: rootNavKey,
             debugShowCheckedModeBanner: false,
-            theme: _getCurrentTheme(settingsBox),
+            theme: App.buildTheme(settingsBox),
             themeAnimationDuration: AppMotion.slow,
             themeAnimationStyle:
                 MediaQueryData.fromView(View.of(context)).disableAnimations
