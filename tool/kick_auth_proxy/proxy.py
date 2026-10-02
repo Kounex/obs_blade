@@ -24,9 +24,27 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote
 
 KICK_TOKEN_URL = "https://id.kick.com/oauth/token"
-ALLOWED_REDIRECT = os.environ.get(
-    "KICK_OAUTH_REDIRECT_URI", "https://kick-auth.kounex.com/oauth/callback"
-)
+# Every callback URL registered on the Kick app. The first is the default;
+# app versions in the stores use kick-auth.kounex.com, newer ones
+# kick-auth.obs-blade.com. The exchange must name the redirect the login
+# started with, so the callback host picks it.
+ALLOWED_REDIRECTS = [
+    url.strip()
+    for url in os.environ.get(
+        "KICK_OAUTH_REDIRECT_URIS",
+        ",".join(
+            [
+                os.environ.get(
+                    "KICK_OAUTH_REDIRECT_URI",
+                    "https://kick-auth.kounex.com/oauth/callback",
+                ),
+                "https://kick-auth.obs-blade.com/oauth/callback",
+            ]
+        ),
+    ).split(",")
+    if url.strip()
+]
+ALLOWED_REDIRECT = ALLOWED_REDIRECTS[0]
 LISTEN_HOST = os.environ.get("KICK_AUTH_LISTEN", "127.0.0.1")
 LISTEN_PORT = int(os.environ.get("KICK_AUTH_PORT", "8422"))
 MAX_BODY = 8192
@@ -85,7 +103,7 @@ def build_upstream(form: dict[str, str]) -> dict[str, str]:
         redirect = form.get("redirect_uri", "")
         if not code or not verifier:
             raise ProxyError(400, "invalid_request")
-        if redirect != ALLOWED_REDIRECT:
+        if redirect not in ALLOWED_REDIRECTS:
             raise ProxyError(400, "invalid_redirect")
         if len(code) > 512 or len(verifier) > 256:
             raise ProxyError(400, "invalid_request")
@@ -94,7 +112,7 @@ def build_upstream(form: dict[str, str]) -> dict[str, str]:
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
             "code": code,
-            "redirect_uri": ALLOWED_REDIRECT,
+            "redirect_uri": redirect,
             "code_verifier": verifier,
         }
     if grant == "refresh_token":
@@ -194,7 +212,22 @@ def register_session(
         }
 
 
-def accept_callback(query: dict[str, str], forward, now: float | None = None) -> bool:
+def redirect_for_host(host: str) -> str:
+    """The registered callback URL on [host] (the one the browser came
+    back to), else the default."""
+    name = host.split(":", 1)[0].strip().lower()
+    for url in ALLOWED_REDIRECTS:
+        if url.lower().startswith(f"https://{name}/"):
+            return url
+    return ALLOWED_REDIRECT
+
+
+def accept_callback(
+    query: dict[str, str],
+    forward,
+    now: float | None = None,
+    redirect: str | None = None,
+) -> bool:
     """Exchange the browser redirect. True when the state was known."""
     state = query.get("state", "")
     moment = time.time() if now is None else now
@@ -217,7 +250,7 @@ def accept_callback(query: dict[str, str], forward, now: float | None = None) ->
                     "grant_type": "authorization_code",
                     "code": code,
                     "code_verifier": verifier,
-                    "redirect_uri": ALLOWED_REDIRECT,
+                    "redirect_uri": redirect or ALLOWED_REDIRECT,
                 }
             )
         )
@@ -315,7 +348,11 @@ def make_handler(forward):
                 return
             query = self._query()
             try:
-                known = accept_callback(query, forward)
+                known = accept_callback(
+                    query,
+                    forward,
+                    redirect=redirect_for_host(self.headers.get("Host", "")),
+                )
             except ProxyError:
                 known = False
             except Exception:

@@ -13,7 +13,7 @@ import '../general_helper.dart';
 /// whose owner signed in here and keeps them 7 days.
 const String kKickEventsRelayUrl = String.fromEnvironment(
   'KICK_EVENTS_RELAY_URL',
-  defaultValue: 'https://kick-events.kounex.com',
+  defaultValue: 'https://kick-events.obs-blade.com',
 );
 
 enum KickRelayState {

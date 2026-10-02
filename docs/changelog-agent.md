@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - Kick services on obs-blade.com
+
+The first webhook test delivered nothing: kounex.com runs Cloudflare
+Bot Fight Mode (Free plan, zone-wide, no per-host exception), which
+answers datacenter clients - Kick's webhook servers - with a 403 JS
+challenge. Browsers and phones on home / mobile networks pass, so Kick
+sign-in kept working. Moved to the new obs-blade.com zone (no such
+check, verified from Hetzner):
+- `kick-events.obs-blade.com` is the relay host (the kounex.com one is
+  gone - no released app used it). Kick's webhook URL:
+  `https://kick-events.obs-blade.com/kick/webhook`.
+- `kick-auth.obs-blade.com` serves the token exchange next to
+  `kick-auth.kounex.com`, which stays for app versions in the stores.
+  New builds post there (`kKickTokenProxyUrl`). The proxy accepts both
+  callback URLs (`KICK_OAUTH_REDIRECT_URIS`) and picks the one matching
+  the callback's Host header (cloudflared passes it through - checked
+  with a temporary echo route). The app's redirect stays on kounex.com
+  until `kick-auth.obs-blade.com/oauth/callback` is registered on the
+  Kick app too.
+
 ## 2026-10-03 - Activity feed v1 + Kick events relay
 
 Everything that happens on the user's own channels in one feed, with

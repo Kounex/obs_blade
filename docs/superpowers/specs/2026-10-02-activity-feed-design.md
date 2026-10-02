@@ -20,7 +20,7 @@ fill gaps.
 | Surfaces | Chat \| Activity segment in the Chat tab (tablet: side by side), unread badge button in the chat bar, "N new" chip in streaming mode |
 | Seen model | Seen = per-channel high-water mark ("new since you last looked" + badge + mark all seen). Thanked = swipe; big events stay in the to-thank queue until handled |
 | Retention | Phone 30 days; relay 7 days, a channel with no app check-in for 30 days is unsubscribed |
-| Relay host | `kick-events.kounex.com` on Hetzner, own container next to `kick-auth` |
+| Relay host | `kick-events.obs-blade.com` on Hetzner, own container next to `kick-auth` (first `kick-events.kounex.com`: that zone's Bot Fight Mode blocks Kick's webhook servers) |
 | Fleet board | Add both `kick-auth` and `kick-events` |
 | Gating | Pro: every native source behind the feed is Pro already (native engines never start without it) |
 
@@ -192,7 +192,7 @@ open and daily: older than 30 days or more than 5,000 events.
 ### Kick events relay (`tool/kick_events_relay/`)
 
 Python 3.12 + aiohttp + cryptography, SQLite, quadlet with memory / CPU
-caps, binds localhost, Cloudflare tunnel `kick-events.kounex.com`.
+caps, binds localhost, Cloudflare tunnel `kick-events.obs-blade.com`.
 
 - `POST /kick/webhook`: verify signature; deliveries older than 24 h are
   acknowledged but not kept (retries of a real event stay possible),

@@ -98,5 +98,63 @@ class BuildUpstreamTest(unittest.TestCase):
             proxy.take_result("state-1", "poll-1", now=1_003)
 
 
+class RedirectHostTest(unittest.TestCase):
+    def test_both_registered_callbacks_are_accepted(self):
+        for url in (
+            "https://kick-auth.kounex.com/oauth/callback",
+            "https://kick-auth.obs-blade.com/oauth/callback",
+        ):
+            form = proxy.build_upstream(
+                {
+                    "grant_type": "authorization_code",
+                    "code": "c",
+                    "code_verifier": "v",
+                    "redirect_uri": url,
+                }
+            )
+            self.assertEqual(form["redirect_uri"], url)
+
+    def test_unregistered_redirect_is_rejected(self):
+        with self.assertRaises(proxy.ProxyError):
+            proxy.build_upstream(
+                {
+                    "grant_type": "authorization_code",
+                    "code": "c",
+                    "code_verifier": "v",
+                    "redirect_uri": "https://evil.example/oauth/callback",
+                }
+            )
+
+    def test_callback_host_picks_its_redirect(self):
+        self.assertEqual(
+            proxy.redirect_for_host("kick-auth.obs-blade.com"),
+            "https://kick-auth.obs-blade.com/oauth/callback",
+        )
+        self.assertEqual(
+            proxy.redirect_for_host("KICK-AUTH.KOUNEX.COM:443"),
+            "https://kick-auth.kounex.com/oauth/callback",
+        )
+        self.assertEqual(
+            proxy.redirect_for_host("127.0.0.1:8422"), proxy.ALLOWED_REDIRECT
+        )
+
+    def test_callback_exchange_uses_the_host_redirect(self):
+        proxy._sessions.clear()
+        proxy.register_session("state-9", "verifier-9", "poll-9", now=1_000)
+        seen = []
+
+        def forward(form):
+            seen.append(form["redirect_uri"])
+            return 200, b"{}"
+
+        proxy.accept_callback(
+            {"code": "c", "state": "state-9"},
+            forward,
+            now=1_001,
+            redirect="https://kick-auth.obs-blade.com/oauth/callback",
+        )
+        self.assertEqual(seen, ["https://kick-auth.obs-blade.com/oauth/callback"])
+
+
 if __name__ == "__main__":
     unittest.main()

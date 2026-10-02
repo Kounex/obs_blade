@@ -102,6 +102,8 @@ Not OBS, but the same kind of trap - verified 2026-10-02, details in
   (no user scope). The public key at `api.kick.com/public/v1/public-key`
   is NOT the one printed in KickDevDocs - fetch it. Failing deliveries
   for a day unsubscribes the app from that event.
+- kounex.com runs Cloudflare Bot Fight Mode: anything a server must call
+  (webhooks) can't live there - use obs-blade.com.
 - Helix `streams` pages 20 by default (`first=100`), and its
   `started_at` is when the stream started - use it, not "when the app
   noticed".

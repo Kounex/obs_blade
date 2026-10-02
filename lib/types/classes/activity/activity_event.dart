@@ -30,7 +30,7 @@ enum ActivitySource {
   /// The platform's own API, through the native chat stores
   native,
 
-  /// OBS Blade's Kick webhook relay (`kick-events.kounex.com`)
+  /// OBS Blade's Kick webhook relay (`kick-events.obs-blade.com`)
   kickRelay,
 
   /// StreamElements (planned - waiting on API access)

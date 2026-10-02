@@ -174,7 +174,8 @@ Play internal-track draft `3.3.0 (2026090701)`.
    optional live-session strip; syncOffset gating.
 7. **Activity feed v1 built (2026-10-03, not yet on a device):** Chat |
    Activity segment, header bell, streaming chip, Kick events relay at
-   `kick-events.kounex.com`. Check first on a device: Twitch re-sign-in
+   `kick-events.obs-blade.com` (Kick's webhook URL must point there).
+   Check first on a device: Twitch re-sign-in
    for the activity scopes, a real follow / sub / cheer, the Kick relay
    after the webhook URL is set in Kick's developer settings. Next:
    StreamElements / Streamlabs once their API access is approved.
