@@ -123,6 +123,14 @@ abstract class _CanvasViewStore with Store {
   @computed
   bool get isViewingOtherCanvas => this.viewedCanvas != null;
 
+  /// Aitum Vertical's own stream or recording runs - the dashboard app bar
+  /// then shows it next to the main LIVE / REC pills
+  @computed
+  bool get aitumOnAir =>
+      this.aitumSupport == AitumSupport.available &&
+      this.aitumCanvas != null &&
+      (this.aitumStatus.streaming || this.aitumStatus.recording);
+
   /// The viewed canvas is Aitum's and its vendor answers: scene taps switch
   /// its live scene, its outputs can be started / stopped
   @computed

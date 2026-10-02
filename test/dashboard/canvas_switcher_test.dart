@@ -20,6 +20,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/canvas/canvas_output_controls.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/canvas/canvas_picker.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_element_layout.dart';
+import 'package:obs_blade/views/dashboard/widgets/status_app_bar/on_air_status_cluster.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_buttons/scene_buttons.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/scene_items.dart';
 
@@ -401,6 +402,48 @@ void main() {
 
     canvasStore.viewCanvas(null);
     await tester.pump();
+  });
+
+  testWidgets('app bar: the vertical pill only while Aitum\'s output runs, '
+      'a tap shows that canvas', (tester) async {
+    /// Narrow phone - three pills scale down instead of overflowing
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    runInAction(() {
+      canvasStore.canvases = ObservableList.of([_main, _aitum]);
+    });
+    await tester.pumpWidget(app(const OnAirStatusCluster()));
+    aitumAnswers();
+    await tester.pump();
+    final pill = find.bySemanticsLabel('$kAitumCanvasName: live, recording');
+    expect(find.byType(VerticalOnAirPill), findsNothing);
+
+    aitumAnswers(
+      status: const AitumOutputStatus(streaming: true, recording: true),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(pill, findsOneWidget);
+    expect(find.text('LIVE · REC'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    /// Unknown while reconnecting
+    runInAction(() => dashboardStore.reconnecting = true);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(VerticalOnAirPill), findsNothing);
+    runInAction(() => dashboardStore.reconnecting = false);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.byType(VerticalOnAirPill));
+    await tester.pump();
+    expect(canvasStore.viewedCanvasUuid, _aitum.uuid);
+
+    canvasStore.viewCanvas(null);
+    await tester.pump(const Duration(seconds: 1));
   });
 
   testWidgets('scene items show the picked canvas scene', (tester) async {

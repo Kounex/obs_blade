@@ -5,7 +5,12 @@ import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/animator/status_dot.dart';
 import 'package:obs_blade/shared/design/design.dart';
 
+import '../../../../shared/general/hive_builder.dart';
+import '../../../../stores/views/canvas_view.dart';
 import '../../../../stores/views/dashboard.dart';
+import '../../../../types/classes/api/aitum_vertical.dart';
+import '../../../../types/enums/hive_keys.dart';
+import '../../../../types/enums/settings_keys.dart';
 import '../../../../types/extensions/int.dart';
 
 /// The "On Air" status cluster of the dashboard app bar: a LIVE and a REC
@@ -14,6 +19,11 @@ import '../../../../types/extensions/int.dart';
 ///
 /// Timers keep tabular figures and the store-driven 1s poll cadence - the
 /// digit change just crossfades softly instead of hard swapping.
+///
+/// While Aitum Vertical's own stream / recording runs, a compact
+/// [VerticalOnAirPill] joins them - the only sign of the vertical output
+/// while the main canvas is shown. The row scales down instead of
+/// overflowing on narrow phones.
 class OnAirStatusCluster extends StatelessWidget {
   const OnAirStatusCluster({super.key});
 
@@ -35,42 +45,195 @@ class OnAirStatusCluster extends StatelessWidget {
         /// label, no breathe, timer hidden - token-delta §5)
         final bool reconnecting = dashboardStore.reconnecting;
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            OnAirPill(
-              label: 'LIVE',
-              active: dashboardStore.isLive,
-              unknown: reconnecting,
-              activeColor: statusColors.live,
-              timerText:
-                  ((dashboardStore.latestStreamTimeDurationMS ?? 0) ~/ 1000)
-                      .secondsToFormattedDurationString(),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            OnAirPill(
-              label: 'REC',
-              active: dashboardStore.isRecording,
-              unknown: reconnecting,
-              paused:
-                  dashboardStore.isRecording &&
-                  dashboardStore.isRecordingPaused,
-              activeColor: recordingActive
-                  ? statusColors.recording
-                  : statusColors.warning,
+        final CanvasViewStore? canvasStore = canvasViewStoreOrNull();
 
-              /// Red status text on a same-hue tint resolves the brightened
-              /// [AppStatusColors.recordingText] derivative (§2.3)
-              activeTextColor: recordingActive
-                  ? statusColors.recordingText
-                  : null,
-              timerText:
-                  ((dashboardStore.latestRecordTimeDurationMS ?? 0) ~/ 1000)
-                      .secondsToFormattedDurationString(),
-            ),
-          ],
+        /// Unknown while reconnecting - never assert the vertical output
+        /// over a dead connection either
+        final bool verticalOnAir =
+            !reconnecting && (canvasStore?.aitumOnAir ?? false);
+
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              OnAirPill(
+                label: 'LIVE',
+                active: dashboardStore.isLive,
+                unknown: reconnecting,
+                activeColor: statusColors.live,
+                timerText:
+                    ((dashboardStore.latestStreamTimeDurationMS ?? 0) ~/ 1000)
+                        .secondsToFormattedDurationString(),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              OnAirPill(
+                label: 'REC',
+                active: dashboardStore.isRecording,
+                unknown: reconnecting,
+                paused:
+                    dashboardStore.isRecording &&
+                    dashboardStore.isRecordingPaused,
+                activeColor: recordingActive
+                    ? statusColors.recording
+                    : statusColors.warning,
+
+                /// Red status text on a same-hue tint resolves the brightened
+                /// [AppStatusColors.recordingText] derivative (§2.3)
+                activeTextColor: recordingActive
+                    ? statusColors.recordingText
+                    : null,
+                timerText:
+                    ((dashboardStore.latestRecordTimeDurationMS ?? 0) ~/ 1000)
+                        .secondsToFormattedDurationString(),
+              ),
+              AnimatedSwitcher(
+                duration: AppMotion.medium,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SizeTransition(
+                    axis: Axis.horizontal,
+                    sizeFactor: animation,
+                    child: child,
+                  ),
+                ),
+                child: verticalOnAir
+                    ? Padding(
+                        key: const ValueKey('vertical'),
+                        padding: const EdgeInsets.only(left: AppSpacing.md),
+                        child: VerticalOnAirPill(canvasStore: canvasStore!),
+                      )
+                    : const SizedBox(key: ValueKey('no-vertical')),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+}
+
+/// Aitum Vertical's own outputs in the app bar: phone glyph + LIVE / REC
+/// (no timers - the plugin reports none). Tapping it shows that canvas,
+/// outside streaming mode (always the main canvas) and only with the canvas
+/// picker on.
+class VerticalOnAirPill extends StatelessWidget {
+  final CanvasViewStore canvasStore;
+
+  const VerticalOnAirPill({super.key, required this.canvasStore});
+
+  @override
+  Widget build(BuildContext context) {
+    final AppStatusColors statusColors = Theme.of(
+      context,
+    ).extension<AppStatusColors>()!;
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [
+        SettingsKeys.StreamingMode,
+        SettingsKeys.ExposeCanvasSwitcher,
+      ],
+      builder: (context, settingsBox, child) => Observer(
+        builder: (context) {
+          final status = this.canvasStore.aitumStatus;
+          final bool recordingActive =
+              status.recording && !status.recordingPaused;
+
+          /// Streaming leads (green), else the recording's red / paused
+          /// amber - same signal grammar as the main pills
+          final Color color = status.streaming
+              ? statusColors.live
+              : recordingActive
+              ? statusColors.recording
+              : statusColors.warning;
+          final Color textColor = !status.streaming && recordingActive
+              ? statusColors.recordingText
+              : color;
+
+          /// Each part in its own signal color - REC stays red / amber
+          /// next to a green LIVE
+          final Color recColor = recordingActive
+              ? statusColors.recordingText
+              : statusColors.warning;
+
+          final bool canJump =
+              !(settingsBox.get(
+                    SettingsKeys.StreamingMode.name,
+                    defaultValue: false,
+                  )
+                  as bool) &&
+              (settingsBox.get(
+                    SettingsKeys.ExposeCanvasSwitcher.name,
+                    defaultValue: true,
+                  )
+                  as bool);
+          final String? aitumUuid = this.canvasStore.aitumCanvas?.uuid;
+
+          final Widget pill = Container(
+            height: 28.0,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.pill,
+              color: color.withValues(alpha: 0.14),
+              border: Border.all(color: color.withValues(alpha: 0.45)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.device_phone_portrait,
+                  size: 13.0,
+                  color: textColor,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                status.recording && status.recordingPaused && !status.streaming
+                    ? Icon(CupertinoIcons.pause_fill, size: 10.0, color: color)
+                    : StatusDot(size: 8.0, color: color),
+                const SizedBox(width: AppSpacing.sm),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      if (status.streaming)
+                        TextSpan(
+                          text: 'LIVE',
+                          style: TextStyle(color: statusColors.live),
+                        ),
+                      if (status.streaming && status.recording)
+                        TextSpan(
+                          text: ' · ',
+                          style: TextStyle(color: textTheme.bodySmall?.color),
+                        ),
+                      if (status.recording)
+                        TextSpan(
+                          text: 'REC',
+                          style: TextStyle(color: recColor),
+                        ),
+                    ],
+                  ),
+                  style: textTheme.labelSmall,
+                ),
+              ],
+            ),
+          );
+
+          return Semantics(
+            button: canJump,
+            label:
+                '$kAitumCanvasName: ${[if (status.streaming) 'live', if (status.recording) status.recordingPaused ? 'recording paused' : 'recording'].join(', ')}',
+            hint: canJump ? 'Shows the $kAitumCanvasName canvas' : null,
+            excludeSemantics: true,
+            child: canJump && aitumUuid != null
+                ? Pressable(
+                    haptic: true,
+                    onTap: () => this.canvasStore.viewCanvas(aitumUuid),
+                    child: pill,
+                  )
+                : pill,
+          );
+        },
+      ),
     );
   }
 }

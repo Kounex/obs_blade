@@ -40,6 +40,13 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
         () => super.isViewingOtherCanvas,
         name: '_CanvasViewStore.isViewingOtherCanvas',
       )).value;
+  Computed<bool>? _$aitumOnAirComputed;
+
+  @override
+  bool get aitumOnAir => (_$aitumOnAirComputed ??= Computed<bool>(
+    () => super.aitumOnAir,
+    name: '_CanvasViewStore.aitumOnAir',
+  )).value;
   Computed<bool>? _$canControlViewedCanvasComputed;
 
   @override
@@ -464,6 +471,7 @@ hasMultipleCanvases: ${hasMultipleCanvases},
 aitumCanvas: ${aitumCanvas},
 viewedCanvas: ${viewedCanvas},
 isViewingOtherCanvas: ${isViewingOtherCanvas},
+aitumOnAir: ${aitumOnAir},
 canControlViewedCanvas: ${canControlViewedCanvas},
 liveControlBlockedReason: ${liveControlBlockedReason},
 selectedScene: ${selectedScene}
