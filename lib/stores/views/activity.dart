@@ -423,6 +423,12 @@ abstract class _ActivityStore with Store {
         }
         this.sessions.sort((a, b) => b.start.compareTo(a.start));
       }
+
+      /// A feed that opened before the marks were read froze an empty
+      /// snapshot - everything would read as new
+      if (this.visitMarks != null) {
+        this.visitMarks = ObservableMap.of(this.seenMarks);
+      }
       this.revision++;
     });
     this._saveState();
@@ -431,7 +437,7 @@ abstract class _ActivityStore with Store {
   /// A platform chat store was just created (`main.dart` hooks every
   /// chat store's `onCreated` here) - listen to it.
   void chatStoreCreated() {
-    if (!this._attachPlatformStores || !this._initialized) return;
+    if (!this._attachPlatformStores || !this.loaded) return;
     final getIt = GetIt.instance;
     if (!this._attached.contains('twitch') && _created<TwitchChatStore>()) {
       this._attached.add('twitch');
@@ -631,7 +637,12 @@ abstract class _ActivityStore with Store {
   /// [since]: when the platform says the stream started (Twitch Helix
   /// `started_at`, Kick relay `started_at`) - a session opened mid-stream
   /// (app started late) reaches back to it.
-  void _setLive(String source, bool live, {DateTime? since}) => runInAction(() {
+  void _setLive(
+    String source,
+    bool live, {
+    DateTime? since,
+    DateTime? endedAt,
+  }) => runInAction(() {
     var changed = live
         ? this.liveSources.add(source)
         : this.liveSources.remove(source);
@@ -640,14 +651,16 @@ abstract class _ActivityStore with Store {
       changed = true;
     }
     if (!live) this._liveSince.remove(source);
-    if (changed) this._syncSession();
+    if (changed) this._syncSession(endedAt: endedAt);
   });
 
   /// Platform-reported stream start per live source
   final Map<String, DateTime> _liveSince = {};
 
+  /// [endedAt]: when the platform says the stream ended (relay backlog
+  /// replaying an old offline) - the session ends there, not now.
   @action
-  void _syncSession() {
+  void _syncSession({DateTime? endedAt}) {
     final now = this._clock().toUtc();
     final platforms = <ActivityPlatform>{
       for (final source in this.liveSources)
@@ -667,8 +680,11 @@ abstract class _ActivityStore with Store {
     }
     if (since != null && since.isAfter(now)) since = now;
     if (this.liveSources.isNotEmpty) {
+      /// Same broadcast when it (re)started within the grace of the last
+      /// end - or before it (the app was closed while the stream ran on)
+      final startedAt = since ?? now;
       if (last != null &&
-          (last.isOpen || now.difference(last.end!) <= sessionGrace)) {
+          (last.isOpen || startedAt.difference(last.end!) <= sessionGrace)) {
         this.sessions[0] = last.copyWith(
           clearEnd: true,
           platforms: {...last.platforms, ...platforms},
@@ -692,7 +708,15 @@ abstract class _ActivityStore with Store {
         );
       }
     } else if (last != null && last.isOpen) {
-      this.sessions[0] = last.copyWith(end: now);
+      final reported = endedAt?.toUtc();
+      this.sessions[0] = last.copyWith(
+        end:
+            reported != null &&
+                reported.isBefore(now) &&
+                reported.isAfter(last.start)
+            ? reported
+            : now,
+      );
     } else {
       return;
     }
@@ -741,14 +765,23 @@ abstract class _ActivityStore with Store {
     }
   }
 
-  /// The feed came on screen: freeze the divider, keep the badge honest.
-  @action
-  void beginVisit() => this.visitMarks ??= ObservableMap.of(this.seenMarks);
+  /// Feeds on screen right now (tablet pane + a sheet can overlap)
+  int _visits = 0;
 
-  /// The feed left the screen: what it showed is seen now.
+  /// A feed came on screen: freeze the divider at what was seen before.
+  @action
+  void beginVisit() {
+    this._visits++;
+    this.visitMarks ??= ObservableMap.of(this.seenMarks);
+  }
+
+  /// A feed left the screen; when the last one goes, what they showed is
+  /// seen.
   @action
   void endVisit() {
-    if (this.visitMarks == null) return;
+    if (this._visits == 0) return;
+    this._visits--;
+    if (this._visits > 0) return;
     this.visitMarks = null;
     this.markAllSeen();
   }
@@ -811,17 +844,27 @@ abstract class _ActivityStore with Store {
     final kick = this._attached.contains('kick')
         ? GetIt.instance<KickChatStore>()
         : null;
-    final selfId = kick?.selfUserId?.toString();
+    final selfId = this._kickSelfId(kick);
 
     /// Signed out of Kick, another account, or the setting turned off:
     /// the relay forgets that channel's data
+    ///
+    /// Signed out = no stored Kick session. Not `ownChannelSlug`: that is
+    /// null until the store's async auth restore finished, and reading
+    /// it then deleted the backlog the relay kept, on every launch.
     if (this._relayToken != null &&
-        ((kick != null && kick.ownChannelSlug == null) ||
-            (selfId != null && selfId != this._relayUserId) ||
+        (selfId == null ||
+            selfId != this._relayUserId ||
             !this._relayEnabled())) {
       final token = this._relayToken!;
+      this._relayCoverage(false);
+      if (this._relayRunning) {
+        this._relayRunning = false;
+        unawaited(this._relayClient.stop());
+      }
       unawaited(this._relayClient.unregister(token));
       this._forgetRelaySession();
+      this._setLive('kick-relay', false);
     }
     if (!this.relayWanted) {
       if (this._relayRunning) {
@@ -834,6 +877,19 @@ abstract class _ActivityStore with Store {
       return;
     }
     if (!this._relayRunning) unawaited(this._startRelay(kick!));
+  }
+
+  /// The signed-in Kick user id from the stored session - read from the
+  /// box so a sign-out is seen even when the Kick store doesn't exist
+  String? _kickSelfId(KickChatStore? kick) {
+    try {
+      if (Hive.isBoxOpen(HiveKeys.KickAuth.name)) {
+        return Hive.box<KickAuth>(
+          HiveKeys.KickAuth.name,
+        ).get(KickAuth.kBoxKey)?.userId?.toString();
+      }
+    } catch (_) {}
+    return kick?.selfUserId?.toString();
   }
 
   /// The setting changed (options sheet).
@@ -942,7 +998,12 @@ abstract class _ActivityStore with Store {
     if (status != null) {
       final (channel, live, at) = status;
       if (channel == this._relayUserId) {
-        this._setLive('kick-relay', live, since: live ? at : null);
+        this._setLive(
+          'kick-relay',
+          live,
+          since: live ? at : null,
+          endedAt: live ? null : at,
+        );
       }
       return;
     }
@@ -1003,11 +1064,40 @@ abstract class _ActivityStore with Store {
     this._saveCoverage();
   }
 
+  /// "Delete all data" in Settings: rows, bookkeeping and the relay
+  /// session (the relay deletes what it kept for the channel).
+  Future<void> deleteAllData() async {
+    final token = this._relayToken;
+    if (this._relayRunning) {
+      this._relayRunning = false;
+      await this._relayClient.stop();
+    }
+    if (token != null) unawaited(this._relayClient.unregister(token));
+    this._relayToken = null;
+    this._relayUserId = null;
+    this._relayCursor = 0;
+    await this.clearHistory();
+    runInAction(() {
+      this.sessions.clear();
+      this.relayState = KickRelayState.off;
+    });
+    this._ledger.coverage.closeAll(this._clock());
+    this._ledger.coverage.prune(this._clock().add(const Duration(days: 1)));
+    await this._persistence.putMeta('sessions', null);
+    await this._persistence.putMeta('coverage', null);
+    await this._persistence.putMeta('heartbeat', null);
+    this._saveState();
+  }
+
   // Test seams
 
   /// Live flag of one source (tests: drive sessions without stores).
-  void setLiveForTest(String source, bool live, {DateTime? since}) =>
-      this._setLive(source, live, since: since);
+  void setLiveForTest(
+    String source,
+    bool live, {
+    DateTime? since,
+    DateTime? endedAt,
+  }) => this._setLive(source, live, since: since, endedAt: endedAt);
 
   void setNativeCoverageForTest(ActivityPlatform platform, String? channel) =>
       this._setNativeCoverage(platform, channel);

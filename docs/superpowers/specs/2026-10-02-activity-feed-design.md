@@ -194,7 +194,8 @@ open and daily: older than 30 days or more than 5,000 events.
 Python 3.12 + aiohttp + cryptography, SQLite, quadlet with memory / CPU
 caps, binds localhost, Cloudflare tunnel `kick-events.kounex.com`.
 
-- `POST /kick/webhook`: verify signature + timestamp (10 min window),
+- `POST /kick/webhook`: verify signature; deliveries older than 24 h are
+  acknowledged but not kept (retries of a real event stay possible),
   dedupe on message id, keep only registered broadcasters, store, push
   to open sockets. Always 200 once verified (bad signature → 403).
 - `POST /v1/session {access_token}`: `GET /public/v1/users` with it →

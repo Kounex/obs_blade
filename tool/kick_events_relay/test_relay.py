@@ -221,6 +221,12 @@ class SessionTest(RelayTestBase):
         self.assertFalse(self.store.is_registered(BROADCASTER))
         self.assertEqual(self.store.latest_seq(BROADCASTER), 0)
 
+    async def test_old_sessions_beyond_the_cap_are_dropped(self):
+        first = (await self.register())["session_token"]
+        for _ in range(10):
+            await self.register()
+        self.assertIsNone(self.store.session_user(first))
+
     async def test_unknown_session_is_401_everywhere(self):
         headers = {"Authorization": "Bearer nope"}
         self.assertEqual((await self.client.get("/v1/events", headers=headers)).status, 401)

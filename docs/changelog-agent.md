@@ -67,6 +67,20 @@ behind it are).
 
 Tests: `test/activity/` (ledger, mappers, store, EventSub routing, relay
 client, UI), shots in `tool/widget_shots/activity_shots_test.dart`.
+
+Fresh-context review (same day) - 11 findings, all real, all fixed:
+the relay session was dropped on every launch (the Kick store's own
+slug is null until its async auth restore - sign-out is now read from
+the auth box); relay backlog stream status now ends sessions at the
+reported end and a restart during the same broadcast continues its
+session; feed visits are counted and follow the active tab + app
+lifecycle (tabs stay mounted in an `IndexedStack`); "Delete all data"
+clears the activity boxes and the relay session; switching Kick
+accounts stops the old relay socket; feed sub-widgets got their own
+Observers; stores attach only after the boxes loaded; hype trains left
+the to-thank queue; relay: stream loop no longer drops an item when two
+futures finish together, sessions per channel capped at 10. Not changed:
+a re-follow stays one row (follows key on the follower).
 Not built: StreamElements / Streamlabs clients (API approval pending),
 push notifications while closed, end-of-stream recap.
 

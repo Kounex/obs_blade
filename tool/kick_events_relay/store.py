@@ -52,6 +52,7 @@ CREATE INDEX IF NOT EXISTS events_user_seq ON events(user_id, seq);
 
 EVENT_RETENTION_SECONDS = 7 * 24 * 3600
 SESSION_IDLE_SECONDS = 30 * 24 * 3600
+MAX_SESSIONS_PER_CHANNEL = 10
 
 
 def hash_token(token: str) -> str:
@@ -108,6 +109,14 @@ class Store:
                 "INSERT INTO sessions(token_hash, user_id, created_at, last_used)"
                 " VALUES (?, ?, ?, ?)",
                 (hash_token(token), user_id, moment, moment),
+            )
+            # Reinstalls / re-sign-ins leave old sessions behind; keep the
+            # newest few per channel.
+            self._db.execute(
+                "DELETE FROM sessions WHERE user_id = ? AND token_hash NOT IN"
+                " (SELECT token_hash FROM sessions WHERE user_id = ?"
+                " ORDER BY last_used DESC, created_at DESC LIMIT ?)",
+                (user_id, user_id, MAX_SESSIONS_PER_CHANNEL),
             )
         return token
 

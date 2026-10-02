@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:mobx/mobx.dart';
 
 import '../../../../models/enums/chat_type.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/divider.dart';
 import '../../../../stores/pro_store.dart';
+import '../../../../stores/shared/tabs.dart';
 import '../../../../stores/views/activity.dart';
 import '../../../../stores/views/kick_chat.dart';
 import '../../../../stores/views/twitch_chat.dart';
@@ -38,7 +40,17 @@ class ActivityFeed extends StatefulWidget {
   /// Rendered in a bottom sheet (no card frame of its own)
   final bool inSheet;
 
-  const ActivityFeed({super.key, this.proRoute, this.inSheet = false});
+  /// Tab the feed lives in - tabs stay mounted ([IndexedStack]), so the
+  /// feed counts as on screen only while its tab is the active one. Null
+  /// (sheets): on screen while built.
+  final Tabs? hostTab;
+
+  const ActivityFeed({
+    super.key,
+    this.proRoute,
+    this.inSheet = false,
+    this.hostTab,
+  });
 
   @override
   State<ActivityFeed> createState() => _ActivityFeedState();
@@ -47,15 +59,55 @@ class ActivityFeed extends StatefulWidget {
 class _ActivityFeedState extends State<ActivityFeed> {
   ActivityStore? _store;
 
+  /// A visit is open (counted in the store) - while on screen
+  bool _visiting = false;
+  ReactionDisposer? _tabReaction;
+  AppLifecycleListener? _lifecycle;
+
   @override
   void initState() {
     super.initState();
-    this._store = activityStoreOrNull()?..beginVisit();
+    this._store = activityStoreOrNull();
+    final getIt = GetIt.instance;
+    if (this.widget.hostTab != null && getIt.isRegistered<TabsStore>()) {
+      this._tabReaction = reaction<Tabs>(
+        (_) => getIt<TabsStore>().activeTab,
+        (_) => this._sync(),
+      );
+    }
+    this._lifecycle = AppLifecycleListener(onStateChange: (_) => this._sync());
+    this._sync();
+  }
+
+  bool get _onScreen {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
+      return false;
+    }
+    final tab = this.widget.hostTab;
+    final getIt = GetIt.instance;
+    if (tab == null || !getIt.isRegistered<TabsStore>()) return true;
+    return getIt<TabsStore>().activeTab == tab;
+  }
+
+  void _sync() {
+    final store = this._store;
+    if (store == null) return;
+    final visible = this.mounted && this._onScreen;
+    if (visible && !this._visiting) {
+      this._visiting = true;
+      store.beginVisit();
+    } else if (!visible && this._visiting) {
+      this._visiting = false;
+      store.endVisit();
+    }
   }
 
   @override
   void dispose() {
-    this._store?.endVisit();
+    this._tabReaction?.call();
+    this._lifecycle?.dispose();
+    if (this._visiting) this._store?.endVisit();
     super.dispose();
   }
 
@@ -129,8 +181,12 @@ class _FeedHeader extends StatelessWidget {
 
   const _FeedHeader({required this.store, required this.toThank});
 
+  /// Own Observer: reads store observables the parent doesn't track
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Observer(builder: (context) => this._content(context));
+
+  Widget _content(BuildContext context) {
     final Color accent = Theme.of(context).colorScheme.secondary;
     final bool on = this.store.toThankOnly;
     return LayoutBuilder(
@@ -307,13 +363,20 @@ class _FeedNotices extends StatelessWidget {
 
   const _FeedNotices({required this.store});
 
+  /// Own Observer: reads store observables the parent doesn't track
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Observer(builder: (context) => this._content(context));
+
+  Widget _content(BuildContext context) {
     final getIt = GetIt.instance;
     final notices = <Widget>[];
     if (getIt.isRegistered<TwitchChatStore>() &&
         getIt.checkLazySingletonInstanceExists<TwitchChatStore>()) {
       final twitch = getIt<TwitchChatStore>();
+
+      /// The scope list lives in Hive - authState flips on a new sign-in
+      twitch.authState;
       if (twitch.isLoggedIn && twitch.missingActivityScopes.isNotEmpty) {
         notices.add(
           _Notice(
@@ -327,8 +390,9 @@ class _FeedNotices extends StatelessWidget {
         );
       }
     }
-    if (this.store.relayWanted &&
-        this.store.relayState == KickRelayState.retrying) {
+    /// Read first: relayWanted can short-circuit before any observable
+    final relayState = this.store.relayState;
+    if (relayState == KickRelayState.retrying && this.store.relayWanted) {
       notices.add(
         const _Notice(
           key: Key('activity-notice-kick-relay'),
@@ -478,8 +542,12 @@ class _GroupedList extends StatelessWidget {
 
   const _GroupedList({required this.store, required this.groups});
 
+  /// Own Observer: reads store observables the parent doesn't track
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Observer(builder: (context) => this._content(context));
+
+  Widget _content(BuildContext context) {
     final now = DateTime.now();
     final items = <Widget>[];
     var dividerPlaced = false;

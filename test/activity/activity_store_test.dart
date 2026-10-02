@@ -103,6 +103,48 @@ void main() {
     expect(store.allEvents.any(store.isNew), isFalse);
   });
 
+  test('visits are counted: the divider holds until the last feed leaves', () {
+    store.ingest(_event('a', at: now));
+    store.beginVisit();
+    store.beginVisit();
+    store.endVisit();
+    expect(store.unseenCount, 1);
+    expect(store.visitMarks, isNotNull);
+    store.endVisit();
+    expect(store.unseenCount, 0);
+    store.endVisit(); // extra end is ignored
+    expect(store.visitMarks, isNull);
+  });
+
+  test(
+    'a feed opened before the marks loaded gets the loaded snapshot',
+    () async {
+      store.ingest(_event('a', at: now));
+      store.markAllSeen();
+      await store.dispose();
+      store = build();
+      store.beginVisit();
+      await store.init();
+      expect(store.allEvents.any(store.isNew), isFalse);
+      store.endVisit();
+    },
+  );
+
+  test('hype trains are not in the to-thank queue', () {
+    store.ingest(_event('h', kind: ActivityKind.hypeTrain, at: now));
+    expect(store.toThankCount, 0);
+  });
+
+  test('delete all data forgets rows, sessions and marks', () async {
+    store.ingest(_event('a', at: now));
+    store.setLiveForTest('twitch', true);
+    await store.deleteAllData();
+    expect(store.allEvents, isEmpty);
+    expect(store.sessions, isEmpty);
+    expect(persistence.events, isEmpty);
+    expect(persistence.meta.containsKey('sessions'), isFalse);
+  });
+
   test('backfilled old rows still count as new (seq, not time)', () {
     store.ingest(_event('fresh', at: now));
     store.markAllSeen();
@@ -254,18 +296,42 @@ void main() {
       );
     });
 
-    test('a stale start never swallows the previous session', () {
+    test('reopened while the same broadcast still runs: one session', () {
       store.setLiveForTest('kick', true);
+      final first = store.currentSession!;
       now = now.add(const Duration(hours: 1));
       store.setLiveForTest('kick', false);
+
+      /// App closed 3 h; Twitch says the stream started before the end
       now = now.add(const Duration(hours: 3));
       store.setLiveForTest(
         'twitch',
         true,
-        since: now.subtract(const Duration(hours: 10)),
+        since: first.start.add(const Duration(minutes: 5)),
+      );
+      expect(store.sessions, hasLength(1));
+      expect(store.currentSession!.id, first.id);
+    });
+
+    test('relay backlog of two past streams: two sessions, real ends', () {
+      final day1 = now.subtract(const Duration(days: 2));
+      final day2 = now.subtract(const Duration(days: 1));
+      store.setLiveForTest('kick-relay', true, since: day1);
+      store.setLiveForTest(
+        'kick-relay',
+        false,
+        endedAt: day1.add(const Duration(hours: 2)),
+      );
+      store.setLiveForTest('kick-relay', true, since: day2);
+      store.setLiveForTest(
+        'kick-relay',
+        false,
+        endedAt: day2.add(const Duration(hours: 3)),
       );
       expect(store.sessions, hasLength(2));
-      expect(store.currentSession!.start, now);
+      expect(store.sessions.last.end, day1.add(const Duration(hours: 2)));
+      expect(store.sessions.first.start, day2);
+      expect(store.sessions.first.end, day2.add(const Duration(hours: 3)));
     });
 
     test('rows outside sessions group by day', () {

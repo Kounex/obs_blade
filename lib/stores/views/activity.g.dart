@@ -184,12 +184,12 @@ mixin _$ActivityStore on _ActivityStore, Store {
   }
 
   @override
-  void _syncSession() {
+  void _syncSession({DateTime? endedAt}) {
     final _$actionInfo = _$_ActivityStoreActionController.startAction(
       name: '_ActivityStore._syncSession',
     );
     try {
-      return super._syncSession();
+      return super._syncSession(endedAt: endedAt);
     } finally {
       _$_ActivityStoreActionController.endAction(_$actionInfo);
     }

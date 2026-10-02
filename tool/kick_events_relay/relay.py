@@ -332,13 +332,15 @@ async def handle_stream(request: web.Request) -> web.StreamResponse:
                 {reader, getter}, return_when=asyncio.FIRST_COMPLETED
             )
             if reader in done:
-                getter.cancel()
                 message = reader.result()
                 if message.type in (WSMsgType.CLOSE, WSMsgType.CLOSED, WSMsgType.ERROR, WSMsgType.CLOSING):
                     break
                 # The app never needs to talk; ignore anything it sends.
                 reader = asyncio.ensure_future(socket.receive())
-                continue
+                if getter not in done:
+                    getter.cancel()
+                    continue
+            # Both may finish in one wait() - the dequeued item must still go out.
             wire = getter.result()
             if wire is None:
                 break

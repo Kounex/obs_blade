@@ -18,6 +18,7 @@ import '../../../models/youtube_auth.dart';
 import '../../../shared/design/design.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/shared/tabs.dart';
+import '../../../stores/views/activity.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
 import '../../../utils/routing_helper.dart';
@@ -45,6 +46,12 @@ Future<void> deleteAllUserDataPreservingEntitlements() async {
   await Hive.box<KickAuth>(HiveKeys.KickAuth.name).clear();
   await Hive.box<Hotkey>(HiveKeys.Hotkey.name).clear();
   await Hive.box<PurchasedTip>(HiveKeys.PurchasedTip.name).clear();
+
+  /// Activity feed rows (viewer names, messages), bookkeeping and the Kick
+  /// relay session
+  if (GetIt.instance.isRegistered<ActivityStore>()) {
+    await GetIt.instance<ActivityStore>().deleteAllData();
+  }
 
   bool boughtBlacksmith = Hive.box(
     HiveKeys.Settings.name,

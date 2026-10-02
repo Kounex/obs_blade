@@ -83,6 +83,8 @@ enum ActivityKind {
     ActivityKind.follow ||
     ActivityKind.redemption ||
     ActivityKind.host ||
+    /// Nobody to thank - its contributors have their own rows
+    ActivityKind.hypeTrain ||
     ActivityKind.other => false,
     _ => true,
   };

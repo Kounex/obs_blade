@@ -150,7 +150,10 @@ class _ChatTabSegmentsState extends State<ChatTabSegments> {
                   ),
                 ),
                 if (activity)
-                  ActivityFeed(proRoute: ChatTabRoutingKeys.Pro.route),
+                  ActivityFeed(
+                    proRoute: ChatTabRoutingKeys.Pro.route,
+                    hostTab: Tabs.Chat,
+                  ),
               ],
             ),
           ),
@@ -215,7 +218,10 @@ class ChatTabSideBySide extends StatelessWidget {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             flex: 2,
-            child: ActivityFeed(proRoute: ChatTabRoutingKeys.Pro.route),
+            child: ActivityFeed(
+              proRoute: ChatTabRoutingKeys.Pro.route,
+              hostTab: Tabs.Chat,
+            ),
           ),
         ],
       ),
