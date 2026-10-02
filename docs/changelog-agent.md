@@ -2,6 +2,41 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Chat TTS review fixes
+
+A `/code-review high` of the whole TTS feature (Dart + both bridges + the
+sheet) found 10 issues, all fixed:
+- **Numbers:** the spam-run rule (4+ same character -> 3) skips digits -
+  "10000 bits" was read as "1000".
+- **One-word spam combined:** "KEKW KEKW KEKW" combines as "KEKW" with
+  its repeats counted (`ChatTtsSpoken.combineText` / `repeats`) - it read
+  "KEKW 3 times 4 times"; a count inside a longer message isn't combined.
+- **Audio taken (phone call):** `ChatTtsSpeaker.speak` returns false when
+  the audio is taken; the queue keeps the message and retries every 2 s
+  (`ChatTtsQueue.busyRetry`). Android: the focus request result is
+  checked and a focus-change listener cuts off on loss; iOS: an
+  interruption blocks `speak` until it ends (or the app comes back from
+  the background), and a session that can't be activated counts as busy.
+- **Android `stop` during detection / init:** a per-call generation makes
+  stale speaks answer without reading (they were read after TTS was off).
+- **Voice preview:** `ChatTtsQueue.hold` pauses reading while the sample
+  plays; Android's `QUEUE_FLUSH` cut it off with the next chat message.
+- **Switching chat:** type / engine changes stop reading (settings
+  watch); queued messages of a channel no longer on screen are skipped
+  (`ChatTtsQueueItem.isCurrent`).
+- **Picker vs bridge:** a voice pick for another region applies only when
+  the tag has no voices of its own (first by tag, not dictionary order);
+  `voices` marks the voice the default language reads with (`default`) -
+  the sheet's voice row and the filler-word language follow it (Android
+  reads in the engine's default language, not the phone's; the option is
+  "Text-to-speech default" there). Older `voices` answers arriving late
+  are dropped.
+- **Startup:** TTS no longer creates the Twitch / YouTube / Kick stores
+  (their `init` started sign-in / polling); it attaches to existing ones
+  and to new ones via GetIt `onCreated`.
+Not run on a device yet - both native compiles checked on the
+workstation.
+
 ## 2026-10-02 - Definition of done for OBS-facing features
 
 Retro on canvas v2 (~5 follow-up "test it again" rounds, each finding

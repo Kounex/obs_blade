@@ -299,7 +299,11 @@ Chat tab shows (one native platform or every Combined source) via each
 store's `liveMessages` stream (no backfill / switch restores) →
 `chatTtsUtterance` (audience, skip rules, chat-wide ignore/mute) →
 `ChatTtsQueue` (never drops on its own; "N waiting" + jump to latest;
-stale skip opt-in). Foreground only (no background modes, by decision);
+stale skip opt-in; `speak` → false = audio taken (call) → the message
+waits and retries; a voice preview `hold`s reading; switching chat type /
+engine clears it, another channel's messages are skipped). It attaches
+only to platform stores that already exist (GetIt `onCreated` in
+`main.dart` for later ones) - never creates one. Foreground only (no background modes, by decision);
 Wake Lock is app-wide now (default off). Speaker in the
 `NativeChatWindow` header: tap toggles, long press = settings (also an
 options-sheet page), one-off hint on first enable (a speech bubble
@@ -308,7 +312,8 @@ tap = open settings, 5 s auto-close). Speech runs on the
 app's own `com.kounex.obsBlade/tts` channel (`PlatformTtsSpeaker` →
 `ChatTts` in `AppDelegate.swift` / `MainActivity.kt`; iOS picks the
 best installed voice + stops on audio interruptions, Android ducks via
-transient audio focus + restarts a dead engine once; `voices` lists the
+transient audio focus + restarts a dead engine once, both answer `speak` false while a call /
+interruption holds the audio; `voices` lists the
 installed voices for the sheet; the Dart queue has a per-message
 watchdog so a missing "finished" never stalls reading). Language: a
 default (`ChatTtsLanguage`, null = phone) + opt-in per-message detection
@@ -325,8 +330,11 @@ from the built-in `ChatTtsPhrases` table (all 39 base languages iOS
 ships voices for + old Android aliases, by the default TTS language,
 English fallback) - no translation service on purpose. Voices: a
 per-language pick (`ChatTtsVoices` JSON, tag → voice id, missing =
-automatic) sent with `setLanguage`; both bridges honour it (exact tag,
-else same base language) and mark it `preferred`; `preview` reads a
+automatic) sent with `setLanguage`; both bridges honour it (exact tag;
+another region's pick only for a tag without voices of its own) and
+mark it `preferred`, plus `default` on the voice the default language
+reads with (the sheet's voice row + filler-word language follow it -
+Android reads in the engine's default language, not the phone's); `preview` reads a
 per-language sample (`ChatTtsPhrases.sample`). Android adds
 `openTtsSettings` / `installVoiceData` intents; iOS can only explain
 the path (no public deep link).
