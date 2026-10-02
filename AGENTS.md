@@ -46,6 +46,26 @@ session start):
   handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
 
+## Definition of done — OBS-facing features
+
+Anything that talks to OBS (requests, events, plugin vendor calls) or
+changes the dashboard goes through the **`obs-feature` skill**
+(`.claude/skills/obs-feature/`; agents without skills: read it as a
+runbook). It's at least process tier M, whatever the handoff's default.
+Not done before:
+
+1. real-world use researched (who uses it, which plugins / platforms);
+2. every request / event checked against the **source** (obs-websocket,
+   OBS, plugin), facts in [`docs/obs-protocol-gotchas.md`](docs/obs-protocol-gotchas.md),
+   and the test fake behaving like that source;
+3. the journeys walked through [`docs/dashboard-interaction-checklist.md`](docs/dashboard-interaction-checklist.md);
+4. every new UI state rendered and looked at (`tool/widget_shots/`);
+5. a fresh-context review done and its findings handled.
+
+**After building a feature, remind the user to run `/code-review high` in
+a fresh session** - an independent pass without this session's
+assumptions. Put the reminder at the end of the final report.
+
 ## Quick map
 
 | Area | Where |
@@ -353,6 +373,8 @@ tips/blacksmith).
 |---|---|
 | [`docs/session-handoff.md`](docs/session-handoff.md) | **Fresh agent** — resume state |
 | [`docs/obs-websocket-architecture.md`](docs/obs-websocket-architecture.md) | How OBS WebSocket is modeled/used |
+| [`docs/obs-protocol-gotchas.md`](docs/obs-protocol-gotchas.md) | **Before any OBS-facing feature** — obs-websocket / OBS / plugin behavior the docs don't tell (canvas-scoped lookups, missing events, Aitum, Dual Format) |
+| [`docs/dashboard-interaction-checklist.md`](docs/dashboard-interaction-checklist.md) | **Before reporting a feature done** — journeys × dashboard surfaces × state changes × form factors |
 | [`docs/websocket-connect-audit.md`](docs/websocket-connect-audit.md) | Connect/handshake gaps + remediation |
 | [`docs/dashboard-store-websocket-audit.md`](docs/dashboard-store-websocket-audit.md) | DashboardStore events/responses/batches |
 | [`docs/chat-webview-audit.md`](docs/chat-webview-audit.md) | Twitch/YouTube/Owncast chat strategy |
@@ -408,6 +430,11 @@ tips/blacksmith).
   without `--yes`). Process: `docs/release-playbook.md`; agents start from
   the `release-*` skills in `.claude/skills/` (agents without skill support:
   read those `SKILL.md` files as runbooks).
+- **Widget shots (headless, any machine):** `tool/widget_shots/run.sh` —
+  renders widget states with the real theme + fonts to
+  `build/widget_shots/*.png`, no simulator / OBS. Specs are
+  `tool/widget_shots/*_shots_test.dart` (template: `canvas_shots_test.dart`,
+  guide: `tool/widget_shots/README.md`). Part of the definition of done.
 - **Visual-QA screenshots (macOS, booted sim):**
   `tool/visual_qa/capture_screenshots.sh` — runs
   `integration_test/screenshot_walk_test.dart`, writes PNGs to

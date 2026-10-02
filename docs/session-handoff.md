@@ -191,7 +191,7 @@ Play internal-track draft `3.3.0 (2026090701)`.
   `kick.com/api/v2` rejects `dart:io`'s default client with a Cloudflare
   403 — use the app's browser UA or `curl -A` for smokes.
 
-Process notes: default process tier **S**; `AGENTS.md` session-start
+Process notes: default process tier **S** (OBS-facing features: **M** via the `obs-feature` skill, see `AGENTS.md` § Definition of done); `AGENTS.md` session-start
 checklist is resume-proof (run it anyway). Former known flakes are
 **fixed** (2026-10-01, changelog same date): the 4
 `mod_action_sheet_test.dart` hit-test failures (pin banner overlaying

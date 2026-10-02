@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Definition of done for OBS-facing features
+
+Retro on canvas v2 (~5 follow-up "test it again" rounds, each finding
+real bugs discoverable from the start): the code was checked against
+assumptions (docs + a fake OBS encoding the same assumptions), the scope
+stopped at the literal request, and real-world use (Twitch Dual Format)
+wasn't researched up front. Now:
+- `AGENTS.md` § Definition of done + `.claude/skills/obs-feature/`
+  (research -> source-verified facts -> build -> journey sweep -> widget
+  shots -> fresh-context review -> report; tier M minimum) and the
+  reminder to run `/code-review high` in a fresh session after a feature.
+- `docs/obs-protocol-gotchas.md` (facts paid for once) and
+  `docs/dashboard-interaction-checklist.md` (journeys x surfaces x state
+  changes x form factors).
+- `tool/widget_shots/` (headless renders, real theme via the now-public
+  `App.buildTheme`).
+
 ## 2026-10-02 - Canvas user-flow sweep (final)
 
 Walked the canvas journeys (no extra canvas, Aitum + TikTok, Twitch Dual
