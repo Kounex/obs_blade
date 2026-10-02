@@ -86,9 +86,14 @@ only selects what the app shows. **Aitum Vertical** (vendor
 detected per connection (`version` vendor call → `aitumSupport`), drives
 only the canvas named `Aitum Vertical` (requests target it by
 width/height) - live scene switch (by name) + its stream / record /
-backtrack (`CanvasOutputControls`), state from `VendorEvent`s. Without
-it everything stays view-only and gated taps explain why
-(`aitumBlockedReason`). Streaming mode always shows main.
+backtrack / virtual camera (+ record pause, chapter) in
+`CanvasOutputControls`, state from `VendorEvent`s; the app bar shows a
+`VerticalOnAirPill` while its stream / recording runs. Without it
+everything stays view-only and gated taps explain why
+(`aitumBlockedReason`). Canvas groups expand (children addressed by the
+group's name), hidden scenes / items are stored per canvas
+(`HiddenScene` / `HiddenSceneItem.canvasName`, null = main). Streaming
+mode always shows main.
 
 **Chat:** Twitch has a native engine (device-code login + EventSub chat +
 Helix send input — reads AND writes) next to the WebView embeds; a manual

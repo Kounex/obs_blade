@@ -2,6 +2,35 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-02 - Canvas v2 follow-ups: vertical pill, groups, hiding, more Aitum
+
+- **Vertical on-air pill** in the app bar status row while Aitum's own
+  stream / recording runs (phone glyph, LIVE / REC in their signal
+  colors, no timer - the plugin reports none). Hidden otherwise and while
+  reconnecting; tap = show the Aitum canvas (not in streaming mode, only
+  with the picker on). The row is in a scale-down `FittedBox` so three
+  pills never overflow narrow phones. Checked as a rendered golden at
+  390 pt (throwaway, not committed).
+- **Canvas groups** expand like the main items: children via
+  `GetGroupSceneItemList` by the group's source name (unique across OBS),
+  toggles in the group's scene, patches keyed by (group, id).
+- **Hiding on canvases:** Edit Scene Visibility hides canvas scenes /
+  items (never switches live). `HiddenScene` HiveField 3 /
+  `HiddenSceneItem` HiveField 7 `canvasName` - additive, existing entries
+  read null = main; committed persistence fixtures still open.
+- **Same-name cross-patch fixed:** `Scene.sceneUuid` + event `sceneUuid`;
+  main scene-item enable/lock events must match the displayed scene's
+  UUID (name-only fallback without UUIDs).
+- **Aitum:** virtual camera row; recording pause / resume (no pause
+  events or status in the vendor - the answers are the truth: applied or
+  refused-because-already = requested state; caught a real inversion bug
+  in the first cut via test); chapter marker (Hybrid MP4 only, refusal
+  toast says so). **Not wired: stream key / server** - the vendor only
+  overwrites an in-memory setting at an output index it can't list,
+  answers success even for an invalid index, nothing to read back.
+- Gotcha: `cp` is aliased to `cp -i` on the NAS shell - a restore `cp`
+  sat on the overwrite prompt; use `\cp -f`.
+
 ## 2026-10-02 - Canvas v2: Aitum Vertical live control
 
 The v2 follow-up of the canvas switcher (`docs/private/feature-requests-2026-10.md`
