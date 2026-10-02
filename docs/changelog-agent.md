@@ -42,6 +42,15 @@ canvas by `width`/`height` (0 = any), every handler answers
   against a real OBS 32.1 + Aitum Vertical yet.**
 - `docs/private/feature-requests-2026-10.md` status not updated yet - the
   workstation was unreachable for the same-turn mirror.
+- **User-flow review (same day)** - walked every dashboard path with a
+  canvas viewed; fixed: Settings → Canvases help still said "view only";
+  the studio-mode Transition button (main canvas) now hides while another
+  canvas is shown; "Take OBS Screenshot" captured the main program scene
+  while a canvas was shown - it now saves the shown canvas scene (by
+  UUID); Edit Scene Visibility (main-only) let a tap switch the Aitum
+  canvas live - canvas taps now explain instead; the outputs card gained
+  a "<canvas> outputs" title so it can't be mistaken for the main
+  output's exposed Stream / Recording controls.
 
 ## 2026-10-02 - Replay buffer connect fix + OBS↔app sync audit
 

@@ -73,8 +73,7 @@ class UsernameActionRow extends StatelessWidget {
                 ChatType.Owncast => AddEditOwncastUsernameDialog(
                   settingsBox: this.settingsBox,
                 ),
-                ChatType.Kick ||
-                ChatType.Combined => AddEditKickUsernameDialog(
+                ChatType.Kick || ChatType.Combined => AddEditKickUsernameDialog(
                   settingsBox: this.settingsBox,
                 ),
               },

@@ -10,6 +10,7 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/canvas_view.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/models/enums/dashboard_element.dart';
 import 'package:obs_blade/types/classes/api/aitum_vertical.dart';
 import 'package:obs_blade/types/classes/api/obs_canvas.dart';
 import 'package:obs_blade/types/classes/api/scene.dart';
@@ -18,6 +19,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/canvas/canvas_output_controls.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/canvas/canvas_picker.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_element_layout.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_buttons/scene_buttons.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/scene_items.dart';
 
@@ -247,6 +249,52 @@ void main() {
     await drainOverlay(tester);
   });
 
+  testWidgets('scene visibility editing never switches a canvas live', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app(const SceneButtons()));
+    await viewVertical(tester, canvas: _aitum);
+    aitumAnswers(liveScene: 'Vertical Main');
+    dashboardStore.setEditSceneVisibility(true);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.text('Vertical BRB'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(canvasStore.aitumLiveSceneName, 'Vertical Main');
+    expect(
+      find.text('Hiding scenes only works on the main canvas'),
+      findsOneWidget,
+    );
+
+    dashboardStore.setEditSceneVisibility(false);
+    canvasStore.viewCanvas(null);
+    await drainOverlay(tester);
+  });
+
+  test(
+    'the studio-mode transition hides while another canvas is shown',
+    () async {
+      final settingsBox = Hive.box(HiveKeys.Settings.name);
+      await settingsBox.put(SettingsKeys.ExposeStudioControls.name, true);
+
+      int blocks({required bool viewingOtherCanvas}) =>
+          (buildOrderedDashboardSlivers(
+                    const [DashboardElement.StudioModeTransition],
+                    settingsBox: settingsBox,
+                    studioModeActive: true,
+                    viewingOtherCanvas: viewingOtherCanvas,
+                  ).single
+                  as Column)
+              .children
+              .length;
+
+      /// Leading gap + the transition row vs. the leading gap only
+      expect(blocks(viewingOtherCanvas: false), 2);
+      expect(blocks(viewingOtherCanvas: true), 1);
+    },
+  );
+
   testWidgets('output controls: hidden on main, live with Aitum Vertical', (
     tester,
   ) async {
@@ -261,6 +309,7 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('$kAitumCanvasName outputs'), findsOneWidget);
     expect(find.text('Stream'), findsOneWidget);
     expect(find.text('Recording'), findsOneWidget);
     expect(find.text('Backtrack'), findsOneWidget);

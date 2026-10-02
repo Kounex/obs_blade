@@ -22,8 +22,7 @@ class AddEditKickUsernameDialog extends StatefulWidget {
       _AddEditKickUsernameDialogState();
 }
 
-class _AddEditKickUsernameDialogState
-    extends State<AddEditKickUsernameDialog> {
+class _AddEditKickUsernameDialogState extends State<AddEditKickUsernameDialog> {
   late CustomValidationTextEditingController _usernameController;
 
   @override
@@ -69,10 +68,7 @@ class _AddEditKickUsernameDialogState
       kickUsernames[kickUsernames.indexOf(this.widget.username!)] = slug;
     }
     this.widget.settingsBox.put(SettingsKeys.KickUsernames.name, kickUsernames);
-    this.widget.settingsBox.put(
-      SettingsKeys.SelectedKickUsername.name,
-      slug,
-    );
+    this.widget.settingsBox.put(SettingsKeys.SelectedKickUsername.name, slug);
   }
 
   @override

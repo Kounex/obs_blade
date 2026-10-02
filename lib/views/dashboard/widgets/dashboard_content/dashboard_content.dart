@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../models/enums/dashboard_element.dart';
 import '../../../../shared/general/custom_sliver_list.dart';
 import '../../../../shared/general/hive_builder.dart';
+import '../../../../stores/views/canvas_view.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
@@ -41,15 +42,17 @@ class DashboardContent extends StatelessWidget {
               /// value stays persisted-data-safe) silently drop it.
               ..remove(DashboardElement.StreamChat);
 
-        /// Only [DashboardStore.studioMode] is read here, so this Observer
-        /// fires exclusively on studio-mode flips - not on the store's
-        /// constant stream of stats/scene updates
+        /// Only [DashboardStore.studioMode] and the canvas switch are read
+        /// here, so this Observer fires exclusively on their flips - not on
+        /// the store's constant stream of stats/scene updates
         return Observer(
           builder: (context) => CustomSliverList(
             children: buildOrderedDashboardSlivers(
               order,
               settingsBox: settingsBox,
               studioModeActive: GetIt.instance<DashboardStore>().studioMode,
+              viewingOtherCanvas:
+                  canvasViewStoreOrNull()?.isViewingOtherCanvas ?? false,
             ),
           ),
         );

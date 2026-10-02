@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/animator/selectable_box.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/canvas_view.dart';
+import '../../../../../stores/views/dashboard.dart';
+import '../../../../../utils/overlay_handler.dart';
 import '../scene_buttons/scene_buttons.dart';
 import 'canvas_output_controls.dart';
 
@@ -82,6 +86,20 @@ class CanvasSceneButtons extends StatelessWidget {
                 child: Pressable(
                   haptic: true,
                   onTap: () {
+                    /// Hiding scenes is a main-canvas feature - a tap in
+                    /// that mode must never switch this canvas live
+                    if (GetIt.instance<DashboardStore>().editSceneVisibility) {
+                      OverlayHandler.showStatusOverlay(
+                        context: context,
+                        replaceIfActive: true,
+                        showDuration: const Duration(seconds: 3),
+                        content: const BaseResult(
+                          icon: BaseResultIcon.Missing,
+                          text: 'Hiding scenes only works on the main canvas',
+                        ),
+                      );
+                      return;
+                    }
                     if (live) {
                       this.canvasStore.switchLiveScene(scene);
                       return;

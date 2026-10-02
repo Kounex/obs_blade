@@ -138,6 +138,17 @@ class CanvasOutputControls extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    /// Names the canvas - the main output's exposed
+                    /// Stream / Recording controls can sit on the same screen
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                      child: Text(
+                        '$canvasName outputs',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
                     if (!live)
                       Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),

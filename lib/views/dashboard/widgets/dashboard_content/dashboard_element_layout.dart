@@ -46,6 +46,7 @@ List<Widget> buildOrderedDashboardSlivers(
   List<DashboardElement> order, {
   required Box<dynamic> settingsBox,
   required bool studioModeActive,
+  bool viewingOtherCanvas = false,
 }) {
   final bool exposeProfile =
       _settingsFlag(settingsBox, SettingsKeys.ExposeProfile) ||
@@ -68,8 +69,11 @@ List<Widget> buildOrderedDashboardSlivers(
   bool isVisible(DashboardElement element) => switch (element) {
     DashboardElement.ExposedProfile => exposeProfile,
     DashboardElement.ExposedControls => exposeControls,
+
+    /// Transitions the main canvas' preview - hidden while another canvas'
+    /// scenes are shown, a tap there would read as transitioning those
     DashboardElement.StudioModeTransition =>
-      exposeStudioControls && studioModeActive,
+      exposeStudioControls && studioModeActive && !viewingOtherCanvas,
     _ => true,
   };
 

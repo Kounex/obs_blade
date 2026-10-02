@@ -88,7 +88,7 @@ class DashboardCustomisationView extends StatelessWidget {
                     leadingSize: 26.0,
                     title: 'Canvases',
                     help:
-                        'Shows a canvas picker above the scenes when OBS has more than one canvas (e.g. a vertical one from Aitum Vertical, OBS 32.1 or newer). Picking another canvas shows its scenes, preview and scene items - view only, the live scene of that canvas is still set in OBS.',
+                        'Shows a canvas picker above the scenes when OBS has more than one canvas (e.g. a vertical one from Aitum Vertical, OBS 32.1 or newer). Picking another canvas shows its scenes, preview and scene items. With the Aitum Vertical plugin you can also switch its live scene and start its stream, recording and backtrack - otherwise it is view only and the live scene is set in OBS.',
                     trailing: BaseAdaptiveSwitch(
                       value: settingsBox.get(
                         SettingsKeys.ExposeCanvasSwitcher.name,

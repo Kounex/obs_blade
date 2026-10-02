@@ -11,6 +11,7 @@ import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/canvas_view.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/request_batch_type.dart';
@@ -193,32 +194,40 @@ class GeneralActions extends StatelessWidget {
                       /// We also have to do this request in this batch format
                       /// due to API inconsistency -> check the comment of
                       /// [RequestBatchType.Screenshot]
+                      ///
+                      /// The scene the dashboard shows: another canvas' scene
+                      /// while one is viewed (by UUID - names can repeat
+                      /// across canvases), the program / studio preview one
+                      /// otherwise
+                      final String? canvasSceneUuid =
+                          canvasViewStoreOrNull()?.isViewingOtherCanvas == true
+                          ? canvasViewStoreOrNull()?.selectedSceneUuid
+                          : null;
+                      final Map<String, dynamic> source =
+                          canvasSceneUuid != null
+                          ? {'sourceUuid': canvasSceneUuid}
+                          : {
+                              'sourceName':
+                                  Hive.box(HiveKeys.Settings.name).get(
+                                        SettingsKeys.ExposeStudioControls.name,
+                                        defaultValue: false,
+                                      ) &&
+                                      dashboardStore.studioMode
+                                  ? dashboardStore.studioModePreviewSceneName
+                                  : dashboardStore.activeSceneName,
+                            };
                       dashboardStore.sendBatchMutation(
                         RequestBatchType.Screenshot,
                         label: 'Screenshot',
                         [
                           RequestBatchObject(RequestType.SaveSourceScreenshot, {
-                            'sourceName':
-                                Hive.box(HiveKeys.Settings.name).get(
-                                      SettingsKeys.ExposeStudioControls.name,
-                                      defaultValue: false,
-                                    ) &&
-                                    dashboardStore.studioMode
-                                ? dashboardStore.studioModePreviewSceneName
-                                : dashboardStore.activeSceneName,
+                            ...source,
                             'imageFilePath': dashboardStore.screenshotPath,
                             'imageFormat': dashboardStore.previewFileFormat,
                             'imageCompressionQuality': -1,
                           }),
                           RequestBatchObject(RequestType.GetSourceScreenshot, {
-                            'sourceName':
-                                Hive.box(HiveKeys.Settings.name).get(
-                                      SettingsKeys.ExposeStudioControls.name,
-                                      defaultValue: false,
-                                    ) &&
-                                    dashboardStore.studioMode
-                                ? dashboardStore.studioModePreviewSceneName
-                                : dashboardStore.activeSceneName,
+                            ...source,
                             'imageFormat': dashboardStore.previewFileFormat,
                             'imageCompressionQuality': -1,
                           }),
