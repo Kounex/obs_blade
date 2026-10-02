@@ -2,14 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../../shared/animator/status_dot.dart';
 import '../../../../../shared/design/design.dart';
+import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/card.dart';
 import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../shared/overlay/base_result.dart';
 import '../../../../../stores/views/canvas_view.dart';
+import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
@@ -82,10 +85,37 @@ class CanvasOutputControls extends StatelessWidget {
             action();
           };
 
+          /// Sent along with the main stream (Enhanced Broadcasting - Twitch
+          /// Dual Format): live exactly while the main stream is
+          final bool dualFormat = canvasStore.isDualFormat(
+            canvasStore.viewedCanvas,
+          );
+          final bool mainLive = GetIt.instance<DashboardStore>().isLive;
+
           void streamTap() {
             HapticFeedback.mediumImpact();
             final bool isLive = status.streaming;
             void send() => canvasStore.setAitumStreaming(!isLive);
+
+            /// Aitum's own stream is a second, separate one - the Dual
+            /// Format guides warn against pressing it for Twitch
+            if (dualFormat && !isLive) {
+              ModalHandler.showBaseDialog(
+                context: context,
+                dialogWidget: ConfirmationDialog(
+                  title: 'Separate Stream',
+                  body:
+                      'The $canvasName canvas already goes to Twitch with the '
+                      'main stream (Dual Format). This starts a second, '
+                      'separate stream of it - only for another destination, '
+                      'e.g. TikTok.',
+                  okText: 'Start',
+                  noText: 'Cancel',
+                  onOk: (_) => send(),
+                ),
+              );
+              return;
+            }
             if (dontShow(
               isLive
                   ? SettingsKeys.DontShowStreamStopMessage
@@ -175,7 +205,14 @@ class CanvasOutputControls extends StatelessWidget {
                       ),
                     _OutputRow(
                       label: 'Stream',
-                      active: live && status.streaming,
+                      caption: dualFormat
+                          ? mainLive
+                                ? 'Live with the main stream (Dual Format)'
+                                : 'Goes live with the main stream (Dual Format)'
+                          : null,
+                      active:
+                          (live && status.streaming) ||
+                          (dualFormat && mainLive),
                       activeColor: statusColors.live,
                       actions: [
                         _OutputButton(
@@ -309,12 +346,16 @@ class _OutputRow extends StatelessWidget {
   /// Paused output (recording): a pause glyph instead of the pulsing dot
   final bool paused;
 
+  /// Second line under [label] (e.g. how the output goes live)
+  final String? caption;
+
   const _OutputRow({
     required this.label,
     required this.active,
     required this.activeColor,
     required this.actions,
     this.paused = false,
+    this.caption,
   });
 
   @override
@@ -352,11 +393,19 @@ class _OutputRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(
-              this.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.bodyMedium,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  this.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium,
+                ),
+                if (this.caption != null)
+                  Text(this.caption!, maxLines: 2, style: textTheme.bodySmall),
+              ],
             ),
           ),
           for (final (index, action) in this.actions.indexed) ...[

@@ -105,3 +105,25 @@ String aitumBlockedReason(AitumSupport support, ObsCanvas? canvas) {
   return 'Switching this canvas\' live scene and going live need the '
       '$kAitumCanvasName plugin in OBS';
 }
+
+/// What the app bar's extra-canvas pill shows - see
+/// [CanvasViewStore.extraCanvasOnAir]
+class ExtraCanvasOnAir {
+  final ObsCanvas canvas;
+
+  /// Sent along with the main stream (Enhanced Broadcasting / Twitch Dual
+  /// Format) - live exactly while the main stream is
+  final bool viaMainStream;
+
+  final bool streaming;
+  final bool recording;
+  final bool recordingPaused;
+
+  const ExtraCanvasOnAir({
+    required this.canvas,
+    required this.viaMainStream,
+    required this.streaming,
+    required this.recording,
+    required this.recordingPaused,
+  });
+}

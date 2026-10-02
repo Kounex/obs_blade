@@ -110,6 +110,17 @@ enum RequestType {
   /// No specified parameters
   GetProfileList,
 
+  /// Gets a parameter from the current profile's configuration.
+  ///
+  /// {'parameterCategory': String } - Category of the parameter to get
+  /// {'parameterName': String } - Name of the parameter to get
+  GetProfileParameter,
+
+  /// Gets the current stream service settings (stream destination).
+  ///
+  /// No specified parameters
+  GetStreamServiceSettings,
+
   /// Get the status of the OBS replay buffer
   ///
   /// No specified parameters

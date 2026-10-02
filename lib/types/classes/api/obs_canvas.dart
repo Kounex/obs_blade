@@ -42,6 +42,18 @@ class ObsCanvas {
       ? this.baseWidth! / this.baseHeight!
       : null;
 
+  /// Taller than wide (9:16, 4:5, ...) - false when the resolution is unknown
+  bool get isPortrait => this.aspectRatio != null && this.aspectRatio! < 1;
+
+  /// How labels name this canvas' outputs: "vertical" for a portrait canvas,
+  /// its name otherwise - Aitum's canvas is called "Aitum Vertical" even when
+  /// set to a landscape or square resolution
+  String get outputLabel => this.isPortrait
+      ? 'vertical'
+      : this.name.isNotEmpty
+      ? this.name
+      : 'canvas';
+
   /// e.g. "1080×1920", null when the resolution is unknown
   String? get resolutionLabel =>
       this.baseWidth != null && this.baseHeight != null

@@ -93,6 +93,13 @@ abstract class _CanvasViewStore with Store {
   @observable
   AitumOutputStatus aitumStatus = const AitumOutputStatus();
 
+  /// Canvas the main stream sends along (Enhanced Broadcasting's
+  /// "additional canvas" - what Twitch Dual Format uses), null when none is
+  /// set up or the stream destination can't carry it. Read from the profile
+  /// - OBS sends no event when these settings change
+  @observable
+  String? dualFormatCanvasUuid;
+
   /// The "only shown in the app" hint for scene taps on a canvas without
   /// live control was shown once already (per dashboard session)
   bool viewOnlyHintShown = false;
@@ -123,13 +130,45 @@ abstract class _CanvasViewStore with Store {
   @computed
   bool get isViewingOtherCanvas => this.viewedCanvas != null;
 
-  /// Aitum Vertical's own stream or recording runs - the dashboard app bar
-  /// then shows it next to the main LIVE / REC pills
+  /// Aitum Vertical's own stream or recording runs
   @computed
   bool get aitumOnAir =>
       this.aitumSupport == AitumSupport.available &&
       this.aitumCanvas != null &&
       (this.aitumStatus.streaming || this.aitumStatus.recording);
+
+  /// The canvas the main stream sends along (Dual Format), null when none
+  @computed
+  ObsCanvas? get dualFormatCanvas {
+    for (final canvas in this.canvases) {
+      if (!canvas.isMain && canvas.uuid == this.dualFormatCanvasUuid) {
+        return canvas;
+      }
+    }
+    return null;
+  }
+
+  bool isDualFormat(ObsCanvas? canvas) =>
+      canvas != null && canvas.uuid == this.dualFormatCanvas?.uuid;
+
+  /// The extra canvas is on air right now - through the main stream (Dual
+  /// Format) and / or Aitum's own outputs. The dashboard app bar shows it
+  /// next to the main LIVE / REC pills; null while nothing extra is on air
+  @computed
+  ExtraCanvasOnAir? get extraCanvasOnAir {
+    final dual = _dashboardStore.isLive ? this.dualFormatCanvas : null;
+    final aitum = this.aitumOnAir ? this.aitumCanvas : null;
+    final canvas = dual ?? aitum;
+    if (canvas == null) return null;
+    final bool aitumOwn = aitum != null && aitum.uuid == canvas.uuid;
+    return ExtraCanvasOnAir(
+      canvas: canvas,
+      viaMainStream: dual != null,
+      streaming: dual != null || (aitumOwn && this.aitumStatus.streaming),
+      recording: aitumOwn && this.aitumStatus.recording,
+      recordingPaused: aitumOwn && this.aitumStatus.recordingPaused,
+    );
+  }
 
   /// The viewed canvas is Aitum's and its vendor answers: scene taps switch
   /// its live scene, its outputs can be started / stopped
@@ -257,8 +296,10 @@ abstract class _CanvasViewStore with Store {
     );
     if (this.canvases.any((canvas) => !canvas.isMain)) {
       _checkAitum();
+      _loadDualFormat();
     } else {
       _resetAitum();
+      _setDualFormat(null);
     }
   }
 
@@ -305,6 +346,7 @@ abstract class _CanvasViewStore with Store {
     _loadScenes();
     _refreshTimer = Timer.periodic(kCanvasRefreshInterval, (_) {
       _loadScenes();
+      _loadDualFormat();
       if (this.canControlViewedCanvas) _loadAitumState();
     });
     if (this.canControlViewedCanvas) _loadAitumState();
@@ -501,6 +543,18 @@ abstract class _CanvasViewStore with Store {
 
   void _handleEvent(BaseEvent event) {
     switch (event.eventType) {
+      /// Dual Format lives in the profile's stream settings - re-read when
+      /// the profile changes or a stream starts (the settings dialog sends
+      /// no event)
+      case EventType.CurrentProfileChanged:
+        _loadDualFormat();
+        break;
+      case EventType.StreamStateChanged:
+        if (event.json['outputState'] == 'OBS_WEBSOCKET_OUTPUT_STARTING' ||
+            event.json['outputState'] == 'OBS_WEBSOCKET_OUTPUT_STARTED') {
+          _loadDualFormat();
+        }
+        break;
       case EventType.CanvasCreated:
       case EventType.CanvasRemoved:
       case EventType.CanvasNameChanged:
@@ -541,6 +595,51 @@ abstract class _CanvasViewStore with Store {
         break;
     }
   }
+
+  /// Enhanced Broadcasting with an additional canvas (OBS 32+, profile
+  /// `Stream1`): `EnableMultitrackVideo` + `MultitrackExtraCanvas` (that
+  /// canvas' UUID - OBS supports one). OBS only builds the multitrack
+  /// output for a destination that offers it (a service with a multitrack
+  /// config URL, e.g. Twitch) or a custom server - the same condition here
+  Future<void> _loadDualFormat() async {
+    if (!this.canvases.any((canvas) => !canvas.isMain)) return;
+    Future<ObsRequestAck?> parameter(String name) => _request(
+      RequestType.GetProfileParameter,
+      {'parameterCategory': 'Stream1', 'parameterName': name},
+    );
+    final results = await Future.wait([
+      parameter('EnableMultitrackVideo'),
+      parameter('MultitrackExtraCanvas'),
+      _request(RequestType.GetStreamServiceSettings),
+    ]);
+    if (results.any((ack) => ack == null || !ack.success)) return;
+
+    String? value(ObsRequestAck ack) =>
+        (ack.responseData?['parameterValue'] ??
+                ack.responseData?['defaultParameterValue'])
+            as String?;
+    final enabled = value(results[0]!);
+    final canvasUuid = value(results[1]!);
+    final service = results[2]!.responseData ?? const {};
+    final serviceSettings =
+        service['streamServiceSettings'] as Map<String, dynamic>? ?? const {};
+    final bool serviceCarriesIt =
+        service['streamServiceType'] == 'rtmp_custom' ||
+        serviceSettings.containsKey('multitrack_video_configuration_url');
+
+    _setDualFormat(
+      (enabled == 'true' || enabled == '1') &&
+              serviceCarriesIt &&
+              canvasUuid != null &&
+              canvasUuid.isNotEmpty
+          ? canvasUuid
+          : null,
+    );
+  }
+
+  @action
+  void _setDualFormat(String? canvasUuid) =>
+      this.dualFormatCanvasUuid = canvasUuid;
 
   /// Aitum Vertical vendor request - the plugin's own payload (inside the
   /// `CallVendorRequest` response) on success, null when OBS rejected the
@@ -706,14 +805,17 @@ abstract class _CanvasViewStore with Store {
   /// Explicit start / stop instead of Aitum's toggles - see
   /// [RecordStreamService]: a confirmed direction must never flip into the
   /// opposite when the state changed on the PC meanwhile
+  /// "vertical" for a portrait canvas, its name otherwise
+  String get _outputLabel => this.viewedCanvas?.outputLabel ?? 'canvas';
+
   Future<void> setAitumStreaming(bool start) => _aitumOutput(
     start ? 'start_streaming' : 'stop_streaming',
-    start ? 'Start vertical stream' : 'Stop vertical stream',
+    start ? 'Start $_outputLabel stream' : 'Stop $_outputLabel stream',
   );
 
   Future<void> setAitumRecording(bool start) => _aitumOutput(
     start ? 'start_recording' : 'stop_recording',
-    start ? 'Start vertical recording' : 'Stop vertical recording',
+    start ? 'Start $_outputLabel recording' : 'Stop $_outputLabel recording',
   );
 
   Future<void> setAitumBacktrack(bool start) => _aitumOutput(
@@ -726,16 +828,18 @@ abstract class _CanvasViewStore with Store {
 
   Future<void> setAitumVirtualCamera(bool start) => _aitumOutput(
     start ? 'start_virtual_camera' : 'stop_virtual_camera',
-    start ? 'Start vertical virtual camera' : 'Stop vertical virtual camera',
+    start
+        ? 'Start $_outputLabel virtual camera'
+        : 'Stop $_outputLabel virtual camera',
   );
 
-  /// Chapter marker in the running vertical recording - OBS only writes
+  /// Chapter marker in the running recording of the canvas - OBS only writes
   /// them into Hybrid MP4 recordings, the plugin answers `success: false`
   /// otherwise
   Future<bool> addAitumChapter() =>
       _aitumOutput('add_chapter', 'Chapter marker (Hybrid MP4 only)');
 
-  /// Pause / resume the vertical recording. Aitum neither reports nor
+  /// Pause / resume the canvas' recording. Aitum neither reports nor
   /// announces a pause, so the answers are the source of truth: it refuses
   /// a pause of a paused recording (and a resume of a running one) - with
   /// the recording running, that refusal tells the real state, which is
@@ -756,7 +860,9 @@ abstract class _CanvasViewStore with Store {
     } else {
       _reportFailure(
         ack,
-        pause ? 'Pause vertical recording' : 'Resume vertical recording',
+        pause
+            ? 'Pause $_outputLabel recording'
+            : 'Resume $_outputLabel recording',
       );
       _loadAitumState();
     }

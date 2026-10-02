@@ -9,6 +9,7 @@ import '../../../../shared/general/hive_builder.dart';
 import '../../../../stores/views/canvas_view.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../types/classes/api/aitum_vertical.dart';
+import '../../../../types/classes/api/obs_canvas.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/settings_keys.dart';
 import '../../../../types/extensions/int.dart';
@@ -20,10 +21,11 @@ import '../../../../types/extensions/int.dart';
 /// Timers keep tabular figures and the store-driven 1s poll cadence - the
 /// digit change just crossfades softly instead of hard swapping.
 ///
-/// While Aitum Vertical's own stream / recording runs, a compact
-/// [VerticalOnAirPill] joins them - the only sign of the vertical output
-/// while the main canvas is shown. The row scales down instead of
-/// overflowing on narrow phones.
+/// While another canvas is on air - sent along with the main stream (Twitch
+/// Dual Format) or through Aitum Vertical's own outputs - a compact
+/// [ExtraCanvasOnAirPill] joins them, the only sign of it while the main
+/// canvas is shown. The row scales down instead of overflowing on narrow
+/// phones.
 class OnAirStatusCluster extends StatelessWidget {
   const OnAirStatusCluster({super.key});
 
@@ -49,8 +51,9 @@ class OnAirStatusCluster extends StatelessWidget {
 
         /// Unknown while reconnecting - never assert the vertical output
         /// over a dead connection either
-        final bool verticalOnAir =
-            !reconnecting && (canvasStore?.aitumOnAir ?? false);
+        final ExtraCanvasOnAir? extraOnAir = reconnecting
+            ? null
+            : canvasStore?.extraCanvasOnAir;
 
         return FittedBox(
           fit: BoxFit.scaleDown,
@@ -97,11 +100,14 @@ class OnAirStatusCluster extends StatelessWidget {
                     child: child,
                   ),
                 ),
-                child: verticalOnAir
+                child: extraOnAir != null
                     ? Padding(
                         key: const ValueKey('vertical'),
                         padding: const EdgeInsets.only(left: AppSpacing.md),
-                        child: VerticalOnAirPill(canvasStore: canvasStore!),
+                        child: ExtraCanvasOnAirPill(
+                          canvasStore: canvasStore!,
+                          onAir: extraOnAir,
+                        ),
                       )
                     : const SizedBox(key: ValueKey('no-vertical')),
               ),
@@ -113,14 +119,20 @@ class OnAirStatusCluster extends StatelessWidget {
   }
 }
 
-/// Aitum Vertical's own outputs in the app bar: phone glyph + LIVE / REC
-/// (no timers - the plugin reports none). Tapping it shows that canvas,
-/// outside streaming mode (always the main canvas) and only with the canvas
-/// picker on.
-class VerticalOnAirPill extends StatelessWidget {
+/// Another canvas on air, in the app bar: a glyph for its shape (phone for
+/// portrait, stacked frames otherwise) + LIVE / REC, no timers (neither the
+/// main stream's extra canvas nor Aitum's outputs have their own). Tapping
+/// it shows that canvas, outside streaming mode (always the main canvas)
+/// and only with the canvas picker on.
+class ExtraCanvasOnAirPill extends StatelessWidget {
   final CanvasViewStore canvasStore;
+  final ExtraCanvasOnAir onAir;
 
-  const VerticalOnAirPill({super.key, required this.canvasStore});
+  const ExtraCanvasOnAirPill({
+    super.key,
+    required this.canvasStore,
+    required this.onAir,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +149,7 @@ class VerticalOnAirPill extends StatelessWidget {
       ],
       builder: (context, settingsBox, child) => Observer(
         builder: (context) {
-          final status = this.canvasStore.aitumStatus;
+          final status = this.onAir;
           final bool recordingActive =
               status.recording && !status.recordingPaused;
 
@@ -169,7 +181,7 @@ class VerticalOnAirPill extends StatelessWidget {
                     defaultValue: true,
                   )
                   as bool);
-          final String? aitumUuid = this.canvasStore.aitumCanvas?.uuid;
+          final ObsCanvas canvas = status.canvas;
 
           final Widget pill = Container(
             height: 28.0,
@@ -183,7 +195,9 @@ class VerticalOnAirPill extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  CupertinoIcons.device_phone_portrait,
+                  canvas.isPortrait
+                      ? CupertinoIcons.device_phone_portrait
+                      : CupertinoIcons.rectangle_on_rectangle,
                   size: 13.0,
                   color: textColor,
                 ),
@@ -218,16 +232,22 @@ class VerticalOnAirPill extends StatelessWidget {
             ),
           );
 
+          final String states = [
+            if (status.streaming)
+              status.viaMainStream ? 'live with the main stream' : 'live',
+            if (status.recording)
+              status.recordingPaused ? 'recording paused' : 'recording',
+          ].join(', ');
+
           return Semantics(
             button: canJump,
-            label:
-                '$kAitumCanvasName: ${[if (status.streaming) 'live', if (status.recording) status.recordingPaused ? 'recording paused' : 'recording'].join(', ')}',
-            hint: canJump ? 'Shows the $kAitumCanvasName canvas' : null,
+            label: '${canvas.name}: $states',
+            hint: canJump ? 'Shows the ${canvas.name} canvas' : null,
             excludeSemantics: true,
-            child: canJump && aitumUuid != null
+            child: canJump
                 ? Pressable(
                     haptic: true,
-                    onTap: () => this.canvasStore.viewCanvas(aitumUuid),
+                    onTap: () => this.canvasStore.viewCanvas(canvas.uuid),
                     child: pill,
                   )
                 : pill,

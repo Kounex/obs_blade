@@ -418,7 +418,7 @@ void main() {
     aitumAnswers();
     await tester.pump();
     final pill = find.bySemanticsLabel('$kAitumCanvasName: live, recording');
-    expect(find.byType(VerticalOnAirPill), findsNothing);
+    expect(find.byType(ExtraCanvasOnAirPill), findsNothing);
 
     aitumAnswers(
       status: const AitumOutputStatus(streaming: true, recording: true),
@@ -433,17 +433,109 @@ void main() {
     runInAction(() => dashboardStore.reconnecting = true);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byType(VerticalOnAirPill), findsNothing);
+    expect(find.byType(ExtraCanvasOnAirPill), findsNothing);
     runInAction(() => dashboardStore.reconnecting = false);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    await tester.tap(find.byType(VerticalOnAirPill));
+    await tester.tap(find.byType(ExtraCanvasOnAirPill));
     await tester.pump();
     expect(canvasStore.viewedCanvasUuid, _aitum.uuid);
 
     canvasStore.viewCanvas(null);
     await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('app bar: a Dual Format canvas shows while the main stream is '
+      'live; its shape picks the glyph', (tester) async {
+    const landscape = ObsCanvas(
+      uuid: 'wide',
+      name: 'Clean Feed',
+      isMain: false,
+      baseWidth: 2560,
+      baseHeight: 1440,
+    );
+    runInAction(() {
+      canvasStore.canvases = ObservableList.of([_main, _vertical, landscape]);
+      canvasStore.dualFormatCanvasUuid = _vertical.uuid;
+    });
+    await tester.pumpWidget(app(const OnAirStatusCluster()));
+    await tester.pump();
+    expect(find.byType(ExtraCanvasOnAirPill), findsNothing);
+
+    runInAction(() => dashboardStore.isLive = true);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.bySemanticsLabel('Vertical: live with the main stream'),
+      findsOneWidget,
+    );
+    expect(find.byIcon(CupertinoIcons.device_phone_portrait), findsOneWidget);
+
+    runInAction(() => canvasStore.dualFormatCanvasUuid = landscape.uuid);
+    await tester.pump();
+    expect(find.byIcon(CupertinoIcons.rectangle_on_rectangle), findsOneWidget);
+
+    runInAction(() => dashboardStore.isLive = false);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('outputs: Dual Format caption, Aitum\'s own stream asks first', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app(const CanvasOutputControls()));
+    await viewVertical(tester, canvas: _aitum);
+    aitumAnswers(liveScene: 'Vertical Main');
+    runInAction(() => canvasStore.dualFormatCanvasUuid = _aitum.uuid);
+    await tester.pump();
+    expect(
+      find.text('Goes live with the main stream (Dual Format)'),
+      findsOneWidget,
+    );
+
+    runInAction(() => dashboardStore.isLive = true);
+    await tester.pump();
+    expect(
+      find.text('Live with the main stream (Dual Format)'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.bySemanticsLabel('Start $kAitumCanvasName stream'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Separate Stream'), findsOneWidget);
+    expect(find.textContaining('e.g. TikTok'), findsOneWidget);
+
+    runInAction(() => dashboardStore.isLive = false);
+    canvasStore.viewCanvas(null);
+    await tester.pump();
+  });
+
+  test('labels name a canvas by its shape', () {
+    expect(_vertical.outputLabel, 'vertical');
+    expect(
+      const ObsCanvas(
+        uuid: 'a',
+        name: kAitumCanvasName,
+        isMain: false,
+        baseWidth: 1080,
+        baseHeight: 1350,
+      ).outputLabel,
+      'vertical',
+    );
+
+    /// Aitum's canvas keeps its name when set to landscape
+    expect(
+      const ObsCanvas(
+        uuid: 'a',
+        name: kAitumCanvasName,
+        isMain: false,
+        baseWidth: 1920,
+        baseHeight: 1080,
+      ).outputLabel,
+      kAitumCanvasName,
+    );
   });
 
   testWidgets('scene items show the picked canvas scene', (tester) async {

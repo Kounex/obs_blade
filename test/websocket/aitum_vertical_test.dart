@@ -43,6 +43,10 @@ void main() {
   /// What the fake Aitum vendor answers, per vendor request type
   late Map<String, Map<String, dynamic>> vendorResponses;
 
+  /// Profile `Stream1` parameters + stream service the fake OBS reports
+  late Map<String, String?> streamParameters;
+  late Map<String, dynamic> streamService;
+
   List<Map<String, dynamic>> vendorCalls(String vendorRequestType) => peer
       .requests
       .where(
@@ -123,9 +127,23 @@ void main() {
       'supportedImageFormats': ['jpg', 'png'],
     };
     verticalCanvasNamed(kAitumCanvasName);
+    streamParameters = {};
+    streamService = {
+      'streamServiceType': 'rtmp_common',
+      'streamServiceSettings': {'service': 'YouTube - RTMPS'},
+    };
     peer.responseDataFor = (request) {
       final data = request['requestData'] as Map<String, dynamic>? ?? {};
       switch (request['requestType']) {
+        case 'GetProfileParameter':
+          return {
+            'parameterValue': data['parameterCategory'] == 'Stream1'
+                ? streamParameters[data['parameterName']]
+                : null,
+            'defaultParameterValue': null,
+          };
+        case 'GetStreamServiceSettings':
+          return streamService;
         case 'CallVendorRequest':
           final type = data['requestType'] as String;
           return {
@@ -393,6 +411,58 @@ void main() {
     expect(
       dashboardStore.commandFailureNotice?.message,
       contains('Hybrid MP4 only'),
+    );
+  });
+
+  test('Dual Format: the extra canvas of Enhanced Broadcasting, only for a '
+      'destination that carries it, re-read when a stream starts', () async {
+    streamParameters = {
+      'EnableMultitrackVideo': 'true',
+      'MultitrackExtraCanvas': _verticalUuid,
+    };
+    vendorResponses['status'] = {'success': true};
+
+    /// YouTube via the stock service: no multitrack config URL - OBS sends
+    /// the main canvas only
+    await connect();
+    await flushPeer();
+    await flushPeer();
+    expect(canvasStore.dualFormatCanvasUuid, isNull);
+
+    /// Twitch offers multitrack - picked up when the stream starts (the
+    /// settings dialog sends no event)
+    streamService = {
+      'streamServiceType': 'rtmp_common',
+      'streamServiceSettings': {
+        'service': 'Twitch',
+        'multitrack_video_configuration_url':
+            'https://ingest.twitch.tv/api/v3/GetClientConfiguration',
+      },
+    };
+    peer.event('StreamStateChanged', {
+      'outputActive': false,
+      'outputState': 'OBS_WEBSOCKET_OUTPUT_STARTING',
+    });
+    await waitFor(
+      () => canvasStore.dualFormatCanvasUuid == _verticalUuid,
+      'dual format canvas read',
+    );
+    expect(canvasStore.isDualFormat(canvasStore.canvases.last), isTrue);
+
+    /// On air with the main stream - the pill's source
+    expect(canvasStore.extraCanvasOnAir, isNull);
+    dashboardStore.isLive = true;
+    final onAir = canvasStore.extraCanvasOnAir!;
+    expect(onAir.canvas.uuid, _verticalUuid);
+    expect(onAir.viaMainStream, isTrue);
+    expect(onAir.streaming, isTrue);
+
+    /// Turned off in another profile
+    streamParameters = {'EnableMultitrackVideo': 'false'};
+    peer.event('CurrentProfileChanged', {'profileName': 'Other'});
+    await waitFor(
+      () => canvasStore.dualFormatCanvasUuid == null,
+      'profile switch re-read',
     );
   });
 

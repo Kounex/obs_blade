@@ -47,6 +47,22 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
     () => super.aitumOnAir,
     name: '_CanvasViewStore.aitumOnAir',
   )).value;
+  Computed<ObsCanvas?>? _$dualFormatCanvasComputed;
+
+  @override
+  ObsCanvas? get dualFormatCanvas =>
+      (_$dualFormatCanvasComputed ??= Computed<ObsCanvas?>(
+        () => super.dualFormatCanvas,
+        name: '_CanvasViewStore.dualFormatCanvas',
+      )).value;
+  Computed<ExtraCanvasOnAir?>? _$extraCanvasOnAirComputed;
+
+  @override
+  ExtraCanvasOnAir? get extraCanvasOnAir =>
+      (_$extraCanvasOnAirComputed ??= Computed<ExtraCanvasOnAir?>(
+        () => super.extraCanvasOnAir,
+        name: '_CanvasViewStore.extraCanvasOnAir',
+      )).value;
   Computed<bool>? _$canControlViewedCanvasComputed;
 
   @override
@@ -270,6 +286,28 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
     });
   }
 
+  late final _$dualFormatCanvasUuidAtom = Atom(
+    name: '_CanvasViewStore.dualFormatCanvasUuid',
+    context: context,
+  );
+
+  @override
+  String? get dualFormatCanvasUuid {
+    _$dualFormatCanvasUuidAtom.reportRead();
+    return super.dualFormatCanvasUuid;
+  }
+
+  @override
+  set dualFormatCanvasUuid(String? value) {
+    _$dualFormatCanvasUuidAtom.reportWrite(
+      value,
+      super.dualFormatCanvasUuid,
+      () {
+        super.dualFormatCanvasUuid = value;
+      },
+    );
+  }
+
   late final _$_CanvasViewStoreActionController = ActionController(
     name: '_CanvasViewStore',
     context: context,
@@ -382,6 +420,18 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
   }
 
   @override
+  void _setDualFormat(String? canvasUuid) {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore._setDualFormat',
+    );
+    try {
+      return super._setDualFormat(canvasUuid);
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _setAitumSupport(AitumSupport support) {
     final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
       name: '_CanvasViewStore._setAitumSupport',
@@ -467,11 +517,14 @@ loadingScenes: ${loadingScenes},
 aitumSupport: ${aitumSupport},
 aitumLiveSceneName: ${aitumLiveSceneName},
 aitumStatus: ${aitumStatus},
+dualFormatCanvasUuid: ${dualFormatCanvasUuid},
 hasMultipleCanvases: ${hasMultipleCanvases},
 aitumCanvas: ${aitumCanvas},
 viewedCanvas: ${viewedCanvas},
 isViewingOtherCanvas: ${isViewingOtherCanvas},
 aitumOnAir: ${aitumOnAir},
+dualFormatCanvas: ${dualFormatCanvas},
+extraCanvasOnAir: ${extraCanvasOnAir},
 canControlViewedCanvas: ${canControlViewedCanvas},
 liveControlBlockedReason: ${liveControlBlockedReason},
 selectedScene: ${selectedScene}
