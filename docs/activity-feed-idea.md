@@ -139,7 +139,7 @@ is needed live:
 | Twitch sub / resub / gift / raid / charity / cheer / follow / points / hype train | Native |
 | YouTube superchat / sticker / member / milestone / gifting | Native |
 | Kick sub / gifted subs / host | Native |
-| Kick follow, KICKs | SE |
+| Kick follow, KICKs | Kick webhook relay when built (below), else SE |
 | YouTube new subscriber | SE |
 | Tips, merch | SE |
 
@@ -179,6 +179,59 @@ the actor + time like the native `community_sub_gift`.
 - SE doesn't see Streamlabs tips. Streamlabs is the natural next source
   (same exchange host; needs approval past 10 users).
 
+### Option: Kick webhook relay (researched 2026-10-02)
+
+Gets Kick follows and KICKs for every Kick user, not only SE users.
+
+**Kick side** ([docs](https://docs.kick.com/events/subscribe-to-events)):
+
+- One webhook URL per Kick app (developer settings), so all users'
+  events land on one endpoint. Events: `channel.followed`,
+  `kicks.gifted`; the same path also brings `channel.subscription.*`,
+  `channel.reward.redemption.updated` and `livestream.status.updated`
+  with documented payloads (ours from Pusher are guessed).
+- Subscribe per channel with `POST /public/v1/events/subscriptions`
+  (user token needs `events:subscribe`, not in `kKickChatScopes` today,
+  so existing users re-consent; an app token works for any channel id).
+- Cap: 10,000 subscriptions per event type per app.
+- RSA-SHA256 signature over `message-id.timestamp.body` (public key at
+  `api.kick.com/public/v1/public-key`); `Kick-Event-Message-Id` is the
+  idempotency key. Failing for over a day auto-unsubscribes the app, so
+  a resubscribe job is required.
+
+**Load:** small. Assumed worst case 1,000 channels x ~100 follow/KICKs
+events per stream hour x 3 h/day is ~300k events/day, ~3-4/s average,
+maybe 50/s peak, ~1 KB each. Signature checks are sub-millisecond; an
+open WebSocket per running app is a few KB. Fits in caps like
+`kick-auth`'s (128 MB, 50% CPU). Don't route `chat.message.sent` through
+it: that's where the load is (and capped at 1,000 for unverified apps).
+Chat stays on Pusher.
+
+**Shape:** a separate container (`kick-events`) next to `kick-auth` on
+the same host, same Kick app credentials from the env file, own quadlet
+caps. Keep `tool/kick_auth_proxy/` stateless. The new service:
+
+1. verifies and dedupes incoming webhooks,
+2. stores events per channel for phones that are closed (retention
+   limit, deleted on sign-out / unsubscribe),
+3. checks a phone owns the channel (phone presents its Kick token, the
+   server confirms it against Kick's users endpoint, then issues its own
+   session token),
+4. streams live events to open apps over a WebSocket (works through the
+   Cloudflare tunnel), with a "since" backfill on connect,
+5. resubscribes channels after downtime or token changes.
+
+That's the public-backend threat model from
+`docs/private/backend-architecture.md`, plus personal data (follower and
+gifter names): privacy policy and store privacy labels need updating.
+
+**Check first:** Kick's Pusher `channel.{id}` has `FollowersUpdated`,
+listed with `username: unknown` in a
+[community event list](https://gist.github.com/Digital39999/ffe7df2bfc08797c2ba19d42e8f739a0)
+(mid-2025); another tool reports only the count. KICKs on Pusher aren't
+documented. Capture Pusher during a real follow and a real KICKs gift:
+if the sender is there, KICKs need no server.
+
 ### Sources
 
 - StreamElements: [WebSockets](https://docs.streamelements.com/websockets),
@@ -195,6 +248,9 @@ the actor + time like the native `community_sub_gift`.
 - Streamer.bot: [configuration](https://docs.streamer.bot/api/websocket/guide/configuration),
   [auth](https://docs.streamer.bot/api/websocket/guide/authentication),
   [events](https://docs.streamer.bot/api/websocket/events)
+- Kick: [subscribe to events](https://docs.kick.com/events/subscribe-to-events),
+  [webhook security](https://docs.kick.com/events/webhook-security),
+  [event types](https://docs.kick.com/events/event-types)
 - [TipeeeStream API](https://api.tipeeestream.com/api-doc/),
   [DonationAlerts API](https://www.donationalerts.com/apidoc)
 
@@ -207,5 +263,7 @@ the actor + time like the native `community_sub_gift`.
 - Haptic or notification on big events while the app is in the foreground?
 - SE login: per "My chats" channel or one per SE account? Depends on the
   multi-platform capture.
+- Kick webhook relay: Pro only (it's real backend cost), or for every
+  Kick user? Decide after the Pusher capture.
 - Do SE-only kinds (tips, merch) also count for the to-thank queue by
   default? Likely yes, they're the money events.
