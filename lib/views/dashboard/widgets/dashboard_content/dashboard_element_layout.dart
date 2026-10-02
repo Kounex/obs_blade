@@ -6,6 +6,7 @@ import '../../../../shared/design/design.dart';
 import '../../../../shared/general/responsive_widget_wrapper.dart';
 import '../../../../types/enums/settings_keys.dart';
 import '../obs_widgets/stats/stats.dart';
+import 'canvas/canvas_output_controls.dart';
 import 'canvas/canvas_picker.dart';
 import 'dashboard_element_card.dart';
 import 'exposed_controls/exposed_controls.dart';
@@ -161,6 +162,7 @@ List<Widget> _buildStandalone(
     case DashboardElement.SceneButtons:
       return const [
         CanvasPicker(),
+        CanvasOutputControls(),
         StaleStateBadge(),
         Center(
           child: Padding(

@@ -144,4 +144,8 @@ enum EventType {
 
   /// The settings of a source filter have changed.
   SourceFilterSettingsChanged,
+
+  /// An event emitted by a vendor - a third-party plugin or script (e.g.
+  /// Aitum Vertical's scene switches and output state).
+  VendorEvent,
 }

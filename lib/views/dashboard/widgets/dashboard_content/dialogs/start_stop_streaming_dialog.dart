@@ -9,19 +9,28 @@ class StartStopStreamingDialog extends StatelessWidget {
   final bool isLive;
   final VoidCallback onStreamStartStop;
 
+  /// Name of the non-main canvas whose own output this is (e.g. Aitum
+  /// Vertical) - null for the main output
+  final String? canvasName;
+
   const StartStopStreamingDialog({
     super.key,
     required this.isLive,
     required this.onStreamStartStop,
+    this.canvasName,
   });
 
   @override
   Widget build(BuildContext context) {
     return ConfirmationDialog(
       title: '${this.isLive ? 'Stop' : 'Start'} Streaming',
-      body: this.isLive
-          ? 'Are you sure you want to stop the stream? Nothing more to show or talk about? Or just tired or no time?\n\n... just to make sure it\'s intentional!'
-          : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!',
+      body:
+          (this.canvasName != null
+              ? 'This is the ${this.canvasName} canvas\' own output, the main one isn\'t affected.\n\n'
+              : '') +
+          (this.isLive
+              ? 'Are you sure you want to stop the stream? Nothing more to show or talk about? Or just tired or no time?\n\n... just to make sure it\'s intentional!'
+              : 'Are you sure you are ready to start the stream? Everything done? Stream title and description updated?\n\nIf yes: let\'s go!'),
       isYesDestructive: this.isLive,
       enableDontShowAgainOption: true,
       onOk: (checked) {

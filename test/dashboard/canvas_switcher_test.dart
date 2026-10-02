@@ -10,11 +10,13 @@ import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/canvas_view.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/types/classes/api/aitum_vertical.dart';
 import 'package:obs_blade/types/classes/api/obs_canvas.dart';
 import 'package:obs_blade/types/classes/api/scene.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/canvas/canvas_output_controls.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/canvas/canvas_picker.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_buttons/scene_buttons.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/scene_items.dart';
@@ -31,6 +33,13 @@ const ObsCanvas _main = ObsCanvas(
 const ObsCanvas _vertical = ObsCanvas(
   uuid: 'vertical',
   name: 'Vertical',
+  isMain: false,
+  baseWidth: 1080,
+  baseHeight: 1920,
+);
+const ObsCanvas _aitum = ObsCanvas(
+  uuid: 'aitum',
+  name: kAitumCanvasName,
   isMain: false,
   baseWidth: 1080,
   baseHeight: 1920,
@@ -99,11 +108,14 @@ void main() {
 
   /// No session in widget tests: the store's reads return nothing, the
   /// test fills in what OBS would have answered
-  Future<void> viewVertical(WidgetTester tester) async {
+  Future<void> viewVertical(
+    WidgetTester tester, {
+    ObsCanvas canvas = _vertical,
+  }) async {
     runInAction(() {
-      canvasStore.canvases = ObservableList.of([_main, _vertical]);
+      canvasStore.canvases = ObservableList.of([_main, canvas]);
     });
-    canvasStore.viewCanvas(_vertical.uuid);
+    canvasStore.viewCanvas(canvas.uuid);
     await tester.pump();
     runInAction(() {
       canvasStore.scenes = ObservableList.of(const [
@@ -143,6 +155,24 @@ void main() {
     expect(find.text('Canvas'), findsNothing);
   });
 
+  /// Lets the status overlay (delay + show + animations) run out
+  Future<void> drainOverlay(WidgetTester tester) async {
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+  }
+
+  /// What `_checkAitum` / `_loadAitumState` would have read from OBS
+  void aitumAnswers({
+    AitumSupport support = AitumSupport.available,
+    String? liveScene,
+    AitumOutputStatus status = const AitumOutputStatus(),
+  }) => runInAction(() {
+    canvasStore.aitumSupport = support;
+    canvasStore.aitumLiveSceneName = liveScene;
+    canvasStore.aitumStatus = status;
+  });
+
   testWidgets('scene buttons show the viewed canvas, a tap only picks the '
       'scene to view', (tester) async {
     await tester.pumpWidget(app(const SceneButtons()));
@@ -150,6 +180,7 @@ void main() {
     expect(find.text('Program Scene'), findsOneWidget);
 
     await viewVertical(tester);
+    aitumAnswers(support: AitumSupport.missing);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
@@ -161,11 +192,131 @@ void main() {
     await tester.pump();
     expect(canvasStore.selectedSceneUuid, 'v-brb');
 
+    /// The first view-only tap explains what live switching would need
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Shown in the app only'), findsOneWidget);
+    expect(
+      find.textContaining('need the Aitum Vertical plugin'),
+      findsOneWidget,
+    );
+    await drainOverlay(tester);
+
+    /// ... once per session
+    await tester.tap(find.text('Vertical Main'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Shown in the app only'), findsNothing);
+    await drainOverlay(tester);
+
     /// Back to main: the program scenes return
     canvasStore.viewCanvas(null);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('Program Scene'), findsOneWidget);
+  });
+
+  testWidgets('Aitum Vertical: the live scene wears the tally, a tap '
+      'switches it live', (tester) async {
+    await tester.pumpWidget(app(const SceneButtons()));
+    await viewVertical(tester, canvas: _aitum);
+    aitumAnswers(liveScene: 'Vertical Main');
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    final Semantics tile = tester.widget(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label == 'Vertical Main, live',
+      ),
+    );
+    expect(
+      tile.properties.hint,
+      'Switches the $kAitumCanvasName canvas to this scene live',
+    );
+
+    await tester.tap(find.text('Vertical BRB'));
+    await tester.pump();
+
+    /// Optimistic switch (no session to send on here), no view-only hint
+    expect(canvasStore.aitumLiveSceneName, 'Vertical BRB');
+    expect(canvasStore.selectedSceneUuid, 'v-brb');
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Shown in the app only'), findsNothing);
+
+    canvasStore.viewCanvas(null);
+    await drainOverlay(tester);
+  });
+
+  testWidgets('output controls: hidden on main, live with Aitum Vertical', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app(const CanvasOutputControls()));
+    await tester.pump();
+    expect(find.text('Stream'), findsNothing);
+
+    await viewVertical(tester, canvas: _aitum);
+    aitumAnswers(
+      liveScene: 'Vertical Main',
+      status: const AitumOutputStatus(streaming: true, backtrack: true),
+    );
+    await tester.pump();
+
+    expect(find.text('Stream'), findsOneWidget);
+    expect(find.text('Recording'), findsOneWidget);
+    expect(find.text('Backtrack'), findsOneWidget);
+    expect(find.textContaining('View only'), findsNothing);
+    expect(
+      find.bySemanticsLabel('Stop $kAitumCanvasName stream'),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel('Start $kAitumCanvasName recording'),
+      findsOneWidget,
+    );
+
+    /// Save only while the backtrack runs
+    expect(
+      find.bySemanticsLabel('Save $kAitumCanvasName backtrack'),
+      findsOneWidget,
+    );
+
+    /// Stop asks first, naming the canvas
+    await tester.tap(find.bySemanticsLabel('Stop $kAitumCanvasName stream'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Stop Streaming'), findsOneWidget);
+    expect(find.textContaining('$kAitumCanvasName canvas'), findsOneWidget);
+
+    canvasStore.viewCanvas(null);
+    await tester.pump();
+  });
+
+  testWidgets('output controls without the plugin: muted, a tap says why', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app(const CanvasOutputControls()));
+    await viewVertical(tester);
+    aitumAnswers(support: AitumSupport.missing);
+    await tester.pump();
+
+    expect(find.textContaining('View only'), findsOneWidget);
+
+    /// Never "Stop" or "Save" while nothing can be read from the plugin
+    expect(find.text('Stop'), findsNothing);
+    expect(find.text('Save'), findsNothing);
+
+    await tester.tap(find.bySemanticsLabel('Start Vertical stream'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.textContaining('need the Aitum Vertical plugin'),
+      findsOneWidget,
+    );
+
+    /// No confirmation dialog - nothing would be sent
+    expect(find.text('Start Streaming'), findsNothing);
+
+    canvasStore.viewCanvas(null);
+    await drainOverlay(tester);
   });
 
   testWidgets('scene items show the picked canvas scene', (tester) async {

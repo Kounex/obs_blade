@@ -861,6 +861,18 @@ mixin _$DashboardStore on _DashboardStore, Store {
   }
 
   @override
+  void reportCommandFailure(ObsRequestAck ack, {String? label}) {
+    final _$actionInfo = _$_DashboardStoreActionController.startAction(
+      name: '_DashboardStore.reportCommandFailure',
+    );
+    try {
+      return super.reportCommandFailure(ack, label: label);
+    } finally {
+      _$_DashboardStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void init() {
     final _$actionInfo = _$_DashboardStoreActionController.startAction(
       name: '_DashboardStore.init',

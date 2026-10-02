@@ -395,4 +395,12 @@ enum RequestType {
   /// {'filterSettings': Object } - Object of settings to apply
   /// (Optional) {'overlay': bool } - True == apply the settings on top of existing ones, False == reset the input to its defaults, then apply settings.
   SetSourceFilterSettings,
+
+  /// Calls a request registered to a vendor - a third-party plugin or
+  /// script (e.g. Aitum Vertical's `aitum-vertical-canvas`).
+  ///
+  /// {'vendorName': String } - Name of the vendor to use
+  /// {'requestType': String } - The request type to call
+  /// (Optional) {'requestData': Object } - Object containing appropriate request data
+  CallVendorRequest,
 }

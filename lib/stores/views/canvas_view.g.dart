@@ -17,6 +17,13 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
         () => super.hasMultipleCanvases,
         name: '_CanvasViewStore.hasMultipleCanvases',
       )).value;
+  Computed<ObsCanvas?>? _$aitumCanvasComputed;
+
+  @override
+  ObsCanvas? get aitumCanvas => (_$aitumCanvasComputed ??= Computed<ObsCanvas?>(
+    () => super.aitumCanvas,
+    name: '_CanvasViewStore.aitumCanvas',
+  )).value;
   Computed<ObsCanvas?>? _$viewedCanvasComputed;
 
   @override
@@ -32,6 +39,22 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
       (_$isViewingOtherCanvasComputed ??= Computed<bool>(
         () => super.isViewingOtherCanvas,
         name: '_CanvasViewStore.isViewingOtherCanvas',
+      )).value;
+  Computed<bool>? _$canControlViewedCanvasComputed;
+
+  @override
+  bool get canControlViewedCanvas =>
+      (_$canControlViewedCanvasComputed ??= Computed<bool>(
+        () => super.canControlViewedCanvas,
+        name: '_CanvasViewStore.canControlViewedCanvas',
+      )).value;
+  Computed<String?>? _$liveControlBlockedReasonComputed;
+
+  @override
+  String? get liveControlBlockedReason =>
+      (_$liveControlBlockedReasonComputed ??= Computed<String?>(
+        () => super.liveControlBlockedReason,
+        name: '_CanvasViewStore.liveControlBlockedReason',
       )).value;
   Computed<CanvasScene?>? _$selectedSceneComputed;
 
@@ -168,6 +191,60 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
     });
   }
 
+  late final _$aitumSupportAtom = Atom(
+    name: '_CanvasViewStore.aitumSupport',
+    context: context,
+  );
+
+  @override
+  AitumSupport get aitumSupport {
+    _$aitumSupportAtom.reportRead();
+    return super.aitumSupport;
+  }
+
+  @override
+  set aitumSupport(AitumSupport value) {
+    _$aitumSupportAtom.reportWrite(value, super.aitumSupport, () {
+      super.aitumSupport = value;
+    });
+  }
+
+  late final _$aitumLiveSceneNameAtom = Atom(
+    name: '_CanvasViewStore.aitumLiveSceneName',
+    context: context,
+  );
+
+  @override
+  String? get aitumLiveSceneName {
+    _$aitumLiveSceneNameAtom.reportRead();
+    return super.aitumLiveSceneName;
+  }
+
+  @override
+  set aitumLiveSceneName(String? value) {
+    _$aitumLiveSceneNameAtom.reportWrite(value, super.aitumLiveSceneName, () {
+      super.aitumLiveSceneName = value;
+    });
+  }
+
+  late final _$aitumStatusAtom = Atom(
+    name: '_CanvasViewStore.aitumStatus',
+    context: context,
+  );
+
+  @override
+  AitumOutputStatus get aitumStatus {
+    _$aitumStatusAtom.reportRead();
+    return super.aitumStatus;
+  }
+
+  @override
+  set aitumStatus(AitumOutputStatus value) {
+    _$aitumStatusAtom.reportWrite(value, super.aitumStatus, () {
+      super.aitumStatus = value;
+    });
+  }
+
   late final _$_CanvasViewStoreActionController = ActionController(
     name: '_CanvasViewStore',
     context: context,
@@ -258,6 +335,54 @@ mixin _$CanvasViewStore on _CanvasViewStore, Store {
   }
 
   @override
+  void _setAitumSupport(AitumSupport support) {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore._setAitumSupport',
+    );
+    try {
+      return super._setAitumSupport(support);
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void _resetAitum() {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore._resetAitum',
+    );
+    try {
+      return super._resetAitum();
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void _applyAitumState({String? scene, Map<String, dynamic>? status}) {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore._applyAitumState',
+    );
+    try {
+      return super._applyAitumState(scene: scene, status: status);
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void _applyAitumEvent(String eventType, Map<String, dynamic> data) {
+    final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
+      name: '_CanvasViewStore._applyAitumEvent',
+    );
+    try {
+      return super._applyAitumEvent(eventType, data);
+    } finally {
+      _$_CanvasViewStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void _setPreview(Uint8List bytes) {
     final _$actionInfo = _$_CanvasViewStoreActionController.startAction(
       name: '_CanvasViewStore._setPreview',
@@ -279,9 +404,15 @@ selectedSceneUuid: ${selectedSceneUuid},
 sceneItems: ${sceneItems},
 previewImageBytes: ${previewImageBytes},
 loadingScenes: ${loadingScenes},
+aitumSupport: ${aitumSupport},
+aitumLiveSceneName: ${aitumLiveSceneName},
+aitumStatus: ${aitumStatus},
 hasMultipleCanvases: ${hasMultipleCanvases},
+aitumCanvas: ${aitumCanvas},
 viewedCanvas: ${viewedCanvas},
 isViewingOtherCanvas: ${isViewingOtherCanvas},
+canControlViewedCanvas: ${canControlViewedCanvas},
+liveControlBlockedReason: ${liveControlBlockedReason},
 selectedScene: ${selectedScene}
     ''';
   }

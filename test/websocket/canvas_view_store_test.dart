@@ -367,6 +367,7 @@ void main() {
         () => canvasStore.sceneItems.isNotEmpty,
         'vertical scene items loaded',
       );
+      final itemReads = requestsOf('GetSceneItemList').length;
 
       /// Socket dies, fresh session attaches (the _checkOBSConnection
       /// success seam). availableRequests still holds GetCanvasList from
@@ -383,9 +384,13 @@ void main() {
         'canvas list re-read on the new session',
       );
       await waitFor(
-        () => canvasStore.sceneItems.isNotEmpty,
+        () => requestsOf('GetSceneItemList').length > itemReads,
         'viewed scene reloaded on the new session',
       );
+
+      /// The re-read's answer must land before the event, or it overwrites
+      /// the patch (single ordered socket)
+      await flushPeer();
 
       /// Events on the NEW socket must be handled - before the fix the
       /// subscription still listened on the dead socket's stream

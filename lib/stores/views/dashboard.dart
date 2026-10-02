@@ -797,6 +797,13 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  /// Surfaces a failed command sent outside [sendMutation] (e.g. the canvas
+  /// view's scoped requests) through the same toast / log path - no resync,
+  /// the caller owns that state
+  @action
+  void reportCommandFailure(ObsRequestAck ack, {String? label}) =>
+      _surfaceCommandFailure(ack, label: label);
+
   void _surfaceCommandFailure(
     ObsRequestAck ack, {
     Map<String, dynamic>? fields,

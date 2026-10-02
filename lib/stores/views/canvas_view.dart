@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 
+import '../../types/classes/api/aitum_vertical.dart';
 import '../../types/classes/api/obs_canvas.dart';
 import '../../types/classes/api/scene_item.dart';
 import '../../types/classes/obs_request_ack.dart';
@@ -32,6 +33,12 @@ const Duration kCanvasRefreshInterval = Duration(seconds: 10);
 /// scene's items and a preview. Nothing here changes what OBS outputs:
 /// core OBS has no live scene for non-main canvases, so picking a scene only
 /// selects what the app shows.
+///
+/// With Aitum Vertical installed its obs-websocket vendor adds what core OBS
+/// lacks for its canvas: a live scene (tap = switch it, the shown scene
+/// follows it) and the canvas' own stream / record / backtrack outputs.
+/// Detected per connection ([aitumSupport]) - without it the canvas stays
+/// view-only and the UI explains what the plugin would add.
 ///
 /// Every read goes through [NetworkHelper.makeScopedRequest] so
 /// [DashboardStore] never applies these responses to the program state, and
@@ -66,8 +73,34 @@ abstract class _CanvasViewStore with Store {
   @observable
   bool loadingScenes = false;
 
+  /// Whether Aitum Vertical's vendor answers on this connection
+  @observable
+  AitumSupport aitumSupport = AitumSupport.unknown;
+
+  /// Live scene of the Aitum Vertical canvas (by name - that's all the
+  /// vendor speaks), null until read
+  @observable
+  String? aitumLiveSceneName;
+
+  /// Stream / record / backtrack state of the Aitum Vertical canvas
+  @observable
+  AitumOutputStatus aitumStatus = const AitumOutputStatus();
+
+  /// The "only shown in the app" hint for scene taps on a canvas without
+  /// live control was shown once already (per dashboard session)
+  bool viewOnlyHintShown = false;
+
   @computed
   bool get hasMultipleCanvases => this.canvases.length > 1;
+
+  /// The Aitum Vertical canvas, null when OBS has none
+  @computed
+  ObsCanvas? get aitumCanvas {
+    for (final canvas in this.canvases) {
+      if (isAitumCanvas(canvas)) return canvas;
+    }
+    return null;
+  }
 
   /// The viewed canvas while it's a non-main one, null otherwise
   @computed
@@ -82,6 +115,21 @@ abstract class _CanvasViewStore with Store {
 
   @computed
   bool get isViewingOtherCanvas => this.viewedCanvas != null;
+
+  /// The viewed canvas is Aitum's and its vendor answers: scene taps switch
+  /// its live scene, its outputs can be started / stopped
+  @computed
+  bool get canControlViewedCanvas =>
+      this.aitumSupport == AitumSupport.available &&
+      isAitumCanvas(this.viewedCanvas);
+
+  /// Why live control is off for the viewed canvas - null when it works
+  /// (or no other canvas is viewed)
+  @computed
+  String? get liveControlBlockedReason =>
+      !this.isViewingOtherCanvas || this.canControlViewedCanvas
+      ? null
+      : aitumBlockedReason(this.aitumSupport, this.viewedCanvas);
 
   @computed
   CanvasScene? get selectedScene {
@@ -192,6 +240,11 @@ abstract class _CanvasViewStore with Store {
           .map(ObsCanvas.fromJson)
           .toList(),
     );
+    if (this.canvases.any((canvas) => !canvas.isMain)) {
+      _checkAitum();
+    } else {
+      _resetAitum();
+    }
   }
 
   @action
@@ -209,6 +262,7 @@ abstract class _CanvasViewStore with Store {
   void _clearCanvases() {
     this.canvases = ObservableList();
     this.viewCanvas(null);
+    _resetAitum();
   }
 
   /// Show [canvasUuid] in the dashboard - null (or the main canvas) goes
@@ -236,7 +290,9 @@ abstract class _CanvasViewStore with Store {
     _loadScenes();
     _refreshTimer = Timer.periodic(kCanvasRefreshInterval, (_) {
       _loadScenes();
+      if (this.canControlViewedCanvas) _loadAitumState();
     });
+    if (this.canControlViewedCanvas) _loadAitumState();
   }
 
   /// Pick a scene of the viewed canvas to look at (no live switch)
@@ -279,7 +335,10 @@ abstract class _CanvasViewStore with Store {
     );
     this.scenes = ObservableList.of(raw.map(CanvasScene.fromJson));
 
-    if (this.selectedScene == null) {
+    if (this.canControlViewedCanvas && _liveScene != null) {
+      _followLiveScene();
+      if (_liveScene?.uuid == this.selectedSceneUuid) _loadItems();
+    } else if (this.selectedScene == null) {
       if (this.scenes.isNotEmpty) {
         this.selectScene(this.scenes.first.uuid);
       } else {
@@ -369,6 +428,14 @@ abstract class _CanvasViewStore with Store {
       case EventType.CanvasNameChanged:
         this.loadCanvases();
         break;
+      case EventType.VendorEvent:
+        if (event.json['vendorName'] == kAitumVendorName) {
+          _handleAitumEvent(
+            event.json['eventType'] as String?,
+            event.json['eventData'] as Map<String, dynamic>? ?? const {},
+          );
+        }
+        break;
 
       /// Enable / lock events are not limited to the main canvas (created /
       /// removed ones are) - match by scene UUID
@@ -393,6 +460,203 @@ abstract class _CanvasViewStore with Store {
       default:
         break;
     }
+  }
+
+  /// Aitum Vertical vendor request - the plugin's own payload (inside the
+  /// `CallVendorRequest` response) on success, null when OBS rejected the
+  /// call (e.g. no such vendor) or the plugin didn't answer `success: true`
+  /// (every one of its handlers sets it)
+  Future<(ObsRequestAck?, Map<String, dynamic>?)> _vendorRequest(
+    String requestType, [
+    Map<String, dynamic>? data,
+  ]) async {
+    final ack = await _request(RequestType.CallVendorRequest, {
+      'vendorName': kAitumVendorName,
+      'requestType': requestType,
+      'requestData': data ?? const <String, dynamic>{},
+    });
+    if (ack == null || !ack.success) return (ack, null);
+    final response =
+        ack.responseData?['responseData'] as Map<String, dynamic>? ??
+        const <String, dynamic>{};
+    return (ack, response['success'] == true ? response : null);
+  }
+
+  /// Asks Aitum Vertical's vendor for its version - only a rejection (no
+  /// such vendor) or a failed answer counts as missing, a timeout / lost
+  /// connection keeps the previous verdict
+  Future<void> _checkAitum() async {
+    final (ack, data) = await _vendorRequest('version');
+    if (ack == null) return;
+    if (ack.success || ack.failureKind == ObsRequestFailureKind.rejected) {
+      _setAitumSupport(
+        data != null ? AitumSupport.available : AitumSupport.missing,
+      );
+    }
+    if (this.aitumSupport == AitumSupport.available) _loadAitumState();
+  }
+
+  @action
+  void _setAitumSupport(AitumSupport support) {
+    this.aitumSupport = support;
+    if (support != AitumSupport.available) {
+      this.aitumLiveSceneName = null;
+      this.aitumStatus = const AitumOutputStatus();
+    }
+  }
+
+  @action
+  void _resetAitum() => _setAitumSupport(AitumSupport.unknown);
+
+  /// Live scene + outputs of the Aitum canvas
+  Future<void> _loadAitumState() async {
+    final canvas = this.aitumCanvas;
+    if (canvas == null || this.aitumSupport != AitumSupport.available) return;
+    final target = aitumCanvasTarget(canvas);
+    final results = await Future.wait([
+      _vendorRequest('current_scene', target),
+      _vendorRequest('status', target),
+    ]);
+    _applyAitumState(
+      scene: results[0].$2?['scene'] as String?,
+      status: results[1].$2,
+    );
+  }
+
+  @action
+  void _applyAitumState({String? scene, Map<String, dynamic>? status}) {
+    if (this.aitumSupport != AitumSupport.available) return;
+    if (status != null) this.aitumStatus = AitumOutputStatus.fromJson(status);
+    if (scene != null) {
+      this.aitumLiveSceneName = scene.isEmpty ? null : scene;
+      _followLiveScene();
+    }
+  }
+
+  CanvasScene? get _liveScene {
+    for (final scene in this.scenes) {
+      if (scene.name == this.aitumLiveSceneName) return scene;
+    }
+    return null;
+  }
+
+  /// With live control the shown scene is the live one (like the program
+  /// scene buttons)
+  void _followLiveScene() {
+    final live = _liveScene;
+    if (this.canControlViewedCanvas && live != null) {
+      this.selectScene(live.uuid);
+    }
+  }
+
+  void _handleAitumEvent(String? eventType, Map<String, dynamic> data) {
+    final canvas = this.aitumCanvas;
+    if (eventType == null || canvas == null) return;
+
+    /// Aitum tags its events with the canvas resolution
+    final width = (data['width'] as num?)?.toInt();
+    final height = (data['height'] as num?)?.toInt();
+    if ((width != null &&
+            canvas.baseWidth != null &&
+            width != canvas.baseWidth) ||
+        (height != null &&
+            canvas.baseHeight != null &&
+            height != canvas.baseHeight)) {
+      return;
+    }
+    _applyAitumEvent(eventType, data);
+  }
+
+  @action
+  void _applyAitumEvent(String eventType, Map<String, dynamic> data) {
+    /// An event proves the vendor is there (e.g. it registered after the
+    /// first check)
+    if (this.aitumSupport != AitumSupport.available) {
+      this.aitumSupport = AitumSupport.available;
+      _loadAitumState();
+    }
+    switch (eventType) {
+      case 'switch_scene':
+        _applyAitumState(scene: data['new_scene'] as String? ?? '');
+      case 'streaming_started':
+        this.aitumStatus = this.aitumStatus.copyWith(streaming: true);
+      case 'streaming_stopped':
+        this.aitumStatus = this.aitumStatus.copyWith(streaming: false);
+      case 'recording_started':
+        this.aitumStatus = this.aitumStatus.copyWith(recording: true);
+      case 'recording_stopped':
+        this.aitumStatus = this.aitumStatus.copyWith(recording: false);
+      case 'backtrack_started':
+        this.aitumStatus = this.aitumStatus.copyWith(backtrack: true);
+      case 'backtrack_stopped':
+        this.aitumStatus = this.aitumStatus.copyWith(backtrack: false);
+    }
+  }
+
+  /// Switch the Aitum canvas' live scene - optimistic (the shown scene
+  /// follows), re-read on failure
+  Future<void> switchLiveScene(CanvasScene scene) async {
+    if (!this.canControlViewedCanvas) return;
+    _applyAitumState(scene: scene.name);
+    final (ack, data) = await _vendorRequest('switch_scene', {
+      'scene': scene.name,
+      ...aitumCanvasTarget(this.viewedCanvas),
+    });
+    if (data == null) {
+      _reportFailure(ack, 'Scene switch');
+      _loadAitumState();
+    }
+  }
+
+  /// Explicit start / stop instead of Aitum's toggles - see
+  /// [RecordStreamService]: a confirmed direction must never flip into the
+  /// opposite when the state changed on the PC meanwhile
+  Future<void> setAitumStreaming(bool start) => _aitumOutput(
+    start ? 'start_streaming' : 'stop_streaming',
+    start ? 'Start vertical stream' : 'Stop vertical stream',
+  );
+
+  Future<void> setAitumRecording(bool start) => _aitumOutput(
+    start ? 'start_recording' : 'stop_recording',
+    start ? 'Start vertical recording' : 'Stop vertical recording',
+  );
+
+  Future<void> setAitumBacktrack(bool start) => _aitumOutput(
+    start ? 'start_backtrack' : 'stop_backtrack',
+    start ? 'Start backtrack' : 'Stop backtrack',
+  );
+
+  Future<void> saveAitumBacktrack() =>
+      _aitumOutput('save_backtrack', 'Save backtrack');
+
+  /// The output state itself arrives through Aitum's events once the
+  /// output really started / stopped
+  Future<void> _aitumOutput(String requestType, String label) async {
+    if (!this.canControlViewedCanvas) return;
+    final (ack, data) = await _vendorRequest(
+      requestType,
+      aitumCanvasTarget(this.viewedCanvas),
+    );
+    if (data == null) {
+      _reportFailure(ack, label);
+      _loadAitumState();
+    }
+  }
+
+  /// Same toast as failed program commands - an answer with
+  /// `success: false` from the plugin counts as a rejection
+  void _reportFailure(ObsRequestAck? ack, String label) {
+    if (ack == null) return;
+    _dashboardStore.reportCommandFailure(
+      ack.success
+          ? const ObsRequestAck.rejected(
+              RequestType.CallVendorRequest,
+              0,
+              'Aitum Vertical did not apply the command',
+            )
+          : ack,
+      label: label,
+    );
   }
 
   bool get _previewActive =>
