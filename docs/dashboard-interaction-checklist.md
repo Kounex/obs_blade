@@ -1,8 +1,8 @@
 # Dashboard interaction checklist
 
-Walk this before reporting an OBS-facing feature as done. Every row is a
-place where a change has broken something before, or would have - the
-point is to check interactions, not just the feature on its own. Add a row
+Walk this before reporting OBS-facing work (new or a change, `feature-work`
+skill) as done. Every row is a place where a change has broken something
+before, or would have - the point is to check interactions, not just the feature on its own. Add a row
 whenever a review finds a new kind of interaction.
 
 For each row: what does the user see, what does a tap do, and is that

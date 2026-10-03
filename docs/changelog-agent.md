@@ -2,6 +2,35 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - `feature-work` skill, chat journey checklist, chat logs
+
+Six chat / sign-in misses reached the user past two `/code-review high`
+runs (entries below). None was wrong code - each was a wrong assumption,
+shared by the code and its tests - so the process changed, not the review
+count:
+
+- **`obs-feature` → `feature-work`** (`.claude/skills/feature-work/`):
+  generic - OBS, dashboard, chat, sign-ins - and for changes / fixes to
+  existing features too (reproduce with real data, name the class of the
+  miss, fix its siblings). New phase 0: clarify the request with the
+  user (states, platforms, scope, taste) instead of assuming; new last
+  phase: a device check list, store test builds only after the user's
+  on-device OK. `AGENTS.md` § Definition of done follows it.
+- **`docs/chat-journey-checklist.md`:** account states per platform
+  (incl. API-key-only, Brand Account without channel, Testing-mode 7-day
+  tokens), channel cases (never a `UC…` id as a name), entry points that
+  must agree, shared components walked per platform, console steps
+  against current docs, honest fakes, logging, device check, release.
+- **Logs:** `GeneralHelper.logFailure` - the chat / activity / TTS
+  stores' 106 console-only failure logs now reach Settings → Logs
+  (message + HTTP status only, tokens / secrets / long opaque strings
+  masked, each kind at most once per 5 min). The YouTube no-channel
+  sign-in is logged too.
+- **Fakes:** real `channels.list?mine=true` answer shapes (no `items`
+  key for an account without a channel), and an account-variant matrix
+  over sign-in (title / no title / Brand Account / failed lookup) that
+  checks state and that no name is a bare `UC…` id.
+
 ## 2026-10-03 - YouTube own chat: brand accounts, channel names, header sheet
 
 Dogfood (Kounex iOS), three findings around the signed-in YouTube chat:

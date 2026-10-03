@@ -46,21 +46,32 @@ session start):
   handoff doc for exactly how current each machine's clone is).
 - Keep this file short. Deeper notes live in [`docs/`](docs/).
 
-## Definition of done — OBS-facing features
+## Definition of done — feature work
 
-Anything that talks to OBS (requests, events, plugin vendor calls) or
-changes the dashboard goes through the **`obs-feature` skill**
-(`.claude/skills/obs-feature/`; agents without skills: read it as a
-runbook). It's at least process tier M, whatever the handoff's default.
-Not done before:
+Feature work - new **or** a change / fix to an existing feature - that
+talks to OBS (requests, events, plugin vendor calls), to a chat platform
+(chat, sign-ins, activity feed, TTS) or changes the dashboard / chat UI
+goes through the **`feature-work` skill** (`.claude/skills/feature-work/`;
+agents without skills: read it as a runbook). It's at least process tier
+M, whatever the handoff's default. Not done before:
 
-1. real-world use researched (who uses it, which plugins / platforms);
-2. every request / event checked against the **source** (obs-websocket,
-   OBS, plugin), facts in [`docs/obs-protocol-gotchas.md`](docs/obs-protocol-gotchas.md),
-   and the test fake behaving like that source;
-3. the journeys walked through [`docs/dashboard-interaction-checklist.md`](docs/dashboard-interaction-checklist.md);
-4. every new UI state rendered and looked at (`tool/widget_shots/`);
-5. a fresh-context review done and its findings handled.
+1. the request clarified with the user where it leaves room (states,
+   platforms, scope, taste) - ask, don't assume;
+2. real-world use researched (who uses it, which plugins / platforms /
+   account setups);
+3. facts checked against the **source** (obs-websocket / OBS / plugin
+   source, the platform's API reference + a real answer), noted in
+   [`docs/obs-protocol-gotchas.md`](docs/obs-protocol-gotchas.md) or the
+   chat audits, and the test fakes behaving like that source - awkward
+   cases first;
+4. the journeys walked through the area checklist:
+   [`docs/dashboard-interaction-checklist.md`](docs/dashboard-interaction-checklist.md)
+   (OBS / dashboard), [`docs/chat-journey-checklist.md`](docs/chat-journey-checklist.md)
+   (chat, sign-ins, activity);
+5. every new UI state rendered and looked at (`tool/widget_shots/`);
+6. a fresh-context review done and its findings handled;
+7. a device check list handed over - store test builds only after the
+   user's on-device OK.
 
 **After building a feature, remind the user to run `/code-review high` in
 a fresh session** - an independent pass without this session's
