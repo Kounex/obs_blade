@@ -832,7 +832,13 @@ abstract class _ActivityStore with Store {
     final alive = this._aliveAt;
     this._aliveAt = now;
     if (alive == null || now.difference(alive) <= _freezeGap) return;
-    if (this._ledger.coverage.splitOpen(alive, now)) this._saveCoverage();
+    if (this._ledger.coverage.splitOpen(
+      alive,
+      now,
+      except: const {ActivityPlatform.youtube},
+    )) {
+      this._saveCoverage();
+    }
   }
 
   Future<void> _backfillTwitchFollowers(TwitchChatStore twitch) async {
@@ -1006,6 +1012,11 @@ abstract class _ActivityStore with Store {
       if (!ack.success || !this.obsLive) return;
       final platform = obsStreamPlatform(ack.responseData);
       runInAction(() => this.obsLivePlatform = platform);
+
+      /// Known to stream elsewhere (Twitch): no need to look for the own
+      /// YouTube stream every 30 s
+      this._youTubePoller.fast =
+          platform == null || platform == ActivityPlatform.youtube;
     } catch (e) {
       GeneralHelper.logFailure(
         'Activity feed: OBS stream service read failed',

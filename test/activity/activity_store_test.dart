@@ -510,6 +510,16 @@ void main() {
       ]);
     });
 
+    test('a frozen app misses nothing on YouTube (the poll catches up)', () {
+      store.setLiveForTest('youtube-own', true);
+      store.setNativeCoverageForTest(ActivityPlatform.youtube, 'UCme');
+      now = at(0, 30);
+      store.tickForTest();
+      now = at(15, 30);
+      store.tickForTest();
+      expect(store.gapsOf(store.currentSession!), isEmpty);
+    });
+
     test('a kill does not count the downtime as listened', () async {
       store.setLiveForTest('twitch', true);
       store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');

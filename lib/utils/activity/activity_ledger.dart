@@ -148,10 +148,19 @@ class ActivityCoverage {
 
   /// The process was frozen from [from] to [to] (iOS suspends a
   /// backgrounded app: sockets die, nothing arrives): every open window
-  /// ends at [from] and goes on from [to]. Returns whether any was open.
-  bool splitOpen(DateTime from, DateTime to) {
+  /// ends at [from] and goes on from [to] - except [except]'s platforms,
+  /// whose reads catch up after a freeze (YouTube's poll continues from
+  /// its page token). Returns whether any was split.
+  bool splitOpen(
+    DateTime from,
+    DateTime to, {
+    Set<ActivityPlatform> except = const {},
+  }) {
     var any = false;
-    for (final list in this._windows.values) {
+    for (final entry in this._windows.entries) {
+      final platform = entry.key.split('|').elementAtOrNull(1);
+      if (except.any((p) => p.name == platform)) continue;
+      final list = entry.value;
       if (list.isEmpty || list.last.$2 != null) continue;
       any = true;
       final start = list.last.$1;

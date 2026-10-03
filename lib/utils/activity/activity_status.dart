@@ -246,14 +246,18 @@ List<ActivityStatusItem> _youTube(
         ),
       ];
     }
+
+    /// The lookup at sign-in failed (network) - a new sign-in repeats it
     return const [
       ActivityStatusItem(
         id: 'youtube-nochannel-yet',
         platform: platform,
         level: ActivityStatusLevel.info,
         text:
-            'YouTube · your channel isn\'t known yet - open the YouTube chat '
-            'once to look it up.',
+            'YouTube · your channel couldn\'t be looked up at sign-in - sign '
+            'in again so Super Chats on it land here.',
+        action: ActivityStatusAction.youTubeSignIn,
+        actionLabel: 'Sign in again',
       ),
     ];
   }
