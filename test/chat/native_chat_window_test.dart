@@ -242,6 +242,39 @@ void main() {
     expect(find.text('Sign out'), findsNothing);
   });
 
+  /// Signed in on the selected platform: Sign out is in the header sheet
+  /// whatever the chat's state (the chat bar has no account chip); signed
+  /// out it never is.
+  for (final status in NativeChatConnectionStatus.values) {
+    for (final signedIn in [true, false]) {
+      testWidgets(
+        '${status.name}, ${signedIn ? 'signed in: Sign out' : 'signed out: no Sign out'}',
+        (tester) async {
+          await tester.pumpWidget(
+            wrap(
+              NativeChatWindow(
+                chatType: ChatType.YouTube,
+                status: status,
+                accountLabel: signedIn ? 'My Channel' : null,
+                offlineNote: 'My Channel isn\'t live right now.',
+                onLogout: signedIn ? () {} : null,
+                onRetry: () {},
+                child: const SizedBox(height: 200),
+              ),
+            ),
+          );
+          await tester.tap(find.text('Stream Chat'));
+          await tester.pumpAndSettle();
+
+          expect(
+            find.text('Sign out'),
+            signedIn ? findsOneWidget : findsNothing,
+          );
+        },
+      );
+    }
+  }
+
   testWidgets('live with selfUserId routes through the merged card entry', (
     tester,
   ) async {

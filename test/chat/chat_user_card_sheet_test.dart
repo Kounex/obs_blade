@@ -293,6 +293,37 @@ void main() {
     expect(signedOut, isTrue);
   });
 
+  /// The own card the Twitch header opens (signed in, any channel viewed):
+  /// Sign out in every chat state - offline included, which used to say
+  /// "connect your Twitch account" while signed in.
+  for (final status in NativeChatConnectionStatus.values) {
+    testWidgets('self footer, ${status.name}: Sign out', (tester) async {
+      userService.userResult = const TwitchUser(
+        id: 'self-1',
+        login: 'selflogin',
+        displayName: 'SelfUser',
+      );
+      await openCard(
+        tester,
+        userId: 'self-1',
+        connection: ChatUserCardConnection(
+          chatType: ChatType.Twitch,
+          status: status,
+          statusLabel: status.name,
+          statusColor: Colors.grey,
+          accountLabel: 'SelfUser',
+          onRetry: () {},
+          onConnect: () {},
+          onLogout: () {},
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sign out'), findsOneWidget);
+      expect(find.text('Connect Twitch'), findsNothing);
+    });
+  }
+
   testWidgets('mod view lists the user\'s warnings (newest channel '
       'warnings first)', (tester) async {
     grantScopes(kTwitchModerationScopes);

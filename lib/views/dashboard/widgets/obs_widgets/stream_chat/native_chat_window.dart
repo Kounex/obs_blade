@@ -467,8 +467,8 @@ class _NativeChatConnectionSheet extends StatelessWidget {
             ],
           ],
           if (this.status == NativeChatConnectionStatus.offline) ...[
-            /// Signed in while the chat itself is offline (YouTube / Kick)
-            if (this.offlineNote != null && this.accountLabel != null) ...[
+            /// Signed in while the chat itself is offline
+            if (this.onLogout != null && this.accountLabel != null) ...[
               Text(
                 'Signed in as ${this.accountLabel}',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -489,7 +489,7 @@ class _NativeChatConnectionSheet extends StatelessWidget {
                 onTap: this.onConnect,
               ),
             ],
-            if (this.offlineNote != null && this.onLogout != null) ...[
+            if (this.onLogout != null) ...[
               SizedBox(
                 height: this.onConnect != null ? AppSpacing.xs : AppSpacing.md,
               ),

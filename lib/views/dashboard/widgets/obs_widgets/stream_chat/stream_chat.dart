@@ -818,17 +818,21 @@ class _StreamChatState extends State<StreamChat>
           channelIsMod: loggedIn && twitchStore.canModerateSelectedChannel,
           onRetry: twitchStore.connectChat,
           onConnect: () => startTwitchLogin(context),
-          onLogout: () => ModalHandler.showBaseDialog(
-            context: context,
-            dialogWidget: ConfirmationDialog(
-              title: 'Disconnect Twitch?',
-              body:
-                  'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
-              okText: 'Disconnect',
-              isYesDestructive: true,
-              onOk: (_) => twitchStore.logout(),
-            ),
-          ),
+
+          /// Signed in only - the sheets show Sign out whenever it's set
+          onLogout: loggedIn
+              ? () => ModalHandler.showBaseDialog(
+                  context: context,
+                  dialogWidget: ConfirmationDialog(
+                    title: 'Disconnect Twitch?',
+                    body:
+                        'Connected as ${displayName ?? 'your Twitch account'}. You will be logged out of your Twitch account.',
+                    okText: 'Disconnect',
+                    isYesDestructive: true,
+                    onOk: (_) => twitchStore.logout(),
+                  ),
+                )
+              : null,
           selfUserId: loggedIn ? twitchStore.user?.id : null,
           child: loggedIn
               ? NativeTwitchChatView(

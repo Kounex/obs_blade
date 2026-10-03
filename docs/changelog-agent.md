@@ -17,7 +17,11 @@ shield + options (~96pt, fits a 320pt phone); signed out keeps the sign-in
 Sign out row (YouTube, Kick - Kick's sheet now shows the account; Twitch's
 header opens the self card); the degraded state no longer shows a dead
 Log out row without a session. Dogfood (build 5): the Twitch self card
-only offered sign-out while degraded - it has Sign out while live now too. Widget test at phone width
+only offered sign-out while degraded - it has Sign out while live now too. A
+state matrix over both sheets found one more: signed in with the Twitch
+chat offline, the self card said "connect your Twitch account" with no
+Sign out - it offers Reconnect + Sign out now; the header sheet shows Sign
+out whenever signed in (no longer only with an offline note). Widget test at phone width
 reproduces the missing shield; shots in `tool/widget_shots/chat_bar_shots_test.dart`.
 
 ## 2026-10-03 - chat review fixes (`/code-review high` + journey walk)

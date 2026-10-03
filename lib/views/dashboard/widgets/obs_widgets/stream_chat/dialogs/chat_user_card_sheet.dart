@@ -588,7 +588,32 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             ),
           ],
         ],
-        if (connection.status == NativeChatConnectionStatus.offline) ...[
+
+        /// Signed in (the card is the own account's), the chat itself not
+        /// connected: reconnect or sign out - never "connect your account"
+        if (connection.status == NativeChatConnectionStatus.offline &&
+            connection.onLogout != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Signed in as ${connection.accountLabel ?? connection.chatType.text} - the chat isn\'t connected right now.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          this._connectionAction(
+            context,
+            icon: CupertinoIcons.arrow_clockwise,
+            label: 'Reconnect',
+            onTap: connection.onRetry,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          this._connectionAction(
+            context,
+            icon: CupertinoIcons.square_arrow_right,
+            label: 'Sign out',
+            destructive: true,
+            onTap: connection.onLogout,
+          ),
+        ] else if (connection.status == NativeChatConnectionStatus.offline) ...[
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Not connected - connect your ${connection.chatType.text} account to see chat natively.',

@@ -58,6 +58,7 @@ the account - Twitch is the only engine where offline means signed out
 | Surface | Check |
 |---|---|
 | Chat bar account control | signed out: the sign-in / setup pill; signed in: **no account chip** - the account and its sign-out live in the chat header (sheet / Twitch self card), the right side is the mod shield + options on every platform, at phone width too |
+| Header sheet / self card | signed in on the selected platform: **Sign out in every chat state** (live, connecting, failed, offline) and on every viewed channel; signed in + chat offline never says "connect your account" |
 | Header status row → sheet | what "offline" means for this platform; actions match the state (no "Connect" while signed in) |
 | Native chat options sheet | sign-in / sign-out rows, setup row |
 | Setup sheets | full setup vs the sign-in-only part; steps match today's third-party console |
