@@ -227,6 +227,73 @@ void main() {
     });
   });
 
+  /// Real answer shapes of `channels.list?part=snippet&mine=true`,
+  /// captured 2026-10-03 (ids and titles changed)
+  group('fetchOwnChannel (real answer shapes)', () {
+    test(
+      'an account without a channel answers with no items key at all',
+      () async {
+        /// The personal Google account behind a Brand Account channel
+        final client = MockClient(
+          (request) async => http.Response(
+            '{"kind": "youtube#channelListResponse", "etag": "e1", '
+            '"pageInfo": {"totalResults": 0, "resultsPerPage": 5}}',
+            200,
+          ),
+        );
+
+        expect(await serviceWith(client).fetchOwnChannel('access-1'), isNull);
+      },
+    );
+
+    test('a channel answers with its UC id and title', () async {
+      final client = MockClient((request) async {
+        expect(request.headers['Authorization'], 'Bearer access-1');
+        return http.Response(
+          jsonEncode({
+            'kind': 'youtube#channelListResponse',
+            'pageInfo': {'totalResults': 1, 'resultsPerPage': 5},
+            'items': [
+              {
+                'kind': 'youtube#channel',
+                'id': 'UCKp5abcdefghijklmnopqrs',
+                'snippet': {
+                  'title': 'Brand Channel',
+                  'customUrl': '@brandchannel',
+                },
+              },
+            ],
+          }),
+          200,
+        );
+      });
+
+      final own = await serviceWith(client).fetchOwnChannel('access-1');
+      expect(own?.id, 'UCKp5abcdefghijklmnopqrs');
+      expect(own?.title, 'Brand Channel');
+    });
+
+    test('an API error throws with its status', () async {
+      final client = MockClient(
+        (request) async => http.Response(
+          '{"error": {"code": 403, "message": "quotaExceeded"}}',
+          403,
+        ),
+      );
+
+      await expectLater(
+        serviceWith(client).fetchOwnChannel('access-1'),
+        throwsA(
+          isA<YouTubeAuthException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            403,
+          ),
+        ),
+      );
+    });
+  });
+
   group('revoke', () {
     test('posts the token as a query parameter and never throws', () async {
       final client = MockClient((request) async {

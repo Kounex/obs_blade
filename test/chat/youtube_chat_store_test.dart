@@ -1,3 +1,4 @@
+import 'package:mobx/mobx.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -13,6 +14,7 @@ import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_youtube_services.dart';
 
@@ -1376,6 +1378,50 @@ void main() {
         channelId: channelId,
       ),
     );
+
+    /// The account variants of `docs/chat-journey-checklist.md` § Accounts
+    /// - each one has shipped a bug before. Same sign-in, then: the right
+    /// state, and no bare `UC…` id anywhere a name is shown.
+    final variants = <String, ({void Function() arrange, bool noChannel})>{
+      'channel with a title': (arrange: () {}, noChannel: false),
+      'channel without a title': (
+        arrange: () => authService.channelTitleResult = null,
+        noChannel: false,
+      ),
+      'Brand Account channel, personal account picked': (
+        arrange: () => authService.noChannel = true,
+        noChannel: true,
+      ),
+      'channel lookup fails': (
+        arrange: () => authService.failChannelTitleWith =
+            const YouTubeAuthException('lookup failed (500)', statusCode: 500),
+        noChannel: false,
+      ),
+    };
+    for (final MapEntry(key: name, value: variant) in variants.entries) {
+      test('account variant: $name', () async {
+        configure();
+        await store.dispose();
+        store = storeWithResolver();
+        await store.init();
+        variant.arrange();
+
+        await store.startLogin();
+
+        expect(store.authState, YouTubeAuthState.signedIn);
+        expect(store.signedInWithoutChannel, variant.noChannel);
+        for (final channel in store.nativeChannels) {
+          expect(channel.displayName, isNot(startsWith('UC')));
+        }
+        if (store.ownChannel != null) {
+          runInAction(() {
+            store.selectedChannelLabel = kYouTubeOwnChannelLabel;
+            store.awaitingLiveStream = true;
+          });
+          expect(youTubeChatOfflineNote(store), isNot(contains('UC')));
+        }
+      });
+    }
 
     test(
       'sign-in stores the channel id and lists the own entry first',
