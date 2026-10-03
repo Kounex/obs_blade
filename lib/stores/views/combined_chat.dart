@@ -15,6 +15,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notificatio
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/general_helper.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 
 part 'combined_chat.g.dart';
 
@@ -88,6 +89,33 @@ class CombinedItem {
     required this.key,
   });
 }
+
+/// Whether a saved combo's YouTube [source] is the signed-in account's
+/// [own] channel (the "You" entry) - matched by target, so a combo saved
+/// under an older channel title still matches.
+bool isOwnYouTubeComboSource(
+  CombinedYouTubeSource source,
+  YouTubeChatChannel? own,
+) =>
+    own != null && parseYouTubeTarget(source.value)?.key == own.target.key;
+
+/// Entries of the YouTube channel list (label -> value) that a saved
+/// combo created as a copy of the [own] channel before combos used the
+/// "You" entry: the own channel's target, added under its title, and
+/// still referenced by a combo. The "You" entry replaces them.
+List<String> ownYouTubeComboCopies(
+  Map<dynamic, dynamic> entries,
+  List<CombinedCombo> combos,
+  YouTubeChatChannel own,
+) => [
+  for (final MapEntry(:key, :value) in entries.entries)
+    if (key is String &&
+        value is String &&
+        key == own.displayName &&
+        parseYouTubeTarget(value)?.key == own.target.key &&
+        combos.any((combo) => combo.youTube?.label == key))
+      key,
+];
 
 class CombinedChatStore = _CombinedChatStore with _$CombinedChatStore;
 
@@ -163,12 +191,27 @@ abstract class _CombinedChatStore with Store {
           unavailable: !twitch.isLoggedIn,
         ),
       if (combo.youTube case final source?)
-        CombinedSource(
-          platform: ChatType.YouTube,
-          key: source.label,
-          label: source.label,
-          unavailable: youTube.authState == YouTubeAuthState.unconfigured,
-        ),
+        /// The own channel is the "You" entry (owner-only features, the
+        /// activity feed), never a copy in the channel list
+        if (youTube.ownChannel case final own?
+            when isOwnYouTubeComboSource(source, own))
+          CombinedSource(
+            platform: ChatType.YouTube,
+            key: own.label,
+            label: own.displayName,
+          )
+        else
+          CombinedSource(
+            platform: ChatType.YouTube,
+            key: source.label,
+            label: source.label,
+
+            /// Not in the list: the own channel while signed out (it is
+            /// never added as an entry) or an entry deleted meanwhile
+            unavailable:
+                youTube.authState == YouTubeAuthState.unconfigured ||
+                !youTube.channels.any((c) => c.label == source.label),
+          ),
       if (combo.kickSlug case final slug?)
         CombinedSource(platform: ChatType.Kick, key: slug, label: slug),
     ];
@@ -701,6 +744,15 @@ abstract class _CombinedChatStore with Store {
     }
   }
 
+  /// The YouTube channel list dropped [from] in favour of the "You" entry
+  /// ([ownYouTubeComboCopies]) - a restore point on it follows.
+  void renameYouTubeRestore(String from, String to) {
+    this._ensureSettingsLoaded();
+    if (this._restore[ChatType.YouTube] != from) return;
+    this._restore[ChatType.YouTube] = to;
+    this._persistRestore();
+  }
+
   /// Remember [platform]'s pre-combo selection once, durably — a restart
   /// while Combined is active must still restore it later.
   void _remember(ChatType platform, String? selection) {
@@ -805,7 +857,11 @@ abstract class _CombinedChatStore with Store {
     try {
       if (combo.twitch case final ref?) this._twitch().ensureChannel(ref);
       final box = Hive.box(HiveKeys.Settings.name);
-      if (combo.youTube case final source?) {
+      final ownYouTube = combo.youTube == null
+          ? null
+          : this._youTube().ownChannel;
+      if (combo.youTube case final source?
+          when !isOwnYouTubeComboSource(source, ownYouTube)) {
         final entries = Map<String, String>.from(
           box.get(
             SettingsKeys.YouTubeUsernames.name,

@@ -6,6 +6,8 @@ import 'package:mobx/mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/stores/views/combined_chat.dart';
+import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
@@ -688,6 +690,47 @@ abstract class _YouTubeChatStore with Store {
     if (this.selectedChannelLabel == kYouTubeOwnChannelLabel &&
         this.ownChannel == null) {
       unawaited(this.selectChannel(this.channels.firstOrNull?.label));
+    }
+    if (this.ownChannel case final own?) this._dropOwnComboCopies(own);
+  }
+
+  /// Saved combos used to add the own channel to the channel list as a
+  /// plain copy (no "You": no activity feed rows, no owner-only tools).
+  /// Combos now open the "You" entry - the copies go, a selection or
+  /// combined restore point on one moves to "You".
+  void _dropOwnComboCopies(YouTubeChatChannel own) {
+    try {
+      final box = Hive.box(HiveKeys.Settings.name);
+      final raw = box.get(SettingsKeys.YouTubeUsernames.name);
+      if (raw is! Map) return;
+      final copies = ownYouTubeComboCopies(
+        raw,
+        parseCombinedCombos(box.get(SettingsKeys.CombinedChatCombos.name)),
+        own,
+      );
+      if (copies.isEmpty) return;
+      box.put(SettingsKeys.YouTubeUsernames.name, <String, String>{
+        for (final MapEntry(:key, :value) in raw.entries)
+          if (key is String && value is String && !copies.contains(key))
+            key: value,
+      });
+      final selected = this.selectedChannelLabel;
+      final getIt = GetIt.instance;
+      for (final copy in copies) {
+        if (getIt.isRegistered<CombinedChatStore>() &&
+            getIt.checkLazySingletonInstanceExists<CombinedChatStore>()) {
+          getIt<CombinedChatStore>().renameYouTubeRestore(
+            copy,
+            kYouTubeOwnChannelLabel,
+          );
+        }
+      }
+      this.reloadChannels();
+      if (selected != null && copies.contains(selected)) {
+        unawaited(this.selectChannel(kYouTubeOwnChannelLabel));
+      }
+    } catch (e) {
+      GeneralHelper.logFailure('YouTube combo copy cleanup failed', e);
     }
   }
 

@@ -127,9 +127,12 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
         );
       }
       if (combo.youTube case final source?) {
+        final own = this._youTube.ownChannel;
+        final isOwn = isOwnYouTubeComboSource(source, own);
         this._picks[ChatType.YouTube] = _Pick(
-          label: source.label,
+          label: isOwn ? own!.displayName : source.label,
           youTube: source,
+          own: isOwn,
         );
       }
       if (combo.kickSlug case final slug?) {

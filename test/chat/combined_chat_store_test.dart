@@ -460,6 +460,114 @@ void main() {
       expect(youTube.selectedChannelLabel, 'A');
     });
 
+    test('a saved combo with the own YouTube channel opens "You" and adds '
+        'no copy to the channel list', () async {
+      /// What the builder saves for the own pick: title + channel id
+      final combo = CombinedCombo(
+        id: 'c-own',
+        youTube: const CombinedYouTubeSource(
+          label: 'My Channel',
+          value: 'UCownchannel000000000000',
+        ),
+        kickSlug: 'aaa',
+      );
+
+      await store.activate();
+      await store.saveCombo(combo);
+
+      expect(youTube.channels.map((c) => c.label), ['A']);
+      final source = store.activeSources.firstWhere(
+        (s) => s.platform == ChatType.YouTube,
+      );
+      expect(source.key, kYouTubeOwnChannelLabel);
+      expect(source.label, 'My Channel');
+      expect(source.unavailable, isFalse);
+      expect(youTube.selectedChannelLabel, kYouTubeOwnChannelLabel);
+      expect(youTube.isViewingOwnChannel, isTrue);
+
+      /// Signed out, the own source can't be shown (it is never an entry)
+      await youTube.logout();
+      expect(
+        store.sourcesOf(combo).firstWhere(
+          (s) => s.platform == ChatType.YouTube,
+        ).unavailable,
+        isTrue,
+      );
+    });
+
+    test('a copy an older build added for a combo goes once the own channel '
+        'is known; its selection and restore point move to "You"', () async {
+      await youTube.dispose();
+      await settingsBox().put(
+        SettingsKeys.YouTubeUsernames.name,
+        <String, String>{
+          'A': 'video-a-001',
+          'My Channel': 'UCownchannel000000000000',
+
+          /// Same title, someone else's channel: stays
+          'Other': 'UCotherchannel0000000000',
+        },
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedYouTubeNativeChannelId.name,
+        'My Channel',
+      );
+      await settingsBox().put(SettingsKeys.CombinedChatCombos.name, [
+        const CombinedCombo(
+          id: 'c-own',
+          youTube: CombinedYouTubeSource(
+            label: 'My Channel',
+            value: 'UCownchannel000000000000',
+          ),
+        ).toJson(),
+      ]);
+      youTube = YouTubeChatStore(
+        authService: FakeYouTubeAuthService(),
+        chatService: FakeYouTubeLiveChatService(),
+        liveResolver: FakeYouTubeLiveResolver(),
+        sleep: (_) => Future<void>.delayed(const Duration(milliseconds: 1)),
+        isProResolver: () => true,
+      );
+      await youTube.init();
+
+      expect(
+        Map.of(settingsBox().get(SettingsKeys.YouTubeUsernames.name) as Map)
+            .keys,
+        unorderedEquals(['A', 'Other']),
+      );
+      expect(youTube.channels.map((c) => c.label), unorderedEquals(['A', 'Other']));
+      expect(youTube.selectedChannelLabel, kYouTubeOwnChannelLabel);
+    });
+
+    test('a manually added own channel without a combo stays', () {
+      final own = youTube.ownChannel!;
+      expect(
+        ownYouTubeComboCopies(
+          {'My Channel': 'UCownchannel000000000000'},
+          const [],
+          own,
+        ),
+        isEmpty,
+      );
+      expect(
+        ownYouTubeComboCopies(
+          {'Renamed': 'UCownchannel000000000000'},
+          const [
+            CombinedCombo(
+              id: 'c',
+              youTube: CombinedYouTubeSource(
+                label: 'Renamed',
+                value: 'UCownchannel000000000000',
+              ),
+            ),
+          ],
+          own,
+        ),
+        isEmpty,
+        reason: 'not under the channel title',
+      );
+    });
+
     test('combos persist and reload in a fresh store', () async {
       await store.saveCombo(
         const CombinedCombo(id: 'c1', name: 'Co-stream', kickSlug: 'aaa'),

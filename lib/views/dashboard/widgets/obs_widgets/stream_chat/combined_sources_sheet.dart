@@ -186,6 +186,7 @@ class CombinedSourcesSheet extends StatelessWidget {
                 this.hostContext,
                 source.platform,
                 forMyChats: false,
+                needsSignIn: source.unavailable,
               );
             },
           ),
@@ -196,12 +197,14 @@ class CombinedSourcesSheet extends StatelessWidget {
 
 /// What tapping a source's status does: set up where the platform isn't
 /// configured, sign in where the source needs the account (Twitch always;
-/// YouTube / Kick only for "My chats", whose sources ARE the own
-/// channels), else retry.
+/// YouTube / Kick for "My chats", whose sources ARE the own channels, and
+/// a saved combo's YouTube source that can't be shown signed out - the
+/// own channel is only ever the "You" entry), else retry.
 void combinedSourceFix(
   BuildContext context,
   ChatType platform, {
   bool forMyChats = true,
+  bool needsSignIn = false,
 }) {
   switch (platform) {
     case ChatType.Twitch:
@@ -211,7 +214,7 @@ void combinedSourceFix(
       final store = GetIt.instance<YouTubeChatStore>();
       if (store.authState == YouTubeAuthState.unconfigured) {
         showYouTubeSetupSheet(context);
-      } else if (forMyChats && store.ownChannel == null) {
+      } else if ((forMyChats || needsSignIn) && store.ownChannel == null) {
         startYouTubeLogin(context);
       } else {
         store.connectChat();
