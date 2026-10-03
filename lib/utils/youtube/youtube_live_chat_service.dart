@@ -94,8 +94,8 @@ class YouTubeApiException implements Exception {
       'YouTubeApiException: $message${this.cause != null ? ' (${this.cause})' : ''}';
 }
 
-/// Project quota is exhausted (`quotaExceeded` / `rateLimitExceeded` /
-/// `dailyLimitExceeded`) — polling must stop until the midnight-PT reset.
+/// Project quota is exhausted (`quotaExceeded` / `dailyLimitExceeded`) —
+/// polling must stop until the midnight-PT reset.
 class YouTubeQuotaExceededException extends YouTubeApiException {
   const YouTubeQuotaExceededException(
     super.message, {
@@ -104,9 +104,11 @@ class YouTubeQuotaExceededException extends YouTubeApiException {
   });
 }
 
-/// Transient per-user throttling (`userRateLimitExceeded`) — the poll
-/// loop should back off briefly and retry instead of stopping until the
-/// midnight-PT quota reset.
+/// Transient throttling — the poll loop should back off briefly and retry
+/// instead of stopping until the midnight-PT quota reset:
+/// `userRateLimitExceeded`, and `rateLimitExceeded`, which on
+/// `liveChatMessages.list` means "sent too quickly after the previous
+/// request" (Google's errors table for that method), not a used-up quota.
 class YouTubeRateLimitedException extends YouTubeApiException {
   const YouTubeRateLimitedException(
     super.message, {
@@ -546,18 +548,16 @@ class YouTubeLiveChatService {
       );
     }
 
-    /// Transient per-user throttling — the poll loop should back off
-    /// briefly and retry, not treat it as project-quota exhaustion.
-    if (reason == 'userRateLimitExceeded') {
+    /// Transient throttling — the poll loop should back off briefly and
+    /// retry, not treat it as project-quota exhaustion.
+    if (reason == 'userRateLimitExceeded' || reason == 'rateLimitExceeded') {
       return YouTubeRateLimitedException(
         message,
         cause: response.body,
         statusCode: response.statusCode,
       );
     }
-    if (reason == 'quotaExceeded' ||
-        reason == 'dailyLimitExceeded' ||
-        reason == 'rateLimitExceeded') {
+    if (reason == 'quotaExceeded' || reason == 'dailyLimitExceeded') {
       return YouTubeQuotaExceededException(
         message,
         cause: response.body,

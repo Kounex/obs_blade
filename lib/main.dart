@@ -79,8 +79,20 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
     _lastLifecycleState = state;
     GeneralHelper.advLog(_lastLifecycleState);
 
-    /// The OS may drop the wake lock while the app is in the background
-    if (state == AppLifecycleState.resumed) applyWakeLockSetting();
+    if (state == AppLifecycleState.resumed) {
+      /// The OS may drop the wake lock while the app is in the background
+      applyWakeLockSetting();
+
+      /// A YouTube poll that failed or backed off while suspended restarts
+      /// now - app-wide, the Chat tab runs without an OBS dashboard. Only a
+      /// store that already runs: creating it here would start a poll
+      /// nobody opened.
+      final getIt = GetIt.instance;
+      if (getIt.isRegistered<YouTubeChatStore>() &&
+          getIt.checkLazySingletonInstanceExists<YouTubeChatStore>()) {
+        getIt<YouTubeChatStore>().reconnectAfterResume();
+      }
+    }
   }
 
   @override

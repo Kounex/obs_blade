@@ -148,6 +148,48 @@ void main() {
     }
   });
 
+  group('nextYouTubeQuotaReset (midnight Pacific)', () {
+    for (final (name, now, reset) in [
+      (
+        'summer afternoon PT -> next 07:00 UTC',
+        DateTime.utc(2026, 7, 1, 20),
+        DateTime.utc(2026, 7, 2, 7),
+      ),
+      (
+        'winter -> 08:00 UTC',
+        DateTime.utc(2026, 1, 15, 12),
+        DateTime.utc(2026, 1, 16, 8),
+      ),
+      (
+        'just before a summer reset -> the same day',
+        DateTime.utc(2026, 7, 2, 6, 59),
+        DateTime.utc(2026, 7, 2, 7),
+      ),
+      (
+        'DST starts Sun 2026-03-08: that midnight is still PST',
+        DateTime.utc(2026, 3, 7, 20),
+        DateTime.utc(2026, 3, 8, 8),
+      ),
+      (
+        'the day after DST start is PDT',
+        DateTime.utc(2026, 3, 8, 20),
+        DateTime.utc(2026, 3, 9, 7),
+      ),
+      (
+        'DST ends Sun 2026-11-01: that midnight is still PDT',
+        DateTime.utc(2026, 10, 31, 20),
+        DateTime.utc(2026, 11, 1, 7),
+      ),
+      (
+        'the day after DST end is PST',
+        DateTime.utc(2026, 11, 1, 20),
+        DateTime.utc(2026, 11, 2, 8),
+      ),
+    ]) {
+      test(name, () => expect(nextYouTubeQuotaReset(now), reset));
+    }
+  });
+
   group('init', () {
     test(
       'unconfigured without an API key — even with a stored session',
@@ -398,6 +440,94 @@ void main() {
       expect(chatService.listCalls, 1);
     });
 
+    test('quota used up → restarts on its own after the midnight-PT reset '
+        '(resume past the reset), not before', () async {
+      /// 2026-10-03 20:00 UTC = 13:00 PDT; next reset 2026-10-04 07:00 UTC
+      var clock = DateTime.utc(2026, 10, 3, 20);
+      await store.dispose();
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        sleep: (duration) async => sleepLog.add(duration),
+        isProResolver: () => true,
+        now: () => clock,
+      );
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        const YouTubeQuotaExceededException('Listing chat failed'),
+      );
+
+      await store.init();
+      await until(() => store.chatQuotaExhausted);
+      expect(
+        store.quotaResetAt,
+        DateTime.utc(2026, 10, 4, 7).add(kYouTubeQuotaResetGrace),
+      );
+      expect(store.chatError, contains('restarts on its own'));
+
+      /// Before the reset: a resume leaves it stopped
+      clock = DateTime.utc(2026, 10, 4, 6, 59);
+      store.reconnectAfterResume();
+      await until(() => chatService.listCalls > 1);
+      expect(chatService.listCalls, 1);
+      expect(store.chatQuotaExhausted, isTrue);
+
+      /// Past the reset: the resume restarts the chat
+      clock = DateTime.utc(2026, 10, 4, 7, 2);
+      chatService.pollResponses.add(page([ytMessage('m1')]));
+      store.reconnectAfterResume();
+      await until(() => store.messages.isNotEmpty);
+      expect(store.chatQuotaExhausted, isFalse);
+      expect(store.quotaResetAt, isNull);
+      expect(store.chatConnection, YouTubeChatConnectionState.connected);
+    });
+
+    test('rateLimitExceeded while resolving the chat retries, no quota '
+        'stop', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.resolveThrows = const YouTubeRateLimitedException(
+        'Resolving live chat failed (403)',
+        statusCode: 403,
+      );
+      onSleep = () => chatService.resolveThrows = null;
+      chatService.pollResponses.add(page([ytMessage('m1')]));
+
+      await store.init();
+      await until(() => store.messages.isNotEmpty);
+
+      expect(store.chatQuotaExhausted, isFalse);
+      expect(store.chatConnection, YouTubeChatConnectionState.connected);
+      expect(chatService.resolveCalls, 2);
+    });
+
+    test('switching back within the poll interval waits out the rest '
+        'before polling again', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.liveChatIds['video-b-002'] = 'chat-b';
+      chatService.pollResponses.add(
+        page([ytMessage('m1')], nextPageToken: 't1', pollingIntervalMillis: 30000),
+      );
+
+      await store.init();
+      await until(() => store.messages.isNotEmpty);
+      await store.selectChannel('B');
+      await until(() => chatService.isParked);
+      sleepLog.clear();
+      chatService.pushPollResponse(page(const []));
+      await store.selectChannel('A');
+      await until(() => chatService.listPageTokens.contains('t1'));
+
+      /// The resumed cursor waited (most of) A's 30 s interval first
+      expect(
+        sleepLog.any((d) => d.inSeconds >= 25 && d.inSeconds <= 30),
+        isTrue,
+        reason: 'sleeps: $sleepLog',
+      );
+    });
+
     test('rate limited → doubles the wait, then recovers', () async {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
@@ -411,9 +541,9 @@ void main() {
 
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
       expect(store.messages.map((m) => m.id), ['m1']);
-      // Default interval 5s → first backoff 10s (exact — backoffs are
-      // not netted); success resets it and the page's own 2s interval
-      // drives the next wait, net of the elapsed request time.
+      // Default interval 5s → first backoff 10s; success resets it and
+      // the page's own 2s interval drives the next wait (counted from
+      // the answer).
       expect(sleepLog[0], const Duration(seconds: 10));
       expect(sleepLog[1].inMilliseconds, inInclusiveRange(1, 2000));
     });
@@ -438,8 +568,8 @@ void main() {
         const Duration(seconds: 40),
         const Duration(seconds: 60),
       ]);
-      // The post-success wait is the page's 1s interval net of the
-      // elapsed request time.
+      // The post-success wait is the page's 1s interval, counted from
+      // the answer.
       expect(sleepLog[4].inMilliseconds, inInclusiveRange(0, 1000));
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
     });

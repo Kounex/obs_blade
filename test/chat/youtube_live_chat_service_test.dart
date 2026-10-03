@@ -108,14 +108,35 @@ void main() {
       );
     });
 
-    test('429 rateLimitExceeded maps to YouTubeQuotaExceededException', () {
+    test('403 dailyLimitExceeded maps to YouTubeQuotaExceededException', () {
       final client = MockClient(
-        (request) async => errorBody(429, 'rateLimitExceeded'),
+        (request) async => errorBody(403, 'dailyLimitExceeded'),
       );
 
       expect(
         serviceWith(client).listMessages('chat-1', null, apiKey: 'k'),
         throwsA(isA<YouTubeQuotaExceededException>()),
+      );
+    });
+
+    /// liveChatMessages.list errors table: `rateLimitExceeded` = "The
+    /// request was sent too quickly after the previous request" - a
+    /// poll-pacing answer, not a used-up quota.
+    test('403 rateLimitExceeded maps to YouTubeRateLimitedException '
+        '(polled too soon, not quota exhaustion)', () {
+      final client = MockClient(
+        (request) async => errorBody(403, 'rateLimitExceeded'),
+      );
+
+      expect(
+        serviceWith(client).listMessages('chat-1', null, apiKey: 'k'),
+        throwsA(
+          isA<YouTubeRateLimitedException>().having(
+            (e) => e,
+            'not a quota stop',
+            isNot(isA<YouTubeQuotaExceededException>()),
+          ),
+        ),
       );
     });
 

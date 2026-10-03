@@ -57,6 +57,41 @@ const List<Duration> kYouTubeLiveRecheckSchedule = [
   Duration(seconds: 90),
 ];
 
+/// The next YouTube Data API quota reset after [now]: midnight Pacific
+/// time (07:00 UTC while US daylight saving time is on, 08:00 UTC
+/// otherwise; DST runs from the second Sunday of March to the first
+/// Sunday of November - at local midnight of both switch days the old
+/// offset still applies).
+DateTime nextYouTubeQuotaReset(DateTime now) {
+  final utc = now.toUtc();
+  DateTime nthSunday(int year, int month, int n) {
+    final first = DateTime.utc(year, month, 1);
+    final offset = (DateTime.sunday - first.weekday) % 7;
+    return DateTime.utc(year, month, 1 + offset + 7 * (n - 1));
+  }
+
+  bool dstAtMidnight(DateTime day) {
+    final start = nthSunday(day.year, DateTime.march, 2);
+    final end = nthSunday(day.year, DateTime.november, 1);
+    return day.isAfter(start) && !day.isAfter(end);
+  }
+
+  for (var d = -1; d <= 2; d++) {
+    final day = DateTime.utc(utc.year, utc.month, utc.day + d);
+    final reset = DateTime.utc(
+      day.year,
+      day.month,
+      day.day,
+      dstAtMidnight(day) ? 7 : 8,
+    );
+    if (reset.isAfter(utc)) return reset;
+  }
+  return utc.add(const Duration(days: 1));
+}
+
+/// Grace after the quota reset before the chat restarts on its own.
+const Duration kYouTubeQuotaResetGrace = Duration(minutes: 1);
+
 /// How one resolve-and-poll pass of the read transport ended.
 enum _PassOutcome {
   /// Nothing live (or the chat ended before any page arrived).
@@ -165,6 +200,12 @@ class _ChannelBuffer {
   List<ChatBanEntry> bans = <ChatBanEntry>[];
   YouTubeChatMessage? activePoll;
 
+  /// Earliest time the next `liveChatMessages.list` may go out (the last
+  /// page's `pollingIntervalMillis` after it arrived) - a poll resumed by
+  /// a channel switch back / un-pause / app resume waits out the rest
+  /// instead of answering `rateLimitExceeded`.
+  DateTime? nextPollAt;
+
   _ChannelBuffer({
     List<YouTubeChatMessage>? messages,
     this.liveChatId,
@@ -219,6 +260,15 @@ abstract class _YouTubeChatStore with Store {
   /// How often a connected chat re-reads its viewer count (tests: zero).
   final Duration _viewerRefreshInterval;
 
+  /// Wall clock (test seam) - poll pacing and the quota reset.
+  final DateTime Function() _now;
+
+  /// Restarts the chat after the daily quota reset ([quotaResetAt]).
+  Timer? _quotaResetTimer;
+
+  /// When the used-up quota comes back (set while [chatQuotaExhausted]).
+  DateTime? quotaResetAt;
+
   _YouTubeChatStore({
     YouTubeAuthService? authService,
     YouTubeLiveChatService? chatService,
@@ -226,7 +276,9 @@ abstract class _YouTubeChatStore with Store {
     Future<void> Function(Duration)? sleep,
     bool Function()? isProResolver,
     Duration viewerRefreshInterval = kViewerRefreshInterval,
+    DateTime Function()? now,
   }) : _viewerRefreshInterval = viewerRefreshInterval,
+       _now = now ?? DateTime.now,
        _authService = authService ?? YouTubeAuthService(),
        _chatService = chatService ?? YouTubeLiveChatService(),
        _liveResolver = liveResolver ?? YouTubeLiveResolver(),
@@ -334,7 +386,9 @@ abstract class _YouTubeChatStore with Store {
   String? selectedLiveVideoId;
 
   /// True after a [YouTubeQuotaExceededException] stopped the poll loop —
-  /// polling resumes on the midnight-PT quota reset or a manual retry.
+  /// polling restarts on its own after the midnight-PT quota reset
+  /// ([quotaResetAt]; a timer, or the next app resume when the timer was
+  /// suspended) or on a manual retry.
   @observable
   bool chatQuotaExhausted = false;
 
@@ -791,8 +845,15 @@ abstract class _YouTubeChatStore with Store {
     this.chatConnection = YouTubeChatConnectionState.connecting;
     this.awaitingLiveStream = false;
     this.chatError = null;
-    this.chatQuotaExhausted = false;
+    this._clearQuotaStop();
     unawaited(this._pollLoop(label, flow));
+  }
+
+  void _clearQuotaStop() {
+    this._quotaResetTimer?.cancel();
+    this._quotaResetTimer = null;
+    this.quotaResetAt = null;
+    this.chatQuotaExhausted = false;
   }
 
   /// Background pause (combined chat focused elsewhere): stop polling to
@@ -822,7 +883,7 @@ abstract class _YouTubeChatStore with Store {
       this.chatConnection = YouTubeChatConnectionState.idle;
       this.awaitingLiveStream = false;
       this.chatError = null;
-      this.chatQuotaExhausted = false;
+      this._clearQuotaStop();
       this.sendChatError = null;
       this.moderationError = null;
     });
@@ -890,10 +951,18 @@ abstract class _YouTubeChatStore with Store {
   /// while the app was suspended restarts now instead of waiting out its
   /// timer, and a channel between streams checks at once. A paused poll
   /// (combined chat focused elsewhere) stays paused; quota exhaustion
-  /// waits for the daily reset.
+  /// waits for the daily reset (and restarts here once it has passed - the
+  /// reset timer doesn't run while iOS suspends the app).
   @action
   void reconnectAfterResume() {
-    if (this.pollingPaused || this.chatQuotaExhausted) return;
+    if (this.pollingPaused) return;
+    if (this.chatQuotaExhausted) {
+      final resetAt = this.quotaResetAt;
+      if (resetAt != null && !this._now().isBefore(resetAt)) {
+        this.connectChat();
+      }
+      return;
+    }
     final retrying =
         this.chatConnection == YouTubeChatConnectionState.connecting &&
         this.chatError != null;
@@ -923,13 +992,26 @@ abstract class _YouTubeChatStore with Store {
     String apiKey,
     bool Function() superseded,
   ) async {
-    void quotaExhausted() {
+    void quotaExhausted(Object e) {
+      GeneralHelper.logFailure('YouTube API quota used up', e);
+      final resetAt = nextYouTubeQuotaReset(
+        this._now(),
+      ).add(kYouTubeQuotaResetGrace);
       runInAction(() {
         this.chatConnection = YouTubeChatConnectionState.error;
         this.awaitingLiveStream = false;
         this.chatQuotaExhausted = true;
+        this.quotaResetAt = resetAt;
         this.chatError =
-            'YouTube API quota exhausted - chat resumes after the daily reset';
+            'YouTube API quota used up for today - the chat restarts on its '
+            'own after the daily reset (midnight Pacific time)';
+      });
+      this._quotaResetTimer?.cancel();
+      this._quotaResetTimer = Timer(resetAt.difference(this._now()), () {
+        this._quotaResetTimer = null;
+        if (this.chatQuotaExhausted && !this.pollingPaused) {
+          this.connectChat();
+        }
       });
     }
 
@@ -1005,10 +1087,15 @@ abstract class _YouTubeChatStore with Store {
         );
         buffer.liveChatId = resolved.liveChatId;
         buffer.viewerCount = resolved.concurrentViewers;
-      } on YouTubeQuotaExceededException {
+      } on YouTubeQuotaExceededException catch (e) {
         if (superseded()) return _PassOutcome.stopped;
-        quotaExhausted();
+        quotaExhausted(e);
         return _PassOutcome.stopped;
+      } on YouTubeRateLimitedException catch (e) {
+        if (superseded()) return _PassOutcome.stopped;
+        GeneralHelper.logFailure('YouTube live chat resolve throttled', e);
+        retrying('YouTube is busy - retrying');
+        return _PassOutcome.retry;
       } catch (e) {
         if (superseded()) return _PassOutcome.stopped;
         GeneralHelper.logFailure('YouTube live chat resolve failed', e);
@@ -1049,8 +1136,6 @@ abstract class _YouTubeChatStore with Store {
       return this._sleep(Duration(milliseconds: backoffMillis));
     }
 
-    final callStopwatch = Stopwatch();
-
     /// Viewer count refresh — resolved once per connect otherwise.
     final viewerStopwatch = Stopwatch()..start();
 
@@ -1060,6 +1145,7 @@ abstract class _YouTubeChatStore with Store {
       buffer.endedVideoId = buffer.videoId;
       buffer.liveChatId = null;
       buffer.nextPageToken = null;
+      buffer.nextPollAt = null;
       buffer.viewerCount = null;
       runInAction(() {
         this.selectedChannelViewerCount = null;
@@ -1068,10 +1154,20 @@ abstract class _YouTubeChatStore with Store {
       return attached ? _PassOutcome.attached : _PassOutcome.offline;
     }
 
+    /// A resumed poll (switch back, un-pause, app resume) waits out the
+    /// rest of the last page's interval - polling sooner answers
+    /// `rateLimitExceeded`.
+    final resumeAt = buffer.nextPollAt;
+    if (resumeAt != null) {
+      final wait = resumeAt.difference(this._now());
+      if (wait > Duration.zero) {
+        await this._sleep(wait);
+        if (superseded()) return _PassOutcome.stopped;
+      }
+    }
+
     while (!superseded()) {
       YouTubeLiveChatPage page;
-      callStopwatch.reset();
-      callStopwatch.start();
       try {
         page = await this._chatService.listMessages(
           buffer.liveChatId!,
@@ -1086,9 +1182,9 @@ abstract class _YouTubeChatStore with Store {
         );
         await wait;
         continue;
-      } on YouTubeQuotaExceededException {
+      } on YouTubeQuotaExceededException catch (e) {
         if (superseded()) return _PassOutcome.stopped;
-        quotaExhausted();
+        quotaExhausted(e);
         return _PassOutcome.stopped;
       } on YouTubeChatEndedException {
         if (superseded()) return _PassOutcome.stopped;
@@ -1111,6 +1207,9 @@ abstract class _YouTubeChatStore with Store {
 
       backoffMillis = 0;
       lastIntervalMillis = page.pollingIntervalMillis;
+      buffer.nextPollAt = this._now().add(
+        Duration(milliseconds: page.pollingIntervalMillis),
+      );
 
       /// No cursor yet = this is the chat's first page, which YouTube
       /// fills with recent history — mark it historical (dimmed + the
@@ -1150,13 +1249,11 @@ abstract class _YouTubeChatStore with Store {
         if (superseded()) return _PassOutcome.stopped;
       }
 
-      // Net-of-call pacing: the server interval spans response to next
-      // request, so subtract the elapsed request time (floor at 0).
-      final waitMillis =
-          page.pollingIntervalMillis - callStopwatch.elapsedMilliseconds;
-      await this._sleep(
-        Duration(milliseconds: waitMillis > 0 ? waitMillis : 0),
-      );
+      /// Google: "the amount of time the client should wait before
+      /// polling again" - counted from the answer, so the full interval
+      /// (less only the time spent on the viewer refresh above).
+      final remaining = buffer.nextPollAt!.difference(this._now());
+      await this._sleep(remaining > Duration.zero ? remaining : Duration.zero);
     }
     return _PassOutcome.stopped;
   }
@@ -1350,7 +1447,7 @@ abstract class _YouTubeChatStore with Store {
       if (this._isProResolver()) {
         this.chatConnection = YouTubeChatConnectionState.connecting;
         this.chatError = null;
-        this.chatQuotaExhausted = false;
+        this._clearQuotaStop();
         final flow = this._pollFlow;
         unawaited(this._pollLoop(label, flow));
       } else {
@@ -1876,6 +1973,8 @@ abstract class _YouTubeChatStore with Store {
   Future<void> dispose() async {
     this._pollFlow++;
     this._loginFlow++;
+    this._quotaResetTimer?.cancel();
+    this._quotaResetTimer = null;
     await this._authBoxSub?.cancel();
     await this._liveMessages.close();
     await this._activityEvents.close();
