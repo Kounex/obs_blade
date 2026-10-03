@@ -1,21 +1,29 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../models/kick_auth.dart';
 import '../../models/twitch_auth.dart';
+import '../../models/youtube_auth.dart';
 import '../../types/classes/activity/activity_event.dart';
 import '../../types/enums/hive_keys.dart';
+import '../../types/enums/request_type.dart';
 import '../../types/enums/settings_keys.dart';
 import '../../utils/activity/activity_ledger.dart';
 import '../../utils/activity/activity_mappers.dart';
 import '../../utils/activity/activity_persistence.dart';
+import '../../utils/activity/obs_stream_destination.dart';
+import '../../utils/activity/youtube_own_activity_poller.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/get_it_helper.dart';
 import '../../utils/kick/kick_events_relay_client.dart';
+import '../../utils/network_helper.dart';
+import '../../utils/youtube/youtube_live_chat_service.dart';
 import '../pro_store.dart';
+import '../shared/network.dart';
 import 'dashboard.dart';
 import 'kick_chat.dart';
 import 'twitch_chat.dart';
@@ -147,8 +155,10 @@ abstract class _ActivityStore with Store {
     DateTime Function()? clock,
     KickEventsRelayClient? relayClient,
     bool Function()? relayEnabledResolver,
+    YouTubeOwnActivityPoller? youTubePoller,
     bool attachPlatformStores = true,
-  }) : _persistence = persistence ?? HiveActivityPersistence(),
+  }) : _youTubePoller = youTubePoller ?? YouTubeOwnActivityPoller(),
+       _persistence = persistence ?? HiveActivityPersistence(),
        _isProResolver =
            isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
        _clock = clock ?? DateTime.now,
@@ -166,8 +176,28 @@ abstract class _ActivityStore with Store {
   final KickEventsRelayClient _relayClient;
   final bool Function() _relayEnabledResolver;
   final bool _attachPlatformStores;
+  final YouTubeOwnActivityPoller _youTubePoller;
+  AppLifecycleListener? _lifecycle;
+  final List<StreamSubscription<dynamic>> _boxWatches = [];
 
   ActivityLedger _ledger = ActivityLedger();
+
+  /// The own-YouTube poller's state (status banner)
+  @observable
+  YouTubeOwnActivityState youTubeOwnState = YouTubeOwnActivityState.off;
+
+  /// When the own-YouTube poll resumes after a used-up quota
+  @observable
+  DateTime? youTubeQuotaResetAt;
+
+  /// The connected OBS is streaming
+  @observable
+  bool obsLive = false;
+
+  /// Where OBS streams to while [obsLive] (null: unknown - custom server,
+  /// Kick, a multistream plugin)
+  @observable
+  ActivityPlatform? obsLivePlatform;
 
   /// Bumped on every ledger change - the computeds below read it
   @observable
@@ -383,15 +413,99 @@ abstract class _ActivityStore with Store {
     this._pending.clear();
     this._prune();
     this._ticker = Timer.periodic(_tick, (_) => this._onTick());
+    this._youTubePoller
+      ..onEvent = this.ingest
+      ..onChanged = this._onYouTubeOwnChanged;
     if (this._attachPlatformStores) {
       this._reactions.add(
         reaction<bool>((_) => this._isProResolver(), (pro) {
           if (pro) this._createSignedInStores();
           this._syncRelay();
+          this._syncYouTubeOwn();
         }, fireImmediately: true),
       );
+      this._watchYouTubeSetup();
+      this._listenToLifecycle();
       this.chatStoreCreated();
     }
+  }
+
+  /// Foreground / background: the own-YouTube poller only checks for a
+  /// stream while someone may look; a resume catches up a freeze at once.
+  void _listenToLifecycle() {
+    try {
+      this._lifecycle = AppLifecycleListener(
+        onResume: () {
+          this._catchUpFreeze(this._clock());
+          this._youTubePoller.foreground = true;
+        },
+        onHide: () => this._youTubePoller.foreground = false,
+      );
+    } catch (e) {
+      /// No widgets binding (headless tests) - stays "foreground"
+      GeneralHelper.advLog('Activity feed: no lifecycle - $e');
+    }
+  }
+
+  // Own YouTube channel (no YouTube store needed)
+
+  /// The sign-in (own channel id) or the API key changed: the poller
+  /// follows. Read off Hive - never creates the YouTube store.
+  void _watchYouTubeSetup() {
+    try {
+      if (Hive.isBoxOpen(HiveKeys.YouTubeAuth.name)) {
+        this._boxWatches.add(
+          Hive.box<YouTubeAuth>(
+            HiveKeys.YouTubeAuth.name,
+          ).watch().listen((_) => this._syncYouTubeOwn()),
+        );
+      }
+      if (Hive.isBoxOpen(HiveKeys.Settings.name)) {
+        this._boxWatches.add(
+          Hive.box(HiveKeys.Settings.name)
+              .watch(key: SettingsKeys.YouTubeApiKey.name)
+              .listen((_) => this._syncYouTubeOwn()),
+        );
+      }
+    } catch (e) {
+      GeneralHelper.logFailure('Activity feed: YouTube setup watch failed', e);
+    }
+  }
+
+  /// Signed in to YouTube with a channel (the stored session)
+  String? get _youTubeChannelId {
+    try {
+      if (!Hive.isBoxOpen(HiveKeys.YouTubeAuth.name)) return null;
+      return Hive.box<YouTubeAuth>(
+        HiveKeys.YouTubeAuth.name,
+      ).get(YouTubeAuth.kBoxKey)?.channelId;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _syncYouTubeOwn() {
+    if (!this._attachPlatformStores) return;
+    this._youTubePoller.configure(
+      channelId: this._youTubeChannelId,
+      apiKey: YouTubeLiveChatService.resolveApiKey(),
+      enabled: this._isProResolver(),
+    );
+  }
+
+  void _onYouTubeOwnChanged() {
+    final poller = this._youTubePoller;
+    final live = poller.state == YouTubeOwnActivityState.live;
+    runInAction(() {
+      this.youTubeOwnState = poller.state;
+      this.youTubeQuotaResetAt = poller.quotaResetAt;
+    });
+    this._setCoverer(
+      'youtube-own',
+      ActivityPlatform.youtube,
+      live ? poller.channelId : null,
+    );
+    this._setLive('youtube-own', live, since: live ? poller.liveSince : null);
   }
 
   void _load() {
@@ -541,6 +655,18 @@ abstract class _ActivityStore with Store {
 
   void _attachYouTube(YouTubeChatStore youTube) {
     this._subscriptions.add(youTube.activityEvents.listen(this.ingest));
+
+    /// The chat reads the own chat itself: the poller stands by (no
+    /// second poll on the same quota)
+    this._reactions.add(
+      reaction<bool>(
+        (_) =>
+            youTube.isViewingOwnChannel &&
+            youTube.chatConnection == YouTubeChatConnectionState.connected,
+        (covered) => this._youTubePoller.standby = covered,
+        fireImmediately: true,
+      ),
+    );
     this._reactions.add(
       reaction<String?>(
         (_) =>
@@ -724,7 +850,7 @@ abstract class _ActivityStore with Store {
       for (final source in this.liveSources)
         ?switch (source) {
           'twitch' => ActivityPlatform.twitch,
-          'youtube' => ActivityPlatform.youtube,
+          'youtube' || 'youtube-own' => ActivityPlatform.youtube,
           'kick' || 'kick-relay' => ActivityPlatform.kick,
           _ => null,
         },
@@ -806,6 +932,8 @@ abstract class _ActivityStore with Store {
         lazySingletonCreated<DashboardStore>() &&
         GetIt.instance<DashboardStore>().isLive;
     this._setLive('obs', obsLive);
+    this._syncObs(obsLive);
+    this._syncYouTubeOwn();
 
     /// The last alive moment: a kill ends sessions and coverage there
     if (this.currentSession != null || this._ledger.coverage.anyOpen) {
@@ -814,6 +942,45 @@ abstract class _ActivityStore with Store {
 
     /// Every 6 h while running
     if (this._ticks % 720 == 0) this._prune();
+  }
+
+  /// OBS went live (or is live when first seen): ask once where it
+  /// streams to; a stream to YouTube - or anywhere unknown, multistream
+  /// plugins hide YouTube - checks for the own YouTube stream every 30 s.
+  void _syncObs(bool live) {
+    if (live == this.obsLive) return;
+    runInAction(() {
+      this.obsLive = live;
+      if (!live) this.obsLivePlatform = null;
+    });
+    this._youTubePoller.fast = live;
+    if (live) unawaited(this._readObsDestination());
+  }
+
+  Future<void> _readObsDestination() async {
+    try {
+      if (!lazySingletonCreated<NetworkStore>()) return;
+      final session = GetIt.instance<NetworkStore>().activeSession;
+      if (session == null) return;
+      final ack = await NetworkHelper.makeScopedRequest(
+        session.socket,
+        RequestType.GetStreamServiceSettings,
+      );
+      if (!ack.success || !this.obsLive) return;
+      final platform = obsStreamPlatform(ack.responseData);
+      runInAction(() => this.obsLivePlatform = platform);
+    } catch (e) {
+      GeneralHelper.logFailure(
+        'Activity feed: OBS stream service read failed',
+        e,
+      );
+    }
+  }
+
+  /// OBS streaming state from a test (no dashboard / socket).
+  void setObsLiveForTest(bool live, {ActivityPlatform? platform}) {
+    this._syncObs(live);
+    runInAction(() => this.obsLivePlatform = live ? platform : null);
   }
 
   // Seen / thanked
@@ -1280,6 +1447,12 @@ abstract class _ActivityStore with Store {
 
   Future<void> dispose() async {
     this._ticker?.cancel();
+    this._lifecycle?.dispose();
+    for (final watch in this._boxWatches) {
+      await watch.cancel();
+    }
+    this._boxWatches.clear();
+    await this._youTubePoller.dispose();
     this._relayRetryTimer?.cancel();
     this._relayCursorWrite?.cancel();
     for (final disposer in this._reactions) {

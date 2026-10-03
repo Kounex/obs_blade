@@ -68,7 +68,15 @@ class YouTubeLiveStreamingDetails {
   final String? liveChatId;
   final int? concurrentViewers;
 
-  const YouTubeLiveStreamingDetails({this.liveChatId, this.concurrentViewers});
+  /// When the broadcast really started (`actualStartTime`) - null before
+  /// it went live
+  final DateTime? actualStartTime;
+
+  const YouTubeLiveStreamingDetails({
+    this.liveChatId,
+    this.concurrentViewers,
+    this.actualStartTime,
+  });
 }
 
 /// Public channel facts for the user card (`channels.list?part=snippet`,
@@ -466,6 +474,9 @@ class YouTubeLiveChatService {
       concurrentViewers: rawViewers == null
           ? null
           : int.tryParse(rawViewers.toString()),
+      actualStartTime: DateTime.tryParse(
+        '${details['actualStartTime'] ?? ''}',
+      )?.toUtc(),
     );
   }
 

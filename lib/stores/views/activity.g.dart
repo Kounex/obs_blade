@@ -48,6 +48,78 @@ mixin _$ActivityStore on _ActivityStore, Store {
         name: '_ActivityStore.groups',
       )).value;
 
+  late final _$youTubeOwnStateAtom = Atom(
+    name: '_ActivityStore.youTubeOwnState',
+    context: context,
+  );
+
+  @override
+  YouTubeOwnActivityState get youTubeOwnState {
+    _$youTubeOwnStateAtom.reportRead();
+    return super.youTubeOwnState;
+  }
+
+  @override
+  set youTubeOwnState(YouTubeOwnActivityState value) {
+    _$youTubeOwnStateAtom.reportWrite(value, super.youTubeOwnState, () {
+      super.youTubeOwnState = value;
+    });
+  }
+
+  late final _$youTubeQuotaResetAtAtom = Atom(
+    name: '_ActivityStore.youTubeQuotaResetAt',
+    context: context,
+  );
+
+  @override
+  DateTime? get youTubeQuotaResetAt {
+    _$youTubeQuotaResetAtAtom.reportRead();
+    return super.youTubeQuotaResetAt;
+  }
+
+  @override
+  set youTubeQuotaResetAt(DateTime? value) {
+    _$youTubeQuotaResetAtAtom.reportWrite(value, super.youTubeQuotaResetAt, () {
+      super.youTubeQuotaResetAt = value;
+    });
+  }
+
+  late final _$obsLiveAtom = Atom(
+    name: '_ActivityStore.obsLive',
+    context: context,
+  );
+
+  @override
+  bool get obsLive {
+    _$obsLiveAtom.reportRead();
+    return super.obsLive;
+  }
+
+  @override
+  set obsLive(bool value) {
+    _$obsLiveAtom.reportWrite(value, super.obsLive, () {
+      super.obsLive = value;
+    });
+  }
+
+  late final _$obsLivePlatformAtom = Atom(
+    name: '_ActivityStore.obsLivePlatform',
+    context: context,
+  );
+
+  @override
+  ActivityPlatform? get obsLivePlatform {
+    _$obsLivePlatformAtom.reportRead();
+    return super.obsLivePlatform;
+  }
+
+  @override
+  set obsLivePlatform(ActivityPlatform? value) {
+    _$obsLivePlatformAtom.reportWrite(value, super.obsLivePlatform, () {
+      super.obsLivePlatform = value;
+    });
+  }
+
   late final _$revisionAtom = Atom(
     name: '_ActivityStore.revision',
     context: context,
@@ -318,6 +390,10 @@ mixin _$ActivityStore on _ActivityStore, Store {
   @override
   String toString() {
     return '''
+youTubeOwnState: ${youTubeOwnState},
+youTubeQuotaResetAt: ${youTubeQuotaResetAt},
+obsLive: ${obsLive},
+obsLivePlatform: ${obsLivePlatform},
 revision: ${revision},
 loaded: ${loaded},
 visitMarks: ${visitMarks},
