@@ -42,25 +42,14 @@ class KickNativeChannelDropdown extends StatelessWidget {
     /// The dropdown route has already popped itself by the time
     /// [onChanged] runs. Another pop here dismisses the chat page and
     /// leaves an empty view under the dialog.
+    final store = GetIt.instance<KickChatStore>();
+    final before = List<String>.of(store.channels);
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: AddEditKickUsernameDialog(
         settingsBox: Hive.box(HiveKeys.Settings.name),
       ),
-    ).then((_) {
-      /// The dialog edited [SettingsKeys.KickUsernames] AND selected the
-      /// new slug ([SettingsKeys.SelectedKickUsername] is shared with the
-      /// native engine) — re-read, then follow the dialog's selection
-      /// when nothing is selected yet.
-      final store = GetIt.instance<KickChatStore>();
-      store.reloadChannels();
-      final selected = Hive.box(
-        HiveKeys.Settings.name,
-      ).get(SettingsKeys.SelectedKickUsername.name);
-      if (store.selectedChannelSlug == null && selected is String) {
-        store.selectChannel(selected);
-      }
-    });
+    ).then((_) => store.showAddedChannel(before));
   }
 
   void _confirmRemove(BuildContext context, String slug) {

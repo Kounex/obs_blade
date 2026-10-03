@@ -738,6 +738,27 @@ void main() {
   });
 
   group('channel switch', () {
+    test('an entry added from the channel menu is shown; a cancelled '
+        'dialog keeps the selection', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      await store.init();
+      expect(store.selectedChannelLabel, 'A');
+
+      store.showAddedChannel([for (final c in store.channels) c.label]);
+      expect(store.selectedChannelLabel, 'A');
+
+      final before = [for (final c in store.channels) c.label];
+      await settingsBox()
+          .put(SettingsKeys.YouTubeUsernames.name, <String, String>{
+            'A': 'video-a-001',
+            'B': 'https://www.youtube.com/watch?v=video-b-002',
+            'NASA': '@NASA',
+          });
+      store.showAddedChannel(before);
+      expect(store.selectedChannelLabel, 'NASA');
+    });
+
     test(
       'removed and re-added label cannot resurrect its retired history',
       () async {

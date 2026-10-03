@@ -1506,6 +1506,19 @@ abstract class _YouTubeChatStore with Store {
     }
   }
 
+  /// After an add dialog: re-read the list and show the entry it added.
+  /// Nothing added (cancelled): the selection stays.
+  @action
+  void showAddedChannel(List<String> before) {
+    this.reloadChannels();
+    final added = [
+      for (final channel in this.channels)
+        if (!before.contains(channel.label)) channel.label,
+    ];
+    if (added.isEmpty) return;
+    unawaited(this.selectChannel(added.first));
+  }
+
   /// Re-read the channel list from settings (after the user edited
   /// [SettingsKeys.YouTubeUsernames] outside this store). A label whose
   /// target (video or channel) changed is a new conversation: retire its

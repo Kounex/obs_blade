@@ -698,7 +698,7 @@ abstract class _KickChatStore with Store {
         code: code,
         session: session,
       );
-      return this._storeToken(token);
+      return await this._storeToken(token);
     } on KickAuthException catch (e) {
       this.authState = KickAuthState.error;
       this.authError = e.message;
@@ -1602,6 +1602,28 @@ abstract class _KickChatStore with Store {
       this.pinnedMessage = null;
       this.chatConnection = KickChatConnectionState.idle;
     }
+  }
+
+  /// After an add dialog: re-read the list and show the channel it added
+  /// (the dialog's own pick when it is one of them) - adding from the
+  /// "can't be found" state or the channel menu means "show me that".
+  /// Nothing added (cancelled): the selection stays.
+  @action
+  void showAddedChannel(List<String> before) {
+    this.reloadChannels();
+    final added = [
+      for (final slug in this.channels)
+        if (!before.contains(slug)) slug,
+    ];
+    if (added.isEmpty) return;
+    final picked = Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.SelectedKickUsername.name);
+    unawaited(
+      this.selectChannel(
+        added.contains(picked) ? picked as String : added.first,
+      ),
+    );
   }
 
   /// Re-read the channel list from settings (after the user edited

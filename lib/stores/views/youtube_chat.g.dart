@@ -585,6 +585,18 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   }
 
   @override
+  void showAddedChannel(List<String> before) {
+    final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
+      name: '_YouTubeChatStore.showAddedChannel',
+    );
+    try {
+      return super.showAddedChannel(before);
+    } finally {
+      _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void reloadChannels() {
     final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
       name: '_YouTubeChatStore.reloadChannels',

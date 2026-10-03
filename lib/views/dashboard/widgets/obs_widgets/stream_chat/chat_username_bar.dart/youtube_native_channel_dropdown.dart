@@ -44,17 +44,14 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
     /// The dropdown route has already popped itself by the time
     /// [onChanged] runs. Another pop here dismisses the page under the
     /// dialog.
+    final store = GetIt.instance<YouTubeChatStore>();
+    final before = [for (final channel in store.channels) channel.label];
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: AddEditYouTubeUsernameDialog(
         settingsBox: Hive.box(HiveKeys.Settings.name),
       ),
-    ).then((_) {
-      /// The dialog edited [SettingsKeys.YouTubeUsernames] — re-read so the
-      /// new/changed entry appears (and its video id is re-resolved).
-      final store = GetIt.instance<YouTubeChatStore>();
-      store.reloadChannels();
-    });
+    ).then((_) => store.showAddedChannel(before));
   }
 
   void _confirmRemove(BuildContext context, String label) {

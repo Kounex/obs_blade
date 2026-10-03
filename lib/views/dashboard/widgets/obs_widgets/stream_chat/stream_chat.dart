@@ -563,26 +563,16 @@ class _StreamChatState extends State<StreamChat>
     /// Kick sign-in (setup sheet) unlocks the input dock; signed out,
     /// the dock is a read-only strip with a sign-in affordance.
     if (chatType == ChatType.Kick) {
-      void addKickChannel() =>
-          ModalHandler.showBaseDialog(
-            context: context,
-            dialogWidget: AddEditKickUsernameDialog(
-              settingsBox: Hive.box(HiveKeys.Settings.name),
-            ),
-          ).then((_) {
-            /// The dialog edited [SettingsKeys.KickUsernames] AND selected
-            /// the new slug ([SettingsKeys.SelectedKickUsername] is shared
-            /// with the native engine) — re-read, then follow the
-            /// dialog's selection when nothing is selected yet.
-            final store = GetIt.instance<KickChatStore>();
-            store.reloadChannels();
-            final selected = Hive.box(
-              HiveKeys.Settings.name,
-            ).get(SettingsKeys.SelectedKickUsername.name);
-            if (store.selectedChannelSlug == null && selected is String) {
-              store.selectChannel(selected);
-            }
-          });
+      void addKickChannel() {
+        final store = GetIt.instance<KickChatStore>();
+        final before = List<String>.of(store.channels);
+        ModalHandler.showBaseDialog(
+          context: context,
+          dialogWidget: AddEditKickUsernameDialog(
+            settingsBox: Hive.box(HiveKeys.Settings.name),
+          ),
+        ).then((_) => store.showAddedChannel(before));
+      }
 
       return Observer(
         builder: (_) {

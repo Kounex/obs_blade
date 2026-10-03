@@ -475,6 +475,18 @@ mixin _$KickChatStore on _KickChatStore, Store {
   }
 
   @override
+  void showAddedChannel(List<String> before) {
+    final _$actionInfo = _$_KickChatStoreActionController.startAction(
+      name: '_KickChatStore.showAddedChannel',
+    );
+    try {
+      return super.showAddedChannel(before);
+    } finally {
+      _$_KickChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void reloadChannels() {
     final _$actionInfo = _$_KickChatStoreActionController.startAction(
       name: '_KickChatStore.reloadChannels',

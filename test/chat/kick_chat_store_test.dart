@@ -917,6 +917,40 @@ void main() {
       expect(channelService.resolveCalls, 0);
     });
 
+    test('an added channel is shown: from a not-found channel, the one the '
+        'add dialog picked; a cancelled dialog keeps the selection', () async {
+      configure();
+      await settingsBox().put(SettingsKeys.KickUsernames.name, <String>[
+        'aaa',
+        'typo',
+      ]);
+      await settingsBox().put(SettingsKeys.SelectedKickUsername.name, 'typo');
+      await store.init();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.offline,
+      );
+      expect(store.selectedChannelSlug, 'typo');
+
+      /// Cancelled: nothing added, nothing switches
+      store.showAddedChannel(List.of(store.channels));
+      expect(store.selectedChannelSlug, 'typo');
+
+      /// The dialog adds 'bbb' and picks it (shared WebView key)
+      final before = List.of(store.channels);
+      await settingsBox().put(SettingsKeys.KickUsernames.name, <String>[
+        'aaa',
+        'typo',
+        'bbb',
+      ]);
+      await settingsBox().put(SettingsKeys.SelectedKickUsername.name, 'bbb');
+      store.showAddedChannel(before);
+
+      expect(store.selectedChannelSlug, 'bbb');
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+    });
+
     test(
       'removed and re-added slug cannot resurrect its retired history',
       () async {
