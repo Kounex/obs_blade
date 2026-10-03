@@ -32,6 +32,17 @@ store release the maintainer's site gets its pending feature copy
 (website project's AGENTS.md § Pending) - the privacy policy for the
 Kick events relay + TTS is already live.
 
+**Update 2026-10-03 (later) — chat review fixes, not on a device yet:**
+a `/code-review high` + chat journey walk found 8 issues, all fixed on
+`master` (`5e72ca18..`; changelog "chat review fixes"): YouTube "polled
+too soon" no longer stops the chat for the day + auto-restart after the
+quota reset, combined chat no longer starts every platform chat at launch,
+own YouTube channel in saved combos = "You", no `UC…` ids as names,
+activity empty state, adding a channel shows it, YouTube dead-session /
+no-channel states, transport failures in Settings → Logs. The dogfood
+phone was offline - **install on Kounex iOS and run the device check list
+from the session report before any test build.**
+
 **Update 2026-10-03 — global Pro pricing overhaul (both stores
 re-priced):** a Turkish monthly sub came through at ~€0.80; the audit
 found nominal parity was currency-blind AND Apple's equalized-tier matrix
