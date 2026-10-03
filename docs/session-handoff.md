@@ -9,6 +9,18 @@ picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
 Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 
+**Update 2026-10-03 — 4.1.0 beta for dogfooding:** build 2026100301 on
+TestFlight (internal, `VALID`) + Play internal - activity feed, TTS,
+canvases, plus paywall cards / FAQ / store listings / release notes for
+them (details: `changelog-agent.md` 2026-10-03 "4.1.0 beta"). The Play
+"what's new" is locked for this build. Nothing submitted; 4.0.1 is still
+`WAITING_FOR_REVIEW` on iOS - publish 4.0.1 first (`release-publish`),
+then `release-promote` 4.1.0 once the user is happy with it on device
+(promote also pushes the changed iOS + Play listing text). At the 4.1
+store release the maintainer's site gets its pending feature copy
+(website project's AGENTS.md § Pending) - the privacy policy for the
+Kick events relay + TTS is already live.
+
 **Update 2026-10-03 — global Pro pricing overhaul (both stores
 re-priced):** a Turkish monthly sub came through at ~€0.80; the audit
 found nominal parity was currency-blind AND Apple's equalized-tier matrix

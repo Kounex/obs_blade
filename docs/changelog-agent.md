@@ -2,6 +2,35 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - 4.1.0 beta: Pro copy, store listings, release notes
+
+4.1.0 (2026100301) built for dogfooding: TestFlight internal + Play
+internal. Nothing submitted for review; 4.0.1 is still in review on iOS.
+
+- **Paywall:** two new benefit cards - "Never Miss a Supporter"
+  (activity feed, amber `ProPalette.activity`, black glyph 9.8:1) and
+  "Hear Your Chat" (TTS, blue `ProPalette.speech`, white 5.0:1), placed
+  2nd/3rd so the native-chat upsell (`kProBenefits.skip(1).take(3)`)
+  now names them. Six cards: phone carousel, 3x2 tablet grid. Shot spec
+  `tool/widget_shots/pro_shots_test.dart`. Welcome-to-Pro + FAQ "What
+  does Pro unlock" name both.
+- **Store listings:** description (both stores) gets the two Pro
+  bullets + a free canvas bullet; iOS promo text announces 4.1. They
+  go up with `release metadata ios|android` at promote (the promote
+  skill now covers the Play listing too).
+- **Release notes:** store text in the usual two files (486/500).
+  New: TestFlight "What to Test" from `fastlane/testflight_notes.txt`
+  (Fastfile falls back to the iOS notes) - a tester checklist that never
+  reaches the listing. Rewrite it each beta (playbook § Release notes).
+- **Website (maintainer):** privacy policy now covers the Kick events
+  relay (`kick-events.obs-blade.com`: token used once, channel id/name,
+  hashed session keys, events 7 days, 30-day idle removal, method/path/
+  status logs), `kick-auth.obs-blade.com`, on-device activity data and
+  Android network TTS voices - deployed. The landing page's 4.1 feature
+  copy waits for the store release.
+- Build machine: a stale pre-SPM `macos/Podfile` (Aug) failed the
+  clean-tree preflight; moved out of the clone.
+
 ## 2026-10-03 - Activity feed review fixes (`/code-review high`)
 
 Fixes from a high-effort review of the activity feed + Kick relay:

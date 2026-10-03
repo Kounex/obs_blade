@@ -23,6 +23,10 @@ Maintainers: `docs/private/maintainer-workflow.md` § "Store releases over SSH".
 1. **iOS version + notes.** `release metadata ios` (dry run), then `--yes`:
    creates the App Store version `<name>` with the notes and screenshots.
    Check the version still has its App Preview (playbook § Stores).
+   If the Play listing changed since the last release
+   (`git diff <last tag> -- fastlane/metadata/android`, the changelogs
+   aside), also `release metadata android` - managed publishing holds the
+   listing until the user publishes, same as the release.
 2. **Confirm with the user:** notes (they lock on submit) and the Play
    rollout share (playbook § Rollout).
 3. **Submit iOS.** `release submit ios` (dry run), then `--yes`.
