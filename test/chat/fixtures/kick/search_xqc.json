@@ -1,0 +1,89 @@
+{
+ "channels": [
+  {
+   "id": 668,
+   "user_id": 676,
+   "slug": "xqc",
+   "is_banned": false,
+   "playback_url": null,
+   "name_updated_at": null,
+   "vod_enabled": true,
+   "subscription_enabled": true,
+   "is_affiliate": false,
+   "followers_count": 1118300,
+   "userId": 676,
+   "followersCount": 1118300,
+   "following": false,
+   "subscription": false,
+   "isLive": false,
+   "recentCategories": [],
+   "can_host": true,
+   "user": {
+    "id": 676,
+    "username": "xQc",
+    "bio": "",
+    "profilePic": "https://files.kick.com/images/user/676/profile_image/conversion/931b4e8f-5445-427c-bd82-b473530390cc-fullsize.webp"
+   },
+   "verified": {
+    "id": 3496,
+    "channel_id": 668,
+    "created_at": "2023-06-16T21:07:17.000000Z",
+    "updated_at": "2023-06-16T21:07:17.000000Z"
+   }
+  },
+  {
+   "id": 66401232,
+   "user_id": 67553903,
+   "slug": "xqcow-waiting-room-x",
+   "is_banned": false,
+   "playback_url": null,
+   "name_updated_at": null,
+   "vod_enabled": true,
+   "subscription_enabled": false,
+   "is_affiliate": false,
+   "followers_count": 632,
+   "userId": 67553903,
+   "followersCount": 632,
+   "following": false,
+   "subscription": false,
+   "isLive": true,
+   "recentCategories": [],
+   "can_host": true,
+   "user": {
+    "id": 67553903,
+    "username": "xQcOW_waiting_room_X",
+    "bio": "",
+    "profilePic": "https://files.kick.com/images/user/67553903/profile_image/conversion/752135e0-8198-4d61-aab5-0e8c7629b3f6-fullsize.webp"
+   },
+   "verified": null
+  },
+  {
+   "id": 8060389,
+   "user_id": 8812846,
+   "slug": "xqc-pog",
+   "is_banned": false,
+   "playback_url": null,
+   "name_updated_at": null,
+   "vod_enabled": true,
+   "subscription_enabled": false,
+   "is_affiliate": false,
+   "followers_count": 26,
+   "userId": 8812846,
+   "followersCount": 26,
+   "following": false,
+   "subscription": false,
+   "isLive": false,
+   "recentCategories": [],
+   "can_host": true,
+   "user": {
+    "id": 8812846,
+    "username": "xqc_pog",
+    "bio": "",
+    "profilePic": null
+   },
+   "verified": null
+  }
+ ],
+ "categories": [],
+ "livestreams": []
+}

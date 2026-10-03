@@ -441,6 +441,18 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     return _$selectChannelAsyncAction.run(() => super.selectChannel(label));
   }
 
+  late final _$addChannelEntryAsyncAction = AsyncAction(
+    '_YouTubeChatStore.addChannelEntry',
+    context: context,
+  );
+
+  @override
+  Future<String?> addChannelEntry(YouTubeTarget target, String name) {
+    return _$addChannelEntryAsyncAction.run(
+      () => super.addChannelEntry(target, name),
+    );
+  }
+
   late final _$sendChatMessageAsyncAction = AsyncAction(
     '_YouTubeChatStore.sendChatMessage',
     context: context,

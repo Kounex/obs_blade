@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 
 const String _kApiBase = 'https://kick.com/api/v2';
@@ -105,6 +106,40 @@ class KickChannelService {
           .compareTo(b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)),
     );
     return KickChatBackfill(messages: messages, pinnedMessage: pinned);
+  }
+
+  /// Fewest characters `kick.com/api/search` accepts — shorter queries
+  /// answer 400 "Please enter at least 3 characters".
+  static const int kSearchMinLength = 3;
+
+  /// `GET kick.com/api/search?searched_word=` — the website's own channel
+  /// search (Kick's official API has none). Anonymous; answers the top 20
+  /// channels by followers with live flag and verified seal (verified
+  /// 2026-10-03). Undocumented, like the other `kick.com/api` reads here,
+  /// so callers keep a paste-the-slug fallback. Queries under
+  /// [kSearchMinLength] return empty without a request.
+  Future<List<KickChannelSuggestion>> searchChannels(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.length < kSearchMinLength) return const [];
+    final response = await this._client.get(
+      Uri.parse(
+        'https://kick.com/api/search',
+      ).replace(queryParameters: {'searched_word': trimmed}),
+      headers: this._headers,
+    );
+    if (response.statusCode != 200) {
+      throw KickApiException(
+        'Searching Kick channels failed (${response.statusCode})',
+        cause: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+    final body = json.decode(response.body);
+    final channels = body is Map ? body['channels'] : null;
+    if (channels is! List) return const [];
+    return [
+      for (final raw in channels) ?KickChannelSuggestion.fromSearchJson(raw),
+    ];
   }
 }
 

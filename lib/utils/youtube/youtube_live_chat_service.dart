@@ -518,6 +518,10 @@ class YouTubeLiveChatService {
     );
   }
 
+  /// [_errorFor] for the other Data API services (channel search).
+  static YouTubeApiException errorFor(http.Response response, String action) =>
+      _errorFor(response, action);
+
   /// Maps a failing response to a typed error. YouTube error bodies look
   /// like `{error: {code, message, errors: [{reason, ...}]}}`.
   static YouTubeApiException _errorFor(http.Response response, String action) {

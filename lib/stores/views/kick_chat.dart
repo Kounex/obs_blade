@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -1601,6 +1602,64 @@ abstract class _KickChatStore with Store {
       this.channelInfo = null;
       this.pinnedMessage = null;
       this.chatConnection = KickChatConnectionState.idle;
+    }
+  }
+
+  /// "Add chat" picker: put [slug] on the shared Kick list (shared with
+  /// the WebView path, like the add dialog) and switch to it. The own
+  /// channel and listed slugs are only switched to.
+  @action
+  Future<void> addChannel(String slug) async {
+    if (!this.isOwnChannel(slug) && !this.channels.contains(slug)) {
+      try {
+        final box = Hive.box(HiveKeys.Settings.name);
+        final slugs = List<String>.from(
+          box.get(SettingsKeys.KickUsernames.name, defaultValue: <String>[]),
+        );
+        if (!slugs.contains(slug)) {
+          slugs.add(slug);
+          box.put(SettingsKeys.KickUsernames.name, slugs);
+        }
+      } catch (e) {
+        GeneralHelper.logFailure('Kick channel add failed', e);
+        return;
+      }
+      this.reloadChannels();
+    }
+    await this.selectChannel(slug);
+  }
+
+  /// "Add chat" picker search — the website's channel search, anonymous
+  /// (see [KickChannelService.searchChannels]). Failures are logged and
+  /// rethrown for the picker's retry row.
+  Future<List<KickChannelSuggestion>> searchChannels(String query) async {
+    try {
+      return await this._channelService.searchChannels(query);
+    } catch (e) {
+      GeneralHelper.logFailure('Kick channel search failed', e);
+      rethrow;
+    }
+  }
+
+  /// "Popular live now" for the picker: the official listing in
+  /// [languageCode] (the device language), falling back to every language
+  /// when that one has nothing live. Needs a session — the listing takes
+  /// any token but none without one, so signed-out pickers skip it.
+  Future<List<KickChannelSuggestion>> loadPopularLive({
+    String? languageCode,
+  }) async {
+    if (!this.canWrite) return const [];
+    try {
+      if (languageCode != null && languageCode.isNotEmpty) {
+        final local = await this._apiService.fetchPopularLivestreams(
+          language: languageCode,
+        );
+        if (local.isNotEmpty) return local;
+      }
+      return await this._apiService.fetchPopularLivestreams();
+    } catch (e) {
+      GeneralHelper.logFailure('Kick live listing failed', e);
+      rethrow;
     }
   }
 

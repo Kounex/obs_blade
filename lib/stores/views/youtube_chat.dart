@@ -17,6 +17,8 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/activity/activity_mappers.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_entry_name.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
@@ -1544,6 +1546,58 @@ abstract class _YouTubeChatStore with Store {
     ];
     if (added.isEmpty) return;
     unawaited(this.selectChannel(added.first));
+  }
+
+  /// "Add chat" picker: list [target] under [name] (made unique; an
+  /// entry already pointing at it keeps its label) and switch to it.
+  /// Native only: the WebView selection stays as it was. Returns the
+  /// label, null when saving failed.
+  @action
+  Future<String?> addChannelEntry(YouTubeTarget target, String name) async {
+    final own = this.ownChannel;
+    if (own != null && own.target.key == target.key) {
+      await this.selectChannel(kYouTubeOwnChannelLabel);
+      return kYouTubeOwnChannelLabel;
+    }
+    final String label;
+    try {
+      final box = Hive.box(HiveKeys.Settings.name);
+      final entries = Map<String, String>.from(
+        box.get(
+          SettingsKeys.YouTubeUsernames.name,
+          defaultValue: <String, String>{},
+        ),
+      );
+      final pick = youTubeEntryLabelFor(target, name, entries);
+      label = pick.label;
+      if (!pick.existing) {
+        entries[label] = target.storageValue;
+        box.put(SettingsKeys.YouTubeUsernames.name, entries);
+      }
+    } catch (e) {
+      GeneralHelper.logFailure('YouTube channel add failed', e);
+      return null;
+    }
+    this.reloadChannels();
+    await this.selectChannel(label);
+    return label;
+  }
+
+  /// The picker's "Channels you subscribe to" — signed-in accounts with a
+  /// channel only (a channel-less account subscribes to nothing). Logged
+  /// and rethrown for the picker's retry row.
+  Future<List<YouTubeChannelSuggestion>> loadSubscriptions(
+    YouTubeChannelSearchService service,
+  ) async {
+    if (!this.isSignedIn || this.signedInWithoutChannel) return const [];
+    try {
+      return await service.listSubscriptions(
+        accessToken: await this._validAccessToken(),
+      );
+    } catch (e) {
+      GeneralHelper.logFailure('YouTube subscriptions load failed', e);
+      rethrow;
+    }
   }
 
   /// Re-read the channel list from settings (after the user edited

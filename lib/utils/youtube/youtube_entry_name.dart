@@ -146,3 +146,20 @@ String uniqueYouTubeEntryLabel(String name, Iterable<String> taken) {
     if (!used.contains(candidate)) return candidate;
   }
 }
+
+/// The label a picked YouTube [target] gets in [entries] (label → stored
+/// value): the existing entry's label when that target is already listed
+/// (`@handle` and `UC…` compare by target, case-insensitively), else
+/// [name] made unique. [existing] tells the two apart.
+({String label, bool existing}) youTubeEntryLabelFor(
+  YouTubeTarget target,
+  String name,
+  Map<String, String> entries,
+) {
+  for (final MapEntry(:key, :value) in entries.entries) {
+    if (parseYouTubeTarget(value)?.key == target.key) {
+      return (label: key, existing: true);
+    }
+  }
+  return (label: uniqueYouTubeEntryLabel(name, entries.keys), existing: false);
+}

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/kick/kick_emote.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
@@ -52,6 +53,22 @@ class FakeKickChannelService extends KickChannelService {
       messages: messages,
       pinnedMessage: this.pinnedBackfills[channelId],
     );
+  }
+
+  /// query → search answer; a missing key answers empty. Mirrors the real
+  /// endpoint's 3-character floor (shorter queries never reach it).
+  final Map<String, List<KickChannelSuggestion>> searchResults =
+      <String, List<KickChannelSuggestion>>{};
+  final List<String> searchCalls = <String>[];
+  Object? searchThrows;
+
+  @override
+  Future<List<KickChannelSuggestion>> searchChannels(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.length < KickChannelService.kSearchMinLength) return const [];
+    this.searchCalls.add(trimmed);
+    if (this.searchThrows != null) throw this.searchThrows!;
+    return this.searchResults[trimmed] ?? const [];
   }
 }
 
@@ -297,6 +314,23 @@ class FakeKickApiService extends KickApiService {
     this.fetchUserCalls.add(userId);
     if (this.fetchUserThrows != null) throw this.fetchUserThrows!;
     return this.fetchUserResult;
+  }
+
+  /// language ('' = no filter) → live listing; a missing key answers
+  /// empty (a language with nobody live).
+  final Map<String, List<KickChannelSuggestion>> popular =
+      <String, List<KickChannelSuggestion>>{};
+  final List<String> popularCalls = <String>[];
+  Object? popularThrows;
+
+  @override
+  Future<List<KickChannelSuggestion>> fetchPopularLivestreams({
+    String? language,
+    int limit = 25,
+  }) async {
+    this.popularCalls.add(language ?? '');
+    if (this.popularThrows != null) throw this.popularThrows!;
+    return this.popular[language ?? ''] ?? const [];
   }
 }
 

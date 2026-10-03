@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -373,6 +374,52 @@ void main() {
         client: client,
         tokenProvider: _TokenProvider().call,
       ).unbanUser(broadcasterUserId: broadcasterUserId, userId: 77);
+    });
+  });
+
+  group('fetchPopularLivestreams', () {
+    /// Shape of `GET /public/v1/livestreams?language=de&sort=viewer_count`
+    /// (live call 2026-10-03, titles trimmed).
+    final fixture = File(
+      'test/chat/fixtures/kick/livestreams_de.json',
+    ).readAsStringSync();
+
+    test('asks by viewers in the language and drops mature streams', () async {
+      late Uri seen;
+      final client = MockClient((request) async {
+        seen = request.url;
+        expect(request.headers['Authorization'], 'Bearer token-1');
+        return http.Response(fixture, 200);
+      });
+
+      final streams = await KickApiService(
+        client: client,
+        tokenProvider: _TokenProvider().call,
+      ).fetchPopularLivestreams(language: 'de');
+
+      expect(seen.path, '/public/v1/livestreams');
+      expect(seen.queryParameters['sort'], 'viewer_count');
+      expect(seen.queryParameters['language'], 'de');
+      expect(streams.map((s) => s.slug), ['denzelthom', 'ronbielecki']);
+      expect(streams.first.viewerCount, 538);
+      expect(streams.first.categoryName, 'Just Chatting');
+      expect(streams.last.categoryName, isNull);
+      expect(streams.every((s) => s.isLive), isTrue);
+    });
+
+    test('without a language there is no language filter', () async {
+      late Uri seen;
+      final client = MockClient((request) async {
+        seen = request.url;
+        return http.Response('{"data": [], "message": "OK"}', 200);
+      });
+
+      await KickApiService(
+        client: client,
+        tokenProvider: _TokenProvider().call,
+      ).fetchPopularLivestreams();
+
+      expect(seen.queryParameters.containsKey('language'), isFalse);
     });
   });
 }

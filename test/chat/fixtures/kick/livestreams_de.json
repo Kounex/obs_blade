@@ -1,0 +1,8 @@
+{
+ "data": [
+  {"broadcaster_user_id": 376486, "channel_id": 367509, "slug": "orangemorange", "stream_title": "Casino", "language": "de", "has_mature_content": true, "viewer_count": 2983, "thumbnail": "", "started_at": "2026-10-03T17:00:37Z", "category": {"id": 28, "name": "Slots & Casino", "thumbnail": ""}, "profile_picture": ""},
+  {"broadcaster_user_id": 1001, "channel_id": 1002, "slug": "denzelthom", "stream_title": "Abend", "language": "de", "has_mature_content": false, "viewer_count": 538, "thumbnail": "", "started_at": "2026-10-03T16:00:00Z", "category": {"id": 15, "name": "Just Chatting", "thumbnail": ""}, "profile_picture": ""},
+  {"broadcaster_user_id": 1003, "channel_id": 1004, "slug": "ronbielecki", "stream_title": "GTA", "language": "de", "has_mature_content": false, "viewer_count": 242, "thumbnail": "", "started_at": "2026-10-03T15:00:00Z", "category": null, "profile_picture": ""}
+ ],
+ "message": "OK"
+}

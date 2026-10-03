@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart'
     show KickUserIdentity;
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
@@ -197,5 +198,40 @@ class KickApiService {
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw this._error('Could not lift the ban', response);
     }
+  }
+
+  /// `GET /livestreams?sort=viewer_count` — the most watched live channels,
+  /// optionally in one [language] (ISO 639-1, e.g. `de`; verified
+  /// 2026-10-03 — the anonymous website listing ignores language, this
+  /// one filters). Any token works (no scope). Streams flagged
+  /// `has_mature_content` are left out: Kick's top lists are dominated by
+  /// casino streams. Kick marks this v1 endpoint deprecated; v2 has a
+  /// language filter but no viewer sort.
+  Future<List<KickChannelSuggestion>> fetchPopularLivestreams({
+    String? language,
+    int limit = 25,
+  }) async {
+    final response = await this._authed(
+      (token) => this._client.get(
+        Uri.parse('$_kApiBase/livestreams').replace(
+          queryParameters: {
+            'sort': 'viewer_count',
+            'limit': '$limit',
+            if (language != null && language.isNotEmpty) 'language': language,
+          },
+        ),
+        headers: this._headers(token),
+      ),
+    );
+    if (response.statusCode != 200) {
+      throw this._error('Could not load live channels', response);
+    }
+    final data = (json.decode(response.body) as Map)['data'];
+    if (data is! List) return const [];
+    return [
+      for (final raw in data)
+        if (raw is Map && raw['has_mature_content'] != true)
+          ?KickChannelSuggestion.fromLivestreamJson(raw),
+    ];
   }
 }

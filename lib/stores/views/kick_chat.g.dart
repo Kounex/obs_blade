@@ -397,6 +397,16 @@ mixin _$KickChatStore on _KickChatStore, Store {
     return _$selectChannelAsyncAction.run(() => super.selectChannel(slug));
   }
 
+  late final _$addChannelAsyncAction = AsyncAction(
+    '_KickChatStore.addChannel',
+    context: context,
+  );
+
+  @override
+  Future<void> addChannel(String slug) {
+    return _$addChannelAsyncAction.run(() => super.addChannel(slug));
+  }
+
   late final _$_KickChatStoreActionController = ActionController(
     name: '_KickChatStore',
     context: context,
