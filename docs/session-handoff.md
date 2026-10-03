@@ -12,9 +12,14 @@ Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 **Update 2026-10-03 — 4.1.0 beta for dogfooding:** build **2026100302**
 on TestFlight + Play internal (2026100301 had the Kick client secret
 compiled in - sign-in broke; see changelog "Kick sign-in: client secret").
-**Open, user decision: rotate the Kick client secret** - it is very likely
-extractable from the live 4.0.0 and the in-review 4.0.1; rotating breaks
-Kick sign-in / refresh on 4.0.x builds (they exchange with Kick directly).
+**Kick client secret rotation (user decision 2026-10-03): rotate once 4.1
+is live in the stores, before the next build after that** - it is very
+likely extractable from 4.0.0 / 4.0.1; rotating breaks Kick sign-in /
+refresh on 4.0.x builds (they exchange with Kick directly). New secret
+goes to Kick's developer settings, the exchange host + events relay env
+and `docs/private/kick_oauth_server.json` (never the build defines).
+Since build 2026100302, `master` also has the YouTube read-only fix
+(not in a build yet).
 Build 2026100302: activity feed, TTS,
 canvases, plus paywall cards / FAQ / store listings / release notes for
 them (details: `changelog-agent.md` 2026-10-03 "4.1.0 beta"). The Play
