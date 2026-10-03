@@ -32,9 +32,14 @@ subscription (409 STATE_ERROR "Initial price cannot be created again
 after subscription is approved") — those territories get a scheduled
 price change instead (startDate +2 days, the soonest Apple schedules;
 `preserveCurrentPrice: true` — existing subscribers grandfathered, only
-new buyers see the new price). The single existing subscriber (Turkish,
-Play monthly at the old cheap price) keeps their price. Play takes base
-plan price updates on ACTIVE plans directly.
+new buyers see the new price; the response marks the CURRENT price
+record `preserved: true`). Also verified live: the API allows only ONE
+future price per territory (a second POST 409s with "You cannot create
+more than one future prices" — re-scheduling means DELETE +
+re-POST, so the startDate can't be moved earlier cheaply). The single
+existing subscriber (Turkish, Play monthly at the old cheap price)
+keeps their price. Play takes base plan price updates on ACTIVE plans
+directly.
 
 Refresh cadence: re-run the audit + generator when FX moves
 (quarterly-ish); workflow in `tool/provisioning/README.md` § Pricing
