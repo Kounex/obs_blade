@@ -488,9 +488,10 @@ void main() {
       /// Signed out, the own source can't be shown (it is never an entry)
       await youTube.logout();
       expect(
-        store.sourcesOf(combo).firstWhere(
-          (s) => s.platform == ChatType.YouTube,
-        ).unavailable,
+        store
+            .sourcesOf(combo)
+            .firstWhere((s) => s.platform == ChatType.YouTube)
+            .unavailable,
         isTrue,
       );
     });
@@ -531,11 +532,15 @@ void main() {
       await youTube.init();
 
       expect(
-        Map.of(settingsBox().get(SettingsKeys.YouTubeUsernames.name) as Map)
-            .keys,
+        Map.of(
+          settingsBox().get(SettingsKeys.YouTubeUsernames.name) as Map,
+        ).keys,
         unorderedEquals(['A', 'Other']),
       );
-      expect(youTube.channels.map((c) => c.label), unorderedEquals(['A', 'Other']));
+      expect(
+        youTube.channels.map((c) => c.label),
+        unorderedEquals(['A', 'Other']),
+      );
       expect(youTube.selectedChannelLabel, kYouTubeOwnChannelLabel);
     });
 

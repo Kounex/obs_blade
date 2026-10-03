@@ -21,6 +21,7 @@ import '../../../../../types/classes/twitch/twitch_channel_search_result.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/combined/combined_match_finder.dart';
+import '../../../../../utils/youtube/youtube_entry_name.dart';
 import '../../../../../utils/kick_channel_slug.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/twitch/twitch_channel_service.dart';
@@ -74,7 +75,15 @@ class CombinedChatBuilderSheet extends StatefulWidget {
   final CombinedCombo? combo;
   final CombinedMatchFinder? matchFinder;
 
-  const CombinedChatBuilderSheet({super.key, this.combo, this.matchFinder});
+  /// Names a YouTube channel typed via "Other…" (test seam)
+  final YouTubeEntryNamer? youTubeNamer;
+
+  const CombinedChatBuilderSheet({
+    super.key,
+    this.combo,
+    this.matchFinder,
+    this.youTubeNamer,
+  });
 
   @override
   State<CombinedChatBuilderSheet> createState() =>
@@ -194,10 +203,13 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
         pick.twitch?.login ??
         pick.kickSlug ??
         switch (parseYouTubeTarget(pick.youTube?.value)) {
-          /// A bare `UC…` id is no name to search other platforms for
-          YouTubeChannelTarget(:final displayName)
-              when !displayName.startsWith('UC') =>
-            displayName,
+          /// A handle / legacy name searches as typed; a channel id is no
+          /// name to search for - the entry's title is
+          YouTubeChannelTarget(:final path, :final displayName)
+              when !path.startsWith('channel/') =>
+            displayName.startsWith('@')
+                ? displayName.substring(1)
+                : displayName,
           _ => pick.label,
         };
     final seq = ++this._matchSeq;
@@ -326,41 +338,11 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   }
 
   Future<void> _pickOther(ChatType platform) async {
-    final controller = TextEditingController();
     final value = await showCupertinoDialog<String>(
       context: this.context,
       barrierDismissible: true,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text('${platform.text} channel'),
-        content: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.sm),
-          child: Material(
-            type: MaterialType.transparency,
-            child: NativeChatTextField(
-              controller: controller,
-              hintText: switch (platform) {
-                ChatType.YouTube => '@handle or channel URL',
-                ChatType.Twitch => 'Twitch login',
-                _ => 'Channel name or kick.com link',
-              },
-              onSubmitted: (text) => Navigator.of(context).pop(text),
-            ),
-          ),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Use'),
-          ),
-        ],
-      ),
+      builder: (context) => _OtherChannelDialog(platform: platform),
     );
-    controller.dispose();
     final input = value?.trim();
     if (input == null || input.isEmpty || !this.mounted) return;
     switch (platform) {
@@ -373,12 +355,18 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
         if (target is! YouTubeChannelTarget) {
           return this._toast('Use an @handle or channel link');
         }
+
+        /// Named like the add dialog names entries: the channel's title,
+        /// never its `UC…` id or `@handle` (this becomes the list entry)
+        final name = await (this.widget.youTubeNamer ?? YouTubeEntryNamer())
+            .nameFor(target);
+        if (!this.mounted) return;
         this._setPick(
           platform,
           _Pick(
-            label: target.displayName,
+            label: name,
             youTube: CombinedYouTubeSource(
-              label: target.displayName,
+              label: name,
               value: target.storageValue,
             ),
           ),
@@ -713,6 +701,60 @@ class _SuggestionChip extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// "Other … channel" input. Owns its text controller: the dialog still
+/// rebuilds while it animates out, after the picker has its answer.
+class _OtherChannelDialog extends StatefulWidget {
+  final ChatType platform;
+
+  const _OtherChannelDialog({required this.platform});
+
+  @override
+  State<_OtherChannelDialog> createState() => _OtherChannelDialogState();
+}
+
+class _OtherChannelDialogState extends State<_OtherChannelDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    this._controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoAlertDialog(
+      title: Text('${this.widget.platform.text} channel'),
+      content: Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
+        child: Material(
+          type: MaterialType.transparency,
+          child: NativeChatTextField(
+            controller: this._controller,
+            hintText: switch (this.widget.platform) {
+              ChatType.YouTube => '@handle or channel URL',
+              ChatType.Twitch => 'Twitch login',
+              _ => 'Channel name or kick.com link',
+            },
+            onSubmitted: (text) => Navigator.of(context).pop(text),
+          ),
+        ),
+      ),
+      actions: [
+        CupertinoDialogAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(context).pop(this._controller.text),
+          child: const Text('Use'),
+        ),
+      ],
     );
   }
 }

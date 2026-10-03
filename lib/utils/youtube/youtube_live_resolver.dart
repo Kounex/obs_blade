@@ -74,13 +74,15 @@ class YouTubeLiveResolver {
     if (response.statusCode != 200) {
       unawaited(response.stream.listen(null).cancel());
       if (response.statusCode == 404) {
-        throw YouTubeLiveResolveException(
-          'YouTube channel ${channel.displayName} not found',
+        /// Shown as is next to the entry's name - never the target's
+        /// own form, a bare `UC…` id for channel-id entries
+        throw const YouTubeLiveResolveException(
+          'This YouTube channel doesn\'t exist - check the entry',
           statusCode: 404,
         );
       }
       throw YouTubeLiveResolveException(
-        'Looking up ${channel.displayName} failed (${response.statusCode})',
+        'Checking whether the channel is live failed (${response.statusCode})',
         statusCode: response.statusCode,
       );
     }

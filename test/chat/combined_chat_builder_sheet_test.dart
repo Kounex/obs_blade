@@ -17,6 +17,8 @@ import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/combined/combined_match_finder.dart';
+import 'package:obs_blade/utils/youtube/youtube_entry_name.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/combined_chat_builder_sheet.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -41,6 +43,17 @@ class FakeFinder extends CombinedMatchFinder {
       for (final match in this.results)
         if (platforms.contains(match.platform)) match,
     ];
+  }
+}
+
+/// Answers like the real namer for a channel id: the channel's title
+class FakeNamer extends YouTubeEntryNamer {
+  final List<YouTubeTarget> asked = [];
+
+  @override
+  Future<String> nameFor(YouTubeTarget target) async {
+    this.asked.add(target);
+    return 'NASA';
   }
 }
 
@@ -164,6 +177,45 @@ void main() {
     expect(find.byKey(const Key('combined-suggestion-YouTube')), findsNothing);
     expect(find.text('xQc'), findsOneWidget);
     expect(find.text('Pick at least two channels to save.'), findsNothing);
+  });
+
+  testWidgets('a YouTube channel typed via "Other…" is named by its title, '
+      'never its UC… id', (tester) async {
+    final namer = FakeNamer();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: const [AppStatusColors.standard, AppTextColors.standard],
+        ),
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: CombinedChatBuilderSheet(
+              matchFinder: finder,
+              youTubeNamer: namer,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('combined-builder-YouTube')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Other YouTube channel…').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(EditableText).last,
+      'https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ',
+    );
+    await tester.tap(find.text('Use'));
+    await tester.pumpAndSettle();
+
+    expect(namer.asked.single, isA<YouTubeChannelTarget>());
+    expect(find.text('NASA'), findsWidgets);
+    expect(find.textContaining('UCLA_'), findsNothing);
+
+    /// The other platforms are searched by the title, not the id
+    expect(finder.asked.single.$1, 'NASA');
   });
 
   testWidgets('suggestions are never picked on their own', (tester) async {

@@ -926,8 +926,14 @@ class _StreamChatState extends State<StreamChat>
           ),
           if (youTubeWaiting)
             Positioned.fill(
-              child: _YouTubeChannelWaitingState(
-                channel: youTubeChannel,
+              child: YouTubeChannelWaitingPanel(
+                /// The entry's name - the target's own form is a bare
+                /// `UC…` id for channel-id entries
+                name:
+                    settingsBox
+                        .get(SettingsKeys.SelectedYouTubeUsername.name)
+                        ?.toString() ??
+                    'This channel',
                 tracker: this._youTubeLiveTracker,
               ),
             ),
@@ -1224,13 +1230,16 @@ class _ChatProUpsell extends StatelessWidget {
 /// Opaque branded surface crossfading out once the embedded chat page has
 /// loaded - masks the reload flash of the keyed [WebView]
 /// WebView YouTube channel entry between streams (or still resolving):
-/// what the tracker is doing + a "Check now" to skip the wait.
-class _YouTubeChannelWaitingState extends StatelessWidget {
-  final YouTubeChannelTarget channel;
+/// what the tracker is doing + a "Check now" to skip the wait. Public for
+/// tests only.
+class YouTubeChannelWaitingPanel extends StatelessWidget {
+  /// The entry's name as listed (never the target's `UC…` id)
+  final String name;
   final YouTubeWebLiveTracker tracker;
 
-  const _YouTubeChannelWaitingState({
-    required this.channel,
+  const YouTubeChannelWaitingPanel({
+    super.key,
+    required this.name,
     required this.tracker,
   });
 
@@ -1241,11 +1250,11 @@ class _YouTubeChannelWaitingState extends StatelessWidget {
     final resolving = this.tracker.state == YouTubeWebLiveState.resolving;
     final String body = switch (this.tracker.state) {
       YouTubeWebLiveState.resolving =>
-        'Looking for ${this.channel.displayName}\'s livestream…',
+        'Looking for ${this.name}\'s livestream…',
       YouTubeWebLiveState.error =>
         this.tracker.error ?? 'Could not reach YouTube',
       _ =>
-        '${this.channel.displayName} isn\'t live right now. The chat opens '
+        '${this.name} isn\'t live right now. The chat opens '
             'on its own as soon as the next stream starts.',
     };
 

@@ -508,7 +508,11 @@ void main() {
       chatService.liveChatIds['video-a-001'] = 'chat-a';
       chatService.liveChatIds['video-b-002'] = 'chat-b';
       chatService.pollResponses.add(
-        page([ytMessage('m1')], nextPageToken: 't1', pollingIntervalMillis: 30000),
+        page(
+          [ytMessage('m1')],
+          nextPageToken: 't1',
+          pollingIntervalMillis: 30000,
+        ),
       );
 
       await store.init();
