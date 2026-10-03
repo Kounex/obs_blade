@@ -106,6 +106,14 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   /// Suggestions for the platforms without a pick.
   List<CombinedMatch> _matches = const [];
   bool _findingMatches = false;
+
+  /// The platform whose "Other…" channel is being looked up (its row
+  /// says so, Save waits)
+  ChatType? _lookingUp;
+
+  /// Bumped by every pick change - a lookup that finishes after the user
+  /// picked something else is dropped
+  int _pickSeq = 0;
   int _matchSeq = 0;
 
   late final CombinedMatchFinder _finder =
@@ -138,9 +146,19 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
       if (combo.youTube case final source?) {
         final own = this._youTube.ownChannel;
         final isOwn = isOwnYouTubeComboSource(source, own);
+
+        /// Kept as the own source (even when another account is signed
+        /// in now) - re-saving must not turn it into a list entry
+        final saved = source.own || isOwn
+            ? CombinedYouTubeSource(
+                label: source.label,
+                value: source.value,
+                own: true,
+              )
+            : source;
         this._picks[ChatType.YouTube] = _Pick(
           label: isOwn ? own!.displayName : source.label,
-          youTube: source,
+          youTube: saved,
           own: isOwn,
         );
       }
@@ -174,6 +192,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   }
 
   void _setPick(ChatType platform, _Pick? pick) {
+    this._pickSeq++;
     setState(() {
       if (pick == null) {
         this._picks.remove(platform);
@@ -309,6 +328,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
               youTube: CombinedYouTubeSource(
                 label: own.displayName,
                 value: own.target.storageValue,
+                own: true,
               ),
             ),
           if (entries is Map)
@@ -356,17 +376,51 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
           return this._toast('Use an @handle or channel link');
         }
 
+        /// Already listed (or the own channel): that entry, no lookup
+        for (final option in this._optionsFor(platform)) {
+          final value = option.youTube?.value;
+          if (value != null && parseYouTubeTarget(value)?.key == target.key) {
+            return this._setPick(platform, option);
+          }
+        }
+
         /// Named like the add dialog names entries: the channel's title,
         /// never its `UC…` id or `@handle` (this becomes the list entry)
-        final name = await (this.widget.youTubeNamer ?? YouTubeEntryNamer())
-            .nameFor(target);
-        if (!this.mounted) return;
+        final namer = this.widget.youTubeNamer ?? YouTubeEntryNamer();
+        final seq = this._pickSeq;
+        setState(() => this._lookingUp = platform);
+        final String? name;
+        try {
+          name = target.path.startsWith('channel/')
+              ? await namer
+                    .nameFor(target)
+                    .then(
+                      (title) => title == target.storageValue ? null : title,
+                    )
+              : await namer.channelPageTitle(target.path);
+        } finally {
+          if (this.mounted) setState(() => this._lookingUp = null);
+        }
+        if (!this.mounted || seq != this._pickSeq) return;
+        if (name == null) {
+          return this._toast('No YouTube channel "$input" found');
+        }
+
+        /// Labels are the list's keys - never overwrite another entry
+        final entries = Hive.box(
+          HiveKeys.Settings.name,
+        ).get(SettingsKeys.YouTubeUsernames.name);
+        final label = uniqueYouTubeEntryLabel(name, [
+          if (entries is Map)
+            for (final key in entries.keys)
+              if (key is String) key,
+        ]);
         this._setPick(
           platform,
           _Pick(
-            label: name,
+            label: label,
             youTube: CombinedYouTubeSource(
-              label: name,
+              label: label,
               value: target.storageValue,
             ),
           ),
@@ -431,7 +485,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final canSave = this._picks.length >= 2;
+    final canSave = this._picks.length >= 2 && this._lookingUp == null;
     return NativeChatSheetScaffold(
       headerGap: AppSpacing.sm,
       header: Row(
@@ -471,6 +525,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
               onPick: (pick) => this._setPick(platform, pick),
               onOther: () => this._pickOther(platform),
               onClear: () => this._setPick(platform, null),
+              lookingUp: this._lookingUp == platform,
             ),
           if (this._findingMatches || this._matches.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -541,6 +596,9 @@ class _PlatformRow extends StatelessWidget {
   final VoidCallback onOther;
   final VoidCallback onClear;
 
+  /// An "Other…" channel is being looked up for this row
+  final bool lookingUp;
+
   const _PlatformRow({
     required this.platform,
     required this.pick,
@@ -550,6 +608,7 @@ class _PlatformRow extends StatelessWidget {
     required this.onPick,
     required this.onOther,
     required this.onClear,
+    this.lookingUp = false,
   });
 
   @override
@@ -629,9 +688,15 @@ class _PlatformRow extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
+                    if (this.lookingUp) ...[
+                      const CupertinoActivityIndicator(radius: 7.0),
+                      const SizedBox(width: AppSpacing.xs),
+                    ],
                     Flexible(
                       child: Text(
-                        pick?.label ?? 'No ${this.platform.text} channel',
+                        this.lookingUp
+                            ? 'Looking up the channel…'
+                            : pick?.label ?? 'No ${this.platform.text} channel',
                         overflow: TextOverflow.ellipsis,
                         style: pick == null
                             ? Theme.of(context).textTheme.bodySmall

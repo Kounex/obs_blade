@@ -193,7 +193,7 @@ class CombinedSourcesSheet extends StatelessWidget {
                 this.hostContext,
                 source.platform,
                 forMyChats: false,
-                needsSignIn: source.unavailable,
+                needsSignIn: source.needsSignIn,
               );
             },
           ),
@@ -223,8 +223,13 @@ void combinedSourceFix(
         showYouTubeSetupSheet(context);
       } else if (store.isSignedInState && store.signedInWithoutChannel) {
         unawaited(switchYouTubeAccount(context));
-      } else if ((forMyChats || needsSignIn) &&
-          (store.ownChannel == null || !store.canWrite)) {
+      } else if (needsSignIn) {
+        /// Signed in as another account (or with old permissions): a new
+        /// sign-in replaces it
+        store.isSignedInState
+            ? unawaited(switchYouTubeAccount(context))
+            : startYouTubeLogin(context);
+      } else if (forMyChats && (store.ownChannel == null || !store.canWrite)) {
         startYouTubeLogin(context);
       } else {
         store.connectChat();
@@ -289,6 +294,10 @@ class _SourceRow extends StatelessWidget {
         : switch (this.status) {
             CombinedSourceStatus.connected => ('Chat connected', null),
             CombinedSourceStatus.connecting => ('Connecting…', null),
+            CombinedSourceStatus.needsSetup when source.needsSignIn => (
+              'Not signed in to this channel',
+              'Sign in',
+            ),
             CombinedSourceStatus.needsSetup => ('Needs setup', 'Set up'),
             CombinedSourceStatus.error => ('Chat failed', 'Retry'),
             CombinedSourceStatus.offline => ('Chat not connected', null),

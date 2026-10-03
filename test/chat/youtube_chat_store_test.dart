@@ -1092,6 +1092,25 @@ void main() {
       expect(store.moderationForbidden, isTrue);
     });
 
+    test('a Data API 401 without a refresh token ends the session', () async {
+      configure();
+      await seedAuth();
+      final auth = authBox().get(YouTubeAuth.kBoxKey)!;
+      auth.refreshToken = '';
+      await auth.save();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page([ytMessage('m1')]));
+      await store.init();
+      await until(() => store.messages.isNotEmpty);
+      chatService.deleteThrows = const YouTubeForbiddenException(
+        'Deleting chat message failed (401)',
+        statusCode: 401,
+      );
+
+      expect(await store.deleteMessage('m1'), isFalse);
+      expect(store.authState, YouTubeAuthState.signedOut);
+    });
+
     test('signed in without a channel: nothing to write as', () async {
       configure();
       authService.noChannel = true;

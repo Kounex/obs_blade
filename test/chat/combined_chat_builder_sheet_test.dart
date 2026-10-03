@@ -50,11 +50,17 @@ class FakeFinder extends CombinedMatchFinder {
 class FakeNamer extends YouTubeEntryNamer {
   final List<YouTubeTarget> asked = [];
 
+  /// `/@handle` pages that exist (path -> og:title)
+  final Map<String, String> pages = {};
+
   @override
   Future<String> nameFor(YouTubeTarget target) async {
     this.asked.add(target);
     return 'NASA';
   }
+
+  @override
+  Future<String?> channelPageTitle(String path) async => this.pages[path];
 }
 
 void main() {
@@ -216,6 +222,59 @@ void main() {
 
     /// The other platforms are searched by the title, not the id
     expect(finder.asked.single.$1, 'NASA');
+  });
+
+  Future<void> typeOther(WidgetTester tester, String input) async {
+    await tester.tap(find.byKey(const Key('combined-builder-YouTube')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Other YouTube channel…').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText).last, input);
+    await tester.tap(find.text('Use'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pumpWithNamer(WidgetTester tester, FakeNamer namer) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(
+          extensions: const [AppStatusColors.standard, AppTextColors.standard],
+        ),
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: CombinedChatBuilderSheet(
+              matchFinder: finder,
+              youTubeNamer: namer,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  testWidgets('"Other…": a handle without a channel page is "not found", '
+      'not a pick named after the typo', (tester) async {
+    await pumpWithNamer(tester, FakeNamer());
+    await typeOther(tester, '@nasaa');
+
+    expect(find.text('No YouTube channel "@nasaa" found'), findsOneWidget);
+    expect(find.text('No YouTube channel'), findsOneWidget);
+  });
+
+  testWidgets('"Other…": a title already used by another list entry gets '
+      'its own label instead of overwriting it', (tester) async {
+    await tester.runAsync(() async {
+      await Hive.box(HiveKeys.Settings.name).put(
+        SettingsKeys.YouTubeUsernames.name,
+        <String, String>{'Ludwig': 'dQw4w9WgXcQ'},
+      );
+    });
+    final namer = FakeNamer()..pages['@ludwig'] = 'Ludwig';
+    await pumpWithNamer(tester, namer);
+    await typeOther(tester, '@ludwig');
+
+    expect(find.text('Ludwig (2)'), findsOneWidget);
   });
 
   testWidgets('suggestions are never picked on their own', (tester) async {

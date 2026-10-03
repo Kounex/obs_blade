@@ -49,11 +49,16 @@ class CombinedSource {
   /// as needing setup, skipped when selecting.
   final bool unavailable;
 
+  /// [unavailable] because it is an account's own channel and that
+  /// account isn't the signed-in one - the fix is a sign-in, not setup.
+  final bool needsSignIn;
+
   const CombinedSource({
     required this.platform,
     required this.key,
     required this.label,
     this.unavailable = false,
+    this.needsSignIn = false,
   });
 
   @override
@@ -102,19 +107,54 @@ bool isOwnYouTubeComboSource(
 /// combo created as a copy of the [own] channel before combos used the
 /// "You" entry: the own channel's target, added under its title, and
 /// still referenced by a combo. The "You" entry replaces them.
+/// The WebView engine's selection ([webViewSelected]) is kept: the
+/// WebView has no "You" entry and shows that channel through it.
 List<String> ownYouTubeComboCopies(
   Map<dynamic, dynamic> entries,
   List<CombinedCombo> combos,
-  YouTubeChatChannel own,
-) => [
+  YouTubeChatChannel own, {
+  Object? webViewSelected,
+}) => [
   for (final MapEntry(:key, :value) in entries.entries)
     if (key is String &&
         value is String &&
+        key != webViewSelected &&
         key == own.displayName &&
         parseYouTubeTarget(value)?.key == own.target.key &&
         combos.any((combo) => combo.youTube?.label == key))
       key,
 ];
+
+/// Saved combos (settings JSON) whose YouTube source is [own]'s channel,
+/// marked as own sources (`own: true`) - null when none changed. Combos
+/// saved before the flag existed get it once the channel is known, so a
+/// later sign-out shows "Sign in" instead of re-adding a copy.
+List<Object?>? markOwnYouTubeComboSources(
+  Object? rawCombos,
+  YouTubeChatChannel own,
+) {
+  if (rawCombos is! List) return null;
+  var changed = false;
+  final marked = <Object?>[];
+  for (final raw in rawCombos) {
+    final source = raw is Map ? raw['youtube'] : null;
+    final value = source is Map ? source['value'] : null;
+    if (raw is Map &&
+        source is Map &&
+        source['own'] != true &&
+        value is String &&
+        parseYouTubeTarget(value)?.key == own.target.key) {
+      changed = true;
+      marked.add({
+        ...raw,
+        'youtube': {...source, 'own': true},
+      });
+    } else {
+      marked.add(raw);
+    }
+  }
+  return changed ? marked : null;
+}
 
 class CombinedChatStore = _CombinedChatStore with _$CombinedChatStore;
 
@@ -199,17 +239,22 @@ abstract class _CombinedChatStore with Store {
             key: own.label,
             label: own.displayName,
           )
+        else if (source.own)
+          /// Someone's own channel while that account isn't signed in -
+          /// never a list entry, so only a sign-in brings it back
+          CombinedSource(
+            platform: ChatType.YouTube,
+            key: source.label,
+            label: source.label,
+            unavailable: true,
+            needsSignIn: youTube.authState != YouTubeAuthState.unconfigured,
+          )
         else
           CombinedSource(
             platform: ChatType.YouTube,
             key: source.label,
             label: source.label,
-
-            /// Not in the list: the own channel while signed out (it is
-            /// never added as an entry) or an entry deleted meanwhile
-            unavailable:
-                youTube.authState == YouTubeAuthState.unconfigured ||
-                !youTube.channels.any((c) => c.label == source.label),
+            unavailable: youTube.authState == YouTubeAuthState.unconfigured,
           ),
       if (combo.kickSlug case final slug?)
         CombinedSource(platform: ChatType.Kick, key: slug, label: slug),
@@ -697,6 +742,10 @@ abstract class _CombinedChatStore with Store {
     this._youTube().resumePolling();
     final generation = ++this._generation;
     this.active = true;
+
+    /// A combo channel removed from its platform's list meanwhile comes
+    /// back - the platform stores can only show listed channels
+    if (this.selectedCombo case final combo?) this._registerSources(combo);
     for (final source in this.activeSources) {
       if (generation != this._generation) return;
       if (source.unavailable) continue;
@@ -742,6 +791,26 @@ abstract class _CombinedChatStore with Store {
       if (generation != this._generation) return;
       this._restore.remove(entry.key);
       this._persistRestore();
+    }
+  }
+
+  /// Saved combos changed in settings outside this store (the YouTube
+  /// store marking own-channel sources) - re-read them.
+  void reloadCombos() {
+    if (!this._settingsLoaded) return;
+    try {
+      final combos = parseCombinedCombos(
+        Hive.box(
+          HiveKeys.Settings.name,
+        ).get(SettingsKeys.CombinedChatCombos.name),
+      );
+      runInAction(
+        () => this.combos
+          ..clear()
+          ..addAll(combos),
+      );
+    } catch (e) {
+      GeneralHelper.logFailure('Combined chat combos reload failed', e);
     }
   }
 
@@ -862,7 +931,7 @@ abstract class _CombinedChatStore with Store {
           ? null
           : this._youTube().ownChannel;
       if (combo.youTube case final source?
-          when !isOwnYouTubeComboSource(source, ownYouTube)) {
+          when !source.own && !isOwnYouTubeComboSource(source, ownYouTube)) {
         final entries = Map<String, String>.from(
           box.get(
             SettingsKeys.YouTubeUsernames.name,

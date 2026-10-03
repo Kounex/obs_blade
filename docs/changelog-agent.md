@@ -47,6 +47,16 @@ dogfood phone was offline) - device check list in the session report.
 - Checklist rows added (throttle ≠ quota, stores start chats, own channel
   in combos, adding shows it, fix buttons in saved combos); facts in
   `youtube-native-chat-audit.md`.
+- **Fresh-context review** of the above found 4 more, fixed: combo YouTube
+  sources carry `own: true` (signed out / another account → "Sign in",
+  never a list copy; older combos get the flag once the own channel is
+  known) and a non-own channel removed from the list is re-added when the
+  combo is used (was a "Set up" button that did nothing); the copy cleanup
+  keeps the entry the WebView engine has selected; the builder's "Other…"
+  YouTube lookup shows progress, holds Save, drops a late result after a
+  newer pick, says "not found" for a handle without a channel page and
+  never overwrites another entry's label; a Data API 401 with no refresh
+  token ends the session.
 
 ## 2026-10-03 - `feature-work` skill, chat journey checklist, chat logs
 

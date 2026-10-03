@@ -75,7 +75,9 @@ CombinedModBlock? combinedModBlock(CombinedSource source) {
       if (youTube.isSignedInState && youTube.signedInWithoutChannel) {
         return CombinedModBlock.noChannel;
       }
-      if (!youTube.isSignedInState || !youTube.canWrite) {
+      if (!youTube.isSignedInState ||
+          !youTube.canWrite ||
+          source.needsSignIn) {
         return CombinedModBlock.signedOut;
       }
       return source.unavailable ? CombinedModBlock.unavailable : null;

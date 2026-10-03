@@ -468,6 +468,7 @@ void main() {
         youTube: const CombinedYouTubeSource(
           label: 'My Channel',
           value: 'UCownchannel000000000000',
+          own: true,
         ),
         kickSlug: 'aaa',
       );
@@ -486,14 +487,17 @@ void main() {
       expect(youTube.isViewingOwnChannel, isTrue);
 
       /// Signed out, the own source can't be shown (it is never an entry)
+      /// - the fix is a sign-in
       await youTube.logout();
-      expect(
-        store
-            .sourcesOf(combo)
-            .firstWhere((s) => s.platform == ChatType.YouTube)
-            .unavailable,
-        isTrue,
-      );
+      final signedOut = store
+          .sourcesOf(combo)
+          .firstWhere((s) => s.platform == ChatType.YouTube);
+      expect(signedOut.unavailable, isTrue);
+      expect(signedOut.needsSignIn, isTrue);
+
+      /// ... and using the combo doesn't add it to the list either
+      await store.activate();
+      expect(youTube.channels.map((c) => c.label), ['A']);
     });
 
     test('a copy an older build added for a combo goes once the own channel '
@@ -542,6 +546,79 @@ void main() {
         unorderedEquals(['A', 'Other']),
       );
       expect(youTube.selectedChannelLabel, kYouTubeOwnChannelLabel);
+    });
+
+    test('a combo channel removed from the YouTube list comes back when '
+        'the combo is used', () async {
+      final combo = CombinedCombo(
+        id: 'c1',
+        youTube: const CombinedYouTubeSource(label: 'xQc', value: '@xqcow'),
+        kickSlug: 'aaa',
+      );
+      await store.activate();
+      await store.saveCombo(combo);
+      expect(youTube.channels.map((c) => c.label), contains('xQc'));
+
+      /// Removed from the list (the delete-combo copy says channels stay
+      /// in their lists - so users treat them as separate)
+      await store.deactivate();
+      await settingsBox().put(
+        SettingsKeys.YouTubeUsernames.name,
+        <String, String>{'A': 'video-a-001'},
+      );
+      youTube.reloadChannels();
+
+      await store.activate();
+      final source = store.activeSources.firstWhere(
+        (s) => s.platform == ChatType.YouTube,
+      );
+      expect(source.unavailable, isFalse);
+      expect(youTube.channels.map((c) => c.label), contains('xQc'));
+      expect(youTube.selectedChannelLabel, 'xQc');
+    });
+
+    test('the cleanup keeps a copy the WebView engine has selected, and '
+        'marks the combo source as own', () async {
+      await youTube.dispose();
+      await settingsBox().put(
+        SettingsKeys.YouTubeUsernames.name,
+        <String, String>{
+          'A': 'video-a-001',
+          'My Channel': 'UCownchannel000000000000',
+        },
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedYouTubeUsername.name,
+        'My Channel',
+      );
+      await settingsBox().put(SettingsKeys.CombinedChatCombos.name, [
+        const CombinedCombo(
+          id: 'c-own',
+          youTube: CombinedYouTubeSource(
+            label: 'My Channel',
+            value: 'UCownchannel000000000000',
+          ),
+        ).toJson(),
+      ]);
+      youTube = YouTubeChatStore(
+        authService: FakeYouTubeAuthService(),
+        chatService: FakeYouTubeLiveChatService(),
+        liveResolver: FakeYouTubeLiveResolver(),
+        sleep: (_) => Future<void>.delayed(const Duration(milliseconds: 1)),
+        isProResolver: () => true,
+      );
+      await youTube.init();
+
+      expect(
+        youTube.channels.map((c) => c.label),
+        unorderedEquals(['A', 'My Channel']),
+      );
+      expect(
+        parseCombinedCombos(
+          settingsBox().get(SettingsKeys.CombinedChatCombos.name),
+        ).single.youTube!.own,
+        isTrue,
+      );
     });
 
     test('a manually added own channel without a combo stays', () {

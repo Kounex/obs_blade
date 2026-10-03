@@ -715,24 +715,37 @@ abstract class _YouTubeChatStore with Store {
   void _dropOwnComboCopies(YouTubeChatChannel own) {
     try {
       final box = Hive.box(HiveKeys.Settings.name);
+      final getIt = GetIt.instance;
+      final combinedCreated =
+          getIt.isRegistered<CombinedChatStore>() &&
+          getIt.checkLazySingletonInstanceExists<CombinedChatStore>();
+      final combosRaw = box.get(SettingsKeys.CombinedChatCombos.name);
       final raw = box.get(SettingsKeys.YouTubeUsernames.name);
-      if (raw is! Map) return;
-      final copies = ownYouTubeComboCopies(
-        raw,
-        parseCombinedCombos(box.get(SettingsKeys.CombinedChatCombos.name)),
-        own,
-      );
-      if (copies.isEmpty) return;
+      final copies = raw is Map
+          ? ownYouTubeComboCopies(
+              raw,
+              parseCombinedCombos(combosRaw),
+              own,
+              webViewSelected: box.get(
+                SettingsKeys.SelectedYouTubeUsername.name,
+              ),
+            )
+          : const <String>[];
+
+      final marked = markOwnYouTubeComboSources(combosRaw, own);
+      if (marked != null) {
+        box.put(SettingsKeys.CombinedChatCombos.name, marked);
+        if (combinedCreated) getIt<CombinedChatStore>().reloadCombos();
+      }
+      if (raw is! Map || copies.isEmpty) return;
       box.put(SettingsKeys.YouTubeUsernames.name, <String, String>{
         for (final MapEntry(:key, :value) in raw.entries)
           if (key is String && value is String && !copies.contains(key))
             key: value,
       });
       final selected = this.selectedChannelLabel;
-      final getIt = GetIt.instance;
       for (final copy in copies) {
-        if (getIt.isRegistered<CombinedChatStore>() &&
-            getIt.checkLazySingletonInstanceExists<CombinedChatStore>()) {
+        if (combinedCreated) {
           getIt<CombinedChatStore>().renameYouTubeRestore(
             copy,
             kYouTubeOwnChannelLabel,
@@ -2033,6 +2046,14 @@ abstract class _YouTubeChatStore with Store {
     if (e.statusCode != 401) return;
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);
     if (auth == null) return;
+
+    /// Nothing to refresh with: the session is over
+    if (auth.refreshToken.isEmpty) {
+      await this._handleInvalidAuth(
+        'YouTube session expired - please sign in again',
+      );
+      return;
+    }
     auth.expiresAtMs = 0;
     await auth.save();
   }

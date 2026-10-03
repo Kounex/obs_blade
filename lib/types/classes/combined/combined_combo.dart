@@ -12,24 +12,39 @@ class CombinedYouTubeSource {
   final String label;
   final String value;
 
-  const CombinedYouTubeSource({required this.label, required this.value});
+  /// The signed-in account's own channel: shown as the "You" entry, never
+  /// added to the channel list - while another (or no) account is signed
+  /// in, it needs a sign-in.
+  final bool own;
+
+  const CombinedYouTubeSource({
+    required this.label,
+    required this.value,
+    this.own = false,
+  });
 
   factory CombinedYouTubeSource.fromJson(Map<Object?, Object?> json) =>
       CombinedYouTubeSource(
         label: json['label'] as String,
         value: json['value'] as String,
+        own: json['own'] == true,
       );
 
-  Map<String, Object?> toJson() => {'label': this.label, 'value': this.value};
+  Map<String, Object?> toJson() => {
+    'label': this.label,
+    'value': this.value,
+    if (this.own) 'own': true,
+  };
 
   @override
   bool operator ==(Object other) =>
       other is CombinedYouTubeSource &&
       other.label == this.label &&
-      other.value == this.value;
+      other.value == this.value &&
+      other.own == this.own;
 
   @override
-  int get hashCode => Object.hash(this.label, this.value);
+  int get hashCode => Object.hash(this.label, this.value, this.own);
 }
 
 /// A user-built combined chat: at most one channel per platform, any
