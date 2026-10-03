@@ -2,6 +2,32 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - Kick client secret rotated
+
+The old secret shipped in store builds (entry below). 4.0.x builds could
+not complete a Kick sign-in anyway (secret compiled in = no exchange-host
+registration and no polling; the paste field is hidden for the app
+client), so rotating cost released users nothing.
+
+- The user rotated it in Kick's developer settings; new value in
+  `docs/private/kick_oauth_server.json` (synced, checksums match).
+- Checked with Kick before the swap (secrets over stdin, never argv):
+  new secret → client credentials 200, old → 401 `invalid_client`.
+- Hetzner `/etc/kick-auth.env` (shared by `kick-auth` and
+  `kick-events`) updated in place, both units restarted; the temporary
+  backup holding the old value deleted.
+- Verified: both kick-auth hosts pass Kick's client check (dummy refresh
+  token → `invalid_grant`, not `invalid_client`); the events relay's
+  health is ok, no reconcile failures, and the app's 7 webhook
+  subscriptions list fine with the new secret.
+- Runbook for next time: test the new secret with client credentials
+  from Hetzner, swap the one line, restart both units, probe as above.
+- Slip: a probe printed 43 of 48 characters of one app access token
+  (client credentials, valid 60 days) into the local session output -
+  the redaction ran after a truncation. App-level only (webhook
+  subscriptions, public reads), not a user token. Redact before
+  truncating.
+
 ## 2026-10-03 - YouTube read-only setups: explain, then the sign-in part only
 
 Dogfood report (4.1.0 TestFlight): with only an API key, "Connect
