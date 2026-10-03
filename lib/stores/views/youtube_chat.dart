@@ -430,6 +430,10 @@ abstract class _YouTubeChatStore with Store {
   /// Reads (polling) need only the API key — no sign-in required.
   bool get canRead => this.isConfigured;
 
+  /// Sign-in (writing, moderating, the own "You" chat) needs an OAuth
+  /// client on top of the API key - without one the chat stays read-only.
+  bool get canSignIn => this._authService.resolveClientId().isNotEmpty;
+
   @computed
   bool get isSignedInState => this.authState == YouTubeAuthState.signedIn;
 

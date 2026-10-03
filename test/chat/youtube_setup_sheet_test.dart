@@ -11,6 +11,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_text_field.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_device_code_dialog.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_setup_sheet.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -394,4 +395,115 @@ void main() {
       }
     },
   );
+
+  group('read-only (API key, no OAuth client)', () {
+    late YouTubeChatStore store;
+    late FakeYouTubeAuthService authService;
+
+    Future<void> registerStore(WidgetTester tester) async {
+      authService = FakeYouTubeAuthService()..clientId = '';
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        sleep: (duration) async {},
+      );
+      await tester.runAsync(
+        () => Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name),
+      );
+      GetIt.instance.registerSingleton<YouTubeChatStore>(store);
+    }
+
+    Future<void> cleanUp(WidgetTester tester) async {
+      unawaited(store.dispose());
+      await closeHiveInZone(tester);
+      await GetIt.instance.reset();
+    }
+
+    Widget opener(void Function(BuildContext) onTap) => MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => onTap(context),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('Connect explains read-only instead of failing, and offers '
+        'the sign-in sheet', (tester) async {
+      await registerStore(tester);
+      try {
+        await tester.runAsync(
+          () => settingsBox().put(SettingsKeys.YouTubeApiKey.name, 'key'),
+        );
+        await tester.pumpWidget(opener(startYouTubeLogin));
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Read-only for now'), findsOneWidget);
+        expect(find.text('Something went wrong'), findsNothing);
+        expect(store.authState, isNot(YouTubeAuthState.error));
+
+        await tester.tap(find.text('Add sign-in'));
+        await tester.pumpAndSettle();
+        expect(find.text('Read-only for now'), findsNothing);
+        expect(find.text('YouTube sign-in'), findsOneWidget);
+
+        /// Only the two client fields - no API key part
+        expect(find.byType(NativeChatTextField), findsNWidgets(2));
+        expect(find.byKey(const Key('youtube-setup-test-key')), findsNothing);
+      } finally {
+        await cleanUp(tester);
+      }
+    });
+
+    testWidgets('sign-in sheet: Save & connect waits for a client id and '
+        'then starts the device flow', (tester) async {
+      await registerStore(tester);
+      try {
+        await tester.runAsync(
+          () => settingsBox().put(SettingsKeys.YouTubeApiKey.name, 'key'),
+        );
+        await tester.pumpWidget(opener(showYouTubeSignInSheet));
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('youtube-sign-in-connect')));
+        await tester.pumpAndSettle();
+        expect(find.text('YouTube sign-in'), findsOneWidget);
+
+        await tester.enterText(find.byType(NativeChatTextField).at(0), 'cid');
+        await tester.enterText(find.byType(NativeChatTextField).at(1), 'sec');
+        await tester.pump();
+
+        /// The fake resolves the client the way the real service would -
+        /// from what was just saved
+        authService.clientId = 'cid';
+        await tester.tap(find.byKey(const Key('youtube-sign-in-connect')));
+        await tester.pump();
+
+        expect(
+          settingsBox().get(SettingsKeys.YouTubeOAuthClientId.name),
+          'cid',
+        );
+        expect(
+          settingsBox().get(SettingsKeys.YouTubeOAuthClientSecret.name),
+          'sec',
+        );
+        expect(settingsBox().get(SettingsKeys.YouTubeApiKey.name), 'key');
+        expect(find.text('Read-only for now'), findsNothing);
+        expect(store.authState, isNot(YouTubeAuthState.unconfigured));
+        /// The device-code dialog spins while it polls - pump, don't settle
+        for (var i = 0; i < 5; i++) {
+          await tester.pump(const Duration(milliseconds: 200));
+        }
+        expect(find.text('Connect YouTube'), findsOneWidget);
+      } finally {
+        await cleanUp(tester);
+      }
+    });
+  });
 }

@@ -12,16 +12,57 @@ import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'youtube_setup_sheet.dart';
+
 /// Start the device-flow login and show its dialog — the single entry
 /// point every "Connect YouTube" affordance uses. Requires a configured
 /// API key (the store falls back to `unconfigured` without one, so the
-/// setup sheet is the right CTA there, not this).
+/// setup sheet is the right CTA there, not this). Without an OAuth client
+/// it explains the read-only state instead of failing in the code dialog.
 void startYouTubeLogin(BuildContext context) {
-  GetIt.instance<YouTubeChatStore>().startLogin();
+  final store = GetIt.instance<YouTubeChatStore>();
+  if (!store.canSignIn) {
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: YouTubeReadOnlyDialog(hostContext: context),
+    );
+    return;
+  }
+  store.startLogin();
   ModalHandler.showBaseDialog(
     context: context,
     dialogWidget: const YouTubeDeviceCodeDialog(),
   );
+}
+
+/// API key only: chat is read-only. Says what sign-in adds and offers the
+/// sign-in part of the setup sheet.
+class YouTubeReadOnlyDialog extends StatelessWidget {
+  /// Opener of this dialog - the sign-in sheet opens there once the
+  /// dialog is gone.
+  final BuildContext hostContext;
+
+  const YouTubeReadOnlyDialog({super.key, required this.hostContext});
+
+  @override
+  Widget build(BuildContext context) {
+    return BaseAdaptiveDialog(
+      title: 'Read-only for now',
+      body:
+          'Your API key lets OBS Blade read YouTube chat - no sign-in needed '
+          'for that. Sending messages, moderating and your own chat as "You" '
+          'need a Google sign-in, and Google only allows that with your own '
+          'OAuth client (client id and secret from the Google Cloud Console).',
+      actions: [
+        DialogActionConfig(onPressed: (_) {}, child: const Text('Not now')),
+        DialogActionConfig(
+          isDefaultAction: true,
+          onPressed: (_) => showYouTubeSignInSheet(this.hostContext),
+          child: const Text('Add sign-in'),
+        ),
+      ],
+    );
+  }
 }
 
 /// Walks the user through Google's device code grant: show the code, open

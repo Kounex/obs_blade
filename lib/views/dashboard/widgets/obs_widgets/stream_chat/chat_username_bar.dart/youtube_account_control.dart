@@ -124,7 +124,9 @@ class _AccountChip extends StatelessWidget {
   }
 }
 
-/// Same visual idiom as the Twitch "Connect Twitch" pill.
+/// Same visual idiom as the Twitch "Connect Twitch" pill. Read-only
+/// setups (API key, no OAuth client) go straight to the sign-in part of
+/// the setup sheet - the device flow can't start without a client.
 class _ConnectPill extends StatelessWidget {
   const _ConnectPill();
 
@@ -132,7 +134,9 @@ class _ConnectPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Pressable(
       haptic: true,
-      onTap: () => startYouTubeLogin(context),
+      onTap: () => GetIt.instance<YouTubeChatStore>().canSignIn
+          ? startYouTubeLogin(context)
+          : showYouTubeSignInSheet(context),
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,

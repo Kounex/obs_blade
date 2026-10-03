@@ -36,6 +36,20 @@ Future<void> showYouTubeSetupSheet(BuildContext context) =>
       builder: (sheetContext) => YouTubeSetupSheet(hostContext: context),
     );
 
+/// Only the sign-in part of the setup sheet (OAuth client id + secret) -
+/// for a read-only setup (API key, no client) that wants to write,
+/// moderate and see its own chat. The full sheet stays in the chat
+/// options ("Chat setup").
+Future<void> showYouTubeSignInSheet(BuildContext context) =>
+    ModalHandler.showBaseBottomSheet(
+      context: context,
+      barrierDismissible: true,
+      enableDrag: true,
+      maxHeightFraction: 0.86,
+      builder: (sheetContext) =>
+          YouTubeSetupSheet(hostContext: context, signInOnly: true),
+    );
+
 /// Configuration UX for the native YouTube chat: explains the (free) Google
 /// Cloud API key requirement, validates a pasted key with a live
 /// `videos.list` probe, holds the optional OAuth client credentials behind
@@ -50,10 +64,14 @@ class YouTubeSetupSheet extends StatefulWidget {
   /// Test seam — probes run through this service instead of a live one.
   final YouTubeLiveChatService? chatService;
 
+  /// Just the OAuth client fields ([showYouTubeSignInSheet])
+  final bool signInOnly;
+
   const YouTubeSetupSheet({
     super.key,
     required this.hostContext,
     this.chatService,
+    this.signInOnly = false,
   });
 
   @override
@@ -97,6 +115,13 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     this._clientSecretController = TextEditingController(
       text: read(SettingsKeys.YouTubeOAuthClientSecret),
     );
+
+    /// "Save & connect" follows the client id field
+    this._clientIdController.addListener(this._onClientIdChanged);
+  }
+
+  void _onClientIdChanged() {
+    if (this.mounted) this.setState(() {});
   }
 
   @override
@@ -172,6 +197,14 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
   void _save() {
     this._persist();
     if (this.mounted) Navigator.of(this.context).pop();
+  }
+
+  /// Sign-in sheet: needs a client id; persists, then starts the device
+  /// flow from the opener (this sheet is gone by then)
+  void _saveAndConnect() {
+    this._persist();
+    Navigator.of(this.context).pop();
+    startYouTubeLogin(this.widget.hostContext);
   }
 
   void _signIn() {
@@ -314,6 +347,120 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     );
   }
 
+  /// Link out to the Google Cloud Console
+  Widget _consoleLink(BuildContext context) {
+    return Pressable(
+      haptic: true,
+      onTap: () async {
+        final uri = Uri.parse('https://console.cloud.google.com');
+        if (await launcher.canLaunchUrl(uri)) {
+          await launcher.launchUrl(
+            uri,
+            mode: launcher.LaunchMode.externalApplication,
+          );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              CupertinoIcons.link,
+              size: 14.0,
+              color:
+                  (Theme.of(context).extension<AppTextColors>() ??
+                          AppTextColors.standard)
+                      .highlightText,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              'Open console.cloud.google.com',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color:
+                    (Theme.of(context).extension<AppTextColors>() ??
+                            AppTextColors.standard)
+                        .highlightText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The OAuth client fields (advanced section of the full sheet, the
+  /// whole body of the sign-in sheet)
+  Widget _clientFields(BuildContext context, Color accent) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        NativeChatTextField(
+          controller: this._clientIdController,
+          hintText: 'OAuth client id',
+          focusBorderColor: accent,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        NativeChatTextField(
+          controller: this._clientSecretController,
+          hintText: 'OAuth client secret',
+          focusBorderColor: accent,
+        ),
+      ],
+    );
+  }
+
+  /// Sign-in sheet body: why, how, the two fields, Save / Save & connect
+  List<Widget> _signInBody(BuildContext context, Color accent) {
+    return [
+      Text(
+        'Reading chat works with your API key alone. To send messages, '
+        'moderate and see your own chat as "You", sign in with your own '
+        'Google OAuth client:',
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      this._stepRow(
+        context,
+        '1',
+        'In the Google Cloud project of your API key, set up the OAuth consent screen and add your Google account as a test user',
+      ),
+      this._stepRow(
+        context,
+        '2',
+        'Create an OAuth client (Credentials → Create credentials → OAuth client ID) of the type "TVs and Limited Input devices"',
+      ),
+      this._stepRow(context, '3', 'Paste its client id and secret below'),
+      this._consoleLink(context),
+      const SizedBox(height: AppSpacing.md),
+      this._clientFields(context, accent),
+      const SizedBox(height: AppSpacing.md),
+      Row(
+        children: [
+          this._pillButton(
+            context,
+            key: const Key('youtube-sign-in-save'),
+            label: 'Save',
+            onTap: this._save,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          this._pillButton(
+            context,
+            key: const Key('youtube-sign-in-connect'),
+            label: 'Save & connect',
+            onTap: this._clientIdController.text.trim().isEmpty
+                ? null
+                : this._saveAndConnect,
+            color:
+                Theme.of(context).buttonTheme.colorScheme?.secondary ??
+                StylingHelper.accent_color,
+          ),
+        ],
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final accent =
@@ -339,7 +486,9 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             children: [
               nativeChatSheetDragHandle(context),
               Text(
-                'YouTube chat setup',
+                this.widget.signInOnly
+                    ? 'YouTube sign-in'
+                    : 'YouTube chat setup',
                 style: nativeChatSheetTitleStyle(context),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -361,173 +510,124 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Native YouTube chat reads through the official YouTube Data '
-                  'API, which needs a free Google Cloud API key:',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                this._stepRow(
-                  context,
-                  '1',
-                  'Open the Google Cloud Console and create (or select) a project',
-                ),
-                this._stepRow(
-                  context,
-                  '2',
-                  'Enable the "YouTube Data API v3" for that project',
-                ),
-                this._stepRow(
-                  context,
-                  '3',
-                  'Create an API key (Credentials → Create credentials) and paste it below',
-                ),
-                Pressable(
-                  haptic: true,
-                  onTap: () async {
-                    final uri = Uri.parse('https://console.cloud.google.com');
-                    if (await launcher.canLaunchUrl(uri)) {
-                      await launcher.launchUrl(
-                        uri,
-                        mode: launcher.LaunchMode.externalApplication,
-                      );
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSpacing.xs,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.link,
-                          size: 14.0,
-                          color:
-                              (Theme.of(context).extension<AppTextColors>() ??
-                                      AppTextColors.standard)
-                                  .highlightText,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          'Open console.cloud.google.com',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color:
-                                    (Theme.of(
-                                              context,
-                                            ).extension<AppTextColors>() ??
-                                            AppTextColors.standard)
-                                        .highlightText,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Tip: add a channel (@handle or channel link) instead of a '
-                  'video - the chat then follows the channel\'s current '
-                  'stream and switches to the next one on its own. A pasted '
-                  'video id stays tied to that one stream.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'API key',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                NativeChatTextField(
-                  controller: this._apiKeyController,
-                  hintText: 'YouTube Data API key',
-                  focusBorderColor: accent,
-                  onChanged: (_) => this.setState(() => this._keyValid = null),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    this._pillButton(
-                      context,
-                      key: const Key('youtube-setup-test-key'),
-                      label: 'Test key',
-                      onTap:
-                          this._apiKeyController.text.trim().isEmpty ||
-                              this._testing
-                          ? null
-                          : this._testKey,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(child: this._testStatus(context)),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                CustomExpansionTile(
-                  headerText: 'Advanced: sign-in (optional)',
-                  headerTextStyle: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                  expandedBody: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              children: this.widget.signInOnly
+                  ? this._signInBody(context, accent)
+                  : [
                       Text(
-                        'Reading chat works with the API key alone. Sending '
-                        'messages and moderating need a Google OAuth "TVs and '
-                        'Limited Input" client - create one in the same console '
-                        '(Credentials → Create credentials → OAuth client ID) '
-                        'and paste its credentials here.',
+                        'Native YouTube chat reads through the official YouTube Data '
+                        'API, which needs a free Google Cloud API key:',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      this._stepRow(
+                        context,
+                        '1',
+                        'Open the Google Cloud Console and create (or select) a project',
+                      ),
+                      this._stepRow(
+                        context,
+                        '2',
+                        'Enable the "YouTube Data API v3" for that project',
+                      ),
+                      this._stepRow(
+                        context,
+                        '3',
+                        'Create an API key (Credentials → Create credentials) and paste it below',
+                      ),
+                      this._consoleLink(context),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'Tip: add a channel (@handle or channel link) instead of a '
+                        'video - the chat then follows the channel\'s current '
+                        'stream and switches to the next one on its own. A pasted '
+                        'video id stays tied to that one stream.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      NativeChatTextField(
-                        controller: this._clientIdController,
-                        hintText: 'OAuth client id',
-                        focusBorderColor: accent,
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'API key',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.xs),
                       NativeChatTextField(
-                        controller: this._clientSecretController,
-                        hintText: 'OAuth client secret',
+                        controller: this._apiKeyController,
+                        hintText: 'YouTube Data API key',
                         focusBorderColor: accent,
+                        onChanged: (_) =>
+                            this.setState(() => this._keyValid = null),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Row(
+                        children: [
+                          this._pillButton(
+                            context,
+                            key: const Key('youtube-setup-test-key'),
+                            label: 'Test key',
+                            onTap:
+                                this._apiKeyController.text.trim().isEmpty ||
+                                    this._testing
+                                ? null
+                                : this._testKey,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(child: this._testStatus(context)),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      CustomExpansionTile(
+                        headerText: 'Advanced: sign-in (optional)',
+                        headerTextStyle: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                        expandedBody: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Reading chat works with the API key alone. Sending '
+                              'messages and moderating need a Google OAuth "TVs and '
+                              'Limited Input" client - create one in the same console '
+                              '(Credentials → Create credentials → OAuth client ID) '
+                              'and paste its credentials here.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            this._clientFields(context, accent),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Row(
+                        children: [
+                          this._pillButton(
+                            context,
+                            key: const Key('youtube-setup-save'),
+                            label: 'Save',
+                            onTap: this._save,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          if (this._keyValid == true && this._storeRegistered)
+                            Observer(
+                              builder: (_) =>
+                                  this._store!.authState ==
+                                      YouTubeAuthState.signedIn
+                                  ? const SizedBox.shrink()
+                                  : this._pillButton(
+                                      context,
+                                      key: const Key('youtube-setup-sign-in'),
+                                      label: 'Connect YouTube',
+                                      onTap: this._signIn,
+                                      color:
+                                          Theme.of(context)
+                                              .buttonTheme
+                                              .colorScheme
+                                              ?.secondary ??
+                                          StylingHelper.accent_color,
+                                    ),
+                            ),
+                        ],
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    this._pillButton(
-                      context,
-                      key: const Key('youtube-setup-save'),
-                      label: 'Save',
-                      onTap: this._save,
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    if (this._keyValid == true && this._storeRegistered)
-                      Observer(
-                        builder: (_) =>
-                            this._store!.authState == YouTubeAuthState.signedIn
-                            ? const SizedBox.shrink()
-                            : this._pillButton(
-                                context,
-                                key: const Key('youtube-setup-sign-in'),
-                                label: 'Connect YouTube',
-                                onTap: this._signIn,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).buttonTheme.colorScheme?.secondary ??
-                                    StylingHelper.accent_color,
-                              ),
-                      ),
-                  ],
-                ),
-              ],
             ),
           ),
         ),

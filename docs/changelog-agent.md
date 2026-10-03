@@ -2,6 +2,27 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - YouTube read-only setups: explain, then the sign-in part only
+
+Dogfood report (4.1.0 TestFlight): with only an API key, "Connect
+YouTube" (setup sheet, chat bar pill, options "Sign in with Google")
+started the device flow and failed straight into "No Google OAuth client
+id configured"; the bar pill kept reopening that.
+
+- `YouTubeChatStore.canSignIn` (OAuth client id resolved).
+  `startYouTubeLogin` without it shows `YouTubeReadOnlyDialog` (reading
+  works with the key; writing, moderating and the own "You" chat need a
+  Google sign-in with the user's own OAuth client) with "Add sign-in".
+- `showYouTubeSignInSheet`: the setup sheet with `signInOnly` - steps
+  (consent screen + test user, "TVs and Limited Input" client), console
+  link, client id / secret, Save / Save & connect (needs a client id).
+  The bar's Connect pill opens it directly while read-only. The full
+  sheet stays in the YouTube chat options ("Chat setup").
+- The own "You" chat needs the sign-in: an API key identifies a Cloud
+  project, not a YouTube account (`channels.list?mine=true` is OAuth-only).
+- Tests in `youtube_setup_sheet_test.dart`, shots
+  `tool/widget_shots/youtube_sign_in_shots_test.dart`.
+
 ## 2026-10-03 - Kick sign-in: client secret was compiled into store builds
 
 The 4.1.0 TestFlight build (2026100301) ended Kick sign-in on
