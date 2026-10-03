@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/activity.dart';
+import 'package:obs_blade/stores/views/kick_chat.dart';
+import 'package:obs_blade/stores/views/kick_emotes.dart';
+import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -16,6 +20,9 @@ import 'package:obs_blade/views/chat/widgets/activity/activity_feed.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 
+import '../../test/chat/support/fake_kick_services.dart';
+import '../../test/chat/support/fake_twitch_services.dart'
+    show FakeThirdPartyEmoteService;
 import '../../test/pro/support/fake_pro_purchase_gateway.dart';
 import 'support/shots_harness.dart';
 
@@ -340,6 +347,49 @@ void main() {
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('../../build/widget_shots/activity_options_sheet.png'),
+    );
+  });
+
+  testWidgets('options sheet: Kick relay missing some events', (tester) async {
+    await tester.runAsync(fill);
+    GetIt.instance.registerLazySingleton<KickChatStore>(
+      () => KickChatStore(
+        channelService: FakeKickChannelService(),
+        authService: FakeKickAuthService(),
+        apiService: FakeKickApiService(),
+        pusherFactory: ({required onEvent, required onStateChanged}) =>
+            FakeKickPusherService(
+              onEvent: onEvent,
+              onStateChanged: onStateChanged,
+            ),
+        isProResolver: () => true,
+        emoteStoreResolver: () =>
+            ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+        kickEmoteStoreResolver: () =>
+            KickEmoteStore(service: FakeKickEmoteService()),
+      ),
+    );
+    final kick = GetIt.instance<KickChatStore>();
+    runInAction(() {
+      kick.ownChannelSlug = 'kicker';
+      store.relayState = KickRelayState.synced;
+      store.relaySubscribed = false;
+    });
+    await harness.shot(
+      tester,
+      'activity_options_relay_partial_base',
+      framed(const ActivityFeed()),
+    );
+    await tester.tap(find.byKey(const Key('activity-options')));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byKey(const Key('activity-kick-relay-state')), findsOneWidget);
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile(
+        '../../build/widget_shots/activity_options_relay_partial.png',
+      ),
     );
   });
 

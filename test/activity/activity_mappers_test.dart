@@ -157,6 +157,35 @@ void main() {
       expect(resub.tier, 'prime');
       expect(resub.amount!.value, 14);
 
+      final continued = _twitch(
+        'channel.chat.notification',
+        _notice('gift_paid_upgrade', {
+          'gift_paid_upgrade': {
+            'gifter_is_anonymous': false,
+            'gifter_user_id': '7',
+            'gifter_user_name': 'Santa',
+            'gifter_user_login': 'santa',
+          },
+        }),
+      )!;
+      expect(continued.kind, ActivityKind.sub);
+      expect(continued.title, 'Continued the sub from Santa');
+      final continuedAnon = _twitch(
+        'channel.chat.notification',
+        _notice('gift_paid_upgrade', {
+          'gift_paid_upgrade': {'gifter_is_anonymous': true},
+        }),
+      )!;
+      expect(continuedAnon.title, 'Continued a gifted sub');
+      final prime = _twitch(
+        'channel.chat.notification',
+        _notice('prime_paid_upgrade', {
+          'prime_paid_upgrade': {'sub_tier': '1000'},
+        }),
+      )!;
+      expect(prime.tier, '1000');
+      expect(prime.title, 'Upgraded from Prime');
+
       final raid = _twitch(
         'channel.chat.notification',
         _notice('raid', {

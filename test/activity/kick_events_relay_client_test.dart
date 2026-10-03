@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -146,6 +147,99 @@ void main() {
     );
     await pumpEventQueue(times: 50);
     expect(unknown, 1);
+    await client.stop();
+  });
+
+  test(
+    'a failed upgrade whose URL reads "401" is a retry, not a lost session',
+    () async {
+      var unknown = 0;
+      var sleeps = 0;
+      final states = <KickRelayState>[];
+      final client = KickEventsRelayClient(
+        baseUrl: 'https://relay.test',
+
+        /// The relay still knows the session
+        client: MockClient((_) async => http.Response('{"events": []}', 200)),
+
+        /// A few quick retries, then hold (a valid session retries forever)
+        sleep: (_) =>
+            ++sleeps < 4 ? Future<void>.value() : Completer<void>().future,
+        socketFactory: (uri, h) {
+          final channel = _Channel()
+            ..readyCompleter.completeError(
+              WebSocketChannelException.from(
+                WebSocketException(
+                  "Connection to '$uri' was not upgraded to websocket",
+                  502,
+                ),
+              ),
+            );
+          scheduleMicrotask(() => channel.incoming.close());
+          return channel;
+        },
+      );
+      client.start(
+        sessionToken: 'kept',
+        cursor: () => 14017,
+        onEvent: (_) {},
+        onState: states.add,
+        onUnknownSession: () => unknown++,
+      );
+      await pumpEventQueue(times: 50);
+      expect(unknown, 0);
+      expect(states, contains(KickRelayState.retrying));
+      expect(states, isNot(contains(KickRelayState.off)));
+      await client.stop();
+    },
+  );
+
+  test('upgrade status comes from the error, not its text', () {
+    expect(
+      KickEventsRelayClient.upgradeStatus(
+        WebSocketChannelException.from(
+          const WebSocketException(
+            'to wss://x/v1/stream?after=401 failed',
+            502,
+          ),
+        ),
+      ),
+      502,
+    );
+    expect(
+      KickEventsRelayClient.upgradeStatus(
+        WebSocketChannelException.from(const WebSocketException('no', 401)),
+      ),
+      401,
+    );
+    expect(
+      KickEventsRelayClient.upgradeStatus(WebSocketChannelException('x')),
+      isNull,
+    );
+  });
+
+  test('hello and status frames report the subscription state', () async {
+    final channel = _Channel()..readyCompleter.complete();
+    final client = KickEventsRelayClient(
+      baseUrl: 'https://relay.test',
+      sleep: (_) async {},
+      socketFactory: (uri, h) => channel,
+    );
+    final subscribed = <bool>[];
+    client.start(
+      sessionToken: 's',
+      cursor: () => 0,
+      onEvent: (_) {},
+      onState: (_) {},
+      onUnknownSession: () {},
+      onSubscribed: subscribed.add,
+    );
+    channel.incoming
+      ..add(json.encode({'type': 'hello', 'subscribed': false}))
+      ..add(json.encode({'type': 'synced', 'seq': 0}))
+      ..add(json.encode({'type': 'status', 'subscribed': true}));
+    await pumpEventQueue();
+    expect(subscribed, [false, true]);
     await client.stop();
   });
 }

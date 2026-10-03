@@ -218,6 +218,35 @@ void main() {
     );
   });
 
+  testWidgets('Chat tab: back to the chat clears the badge cleanly', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844) * 2;
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    store.ingest(_event('a', ActivityKind.sub));
+    await tester.pumpWidget(_wrap(const ChatView()));
+    await tester.pump();
+    Future<void> tapSegment(String label) async {
+      await tester.runAsync(() async {
+        await tester.tap(find.text(label).first);
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    await tapSegment('Activity');
+    expect(find.byKey(const Key('chat-tab-activity-badge')), findsOneWidget);
+
+    /// The feed unmounts and marks its rows seen; the badge (still
+    /// mounted) follows - flutter_mobx defers its rebuild past the frame
+    await tapSegment('Chat');
+    expect(tester.takeException(), isNull);
+    expect(store.unseenCount, 0);
+    expect(find.byKey(const Key('chat-tab-activity-badge')), findsNothing);
+  });
+
   testWidgets('tablet split: no overflow in a narrow feed pane', (
     tester,
   ) async {
@@ -283,6 +312,19 @@ void main() {
       );
       expect(text, startsWith('€5.00 · \$10.00 · 300 bits'));
       expect(text, endsWith('2 subs · 1 follow'));
+    });
+
+    /// Meaningful under a DST zone (e.g. TZ=Europe/Berlin): 23 h between
+    /// the two local midnights
+    test('day labels count calendar days across a DST switch', () {
+      final now = DateTime(2026, 3, 30, 10);
+      String title(DateTime day) => activityGroupTitle(
+        ActivityGroup(day: day, events: []),
+        now: now,
+      );
+      expect(title(DateTime(2026, 3, 30)), 'Today');
+      expect(title(DateTime(2026, 3, 29)), 'Yesterday');
+      expect(title(DateTime(2026, 3, 28)), isNot('Yesterday'));
     });
   });
 }

@@ -236,6 +236,9 @@ class _OptionsSheet extends StatelessWidget {
                 padding: const EdgeInsets.only(top: AppSpacing.xs),
                 child: Text(
                   switch (store.relayState) {
+                    KickRelayState.synced when !store.relaySubscribed =>
+                      'Connected · Kick hasn\'t accepted every event yet, '
+                          'retrying',
                     KickRelayState.synced => 'Connected',
                     KickRelayState.retrying => 'Reconnecting…',
                     _ => 'Connecting…',

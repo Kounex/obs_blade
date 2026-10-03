@@ -235,16 +235,28 @@ ActivityEvent? _twitchChatNotification(
         tier: _tier(block),
         amount: ActivityAmount(total, ActivityUnit.subs),
       );
+
+    /// No tier in this block - only who gifted the sub being continued
     case 'gift_paid_upgrade':
+      final block = _map(event['gift_paid_upgrade']);
+      final gifter = block?['gifter_is_anonymous'] == true
+          ? null
+          : _str(block?['gifter_user_name']);
+      return build(
+        id: 'sub:$chatMessageId',
+        kind: ActivityKind.sub,
+        actor: chatter,
+        title: gifter == null
+            ? 'Continued a gifted sub'
+            : 'Continued the sub from $gifter',
+      );
     case 'prime_paid_upgrade':
       return build(
         id: 'sub:$chatMessageId',
         kind: ActivityKind.sub,
         actor: chatter,
         tier: _tier(_map(event['prime_paid_upgrade'])),
-        title: noticeType == 'gift_paid_upgrade'
-            ? 'Continued a gifted sub'
-            : 'Upgraded from Prime',
+        title: 'Upgraded from Prime',
       );
     case 'raid':
       final block = _map(event['raid']);

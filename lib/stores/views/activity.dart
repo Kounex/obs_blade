@@ -13,6 +13,7 @@ import '../../utils/activity/activity_ledger.dart';
 import '../../utils/activity/activity_mappers.dart';
 import '../../utils/activity/activity_persistence.dart';
 import '../../utils/general_helper.dart';
+import '../../utils/get_it_helper.dart';
 import '../../utils/kick/kick_events_relay_client.dart';
 import '../pro_store.dart';
 import 'dashboard.dart';
@@ -195,6 +196,12 @@ abstract class _ActivityStore with Store {
   @observable
   KickRelayState relayState = KickRelayState.off;
 
+  /// The relay has every Kick webhook subscribed (false: Kick refused some
+  /// and the relay retries every 15 minutes - Pusher keeps subs and
+  /// redemptions until then)
+  @observable
+  bool relaySubscribed = true;
+
   /// Live sources right now: `twitch`, `youtube`, `kick`, `kick-relay`,
   /// `obs`
   final ObservableSet<String> liveSources = ObservableSet();
@@ -210,6 +217,10 @@ abstract class _ActivityStore with Store {
   DateTime? _relayRegisterFailedAt;
   Timer? _relayRetryTimer;
   Timer? _relayCursorWrite;
+
+  /// Bumped when the relay session is dropped (sign-out, delete all data) -
+  /// a registration still in flight from before must not store its session
+  int _relayEpoch = 0;
 
   final List<ActivityEvent> _pending = [];
   final List<StreamSubscription<dynamic>> _subscriptions = [];
@@ -414,10 +425,15 @@ abstract class _ActivityStore with Store {
           final session = ActivitySession.fromJson(raw);
           if (session == null) continue;
 
-          /// Left open by a kill: it ended at the last heartbeat
+          /// Left open by a kill: it ended at the last heartbeat - if
+          /// that was written for this session, not the one before
           this.sessions.add(
             session.isOpen
-                ? session.copyWith(end: heartbeat ?? session.start)
+                ? session.copyWith(
+                    end: heartbeat != null && heartbeat.isAfter(session.start)
+                        ? heartbeat
+                        : session.start,
+                  )
                 : session,
           );
         }
@@ -439,27 +455,20 @@ abstract class _ActivityStore with Store {
   void chatStoreCreated() {
     if (!this._attachPlatformStores || !this.loaded) return;
     final getIt = GetIt.instance;
-    if (!this._attached.contains('twitch') && _created<TwitchChatStore>()) {
+    if (!this._attached.contains('twitch') &&
+        lazySingletonCreated<TwitchChatStore>()) {
       this._attached.add('twitch');
       this._attachTwitch(getIt<TwitchChatStore>());
     }
-    if (!this._attached.contains('youtube') && _created<YouTubeChatStore>()) {
+    if (!this._attached.contains('youtube') &&
+        lazySingletonCreated<YouTubeChatStore>()) {
       this._attached.add('youtube');
       this._attachYouTube(getIt<YouTubeChatStore>());
     }
-    if (!this._attached.contains('kick') && _created<KickChatStore>()) {
+    if (!this._attached.contains('kick') &&
+        lazySingletonCreated<KickChatStore>()) {
       this._attached.add('kick');
       this._attachKick(getIt<KickChatStore>());
-    }
-  }
-
-  static bool _created<T extends Object>() {
-    final getIt = GetIt.instance;
-    if (!getIt.isRegistered<T>()) return false;
-    try {
-      return getIt.checkLazySingletonInstanceExists<T>();
-    } on StateError {
-      return true;
     }
   }
 
@@ -672,6 +681,7 @@ abstract class _ActivityStore with Store {
         },
     };
     final last = this.sessions.isEmpty ? null : this.sessions.first;
+    final previousEnd = this.sessions.length > 1 ? this.sessions[1].end : null;
 
     /// Earliest platform-reported start, never in the future
     DateTime? since;
@@ -685,10 +695,15 @@ abstract class _ActivityStore with Store {
       final startedAt = since ?? now;
       if (last != null &&
           (last.isOpen || startedAt.difference(last.end!) <= sessionGrace)) {
+        /// Reaching back never crosses into the session before
+        final reachBack =
+            since != null &&
+            since.isBefore(last.start) &&
+            (previousEnd == null || since.isAfter(previousEnd));
         this.sessions[0] = last.copyWith(
           clearEnd: true,
           platforms: {...last.platforms, ...platforms},
-          start: since != null && since.isBefore(last.start) ? since : null,
+          start: reachBack ? since : null,
         );
       } else {
         /// Reaching back is only for the stream that is live now - a start
@@ -721,24 +736,27 @@ abstract class _ActivityStore with Store {
       return;
     }
     this._saveSessions();
+    if (this.currentSession != null) this._writeHeartbeat();
     this.revision++;
   }
+
+  /// While live: a kill closes the session here on the next start
+  void _writeHeartbeat() => unawaited(
+    this._persistence.putMeta(
+      'heartbeat',
+      this._clock().toUtc().toIso8601String(),
+    ),
+  );
 
   void _onTick() {
     this._ticks++;
 
     /// OBS streaming counts as live too (no platform needed)
     final obsLive =
-        _created<DashboardStore>() && GetIt.instance<DashboardStore>().isLive;
+        lazySingletonCreated<DashboardStore>() &&
+        GetIt.instance<DashboardStore>().isLive;
     this._setLive('obs', obsLive);
-    if (this.currentSession != null) {
-      unawaited(
-        this._persistence.putMeta(
-          'heartbeat',
-          this._clock().toUtc().toIso8601String(),
-        ),
-      );
-    }
+    if (this.currentSession != null) this._writeHeartbeat();
 
     /// Every 6 h while running
     if (this._ticks % 720 == 0) this._prune();
@@ -802,7 +820,8 @@ abstract class _ActivityStore with Store {
   @action
   void setToThankOnly(bool value) => this.toThankOnly = value;
 
-  /// Forget every row (sessions and coverage stay).
+  /// Forget every row (sessions and coverage stay). The follower
+  /// backfill starts from here too - cleared follows don't come back.
   @action
   Future<void> clearHistory() async {
     final ids = this._ledger.events.map((e) => e.id).toList();
@@ -811,6 +830,8 @@ abstract class _ActivityStore with Store {
     }
     this.seenMarks.clear();
     this.visitMarks = null;
+    this._startedAt = this._clock().toUtc();
+    this._saveState();
     this.revision++;
     await this._persistence.clearEvents();
     await this._persistence.putMeta('seen', null);
@@ -857,6 +878,7 @@ abstract class _ActivityStore with Store {
             selfId != this._relayUserId ||
             !this._relayEnabled())) {
       final token = this._relayToken!;
+      this._relayEpoch++;
       this._relayCoverage(false);
       if (this._relayRunning) {
         this._relayRunning = false;
@@ -868,6 +890,8 @@ abstract class _ActivityStore with Store {
     }
     if (!this.relayWanted) {
       if (this._relayRunning) {
+        /// A sign-in still in flight drops its session when it lands
+        this._relayEpoch++;
         this._relayRunning = false;
         unawaited(this._relayClient.stop());
       }
@@ -897,6 +921,7 @@ abstract class _ActivityStore with Store {
 
   Future<void> _startRelay(KickChatStore kick) async {
     this._relayRunning = true;
+    final epoch = this._relayEpoch;
     final selfId = '${kick.selfUserId}';
     var token = this._relayUserId == selfId ? this._relayToken : null;
     if (token == null) {
@@ -912,6 +937,12 @@ abstract class _ActivityStore with Store {
         final session = await this._relayClient.register(
           await kick.relayAccessToken(),
         );
+
+        /// Signed out or deleted meanwhile: that session isn't wanted
+        if (epoch != this._relayEpoch) {
+          unawaited(this._relayClient.unregister(session.token));
+          return;
+        }
         token = session.token;
         this._relayToken = session.token;
         this._relayUserId = session.broadcasterUserId;
@@ -919,6 +950,7 @@ abstract class _ActivityStore with Store {
         this._relayRegisterFailedAt = null;
         this._saveState();
       } catch (e) {
+        if (epoch != this._relayEpoch) return;
         GeneralHelper.advLog('Kick relay sign-in failed - $e');
         this._relayRegisterFailedAt = this._clock();
         this._relayRunning = false;
@@ -939,6 +971,10 @@ abstract class _ActivityStore with Store {
       onState: (state) {
         runInAction(() => this.relayState = state);
         this._relayCoverage(state == KickRelayState.synced);
+      },
+      onSubscribed: (subscribed) {
+        runInAction(() => this.relaySubscribed = subscribed);
+        this._relayCoverage(this.relayState == KickRelayState.synced);
       },
       onUnknownSession: () {
         this._forgetRelaySession();
@@ -963,11 +999,13 @@ abstract class _ActivityStore with Store {
     this._saveState();
   }
 
+  /// The relay owns Kick's sub / gift / redemption rows only while it is
+  /// synced and Kick delivers all of them - otherwise Pusher's copies stay.
   void _relayCoverage(bool synced) {
     final channel = this._relayUserId;
     if (channel == null) return;
     final now = this._clock();
-    final changed = synced
+    final changed = synced && this.relaySubscribed
         ? this._ledger.coverage.open(
             ActivitySource.kickRelay,
             ActivityPlatform.kick,
@@ -996,19 +1034,41 @@ abstract class _ActivityStore with Store {
     }
     final status = kickRelayLiveStatus(frame);
     if (status != null) {
-      final (channel, live, at) = status;
-      if (channel == this._relayUserId) {
-        this._setLive(
-          'kick-relay',
-          live,
-          since: live ? at : null,
-          endedAt: live ? null : at,
-        );
-      }
+      this._applyRelayStatus(status);
       return;
     }
     final event = kickActivityFromRelay(frame);
     if (event != null) runInAction(() => this.ingest(event));
+  }
+
+  void _applyRelayStatus((String, bool, DateTime) status) {
+    final (channel, live, at) = status;
+    if (channel != this._relayUserId || this._olderThanSessions(live, at)) {
+      return;
+    }
+    this._setLive(
+      'kick-relay',
+      live,
+      since: live ? at : null,
+      endedAt: live ? null : at,
+    );
+  }
+
+  /// A replayed status from before the newest session (the backlog sent
+  /// again after a new relay sign-in) - it would drag that session back
+  /// days. Streams after it still open their own sessions.
+  bool _olderThanSessions(bool live, DateTime at) {
+    if (this.sessions.isEmpty) return false;
+    final newest = this.sessions.first;
+    final moment = at.toUtc();
+    if (!live) return moment.isBefore(newest.start);
+    if (!moment.isBefore(newest.start.subtract(sessionGrace))) return false;
+
+    /// Live now and opened late: reaching back is fine up to the session
+    /// before
+    final previousEnd = this.sessions.length > 1 ? this.sessions[1].end : null;
+    return !(newest.isOpen &&
+        (previousEnd == null || moment.isAfter(previousEnd)));
   }
 
   // Persistence
@@ -1068,6 +1128,8 @@ abstract class _ActivityStore with Store {
   /// session (the relay deletes what it kept for the channel).
   Future<void> deleteAllData() async {
     final token = this._relayToken;
+    this._relayEpoch++;
+    this._relayRetryTimer?.cancel();
     if (this._relayRunning) {
       this._relayRunning = false;
       await this._relayClient.stop();

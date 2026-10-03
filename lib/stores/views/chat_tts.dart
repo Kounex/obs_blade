@@ -21,6 +21,7 @@ import '../../utils/chat_tts/chat_tts_queue.dart';
 import '../../utils/chat_tts/chat_tts_utterance.dart';
 import '../../utils/chat_tts/chat_tts_voice.dart';
 import '../../utils/general_helper.dart';
+import '../../utils/get_it_helper.dart';
 import '../../utils/pro_ids.dart';
 import '../pro_store.dart';
 import 'combined_chat.dart';
@@ -346,25 +347,14 @@ abstract class _ChatTtsStore with Store {
     if (this.enabled && _messagesFactory == null) _attachChatStores();
   }
 
-  /// Whether [T]'s lazy singleton exists already - never creates it
-  static bool _created<T extends Object>() {
-    final getIt = GetIt.instance;
-    if (!getIt.isRegistered<T>()) return false;
-    try {
-      return getIt.checkLazySingletonInstanceExists<T>();
-    } on StateError {
-      /// Registered as a plain singleton (tests) - it exists
-      return true;
-    }
-  }
-
   /// Listens to the platform stores that exist. Creating one here would
   /// start its sign-in / connection work (a YouTube poll that spends quota)
   /// for a chat nobody opened - the rest attach via [chatStoreCreated].
   void _attachChatStores() {
     final getIt = GetIt.instance;
 
-    if (!_attached.contains(ChatType.Twitch) && _created<TwitchChatStore>()) {
+    if (!_attached.contains(ChatType.Twitch) &&
+        lazySingletonCreated<TwitchChatStore>()) {
       _attached.add(ChatType.Twitch);
       final twitch = getIt<TwitchChatStore>();
       _subscriptions.add(
@@ -390,7 +380,8 @@ abstract class _ChatTtsStore with Store {
       );
     }
 
-    if (!_attached.contains(ChatType.YouTube) && _created<YouTubeChatStore>()) {
+    if (!_attached.contains(ChatType.YouTube) &&
+        lazySingletonCreated<YouTubeChatStore>()) {
       _attached.add(ChatType.YouTube);
       final youTube = getIt<YouTubeChatStore>();
       _subscriptions.add(
@@ -413,7 +404,8 @@ abstract class _ChatTtsStore with Store {
       );
     }
 
-    if (!_attached.contains(ChatType.Kick) && _created<KickChatStore>()) {
+    if (!_attached.contains(ChatType.Kick) &&
+        lazySingletonCreated<KickChatStore>()) {
       _attached.add(ChatType.Kick);
       final kick = getIt<KickChatStore>();
       _subscriptions.add(

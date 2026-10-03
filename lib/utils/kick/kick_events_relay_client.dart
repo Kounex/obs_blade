@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/io.dart';
@@ -154,17 +155,21 @@ class KickEventsRelayClient {
   /// on every reconnect so nothing already handled is sent again.
   /// [onUnknownSession] fires when the relay no longer knows the session
   /// (the caller registers again and calls [start] with the new token).
+  /// [onSubscribed] gets whether Kick accepted every webhook subscription
+  /// (on connect, and again when the relay's retry changes it).
   void start({
     required String sessionToken,
     required int Function() cursor,
     required void Function(Map<String, Object?> frame) onEvent,
     required void Function(KickRelayState state) onState,
     required void Function() onUnknownSession,
+    void Function(bool subscribed)? onSubscribed,
   }) {
     unawaited(this.stop());
     this._running = true;
     this._attempts = 0;
     final generation = ++this._generation;
+    this._onSubscribed = onSubscribed;
     this._open(
       generation,
       sessionToken,
@@ -173,6 +178,14 @@ class KickEventsRelayClient {
       onState,
       onUnknownSession,
     );
+  }
+
+  void Function(bool subscribed)? _onSubscribed;
+
+  /// The HTTP status a failed WebSocket upgrade was answered with
+  static int? upgradeStatus(Object error) {
+    final inner = error is WebSocketChannelException ? error.inner : error;
+    return inner is WebSocketException ? inner.httpStatusCode : null;
   }
 
   void _open(
@@ -209,10 +222,11 @@ class KickEventsRelayClient {
     }
     this._socket = socket;
 
-    /// A 401 on the upgrade surfaces as a failed `ready`
+    /// A 401 on the upgrade surfaces as a failed `ready`. Its status code,
+    /// never its text: that holds the URL, whose cursor can read "401".
     socket.ready.catchError((Object e) {
       if (generation != this._generation) return;
-      if ('$e'.contains('401')) {
+      if (upgradeStatus(e) == 401) {
         this._running = false;
         onState(KickRelayState.off);
         onUnknownSession();
@@ -232,6 +246,9 @@ class KickEventsRelayClient {
         switch (frame['type']) {
           case 'event':
             onEvent(frame);
+          case 'hello' || 'status':
+            final subscribed = frame['subscribed'];
+            if (subscribed is bool) this._onSubscribed?.call(subscribed);
           case 'synced':
             this._attempts = 0;
             onState(KickRelayState.synced);

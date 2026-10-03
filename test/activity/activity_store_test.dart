@@ -34,6 +34,23 @@ ActivityEvent _event(
   primarySource: source,
 );
 
+/// Kick relay `livestream.status.updated` for channel 42
+Map<String, Object?> _liveFrame(bool live, DateTime at, {required int seq}) => {
+  'type': 'event',
+  'seq': seq,
+  'message_id': 'live-$seq',
+  'event_type': 'livestream.status.updated',
+  'event_version': '1',
+  'timestamp': at.toUtc().toIso8601String(),
+  'payload': {
+    'broadcaster': {'user_id': 42, 'username': 'me'},
+    'is_live': live,
+    'title': 'Stream',
+    'started_at': live ? at.toUtc().toIso8601String() : null,
+    'ended_at': live ? null : at.toUtc().toIso8601String(),
+  },
+};
+
 void main() {
   late MemoryActivityPersistence persistence;
   late DateTime now;
@@ -267,6 +284,28 @@ void main() {
       expect(store.sessions.single.end, DateTime.utc(2026, 10, 2, 20, 42));
     });
 
+    test('a heartbeat from the stream before never ends a session', () async {
+      store.setLiveForTest('twitch', true);
+      final start = store.currentSession!.start;
+
+      /// Killed before this stream's first tick: yesterday's heartbeat
+      await persistence.putMeta(
+        'heartbeat',
+        now.subtract(const Duration(days: 1)).toIso8601String(),
+      );
+      await store.dispose();
+      now = now.add(const Duration(hours: 2));
+      store = build();
+      await store.init();
+      expect(store.sessions.single.end, start);
+      expect(store.sessionOf(start.add(const Duration(minutes: 1))), isNotNull);
+    });
+
+    test('opening a session writes a heartbeat right away', () {
+      store.setLiveForTest('twitch', true);
+      expect(persistence.loadMeta('heartbeat'), now.toIso8601String());
+    });
+
     test('opened mid-stream: the session reaches back to the stream start', () {
       store.ingest(
         _event('early', at: now.subtract(const Duration(minutes: 40))),
@@ -332,6 +371,58 @@ void main() {
       expect(store.sessions.last.end, day1.add(const Duration(hours: 2)));
       expect(store.sessions.first.start, day2);
       expect(store.sessions.first.end, day2.add(const Duration(hours: 3)));
+    });
+
+    test(
+      'a replayed old stream status leaves the newest session alone',
+      () async {
+        await store.dispose();
+        persistence = MemoryActivityPersistence();
+        await persistence.putMeta('state', {
+          'relay': {'token': 't', 'userId': '42', 'cursor': 0},
+        });
+        store = build();
+        await store.init();
+
+        /// Today's stream, ended
+        store.setLiveForTest('twitch', true);
+        final today = store.currentSession!;
+        now = now.add(const Duration(hours: 2));
+        store.setLiveForTest('twitch', false);
+        final ended = store.sessions.single;
+
+        /// Re-registered relay replays its 7 days: a stream 3 days ago
+        final old = today.start.subtract(const Duration(days: 3));
+        store.handleRelayFrame(_liveFrame(true, old, seq: 1));
+        store.handleRelayFrame(
+          _liveFrame(false, old.add(const Duration(hours: 1)), seq: 2),
+        );
+        expect(store.sessions.single.start, ended.start);
+        expect(store.sessions.single.end, ended.end);
+        expect(store.currentSession, isNull);
+
+        /// A stream after it still opens its own session
+        now = now.add(const Duration(hours: 1));
+        store.handleRelayFrame(_liveFrame(true, now, seq: 3));
+        expect(store.sessions, hasLength(2));
+        expect(store.currentSession!.start, now);
+      },
+    );
+
+    test('reaching back stops at the session before', () {
+      store.setLiveForTest('kick', true);
+      now = now.add(const Duration(hours: 1));
+      store.setLiveForTest('kick', false);
+      final firstEnd = store.sessions.single.end!;
+      now = now.add(const Duration(hours: 3));
+      store.setLiveForTest('obs', true);
+      store.setLiveForTest(
+        'twitch',
+        true,
+        since: firstEnd.subtract(const Duration(minutes: 30)),
+      );
+      expect(store.sessions, hasLength(2));
+      expect(store.currentSession!.start.isAfter(firstEnd), isTrue);
     });
 
     test('rows outside sessions group by day', () {
@@ -402,9 +493,16 @@ void main() {
 
   test('clear history', () async {
     store.ingest(_event('a', at: now));
+    now = now.add(const Duration(hours: 1));
     await store.clearHistory();
     expect(store.allEvents, isEmpty);
     expect(persistence.events, isEmpty);
     expect(store.unseenCount, 0);
+
+    /// Follower backfill starts here now - cleared follows stay gone
+    expect(
+      (persistence.loadMeta('state') as Map)['startedAt'],
+      now.toIso8601String(),
+    );
   });
 }

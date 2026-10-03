@@ -156,6 +156,24 @@ mixin _$ActivityStore on _ActivityStore, Store {
     });
   }
 
+  late final _$relaySubscribedAtom = Atom(
+    name: '_ActivityStore.relaySubscribed',
+    context: context,
+  );
+
+  @override
+  bool get relaySubscribed {
+    _$relaySubscribedAtom.reportRead();
+    return super.relaySubscribed;
+  }
+
+  @override
+  set relaySubscribed(bool value) {
+    _$relaySubscribedAtom.reportWrite(value, super.relaySubscribed, () {
+      super.relaySubscribed = value;
+    });
+  }
+
   late final _$clearHistoryAsyncAction = AsyncAction(
     '_ActivityStore.clearHistory',
     context: context,
@@ -276,6 +294,7 @@ visitMarks: ${visitMarks},
 filter: ${filter},
 toThankOnly: ${toThankOnly},
 relayState: ${relayState},
+relaySubscribed: ${relaySubscribed},
 allEvents: ${allEvents},
 unseenCount: ${unseenCount},
 toThankCount: ${toThankCount},

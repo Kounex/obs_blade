@@ -15,6 +15,7 @@ import '../../../../stores/views/activity.dart';
 import '../../../../stores/views/kick_chat.dart';
 import '../../../../stores/views/twitch_chat.dart';
 import '../../../../types/classes/activity/activity_event.dart';
+import '../../../../utils/get_it_helper.dart';
 import '../../../../utils/icons/jam_icons.dart';
 import '../../../../utils/kick/kick_events_relay_client.dart';
 import '../../../../utils/routing_helper.dart';
@@ -390,6 +391,7 @@ class _FeedNotices extends StatelessWidget {
         );
       }
     }
+
     /// Read first: relayWanted can short-circuit before any observable
     final relayState = this.store.relayState;
     if (relayState == KickRelayState.retrying && this.store.relayWanted) {
@@ -523,12 +525,11 @@ class _EmptyFeed extends StatelessWidget {
 
   static bool _anyOwnChannel() {
     final getIt = GetIt.instance;
-    bool created<T extends Object>() =>
-        getIt.isRegistered<T>() && getIt.checkLazySingletonInstanceExists<T>();
-    if (created<TwitchChatStore>() && getIt<TwitchChatStore>().isLoggedIn) {
+    if (lazySingletonCreated<TwitchChatStore>() &&
+        getIt<TwitchChatStore>().isLoggedIn) {
       return true;
     }
-    if (created<KickChatStore>() &&
+    if (lazySingletonCreated<KickChatStore>() &&
         getIt<KickChatStore>().ownChannelSlug != null) {
       return true;
     }
@@ -549,11 +550,14 @@ class _GroupedList extends StatelessWidget {
 
   Widget _content(BuildContext context) {
     final now = DateTime.now();
-    final items = <Widget>[];
+
+    /// Only what each line needs - rows are built as they scroll in
+    final items = <Object>[];
+    final rowIndex = <String, int>{};
     var dividerPlaced = false;
     var sawNew = false;
     for (final group in this.groups) {
-      items.add(_GroupHeader(group: group, now: now));
+      items.add(group);
       for (final event in group.events) {
         final isNew = this.store.isNew(event);
 
@@ -563,22 +567,31 @@ class _GroupedList extends StatelessWidget {
           dividerPlaced = true;
         }
         sawNew = sawNew || isNew;
-        items.add(
-          ActivityRow(
-            key: ValueKey(event.id),
-            event: event,
-            isNew: isNew,
-            now: now,
-            onThanked: (thanked) => this.store.setThanked(event, thanked),
-            onTap: () => showActivityPersonSheet(context, event),
-          ),
-        );
+        rowIndex[event.id] = items.length;
+        items.add((event, isNew));
       }
     }
-    return ListView(
+    return ListView.builder(
       key: const Key('activity-list'),
       padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-      children: items,
+      itemCount: items.length,
+
+      /// Rows keep their state (swipe) when rows above come and go
+      findChildIndexCallback: (key) =>
+          key is ValueKey<String> ? rowIndex[key.value] : null,
+      itemBuilder: (context, index) => switch (items[index]) {
+        final ActivityGroup group => _GroupHeader(group: group, now: now),
+        (final ActivityEvent event, final bool isNew) => ActivityRow(
+          key: ValueKey(event.id),
+          event: event,
+          isNew: isNew,
+          now: now,
+          onThanked: (thanked) => this.store.setThanked(event, thanked),
+          onTap: () => showActivityPersonSheet(context, event),
+        ),
+        final Widget widget => widget,
+        _ => const SizedBox.shrink(),
+      },
     );
   }
 }

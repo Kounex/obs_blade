@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,11 +7,13 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/views/activity.dart';
+import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/activity/activity_mappers.dart';
 import 'package:obs_blade/utils/activity/activity_persistence.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_events_relay_client.dart';
@@ -26,9 +29,14 @@ class _RecordingRelay extends KickEventsRelayClient {
   final List<String> started = [];
   int registers = 0;
 
+  /// Holds [register] until completed (a sign-in in flight)
+  Completer<void>? registerGate;
+  void Function(bool subscribed)? onSubscribed;
+
   @override
   Future<KickRelaySession> register(String kickAccessToken) async {
     this.registers++;
+    await this.registerGate?.future;
     return const KickRelaySession(
       token: 'fresh',
       broadcasterUserId: '9001',
@@ -48,8 +56,10 @@ class _RecordingRelay extends KickEventsRelayClient {
     required void Function(Map<String, Object?> frame) onEvent,
     required void Function(KickRelayState state) onState,
     required void Function() onUnknownSession,
+    void Function(bool subscribed)? onSubscribed,
   }) {
     this.started.add('$sessionToken@${cursor()}');
+    this.onSubscribed = onSubscribed;
     onState(KickRelayState.synced);
   }
 
@@ -156,6 +166,69 @@ void main() {
       expect(relay.started, ['kept@12']);
     },
   );
+
+  Future<void> signIn() => Hive.box<KickAuth>(HiveKeys.KickAuth.name).put(
+    KickAuth.kBoxKey,
+    KickAuth(
+      accessToken: 'access-1',
+      refreshToken: 'refresh-1',
+      expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+      scopes: kKickChatScopes,
+      userId: 9001,
+      username: 'kicker',
+    ),
+  );
+
+  test(
+    'delete all data during the relay sign-in drops the new session',
+    () async {
+      await persistence.putMeta('state', {
+        'startedAt': DateTime.now().toUtc().toIso8601String(),
+        'seq': 0,
+      });
+      relay.registerGate = Completer<void>();
+      await signIn();
+      registerKick();
+      activity = build();
+      await activity.init();
+      await _until(() => relay.registers > 0);
+
+      await activity.deleteAllData();
+      relay.registerGate!.complete();
+      await _until(() => relay.unregistered.isNotEmpty);
+
+      expect(relay.unregistered, ['fresh']);
+      expect(relay.started, isEmpty);
+      expect((persistence.loadMeta('state') as Map)['relay'], isNull);
+    },
+  );
+
+  test('the relay owns Kick subs only while Kick delivers them', () async {
+    await signIn();
+    registerKick();
+    activity = build();
+    await activity.init();
+    await _until(() => relay.started.isNotEmpty);
+    var n = 0;
+    ActivityEvent pusherSub() => kickActivityFromPusher(
+      kind: 'subscription',
+      channelId: '9001',
+      eventId: 'p${n++}',
+      at: DateTime.now().toUtc().add(const Duration(seconds: 1)),
+      username: 'Fan$n',
+    )!;
+
+    /// Kick refused some webhooks: Pusher's copy is the only one
+    relay.onSubscribed!(false);
+    activity.ingest(pusherSub());
+    expect(activity.allEvents, hasLength(1));
+    expect(activity.relaySubscribed, isFalse);
+
+    /// All accepted: the relay's copy wins, Pusher's is dropped
+    relay.onSubscribed!(true);
+    activity.ingest(pusherSub());
+    expect(activity.allEvents, hasLength(1));
+  });
 
   test('signed out of Kick: the relay forgets the channel', () async {
     registerKick();

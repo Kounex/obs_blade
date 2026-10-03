@@ -187,8 +187,10 @@ String _clock(DateTime time) {
 }
 
 String _day(DateTime day, DateTime now) {
-  final today = DateTime(now.year, now.month, now.day);
-  final date = DateTime(day.year, day.month, day.day);
+  /// Calendar days in UTC: local midnights are 23 / 25 h apart around a
+  /// DST switch, which `inDays` would miscount
+  final today = DateTime.utc(now.year, now.month, now.day);
+  final date = DateTime.utc(day.year, day.month, day.day);
   final diff = today.difference(date).inDays;
   if (diff == 0) return 'Today';
   if (diff == 1) return 'Yesterday';
