@@ -17,8 +17,7 @@ class BasePlanSpec {
 }
 
 /// Wanted per-region price table: Play region code (alpha-2) → Play `Money`
-/// map. Built by the provisioner from `pricing:convertRegionPrices` with
-/// nominal-parity overrides.
+/// map. Built by the provisioner from the reviewed PricingTargets table.
 typedef RegionPrices = Map<String, Map<String, Object?>>;
 
 /// A region price table plus the regions version it was computed from —

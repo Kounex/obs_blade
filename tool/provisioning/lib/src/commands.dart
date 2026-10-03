@@ -186,7 +186,8 @@ class AscProductsCommand extends Command<int> {
       'Create/reuse the App Store Connect Pro subscription group, the '
       'pro_yearly/pro_monthly subscriptions and the pro_lifetime '
       'non-consumable, with en-US localizations (drift-reconciled) and '
-      'nominal-parity pricing in every available territory.';
+      'per-territory pricing from the reviewed PricingTargets table '
+      '(lib/src/pricing_targets.dart).';
 
   @override
   Future<int> run() async {
@@ -324,19 +325,6 @@ class PlayProductsCommand extends Command<int> {
         help: 'US price for the lifetime one-time product.',
         defaultsTo: '99.99',
       )
-      ..addOption(
-        'price-source',
-        help:
-            'Where per-region prices come from. `apple` drives every '
-            'region from Apple\'s equalized tier table of the matching '
-            'ASC products (exact cross-store parity) and needs ASC '
-            'credentials in the environment (\$OBS_BLADE_ASC_KEY_PATH / '
-            '\$OBS_BLADE_ASC_KEY_ID / \$OBS_BLADE_ASC_ISSUER_ID / \$OBS_BLADE_ASC_APP_ID). `google` '
-            'uses Play\'s convertRegionPrices table with EUR/GBP/USD '
-            'nominal parity.',
-        allowed: ['apple', 'google'],
-        defaultsTo: 'apple',
-      )
       ..addFlag(
         'activate',
         help: 'Activate base plans / the purchase option after creation.',
@@ -351,8 +339,8 @@ class PlayProductsCommand extends Command<int> {
   final description =
       'Create/reuse the Play subscription product with pro_yearly/'
       'pro_monthly base plans and the pro_lifetime one-time product, with '
-      'per-region pricing pinned to Apple\'s equalized tier table '
-      '(--price-source google keeps Play\'s converted table).';
+      'per-region pricing pinned from the reviewed PricingTargets table '
+      '(lib/src/pricing_targets.dart).';
 
   @override
   Future<int> run() async {
@@ -403,16 +391,6 @@ class PlayProductsCommand extends Command<int> {
     final monthlyPriceUsd = args['monthly-price-usd'] as String;
     final lifetimePriceUsd = args['lifetime-price-usd'] as String;
 
-    Map<String, Map<String, String>>? appleTables;
-    if (!dryRun && args['price-source'] == 'apple') {
-      appleTables = await _applePriceTables(
-        yearlyPriceUsd: yearlyPriceUsd,
-        monthlyPriceUsd: monthlyPriceUsd,
-        lifetimePriceUsd: lifetimePriceUsd,
-      );
-      if (appleTables == null) return 64; // helper already wrote stderr
-    }
-
     final provisioner = PlayProvisioner(
       client: client,
       packageName: packageName,
@@ -435,7 +413,6 @@ class PlayProductsCommand extends Command<int> {
           ),
         ],
         lifetimePriceUsd: lifetimePriceUsd,
-        appleTables: appleTables,
       );
     } on ApiException catch (e) {
       stderr.writeln(e);
@@ -446,9 +423,8 @@ class PlayProductsCommand extends Command<int> {
     print('Manual remainder (console-only):');
     print(
       '  - Review the products + prices in Play Console → Monetize → '
-      'Products (prices are pinned per region — Apple equalized-tier '
-      'parity, or Google-converted with EUR/GBP/USD nominal parity when '
-      'run with --price-source google).',
+      'Products (prices are pinned per region from the reviewed '
+      'PricingTargets table — see tool/provisioning/README.md).',
     );
     print(
       '  - Attach the products to the RevenueCat entitlement `pro` '
@@ -457,106 +433,6 @@ class PlayProductsCommand extends Command<int> {
       'docs/revenuecat-setup.md §3).',
     );
     return ok ? 0 : 1;
-  }
-
-  /// Builds the Apple equalized-tier currency tables (currency → price)
-  /// per USD nominal by resolving the products `asc-products` created and
-  /// scanning their price points — the tables `PlayProvisioner` needs for
-  /// cross-store parity. Returns null (after printing the cause) when the
-  /// ASC credentials/app id are missing or a product can't be found.
-  Future<Map<String, Map<String, String>>?> _applePriceTables({
-    required String yearlyPriceUsd,
-    required String monthlyPriceUsd,
-    required String lifetimePriceUsd,
-  }) async {
-    final env = Platform.environment;
-    final keyPath = env['OBS_BLADE_ASC_KEY_PATH'];
-    final keyId = env['OBS_BLADE_ASC_KEY_ID'];
-    final issuerId = env['OBS_BLADE_ASC_ISSUER_ID'];
-    final appId = env['OBS_BLADE_ASC_APP_ID'];
-    if (keyPath == null || keyId == null || issuerId == null) {
-      stderr.writeln(
-        '--price-source apple needs the ASC credentials in the '
-        'environment (OBS_BLADE_ASC_KEY_PATH / OBS_BLADE_ASC_KEY_ID / OBS_BLADE_ASC_ISSUER_ID, e.g. '
-        'exported from ~/.localrc). Or use --price-source google.',
-      );
-      return null;
-    }
-    if (appId == null) {
-      stderr.writeln(
-        '--price-source apple needs \$OBS_BLADE_ASC_APP_ID (App Information → '
-        'Apple ID). Or use --price-source google.',
-      );
-      return null;
-    }
-    final pemFile = File(keyPath);
-    if (!pemFile.existsSync()) {
-      stderr.writeln('ASC key file not found: $keyPath');
-      return null;
-    }
-    final token = buildAscJwt(
-      privateKeyPem: await pemFile.readAsString(),
-      keyId: keyId,
-      issuerId: issuerId,
-    );
-    final ascClient = HttpApiClient(
-      baseUrl: 'https://api.appstoreconnect.apple.com',
-      token: token,
-    );
-
-    Future<String?> firstId(ApiResponse res) async =>
-        res.dataList.isEmpty ? null : res.dataList.first['id'] as String?;
-
-    final groupId = await firstId(
-      await ascClient.get('v1/apps/$appId/subscriptionGroups', {
-        'filter[referenceName]': AscProvisioner.groupReferenceName,
-      }),
-    );
-    if (groupId == null) {
-      stderr.writeln(
-        'ASC subscription group "${AscProvisioner.groupReferenceName}" '
-        'not found — run `provision asc-products` first (or use '
-        '--price-source google).',
-      );
-      return null;
-    }
-
-    Future<String?> subId(String productId) async => firstId(
-      await ascClient.get('v1/subscriptionGroups/$groupId/subscriptions', {
-        'filter[productId]': productId,
-      }),
-    );
-    final yearlyId = await subId('pro_yearly');
-    final monthlyId = await subId('pro_monthly');
-    final iapId = await firstId(
-      await ascClient.get('v1/apps/$appId/inAppPurchasesV2', {
-        'filter[productId]': AscProvisioner.lifetimeProductId,
-      }),
-    );
-    if (yearlyId == null || monthlyId == null || iapId == null) {
-      stderr.writeln(
-        'ASC products pro_yearly/pro_monthly/pro_lifetime not all found '
-        '— run `provision asc-products` first (or use '
-        '--price-source google).',
-      );
-      return null;
-    }
-
-    final asc = AscProvisioner(client: ascClient, appId: appId);
-    return {
-      yearlyPriceUsd: await asc.appleCurrencyPrices(
-        pricePointsPath: 'v1/subscriptions/$yearlyId/pricePoints',
-        priceUsd: yearlyPriceUsd,
-      ),
-      monthlyPriceUsd: await asc.appleCurrencyPrices(
-        pricePointsPath: 'v1/subscriptions/$monthlyId/pricePoints',
-        priceUsd: monthlyPriceUsd,
-      ),
-      lifetimePriceUsd: await asc.appleCurrencyPrices(
-        pricePointsPath: 'v2/inAppPurchases/$iapId/pricePoints',
-        priceUsd: lifetimePriceUsd,
-      ),
-    };
   }
 }
 

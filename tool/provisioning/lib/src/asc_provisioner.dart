@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'asc_payloads.dart';
 import 'api_client.dart';
 import 'money.dart';
+import 'pricing_targets.dart';
 
 /// One auto-renewable subscription to ensure inside the Pro group.
 class SubscriptionSpec {
@@ -24,9 +25,12 @@ class SubscriptionSpec {
 /// Idempotently creates the Pro subscription group, the two subscriptions
 /// (+ en-US localizations), the lifetime non-consumable IAP (+ localization)
 /// and — when prices are passed — a current price in EVERY available
-/// territory with nominal parity (the territory price point whose
-/// `customerPrice` equals the USD nominal string). The IAP keeps a USA base
-/// price only (its price schedule auto-equalizes all other territories).
+/// territory from the reviewed [PricingTargets] table (anchor currencies at
+/// the USD nominal, everything else at Google's converted table, snapped to
+/// the nearest App Store price point). The IAP keeps a USA base price only
+/// (its price schedule auto-equalizes all other territories and Apple keeps
+/// that schedule FX-current — verified 2026-10; unlike subscription prices,
+/// which Apple never auto-updates, hence the checked-in table).
 ///
 /// Field names / endpoints per Apple's OpenAPI spec v4.4.1 (see
 /// asc_payloads.dart). Pricing uses the price-point + price-change /
@@ -46,9 +50,19 @@ class AscProvisioner {
   final String territoryId;
   final void Function(String) _log;
 
-  /// Memoized Apple tiers of the reference (USA) price points, keyed by
-  /// `subscriptionId|price` — see [_referenceTier].
-  final _referenceTiers = <String, String?>{};
+  /// Territory id → currency, fetched once per run (v1/territories).
+  Map<String, String>? _territoryCurrencies;
+
+  /// ASC territories whose currency prices per region — the [PricingTargets]
+  /// per-region rows are keyed by Play region code, so map the ISO-3
+  /// territory to its ISO-2 equivalent (CHF is the only conflicted
+  /// currency: CH and LI price differently).
+  static const _territoryRegionOverride = {'CHE': 'CH', 'LIE': 'LI'};
+
+  /// How far the snapped price point may deviate from the target before the
+  /// log calls it out (Apple's point granularity is fine enough that
+  /// anything larger is worth a human look).
+  static const _snapWarnThreshold = 0.02;
 
   static const groupReferenceName = 'Pro';
   static const lifetimeProductId = 'pro_lifetime';
@@ -277,19 +291,19 @@ class AscProvisioner {
     return ids;
   }
 
-  /// Sets a current price in EVERY available territory with nominal parity:
-  /// the price point whose `customerPrice` equals the USD nominal string
-  /// ('4.99' → 4.99 EUR in DEU, 4.99 GBP in GBR, …). Subscriptions get no
-  /// auto-derived territory prices (unlike IAP price schedules), so each
-  /// territory needs its own POST /v1/subscriptionPrices.
+  /// Sets a current price in EVERY available territory from the reviewed
+  /// [PricingTargets] table: anchor currencies (USD/EUR/GBP) at the USD
+  /// nominal, every other currency at Google's converted price, snapped to
+  /// the nearest App Store price point in that territory. Subscriptions get
+  /// no auto-derived territory prices (unlike IAP price schedules) and Apple
+  /// never auto-updates them, so each territory needs its own POST
+  /// /v1/subscriptionPrices — and this table is what keeps them correct.
   ///
   /// Idempotent: a territory whose current price point is already the one
-  /// we'd pick is skipped. Territories without an exact nominal price point
-  /// (JPY, SEK, KRW, …) fall back to the point with the SAME Apple tier as
-  /// the USA point for the nominal price — tiers are Apple's global price
-  /// matrix, so the same tier is the equalized, locally conventional price
-  /// in every storefront ($4.99 → ¥660 / 64 kr / ₹210 / …, verified live).
-  /// Fallbacks are summarized at the end.
+  /// we'd pick is skipped (point-id comparison — the snapped point's price
+  /// string need not equal the target). Territories whose currency has no
+  /// target (shouldn't happen — the table covers every ASC currency) are
+  /// skipped with a warning and don't fail the run.
   Future<bool> _ensureTerritoryPrices(
     String subscriptionId,
     SubscriptionSpec spec,
@@ -298,7 +312,7 @@ class AscProvisioner {
     if (territories.isEmpty) {
       if (client.isDryRun) {
         _log(
-          '  would set the nominal-parity price USD ${spec.priceUsd} in '
+          '  would set the reviewed-table price for USD ${spec.priceUsd} in '
           'every available territory — territories and price points are '
           'not simulated in dry-run',
         );
@@ -311,15 +325,15 @@ class AscProvisioner {
       return false;
     }
     final skipped = <String>[];
-    final fallbacks = <String, String>{};
+    final snapped = <String, String>{};
     var ok = true;
     for (final territory in territories) {
-      final (:result, :fallbackPrice) = await _ensureTerritoryPrice(
+      final (:result, :snapNote) = await _ensureTerritoryPrice(
         subscriptionId,
         spec,
         territory,
       );
-      if (fallbackPrice != null) fallbacks[territory] = fallbackPrice;
+      if (snapNote != null) snapped[territory] = snapNote;
       switch (result) {
         case _TerritoryPriceResult.ok:
           break;
@@ -329,51 +343,58 @@ class AscProvisioner {
           ok = false;
       }
     }
-    if (fallbacks.isNotEmpty) {
+    if (snapped.isNotEmpty) {
       _log(
-        '  ${spec.productId}: no ${normalizePrice(spec.priceUsd!)} point in '
-        '${fallbacks.length} territories — equalized tier price '
-        '(set or already current): '
-        '${fallbacks.entries.map((e) => '${e.key}→${e.value}').join(', ')}',
+        '  ${spec.productId}: snapped to the nearest price point '
+        '(>${(_snapWarnThreshold * 100).round()}% off target): '
+        '${snapped.entries.map((e) => '${e.key}→${e.value}').join(', ')}',
       );
     }
     if (skipped.isNotEmpty) {
       _log(
-        '  WARNING: ${spec.productId}: no usable price point at all in '
+        '  WARNING: ${spec.productId}: no target or usable price point in '
         '${skipped.length} territories — skipped: ${skipped.join(', ')}',
       );
     }
     return ok;
   }
 
-  Future<({_TerritoryPriceResult result, String? fallbackPrice})>
-  _ensureTerritoryPrice(
-    String subscriptionId,
-    SubscriptionSpec spec,
-    String territory,
-  ) {
+  Future<({_TerritoryPriceResult result, String? snapNote})>
+  _ensureTerritoryPrice(String subscriptionId, SubscriptionSpec spec, String territory) {
     return _retry429(
       () => _ensureTerritoryPriceOnce(subscriptionId, spec, territory),
     );
   }
 
-  /// Sets the current price for one territory. Exact nominal point wins;
-  /// when none exists, falls back to the point with the same Apple tier as
-  /// the reference (USA) point for the nominal price — the equalized,
-  /// locally conventional price (see [_findSameTierPricePoint]).
-  /// Idempotent: skips when the current price point is already the one we'd
-  /// pick — for fallback territories that means comparing point ids, since
-  /// the nominal string never matches there. Returns the fallback price
-  /// string when the fallback was used (set or already current), so callers
-  /// can summarize it.
-  Future<({_TerritoryPriceResult result, String? fallbackPrice})>
+  /// Sets the current price for one territory from the [PricingTargets]
+  /// table (per-territory override, else per-currency). The target point is
+  /// the exact-price point when one exists, else the numerically nearest
+  /// one (deviations beyond [_snapWarnThreshold] are reported back as
+  /// [snapNote]). Idempotent via point-id comparison.
+  Future<({_TerritoryPriceResult result, String? snapNote})>
   _ensureTerritoryPriceOnce(
     String subscriptionId,
     SubscriptionSpec spec,
     String territory,
   ) async {
-    final wanted = normalizePrice(spec.priceUsd!);
+    final currency = await _currencyOf(territory);
+    final wanted = currency == null
+        ? null
+        : PricingTargets.target(
+            currency,
+            spec.priceUsd!,
+            region: _territoryRegionOverride[territory],
+          );
+    if (wanted == null) {
+      _log(
+        '  $territory: no pricing target for currency ${currency ?? '?'} — '
+        'extend PricingTargets',
+      );
+      return (result: _TerritoryPriceResult.noPricePoint, snapNote: null);
+    }
+    final target = double.parse(wanted);
     String? currentPointId;
+    String? currentPrice;
     final existing = await client
         .get('v1/subscriptions/$subscriptionId/prices', {
           'filter[territory]': territory,
@@ -392,66 +413,47 @@ class AscProvisioner {
                       as Map<String, Object?>?)?['data']
                   as Map<String, Object?>?)?['id']
               as String?;
-      final currentPrice = _includedPricePointPrice(existing, currentPointId);
-      if (currentPrice == wanted) {
-        _log('  $territory: price already $wanted — skipping');
-        return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
-      }
-      _log(
-        '  $territory: price differs (have $currentPrice, want $wanted) — '
-        'creating a price change',
-      );
+      currentPrice = _includedPricePointPrice(existing, currentPointId);
     }
     final path = 'v1/subscriptions/$subscriptionId/pricePoints';
-    final pointId = await _findPricePoint(
+    final point = await _findNearestPricePoint(
       path,
-      spec.priceUsd!,
+      wanted,
       territory: territory,
     );
-    if (pointId == null) {
+    if (point == null) {
       if (client.isDryRun) {
         _log(
           '  $territory: would look up the $wanted price point (or the '
-          'equalized-tier one) and POST it — price points are not '
-          'simulated in dry-run',
+          'nearest one) and POST it — price points are not simulated in '
+          'dry-run',
         );
-        return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
+        return (result: _TerritoryPriceResult.ok, snapNote: null);
       }
-      final tier = await _referenceTier(subscriptionId, spec.priceUsd!);
-      final match = tier == null
-          ? null
-          : await _findSameTierPricePoint(path, tier, territory: territory);
-      if (match == null) {
-        return (
-          result: _TerritoryPriceResult.noPricePoint,
-          fallbackPrice: null,
-        );
-      }
-      if (currentPointId == match.id) {
-        _log(
-          '  $territory: no $wanted point — already at the equalized '
-          'tier price ${match.price} — skipping',
-        );
-        return (result: _TerritoryPriceResult.ok, fallbackPrice: match.price);
-      }
-      if (!await _postTerritoryPrice(subscriptionId, match.id, territory)) {
-        return (result: _TerritoryPriceResult.failed, fallbackPrice: null);
-      }
+      return (result: _TerritoryPriceResult.noPricePoint, snapNote: null);
+    }
+    final pointValue = double.tryParse(point.price);
+    final snapNote =
+        pointValue != null &&
+            (pointValue / target - 1).abs() > _snapWarnThreshold
+        ? '${point.price} (target $wanted)'
+        : null;
+    if (currentPointId == point.id) {
       _log(
-        '  $territory: no $wanted point — set the equalized tier price '
-        '${match.price} (price point ${match.id})',
+        '  $territory: price already ${point.price} — skipping',
       );
-      return (result: _TerritoryPriceResult.ok, fallbackPrice: match.price);
+      return (result: _TerritoryPriceResult.ok, snapNote: snapNote);
     }
-    if (currentPointId == pointId) {
-      _log('  $territory: price already $wanted — skipping');
-      return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
+    if (!await _postTerritoryPrice(subscriptionId, point.id, territory)) {
+      return (result: _TerritoryPriceResult.failed, snapNote: null);
     }
-    if (!await _postTerritoryPrice(subscriptionId, pointId, territory)) {
-      return (result: _TerritoryPriceResult.failed, fallbackPrice: null);
-    }
-    _log('  $territory: set price $wanted (price point $pointId)');
-    return (result: _TerritoryPriceResult.ok, fallbackPrice: null);
+    _log(
+      '  $territory: set price ${point.price}'
+      '${currentPrice == null ? '' : ' (was $currentPrice)'}'
+      '${point.price == wanted ? '' : ' — snapped from target $wanted'} '
+      '(price point ${point.id})',
+    );
+    return (result: _TerritoryPriceResult.ok, snapNote: snapNote);
   }
 
   /// POSTs the current-price record for one territory. Returns false (after
@@ -569,20 +571,33 @@ class AscProvisioner {
     return null;
   }
 
-  /// Fallback for territories without a literal nominal price point (JPY,
-  /// SEK, KRW, … have no 4.99/49.99): the point with the SAME Apple tier as
-  /// [tier] (the tier of the reference — USA — point for the nominal
-  /// price). Tiers are Apple's global price matrix: the same tier maps to
-  /// the equalized, locally conventional price in every storefront
-  /// ($4.99 → ¥660 / 64 kr / ₹210 / …, verified live). Points come back
-  /// sorted ascending by customerPrice and tiers increase with price, so
-  /// the scan early-exits once a point's tier passes the target.
-  Future<({String id, String price})?> _findSameTierPricePoint(
+  /// Territory id → currency, cached per run.
+  Future<String?> _currencyOf(String territory) async {
+    final map = _territoryCurrencies ??= {};
+    if (map.isEmpty) {
+      final territories = await client.get('v1/territories', {'limit': '200'});
+      for (final t in territories.dataList) {
+        final currency =
+            (t['attributes'] as Map<String, Object?>?)?['currency'] as String?;
+        final id = t['id'] as String?;
+        if (currency != null && id != null) map[id] = currency;
+      }
+    }
+    return map[territory];
+  }
+
+  /// The price point for [wanted] in [territory]: the exact-price point when
+  /// one exists, else the numerically nearest one (ties go to the lower
+  /// point). Points come back sorted ascending by customerPrice (verified
+  /// live), so the nearest point is decided as soon as a point exceeds the
+  /// target — the scan stops there.
+  Future<({String id, String price})?> _findNearestPricePoint(
     String path,
-    String tier, {
+    String wanted, {
     String? territory,
   }) async {
-    final targetTier = int.tryParse(tier);
+    final target = double.parse(normalizePrice(wanted));
+    ({String id, String price})? lastBelow;
     String? cursor;
     do {
       final points = await client.get(path, {
@@ -592,86 +607,28 @@ class AscProvisioner {
         if (cursor != null) 'cursor': cursor,
       });
       for (final point in points.dataList) {
-        final pointTier = _priceTierOf(point['id'] as String?);
-        if (pointTier == null) continue;
-        if (pointTier == tier) {
-          final raw =
-              (point['attributes'] as Map<String, Object?>?)?['customerPrice']
-                  as String?;
-          if (raw != null) return (id: point['id'] as String, price: raw);
+        final attrs = point['attributes'] as Map<String, Object?>?;
+        final raw = attrs?['customerPrice'] as String?;
+        final value = raw == null ? null : double.tryParse(raw);
+        if (value == null) continue;
+        final id = point['id'] as String;
+        if (value == target) return (id: id, price: raw!);
+        if (value > target) {
+          // Sorted ascending — the nearest point is this one or the last
+          // one below (tie → the lower point).
+          if (lastBelow == null) return (id: id, price: raw!);
+          final belowDiff = target - double.parse(lastBelow.price);
+          return belowDiff <= value - target
+              ? lastBelow
+              : (id: id, price: raw!);
         }
-        final numeric = int.tryParse(pointTier);
-        if (targetTier != null && numeric != null && numeric > targetTier) {
-          return null; // tiers ascend with price — the tier can't come later
-        }
+        lastBelow = (id: id, price: raw!);
       }
       final meta = points.json['meta'];
       final paging = meta is Map ? meta['paging'] : null;
       cursor = paging is Map ? paging['nextCursor'] as String? : null;
     } while (cursor != null);
-    return null;
-  }
-
-  /// The Apple tier of the reference (USA) price point for [priceUsd] —
-  /// cached per subscription, since every territory fallback needs it.
-  Future<String?> _referenceTier(String subscriptionId, String priceUsd) async {
-    final key = '$subscriptionId|${normalizePrice(priceUsd)}';
-    if (_referenceTiers.containsKey(key)) return _referenceTiers[key];
-    final pointId = await _findPricePoint(
-      'v1/subscriptions/$subscriptionId/pricePoints',
-      priceUsd,
-      territory: territoryId,
-    );
-    final tier = _priceTierOf(pointId);
-    _referenceTiers[key] = tier;
-    return tier;
-  }
-
-  /// Currency → locally conventional price for [priceUsd] across Apple's
-  /// storefronts, derived from the equalized Apple tier of the reference
-  /// ([territoryId]) price point — e.g. USD 4.99 → {USD: 4.99, EUR: 4.99,
-  /// JPY: 660, SEK: 64, …}. Scans one representative territory per currency
-  /// (territories sharing a currency share the tier price). Used to drive
-  /// Play per-region pricing for exact cross-store parity. Returns an empty
-  /// map (with a warning) when the reference tier can't be resolved.
-  Future<Map<String, String>> appleCurrencyPrices({
-    required String pricePointsPath,
-    required String priceUsd,
-  }) async {
-    final table = <String, String>{};
-    final tier = _priceTierOf(
-      await _findPricePoint(pricePointsPath, priceUsd, territory: territoryId),
-    );
-    if (tier == null) {
-      _log(
-        '  WARNING: no reference price point for USD $priceUsd in '
-        '$territoryId — cannot build the Apple currency table',
-      );
-      return table;
-    }
-    final territories = await client.get('v1/territories', {'limit': '200'});
-    final representative = <String, String>{}; // currency → territory id
-    for (final t in territories.dataList) {
-      final currency =
-          (t['attributes'] as Map<String, Object?>?)?['currency'] as String?;
-      final id = t['id'] as String?;
-      if (currency != null && id != null) {
-        representative.putIfAbsent(currency, () => id);
-      }
-    }
-    for (final entry in representative.entries) {
-      final match = await _findSameTierPricePoint(
-        pricePointsPath,
-        tier,
-        territory: entry.value,
-      );
-      if (match != null) table[entry.key] = match.price;
-    }
-    _log(
-      '  Apple currency table for USD $priceUsd: ${table.length} currencies '
-      '(tier $tier)',
-    );
-    return table;
+    return lastBelow; // every point is below the target — take the highest
   }
 
   Future<String> _ensureInAppPurchase() async {

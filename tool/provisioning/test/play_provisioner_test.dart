@@ -2,6 +2,7 @@ import 'package:provisioning/src/api_client.dart';
 import 'package:provisioning/src/money.dart';
 import 'package:provisioning/src/play_payloads.dart';
 import 'package:provisioning/src/play_provisioner.dart';
+import 'package:provisioning/src/pricing_targets.dart';
 import 'package:test/test.dart';
 
 import 'fake_api_client.dart';
@@ -11,7 +12,7 @@ const basePlans = [
   BasePlanSpec(
     basePlanId: 'pro-yearly',
     billingPeriodDuration: 'P1Y',
-    priceUsd: '24.99',
+    priceUsd: '49.99',
   ),
   BasePlanSpec(
     basePlanId: 'pro-monthly',
@@ -19,6 +20,7 @@ const basePlans = [
     priceUsd: '4.99',
   ),
 ];
+const lifetimePrice = '99.99';
 
 Map<String, Object?> _subscription(List<Map<String, Object?>> plans) => {
   'productId': 'pro',
@@ -26,76 +28,31 @@ Map<String, Object?> _subscription(List<Map<String, Object?>> plans) => {
   'basePlans': plans,
 };
 
-/// Google's convertRegionPrices response: US/DE entries get overridden by
-/// nominal parity anyway; only the JPY passthrough ([jpUnits]) matters.
-void scriptConvertPrices(FakeApiClient client, String jpUnits) => client.on(
-  'POST',
-  'androidpublisher/v3/applications/$pkg/pricing:convertRegionPrices',
-  ApiResponse(200, {
-    'regionVersion': {'version': '2025/03'},
-    'convertedRegionPrices': {
-      'US': {
-        'price': {'currencyCode': 'USD', 'units': '9', 'nanos': 990000000},
-      },
-      'DE': {
-        'price': {'currencyCode': 'EUR', 'units': '9', 'nanos': 490000000},
-      },
-      'JP': {
-        'price': {'currencyCode': 'JPY', 'units': jpUnits},
-      },
-    },
-  }),
-);
+/// The wanted per-region prices for a USD nominal, built from the checked-in
+/// [PricingTargets] table exactly the way the provisioner builds them.
+RegionPrices wantedPrices(String priceUsd) => {
+  for (final entry in PricingTargets.playRegionCurrency.entries)
+    if (PricingTargets.target(entry.value, priceUsd, region: entry.key)
+        case final target?)
+      entry.key: moneyFromDecimal(target, currencyCode: entry.value),
+};
 
-/// The wanted per-region configs for a plan/product at [priceUsd] given the
-/// scripted conversion table: EUR + USD at nominal parity, JPY passthrough.
+/// The wanted per-region configs for a plan/product at [priceUsd].
 List<Map<String, Object?>> _configs(
-  String priceUsd,
-  String jpUnits, {
-  required bool subscription,
-}) => [
-  {
-    'regionCode': 'DE',
-    if (subscription)
-      'newSubscriberAvailability': true
-    else
-      'availability': 'AVAILABLE',
-    'price': moneyFromDecimal(priceUsd, currencyCode: 'EUR'),
-  },
-  {
-    'regionCode': 'JP',
-    if (subscription)
-      'newSubscriberAvailability': true
-    else
-      'availability': 'AVAILABLE',
-    'price': {'currencyCode': 'JPY', 'units': jpUnits, 'nanos': 0},
-  },
-  {
-    'regionCode': 'US',
-    if (subscription)
-      'newSubscriberAvailability': true
-    else
-      'availability': 'AVAILABLE',
-    'price': moneyFromDecimal(priceUsd),
-  },
-];
-
-Map<String, Object?> _plan(
-  String id,
-  String state,
   String priceUsd, {
-  String jpUnits = '800',
-}) => {
+  required bool subscription,
+}) => regionalConfigList(wantedPrices(priceUsd), subscription: subscription);
+
+Map<String, Object?> _plan(String id, String state, String priceUsd) => {
   'basePlanId': id,
   'state': state,
-  'regionalConfigs': _configs(priceUsd, jpUnits, subscription: true),
+  'regionalConfigs': _configs(priceUsd, subscription: true),
 };
 
 Map<String, Object?> _oneTimeProduct(
   String state,
   String priceUsd, {
   String? title,
-  String jpUnits = '2600',
 }) => {
   'productId': 'pro_lifetime',
   'listings': [
@@ -107,11 +64,16 @@ Map<String, Object?> _oneTimeProduct(
       'state': state,
       'regionalPricingAndAvailabilityConfigs': _configs(
         priceUsd,
-        jpUnits,
         subscription: false,
       ),
     },
   ],
+};
+
+/// regionCode → price map for one plan's config list.
+Map<String, Map> _pricesByRegion(Map plan) => {
+  for (final c in (plan['regionalConfigs'] as List).whereType<Map>())
+    c['regionCode'] as String: c['price'] as Map,
 };
 
 void main() {
@@ -120,11 +82,6 @@ void main() {
       final client = FakeApiClient();
       final logs = <String>[];
 
-      // Region price tables: 24.99 (yearly), 4.99 (monthly), 79.99
-      // (lifetime) — fetched in that order.
-      scriptConvertPrices(client, '800');
-      scriptConvertPrices(client, '200');
-      scriptConvertPrices(client, '2600');
       // Subscription GET -> 404 (missing); after create the re-read shows
       // the two base plans in DRAFT.
       client.on(
@@ -167,7 +124,7 @@ void main() {
       );
       final ok = await provisioner.run(
         basePlans: basePlans,
-        lifetimePriceUsd: '79.99',
+        lifetimePriceUsd: lifetimePrice,
       );
 
       expect(ok, isTrue);
@@ -210,9 +167,20 @@ void main() {
         1,
       );
 
-      // The created subscription carries the full per-region table:
-      // EUR at nominal parity (NOT Google's converted 9.49), JPY as
-      // Google's converted passthrough.
+      // The create carries the table's regions version or Play rejects
+      // currency-changed regions (e.g. BG → EUR).
+      final createRequest = client.requests.singleWhere(
+        (r) => r.startsWith(
+          'POST androidpublisher/v3/applications/$pkg/subscriptions?',
+        ),
+      );
+      expect(
+        createRequest,
+        contains('regionsVersion.version=${PricingTargets.googleTableVersion}'),
+      );
+
+      // The created subscription carries the full per-region table from
+      // PricingTargets: anchors at nominal, everything else Google-table.
       final createBody = client
           .bodiesFor(
             'POST',
@@ -222,26 +190,66 @@ void main() {
       final yearlyPlan = (createBody['basePlans'] as List)
           .whereType<Map>()
           .firstWhere((b) => b['basePlanId'] == 'pro-yearly');
-      final yearlyConfigs = {
-        for (final c
-            in (yearlyPlan['regionalConfigs'] as List).whereType<Map>())
-          c['regionCode'] as String: c['price'] as Map,
-      };
-      expect(yearlyConfigs.keys, ['DE', 'JP', 'US']);
-      expect(yearlyConfigs['DE'], {
-        'currencyCode': 'EUR',
-        'units': '24',
+      final yearly = _pricesByRegion(yearlyPlan);
+      expect(yearly.length, PricingTargets.playRegionCurrency.length);
+      expect(yearly['US'], {
+        'currencyCode': 'USD',
+        'units': '49',
         'nanos': 990000000,
       });
-      expect(yearlyConfigs['JP'], {
+      expect(yearly['DE'], {
+        'currencyCode': 'EUR',
+        'units': '49',
+        'nanos': 990000000,
+      });
+      expect(yearly['GB'], {
+        'currencyCode': 'GBP',
+        'units': '49',
+        'nanos': 990000000,
+      });
+      expect(yearly['JP'], {
         'currencyCode': 'JPY',
-        'units': '800',
+        'units': '8700',
         'nanos': 0,
       });
-      expect(yearlyConfigs['US'], {
-        'currencyCode': 'USD',
-        'units': '24',
+      expect(yearly['TR'], {
+        'currencyCode': 'TRY',
+        'units': '2949',
         'nanos': 990000000,
+      });
+      expect(yearly['DK'], {'currencyCode': 'DKK', 'units': '415', 'nanos': 0});
+      // CHF splits per region (Google prices CH and LI differently).
+      expect(yearly['CH'], {'currencyCode': 'CHF', 'units': '41', 'nanos': 0});
+      expect(yearly['LI'], {'currencyCode': 'CHF', 'units': '45', 'nanos': 0});
+
+      final monthlyPlan = (createBody['basePlans'] as List)
+          .whereType<Map>()
+          .firstWhere((b) => b['basePlanId'] == 'pro-monthly');
+      final monthly = _pricesByRegion(monthlyPlan);
+      expect(monthly['US'], {
+        'currencyCode': 'USD',
+        'units': '4',
+        'nanos': 990000000,
+      });
+      expect(monthly['JP'], {
+        'currencyCode': 'JPY',
+        'units': '860',
+        'nanos': 0,
+      });
+      expect(monthly['TR'], {
+        'currencyCode': 'TRY',
+        'units': '294',
+        'nanos': 990000000,
+      });
+      expect(monthly['CH'], {
+        'currencyCode': 'CHF',
+        'units': '4',
+        'nanos': 100000000,
+      });
+      expect(monthly['LI'], {
+        'currencyCode': 'CHF',
+        'units': '4',
+        'nanos': 500000000,
       });
     });
 
@@ -249,10 +257,6 @@ void main() {
       final client = FakeApiClient();
       final logs = <String>[];
 
-      // Region price tables (yearly 24.99, monthly 4.99, lifetime 79.99).
-      scriptConvertPrices(client, '800');
-      scriptConvertPrices(client, '200');
-      scriptConvertPrices(client, '2600');
       // Scripted twice: once for the existence/base-plan check, once for
       // the post-create state re-read.
       for (var i = 0; i < 2; i++) {
@@ -262,8 +266,8 @@ void main() {
           ApiResponse(
             200,
             _subscription([
-              _plan('pro-yearly', 'ACTIVE', '24.99'),
-              _plan('pro-monthly', 'ACTIVE', '4.99', jpUnits: '200'),
+              _plan('pro-yearly', 'ACTIVE', '49.99'),
+              _plan('pro-monthly', 'ACTIVE', '4.99'),
             ]),
           ),
         );
@@ -271,7 +275,7 @@ void main() {
       client.on(
         'GET',
         'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+        ApiResponse(200, _oneTimeProduct('ACTIVE', lifetimePrice)),
       );
 
       final provisioner = PlayProvisioner(
@@ -281,19 +285,14 @@ void main() {
       );
       final ok = await provisioner.run(
         basePlans: basePlans,
-        lifetimePriceUsd: '79.99',
+        lifetimePriceUsd: lifetimePrice,
       );
 
       expect(ok, isTrue);
-      // No writes — the pricing:convertRegionPrices lookups are read-only
-      // POSTs by API design and don't count.
       expect(
-        client.requests.where(
-          (r) =>
-              r.startsWith('POST') &&
-              !r.contains('pricing:convertRegionPrices'),
-        ),
+        client.requests.where((r) => !r.startsWith('GET')),
         isEmpty,
+        reason: 'matching prices + states must not write anything',
       );
       expect(logs.any((l) => l.contains('already exists')), isTrue);
       expect(logs.any((l) => l.contains('already ACTIVE')), isTrue);
@@ -305,15 +304,12 @@ void main() {
         final client = FakeApiClient();
         final logs = <String>[];
 
-        scriptConvertPrices(client, '800');
-        scriptConvertPrices(client, '200');
-        scriptConvertPrices(client, '2600');
         client.on(
           'GET',
           'androidpublisher/v3/applications/$pkg/subscriptions/pro',
           ApiResponse(
             200,
-            _subscription([_plan('pro-yearly', 'ACTIVE', '24.99')]),
+            _subscription([_plan('pro-yearly', 'ACTIVE', '49.99')]),
           ),
         );
         // Re-read after patch: both plans, monthly still DRAFT.
@@ -331,7 +327,7 @@ void main() {
         client.on(
           'GET',
           'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-          ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+          ApiResponse(200, _oneTimeProduct('ACTIVE', lifetimePrice)),
         );
 
         final provisioner = PlayProvisioner(
@@ -341,7 +337,7 @@ void main() {
         );
         final ok = await provisioner.run(
           basePlans: basePlans,
-          lifetimePriceUsd: '79.99',
+          lifetimePriceUsd: lifetimePrice,
         );
 
         expect(ok, isTrue);
@@ -382,17 +378,18 @@ void main() {
         );
       },
     );
+
     test('updates prices when they drift from the wanted values', () async {
       final client = FakeApiClient();
       final logs = <String>[];
 
-      // Region price tables for the WANTED prices: yearly 49.99, monthly
-      // 4.99, lifetime 99.99.
-      scriptConvertPrices(client, '1700');
-      scriptConvertPrices(client, '200');
-      scriptConvertPrices(client, '3300');
-      // Yearly at the old 24.99, monthly already correct; scripted twice
-      // (check + activation re-read).
+      // Yearly carries the old cheap Turkish tier (₺699.99 instead of the
+      // wanted ₺2949.99); monthly is already correct. Scripted twice (check
+      // + activation re-read).
+      final driftedYearly = Map<String, Map<String, Object?>>.of(
+        wantedPrices('49.99'),
+      );
+      driftedYearly['TR'] = moneyFromDecimal('699.99', currencyCode: 'TRY');
       for (var i = 0; i < 2; i++) {
         client.on(
           'GET',
@@ -400,44 +397,59 @@ void main() {
           ApiResponse(
             200,
             _subscription([
-              _plan('pro-yearly', 'ACTIVE', '24.99'),
-              _plan('pro-monthly', 'ACTIVE', '4.99', jpUnits: '200'),
+              {
+                'basePlanId': 'pro-yearly',
+                'state': 'ACTIVE',
+                'regionalConfigs': regionalConfigList(
+                  driftedYearly,
+                  subscription: true,
+                ),
+              },
+              _plan('pro-monthly', 'ACTIVE', '4.99'),
             ]),
           ),
         );
       }
-      // Lifetime at the old 79.99, then re-read after the update.
+      // Lifetime at the old cheap Turkish price, then re-read after the
+      // update with the corrected table.
+      final driftedLifetime = Map<String, Map<String, Object?>>.of(
+        wantedPrices(lifetimePrice),
+      );
+      driftedLifetime['TR'] = moneyFromDecimal('1389.99', currencyCode: 'TRY');
       client.on(
         'GET',
         'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+        ApiResponse(200, {
+          'productId': 'pro_lifetime',
+          'listings': [
+            {'languageCode': 'en-US', 'title': PlayProvisioner.lifetimeTitle},
+          ],
+          'purchaseOptions': [
+            {
+              'purchaseOptionId': 'pro-lifetime',
+              'state': 'ACTIVE',
+              'regionalPricingAndAvailabilityConfigs': regionalConfigList(
+                driftedLifetime,
+                subscription: false,
+              ),
+            },
+          ],
+        }),
       );
       client.on(
         'GET',
         'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(200, _oneTimeProduct('ACTIVE', '99.99', jpUnits: '3300')),
+        ApiResponse(200, _oneTimeProduct('ACTIVE', lifetimePrice)),
       );
 
-      const updatedPlans = [
-        BasePlanSpec(
-          basePlanId: 'pro-yearly',
-          billingPeriodDuration: 'P1Y',
-          priceUsd: '49.99',
-        ),
-        BasePlanSpec(
-          basePlanId: 'pro-monthly',
-          billingPeriodDuration: 'P1M',
-          priceUsd: '4.99',
-        ),
-      ];
       final provisioner = PlayProvisioner(
         client: client,
         packageName: pkg,
         log: logs.add,
       );
       final ok = await provisioner.run(
-        basePlans: updatedPlans,
-        lifetimePriceUsd: '99.99',
+        basePlans: basePlans,
+        lifetimePriceUsd: lifetimePrice,
       );
 
       expect(ok, isTrue);
@@ -447,38 +459,33 @@ void main() {
       );
       expect(patches, hasLength(1));
       final patchedPlans = patches.first['basePlans'] as List;
-      final yearly = patchedPlans.whereType<Map>().firstWhere(
-        (b) => b['basePlanId'] == 'pro-yearly',
+      final yearly = _pricesByRegion(
+        patchedPlans.whereType<Map>().firstWhere(
+          (b) => b['basePlanId'] == 'pro-yearly',
+        ),
       );
-      final yearlyUs = (yearly['regionalConfigs'] as List)
-          .whereType<Map>()
-          .firstWhere((c) => c['regionCode'] == 'US');
-      expect((yearlyUs['price'] as Map)['units'], '49');
-      // …with EUR at nominal parity and JPY as the converted passthrough.
-      final yearlyDe = (yearly['regionalConfigs'] as List)
-          .whereType<Map>()
-          .firstWhere((c) => c['regionCode'] == 'DE');
-      expect(yearlyDe['price'], {
-        'currencyCode': 'EUR',
+      expect(yearly['US'], {
+        'currencyCode': 'USD',
         'units': '49',
         'nanos': 990000000,
       });
-      final yearlyJp = (yearly['regionalConfigs'] as List)
-          .whereType<Map>()
-          .firstWhere((c) => c['regionCode'] == 'JP');
-      expect(yearlyJp['price'], {
-        'currencyCode': 'JPY',
-        'units': '1700',
-        'nanos': 0,
+      expect(yearly['TR'], {
+        'currencyCode': 'TRY',
+        'units': '2949',
+        'nanos': 990000000,
       });
       // Monthly plan carried over untouched.
-      final monthly = patchedPlans.whereType<Map>().firstWhere(
-        (b) => b['basePlanId'] == 'pro-monthly',
+      final monthly = _pricesByRegion(
+        patchedPlans.whereType<Map>().firstWhere(
+          (b) => b['basePlanId'] == 'pro-monthly',
+        ),
       );
-      final monthlyUs = (monthly['regionalConfigs'] as List)
-          .whereType<Map>()
-          .firstWhere((c) => c['regionCode'] == 'US');
-      expect(monthlyUs['price'], moneyFromDecimal('4.99'));
+      expect(monthly['US'], moneyFromDecimal('4.99'));
+      expect(monthly['TR'], {
+        'currencyCode': 'TRY',
+        'units': '294',
+        'nanos': 990000000,
+      });
       // One-time product updated via the same batchUpdate upsert.
       expect(
         client.count(
@@ -495,9 +502,6 @@ void main() {
       final client = FakeApiClient();
       final logs = <String>[];
 
-      scriptConvertPrices(client, '800');
-      scriptConvertPrices(client, '200');
-      scriptConvertPrices(client, '2600');
       // Live pre-migration state: base plans carry a single US config.
       Map<String, Object?> legacyPlan(String id) => {
         'basePlanId': id,
@@ -506,7 +510,7 @@ void main() {
           {
             'regionCode': 'US',
             'newSubscriberAvailability': true,
-            'price': moneyFromDecimal(id == 'pro-yearly' ? '24.99' : '4.99'),
+            'price': moneyFromDecimal(id == 'pro-yearly' ? '49.99' : '4.99'),
           },
         ],
       };
@@ -526,7 +530,7 @@ void main() {
       client.on(
         'GET',
         'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+        ApiResponse(200, _oneTimeProduct('ACTIVE', lifetimePrice)),
       );
 
       final provisioner = PlayProvisioner(
@@ -536,7 +540,7 @@ void main() {
       );
       final ok = await provisioner.run(
         basePlans: basePlans,
-        lifetimePriceUsd: '79.99',
+        lifetimePriceUsd: lifetimePrice,
       );
 
       expect(ok, isTrue);
@@ -547,17 +551,20 @@ void main() {
       expect(patches, hasLength(1));
       final patchedPlans = patches.single['basePlans'] as List;
       for (final plan in patchedPlans.whereType<Map>()) {
-        final regions = (plan['regionalConfigs'] as List).whereType<Map>().map(
-          (c) => c['regionCode'],
+        expect(
+          (plan['regionalConfigs'] as List).length,
+          PricingTargets.playRegionCurrency.length,
         );
-        expect(regions, ['DE', 'JP', 'US']);
       }
       // The PATCH must carry the table's regions version (not the legacy
       // 2022/02 default) or Play rejects currency-changed regions like BG.
       final patchRequest = client.requests.singleWhere(
         (r) => r.startsWith('PATCH '),
       );
-      expect(patchRequest, contains('regionsVersion.version=2025/03'));
+      expect(
+        patchRequest,
+        contains('regionsVersion.version=${PricingTargets.googleTableVersion}'),
+      );
       // OTP already had the full table — untouched.
       expect(
         client.count(
@@ -568,145 +575,10 @@ void main() {
       );
     });
 
-    test('apple mode: covered currencies use Apple tier prices, uncovered '
-        'fall back to Google-converted', () async {
-      final client = FakeApiClient();
-      final logs = <String>[];
-
-      // Region price tables: 24.99 (yearly), 4.99 (monthly), 79.99
-      // (lifetime) — fetched in that order. The yearly table adds GB to
-      // probe the uncovered-currency fallback (GBP is a nominal-parity
-      // currency in google mode, but apple mode leaves it to Google).
-      client.on(
-        'POST',
-        'androidpublisher/v3/applications/$pkg/pricing:convertRegionPrices',
-        ApiResponse(200, {
-          'regionVersion': {'version': '2025/03'},
-          'convertedRegionPrices': {
-            'US': {
-              'price': {
-                'currencyCode': 'USD',
-                'units': '9',
-                'nanos': 990000000,
-              },
-            },
-            'DE': {
-              'price': {
-                'currencyCode': 'EUR',
-                'units': '9',
-                'nanos': 490000000,
-              },
-            },
-            'GB': {
-              'price': {
-                'currencyCode': 'GBP',
-                'units': '21',
-                'nanos': 490000000,
-              },
-            },
-            'JP': {
-              'price': {'currencyCode': 'JPY', 'units': '800'},
-            },
-          },
-        }),
-      );
-      scriptConvertPrices(client, '200');
-      scriptConvertPrices(client, '2600');
-      client.on(
-        'GET',
-        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-        ApiResponse(404, null),
-      );
-      client.on(
-        'GET',
-        'androidpublisher/v3/applications/$pkg/subscriptions/pro',
-        ApiResponse(
-          200,
-          _subscription([
-            {'basePlanId': 'pro-yearly', 'state': 'DRAFT'},
-            {'basePlanId': 'pro-monthly', 'state': 'DRAFT'},
-          ]),
-        ),
-      );
-      client.on(
-        'GET',
-        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(404, null),
-      );
-      client.on(
-        'GET',
-        'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(200, {
-          'productId': 'pro_lifetime',
-          'purchaseOptions': [
-            {'purchaseOptionId': 'pro-lifetime', 'state': 'DRAFT'},
-          ],
-        }),
-      );
-
-      final provisioner = PlayProvisioner(
-        client: client,
-        packageName: pkg,
-        log: logs.add,
-      );
-      final ok = await provisioner.run(
-        basePlans: basePlans,
-        lifetimePriceUsd: '79.99',
-        // Only the yearly nominal has an Apple table — monthly/lifetime
-        // stay in google mode.
-        appleTables: const {
-          '24.99': {'USD': '24.99', 'EUR': '24.99', 'JPY': '660'},
-        },
-      );
-
-      expect(ok, isTrue);
-      final createBody = client
-          .bodiesFor(
-            'POST',
-            'androidpublisher/v3/applications/$pkg/subscriptions',
-          )
-          .single;
-      final yearlyPlan = (createBody['basePlans'] as List)
-          .whereType<Map>()
-          .firstWhere((b) => b['basePlanId'] == 'pro-yearly');
-      final yearlyConfigs = {
-        for (final c
-            in (yearlyPlan['regionalConfigs'] as List).whereType<Map>())
-          c['regionCode'] as String: c['price'] as Map,
-      };
-      expect(yearlyConfigs.keys, ['DE', 'GB', 'JP', 'US']);
-      expect(yearlyConfigs['DE'], {
-        'currencyCode': 'EUR',
-        'units': '24',
-        'nanos': 990000000,
-      });
-      expect(yearlyConfigs['US'], {
-        'currencyCode': 'USD',
-        'units': '24',
-        'nanos': 990000000,
-      });
-      // Covered by the Apple table: the equalized ¥660, NOT Google's ¥800.
-      expect(yearlyConfigs['JP'], {
-        'currencyCode': 'JPY',
-        'units': '660',
-        'nanos': 0,
-      });
-      // Uncovered currency: Google's converted price, not nominal parity.
-      expect(yearlyConfigs['GB'], {
-        'currencyCode': 'GBP',
-        'units': '21',
-        'nanos': 490000000,
-      });
-      expect(logs.any((l) => l.contains('at Apple tier prices')), isTrue);
-    });
-
     test('re-applies the listing when its title drifted', () async {
       final client = FakeApiClient();
       final logs = <String>[];
 
-      scriptConvertPrices(client, '800');
-      scriptConvertPrices(client, '200');
-      scriptConvertPrices(client, '2600');
       for (var i = 0; i < 2; i++) {
         client.on(
           'GET',
@@ -714,8 +586,8 @@ void main() {
           ApiResponse(
             200,
             _subscription([
-              _plan('pro-yearly', 'ACTIVE', '24.99'),
-              _plan('pro-monthly', 'ACTIVE', '4.99', jpUnits: '200'),
+              _plan('pro-yearly', 'ACTIVE', '49.99'),
+              _plan('pro-monthly', 'ACTIVE', '4.99'),
             ]),
           ),
         );
@@ -728,13 +600,13 @@ void main() {
         'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
         ApiResponse(
           200,
-          _oneTimeProduct('ACTIVE', '79.99', title: 'Pro — Lifetime'),
+          _oneTimeProduct('ACTIVE', lifetimePrice, title: 'Pro — Lifetime'),
         ),
       );
       client.on(
         'GET',
         'androidpublisher/v3/applications/$pkg/oneTimeProducts/pro_lifetime',
-        ApiResponse(200, _oneTimeProduct('ACTIVE', '79.99')),
+        ApiResponse(200, _oneTimeProduct('ACTIVE', lifetimePrice)),
       );
 
       final provisioner = PlayProvisioner(
@@ -744,7 +616,7 @@ void main() {
       );
       final ok = await provisioner.run(
         basePlans: basePlans,
-        lifetimePriceUsd: '79.99',
+        lifetimePriceUsd: lifetimePrice,
       );
 
       expect(ok, isTrue);
@@ -762,6 +634,52 @@ void main() {
         client.requests.where((r) => r.contains('batchUpdateStates')),
         isEmpty,
       );
+    });
+  });
+
+  group('PricingTargets', () {
+    test('anchor currencies stay at the USD nominal', () {
+      for (final currency in ['USD', 'EUR', 'GBP']) {
+        expect(PricingTargets.target(currency, '4.99'), '4.99');
+        expect(PricingTargets.target(currency, '49.99'), '49.99');
+        expect(PricingTargets.target(currency, '99.99'), '99.99');
+      }
+    });
+
+    test('converted currencies use the Google table values', () {
+      expect(PricingTargets.target('TRY', '4.99'), '294.99');
+      expect(PricingTargets.target('TRY', '49.99'), '2949.99');
+      expect(PricingTargets.target('JPY', '4.99'), '860');
+      expect(PricingTargets.target('JPY', '49.99'), '8700');
+      expect(PricingTargets.target('DKK', '4.99'), '41');
+      expect(PricingTargets.target('EGP', '4.99'), '299.99');
+      // No Play in China — Apple's mainland market pricing is kept.
+      expect(PricingTargets.target('CNY', '4.99'), '26');
+      expect(PricingTargets.target('CNY', '49.99'), '222');
+    });
+
+    test('CHF splits per region', () {
+      expect(PricingTargets.target('CHF', '4.99'), isNull);
+      expect(PricingTargets.target('CHF', '4.99', region: 'CH'), '4.10');
+      expect(PricingTargets.target('CHF', '4.99', region: 'LI'), '4.50');
+    });
+
+    test('unknown currencies and nominals return null', () {
+      expect(PricingTargets.target('QQQ', '4.99'), isNull);
+      expect(PricingTargets.target('USD', '12.34'), isNull);
+    });
+
+    test('every Play region has a target for all three nominals', () {
+      for (final entry in PricingTargets.playRegionCurrency.entries) {
+        for (final nominal in ['4.99', '49.99', '99.99']) {
+          expect(
+            PricingTargets.target(entry.value, nominal, region: entry.key),
+            isNotNull,
+            reason: '${entry.key} (${entry.value}) @ $nominal',
+          );
+        }
+      }
+      expect(PricingTargets.playRegionCurrency, isNot(contains('CN')));
     });
   });
 }

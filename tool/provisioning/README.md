@@ -12,24 +12,20 @@ Three subcommands of one entrypoint:
   `gcloud services api-keys` surface).
 - **`asc-products`** — App Store Connect: subscription group "Pro",
   subscriptions `pro_yearly` + `pro_monthly`, non-consumable `pro_lifetime`,
-  en-US localizations (drift-reconciled via PATCH) and **nominal-parity
-  subscription pricing in every available territory** (equalized-tier
-  fallback where no nominal point exists; US base price for the IAP, whose
+  en-US localizations (drift-reconciled via PATCH) and **reviewed-table
+  subscription pricing in every available territory** (anchor currencies at
+  the USD nominal, everything else at Google's converted table, snapped to
+  the nearest App Store price point; US base price for the IAP, whose
   schedule auto-equalizes the other territories).
 - **`play-products`** — Google Play: one subscription product (`pro`)
   containing the `pro-yearly` + `pro-monthly` base plans, plus the
-  `pro_lifetime` one-time product, with **per-region pricing in all 173
-  Play regions**. Default `--price-source apple` pins each region to the
-  **equalized Apple tier price of its currency** (exact cross-store
-  parity, e.g. ¥660 / ₹210 — read live from the ASC products' price
-  points, so it needs the `OBS_BLADE_ASC_*` env vars; currencies Apple doesn't
-  cover keep Google's converted price). `--price-source google` pins
-  Play's own `pricing:convertRegionPrices` table (conventionally rounded
-  per market, e.g. ¥840 / ₹550) with nominal parity for EUR/GBP/USD
-  instead. Either way prices are pinned explicitly so they don't drift
+  `pro_lifetime` one-time product, with **per-region pricing in all ~174
+  Play regions** from the same reviewed table (`lib/src/pricing_targets.dart`
+  — generated from Play's own `pricing:convertRegionPrices`, then
+  hand-reviewed). Prices are pinned explicitly so they don't drift
   with FX rates;
   base plans / purchase option are activated after creation. Writes pass
-  the table's `regionVersion` (e.g. 2025/03) — an older version gets
+  the table's `regionVersion` (currently 2026/01) — an older version gets
   rejected for regions whose currency changed (BG → EUR).
 
 Product ids are final and match `lib/utils/pro_ids.dart`. All commands are
@@ -125,27 +121,26 @@ these canonical values are reconciled via `PATCH
 /v1/subscriptionLocalizations/{id}` resp. `/v1/inAppPurchaseLocalizations/{id}`
 — re-runs converge instead of fighting manual console edits.
 
-**Subscription pricing is automated for EVERY available territory with
-nominal parity.** With `--yearly-price-usd` / `--monthly-price-usd`
+**Subscription pricing is automated for EVERY available territory from the
+reviewed pricing table** (`lib/src/pricing_targets.dart` — see "Pricing
+table" below). With `--yearly-price-usd` / `--monthly-price-usd`
 (defaults 49.99 / 4.99) the tool reads the territory list from
 `GET /v1/subscriptionAvailabilities/{id}/availableTerritories` (the
-availability resource shares the subscription's id) and, per territory,
-compares the current price (the `GET /v1/subscriptions/{id}/prices` record
-without a `startDate`) against the USD nominal string — then sets the price
-point whose `customerPrice` equals it ('4.99' → 4.99 EUR in DEU, 4.99 GBP in
-GBR, …) via `POST /v1/subscriptionPrices`. Subscriptions get no auto-derived
-territory prices, so this per-territory pass is what lifts them out of
-`MISSING_METADATA`. Territories without an exact nominal price point
-(JPY, SEK, KRW, … have no 4.99/49.99) fall back to the point with the
-**same Apple tier as the USA nominal point** — tiers are Apple's global
-price matrix (the `p` field embedded in the base64url point id), so the
-same tier is the equalized, locally conventional price in every storefront
-($4.99 → ¥660 / 64 kr / ₹210 / …, verified live). Fallback territories are
-summarized at the end. A territory whose scan finds neither an exact point
-nor the reference tier is skipped with a warning (it doesn't fail the
-run). Re-runs skip every territory already at the point the tool would
-pick — for fallback territories that's a point-id comparison, since the
-nominal string never matches there.
+availability resource shares the subscription's id) and each territory's
+currency from `GET /v1/territories` (cached per run), looks up the table
+target for that currency (CHF is split per territory: CHE/LIE), and sets
+the price point whose `customerPrice` is the target — or the numerically
+nearest point when no exact one exists — via
+`POST /v1/subscriptionPrices`. Snap deviations beyond 2% are called out in
+the run summary (Apple's point granularity is fine enough that anything
+larger deserves a human look). Subscriptions get no auto-derived territory
+prices, so this per-territory pass is what lifts them out of
+`MISSING_METADATA`. A territory whose currency has no table target, or
+with no usable price point at all, is skipped with a warning (it doesn't
+fail the run). Re-runs skip every territory whose current price point is
+already the one the tool would pick (point-id comparison — the snapped
+point's price string need not equal the target), and create a price
+change where the current point differs.
 
 The **IAP** (`--lifetime-price-usd`, default 99.99) keeps a USA base price
 via `POST /v1/inAppPurchasePriceSchedules` — its schedule auto-equalizes all
@@ -170,16 +165,10 @@ carries the legacy-buyer migration).
 dart run bin/provision.dart play-products --dry-run
 dart run bin/provision.dart play-products \
     --service-account-json ~/.config/obs-blade/play-service-account.json
-# Play-converted regional prices instead of Apple-parity (no ASC env needed):
-dart run bin/provision.dart play-products --price-source google
 ```
 
 `--package-name` defaults to the `applicationId` read from
 `android/app/build.gradle` (found by walking up from the current directory).
-`--price-source apple` (the default) reads the matching ASC products' price
-points for the equalized-tier currency table and therefore needs the same
-`OBS_BLADE_ASC_KEY_PATH` / `OBS_BLADE_ASC_KEY_ID` / `OBS_BLADE_ASC_ISSUER_ID` / `OBS_BLADE_ASC_APP_ID` environment
-as `asc-products`.
 
 Creates, if missing: subscription product **`pro`** (`--subscription-id`)
 with base plans **pro-yearly** (`P1Y`) and **pro-monthly** (`P1M`), each with
@@ -201,11 +190,53 @@ products via the same batchUpdate upsert).
 > happens in RevenueCat.
 
 **Manual afterwards:** review products/prices in Play Console (Monetize →
-Products; regional pricing is already pinned to Apple's equalized tier
-table per currency by default), then wire the
+Products; regional pricing is already pinned to the reviewed table per
+region), then wire the
 products into the RevenueCat entitlement `pro` with store ids
 `pro:pro-yearly`, `pro:pro-monthly`, `pro_lifetime` — see
 `docs/revenuecat-setup.md` §3.
+
+## Pricing table
+
+Both store commands price from one checked-in, hand-reviewed table:
+`lib/src/pricing_targets.dart`. Anchor currencies (USD/EUR/GBP) stay at the
+USD nominal (4.99 / 49.99 / 99.99); every other currency uses **Google's
+`convertRegionPrices` table** (FX-current, tax-aware, market-rounded —
+the same values Play would auto-convert to). Policy baked in: CNY keeps
+Apple's mainland-China market pricing (no Play in China, so no Google
+reference), and CHF is split per territory (CH and LI price differently on
+Google). The iOS lifetime IAP is NOT driven by this table — its
+auto-equalized price schedule is maintained by Apple and stays FX-current.
+
+Why not Apple's own equalized tier matrix: it deviates from FX+tax reality
+by >20% in ~30 currencies in BOTH directions (e.g. TRY at ~$0.90 for the
+$4.99 tier, DKK at ~$153 for the $49.99 tier — found by auditing the live
+products in 2026-10 after a Turkish monthly sub came through at ~€0.80).
+
+The workflow when FX rates move (quarterly-ish, or after any suspicious
+sale):
+
+```bash
+source ~/.localrc
+# 1. Cross-check the live stores against the table + independent FX rates.
+dart run bin/audit_prices.dart
+# 2. Regenerate the table from Google's current convertRegionPrices data…
+dart run bin/generate_pricing_targets.dart
+# 3. …review the git diff of lib/src/pricing_targets.dart CAREFULLY
+#    (this is the human pricing decision — the generator is just a fetch),
+#    re-anchor CNY if the diff drops it, then commit.
+# 4. Re-apply to both stores (idempotent; only drifted territories move).
+dart run bin/provision.dart asc-products
+dart run bin/provision.dart play-products
+# 5. Verify.
+dart run bin/audit_prices.dart
+dart run bin/inspect_products.dart
+```
+
+`bin/audit_prices.dart` is read-only: it walks every ASC territory + Play
+region × product and flags prices that deviate from the table, from Apple's
+tier matrix, and from an independent FX rate (open.er-api.com) — outliers in
+either direction (too cheap AND too expensive) get listed.
 
 ## Inspecting live state
 
@@ -216,18 +247,14 @@ dart run bin/inspect_products.dart
 
 Read-only verification tool: prints both subscriptions' and the IAP's
 state + en-US localizations, **per-territory subscription price coverage**
-(`territories priced: 175/175 — parity OK (nominal or equalized tier)`,
-listing missing or off-parity territories), the IAP base-price note, and
-the Play listings / base-plan prices. Note: the Play endpoints are
+(`territories priced: 175/175 — parity OK (reviewed PricingTargets)`,
+listing missing or off-target territories), the IAP
+base-price note, and the Play listings / base-plan prices. Note: the Play
+endpoints are
 `.../subscriptions` and `.../oneTimeProducts` — the old
 `.../monetization/...` routes were removed server-side and answer with a
 bare HTML 404 (no JSON error), which looks exactly like a permission
 problem but isn't one.
-
-`bin/probe_tiers.dart` is a small diagnostic that prints, per product, the
-Apple tier of the USA nominal price point and the local price of that same
-tier in a handful of storefronts — handy when checking what the
-equalized-tier fallback would pick before a run.
 
 ## Safety notes
 

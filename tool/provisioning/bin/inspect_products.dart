@@ -1,7 +1,7 @@
 /// Inspection / verification: prints the live store state of the Pro
 /// products (ASC + Play) — localizations (name/description), per-territory
-/// subscription price coverage with nominal parity, and Play listings.
-/// Read-only.
+/// subscription price coverage against the reviewed PricingTargets table,
+/// and Play listings. Read-only.
 ///
 /// Run: source ~/.localrc && dart run bin/inspect_products.dart
 import 'dart:convert';
@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:provisioning/src/api_client.dart';
 import 'package:provisioning/src/asc_jwt.dart';
-import 'package:provisioning/src/money.dart';
+import 'package:provisioning/src/pricing_targets.dart';
 
 Future<void> main() async {
   final env = Platform.environment;
@@ -38,19 +38,6 @@ Future<void> main() async {
     return '${a['customerPrice']}';
   }
 
-  /// The Apple tier (`p` field) embedded in a base64url price-point id —
-  /// points sharing a tier are Apple's equalized local prices.
-  String? tierOf(String? id) {
-    if (id == null) return null;
-    try {
-      final padded = id + '=' * ((4 - id.length % 4) % 4);
-      final decoded = jsonDecode(utf8.decode(base64Url.decode(padded)));
-      return decoded is Map ? decoded['p'] as String? : null;
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<List<String>> territoryIds(String subId) async {
     final ids = <String>[];
     String? cursor;
@@ -67,34 +54,16 @@ Future<void> main() async {
     return ids;
   }
 
-  /// The tier of the USA point for [nominalUsd], or null when unknown.
-  Future<String?> referenceTier(String subId, String nominalUsd) async {
-    String? cursor;
-    do {
-      final page = await asc.get('v1/subscriptions/$subId/pricePoints', {
-        'filter[territory]': 'USA',
-        'limit': '200',
-        if (cursor != null) 'cursor': cursor,
-      });
-      for (final p in page.dataList) {
-        if ((p['attributes'] as Map?)?['customerPrice'] ==
-            normalizePrice(nominalUsd)) {
-          return tierOf(p['id'] as String?);
-        }
-      }
-      final meta = page.json['meta'];
-      final paging = meta is Map ? meta['paging'] : null;
-      cursor = paging is Map ? paging['nextCursor'] as String? : null;
-    } while (cursor != null);
-    return null;
-  }
-
-  /// Prints "priced/total territories" and parity mismatches. Parity =
-  /// nominal price match OR the equalized tier price (same Apple tier as
-  /// the USA nominal point) — the provisioner's two pricing modes.
-  Future<void> priceCoverage(String subId, String nominalUsd) async {
-    final wanted = normalizePrice(nominalUsd);
-    final refTier = await referenceTier(subId, nominalUsd);
+  /// Prints "priced/total territories" and parity mismatches. Parity = the
+  /// current price matches the reviewed PricingTargets value for the
+  /// territory's currency (per-territory override first), allowing the
+  /// provisioner's snap-to-nearest-point tolerance.
+  Future<void> priceCoverage(
+    String subId,
+    String nominalUsd,
+    Map<String, String> territoryCurrency,
+  ) async {
+    const snapTolerance = 0.02;
     final territories = await territoryIds(subId);
     var priced = 0;
     final missing = <String>[];
@@ -123,12 +92,21 @@ Future<void> main() async {
                   as Map?)?['id']
               as String?;
       final price = pricePointPrice(prices.json, pointId);
+      final wanted = PricingTargets.target(
+        territoryCurrency[t] ?? '?',
+        nominalUsd,
+        region: {'CHE': 'CH', 'LIE': 'LI'}[t],
+      );
+      final value = double.tryParse(price ?? '');
+      final target = wanted == null ? null : double.tryParse(wanted);
       final atParity =
-          price == wanted || (refTier != null && tierOf(pointId) == refTier);
-      if (!atParity) offParity.add('$t=$price');
+          value != null &&
+          target != null &&
+          (value / target - 1).abs() <= snapTolerance;
+      if (!atParity) offParity.add('$t=$price(want $wanted)');
     }
     final parityNote = offParity.isEmpty
-        ? 'parity OK (nominal or equalized tier)'
+        ? 'parity OK (reviewed PricingTargets)'
         : 'OFF PARITY: ${offParity.join(', ')}';
     print('  territories priced: $priced/${territories.length} — $parityNote');
     if (missing.isNotEmpty) {
@@ -137,6 +115,14 @@ Future<void> main() async {
   }
 
   print('=== App Store Connect ===');
+  final territoryCurrency = <String, String>{};
+  {
+    final territories = await asc.get('v1/territories', {'limit': '200'});
+    for (final t in territories.dataList) {
+      territoryCurrency[t['id'] as String] =
+          (t['attributes'] as Map?)?['currency'] as String? ?? '?';
+    }
+  }
   const nominal = {'pro_yearly': '49.99', 'pro_monthly': '4.99'};
   for (final productId in ['pro_yearly', 'pro_monthly']) {
     final found = await asc.get(
@@ -163,7 +149,7 @@ Future<void> main() async {
         'description="${a['description']}"',
       );
     }
-    await priceCoverage(subId, nominal[productId]!);
+    await priceCoverage(subId, nominal[productId]!, territoryCurrency);
   }
 
   // IAP (lifetime)

@@ -18,7 +18,7 @@ const subs = [
     name: 'Pro - Yearly',
     description: 'Yearly Pro Subscription',
     subscriptionPeriod: 'ONE_YEAR',
-    priceUsd: '24.99',
+    priceUsd: '49.99',
   ),
   SubscriptionSpec(
     productId: 'pro_monthly',
@@ -34,6 +34,29 @@ Map<String, Object?> _resource(
   String id, [
   Map<String, Object?> attributes = const {},
 ]) => {'type': type, 'id': id, 'attributes': attributes};
+
+/// Scripts the territory list the provisioner reads for the per-territory
+/// currency map (fetched once per run, then cached). In create flows the
+/// availability setup reads the same endpoint per subscription — script
+/// [times] accordingly (the ids are all that read uses).
+void scriptTerritories(
+  FakeApiClient client,
+  Map<String, String> currencies, {
+  int times = 1,
+}) {
+  for (var i = 0; i < times; i++) {
+    client.on(
+      'GET',
+      'v1/territories',
+      ApiResponse(200, {
+        'data': [
+          for (final e in currencies.entries)
+            _resource('territories', e.key, {'currency': e.value}),
+        ],
+      }),
+    );
+  }
+}
 
 /// Scripts an existing availability plus its territory list (the related
 /// collection endpoint the provisioner reads territory ids from).
@@ -75,6 +98,16 @@ ApiResponse currentPrice(String subId, String pointId, String customerPrice) =>
         },
       ],
       'included': [
+        _resource('subscriptionPricePoints', pointId, {
+          'customerPrice': customerPrice,
+        }),
+      ],
+    });
+
+/// A price-points page with a single point.
+ApiResponse pricePoints(String pointId, String customerPrice) =>
+    ApiResponse(200, {
+      'data': [
         _resource('subscriptionPricePoints', pointId, {
           'customerPrice': customerPrice,
         }),
@@ -225,6 +258,36 @@ void scriptExistingIap(
   }
 }
 
+/// Scripts both subscriptions as available in the USA only, priced at the
+/// wanted nominal with the matching price points — the steady state every
+/// non-pricing test rides on.
+void scriptPricedUsaSubs(FakeApiClient client) {
+  scriptExistingSubs(client);
+  scriptAvailability(client, 's1', ['USA']);
+  scriptAvailability(client, 's2', ['USA']);
+  scriptTerritories(client, {'USA': 'USD'});
+  client.on(
+    'GET',
+    'v1/subscriptions/s1/prices',
+    currentPrice('s1', 'pp-s1', '49.99'),
+  );
+  client.on(
+    'GET',
+    'v1/subscriptions/s1/pricePoints',
+    pricePoints('pp-s1', '49.99'),
+  );
+  client.on(
+    'GET',
+    'v1/subscriptions/s2/prices',
+    currentPrice('s2', 'pp-s2', '4.99'),
+  );
+  client.on(
+    'GET',
+    'v1/subscriptions/s2/pricePoints',
+    pricePoints('pp-s2', '4.99'),
+  );
+}
+
 void main() {
   group('AscProvisioner', () {
     test('creates everything when nothing exists', () async {
@@ -247,43 +310,20 @@ void main() {
         'v1/subscriptions',
         ApiResponse(201, {'data': _resource('subscriptions', 's2')}),
       );
-      // Territories list is fetched once per subscription (availability is
-      // created over all of them, then each territory gets priced).
-      for (var i = 0; i < 2; i++) {
-        client.on(
-          'GET',
-          'v1/territories',
-          ApiResponse(200, {
-            'data': [
-              _resource('territories', 'USA'),
-              _resource('territories', 'DEU'),
-            ],
-          }),
-        );
-      }
+      // Territories are fetched once per subscription (availability
+      // creation) plus once for the currency map.
+      scriptTerritories(client, {'USA': 'USD', 'DEU': 'EUR'}, times: 3);
       // Price points are looked up once per territory (USA, then DEU).
       for (var i = 0; i < 2; i++) {
         client.on(
           'GET',
           'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-y', {
-                'customerPrice': '24.99',
-              }),
-            ],
-          }),
+          pricePoints('pp-y', '49.99'),
         );
         client.on(
           'GET',
           'v1/subscriptions/s2/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-m', {
-                'customerPrice': '4.99',
-              }),
-            ],
-          }),
+          pricePoints('pp-m', '4.99'),
         );
       }
       client.on(
@@ -384,19 +424,7 @@ void main() {
       final client = FakeApiClient();
       final logs = <String>[];
 
-      scriptExistingSubs(client);
-      scriptAvailability(client, 's1', ['USA']);
-      scriptAvailability(client, 's2', ['USA']);
-      client.on(
-        'GET',
-        'v1/subscriptions/s1/prices',
-        currentPrice('s1', 'pp-s1', '24.99'),
-      );
-      client.on(
-        'GET',
-        'v1/subscriptions/s2/prices',
-        currentPrice('s2', 'pp-s2', '4.99'),
-      );
+      scriptPricedUsaSubs(client);
       scriptExistingIap(client, '10417', '79.99');
 
       final provisioner = AscProvisioner(
@@ -422,6 +450,7 @@ void main() {
       final client = FakeApiClient();
       final logs = <String>[];
 
+      // s1 localization drifted (em-dash name, no description).
       scriptExistingSubs(
         client,
         s1LocAttributes: {
@@ -432,15 +461,26 @@ void main() {
       );
       scriptAvailability(client, 's1', ['USA']);
       scriptAvailability(client, 's2', ['USA']);
+      scriptTerritories(client, {'USA': 'USD'});
       client.on(
         'GET',
         'v1/subscriptions/s1/prices',
-        currentPrice('s1', 'pp-s1', '24.99'),
+        currentPrice('s1', 'pp-s1', '49.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/pricePoints',
+        pricePoints('pp-s1', '49.99'),
       );
       client.on(
         'GET',
         'v1/subscriptions/s2/prices',
         currentPrice('s2', 'pp-s2', '4.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/pricePoints',
+        pricePoints('pp-s2', '4.99'),
       );
       // IAP localization drifted too (em-dash name, no description).
       scriptExistingIap(
@@ -499,15 +539,26 @@ void main() {
       );
       scriptAvailability(client, 's1', ['USA']);
       scriptAvailability(client, 's2', ['USA']);
+      scriptTerritories(client, {'USA': 'USD'});
       client.on(
         'GET',
         'v1/subscriptions/s1/prices',
-        currentPrice('s1', 'pp-s1', '24.99'),
+        currentPrice('s1', 'pp-s1', '49.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/pricePoints',
+        pricePoints('pp-s1', '49.99'),
       );
       client.on(
         'GET',
         'v1/subscriptions/s2/prices',
         currentPrice('s2', 'pp-s2', '4.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/pricePoints',
+        pricePoints('pp-s2', '4.99'),
       );
       scriptExistingIap(
         client,
@@ -553,21 +604,36 @@ void main() {
     });
 
     test(
-      'prices every territory with nominal parity, skips matching ones',
+      'prices every territory from the targets table, skips matching ones',
       () async {
         final client = FakeApiClient();
         final logs = <String>[];
 
         scriptExistingSubs(client);
-        // USA already at parity, DEU unpriced (point exists), JPN unpriced
-        // with no 24.99 point — page 1 jumps past the target (sorted
-        // ascending) so the scan must stop early and skip JPN.
+        // USA already at the wanted price, DEU + JPN unpriced with exact
+        // table points (EUR anchor 49.99, JPY Google-table 8700).
         scriptAvailability(client, 's1', ['USA', 'DEU', 'JPN']);
         scriptAvailability(client, 's2', ['USA']);
+        scriptTerritories(client, {'USA': 'USD', 'DEU': 'EUR', 'JPN': 'JPY'});
         client.on(
           'GET',
           'v1/subscriptions/s1/prices',
-          currentPrice('s1', 'pp-usa', '24.99'),
+          currentPrice('s1', 'pp-usa', '49.99'),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          pricePoints('pp-usa', '49.99'),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          pricePoints('pp-deu', '49.99'),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          pricePoints('pp-jpn', '8700'),
         );
         client.on(
           'GET',
@@ -576,31 +642,8 @@ void main() {
         );
         client.on(
           'GET',
-          'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-deu', {
-                'customerPrice': '24.99',
-              }),
-            ],
-          }),
-        );
-        client.on(
-          'GET',
-          'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-jpn-low', {
-                'customerPrice': '0.29',
-              }),
-              _resource('subscriptionPricePoints', 'pp-jpn-high', {
-                'customerPrice': '25',
-              }),
-            ],
-            'meta': {
-              'paging': {'total': 800, 'nextCursor': 'AMg', 'limit': 200},
-            },
-          }),
+          'v1/subscriptions/s2/pricePoints',
+          pricePoints('pp-s2', '4.99'),
         );
         scriptExistingIap(client, '10417', '79.99');
 
@@ -614,81 +657,71 @@ void main() {
           lifetimePriceUsd: '79.99',
         );
 
-        expect(ok, isTrue); // missing points don't fail the run
+        expect(ok, isTrue);
         final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
-        expect(priceBodies, hasLength(1)); // only DEU
-        final rels =
-            (priceBodies.single['data'] as Map)['relationships'] as Map;
-        expect(((rels['territory'] as Map)['data'] as Map)['id'], 'DEU');
+        expect(priceBodies, hasLength(2)); // DEU + JPN
+        String pointOf(Map<String, Object?> body) =>
+            ((((body['data'] as Map)['relationships']
+                            as Map)['subscriptionPricePoint']
+                        as Map)['data']
+                    as Map)['id']
+                as String;
+        String territoryOf(Map<String, Object?> body) =>
+            ((((body['data'] as Map)['relationships'] as Map)['territory']
+                        as Map)['data']
+                    as Map)['id']
+                as String;
+        expect(priceBodies.map(pointOf), ['pp-deu', 'pp-jpn']);
+        expect(priceBodies.map(territoryOf), ['DEU', 'JPN']);
         expect(
-          ((rels['subscriptionPricePoint'] as Map)['data'] as Map)['id'],
-          'pp-deu',
-        );
-        // JPN was skipped with a summary warning, and the cursor was NOT
-        // followed (early exit once a point exceeds the target; the fallback
-        // scan then hits an unscripted — empty — page, so JPN has no usable
-        // point at all).
-        expect(
-          logs.any((l) => l.contains('WARNING') && l.contains('JPN')),
+          logs.any((l) => l.contains('USA: price already 49.99 — skipping')),
           isTrue,
         );
-        expect(client.requests.any((r) => r.contains('cursor=AMg')), isFalse);
+        // Exact table prices — no snap notes.
+        expect(logs.any((l) => l.contains('snapped')), isFalse);
       },
     );
 
-    test('falls back to the equalized tier price point', () async {
+    test('snaps to the nearest price point when no exact one exists', () async {
       final client = FakeApiClient();
       final logs = <String>[];
 
       scriptExistingSubs(client);
       scriptAvailability(client, 's1', ['JPN']);
-      scriptAvailability(client, 's2', ['USA']);
-      // JPN is unpriced (no scripted prices → empty collection) and has no
-      // 24.99 point — the point with the SAME tier as the USA 24.99 point
-      // (Apple's equalized local price, ¥660) must be chosen.
-      client.on(
-        'GET',
-        'v1/subscriptions/s2/prices',
-        currentPrice('s2', 'pp-s2', '4.99'),
-      );
-      // pricePoints GETs on s1 in order: 1) JPN exact scan (early exit once
-      // a point exceeds 24.99), 2) USA reference-tier lookup, 3) JPN tier
-      // scan.
+      scriptAvailability(client, 's2', ['TUR']);
+      scriptTerritories(client, {'JPN': 'JPY', 'TUR': 'TRY'});
+      // JPN (yearly target ¥8700): points at 8500 / 9000 — the nearer 8500
+      // wins (2.3% off → snap note) and the scan stops there (points come
+      // back sorted ascending), never following the cursor.
       client.on(
         'GET',
         'v1/subscriptions/s1/pricePoints',
         ApiResponse(200, {
           'data': [
-            _resource('subscriptionPricePoints', 'pp-low', {
-              'customerPrice': '24.5',
+            _resource('subscriptionPricePoints', 'pp-jpn-low', {
+              'customerPrice': '8500',
             }),
-            _resource('subscriptionPricePoints', 'pp-high', {
-              'customerPrice': '25',
+            _resource('subscriptionPricePoints', 'pp-jpn-high', {
+              'customerPrice': '9000',
             }),
           ],
+          'meta': {
+            'paging': {'total': 800, 'nextCursor': 'AMg', 'limit': 200},
+          },
         }),
       );
+      // TUR (monthly target ₺294.99): 289.99 is much nearer than the next
+      // point above (1.7% off → no snap note).
       client.on(
         'GET',
-        'v1/subscriptions/s1/pricePoints',
+        'v1/subscriptions/s2/pricePoints',
         ApiResponse(200, {
           'data': [
-            _resource('subscriptionPricePoints', fakePointId('10300'), {
-              'customerPrice': '24.99',
+            _resource('subscriptionPricePoints', 'pp-tur-low', {
+              'customerPrice': '289.99',
             }),
-          ],
-        }),
-      );
-      client.on(
-        'GET',
-        'v1/subscriptions/s1/pricePoints',
-        ApiResponse(200, {
-          'data': [
-            _resource('subscriptionPricePoints', fakePointId('10290'), {
-              'customerPrice': '500',
-            }),
-            _resource('subscriptionPricePoints', fakePointId('10300'), {
-              'customerPrice': '660',
+            _resource('subscriptionPricePoints', 'pp-tur-high', {
+              'customerPrice': '350',
             }),
           ],
         }),
@@ -707,243 +740,59 @@ void main() {
 
       expect(ok, isTrue);
       final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
-      expect(priceBodies, hasLength(1));
-      final rels = (priceBodies.single['data'] as Map)['relationships'] as Map;
-      expect(((rels['territory'] as Map)['data'] as Map)['id'], 'JPN');
-      expect(
-        ((rels['subscriptionPricePoint'] as Map)['data'] as Map)['id'],
-        fakePointId('10300'),
-      );
+      expect(priceBodies, hasLength(2));
+      String pointOf(Map<String, Object?> body) =>
+          ((((body['data'] as Map)['relationships']
+                          as Map)['subscriptionPricePoint']
+                      as Map)['data']
+                  as Map)['id']
+              as String;
+      expect(priceBodies.map(pointOf), ['pp-jpn-low', 'pp-tur-low']);
+      // Early exit: the second page was never fetched.
+      expect(client.requests.any((r) => r.contains('cursor=AMg')), isFalse);
+      // Only JPN deviates beyond the 2% snap-warning threshold.
+      expect(logs.any((l) => l.contains('JPN→8500 (target 8700)')), isTrue);
+      expect(logs.any((l) => l.contains('TUR→')), isFalse);
       expect(
         logs.any(
-          (l) =>
-              l.contains('no 24.99 point — set the equalized tier price 660'),
+          (l) => l.contains('JPN: set price 8500 — snapped from target 8700'),
         ),
         isTrue,
       );
-      expect(logs.any((l) => l.contains('JPN→660')), isTrue);
-    });
-
-    test('tier fallback works when every point is below the target', () async {
-      final client = FakeApiClient();
-      final logs = <String>[];
-
-      scriptExistingSubs(client);
-      scriptAvailability(client, 's1', ['USA']);
-      scriptAvailability(client, 's2', ['SWE']);
-      client.on(
-        'GET',
-        'v1/subscriptions/s1/prices',
-        currentPrice('s1', 'pp-s1', '24.99'),
-      );
-      // SWE is unpriced; every point is below 4.99, so the exact scan runs
-      // the full page before the tier fallback kicks in (64 kr at the USA
-      // 4.99 tier).
-      client.on(
-        'GET',
-        'v1/subscriptions/s2/pricePoints',
-        ApiResponse(200, {
-          'data': [
-            _resource('subscriptionPricePoints', 'pp-low', {
-              'customerPrice': '0.29',
-            }),
-            _resource('subscriptionPricePoints', 'pp-mid', {
-              'customerPrice': '4.5',
-            }),
-          ],
-        }),
-      );
-      client.on(
-        'GET',
-        'v1/subscriptions/s2/pricePoints',
-        ApiResponse(200, {
-          'data': [
-            _resource('subscriptionPricePoints', fakePointId('10062'), {
-              'customerPrice': '4.99',
-            }),
-          ],
-        }),
-      );
-      client.on(
-        'GET',
-        'v1/subscriptions/s2/pricePoints',
-        ApiResponse(200, {
-          'data': [
-            _resource('subscriptionPricePoints', fakePointId('10060'), {
-              'customerPrice': '55',
-            }),
-            _resource('subscriptionPricePoints', fakePointId('10062'), {
-              'customerPrice': '64',
-            }),
-          ],
-        }),
-      );
-      scriptExistingIap(client, '10417', '79.99');
-
-      final provisioner = AscProvisioner(
-        client: client,
-        appId: '1234',
-        log: logs.add,
-      );
-      final ok = await provisioner.run(
-        subscriptions: subs,
-        lifetimePriceUsd: '79.99',
-      );
-
-      expect(ok, isTrue);
-      final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
-      expect(priceBodies, hasLength(1));
-      final rels = (priceBodies.single['data'] as Map)['relationships'] as Map;
-      expect(((rels['territory'] as Map)['data'] as Map)['id'], 'SWE');
-      expect(
-        ((rels['subscriptionPricePoint'] as Map)['data'] as Map)['id'],
-        fakePointId('10062'),
-      );
-      expect(
-        logs.any(
-          (l) => l.contains('no 4.99 point — set the equalized tier price 64'),
-        ),
-        isTrue,
-      );
-      expect(logs.any((l) => l.contains('SWE→64')), isTrue);
     });
 
     test(
-      'territory without the reference tier is skipped with a warning',
+      'snaps to the highest point when every point is below the target',
       () async {
         final client = FakeApiClient();
         final logs = <String>[];
 
         scriptExistingSubs(client);
-        scriptAvailability(client, 's1', ['XYZ']);
-        scriptAvailability(client, 's2', ['USA']);
-        client.on(
-          'GET',
-          'v1/subscriptions/s2/prices',
-          currentPrice('s2', 'pp-s2', '4.99'),
-        );
-        // 1) XYZ exact scan: no 24.99 (early exit at 25). 2) USA reference
-        // tier: 10300. 3) XYZ tier scan: jumps from 10290 to 10350 — the
-        // reference tier doesn't exist there.
-        client.on(
-          'GET',
-          'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-low', {
-                'customerPrice': '24.5',
-              }),
-              _resource('subscriptionPricePoints', 'pp-high', {
-                'customerPrice': '25',
-              }),
-            ],
-          }),
-        );
-        client.on(
-          'GET',
-          'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', fakePointId('10300'), {
-                'customerPrice': '24.99',
-              }),
-            ],
-          }),
-        );
-        client.on(
-          'GET',
-          'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', fakePointId('10290'), {
-                'customerPrice': '500',
-              }),
-              _resource('subscriptionPricePoints', fakePointId('10350'), {
-                'customerPrice': '1200',
-              }),
-            ],
-          }),
-        );
-        scriptExistingIap(client, '10417', '79.99');
-
-        final provisioner = AscProvisioner(
-          client: client,
-          appId: '1234',
-          log: logs.add,
-        );
-        final ok = await provisioner.run(
-          subscriptions: subs,
-          lifetimePriceUsd: '79.99',
-        );
-
-        expect(ok, isTrue); // missing tiers don't fail the run
-        expect(client.count('POST', 'v1/subscriptionPrices'), 0);
-        expect(
-          logs.any((l) => l.contains('WARNING') && l.contains('XYZ')),
-          isTrue,
-        );
-      },
-    );
-
-    test(
-      're-runs skip territories already at the equalized tier price',
-      () async {
-        final client = FakeApiClient();
-        final logs = <String>[];
-
-        scriptExistingSubs(client);
-        scriptAvailability(client, 's1', ['JPN']);
-        scriptAvailability(client, 's2', ['USA']);
-        // JPN was priced with the fallback on a previous run: current point is
-        // the equalized one (tier 10300, ¥660), which must be recognized by
-        // POINT ID (the nominal string 24.99 never matches there).
+        scriptAvailability(client, 's1', ['USA']);
+        scriptAvailability(client, 's2', ['SWE']);
+        scriptTerritories(client, {'USA': 'USD', 'SWE': 'SEK'});
         client.on(
           'GET',
           'v1/subscriptions/s1/prices',
-          currentPrice('s1', fakePointId('10300'), '660'),
-        );
-        client.on(
-          'GET',
-          'v1/subscriptions/s2/prices',
-          currentPrice('s2', 'pp-s2', '4.99'),
-        );
-        // 1) JPN exact scan (no 24.99), 2) USA reference tier, 3) JPN tier
-        // scan finding the already-current point.
-        client.on(
-          'GET',
-          'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-low', {
-                'customerPrice': '24.5',
-              }),
-              _resource('subscriptionPricePoints', 'pp-high', {
-                'customerPrice': '25',
-              }),
-            ],
-          }),
+          currentPrice('s1', 'pp-s1', '49.99'),
         );
         client.on(
           'GET',
           'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', fakePointId('10300'), {
-                'customerPrice': '24.99',
-              }),
-            ],
-          }),
+          pricePoints('pp-s1', '49.99'),
         );
+        // SWE (monthly target 65 kr): every point is below the target — the
+        // highest one wins.
         client.on(
           'GET',
-          'v1/subscriptions/s1/pricePoints',
+          'v1/subscriptions/s2/pricePoints',
           ApiResponse(200, {
             'data': [
-              _resource('subscriptionPricePoints', fakePointId('10290'), {
-                'customerPrice': '500',
+              _resource('subscriptionPricePoints', 'pp-swe-low', {
+                'customerPrice': '55',
               }),
-              _resource('subscriptionPricePoints', fakePointId('10300'), {
-                'customerPrice': '660',
+              _resource('subscriptionPricePoints', 'pp-swe-high', {
+                'customerPrice': '60',
               }),
             ],
           }),
@@ -961,17 +810,125 @@ void main() {
         );
 
         expect(ok, isTrue);
-        expect(client.count('POST', 'v1/subscriptionPrices'), 0);
+        final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
+        expect(priceBodies, hasLength(1));
+        final rels =
+            (priceBodies.single['data'] as Map)['relationships'] as Map;
+        expect(((rels['territory'] as Map)['data'] as Map)['id'], 'SWE');
         expect(
-          logs.any(
-            (l) => l.contains('already at the equalized tier price 660'),
-          ),
-          isTrue,
+          ((rels['subscriptionPricePoint'] as Map)['data'] as Map)['id'],
+          'pp-swe-high',
         );
-        // The summary still lists the fallback territory.
-        expect(logs.any((l) => l.contains('JPN→660')), isTrue);
+        expect(logs.any((l) => l.contains('SWE→60 (target 65)')), isTrue);
       },
     );
+
+    test(
+      'a territory whose currency has no target is skipped with a warning',
+      () async {
+        final client = FakeApiClient();
+        final logs = <String>[];
+
+        scriptExistingSubs(client);
+        scriptAvailability(client, 's1', ['XYZ']);
+        scriptAvailability(client, 's2', ['USA']);
+        scriptTerritories(client, {'XYZ': 'QQQ', 'USA': 'USD'});
+        client.on(
+          'GET',
+          'v1/subscriptions/s2/prices',
+          currentPrice('s2', 'pp-s2', '4.99'),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s2/pricePoints',
+          pricePoints('pp-s2', '4.99'),
+        );
+        scriptExistingIap(client, '10417', '79.99');
+
+        final provisioner = AscProvisioner(
+          client: client,
+          appId: '1234',
+          log: logs.add,
+        );
+        final ok = await provisioner.run(
+          subscriptions: subs,
+          lifetimePriceUsd: '79.99',
+        );
+
+        expect(ok, isTrue); // missing targets don't fail the run
+        expect(client.count('POST', 'v1/subscriptionPrices'), 0);
+        expect(
+          logs.any((l) => l.contains('no pricing target for currency QQQ')),
+          isTrue,
+        );
+        expect(
+          logs.any((l) => l.contains('WARNING') && l.contains('XYZ')),
+          isTrue,
+        );
+      },
+    );
+
+    test('re-runs skip territories already at the snapped point', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      scriptExistingSubs(client);
+      scriptAvailability(client, 's1', ['JPN']);
+      scriptAvailability(client, 's2', ['USA']);
+      scriptTerritories(client, {'JPN': 'JPY', 'USA': 'USD'});
+      // JPN was priced on a previous run: the current point is the snapped
+      // one (¥8500 for the ¥8700 target), which must be recognized by POINT
+      // ID (the target price string never matches there).
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/prices',
+        currentPrice('s1', 'pp-jpn-low', '8500'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/pricePoints',
+        ApiResponse(200, {
+          'data': [
+            _resource('subscriptionPricePoints', 'pp-jpn-low', {
+              'customerPrice': '8500',
+            }),
+            _resource('subscriptionPricePoints', 'pp-jpn-high', {
+              'customerPrice': '9000',
+            }),
+          ],
+        }),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/prices',
+        currentPrice('s2', 'pp-s2', '4.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/pricePoints',
+        pricePoints('pp-s2', '4.99'),
+      );
+      scriptExistingIap(client, '10417', '79.99');
+
+      final provisioner = AscProvisioner(
+        client: client,
+        appId: '1234',
+        log: logs.add,
+      );
+      final ok = await provisioner.run(
+        subscriptions: subs,
+        lifetimePriceUsd: '79.99',
+      );
+
+      expect(ok, isTrue);
+      expect(client.count('POST', 'v1/subscriptionPrices'), 0);
+      expect(
+        logs.any((l) => l.contains('JPN: price already 8500 — skipping')),
+        isTrue,
+      );
+      // The summary still lists the snapped territory.
+      expect(logs.any((l) => l.contains('JPN→8500 (target 8700)')), isTrue);
+    });
 
     test(
       'finds price points beyond the first page (cursor pagination)',
@@ -994,17 +951,9 @@ void main() {
           'v1/subscriptions',
           ApiResponse(201, {'data': _resource('subscriptions', 's2')}),
         );
-        for (var i = 0; i < 2; i++) {
-          client.on(
-            'GET',
-            'v1/territories',
-            ApiResponse(200, {
-              'data': [_resource('territories', 'USA')],
-            }),
-          );
-        }
-        // Yearly's 24.99 point sits on page 2 of 4 (ASC USA has ~800 points,
-        // paged at 200) — page 1 must not satisfy the lookup.
+        scriptTerritories(client, {'USA': 'USD'}, times: 3);
+        // Yearly's 49.99 point sits on page 2 (ASC USA has ~800 points,
+        // paged at 200) — page 1 only holds points below the target.
         client.on(
           'GET',
           'v1/subscriptions/s1/pricePoints',
@@ -1022,24 +971,12 @@ void main() {
         client.on(
           'GET',
           'v1/subscriptions/s1/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-y', {
-                'customerPrice': '24.99',
-              }),
-            ],
-          }),
+          pricePoints('pp-y', '49.99'),
         );
         client.on(
           'GET',
           'v1/subscriptions/s2/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-m', {
-                'customerPrice': '4.99',
-              }),
-            ],
-          }),
+          pricePoints('pp-m', '4.99'),
         );
         client.on(
           'POST',
@@ -1113,26 +1050,17 @@ void main() {
         'v1/subscriptions',
         ApiResponse(201, {'data': _resource('subscriptions', 's2')}),
       );
-      for (var i = 0; i < 2; i++) {
-        client.on(
-          'GET',
-          'v1/territories',
-          ApiResponse(200, {
-            'data': [_resource('territories', 'USA')],
-          }),
-        );
-        client.on(
-          'GET',
-          'v1/subscriptions/${i == 0 ? 's1' : 's2'}/pricePoints',
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', 'pp-s${i + 1}', {
-                'customerPrice': i == 0 ? '24.99' : '4.99',
-              }),
-            ],
-          }),
-        );
-      }
+      scriptTerritories(client, {'USA': 'USD'}, times: 3);
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/pricePoints',
+        pricePoints('pp-s1', '49.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/pricePoints',
+        pricePoints('pp-s2', '4.99'),
+      );
       // Every price POST 409s (account-level block, e.g. missing Paid Apps
       // agreement) — the run must still reach the IAP.
       client.onThrow(
@@ -1200,6 +1128,7 @@ void main() {
       scriptExistingSubs(client);
       scriptAvailability(client, 's1', ['USA']);
       scriptAvailability(client, 's2', ['USA']);
+      scriptTerritories(client, {'USA': 'USD'});
       // Yearly: current 24.99, wanted 49.99 → change. Monthly: matches.
       client.on(
         'GET',
@@ -1209,18 +1138,17 @@ void main() {
       client.on(
         'GET',
         'v1/subscriptions/s1/pricePoints',
-        ApiResponse(200, {
-          'data': [
-            _resource('subscriptionPricePoints', 'pp-new', {
-              'customerPrice': '49.99',
-            }),
-          ],
-        }),
+        pricePoints('pp-new', '49.99'),
       );
       client.on(
         'GET',
         'v1/subscriptions/s2/prices',
         currentPrice('s2', 'pp-m', '4.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/pricePoints',
+        pricePoints('pp-m', '4.99'),
       );
       // IAP: schedule at tier 10417 (79.99), wanted 99.99 (tier 10477).
       scriptExistingIap(client, '10417', '79.99', scriptPricePoints: false);
@@ -1236,29 +1164,13 @@ void main() {
         }),
       );
 
-      const updatedSubs = [
-        SubscriptionSpec(
-          productId: 'pro_yearly',
-          name: 'Pro - Yearly',
-          description: 'Yearly Pro Subscription',
-          subscriptionPeriod: 'ONE_YEAR',
-          priceUsd: '49.99',
-        ),
-        SubscriptionSpec(
-          productId: 'pro_monthly',
-          name: 'Pro - Monthly',
-          description: 'Monthly Pro Subscription',
-          subscriptionPeriod: 'ONE_MONTH',
-          priceUsd: '4.99',
-        ),
-      ];
       final provisioner = AscProvisioner(
         client: client,
         appId: '1234',
         log: logs.add,
       );
       final ok = await provisioner.run(
-        subscriptions: updatedSubs,
+        subscriptions: subs,
         lifetimePriceUsd: '99.99',
       );
 
@@ -1273,6 +1185,10 @@ void main() {
             as Map)['id'],
         'pp-new',
       );
+      expect(
+        logs.any((l) => l.contains('USA: set price 49.99 (was 24.99)')),
+        isTrue,
+      );
       // The IAP schedule was re-posted with the new point (create-or-replace).
       final scheduleBodies = client.bodiesFor(
         'POST',
@@ -1286,7 +1202,6 @@ void main() {
             as Map)['data'],
         {'type': 'inAppPurchasePricePoints', 'id': fakePointId('10477')},
       );
-      expect(logs.any((l) => l.contains('price differs')), isTrue);
       expect(logs.any((l) => l.contains('different price')), isTrue);
     });
 
@@ -1309,15 +1224,7 @@ void main() {
         'v1/subscriptions',
         ApiResponse(201, {'data': _resource('subscriptions', 's2')}),
       );
-      for (var i = 0; i < 2; i++) {
-        client.on(
-          'GET',
-          'v1/territories',
-          ApiResponse(200, {
-            'data': [_resource('territories', 'USA')],
-          }),
-        );
-      }
+      scriptTerritories(client, {'USA': 'USD'}, times: 3);
       // No subscription price points scripted -> empty lists -> both
       // subscriptions skip USA and report it in a summary.
       client.on(
@@ -1360,55 +1267,6 @@ void main() {
         logs.where((l) => l.contains('WARNING') && l.contains('USA')).length,
         2,
       );
-    });
-
-    test('appleCurrencyPrices builds a per-currency table from the '
-        'reference tier', () async {
-      final client = FakeApiClient();
-
-      client.on(
-        'GET',
-        'v1/territories',
-        ApiResponse(200, {
-          'data': [
-            _resource('territories', 'USA', {'currency': 'USD'}),
-            _resource('territories', 'DEU', {'currency': 'EUR'}),
-            _resource('territories', 'FRA', {'currency': 'EUR'}),
-            _resource('territories', 'JPN', {'currency': 'JPY'}),
-          ],
-        }),
-      );
-      const path = 'v1/subscriptions/s1/pricePoints';
-      // FIFO: the reference (USA) lookup finds the USD 4.99 point (tier
-      // 10062), then one scan per currency — USD via USA, EUR via DEU
-      // (FRA shares the currency and gets no own scan), JPY via JPN.
-      for (final price in ['4.99', '4.99', '4.99', '660']) {
-        client.on(
-          'GET',
-          path,
-          ApiResponse(200, {
-            'data': [
-              _resource('subscriptionPricePoints', fakePointId('10062'), {
-                'customerPrice': price,
-              }),
-            ],
-          }),
-        );
-      }
-
-      final provisioner = AscProvisioner(
-        client: client,
-        appId: '1234',
-        log: (_) {},
-      );
-      final table = await provisioner.appleCurrencyPrices(
-        pricePointsPath: path,
-        priceUsd: '4.99',
-      );
-
-      expect(table, {'USD': '4.99', 'EUR': '4.99', 'JPY': '660'});
-      // Reference lookup + one scan per distinct currency (EUR once).
-      expect(client.count('GET', path), 4);
     });
   });
 }
