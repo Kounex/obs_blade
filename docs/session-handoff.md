@@ -40,8 +40,11 @@ quota reset, combined chat no longer starts every platform chat at launch,
 own YouTube channel in saved combos = "You", no `UC…` ids as names,
 activity empty state, adding a channel shows it, YouTube dead-session /
 no-channel states, transport failures in Settings → Logs. The dogfood
-phone was offline - **install on Kounex iOS and run the device check list
-from the session report before any test build.**
+phone was offline, so at the user's request these went straight out as
+**build 2026100304** (TestFlight `VALID` + Play internal, 4.1.0; store
+notes unchanged, TestFlight "What to Test" = the device check list). Next:
+the user's on-device verdict, then `release-promote` 4.1.0 (after 4.0.1 is
+published).
 
 **Update 2026-10-03 — global Pro pricing overhaul (both stores
 re-priced):** a Turkish monthly sub came through at ~€0.80; the audit
