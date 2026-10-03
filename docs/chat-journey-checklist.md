@@ -66,7 +66,7 @@ the account - Twitch is the only engine where offline means signed out
 | Setup sheets | full setup vs the sign-in-only part; steps match today's third-party console |
 | Empty-state CTA | the next step for the actual missing piece |
 | Combined sources sheet / builder | per-source state and fixes - every fix button does what it says ("Sign in" opens a sign-in) in "My chats" **and** saved combos |
-| Activity feed | sign-in notices, Pro upsell, relay switch |
+| Activity feed | status banner lines per platform state (incl. API key only, live on a platform that isn't set up), Pro upsell, relay switch; collected with the chat on another platform / another channel / the WebView engine |
 | Streaming mode + Chat tab + dashboard pane | same behavior in all three hosts |
 | Phone vs tablet | side-by-side layouts, sheet heights |
 
@@ -105,6 +105,10 @@ mod sheets, input / read-only strip, pickers, LIVE chips), walk it for
   API quota, Kick opens a socket). Nothing may read a store that isn't on
   screen - watch computeds / reactions created at app start
   (`lazySingletonCreated` before `GetIt.instance<…>()`).
+- "Listening" state (activity coverage, connection flags) must not
+  survive what the app can't see: a kill (close at the last heartbeat)
+  and an iOS suspension (timers stop, sockets die) - check what the
+  user is told after both.
 - Live smoke for new endpoints: a throwaway `flutter test` file; the
   Kick / Cloudflare user-agent notes are in the handoff § Chat
   conventions.

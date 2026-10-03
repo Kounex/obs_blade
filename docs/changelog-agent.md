@@ -2,6 +2,42 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - activity feed: status banner, own YouTube, gaps
+
+From the 2026-10-03 activity review (six findings, all built; spec
+`superpowers/specs/2026-10-04-activity-feed-status.md`). User decisions:
+own-YouTube detection by OBS + quota-free check, own chat always polled
+while live, gaps in the banner + a list marker, banner tucked when calm.
+
+- **Status banner** floating over the feed list (pinned-banner style):
+  tucked button (dot = news since last opened), a new action line pops
+  it out as one line, tap expands every line with its fix, X tucks;
+  seen lines persist (`activity-meta` `statusSeen`). Pure builder
+  `lib/utils/activity/activity_status.dart`, matrix-tested; replaces the
+  old notices row.
+- **Own YouTube without the chat** (`YouTubeOwnActivityPoller`): signed
+  in with a channel + Pro; `/live` check (~3 KB with the mobile UA) every
+  2 min in the foreground, 30 s while OBS streams to YouTube or somewhere
+  unknown; once live `liveChatMessages.list` every 30 s (~600 units/h);
+  stands by while the YouTube chat reads the own chat. API key only:
+  the banner says sign-in is needed (the key can't tell which channel is
+  yours). Sessions start at `actualStartTime`.
+- **OBS destination** (`GetStreamServiceSettings`, key never kept):
+  "You're live on YouTube / Twitch - set up / sign in" lines.
+- **Power-ups**: `channel.bits.use` replaces `channel.cheer` (same
+  `bits:read`, no new sign-in).
+- **Honest coverage**: a kill closes windows at the last heartbeat (was:
+  the next launch, claiming the downtime); a tick lagging > 75 s (iOS
+  suspension) splits open windows - except YouTube, whose page token
+  catches up. `gapsOf(session)` → banner lines + "Not listening on …"
+  rows. YouTube attaches count 2 min back (first page = recent history).
+- **Mark N thanked** per stream / day header; the empty state follows
+  sign-ins (it read them outside an Observer - stale on a tablet).
+
+Tests: `youtube_own_activity_poller_test.dart`, `activity_status_test.dart`,
+store gap / freeze / kill tests; shots in `activity_shots_test.dart`
+(`activity_status_*`). Gate: activity + chat + persistence 1,640 clean.
+
 ## 2026-10-03 - native chat bar: the channel dropdown fills its row
 
 User request: with sign-out in the header sheet, the native bar's right

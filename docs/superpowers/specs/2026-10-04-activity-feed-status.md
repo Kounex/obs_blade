@@ -1,6 +1,6 @@
 # Activity feed: status banner, own YouTube collection, gaps — design
 
-**Status:** building 2026-10-04. Follows the 2026-10-03 activity review
+**Status:** built 2026-10-04 (dogfood pending). Follows the 2026-10-03 activity review
 (six findings). Base design:
 [`2026-10-02-activity-feed-design.md`](2026-10-02-activity-feed-design.md).
 
