@@ -225,13 +225,22 @@ abstract class _CombinedChatStore with Store {
     this._chatTypeSub = box
         .watch(key: SettingsKeys.SelectedChatType.name)
         .listen((_) => sync());
-    this._sourcesReaction = reaction<List<CombinedSource>>(
-      (_) => this.activeSources,
-      (_) {
+    /// Reads the sources only while Combined is active: reading them
+    /// creates the platform stores, and a created store starts its own
+    /// chat (YouTube polls on the user's API quota, Kick opens a socket)
+    /// - at app start, for chats nobody opened. [activate] selects the
+    /// sources itself, so the switch from inactive to active is skipped.
+    var wasActive = false;
+    this._sourcesReaction = reaction<List<CombinedSource>?>(
+      (_) => this.active ? this.activeSources : null,
+      (sources) {
+        final changedWhileActive = wasActive && sources != null;
+        wasActive = sources != null;
+
         /// Not during a focus jump: activate() ends the focus and resumes
         /// YouTube while the user is still on the other platform — the
         /// way back ("↩ Combined") re-activates anyway.
-        if (this.active && this.focusedPlatform == null) {
+        if (changedWhileActive && this.focusedPlatform == null) {
           unawaited(this.activate());
         }
       },
@@ -656,8 +665,11 @@ abstract class _CombinedChatStore with Store {
   Future<void> deactivate() async {
     this._ensureSettingsLoaded();
     this.focusedPlatform = null;
-    this._youTube().resumePolling();
+
+    /// Never active since launch: nothing to put back, and no platform
+    /// store to touch (touching one creates it).
     if (!this.active && this._restore.isEmpty) return;
+    this._youTube().resumePolling();
     final generation = ++this._generation;
     this.active = false;
 

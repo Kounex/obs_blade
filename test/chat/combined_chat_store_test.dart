@@ -95,6 +95,41 @@ void main() {
     });
   });
 
+  /// Reading the sources creates the platform stores, and a created
+  /// store starts its own chat - nothing may read them while Combined
+  /// isn't the chat on screen (it is created at app start).
+  test('bound while another chat type is selected, the platform stores '
+      'are never touched', () async {
+    final tempDir = await Directory.systemTemp.createTemp('combined_bind');
+    final harness = HiveTestHarness(tempDir);
+    await harness.init();
+    await Hive.openBox(HiveKeys.Settings.name);
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.SelectedChatType.name, ChatType.Twitch);
+    final touched = <ChatType>[];
+    Never touch(ChatType type) {
+      touched.add(type);
+      throw StateError('${type.name} store created');
+    }
+
+    final store = CombinedChatStore(
+      twitchStore: () => touch(ChatType.Twitch),
+      youTubeStore: () => touch(ChatType.YouTube),
+      kickStore: () => touch(ChatType.Kick),
+    );
+    store.bindToChatType();
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.SelectedChatType.name, ChatType.Kick);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(touched, isEmpty);
+    await store.dispose();
+    await harness.close();
+    tempDir.deleteSync(recursive: true);
+  });
+
   group('CombinedChatStore', () {
     late Directory tempDir;
     late HiveTestHarness harness;
