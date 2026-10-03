@@ -10,7 +10,7 @@ Design: `docs/superpowers/specs/2026-10-02-activity-feed-design.md`.
 | `POST /kick/webhook` | Kick | Signature-checked delivery (the app's webhook URL) |
 | `POST /v1/session` | app | `{"access_token"}` → the token's Kick user is the channel; subscribes it; returns a session token |
 | `GET /v1/events?after=&limit=` | app | Stored events after a cursor |
-| `GET /v1/stream?after=` | app | WebSocket: `hello`, backlog, `synced`, then live `event`s |
+| `GET /v1/stream?after=` | app | WebSocket: `hello`, backlog, `synced`, then live `event`s; `status` when the channel's `subscribed` changes |
 | `DELETE /v1/session` | app | Sign out; the last session unsubscribes and deletes the channel's data |
 | `GET /health` | fleet board | `{"status": "ok"}` |
 

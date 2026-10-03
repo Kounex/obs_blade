@@ -129,7 +129,10 @@ host.
   platform stores, the relay client and later SE / Streamlabs all feed
   `ActivityStore.ingest(event, source)`.
 - Coverage windows per (source, platform, channel): when a source was
-  really connected for that channel. Persisted.
+  really connected for that channel. Persisted. The Kick relay's window
+  is open only while its socket is synced **and** the relay reports every
+  webhook subscribed (`subscribed` in `hello` / `status`) - while Kick
+  refuses some, Pusher's sub / gift / redemption copies stay.
 - `ingest`:
   1. same source id already stored → update in place;
   2. fuzzy match (platform, channel, kind, actor id or lowercased login,
@@ -202,9 +205,14 @@ caps, binds localhost, Cloudflare tunnel `kick-events.obs-blade.com`.
   broadcaster; ensure subscriptions with the app token; return an
   opaque session token (stored hashed, 30-day sliding expiry). The user
   token is never stored.
-- `GET /v1/events?after=&limit=`, `GET /v1/stream?after=` (WebSocket,
-  backlog then live, ping 25 s), `DELETE /v1/session`.
-- Jobs: reconcile subscriptions every 15 min, purge events > 7 days,
+- `GET /v1/events?after=&limit=`, `GET /v1/stream?after=` (WebSocket:
+  `hello`, backlog, `synced`, then live `event`s and a `status` frame
+  when the channel's subscription state changes; ping 25 s),
+  `DELETE /v1/session`. `subscribed` (session, events, hello, status) =
+  every event in `kick.EVENTS` is subscribed, not just any.
+- Jobs: reconcile subscriptions every 15 min (orphans are judged against
+  the registered channels read *after* Kick's list, so a channel that
+  signs in meanwhile keeps its subscriptions), purge events > 7 days,
   drop broadcasters without a check-in for 30 days.
 - Events pass through raw (type, version, payload); mapping to
   `ActivityEvent` happens in the app.

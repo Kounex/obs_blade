@@ -2,6 +2,38 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - Activity feed review fixes (`/code-review high`)
+
+Fixes from a high-effort review of the activity feed + Kick relay:
+- **Relay client:** a failed WebSocket upgrade counts as "unknown
+  session" only on a real 401 status (`WebSocketException.httpStatusCode`).
+  The old check matched "401" in the error text, which holds the URL, so
+  a cursor like `after=14017` plus any 502/429 dropped a valid session and
+  replayed the whole 7-day backlog.
+- **Relay server (needs a redeploy):** `reconcile()` read the registered
+  channels before its ensure loop and deleted the fresh subscriptions of
+  a channel that signed in meanwhile. `subscribed` now means *every*
+  event is subscribed, and open sockets get a `status` frame when that
+  changes.
+- **Ownership:** the relay owns Kick sub / gift / redemption rows only
+  while it reports full subscriptions (`ActivityStore.relaySubscribed`,
+  shown in the options sheet), so Pusher's copies are no longer dropped
+  for kinds Kick never delivers by webhook.
+- **Sessions:** a replayed relay status from before the newest session
+  is ignored (it reopened today's session and moved its start days back);
+  reaching back never crosses into the previous session; a killed
+  session ends at the heartbeat only if that heartbeat is from this
+  session, and opening a session writes one right away.
+- **History / delete:** clearing history moves the follower-backfill
+  floor so cleared follows don't come back; a relay sign-in still in
+  flight when the user deletes all data, signs out or turns the relay off
+  unregisters its new session instead of storing it.
+- **UI:** the feed list builds rows lazily (`ListView.builder`, up to
+  5,000 rows); day labels count calendar days (DST days read
+  "Yesterday" correctly); `gift_paid_upgrade` names the gifter.
+- Not a bug: `endVisit()` in the feed's `dispose()` - flutter_mobx defers
+  an Observer's rebuild past the frame, so no locked-tree assert.
+
 ## 2026-10-03 - Global Pro pricing overhaul (both stores re-priced)
 
 A Turkish buyer got Pro monthly for ~0.80 EUR. Root cause chain, found by
