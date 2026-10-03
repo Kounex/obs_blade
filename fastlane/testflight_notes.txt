@@ -1,29 +1,29 @@
-4.1.0 test build 3 - what to test:
+4.1.0 test build 4 - chat fixes since build 3. What to test:
 
-ACTIVITY FEED (Pro)
-- Twitch: sign in again when the feed asks (new access for cheers, channel points, hype trains)
-- Chat tab: Chat | Activity switch, the bell with the unseen count in the chat header, the "N new" chip in streaming mode, side by side on iPad
-- A real follow, sub, cheer and raid each arrive once - swipe marks thanked, big ones wait in "To thank"
-- Kick: follows / KICKs / subs that came in while the app was closed show up on the next open
-- Kick sign-in: the browser should say "Signed in" and the app picks it up by itself
+YOUTUBE
+- Native chat on a live stream: switch to another channel and quickly back - the chat keeps running, no "quota" message
+- Background the app for a minute in the Chat tab (no OBS connection), come back: the chat picks up again
+- Setup sheet: the sign-in steps match today's Google Cloud Console (Credentials page, consent screen, test user)
+- Sign in with the personal account instead of the Brand Account and tap "Keep": the input, account chip, header sheet and Combined sources all say there is no channel and offer "Switch account"
+- Your own channel shows by its title, never a UC... id - also in the "not live" screen of the WebView chat
+- Header sheet: an offline chat is not shown as signed out
 
-TEXT-TO-SPEECH (Pro)
-- Speaker in the native chat header: tap on/off, long press for settings
-- Read in / voice per language with preview, volume, detect each message's language
-- Spam gets shortened, emote-only skip, other audio dips and comes back, a phone call stops it
+COMBINED CHAT
+- Build a combo with your own YouTube channel + a Kick channel: it shows "You", your Super Chats / memberships land in Activity, your channel is not listed twice in the YouTube menu
+- Builder -> Other... -> paste a youtube.com/channel/UC... link: "Looking up the channel..." then the channel title; a made-up @handle says not found
+- Signed out of YouTube, a combo with your own channel offers "Sign in"
 
-CANVASES (OBS 32.1+)
-- Canvas picker, scenes and sources of a vertical canvas, hiding scenes / items per canvas
-- Aitum Vertical: live scene switch, stream, recording (pause, chapters), replay buffer, virtual camera, the vertical on-air pill
-- Twitch Dual Format shows as a status line
+STARTUP
+- With Twitch chat selected (Pro, a Kick channel and a YouTube key saved): nothing of Kick / YouTube runs in the background - Settings -> Logs stays quiet about them
 
-YOUTUBE (new in build 3)
-- API key only, no OAuth client: "Connect YouTube" explains read-only instead of failing, "Add sign-in" opens a sheet with just the client id / secret
-- The Connect pill in the chat bar opens that sheet directly while read-only
-- Save & connect with your client starts the Google sign-in, then your own chat shows as "You"
+KICK
+- Add a misspelled channel, then "Add Kick channel" with the right name: the chat switches to it
+- Adding a channel from the channel menu (Kick and YouTube) switches to it
+
+ACTIVITY
+- YouTube-only, signed in with your channel: the empty feed no longer says "No channel connected"
 
 ALSO
-- Wake Lock in Settings covers the whole app
-- Changes made in OBS (inputs, filters, profiles) and an already running replay buffer show up live
-- Paywall: the two new benefit cards
+- Narrow phone, signed out of Twitch: the read-only bar under the chat fits
+- Chat failures (Kick socket, Twitch chat connection) show up in Settings -> Logs
 - Updating over the store version keeps saved connections and settings
