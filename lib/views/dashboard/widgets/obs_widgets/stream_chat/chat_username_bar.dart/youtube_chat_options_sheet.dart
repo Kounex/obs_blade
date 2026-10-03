@@ -185,7 +185,7 @@ class YouTubeChatOptionsSheet extends StatelessWidget {
                             dialogWidget: ConfirmationDialog(
                               title: 'Disconnect YouTube?',
                               body:
-                                  'Connected as ${store.selfChannelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
+                                  'Connected as ${store.accountDescription}. You will be signed out of your Google account.',
                               okText: 'Disconnect',
                               isYesDestructive: true,
                               onOk: (_) => store.logout(),

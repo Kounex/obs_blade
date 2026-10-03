@@ -672,7 +672,11 @@ class _StreamChatState extends State<StreamChat>
           final configured =
               youTubeStore.authState != YouTubeAuthState.unconfigured;
           final signedIn = youTubeStore.isSignedInState;
-          final channelTitle = youTubeStore.selfChannelTitle;
+
+          /// Signed in with a Google account that has no channel:
+          /// reads work, nothing to write as - the way out is another
+          /// account
+          final noChannel = signedIn && youTubeStore.signedInWithoutChannel;
 
           return NativeChatWindow(
             chatType: chatType,
@@ -681,7 +685,7 @@ class _StreamChatState extends State<StreamChat>
               configured,
             ),
             statusDetail: youTubeStore.chatError,
-            accountLabel: channelTitle,
+            accountLabel: signedIn ? youTubeStore.accountDescription : null,
             channelIsLive:
                 youTubeStore.chatConnection ==
                 YouTubeChatConnectionState.connected,
@@ -695,13 +699,18 @@ class _StreamChatState extends State<StreamChat>
                 ? youTubeChatOfflineNote(youTubeStore)
                 : null,
 
-            /// Signed in: nothing to connect (the sheet offers sign-out)
-            onConnect: signedIn
+            /// Signed in: nothing to connect (the sheet offers sign-out),
+            /// unless the account has no channel to write as
+            onConnect: noChannel
+                ? () => switchYouTubeAccount(context)
+                : signedIn
                 ? null
                 : () => configured
                       ? startYouTubeLogin(context)
                       : showYouTubeSetupSheet(context),
-            connectLabel: configured
+            connectLabel: noChannel
+                ? 'Switch account'
+                : configured
                 ? 'Sign in to write and moderate'
                 : 'Set up YouTube chat',
             onLogout: signedIn
@@ -710,7 +719,7 @@ class _StreamChatState extends State<StreamChat>
                     dialogWidget: ConfirmationDialog(
                       title: 'Disconnect YouTube?',
                       body:
-                          'Connected as ${channelTitle ?? 'your YouTube channel'}. You will be signed out of your Google account.',
+                          'Connected as ${youTubeStore.accountDescription}. You will be signed out of your Google account.',
                       okText: 'Disconnect',
                       isYesDestructive: true,
                       onOk: (_) => youTubeStore.logout(),
@@ -747,9 +756,15 @@ class _StreamChatState extends State<StreamChat>
                         Theme.of(context).colorScheme.secondary,
                     completionSource: youTubeChatCompletions,
                     onSend: youTubeStore.sendChatMessage,
-                    onRelogin: () => startYouTubeLogin(context),
-                    lockedHintText: 'Chat is read-only',
-                    lockedActionText: 'Sign in to chat',
+                    onRelogin: () => noChannel
+                        ? switchYouTubeAccount(context)
+                        : startYouTubeLogin(context),
+                    lockedHintText: noChannel
+                        ? 'No YouTube channel on this account'
+                        : 'Chat is read-only',
+                    lockedActionText: noChannel
+                        ? 'Switch account'
+                        : 'Sign in to chat',
                   )
                 : null,
           );

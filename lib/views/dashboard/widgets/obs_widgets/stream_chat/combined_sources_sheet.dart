@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -11,6 +13,7 @@ import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/classes/combined/combined_combo.dart';
+import '../../../../../utils/get_it_helper.dart';
 import '../../../../../utils/modal_handler.dart';
 import 'chat_type_brand.dart';
 import 'combined_chat_builder_sheet.dart';
@@ -140,6 +143,10 @@ class CombinedSourcesSheet extends StatelessWidget {
           _SourceRow(
             platform: platform,
             source: available[platform],
+            noChannel:
+                platform == ChatType.YouTube &&
+                lazySingletonCreated<YouTubeChatStore>() &&
+                GetIt.instance<YouTubeChatStore>().signedInWithoutChannel,
             enabled: !store.disabledPlatforms.contains(platform),
             status: store.selectedComboId == kMyChatsComboId
                 ? store.sourceStatus[platform]
@@ -214,14 +221,18 @@ void combinedSourceFix(
       final store = GetIt.instance<YouTubeChatStore>();
       if (store.authState == YouTubeAuthState.unconfigured) {
         showYouTubeSetupSheet(context);
-      } else if ((forMyChats || needsSignIn) && store.ownChannel == null) {
+      } else if (store.isSignedInState && store.signedInWithoutChannel) {
+        unawaited(switchYouTubeAccount(context));
+      } else if ((forMyChats || needsSignIn) &&
+          (store.ownChannel == null || !store.canWrite)) {
         startYouTubeLogin(context);
       } else {
         store.connectChat();
       }
     case ChatType.Kick:
       final store = GetIt.instance<KickChatStore>();
-      forMyChats && store.ownChannelSlug == null
+      (forMyChats && store.ownChannelSlug == null) ||
+              (needsSignIn && !store.canWrite)
           ? showKickSetupSheet(context)
           : store.connectChat();
     case ChatType.Owncast:
@@ -245,9 +256,14 @@ class _SourceRow extends StatelessWidget {
   final ValueChanged<bool>? onToggle;
   final VoidCallback onFix;
 
+  /// YouTube signed in with an account that has no channel - no source,
+  /// but not "not signed in" either.
+  final bool noChannel;
+
   const _SourceRow({
     required this.platform,
     required this.source,
+    this.noChannel = false,
     required this.enabled,
     required this.status,
     this.live = const {},
@@ -265,7 +281,9 @@ class _SourceRow extends StatelessWidget {
     /// Two separate facts, never merged into one word: whether the
     /// streamer is on air, and how the chat connection is doing.
     final (String label, String? action) = source == null
-        ? ('Not signed in', 'Sign in')
+        ? this.noChannel
+              ? ('No channel on this Google account', 'Switch account')
+              : ('Not signed in', 'Sign in')
         : !this.enabled
         ? ('Off', null)
         : switch (this.status) {

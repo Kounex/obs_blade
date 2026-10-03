@@ -35,6 +35,22 @@ void startYouTubeLogin(BuildContext context) {
   );
 }
 
+/// Signed in with a Google account that has no YouTube channel (a Brand
+/// Account's owner picked as the personal account): sign out and start
+/// the sign-in again, so Google asks which account to use.
+Future<void> switchYouTubeAccount(BuildContext context) async {
+  await GetIt.instance<YouTubeChatStore>().logout();
+  if (context.mounted) startYouTubeLogin(context);
+}
+
+/// What the no-channel state means and how to get out of it - shared by
+/// the sign-in dialog and the account controls.
+const String kYouTubeNoChannelText =
+    'Signed in - but this Google account has no YouTube channel, so '
+    'there is no "You" chat and nothing to write as.\n\nIf your channel '
+    'is a Brand Account, sign in again and pick the channel itself when '
+    'Google asks which account to use.';
+
 /// API key only: chat is read-only. Says what sign-in adds and offers the
 /// sign-in part of the setup sheet.
 class YouTubeReadOnlyDialog extends StatelessWidget {
@@ -335,10 +351,7 @@ class _NoChannelState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Signed in - but this Google account has no YouTube channel, so '
-      'there is no "You" chat and nothing to write as.\n\nIf your channel '
-      'is a Brand Account, sign in again and pick the channel itself when '
-      'Google asks which account to use.',
+      kYouTubeNoChannelText,
       key: const Key('youtube-sign-in-no-channel'),
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodyMedium,

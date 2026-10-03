@@ -4,6 +4,9 @@ import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_type_brand.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/youtube_account_control.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_input.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_device_code_dialog.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_setup_sheet.dart';
@@ -116,6 +119,74 @@ void main() {
       find.byType(MaterialApp),
       matchesGoldenFile(
         '../../build/widget_shots/youtube_header_offline_sheet.png',
+      ),
+    );
+  });
+
+  /// Signed in with a Google account that has no channel (after "Keep")
+  testWidgets('no channel: input strip, phone + narrow', (tester) async {
+    Widget input() => Align(
+      alignment: Alignment.bottomCenter,
+      child: NativeChatInput(
+        canSend: false,
+        inFlight: false,
+        accentColor: ChatType.YouTube.brandColor!,
+        onSend: (_) async => false,
+        onRelogin: _noop,
+        lockedHintText: 'No YouTube channel on this account',
+        lockedActionText: 'Switch account',
+      ),
+    );
+    await harness.shot(tester, 'youtube_no_channel_input', input());
+    await harness.shot(
+      tester,
+      'youtube_no_channel_input_narrow',
+      input(),
+      size: const Size(320, 640),
+    );
+  });
+
+  testWidgets('no channel: header sheet', (tester) async {
+    await harness.shot(
+      tester,
+      'youtube_no_channel_window',
+      const NativeChatWindow(
+        chatType: ChatType.YouTube,
+        status: NativeChatConnectionStatus.offline,
+        accountLabel: 'a Google account without a YouTube channel',
+        offlineNote:
+            'Brand Channel isn\'t live right now. The chat connects on its '
+            'own when the stream starts.',
+        onConnect: _noop,
+        connectLabel: 'Switch account',
+        onLogout: _noop,
+        child: SizedBox(height: 300),
+      ),
+    );
+    await tester.tap(find.text('offline'));
+    await tester.pumpAndSettle();
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile(
+        '../../build/widget_shots/youtube_no_channel_header_sheet.png',
+      ),
+    );
+  });
+
+  testWidgets('no channel: account chip', (tester) async {
+    final store = YouTubeChatStore(isProResolver: () => false);
+    GetIt.instance.registerSingleton<YouTubeChatStore>(store);
+    addTearDown(GetIt.instance.reset);
+    runInAction(() {
+      store.signedInWithoutChannel = true;
+      store.authState = YouTubeAuthState.signedIn;
+    });
+    await harness.shot(
+      tester,
+      'youtube_no_channel_chip',
+      const Align(
+        alignment: Alignment.topCenter,
+        child: SizedBox(width: 220, height: 44, child: YouTubeAccountControl()),
       ),
     );
   });

@@ -126,11 +126,17 @@ class _NativeChatInputState extends State<NativeChatInput> {
           children: [
             Icon(CupertinoIcons.lock_fill, size: 14.0, color: highlightText),
             const SizedBox(width: AppSpacing.xs),
-            Text(
-              this.widget.lockedHintText,
-              style: Theme.of(context).textTheme.bodySmall,
+
+            /// Wraps instead of pushing the action off a narrow phone
+            Expanded(
+              child: Text(
+                this.widget.lockedHintText,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: AppSpacing.sm),
             Pressable(
               haptic: true,
               onTap: this.widget.onRelogin,

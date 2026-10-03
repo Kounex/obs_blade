@@ -32,7 +32,10 @@ class YouTubeAccountControl extends StatelessWidget {
           child: switch (store.authState) {
             YouTubeAuthState.unconfigured => const _SetupPill(),
             YouTubeAuthState.signedIn => _AccountChip(
-              displayName: store.selfChannelTitle,
+              displayName: store.signedInWithoutChannel
+                  ? 'No channel'
+                  : store.selfChannelTitle,
+              noChannel: store.signedInWithoutChannel,
             ),
             _ => const _ConnectPill(),
           },
@@ -47,7 +50,10 @@ class YouTubeAccountControl extends StatelessWidget {
 class _AccountChip extends StatelessWidget {
   final String? displayName;
 
-  const _AccountChip({this.displayName});
+  /// The account has no YouTube channel - a tap offers another account
+  final bool noChannel;
+
+  const _AccountChip({this.displayName, this.noChannel = false});
 
   @override
   Widget build(BuildContext context) {
@@ -63,20 +69,28 @@ class _AccountChip extends StatelessWidget {
             : 96.0;
 
         return Tooltip(
-          message:
-              'Connected as ${this.displayName ?? 'YouTube'} - tap to disconnect',
+          message: this.noChannel
+              ? 'This Google account has no YouTube channel - tap to switch'
+              : 'Connected as ${this.displayName ?? 'YouTube'} - tap to disconnect',
           child: Pressable(
             haptic: true,
             onTap: () => ModalHandler.showBaseDialog(
               context: context,
-              dialogWidget: ConfirmationDialog(
-                title: 'Disconnect YouTube?',
-                body:
-                    'Connected as ${this.displayName ?? 'your YouTube channel'}. You will be signed out of your Google account.',
-                okText: 'Disconnect',
-                isYesDestructive: true,
-                onOk: (_) => GetIt.instance<YouTubeChatStore>().logout(),
-              ),
+              dialogWidget: this.noChannel
+                  ? ConfirmationDialog(
+                      title: 'No YouTube channel',
+                      body: kYouTubeNoChannelText,
+                      okText: 'Switch account',
+                      onOk: (_) => switchYouTubeAccount(context),
+                    )
+                  : ConfirmationDialog(
+                      title: 'Disconnect YouTube?',
+                      body:
+                          'Connected as ${GetIt.instance<YouTubeChatStore>().accountDescription}. You will be signed out of your Google account.',
+                      okText: 'Disconnect',
+                      isYesDestructive: true,
+                      onOk: (_) => GetIt.instance<YouTubeChatStore>().logout(),
+                    ),
             ),
             child: Container(
               padding: const EdgeInsets.symmetric(
@@ -97,9 +111,15 @@ class _AccountChip extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    CupertinoIcons.checkmark_circle_fill,
+                    this.noChannel
+                        ? CupertinoIcons.exclamationmark_circle_fill
+                        : CupertinoIcons.checkmark_circle_fill,
                     size: 18.0,
-                    color: enabledColor,
+                    color: this.noChannel
+                        ? (Theme.of(context).extension<AppStatusColors>() ??
+                                  AppStatusColors.standard)
+                              .warning
+                        : enabledColor,
                   ),
                   const SizedBox(width: AppSpacing.xs),
                   ConstrainedBox(

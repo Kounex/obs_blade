@@ -1014,6 +1014,104 @@ void main() {
       expect(store.messages, isEmpty);
     });
 
+    /// Checklist: a "Testing" OAuth app's refresh token dies after 7 days
+    /// (Google answers 400 invalid_grant) - mid-session, the next write
+    /// must end the session, not loop on "Could not send".
+    test('a dead refresh token on send ends the session', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page(const []));
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+
+      /// The access token runs out while the app stays open
+      final auth = authBox().get(YouTubeAuth.kBoxKey)!;
+      auth.expiresAtMs = 0;
+      await auth.save();
+      authService.failRefreshWith = const YouTubeAuthException(
+        'Token refresh failed (400)',
+        cause:
+            '{"error": "invalid_grant", "error_description": "Token has '
+            'been expired or revoked."}',
+        statusCode: 400,
+      );
+
+      expect(await store.sendChatMessage('hello'), isFalse);
+      expect(store.authState, YouTubeAuthState.signedOut);
+      expect(store.authError, contains('sign in again'));
+      expect(authBox().get(YouTubeAuth.kBoxKey), isNull);
+    });
+
+    test('a transient refresh failure on send keeps the session', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page(const []));
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+      final auth = authBox().get(YouTubeAuth.kBoxKey)!;
+      auth.expiresAtMs = 0;
+      await auth.save();
+      authService.failRefreshWith = const YouTubeAuthException(
+        'Token refresh failed (503)',
+        statusCode: 503,
+      );
+
+      expect(await store.sendChatMessage('hello'), isFalse);
+      expect(store.authState, YouTubeAuthState.signedIn);
+      expect(store.sendChatError, 'Could not send - try again');
+    });
+
+    test('a Data API 401 on a mod action is no "not a moderator"; the '
+        'token is expired so the next write refreshes', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page([ytMessage('m1')]));
+      await store.init();
+      await until(() => store.messages.isNotEmpty);
+      chatService.deleteThrows = const YouTubeForbiddenException(
+        'Deleting chat message failed (401)',
+        statusCode: 401,
+      );
+
+      expect(await store.deleteMessage('m1'), isFalse);
+      expect(store.moderationForbidden, isFalse);
+      expect(authBox().get(YouTubeAuth.kBoxKey)!.isExpired, isTrue);
+
+      chatService.deleteThrows = const YouTubeForbiddenException(
+        'Deleting chat message failed (403)',
+        statusCode: 403,
+      );
+      expect(await store.deleteMessage('m1'), isFalse);
+      expect(store.moderationForbidden, isTrue);
+    });
+
+    test('signed in without a channel: nothing to write as', () async {
+      configure();
+      authService.noChannel = true;
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page(const []));
+      await store.startLogin();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+
+      expect(store.isSignedIn, isTrue);
+      expect(store.canWrite, isFalse);
+      expect(
+        store.accountDescription,
+        'a Google account without a YouTube channel',
+      );
+      expect(await store.sendChatMessage('hello'), isFalse);
+      expect(chatService.insertCalls, 0);
+    });
+
     test('completed send stays in the original channel buffer', () async {
       configure();
       await seedAuth();

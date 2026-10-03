@@ -41,6 +41,9 @@ enum CombinedModBlock {
   /// Not signed in (or signed in without write access).
   signedOut,
 
+  /// YouTube: signed in with a Google account that has no channel.
+  noChannel,
+
   /// Twitch: signed in, but the token lacks the moderation scopes.
   missingScopes,
 
@@ -68,6 +71,9 @@ CombinedModBlock? combinedModBlock(CombinedSource source) {
       final youTube = GetIt.instance<YouTubeChatStore>();
       if (youTube.authState == YouTubeAuthState.unconfigured) {
         return CombinedModBlock.notSetUp;
+      }
+      if (youTube.isSignedInState && youTube.signedInWithoutChannel) {
+        return CombinedModBlock.noChannel;
       }
       if (!youTube.isSignedInState || !youTube.canWrite) {
         return CombinedModBlock.signedOut;
@@ -148,6 +154,10 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
         'Sign in to ${platform.text} to moderate ${source.label}.',
         'Sign in to ${platform.text}',
       ),
+      CombinedModBlock.noChannel => (
+        'This Google account has no YouTube channel to moderate as.',
+        'Switch account',
+      ),
       CombinedModBlock.missingScopes => (
         'Your ${platform.text} login predates the moderation permissions.',
         'Sign in again',
@@ -176,7 +186,12 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
             onTap: () {
               final host = this.widget.hostContext ?? context;
               Navigator.of(context).pop();
-              combinedSourceFix(host, platform, forMyChats: false);
+              combinedSourceFix(
+                host,
+                platform,
+                forMyChats: false,
+                needsSignIn: block == CombinedModBlock.signedOut,
+              );
             },
           ),
         ],

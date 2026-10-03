@@ -91,6 +91,11 @@ DateTime nextYouTubeQuotaReset(DateTime now) {
   return utc.add(const Duration(days: 1));
 }
 
+/// YouTube's answer for "not the owner / a moderator here" - a 403 (a 401
+/// is a rejected token, not a role).
+bool _isNotModerator(YouTubeApiException e) =>
+    e is YouTubeForbiddenException && e.statusCode != 401;
+
 /// Grace after the quota reset before the chat restarts on its own.
 const Duration kYouTubeQuotaResetGrace = Duration(minutes: 1);
 
@@ -513,8 +518,17 @@ abstract class _YouTubeChatStore with Store {
         kYouTubeChatScopes.every(auth.scopes.contains);
   }
 
-  /// Writes (send / delete / ban) require a signed-in, scoped token.
-  bool get canWrite => this.isSignedIn;
+  /// Writes (send / delete / ban) require a signed-in, scoped token of an
+  /// account that has a channel - a channel-less Google account has
+  /// nothing to write or moderate as ([signedInWithoutChannel]).
+  bool get canWrite => this.isSignedIn && !this.signedInWithoutChannel;
+
+  /// Who the session is, for "Connected as …" copy.
+  String get accountDescription =>
+      this.selfChannelTitle ??
+      (this.signedInWithoutChannel
+          ? 'a Google account without a YouTube channel'
+          : 'your YouTube channel');
 
   /// Title of the signed-in channel (display only).
   String? get selfChannelTitle =>
@@ -1691,12 +1705,16 @@ abstract class _YouTubeChatStore with Store {
       return true;
     } on YouTubeApiException catch (e) {
       GeneralHelper.logFailure('YouTube chat send failed', e);
+      await this._expireRejectedToken(e);
       if (sameChannel()) {
-        this.sendChatError = e.message;
+        this.sendChatError = e.statusCode == 401
+            ? 'Could not send - try again'
+            : e.message;
       }
       return false;
     } catch (e) {
       GeneralHelper.logFailure('YouTube chat send failed', e);
+      if (await this._endSessionIfDead(e)) return false;
       if (sameChannel()) {
         this.sendChatError = 'Could not send - try again';
       }
@@ -1722,11 +1740,13 @@ abstract class _YouTubeChatStore with Store {
       await this._chatService.delete(accessToken: token, messageId: messageId);
     } on YouTubeApiException catch (e) {
       GeneralHelper.logFailure('YouTube message delete failed', e);
+      await this._expireRejectedToken(e);
       this.moderationError = e.message;
-      this.moderationForbidden = e is YouTubeForbiddenException;
+      this.moderationForbidden = _isNotModerator(e);
       return false;
     } catch (e) {
       GeneralHelper.logFailure('YouTube message delete failed', e);
+      if (await this._endSessionIfDead(e)) return false;
       this.moderationError = 'Could not delete the message';
       return false;
     }
@@ -1764,11 +1784,13 @@ abstract class _YouTubeChatStore with Store {
       );
     } on YouTubeApiException catch (e) {
       GeneralHelper.logFailure('YouTube ban failed', e);
+      await this._expireRejectedToken(e);
       this.moderationError = e.message;
-      this.moderationForbidden = e is YouTubeForbiddenException;
+      this.moderationForbidden = _isNotModerator(e);
       return false;
     } catch (e) {
       GeneralHelper.logFailure('YouTube ban failed', e);
+      if (await this._endSessionIfDead(e)) return false;
       this.moderationError = 'Could not ban the user';
       return false;
     }
@@ -1815,11 +1837,13 @@ abstract class _YouTubeChatStore with Store {
       this._syncModerationToBuffer();
     } on YouTubeApiException catch (e) {
       GeneralHelper.logFailure('YouTube unban failed', e);
+      await this._expireRejectedToken(e);
       this.moderationError = e.message;
-      this.moderationForbidden = e is YouTubeForbiddenException;
+      this.moderationForbidden = _isNotModerator(e);
       return false;
     } catch (e) {
       GeneralHelper.logFailure('YouTube unban failed', e);
+      if (await this._endSessionIfDead(e)) return false;
       this.moderationError = 'Could not lift the ban';
       return false;
     }
@@ -1869,13 +1893,15 @@ abstract class _YouTubeChatStore with Store {
       return true;
     } on YouTubeApiException catch (e) {
       GeneralHelper.logFailure('YouTube channel mod action failed', e);
+      await this._expireRejectedToken(e);
       runInAction(() {
         this.moderationError = e.message;
-        this.moderationForbidden = e is YouTubeForbiddenException;
+        this.moderationForbidden = _isNotModerator(e);
       });
       return false;
     } catch (e) {
       GeneralHelper.logFailure('YouTube channel mod action failed', e);
+      if (await this._endSessionIfDead(e)) return false;
       runInAction(() => this.moderationError = failure);
       return false;
     }
@@ -1983,6 +2009,32 @@ abstract class _YouTubeChatStore with Store {
         channelId: ownChannel?.id,
       ),
     );
+  }
+
+  /// A write whose token refresh failed definitively (400 `invalid_grant`
+  /// / 401 / 403 - e.g. a "Testing" OAuth app's refresh token after 7
+  /// days, or access revoked in the Google account) ends the session, so
+  /// the UI offers a real sign-in instead of an input that never sends.
+  /// Returns whether it did.
+  Future<bool> _endSessionIfDead(Object e) async {
+    if (e is! YouTubeAuthException) return false;
+    final status = e.statusCode;
+    if (status != 400 && status != 401 && status != 403) return false;
+    await this._handleInvalidAuth(
+      'YouTube session expired - please sign in again',
+    );
+    return true;
+  }
+
+  /// A Data API 401 on a write: the access token was rejected before our
+  /// clock expired it (revoked, clock skew) - expire it locally so the
+  /// next write refreshes, which ends the session if the grant is dead.
+  Future<void> _expireRejectedToken(YouTubeApiException e) async {
+    if (e.statusCode != 401) return;
+    final auth = this._authBox.get(YouTubeAuth.kBoxKey);
+    if (auth == null) return;
+    auth.expiresAtMs = 0;
+    await auth.save();
   }
 
   Future<void> _handleInvalidAuth(String message) async {

@@ -25,6 +25,8 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialog
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_channel_mod_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/combined_sources_sheet.dart';
+
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
 import 'support/fake_twitch_services.dart';
@@ -238,6 +240,34 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Sign in to YouTube'), findsWidgets);
+  });
+
+  /// Checklist state "signed in without a channel": every surface says
+  /// so and offers another account - never "Sign in" (that loops into
+  /// the same account) and never a write that fails.
+  testWidgets('combined: a Google account without a channel is its own '
+      'state in the mod sheet and the sources sheet', (tester) async {
+    youTube.ownChannel = null;
+    youTube.signedInWithoutChannel = true;
+    final source = CombinedSource(
+      platform: ChatType.YouTube,
+      key: 'A',
+      label: 'A',
+    );
+    expect(combinedModBlock(source), CombinedModBlock.noChannel);
+
+    await tester.pumpWidget(
+      wrap(
+        Builder(
+          builder: (context) => CombinedSourcesSheet(hostContext: context),
+        ),
+      ),
+    );
+    final youTubeStatus = tester.widget<Text>(
+      find.byKey(const Key('combined-source-status-YouTube')),
+    );
+    expect(youTubeStatus.data, 'No channel on this Google account');
+    expect(find.text('Switch account'), findsOneWidget);
   });
 
   test('combined: a Twitch source the account doesn\'t moderate is '

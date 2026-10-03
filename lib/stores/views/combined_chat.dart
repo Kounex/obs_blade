@@ -96,8 +96,7 @@ class CombinedItem {
 bool isOwnYouTubeComboSource(
   CombinedYouTubeSource source,
   YouTubeChatChannel? own,
-) =>
-    own != null && parseYouTubeTarget(source.value)?.key == own.target.key;
+) => own != null && parseYouTubeTarget(source.value)?.key == own.target.key;
 
 /// Entries of the YouTube channel list (label -> value) that a saved
 /// combo created as a copy of the [own] channel before combos used the
@@ -268,6 +267,7 @@ abstract class _CombinedChatStore with Store {
     this._chatTypeSub = box
         .watch(key: SettingsKeys.SelectedChatType.name)
         .listen((_) => sync());
+
     /// Reads the sources only while Combined is active: reading them
     /// creates the platform stores, and a created store starts its own
     /// chat (YouTube polls on the user's API quota, Kick opens a socket)
@@ -434,7 +434,8 @@ abstract class _CombinedChatStore with Store {
         }
         if (store.awaitingLiveStream) return CombinedSourceStatus.offline;
         return switch (store.chatConnection) {
-          YouTubeChatConnectionState.connected => CombinedSourceStatus.connected,
+          YouTubeChatConnectionState.connected =>
+            CombinedSourceStatus.connected,
           YouTubeChatConnectionState.connecting =>
             CombinedSourceStatus.connecting,
           YouTubeChatConnectionState.error => CombinedSourceStatus.error,
