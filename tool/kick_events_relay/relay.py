@@ -309,7 +309,7 @@ async def handle_events(request: web.Request) -> web.Response:
         {
             "events": [event.to_wire() for event in events],
             "latest_seq": store.latest_seq(user_id),
-            "subscribed": bool(store.subscriptions_of(user_id)),
+            "subscribed": _fully_subscribed(store, user_id),
         },
     )
 
@@ -342,7 +342,7 @@ async def handle_stream(request: web.Request) -> web.StreamResponse:
                 "type": "hello",
                 "broadcaster_user_id": user_id,
                 "latest_seq": store.latest_seq(user_id),
-                "subscribed": bool(store.subscriptions_of(user_id)),
+                "subscribed": _fully_subscribed(store, user_id),
             }
         )
         while True:
@@ -373,10 +373,12 @@ async def handle_stream(request: web.Request) -> web.StreamResponse:
             wire = getter.result()
             if wire is None:
                 break
-            if wire.get("seq", 0) <= sent:
+            seq = wire.get("seq")
+            if seq is not None and seq <= sent:
                 continue
             await socket.send_json(wire)
-            sent = wire["seq"]
+            if seq is not None:
+                sent = seq
     except (ConnectionResetError, asyncio.CancelledError):
         pass
     finally:
@@ -396,14 +398,27 @@ async def handle_health(request: web.Request) -> web.Response:
 # Subscriptions + housekeeping
 
 
+def _fully_subscribed(store: Store, user_id: int) -> bool:
+    """Kick accepted every event the feed uses for the channel. The app
+    leaves a source in charge of an event kind only then."""
+    existing = store.subscriptions_of(user_id)
+    return all(name in existing for name, _ in kick_api.EVENTS)
+
+
 async def _ensure(app: web.Application, user_id: int) -> bool:
+    store: Store = app[KEY_STORE]
+    before = _fully_subscribed(store, user_id)
     try:
         subscriptions = await kick_api.ensure_subscriptions(app[KEY_API], user_id)
     except kick_api.KickError as error:
         log.warning("subscribe %s failed: %s", user_id, error.status)
         return False
-    app[KEY_STORE].replace_subscriptions(user_id, subscriptions)
-    return len(subscriptions) >= len(kick_api.EVENTS)
+    store.replace_subscriptions(user_id, subscriptions)
+    subscribed = _fully_subscribed(store, user_id)
+    if subscribed != before:
+        # Open sockets learn it now, not on their next reconnect.
+        app[KEY_HUB].publish(user_id, {"type": "status", "subscribed": subscribed})
+    return subscribed
 
 
 async def _forget(app: web.Application, user_id: int) -> None:
@@ -425,13 +440,20 @@ async def reconcile(app: web.Application) -> None:
     """Re-create missing subscriptions (Kick drops them after a day of
     failures) and remove ones for channels nobody uses any more."""
     store: Store = app[KEY_STORE]
-    registered = set(store.registered_broadcasters())
-    for user_id in registered:
-        await _ensure(app, user_id)
+    for user_id in store.registered_broadcasters():
+        # Signed out while this loop ran: don't subscribe it again.
+        if store.is_registered(user_id):
+            await _ensure(app, user_id)
     try:
+        subscriptions = await app[KEY_API].list_subscriptions()
+        # Read after Kick's list: a session is stored before its channel is
+        # subscribed, so every subscription in that list belongs to a
+        # channel this read sees. A snapshot from before the loop above
+        # missed channels that signed in meanwhile and deleted theirs.
+        registered = set(store.registered_broadcasters())
         orphans = [
             str(item["id"])
-            for item in await app[KEY_API].list_subscriptions()
+            for item in subscriptions
             if item.get("id") and item.get("broadcaster_user_id") not in registered
         ]
         await app[KEY_API].unsubscribe(orphans)

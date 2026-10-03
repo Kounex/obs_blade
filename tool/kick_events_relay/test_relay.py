@@ -38,9 +38,15 @@ class FakeKick:
         self.next_id = 0
         self.app_token_status = 200
         self.reject_events: set[str] = set()
+        # Runs before answering a subscription list (simulates what happens
+        # elsewhere while the relay awaits Kick).
+        self.before_list = None
 
     async def __call__(self, method, url, headers, body):
         self.calls.append((method, url))
+        if method == "GET" and "/events/subscriptions" in url and self.before_list:
+            hook, self.before_list = self.before_list, None
+            hook()
         if url == kick.TOKEN_URL:
             if self.app_token_status != 200:
                 return kick.Response(self.app_token_status, b"{}")
@@ -340,6 +346,21 @@ class StreamTest(RelayTestBase):
         self.assertEqual(live["payload"]["follower"]["username"], "live")
         await socket.close()
 
+    async def test_stream_reports_partial_subscriptions_then_the_fix(self):
+        self.fake.reject_events = {"kicks.gifted"}
+        session = (await self.register())["session_token"]
+        socket = await self.client.ws_connect(
+            "/v1/stream", headers={"Authorization": f"Bearer {session}"}
+        )
+        hello = await socket.receive_json(timeout=5)
+        self.assertFalse(hello["subscribed"])
+        await socket.receive_json(timeout=5)  # synced
+        self.fake.reject_events = set()
+        await relay.reconcile(self.app)
+        status = await socket.receive_json(timeout=5)
+        self.assertEqual(status, {"type": "status", "subscribed": True})
+        await socket.close()
+
     async def test_stream_resumes_after_cursor(self):
         session = (await self.register())["session_token"]
         await self.deliver(follow(), message_id="m1")
@@ -390,6 +411,24 @@ class HousekeepingTest(RelayTestBase):
         )
         self.assertEqual(events, sorted(name for name, _ in kick.EVENTS))
         self.assertNotIn("orphan", self.fake.subscriptions)
+
+    async def test_reconcile_keeps_a_channel_that_signs_in_meanwhile(self):
+        await self.register()
+
+        def other_signs_in():
+            # POST /v1/session for OTHER: the session row, then its
+            # subscriptions, while reconcile awaits Kick.
+            self.store.create_session(OTHER, "other")
+            self.fake.subscriptions["other-follow"] = {
+                "id": "other-follow",
+                "broadcaster_user_id": OTHER,
+                "event": "channel.followed",
+                "version": 1,
+            }
+
+        self.fake.before_list = other_signs_in
+        await relay.reconcile(self.app)
+        self.assertIn("other-follow", self.fake.subscriptions)
 
     async def test_purge_drops_idle_channels_and_old_events(self):
         await self.register()
