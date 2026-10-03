@@ -121,8 +121,7 @@ class ActivityCoverage {
     return true;
   }
 
-  /// Close every open window (app start: nothing is connected yet, and a
-  /// window left open by a kill must not claim the downtime).
+  /// Close every open window at [at].
   void closeAll(DateTime at) {
     for (final list in this._windows.values) {
       if (list.isNotEmpty && list.last.$2 == null) {
@@ -131,6 +130,49 @@ class ActivityCoverage {
       }
     }
   }
+
+  /// App start: a window a kill left open ends when the app was last
+  /// known alive ([lastAlive]), never at this launch - the downtime wasn't
+  /// listened to. Without a usable [lastAlive] it ends where it began.
+  void closeAfterKill(DateTime? lastAlive) {
+    for (final list in this._windows.values) {
+      if (list.isEmpty || list.last.$2 != null) continue;
+      final start = list.last.$1;
+      final alive = lastAlive?.toUtc();
+      list[list.length - 1] = (
+        start,
+        alive != null && alive.isAfter(start) ? alive : start,
+      );
+    }
+  }
+
+  /// The process was frozen from [from] to [to] (iOS suspends a
+  /// backgrounded app: sockets die, nothing arrives): every open window
+  /// ends at [from] and goes on from [to]. Returns whether any was open.
+  bool splitOpen(DateTime from, DateTime to) {
+    var any = false;
+    for (final list in this._windows.values) {
+      if (list.isEmpty || list.last.$2 != null) continue;
+      any = true;
+      final start = list.last.$1;
+      final end = from.toUtc();
+      list[list.length - 1] = (start, end.isAfter(start) ? end : start);
+      list.add((to.toUtc(), null));
+      if (list.length > _maxWindowsPerKey) list.removeAt(0);
+    }
+    return any;
+  }
+
+  bool get anyOpen => this._windows.values.any(
+    (list) => list.isNotEmpty && list.last.$2 == null,
+  );
+
+  /// Every window of [platform] from any source and channel, unsorted.
+  List<(DateTime, DateTime?)> windowsFor(ActivityPlatform platform) => [
+    for (final entry in this._windows.entries)
+      if (entry.key.split('|').elementAtOrNull(1) == platform.name)
+        ...entry.value,
+  ];
 
   bool covers(
     ActivitySource source,
@@ -407,4 +449,76 @@ class ActivityLedger {
       thanked: stored.thanked,
     );
   }
+}
+
+/// A stretch of a stream where the app wasn't listening on [platform]:
+/// events of it from then may be missing.
+class ActivityGap {
+  final ActivityPlatform platform;
+  final DateTime start;
+
+  /// Null: still not listening
+  final DateTime? end;
+
+  const ActivityGap({required this.platform, required this.start, this.end});
+
+  String get id => 'gap:${this.platform.name}:${this.start.toIso8601String()}';
+
+  @override
+  bool operator ==(Object other) =>
+      other is ActivityGap &&
+      other.platform == this.platform &&
+      other.start == this.start &&
+      other.end == this.end;
+
+  @override
+  int get hashCode => Object.hash(this.platform, this.start, this.end);
+
+  @override
+  String toString() => 'ActivityGap(${this.platform.name}, $start - $end)';
+}
+
+/// Parts of [from]..[to] that none of [windows] covers, at least [minimum]
+/// long, oldest first. [open] marks [to] as "now" - a gap reaching it is
+/// still going (null end).
+List<ActivityGap> coverageGaps(
+  ActivityPlatform platform,
+  List<(DateTime, DateTime?)> windows,
+  DateTime from,
+  DateTime to, {
+  required bool open,
+  Duration minimum = const Duration(minutes: 1),
+}) {
+  final start = from.toUtc();
+  final end = to.toUtc();
+  final sorted = [for (final (s, e) in windows) (s.toUtc(), (e ?? end).toUtc())]
+    ..sort((a, b) => a.$1.compareTo(b.$1));
+  final gaps = <ActivityGap>[];
+  var cursor = start;
+  void add(DateTime gapStart, DateTime gapEnd, {bool running = false}) {
+    if (gapEnd.difference(gapStart) < minimum) return;
+    gaps.add(
+      ActivityGap(
+        platform: platform,
+        start: gapStart,
+        end: running ? null : gapEnd,
+      ),
+    );
+  }
+
+  for (final (s, e) in sorted) {
+    if (!e.isAfter(cursor)) continue;
+    if (!s.isBefore(end)) {
+      /// Listening again from exactly now: the gap is over
+      if (s == end && cursor.isBefore(end)) {
+        add(cursor, end);
+        cursor = end;
+      }
+      break;
+    }
+    if (s.isAfter(cursor)) add(cursor, s);
+    if (e.isAfter(cursor)) cursor = e;
+  }
+  if (cursor.isBefore(end)) add(cursor, end, running: open);
+  return gaps;
 }

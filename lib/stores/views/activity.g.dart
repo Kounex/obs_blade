@@ -174,6 +174,24 @@ mixin _$ActivityStore on _ActivityStore, Store {
     });
   }
 
+  late final _$coverageRevisionAtom = Atom(
+    name: '_ActivityStore.coverageRevision',
+    context: context,
+  );
+
+  @override
+  int get coverageRevision {
+    _$coverageRevisionAtom.reportRead();
+    return super.coverageRevision;
+  }
+
+  @override
+  set coverageRevision(int value) {
+    _$coverageRevisionAtom.reportWrite(value, super.coverageRevision, () {
+      super.coverageRevision = value;
+    });
+  }
+
   late final _$clearHistoryAsyncAction = AsyncAction(
     '_ActivityStore.clearHistory',
     context: context,
@@ -262,6 +280,18 @@ mixin _$ActivityStore on _ActivityStore, Store {
   }
 
   @override
+  void markThanked(Iterable<ActivityEvent> events) {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.markThanked',
+    );
+    try {
+      return super.markThanked(events);
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void setFilter(ActivityFilter filter) {
     final _$actionInfo = _$_ActivityStoreActionController.startAction(
       name: '_ActivityStore.setFilter',
@@ -295,6 +325,7 @@ filter: ${filter},
 toThankOnly: ${toThankOnly},
 relayState: ${relayState},
 relaySubscribed: ${relaySubscribed},
+coverageRevision: ${coverageRevision},
 allEvents: ${allEvents},
 unseenCount: ${unseenCount},
 toThankCount: ${toThankCount},

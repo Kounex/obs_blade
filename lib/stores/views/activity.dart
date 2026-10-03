@@ -227,8 +227,22 @@ abstract class _ActivityStore with Store {
   final List<ReactionDisposer> _reactions = [];
   final Set<String> _attached = {};
 
-  /// Native coverage per platform → channel id it is open for
-  final Map<ActivityPlatform, String> _nativeCovered = {};
+  /// Who keeps a native coverage window open: coverer key (`twitch`,
+  /// `youtube-store`, `youtube-own`, `kick`) → platform + own channel id.
+  /// A platform's window is open while any of its coverers is.
+  final Map<String, (ActivityPlatform, String)> _coverers = {};
+
+  /// Channels with an open native window, per platform
+  final Map<ActivityPlatform, Set<String>> _nativeOpen = {};
+
+  /// Last moment the process was known to run (tick / coverage change) -
+  /// a longer silence was a freeze (iOS suspended the app)
+  DateTime? _aliveAt;
+  static const Duration _freezeGap = Duration(seconds: 75);
+
+  /// Bumped when coverage changes (gaps read it)
+  @observable
+  int coverageRevision = 0;
   DateTime? _lastFollowerBackfill;
   Timer? _ticker;
   int _ticks = 0;
@@ -395,13 +409,16 @@ abstract class _ActivityStore with Store {
     }
     final now = this._clock().toUtc();
     this._startedAt ??= now;
+    final heartbeat = DateTime.tryParse(
+      '${this._persistence.loadMeta('heartbeat')}',
+    )?.toUtc();
     final coverage = ActivityCoverage.fromJson(
       this._persistence.loadMeta('coverage'),
     );
 
-    /// Nothing is connected yet - a window left open by a kill must not
-    /// claim the downtime
-    coverage.closeAll(now);
+    /// Nothing is connected yet - a window left open by a kill ends when
+    /// the app was last alive, it must not claim the downtime
+    coverage.closeAfterKill(heartbeat);
     this._ledger = ActivityLedger(coverage: coverage, seq: seq);
     for (final event in this._persistence.loadEvents()) {
       this._ledger.restore(event);
@@ -409,9 +426,6 @@ abstract class _ActivityStore with Store {
 
     final seen = this._persistence.loadMeta('seen');
     final rawSessions = this._persistence.loadMeta('sessions');
-    final heartbeat = DateTime.tryParse(
-      '${this._persistence.loadMeta('heartbeat')}',
-    )?.toUtc();
     runInAction(() {
       if (seen is Map) {
         this.seenMarks.addAll({
@@ -507,7 +521,7 @@ abstract class _ActivityStore with Store {
               ? twitch.user?.id
               : null,
           (ownId) {
-            this._setNativeCoverage(ActivityPlatform.twitch, ownId);
+            this._setCoverer('twitch', ActivityPlatform.twitch, ownId);
             if (ownId != null) unawaited(this._backfillTwitchFollowers(twitch));
           },
           fireImmediately: true,
@@ -535,7 +549,7 @@ abstract class _ActivityStore with Store {
             ? youTube.selfChannelId
             : null,
         (ownId) {
-          this._setNativeCoverage(ActivityPlatform.youtube, ownId);
+          this._setCoverer('youtube-store', ActivityPlatform.youtube, ownId);
 
           /// YouTube only connects to a live broadcast's chat
           this._setLive('youtube', ownId != null);
@@ -556,7 +570,7 @@ abstract class _ActivityStore with Store {
                   kick.chatConnection == KickChatConnectionState.connected
               ? kick.selfUserId?.toString()
               : null,
-          (ownId) => this._setNativeCoverage(ActivityPlatform.kick, ownId),
+          (ownId) => this._setCoverer('kick', ActivityPlatform.kick, ownId),
           fireImmediately: true,
         ),
       )
@@ -599,29 +613,64 @@ abstract class _ActivityStore with Store {
     runInAction(() => this.revision++);
   }
 
-  void _setNativeCoverage(ActivityPlatform platform, String? channelId) {
+  /// [key] covers [platform]'s own [channelId] now (null: not anymore).
+  void _setCoverer(String key, ActivityPlatform platform, String? channelId) {
+    final previous = this._coverers[key];
+    if (channelId == null
+        ? previous == null
+        : previous == (platform, channelId)) {
+      return;
+    }
+    if (channelId == null) {
+      this._coverers.remove(key);
+    } else {
+      this._coverers[key] = (platform, channelId);
+    }
+    this._applyNativeCoverage(platform);
+    if (previous != null && previous.$1 != platform) {
+      this._applyNativeCoverage(previous.$1);
+    }
+  }
+
+  void _applyNativeCoverage(ActivityPlatform platform) {
     final now = this._clock();
-    final previous = this._nativeCovered[platform];
-    if (previous == channelId) return;
-    if (previous != null) {
-      this._ledger.coverage.close(
+    this._catchUpFreeze(now);
+    final wanted = {
+      for (final (p, channel) in this._coverers.values)
+        if (p == platform) channel,
+    };
+    final open = this._nativeOpen.putIfAbsent(platform, () => {});
+    var changed = false;
+    for (final channel in open.difference(wanted)) {
+      changed |= this._ledger.coverage.close(
         ActivitySource.native,
         platform,
-        previous,
+        channel,
         now,
       );
-      this._nativeCovered.remove(platform);
     }
-    if (channelId != null) {
-      this._ledger.coverage.open(
+    for (final channel in wanted.difference(open)) {
+      changed |= this._ledger.coverage.open(
         ActivitySource.native,
         platform,
-        channelId,
+        channel,
         now,
       );
-      this._nativeCovered[platform] = channelId;
     }
-    this._saveCoverage();
+    open
+      ..clear()
+      ..addAll(wanted);
+    if (changed) this._saveCoverage();
+  }
+
+  /// A silence longer than [_freezeGap] since the process was last alive
+  /// means it was frozen (iOS suspends a backgrounded app; timers stop,
+  /// sockets die): what was "open" didn't listen then.
+  void _catchUpFreeze(DateTime now) {
+    final alive = this._aliveAt;
+    this._aliveAt = now;
+    if (alive == null || now.difference(alive) <= _freezeGap) return;
+    if (this._ledger.coverage.splitOpen(alive, now)) this._saveCoverage();
   }
 
   Future<void> _backfillTwitchFollowers(TwitchChatStore twitch) async {
@@ -750,13 +799,18 @@ abstract class _ActivityStore with Store {
 
   void _onTick() {
     this._ticks++;
+    this._catchUpFreeze(this._clock());
 
     /// OBS streaming counts as live too (no platform needed)
     final obsLive =
         lazySingletonCreated<DashboardStore>() &&
         GetIt.instance<DashboardStore>().isLive;
     this._setLive('obs', obsLive);
-    if (this.currentSession != null) this._writeHeartbeat();
+
+    /// The last alive moment: a kill ends sessions and coverage there
+    if (this.currentSession != null || this._ledger.coverage.anyOpen) {
+      this._writeHeartbeat();
+    }
 
     /// Every 6 h while running
     if (this._ticks % 720 == 0) this._prune();
@@ -812,6 +866,50 @@ abstract class _ActivityStore with Store {
     this._ledger.update(updated);
     unawaited(this._persistence.putEvent(updated));
     this.revision++;
+  }
+
+  /// Mark [events] thanked in one go (a stream's / day's header).
+  @action
+  void markThanked(Iterable<ActivityEvent> events) {
+    var changed = false;
+    for (final event in events) {
+      final stored = this._ledger[event.id];
+      if (stored == null || !stored.isBig || stored.thanked) continue;
+      final updated = stored.copyWith(thanked: true);
+      this._ledger.update(updated);
+      unawaited(this._persistence.putEvent(updated));
+      changed = true;
+    }
+    if (changed) this.revision++;
+  }
+
+  // Gaps
+
+  /// Where [session] wasn't listened to, per platform of the session,
+  /// oldest first. Kick with the relay never has gaps: the relay keeps
+  /// what arrives while the app is closed and replays it.
+  List<ActivityGap> gapsOf(ActivitySession session, {DateTime? now}) {
+    this.coverageRevision;
+    final current = (now ?? this._clock()).toUtc();
+    final end = session.end ?? current;
+    final gaps = <ActivityGap>[];
+    for (final platform in ActivityPlatform.values) {
+      if (!session.platforms.contains(platform)) continue;
+      if (platform == ActivityPlatform.kick && this._relayToken != null) {
+        continue;
+      }
+      gaps.addAll(
+        coverageGaps(
+          platform,
+          this._ledger.coverage.windowsFor(platform),
+          session.start,
+          end,
+          open: session.isOpen,
+        ),
+      );
+    }
+    gaps.sort((a, b) => a.start.compareTo(b.start));
+    return gaps;
   }
 
   @action
@@ -1005,6 +1103,7 @@ abstract class _ActivityStore with Store {
     final channel = this._relayUserId;
     if (channel == null) return;
     final now = this._clock();
+    this._catchUpFreeze(now);
     final changed = synced && this.relaySubscribed
         ? this._ledger.coverage.open(
             ActivitySource.kickRelay,
@@ -1088,9 +1187,12 @@ abstract class _ActivityStore with Store {
     );
   }
 
-  void _saveCoverage() => unawaited(
-    this._persistence.putMeta('coverage', this._ledger.coverage.toJson()),
-  );
+  void _saveCoverage() {
+    runInAction(() => this.coverageRevision++);
+    unawaited(
+      this._persistence.putMeta('coverage', this._ledger.coverage.toJson()),
+    );
+  }
 
   void _saveSessions() => unawaited(
     this._persistence.putMeta('sessions', [
@@ -1145,10 +1247,17 @@ abstract class _ActivityStore with Store {
     });
     this._ledger.coverage.closeAll(this._clock());
     this._ledger.coverage.prune(this._clock().add(const Duration(days: 1)));
+
     await this._persistence.putMeta('sessions', null);
     await this._persistence.putMeta('coverage', null);
     await this._persistence.putMeta('heartbeat', null);
     this._saveState();
+
+    /// Still listening: what is connected right now starts a new window
+    this._nativeOpen.clear();
+    for (final platform in ActivityPlatform.values) {
+      this._applyNativeCoverage(platform);
+    }
   }
 
   // Test seams
@@ -1162,7 +1271,10 @@ abstract class _ActivityStore with Store {
   }) => this._setLive(source, live, since: since, endedAt: endedAt);
 
   void setNativeCoverageForTest(ActivityPlatform platform, String? channel) =>
-      this._setNativeCoverage(platform, channel);
+      this._setCoverer('test-${platform.name}', platform, channel);
+
+  /// Run one 30 s tick now (tests: freeze detection, heartbeat).
+  void tickForTest() => this._onTick();
 
   void pruneForTest() => this._prune();
 

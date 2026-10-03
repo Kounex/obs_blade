@@ -378,4 +378,88 @@ void main() {
       expect(ActivityUnit.isCurrency('usd'), isFalse);
     });
   });
+
+  group('coverage gaps', () {
+    DateTime at(int minute) => DateTime.utc(2026, 10, 2, 20, minute);
+
+    test('overlapping windows from two sources are one', () {
+      final gaps = coverageGaps(
+        ActivityPlatform.youtube,
+        [(at(0), at(10)), (at(5), at(20)), (at(30), null)],
+        at(0),
+        at(40),
+        open: true,
+      );
+      expect(gaps, [
+        ActivityGap(
+          platform: ActivityPlatform.youtube,
+          start: at(20),
+          end: at(30),
+        ),
+      ]);
+    });
+
+    test('nothing covered: one gap over the whole span, running when open', () {
+      final gaps = coverageGaps(
+        ActivityPlatform.twitch,
+        const [],
+        at(0),
+        at(10),
+        open: true,
+      );
+      expect(gaps.single.start, at(0));
+      expect(gaps.single.end, isNull);
+    });
+
+    test('windows outside the span and sub-minute holes are ignored', () {
+      final gaps = coverageGaps(
+        ActivityPlatform.twitch,
+        [
+          (DateTime.utc(2026, 10, 1), DateTime.utc(2026, 10, 1, 1)),
+          (at(0), DateTime.utc(2026, 10, 2, 20, 4, 30)),
+          (DateTime.utc(2026, 10, 2, 20, 5), at(10)),
+        ],
+        at(0),
+        at(10),
+        open: false,
+      );
+      expect(gaps, isEmpty);
+    });
+
+    test('kill: an open window ends at the last alive moment', () {
+      final coverage = ActivityCoverage()
+        ..open(ActivitySource.native, ActivityPlatform.twitch, '1', at(0));
+      coverage.closeAfterKill(at(3));
+      expect(
+        coverage.covers(
+          ActivitySource.native,
+          ActivityPlatform.twitch,
+          '1',
+          at(2),
+        ),
+        isTrue,
+      );
+      expect(
+        coverage.covers(
+          ActivitySource.native,
+          ActivityPlatform.twitch,
+          '1',
+          at(4),
+        ),
+        isFalse,
+      );
+      final stale = ActivityCoverage()
+        ..open(ActivitySource.native, ActivityPlatform.twitch, '1', at(5));
+      stale.closeAfterKill(at(3));
+      expect(
+        stale.covers(
+          ActivitySource.native,
+          ActivityPlatform.twitch,
+          '1',
+          at(6),
+        ),
+        isFalse,
+      );
+    });
+  });
 }

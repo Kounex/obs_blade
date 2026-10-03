@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/stores/views/activity.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
+import 'package:obs_blade/utils/activity/activity_ledger.dart';
 import 'package:obs_blade/utils/activity/activity_persistence.dart';
 import 'package:obs_blade/utils/kick/kick_events_relay_client.dart';
 
@@ -441,6 +442,117 @@ void main() {
     store.pruneForTest();
     expect(store.allEvents.map((e) => e.id), ['new']);
     expect(persistence.events.keys, ['new']);
+  });
+
+  group('coverage and gaps', () {
+    DateTime at(int minute, [int second = 0]) =>
+        DateTime.utc(2026, 10, 2, 20, minute, second);
+
+    /// Time passes with the app running: a tick every 30 s
+    void runUntil(DateTime target) {
+      while (now.isBefore(target)) {
+        final next = now.add(const Duration(seconds: 30));
+        now = next.isAfter(target) ? target : next;
+        store.tickForTest();
+      }
+    }
+
+    test('listening the whole stream: no gaps', () {
+      store.setLiveForTest('twitch', true);
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      runUntil(at(30));
+      expect(store.gapsOf(store.currentSession!), isEmpty);
+    });
+
+    test('opened late: the stream start before it is a gap', () {
+      store.setLiveForTest('twitch', true, since: at(-20));
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      expect(store.gapsOf(store.currentSession!), [
+        ActivityGap(
+          platform: ActivityPlatform.twitch,
+          start: DateTime.utc(2026, 10, 2, 19, 40),
+          end: at(0),
+        ),
+      ]);
+    });
+
+    test('lost connection: a running gap; a short drop is none', () {
+      store.setLiveForTest('twitch', true);
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      runUntil(at(5));
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, null);
+      runUntil(at(5, 40));
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      expect(store.gapsOf(store.currentSession!), isEmpty);
+      runUntil(at(10));
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, null);
+      runUntil(at(20));
+      final gap = store.gapsOf(store.currentSession!).single;
+      expect(gap.start, at(10));
+      expect(gap.end, isNull);
+    });
+
+    test('a frozen app (iOS suspension) did not listen', () {
+      store.setLiveForTest('twitch', true);
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      now = at(0, 30);
+      store.tickForTest();
+
+      /// No tick for 15 minutes: the process was suspended
+      now = at(15, 30);
+      store.tickForTest();
+      expect(store.gapsOf(store.currentSession!), [
+        ActivityGap(
+          platform: ActivityPlatform.twitch,
+          start: at(0, 30),
+          end: at(15, 30),
+        ),
+      ]);
+    });
+
+    test('a kill does not count the downtime as listened', () async {
+      store.setLiveForTest('twitch', true);
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      runUntil(at(1));
+      await store.dispose();
+
+      now = at(30);
+      store = build();
+      await store.init();
+
+      /// Same broadcast, app back at 20:30
+      store.setLiveForTest('twitch', true, since: at(0));
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      expect(store.sessions, hasLength(1));
+      expect(store.gapsOf(store.currentSession!), [
+        ActivityGap(
+          platform: ActivityPlatform.twitch,
+          start: at(1),
+          end: at(30),
+        ),
+      ]);
+    });
+
+    test('only platforms of the session count', () {
+      store.setLiveForTest('twitch', true);
+      store.setNativeCoverageForTest(ActivityPlatform.twitch, '1');
+      runUntil(at(30));
+      expect(
+        store.gapsOf(store.currentSession!).map((gap) => gap.platform),
+        isNot(contains(ActivityPlatform.youtube)),
+      );
+    });
+  });
+
+  test('mark thanked: big rows of a group in one go', () {
+    store.ingest(_event('a', at: now));
+    store.ingest(_event('b', at: now, actor: 'B'));
+    store.ingest(_event('f', at: now, actor: 'F', kind: ActivityKind.follow));
+    expect(store.toThankCount, 2);
+    store.markThanked(store.allEvents);
+    expect(store.toThankCount, 0);
+    expect(store.allEvents.firstWhere((e) => e.id == 'f').thanked, isFalse);
+    expect(persistence.events['a'], contains('"thanked":true'));
   });
 
   test('native coverage drops a lower-priority duplicate source', () {
