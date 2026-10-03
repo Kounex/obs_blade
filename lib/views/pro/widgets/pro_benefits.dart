@@ -31,8 +31,9 @@ class ProBenefit {
   });
 }
 
-/// Four themed cards (was eight single-feature cards). The native-chat
-/// upsell in the chat pane lists titles from here as its benefit taste.
+/// Themed cards (was eight single-feature cards). The native-chat upsell
+/// in the chat pane lists the titles of the 2nd-4th card as its benefit
+/// taste.
 const List<ProBenefit> kProBenefits = [
   ProBenefit(
     icon: CupertinoIcons.chat_bubble_2_fill,
@@ -41,6 +42,20 @@ const List<ProBenefit> kProBenefits = [
         'Native Twitch, Kick and YouTube chat - on their own or merged into one timeline. Save your channel combos, see who\'s live, and replies land on the right platform.',
     color: ProPalette.twitch,
     showPlatforms: true,
+  ),
+  ProBenefit(
+    icon: CupertinoIcons.bell_fill,
+    title: 'Never Miss a Supporter',
+    body:
+        'Follows, subs, raids, cheers, Super Chats and KICKs from your own channels in one feed - what\'s new since you last looked, totals per stream and a to-thank list for your shout-outs.',
+    color: ProPalette.activity,
+  ),
+  ProBenefit(
+    icon: CupertinoIcons.speaker_2_fill,
+    title: 'Hear Your Chat',
+    body:
+        'Chat read out loud while you play - in each message\'s own language if you like. Spam gets shortened, emote-only messages can be skipped and your other audio dips while it speaks.',
+    color: ProPalette.speech,
   ),
   ProBenefit(
     icon: CupertinoIcons.shield_fill,

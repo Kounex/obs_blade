@@ -127,7 +127,7 @@ class FAQView extends StatelessWidget {
                   FAQBlock(
                     heading: 'What does OBS Blade Pro unlock?',
                     text:
-                        'Native chat for Twitch, Kick and YouTube, combined chat, the moderation toolkit, emotes and badges, smarter chat tools and custom themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
+                        'Native chat for Twitch, Kick and YouTube, combined chat, an activity feed for your follows, subs and tips, chat read out loud, the moderation toolkit, emotes and badges, smarter chat tools and custom themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
                   ),
                   SizedBox(height: AppSpacing.xxl),
                   FAQBlock(

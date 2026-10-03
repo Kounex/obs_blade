@@ -17,7 +17,10 @@ class ProPalette {
   static const Color kick = Color(0xFF53FC18);
   static const Color youtube = Color(0xFFE00000);
 
-  /// Benefit tile fills (white glyph 4.3 - 5.7:1)
+  /// Benefit tile fills (white glyph 4.3 - 5.7:1; the activity amber is
+  /// light enough for a black glyph, 9.8:1)
+  static const Color activity = Color(0xFFF59F00);
+  static const Color speech = Color(0xFF1971C2);
   static const Color moderation = Color(0xFFD9480F);
   static const Color chatTools = Color(0xFF0C8599);
   static const Color themes = Color(0xFFC2255C);
