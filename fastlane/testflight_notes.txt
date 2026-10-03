@@ -1,0 +1,24 @@
+4.1.0 test build - what to test:
+
+ACTIVITY FEED (Pro)
+- Twitch: sign in again when the feed asks (new access for cheers, channel points, hype trains)
+- Chat tab: Chat | Activity switch, the bell with the unseen count in the chat header, the "N new" chip in streaming mode, side by side on iPad
+- A real follow, sub, cheer and raid each arrive once - swipe marks thanked, big ones wait in "To thank"
+- Kick: follows / KICKs / subs that came in while the app was closed show up on the next open
+- Kick sign-in (first real sign-in on the new login callback)
+
+TEXT-TO-SPEECH (Pro)
+- Speaker in the native chat header: tap on/off, long press for settings
+- Read in / voice per language with preview, volume, detect each message's language
+- Spam gets shortened, emote-only skip, other audio dips and comes back, a phone call stops it
+
+CANVASES (OBS 32.1+)
+- Canvas picker, scenes and sources of a vertical canvas, hiding scenes / items per canvas
+- Aitum Vertical: live scene switch, stream, recording (pause, chapters), replay buffer, virtual camera, the vertical on-air pill
+- Twitch Dual Format shows as a status line
+
+ALSO
+- Wake Lock in Settings covers the whole app
+- Changes made in OBS (inputs, filters, profiles) and an already running replay buffer show up live
+- Paywall: the two new benefit cards
+- Updating over the store version keeps saved connections and settings

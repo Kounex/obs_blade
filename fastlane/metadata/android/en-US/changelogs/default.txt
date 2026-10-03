@@ -1,9 +1,9 @@
-Thanks for all the feedback on 4.0! This update fixes the first reports:
+4.1 brings two new Pro features and OBS 32.1 canvas support:
 
-- Saved connections using a ws:// or wss:// address no longer show as offline
-- Quick Connect works with passwords that contain special characters
-- Saved connection cards update right away after you edit or delete one
-- Editing a saved connection keeps its password exactly as it was
-- Cleaner, easier to read text in the FAQ and the log view
+- Activity feed: follows, subs, raids, cheers, Super Chats and KICKs on your channels in one list, with a to-thank queue
+- Text-to-speech: hear your chat read out loud, with a voice per language
+- Canvases: view a vertical canvas and control Aitum Vertical's stream and recording
+- Wake Lock (screen stays on) now covers the whole app - find it in Settings
+- Changes made in OBS show up right away
 
 Keep it coming on GitHub!
