@@ -11,6 +11,7 @@ EVERYTHING YOU NEED - FREE, FOREVER
 - Show and hide sources in any scene
 - Mix audio with live volume meters, or mute in one tap
 - Watch a live scene preview
+- Vertical and extra canvases (OBS 32.1+): browse their scenes and sources, and run Aitum Vertical's own stream, recording and replay buffer
 - Switch profiles and scene collections, trigger hotkeys
 - Keep an eye on stream health: FPS, CPU, bitrate, dropped frames
 - Look back on every past stream and recording in your statistics
@@ -24,6 +25,8 @@ Chat is where your stream lives, so Pro makes it native:
 - Native chat for Twitch, Kick and YouTube - read and write without a browser in sight
 - Combined chat: all your chats in one live timeline, and replies land on the right platform
 - Every channel you mod or follow, saved combos and who's live at a glance
+- An activity feed for your own channels: follows, subs, raids, cheers, Super Chats and KICKs in one list, with a to-thank queue for your shout-outs
+- Chat read out loud while you play, in each message's own language if you like
 - A full moderation toolkit: delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch
 - 7TV, BTTV and FFZ emotes, an emote picker, autocomplete and role badges
 - Highlights, mute words, chat search - and custom themes for the whole app
