@@ -299,11 +299,14 @@ class AscProvisioner {
   /// never auto-updates them, so each territory needs its own POST
   /// /v1/subscriptionPrices — and this table is what keeps them correct.
   ///
-  /// Idempotent: a territory whose current price point is already the one
-  /// we'd pick is skipped (point-id comparison — the snapped point's price
-  /// string need not equal the target). Territories whose currency has no
-  /// target (shouldn't happen — the table covers every ASC currency) are
-  /// skipped with a warning and don't fail the run.
+  /// Idempotent: a territory whose current price point (or already-scheduled
+  /// price change) is the one we'd pick is skipped (point-id comparison —
+  /// the snapped point's price string need not equal the target).
+  /// Territories whose currency has no target (shouldn't happen — the table
+  /// covers every ASC currency) are skipped with a warning and don't fail
+  /// the run. Approved subscriptions reject immediate prices, so those
+  /// changes are scheduled 2 days out instead (existing subscribers keep
+  /// their price).
   Future<bool> _ensureTerritoryPrices(
     String subscriptionId,
     SubscriptionSpec spec,
@@ -360,7 +363,11 @@ class AscProvisioner {
   }
 
   Future<({_TerritoryPriceResult result, String? snapNote})>
-  _ensureTerritoryPrice(String subscriptionId, SubscriptionSpec spec, String territory) {
+  _ensureTerritoryPrice(
+    String subscriptionId,
+    SubscriptionSpec spec,
+    String territory,
+  ) {
     return _retry429(
       () => _ensureTerritoryPriceOnce(subscriptionId, spec, territory),
     );
@@ -393,28 +400,50 @@ class AscProvisioner {
       return (result: _TerritoryPriceResult.noPricePoint, snapNote: null);
     }
     final target = double.parse(wanted);
-    String? currentPointId;
-    String? currentPrice;
     final existing = await client
         .get('v1/subscriptions/$subscriptionId/prices', {
           'filter[territory]': territory,
           'limit': '50',
           'include': 'subscriptionPricePoint',
         });
-    if (existing.dataList.isNotEmpty) {
-      // The current price is the one without a startDate.
-      final current = existing.dataList.firstWhere(
-        (p) => (p['attributes'] as Map<String, Object?>?)?['startDate'] == null,
-        orElse: () => existing.dataList.first,
-      );
-      currentPointId =
-          (((current['relationships']
+    // The current price is the one without a startDate (else the latest
+    // past-dated one — an implemented change keeps its startDate); a
+    // future-dated one is a scheduled change (at most one per territory —
+    // scheduling a second overwrites the first).
+    final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+    String? currentPointId;
+    String? currentDate;
+    String? scheduledPointId;
+    String? scheduledDate;
+    for (final p in existing.dataList) {
+      final startDate =
+          (p['attributes'] as Map<String, Object?>?)?['startDate'] as String?;
+      final pointId =
+          (((p['relationships']
                           as Map<String, Object?>?)?['subscriptionPricePoint']
                       as Map<String, Object?>?)?['data']
                   as Map<String, Object?>?)?['id']
               as String?;
-      currentPrice = _includedPricePointPrice(existing, currentPointId);
+      if (startDate == null) {
+        // The initial/current price — always wins over past-dated records.
+        if (currentDate != null || currentPointId == null) {
+          currentPointId = pointId;
+          currentDate = null;
+        }
+      } else if (startDate.compareTo(today) > 0) {
+        if (scheduledDate == null || startDate.compareTo(scheduledDate) > 0) {
+          scheduledPointId = pointId;
+          scheduledDate = startDate;
+        }
+      } else if (currentDate != null
+          ? startDate.compareTo(currentDate) > 0
+          : currentPointId == null) {
+        // An implemented change keeps its startDate — latest past wins.
+        currentPointId = pointId;
+        currentDate = startDate;
+      }
     }
+    final currentPrice = _includedPricePointPrice(existing, currentPointId);
     final path = 'v1/subscriptions/$subscriptionId/pricePoints';
     final point = await _findNearestPricePoint(
       path,
@@ -439,27 +468,43 @@ class AscProvisioner {
         ? '${point.price} (target $wanted)'
         : null;
     if (currentPointId == point.id) {
+      _log('  $territory: price already ${point.price} — skipping');
+      return (result: _TerritoryPriceResult.ok, snapNote: snapNote);
+    }
+    if (scheduledPointId == point.id) {
       _log(
-        '  $territory: price already ${point.price} — skipping',
+        '  $territory: price change to ${point.price} already scheduled '
+        '(starts $scheduledDate) — skipping',
       );
       return (result: _TerritoryPriceResult.ok, snapNote: snapNote);
     }
-    if (!await _postTerritoryPrice(subscriptionId, point.id, territory)) {
+    final post = await _postTerritoryPrice(subscriptionId, point.id, territory);
+    if (!post.ok) {
       return (result: _TerritoryPriceResult.failed, snapNote: null);
     }
     _log(
-      '  $territory: set price ${point.price}'
-      '${currentPrice == null ? '' : ' (was $currentPrice)'}'
-      '${point.price == wanted ? '' : ' — snapped from target $wanted'} '
-      '(price point ${point.id})',
+      post.scheduledFor == null
+          ? '  $territory: set price ${point.price}'
+                '${currentPrice == null ? '' : ' (was $currentPrice)'}'
+                '${point.price == wanted ? '' : ' — snapped from target $wanted'} '
+                '(price point ${point.id})'
+          : '  $territory: scheduled price ${point.price} starting '
+                '${post.scheduledFor}'
+                '${currentPrice == null ? '' : ' (was $currentPrice)'}'
+                '${point.price == wanted ? '' : ' — snapped from target $wanted'} '
+                '(price point ${point.id})',
     );
     return (result: _TerritoryPriceResult.ok, snapNote: snapNote);
   }
 
-  /// POSTs the current-price record for one territory. Returns false (after
-  /// logging) on API errors instead of throwing so one bad territory
-  /// doesn't abort the run.
-  Future<bool> _postTerritoryPrice(
+  /// POSTs the current-price record for one territory. Approved
+  /// subscriptions reject an immediate price (409 STATE_ERROR: "Initial
+  /// price cannot be created again after subscription is approved") — those
+  /// get a scheduled price change instead (start date 2 days out, the
+  /// soonest Apple schedules; existing subscribers keep their price — we
+  /// only re-price for new buyers). Returns false (after logging) on API
+  /// errors instead of throwing so one bad territory doesn't abort the run.
+  Future<({bool ok, String? scheduledFor})> _postTerritoryPrice(
     String subscriptionId,
     String pointId,
     String territory,
@@ -473,20 +518,43 @@ class AscProvisioner {
           territoryId: territory,
         ),
       );
-      return true;
+      return (ok: true, scheduledFor: null);
     } on ApiException catch (e) {
-      // A 409 here with "error occurred while processing the pricing
-      // information" on a subscription's FIRST price almost always means an
-      // account-level block (Paid Apps agreement / tax / banking not
-      // active) — the payload and price point are not the problem.
-      _log(
-        '  ERROR: setting the $territory price failed: $e\n'
-        '  If this is the subscription\'s first price, check App Store '
-        'Connect → Business → Agreements, Tax, and Banking — the Paid Apps '
-        'agreement (incl. bank account + tax forms) must be Active before '
-        'pricing works.',
-      );
-      return false;
+      if (e.statusCode != 409 || !'$e'.contains('STATE_ERROR')) {
+        // A 409 here with "error occurred while processing the pricing
+        // information" on a subscription's FIRST price almost always means an
+        // account-level block (Paid Apps agreement / tax / banking not
+        // active) — the payload and price point are not the problem.
+        _log(
+          '  ERROR: setting the $territory price failed: $e\n'
+          '  If this is the subscription\'s first price, check App Store '
+          'Connect → Business → Agreements, Tax, and Banking — the Paid Apps '
+          'agreement (incl. bank account + tax forms) must be Active before '
+          'pricing works.',
+        );
+        return (ok: false, scheduledFor: null);
+      }
+      // Approved subscription — immediate prices are rejected; schedule.
+      final startDate = DateTime.now()
+          .toUtc()
+          .add(const Duration(days: 2))
+          .toIso8601String()
+          .substring(0, 10);
+      try {
+        await client.post(
+          'v1/subscriptionPrices',
+          subscriptionPriceCreate(
+            subscriptionId: subscriptionId,
+            pricePointId: pointId,
+            territoryId: territory,
+            startDate: startDate,
+          ),
+        );
+        return (ok: true, scheduledFor: startDate);
+      } on ApiException catch (e2) {
+        _log('  ERROR: scheduling the $territory price change failed: $e2');
+        return (ok: false, scheduledFor: null);
+      }
     }
   }
 

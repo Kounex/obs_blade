@@ -211,8 +211,7 @@ void main() async {
         in (otp.json['purchaseOptions'] as List? ?? const [])
             .whereType<Map>()) {
       for (final rc
-          in (po['regionalPricingAndAvailabilityConfigs'] as List? ??
-                  const [])
+          in (po['regionalPricingAndAvailabilityConfigs'] as List? ?? const [])
               .whereType<Map>()) {
         final p = rc['price'] as Map?;
         if (p != null) out[rc['regionCode'] as String] = money(p);
@@ -277,6 +276,9 @@ void main() async {
   }
 
   /// Live per-territory subscription prices: territory → customerPrice.
+  /// A pending SCHEDULED price change (future startDate — approved
+  /// subscriptions only take those) wins over the current price: it's the
+  /// price new buyers will actually pay once it takes effect.
   Future<PriceMap> appleSubPrices(String subId) async {
     final ids = <String>[];
     String? cursor;
@@ -290,6 +292,7 @@ void main() async {
       final paging = meta is Map ? meta['paging'] : null;
       cursor = paging is Map ? paging['nextCursor'] as String? : null;
     } while (cursor != null);
+    final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
     final out = <String, String>{};
     for (final t in ids) {
       final prices = await asc.get('v1/subscriptions/$subId/prices', {
@@ -297,16 +300,25 @@ void main() async {
         'limit': '50',
         'include': 'subscriptionPricePoint',
       });
-      final current = prices.dataList
-          .where(
-            (p) =>
-                (p['attributes'] as Map<String, Object?>?)?['startDate'] ==
-                null,
-          )
-          .firstOrNull;
-      if (current == null) continue;
+      Map<String, Object?>? chosen;
+      var chosenDate = '';
+      for (final p in prices.dataList) {
+        final startDate =
+            (p['attributes'] as Map<String, Object?>?)?['startDate']
+                as String? ??
+            '';
+        final isFuture = startDate.compareTo(today) > 0;
+        final chosenIsFuture = chosenDate.compareTo(today) > 0;
+        if ((isFuture &&
+                (!chosenIsFuture || startDate.compareTo(chosenDate) > 0)) ||
+            (chosen == null)) {
+          chosen = p;
+          chosenDate = startDate;
+        }
+      }
+      if (chosen == null) continue;
       final pointId =
-          (((current['relationships'] as Map?)?['subscriptionPricePoint']
+          (((chosen['relationships'] as Map?)?['subscriptionPricePoint']
                       as Map?)?['data']
                   as Map?)?['id']
               as String?;
@@ -333,14 +345,12 @@ void main() async {
       final out = <String, String>{};
       String? cursor;
       do {
-        final page = await asc.get(
-          'v1/inAppPurchasePriceSchedules/$schedId/automaticPrices',
-          {
-            'limit': '200',
-            'include': 'territory,inAppPurchasePricePoint',
-            if (cursor != null) 'cursor': cursor,
-          },
-        );
+        final page = await asc
+            .get('v1/inAppPurchasePriceSchedules/$schedId/automaticPrices', {
+              'limit': '200',
+              'include': 'territory,inAppPurchasePricePoint',
+              if (cursor != null) 'cursor': cursor,
+            });
         final included = <String, Map<String, Object?>>{};
         for (final inc
             in (page.json['included'] as List? ?? const [])
@@ -352,7 +362,8 @@ void main() async {
           final territoryId =
               ((rels?['territory'] as Map?)?['data'] as Map?)?['id'] as String?;
           final pointId =
-              ((rels?['inAppPurchasePricePoint'] as Map?)?['data'] as Map?)?['id']
+              ((rels?['inAppPurchasePricePoint'] as Map?)?['data']
+                      as Map?)?['id']
                   as String?;
           final point = included['inAppPurchasePricePoints/$pointId'];
           final price =
@@ -419,10 +430,8 @@ void main() async {
     final appleByCur = territoryPricesByCurrency(appleLive);
     final playByCur = regionPricesByCurrency(playLive, googleRaw);
     final byCur = territoriesByCurrency(appleLive);
-    final currencies = <String>{
-      ...appleByCur.keys,
-      ...playByCur.keys,
-    }.toList()..sort();
+    final currencies = <String>{...appleByCur.keys, ...playByCur.keys}.toList()
+      ..sort();
 
     print('\n=== $label (USD $nominalUsd) ===');
     if (conflicts.isNotEmpty) {
@@ -459,7 +468,8 @@ void main() async {
             final dev = (v / ref - 1).abs();
             return worst == null || dev > worst ? dev : worst;
           });
-      final isOutlier = !anchor &&
+      final isOutlier =
+          !anchor &&
           ref != null &&
           ((appleWorst != null && appleWorst > outlierThreshold) ||
               (playWorst != null && playWorst > outlierThreshold));
@@ -477,8 +487,7 @@ void main() async {
       }
       if (appleTier != null && ref != null && tier != null) {
         final tierUsd = usd(tier, currency);
-        if (tierUsd != null &&
-            (tierUsd / ref - 1).abs() > outlierThreshold) {
+        if (tierUsd != null && (tierUsd / ref - 1).abs() > outlierThreshold) {
           matrixIssues.add(
             '  $currency: AppleTier ${fmt(tier, currency, ref: ref)} '
             'vs Google ${fmt(google, currency)}',
@@ -550,8 +559,10 @@ void main() async {
     googleRaw: googleLifetime,
   );
   if (appleLifetime == null) {
-    print('  (App Store lifetime per-territory prices could not be read — '
-        'the automaticPrices endpoint shape differs; check the console.)');
+    print(
+      '  (App Store lifetime per-territory prices could not be read — '
+      'the automaticPrices endpoint shape differs; check the console.)',
+    );
   }
 
   // ---- Proposed target table ----
@@ -563,9 +574,7 @@ void main() async {
     googleLifetime,
     <String, Set<String>>{},
   );
-  final allCurrencies = <String>{
-    ...territoryCurrency.values,
-  }.toList()..sort();
+  final allCurrencies = <String>{...territoryCurrency.values}.toList()..sort();
   for (final currency in allCurrencies) {
     final anchor = anchorCurrencies.contains(currency);
     final m = anchor ? '4.99' : targetMonthly[currency] ?? 'CONFLICT/—';

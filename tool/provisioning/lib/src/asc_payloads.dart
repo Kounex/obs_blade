@@ -188,14 +188,27 @@ Map<String, Object?> subscriptionAvailabilityCreate({
 
 /// POST /v1/subscriptionPrices — SubscriptionPriceCreateRequest ("Create a
 /// Subscription Price Change"). Omitting startDate applies the price
-/// immediately.
+/// immediately — only possible before the subscription is approved; an
+/// approved subscription answers STATE_ERROR and the change must be
+/// scheduled instead: [startDate] (YYYY-MM-DD, future — Apple schedules
+/// "generally 1 to 2 days in advance") plus [preserveCurrentPrice]
+/// (true = existing subscribers keep their price — grandfathered, only new
+/// subscribers pay the new one). One scheduled change per territory; a new
+/// one overwrites the previous.
 Map<String, Object?> subscriptionPriceCreate({
   required String subscriptionId,
   required String pricePointId,
   required String territoryId, // e.g. USA
+  String? startDate,
+  bool preserveCurrentPrice = true,
 }) => {
   'data': {
     'type': 'subscriptionPrices',
+    if (startDate != null)
+      'attributes': {
+        'startDate': startDate,
+        'preserveCurrentPrice': preserveCurrentPrice,
+      },
     'relationships': {
       'subscription': rel('subscriptions', subscriptionId),
       'subscriptionPricePoint': rel('subscriptionPricePoints', pricePointId),

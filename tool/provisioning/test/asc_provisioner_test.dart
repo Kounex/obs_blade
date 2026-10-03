@@ -104,6 +104,49 @@ ApiResponse currentPrice(String subId, String pointId, String customerPrice) =>
       ],
     });
 
+/// A prices response with a current record at [currentPrice] (point
+/// [currentPointId]) plus a SCHEDULED change (future [startDate]) to
+/// [scheduledPrice] via point [scheduledPointId].
+ApiResponse priceWithScheduledChange(
+  String subId,
+  String currentPointId,
+  String currentPrice,
+  String scheduledPointId,
+  String scheduledPrice,
+  String startDate,
+) => ApiResponse(200, {
+  'data': [
+    {
+      'type': 'subscriptionPrices',
+      'id': 'p-$subId',
+      'attributes': {'startDate': null},
+      'relationships': {
+        'subscriptionPricePoint': {
+          'data': {'type': 'subscriptionPricePoints', 'id': currentPointId},
+        },
+      },
+    },
+    {
+      'type': 'subscriptionPrices',
+      'id': 'p-$subId-scheduled',
+      'attributes': {'startDate': startDate},
+      'relationships': {
+        'subscriptionPricePoint': {
+          'data': {'type': 'subscriptionPricePoints', 'id': scheduledPointId},
+        },
+      },
+    },
+  ],
+  'included': [
+    _resource('subscriptionPricePoints', currentPointId, {
+      'customerPrice': currentPrice,
+    }),
+    _resource('subscriptionPricePoints', scheduledPointId, {
+      'customerPrice': scheduledPrice,
+    }),
+  ],
+});
+
 /// A price-points page with a single point.
 ApiResponse pricePoints(String pointId, String customerPrice) =>
     ApiResponse(200, {
@@ -1203,6 +1246,157 @@ void main() {
         {'type': 'inAppPurchasePricePoints', 'id': fakePointId('10477')},
       );
       expect(logs.any((l) => l.contains('different price')), isTrue);
+    });
+
+    test(
+      'schedules the price change when the subscription is already approved',
+      () async {
+        final client = FakeApiClient();
+        final logs = <String>[];
+
+        scriptExistingSubs(client);
+        scriptAvailability(client, 's1', ['CAN']);
+        scriptAvailability(client, 's2', ['USA']);
+        scriptTerritories(client, {'CAN': 'CAD', 'USA': 'USD'});
+        // CAN: current 24.99, wanted CAD 70.99 (Google table) — but the
+        // subscription is approved, so the immediate price POST is rejected
+        // and the change must be scheduled instead.
+        client.on(
+          'GET',
+          'v1/subscriptions/s1/prices',
+          currentPrice('s1', 'pp-old', '24.99'),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s1/pricePoints',
+          pricePoints('pp-new', '70.99'),
+        );
+        client.onThrow(
+          'POST',
+          'v1/subscriptionPrices',
+          ApiException(
+            'POST',
+            'https://x/v1/subscriptionPrices',
+            409,
+            'STATE_ERROR: Initial price cannot be created again after '
+                'subscription is approved.',
+          ),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s2/prices',
+          currentPrice('s2', 'pp-m', '4.99'),
+        );
+        client.on(
+          'GET',
+          'v1/subscriptions/s2/pricePoints',
+          pricePoints('pp-m', '4.99'),
+        );
+        scriptExistingIap(client, '10417', '79.99');
+
+        final provisioner = AscProvisioner(
+          client: client,
+          appId: '1234',
+          log: logs.add,
+        );
+        final ok = await provisioner.run(
+          subscriptions: subs,
+          lifetimePriceUsd: '79.99',
+        );
+
+        expect(ok, isTrue);
+        // Two POSTs for CAN: the rejected immediate one, then the
+        // scheduled one carrying a future startDate + grandfathering.
+        final priceBodies = client.bodiesFor('POST', 'v1/subscriptionPrices');
+        expect(priceBodies, hasLength(2));
+        expect(
+          (priceBodies[0]['data'] as Map).containsKey('attributes'),
+          isFalse,
+        );
+        final scheduledAttrs =
+            (priceBodies[1]['data'] as Map)['attributes'] as Map;
+        final startDate = scheduledAttrs['startDate'] as String;
+        expect(
+          DateTime.parse(startDate).isAfter(DateTime.now().toUtc()),
+          isTrue,
+        );
+        expect(scheduledAttrs['preserveCurrentPrice'], isTrue);
+        expect(
+          logs.any(
+            (l) => l.contains(
+              'CAN: scheduled price 70.99 starting $startDate (was 24.99)',
+            ),
+          ),
+          isTrue,
+        );
+      },
+    );
+
+    test('skips a territory whose price change is already scheduled', () async {
+      final client = FakeApiClient();
+      final logs = <String>[];
+
+      scriptExistingSubs(client);
+      scriptAvailability(client, 's1', ['CAN']);
+      scriptAvailability(client, 's2', ['USA']);
+      scriptTerritories(client, {'CAN': 'CAD', 'USA': 'USD'});
+      final futureDate = DateTime.now()
+          .toUtc()
+          .add(const Duration(days: 2))
+          .toIso8601String()
+          .substring(0, 10);
+      // CAN: still at the old price, but a change to the wanted CAD 70.99
+      // point is already scheduled — no new POST.
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/prices',
+        priceWithScheduledChange(
+          's1',
+          'pp-old',
+          '24.99',
+          'pp-new',
+          '70.99',
+          futureDate,
+        ),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s1/pricePoints',
+        pricePoints('pp-new', '70.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/prices',
+        currentPrice('s2', 'pp-m', '4.99'),
+      );
+      client.on(
+        'GET',
+        'v1/subscriptions/s2/pricePoints',
+        pricePoints('pp-m', '4.99'),
+      );
+      scriptExistingIap(client, '10417', '79.99');
+
+      final provisioner = AscProvisioner(
+        client: client,
+        appId: '1234',
+        log: logs.add,
+      );
+      final ok = await provisioner.run(
+        subscriptions: subs,
+        lifetimePriceUsd: '79.99',
+      );
+
+      expect(ok, isTrue);
+      expect(client.count('POST', 'v1/subscriptionPrices'), 0);
+      expect(
+        logs.any(
+          (l) => l.contains(
+            'CAN: price change to 70.99 already scheduled '
+            '(starts $futureDate) — skipping',
+          ),
+        ),
+        isTrue,
+      );
     });
 
     test('missing price points are skipped with a summary warning', () async {

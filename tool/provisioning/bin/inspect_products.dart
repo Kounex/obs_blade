@@ -57,7 +57,9 @@ Future<void> main() async {
   /// Prints "priced/total territories" and parity mismatches. Parity = the
   /// current price matches the reviewed PricingTargets value for the
   /// territory's currency (per-territory override first), allowing the
-  /// provisioner's snap-to-nearest-point tolerance.
+  /// provisioner's snap-to-nearest-point tolerance. A matching SCHEDULED
+  /// price change (approved subscriptions only take those) counts too and
+  /// is reported separately.
   Future<void> priceCoverage(
     String subId,
     String nominalUsd,
@@ -66,6 +68,7 @@ Future<void> main() async {
     const snapTolerance = 0.02;
     final territories = await territoryIds(subId);
     var priced = 0;
+    var scheduledOnly = 0;
     final missing = <String>[];
     final offParity = <String>[];
     for (final t in territories) {
@@ -74,41 +77,62 @@ Future<void> main() async {
         'limit': '50',
         'include': 'subscriptionPricePoint',
       });
-      final current = prices.dataList
+      if (prices.dataList.isEmpty) {
+        missing.add(t);
+        continue;
+      }
+      priced++;
+      final wanted = PricingTargets.target(
+        territoryCurrency[t] ?? '?',
+        nominalUsd,
+        region: {'CHE': 'CH', 'LIE': 'LI'}[t],
+      );
+      final target = wanted == null ? null : double.tryParse(wanted);
+      bool matches(Map<String, Object?> record) {
+        final pointId =
+            (((record['relationships'] as Map?)?['subscriptionPricePoint']
+                        as Map?)?['data']
+                    as Map?)?['id']
+                as String?;
+        final value = double.tryParse(
+          pricePointPrice(prices.json, pointId) ?? '',
+        );
+        return value != null &&
+            target != null &&
+            (value / target - 1).abs() <= snapTolerance;
+      }
+
+      final records = prices.dataList;
+      final current = records
           .where(
             (p) =>
                 (p['attributes'] as Map<String, Object?>?)?['startDate'] ==
                 null,
           )
           .firstOrNull;
-      if (current == null) {
-        missing.add(t);
-        continue;
+      final currentMatches = current != null && matches(current);
+      if (!currentMatches && records.any(matches)) {
+        scheduledOnly++; // a scheduled change covers it
+      } else if (!currentMatches) {
+        final price = current == null
+            ? null
+            : pricePointPrice(
+                prices.json,
+                (((current['relationships'] as Map?)?['subscriptionPricePoint']
+                            as Map?)?['data']
+                        as Map?)?['id']
+                    as String?,
+              );
+        offParity.add('$t=$price(want $wanted)');
       }
-      priced++;
-      final pointId =
-          (((current['relationships'] as Map?)?['subscriptionPricePoint']
-                      as Map?)?['data']
-                  as Map?)?['id']
-              as String?;
-      final price = pricePointPrice(prices.json, pointId);
-      final wanted = PricingTargets.target(
-        territoryCurrency[t] ?? '?',
-        nominalUsd,
-        region: {'CHE': 'CH', 'LIE': 'LI'}[t],
-      );
-      final value = double.tryParse(price ?? '');
-      final target = wanted == null ? null : double.tryParse(wanted);
-      final atParity =
-          value != null &&
-          target != null &&
-          (value / target - 1).abs() <= snapTolerance;
-      if (!atParity) offParity.add('$t=$price(want $wanted)');
     }
     final parityNote = offParity.isEmpty
         ? 'parity OK (reviewed PricingTargets)'
         : 'OFF PARITY: ${offParity.join(', ')}';
     print('  territories priced: $priced/${territories.length} — $parityNote');
+    if (scheduledOnly > 0) {
+      print('  ($scheduledOnly via scheduled price changes not yet in effect)');
+    }
     if (missing.isNotEmpty) {
       print('  missing: ${missing.join(', ')}');
     }
@@ -204,7 +228,9 @@ Future<void> main() async {
 Future<void> _inspectPlay(Map<String, String> env) async {
   final sa = ServiceAccountCredentials.fromJson(
     jsonDecode(
-      await File(env['OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS']!).readAsString(),
+      await File(
+        env['OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS']!,
+      ).readAsString(),
     ),
   );
   final authClient = await clientViaServiceAccount(sa, [

@@ -291,8 +291,7 @@ class PricingTargets {
   /// overrides. Null when neither covers it.
   static String? target(String currency, String priceUsd, {String? region}) {
     final row =
-        (region != null ? byRegion[region] : null) ??
-        byCurrency[currency];
+        (region != null ? byRegion[region] : null) ?? byCurrency[currency];
     if (row == null) {
       if (!anchorCurrencies.contains(currency)) return null;
       return switch (priceUsd) {
