@@ -244,6 +244,41 @@ void main() {
     );
   });
 
+  testWidgets('switching WebView <-> Native keeps the engine switch '
+      '(its thumb slides instead of jumping)', (tester) async {
+    await tester.runAsync(() async {
+      await seedLoggedIn();
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+    });
+    await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 400));
+    await tester.pump();
+    State<StatefulWidget> control() =>
+        tester.state(find.byType(CupertinoSlidingSegmentedControl<ChatEngine>));
+    final before = control();
+
+    await tester.runAsync(
+      () => settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(NativeChannelDropdown), findsOneWidget);
+    expect(control(), same(before));
+
+    await tester.runAsync(
+      () => settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.webView,
+      ),
+    );
+    await tester.pump();
+    expect(control(), same(before));
+  });
+
   test('Mod folds into options only below shield + options (96pt)', () {
     expect(nativeModClusterFitsWithShield(maxWidth: 96.0), isTrue);
     expect(nativeModClusterFitsWithShield(maxWidth: 95.0), isFalse);

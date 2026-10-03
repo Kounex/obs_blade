@@ -17,7 +17,9 @@ the row and the sign-in pills hug their content (their full-width
 (Twitch signed out) options + pill sit right. Tests:
 `channel_mod_entry_test.dart` (row geometry at 320 / 400 / 800 pt, the
 signed-out pill); shots: `chat_bar_shots_test.dart` (long names, phone /
-narrow / tablet, open Kick menu, signed out).
+narrow / tablet, open Kick menu, signed out). Review fix: native and WebView
+build different trees, which rebuilt the engine switch on every swap (a
+tap jumped instead of sliding) - a per-bar `GlobalKey` keeps it.
 
 ## 2026-10-03 - YouTube + Kick Add chat sheets (search, suggestions)
 

@@ -51,8 +51,19 @@ import 'youtube_native_channel_dropdown.dart';
 /// dead-end login pills; the pane's locked Pro upsell is their
 /// experience (the engine switch always applies, the lock badge marks
 /// the gated segment).
-class ChatUsernameBar extends StatelessWidget {
+class ChatUsernameBar extends StatefulWidget {
   const ChatUsernameBar({super.key});
+
+  @override
+  State<ChatUsernameBar> createState() => _ChatUsernameBarState();
+}
+
+class _ChatUsernameBarState extends State<ChatUsernameBar> {
+  /// Native and WebView build different trees around the engine switch;
+  /// the key moves its element across the swap, so a tap still slides
+  /// the thumb (a fresh control would just jump). Per instance: the Chat
+  /// tab and the streaming-mode header each have their own bar.
+  final GlobalKey _engineSwitchKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +146,11 @@ class ChatUsernameBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _ChatBarTopRow(settingsBox: settingsBox, chatType: chatType),
+              _ChatBarTopRow(
+                settingsBox: settingsBox,
+                chatType: chatType,
+                engineSwitchKey: this._engineSwitchKey,
+              ),
               _NativeChannelRow(chatType: chatType),
             ],
           );
@@ -171,6 +186,7 @@ class ChatUsernameBar extends StatelessWidget {
                 children: [
                   if (nativeChatAvailableFor(chatType)) ...[
                     ChatEngineSwitch(
+                      key: this._engineSwitchKey,
                       settingsBox: settingsBox,
                       chatType: chatType,
                     ),
@@ -194,7 +210,13 @@ class _ChatBarTopRow extends StatelessWidget {
   final Box<dynamic> settingsBox;
   final ChatType chatType;
 
-  const _ChatBarTopRow({required this.settingsBox, required this.chatType});
+  final GlobalKey engineSwitchKey;
+
+  const _ChatBarTopRow({
+    required this.settingsBox,
+    required this.chatType,
+    required this.engineSwitchKey,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +236,7 @@ class _ChatBarTopRow extends StatelessWidget {
             child: Align(
               alignment: Alignment.topRight,
               child: ChatEngineSwitch(
+                key: this.engineSwitchKey,
                 settingsBox: this.settingsBox,
                 chatType: this.chatType,
               ),
