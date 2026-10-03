@@ -16,6 +16,11 @@ changelog "Kick sign-in: client secret"; 2026100302 lacked the YouTube
 read-only fix).
 **Kick client secret rotated 2026-10-03** (server side verified, see
 changelog); new builds never carry it (`release preflight` guard).
+Since build 2026100303, `master` has more YouTube fixes (console-accurate
+setup steps, Brand Account / no-channel sign-in, own channel named by
+title, header sheet offline vs signed out) - on Kounex iOS as a dogfood
+install (92246187), not in a store build: per the user, iterate on device
+first and cut the next test build only after an on-device OK.
 Build 2026100303: activity feed, TTS, YouTube read-only setup flow,
 canvases, plus paywall cards / FAQ / store listings / release notes for
 them (details: `changelog-agent.md` 2026-10-03 "4.1.0 beta"). The Play
