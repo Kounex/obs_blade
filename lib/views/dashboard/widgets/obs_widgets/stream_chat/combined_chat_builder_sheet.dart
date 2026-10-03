@@ -22,11 +22,13 @@ import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/combined/combined_match_finder.dart';
 import '../../../../../utils/youtube/youtube_entry_name.dart';
-import '../../../../../utils/kick_channel_slug.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/twitch/twitch_channel_service.dart';
 import '../../../../../utils/youtube_target.dart';
 import 'chat_type_brand.dart';
+import 'chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
+import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
+import 'dialogs/add_chat_sheet.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_text_field.dart';
 
@@ -75,14 +77,18 @@ class CombinedChatBuilderSheet extends StatefulWidget {
   final CombinedCombo? combo;
   final CombinedMatchFinder? matchFinder;
 
-  /// Names a YouTube channel typed via "Other…" (test seam)
+  /// Names a YouTube channel added via "Other…" (test seam)
   final YouTubeEntryNamer? youTubeNamer;
+
+  /// Twitch's Add chat sheet behind "Other…" (test seam)
+  final TwitchChannelService? twitchChannelService;
 
   const CombinedChatBuilderSheet({
     super.key,
     this.combo,
     this.matchFinder,
     this.youTubeNamer,
+    this.twitchChannelService,
   });
 
   @override
@@ -107,13 +113,6 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   List<CombinedMatch> _matches = const [];
   bool _findingMatches = false;
 
-  /// The platform whose "Other…" channel is being looked up (its row
-  /// says so, Save waits)
-  ChatType? _lookingUp;
-
-  /// Bumped by every pick change - a lookup that finishes after the user
-  /// picked something else is dropped
-  int _pickSeq = 0;
   int _matchSeq = 0;
 
   late final CombinedMatchFinder _finder =
@@ -192,7 +191,6 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   }
 
   void _setPick(ChatType platform, _Pick? pick) {
-    this._pickSeq++;
     setState(() {
       if (pick == null) {
         this._picks.remove(platform);
@@ -357,87 +355,90 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
     }
   }
 
+  /// "Other … channel…": the same picker the platform's own chat uses -
+  /// Twitch's Add chat sheet (follows, moderated, live, search), the
+  /// YouTube / Kick add dialogs. The dialogs add the channel to their
+  /// platform's list (as on the platform) but must not switch the WebView
+  /// chat's selection - that is put back.
   Future<void> _pickOther(ChatType platform) async {
-    final value = await showCupertinoDialog<String>(
-      context: this.context,
-      barrierDismissible: true,
-      builder: (context) => _OtherChannelDialog(platform: platform),
-    );
-    final input = value?.trim();
-    if (input == null || input.isEmpty || !this.mounted) return;
     switch (platform) {
-      case ChatType.Kick:
-        final slug = extractKickChannelSlug(input);
-        if (slug == null) return this._toast('Not a Kick channel name');
-        this._setPick(platform, _Pick(label: slug, kickSlug: slug));
+      case ChatType.Twitch:
+        if (!this._twitch.isLoggedIn) {
+          return this._toast('Sign in to Twitch to find channels');
+        }
+        final ref = await showAddChatSheet(
+          this.context,
+          channelService: this.widget.twitchChannelService,
+          pickOnly: true,
+        );
+        if (ref == null || !this.mounted) return;
+        this._setPick(
+          platform,
+          _Pick(
+            label: ref.displayName,
+            twitch: ref,
+            own: ref.id == this._twitch.user?.id,
+          ),
+        );
       case ChatType.YouTube:
-        final target = parseYouTubeTarget(input);
-        if (target is! YouTubeChannelTarget) {
-          return this._toast('Use an @handle or channel link');
-        }
-
-        /// Already listed (or the own channel): that entry, no lookup
-        for (final option in this._optionsFor(platform)) {
-          final value = option.youTube?.value;
-          if (value != null && parseYouTubeTarget(value)?.key == target.key) {
-            return this._setPick(platform, option);
-          }
-        }
-
-        /// Named like the add dialog names entries: the channel's title,
-        /// never its `UC…` id or `@handle` (this becomes the list entry)
-        final namer = this.widget.youTubeNamer ?? YouTubeEntryNamer();
-        final seq = this._pickSeq;
-        setState(() => this._lookingUp = platform);
-        final String? name;
-        try {
-          name = target.path.startsWith('channel/')
-              ? await namer
-                    .nameFor(target)
-                    .then(
-                      (title) => title == target.storageValue ? null : title,
-                    )
-              : await namer.channelPageTitle(target.path);
-        } finally {
-          if (this.mounted) setState(() => this._lookingUp = null);
-        }
-        if (!this.mounted || seq != this._pickSeq) return;
-        if (name == null) {
-          return this._toast('No YouTube channel "$input" found');
-        }
-
-        /// Labels are the list's keys - never overwrite another entry
-        final entries = Hive.box(
-          HiveKeys.Settings.name,
-        ).get(SettingsKeys.YouTubeUsernames.name);
-        final label = uniqueYouTubeEntryLabel(name, [
-          if (entries is Map)
-            for (final key in entries.keys)
-              if (key is String) key,
-        ]);
+        final settings = Hive.box(HiveKeys.Settings.name);
+        final selected = settings.get(
+          SettingsKeys.SelectedYouTubeUsername.name,
+        );
+        final label = await ModalHandler.showBaseDialog<String>(
+          context: this.context,
+          dialogWidget: AddEditYouTubeUsernameDialog(
+            settingsBox: settings,
+            namer: this.widget.youTubeNamer,
+          ),
+        );
+        if (label == null) return;
+        _restoreSetting(
+          settings,
+          SettingsKeys.SelectedYouTubeUsername,
+          selected,
+        );
+        this._youTube.reloadChannels();
+        final entries = settings.get(SettingsKeys.YouTubeUsernames.name);
+        final value = entries is Map ? entries[label] : null;
+        if (value is! String || !this.mounted) return;
         this._setPick(
           platform,
           _Pick(
             label: label,
-            youTube: CombinedYouTubeSource(
-              label: label,
-              value: target.storageValue,
-            ),
+            youTube: CombinedYouTubeSource(label: label, value: value),
           ),
         );
-      case ChatType.Twitch:
-        final matches = await this._finder.find(
-          input,
-          platforms: {ChatType.Twitch},
+      case ChatType.Kick:
+        final settings = Hive.box(HiveKeys.Settings.name);
+        final selected = settings.get(SettingsKeys.SelectedKickUsername.name);
+        final slug = await ModalHandler.showBaseDialog<String>(
+          context: this.context,
+          dialogWidget: AddEditKickUsernameDialog(settingsBox: settings),
         );
+        if (slug == null) return;
+        _restoreSetting(settings, SettingsKeys.SelectedKickUsername, selected);
+        this._kick.reloadChannels();
         if (!this.mounted) return;
-        if (matches.isEmpty) {
-          return this._toast('No Twitch channel "$input" found');
-        }
-        this._setPick(platform, this._pickFromMatch(matches.first));
+        this._setPick(
+          platform,
+          _Pick(
+            label: slug,
+            kickSlug: slug,
+            own: this._kick.isOwnChannel(slug),
+          ),
+        );
       case ChatType.Owncast:
       case ChatType.Combined:
         break;
+    }
+  }
+
+  static void _restoreSetting(Box settings, SettingsKeys key, Object? value) {
+    if (value == null) {
+      settings.delete(key.name);
+    } else {
+      settings.put(key.name, value);
     }
   }
 
@@ -485,7 +486,7 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final canSave = this._picks.length >= 2 && this._lookingUp == null;
+    final canSave = this._picks.length >= 2;
     return NativeChatSheetScaffold(
       headerGap: AppSpacing.sm,
       header: Row(
@@ -525,7 +526,6 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
               onPick: (pick) => this._setPick(platform, pick),
               onOther: () => this._pickOther(platform),
               onClear: () => this._setPick(platform, null),
-              lookingUp: this._lookingUp == platform,
             ),
           if (this._findingMatches || this._matches.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
@@ -596,9 +596,6 @@ class _PlatformRow extends StatelessWidget {
   final VoidCallback onOther;
   final VoidCallback onClear;
 
-  /// An "Other…" channel is being looked up for this row
-  final bool lookingUp;
-
   const _PlatformRow({
     required this.platform,
     required this.pick,
@@ -608,7 +605,6 @@ class _PlatformRow extends StatelessWidget {
     required this.onPick,
     required this.onOther,
     required this.onClear,
-    this.lookingUp = false,
   });
 
   @override
@@ -688,15 +684,9 @@ class _PlatformRow extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Row(
                   children: [
-                    if (this.lookingUp) ...[
-                      const CupertinoActivityIndicator(radius: 7.0),
-                      const SizedBox(width: AppSpacing.xs),
-                    ],
                     Flexible(
                       child: Text(
-                        this.lookingUp
-                            ? 'Looking up the channel…'
-                            : pick?.label ?? 'No ${this.platform.text} channel',
+                        pick?.label ?? 'No ${this.platform.text} channel',
                         overflow: TextOverflow.ellipsis,
                         style: pick == null
                             ? Theme.of(context).textTheme.bodySmall
@@ -766,60 +756,6 @@ class _SuggestionChip extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// "Other … channel" input. Owns its text controller: the dialog still
-/// rebuilds while it animates out, after the picker has its answer.
-class _OtherChannelDialog extends StatefulWidget {
-  final ChatType platform;
-
-  const _OtherChannelDialog({required this.platform});
-
-  @override
-  State<_OtherChannelDialog> createState() => _OtherChannelDialogState();
-}
-
-class _OtherChannelDialogState extends State<_OtherChannelDialog> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    this._controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      title: Text('${this.widget.platform.text} channel'),
-      content: Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.sm),
-        child: Material(
-          type: MaterialType.transparency,
-          child: NativeChatTextField(
-            controller: this._controller,
-            hintText: switch (this.widget.platform) {
-              ChatType.YouTube => '@handle or channel URL',
-              ChatType.Twitch => 'Twitch login',
-              _ => 'Channel name or kick.com link',
-            },
-            onSubmitted: (text) => Navigator.of(context).pop(text),
-          ),
-        ),
-      ),
-      actions: [
-        CupertinoDialogAction(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        CupertinoDialogAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.of(context).pop(this._controller.text),
-          child: const Text('Use'),
-        ),
-      ],
     );
   }
 }

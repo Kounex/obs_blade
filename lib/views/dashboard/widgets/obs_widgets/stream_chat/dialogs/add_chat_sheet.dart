@@ -20,16 +20,20 @@ import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
 
 /// Opens the "Add chat" picker sheet (multi-chat) — the entry behind
-/// `NativeChannelDropdown`'s "Add chat…" item.
-void showAddChatSheet(
+/// `NativeChannelDropdown`'s "Add chat…" item. [pickOnly]: the combined
+/// chat builder's "Other Twitch channel…" - the tapped channel is the
+/// sheet's result (any of them, listed or not) instead of being added.
+Future<TwitchChannelRef?> showAddChatSheet(
   BuildContext context, {
   TwitchChannelService? channelService,
-}) => ModalHandler.showBaseBottomSheet(
+  bool pickOnly = false,
+}) => ModalHandler.showBaseBottomSheet<TwitchChannelRef>(
   context: context,
   barrierDismissible: true,
   enableDrag: true,
   maxHeightFraction: 0.72,
-  builder: (context) => AddChatSheet(channelService: channelService),
+  builder: (context) =>
+      AddChatSheet(channelService: channelService, pickOnly: pickOnly),
 );
 
 /// "Add chat" picker (multi-chat): find another streamer's channel and add
@@ -43,7 +47,11 @@ class AddChatSheet extends StatefulWidget {
   /// Injectable for tests — no real HTTP in unit tests.
   final TwitchChannelService? channelService;
 
-  const AddChatSheet({super.key, this.channelService});
+  /// Picker for the combined chat builder: tapping a channel pops it as
+  /// the result; nothing is added and nothing is greyed out.
+  final bool pickOnly;
+
+  const AddChatSheet({super.key, this.channelService, this.pickOnly = false});
 
   @override
   State<AddChatSheet> createState() => _AddChatSheetState();
@@ -255,6 +263,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
   /// Fire-and-forget: the sheet closes immediately, the switch lands on
   /// the chat view behind it.
   void _addChannel(TwitchChannelRef ref) {
+    if (this.widget.pickOnly) {
+      Navigator.of(context).pop(ref);
+      return;
+    }
     unawaited(this._store.addChannel(ref));
     Navigator.of(context).pop();
   }
@@ -283,7 +295,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           nativeChatSheetDragHandle(context),
-          Text('Add chat', style: nativeChatSheetTitleStyle(context)),
+          Text(
+            this.widget.pickOnly ? 'Twitch channel' : 'Add chat',
+            style: nativeChatSheetTitleStyle(context),
+          ),
           Padding(
             padding: const EdgeInsets.only(
               top: AppSpacing.sm,
@@ -585,7 +600,8 @@ class _AddChatSheetState extends State<AddChatSheet> {
   /// store dedupes by id, but adding yourself would duplicate the own
   /// channel in the dropdown).
   bool _isAdded(TwitchChatStore store, String? ownId, String id) =>
-      id == ownId || store.channels.any((channel) => channel.id == id);
+      !this.widget.pickOnly &&
+      (id == ownId || store.channels.any((channel) => channel.id == id));
 
   Widget _channelRow(
     BuildContext context, {

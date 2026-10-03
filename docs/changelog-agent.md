@@ -2,6 +2,19 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - combo builder "Other…" reuses the platforms' own pickers
+
+User request: adding a channel that isn't listed yet in the combined chat
+builder opened a bare text dialog. "Other … channel…" now opens what the
+platform's own chat uses (user decisions): Twitch's Add chat sheet in a
+pick mode (follows, moderated, live tags, search; the tapped channel is
+the pick, nothing greyed out, nothing added to the Twitch list until the
+combo is saved - signed out: "Sign in to Twitch to find channels"), the
+YouTube / Kick add dialogs (they add to their list as on the platform;
+the WebView chat's selection they also set is put back). The dialogs now
+return what they saved. Kick has no follow / mod list API and YouTube no
+"channels I moderate" one - their dialogs stay what the platform uses.
+
 ## 2026-10-03 - chat bar: no account chip, the mod shield fits on phones
 
 Dogfood (TestFlight build 2026100304): the signed-in YouTube chat had no

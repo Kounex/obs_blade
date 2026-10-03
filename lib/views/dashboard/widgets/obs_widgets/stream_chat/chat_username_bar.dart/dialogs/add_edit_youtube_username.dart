@@ -79,7 +79,8 @@ class _AddEditYouTubeUsernameDialogState
     return null;
   }
 
-  Future<void> _handleUsername() async {
+  /// Saves and returns the entry's label (the dialog's pop result).
+  Future<String> _handleUsername() async {
     final target = parseYouTubeTarget(_youtubeLinkController.text)!;
 
     /// Persist the normalized form: `@handle` / `UC…` for channels, a bare
@@ -113,6 +114,7 @@ class _AddEditYouTubeUsernameDialogState
       SettingsKeys.SelectedYouTubeUsername.name,
       username,
     );
+    return username;
   }
 
   @override
@@ -151,8 +153,7 @@ class _AddEditYouTubeUsernameDialogState
         if (_usernameController.isValid && _youtubeLinkController.isValid) {
           final navigator = Navigator.of(context);
           this._saving = true;
-          await _handleUsername();
-          navigator.pop();
+          navigator.pop(await _handleUsername());
         }
       },
     );

@@ -53,7 +53,8 @@ class _AddEditKickUsernameDialogState extends State<AddEditKickUsernameDialog> {
         : null;
   }
 
-  void _handleUsername() {
+  /// Saves and returns the slug (the dialog's pop result).
+  String _handleUsername() {
     final slug = extractKickChannelSlug(_usernameController.text)!;
 
     List<String> kickUsernames = List<String>.from(
@@ -69,6 +70,7 @@ class _AddEditKickUsernameDialogState extends State<AddEditKickUsernameDialog> {
     }
     this.widget.settingsBox.put(SettingsKeys.KickUsernames.name, kickUsernames);
     this.widget.settingsBox.put(SettingsKeys.SelectedKickUsername.name, slug);
+    return slug;
   }
 
   @override
@@ -93,8 +95,7 @@ class _AddEditKickUsernameDialogState extends State<AddEditKickUsernameDialog> {
       onOk: (_) {
         _usernameController.submit();
         if (_usernameController.isValid) {
-          _handleUsername();
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(_handleUsername());
         }
       },
     );
