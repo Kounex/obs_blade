@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/activity.dart';
@@ -89,6 +90,41 @@ void main() {
     await GetIt.instance.reset();
     await harness.close();
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+  });
+
+  testWidgets('empty feed: a signed-in YouTube channel counts as connected '
+      '(no "No channel connected")', (tester) async {
+    await tester.runAsync(() async {
+      final box = await Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
+      await box.put(
+        YouTubeAuth.kBoxKey,
+        YouTubeAuth(
+          accessToken: 'a',
+          refreshToken: 'r',
+          expiresAtMs: 0,
+          scopes: const [],
+          channelTitle: 'My Channel',
+          channelId: 'UCownchannel000000000000',
+        ),
+      );
+      await box.flush();
+    });
+    await tester.pumpWidget(_wrap(const ActivityFeed()));
+    await tester.pump();
+
+    expect(find.text('No channel connected'), findsNothing);
+    expect(find.text('Nothing yet'), findsOneWidget);
+    expect(
+      find.textContaining('arrive while your own YouTube chat is open'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('empty feed without any own channel says so', (tester) async {
+    await tester.pumpWidget(_wrap(const ActivityFeed()));
+    await tester.pump();
+
+    expect(find.text('No channel connected'), findsOneWidget);
   });
 
   testWidgets('swiping a row toggles thanked and keeps the row', (

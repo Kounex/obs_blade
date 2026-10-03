@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../../../models/enums/chat_type.dart';
+import '../../../../models/youtube_auth.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/divider.dart';
@@ -14,7 +16,9 @@ import '../../../../stores/shared/tabs.dart';
 import '../../../../stores/views/activity.dart';
 import '../../../../stores/views/kick_chat.dart';
 import '../../../../stores/views/twitch_chat.dart';
+import '../../../../stores/views/youtube_chat.dart';
 import '../../../../types/classes/activity/activity_event.dart';
+import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/get_it_helper.dart';
 import '../../../../utils/icons/jam_icons.dart';
 import '../../../../utils/kick/kick_events_relay_client.dart';
@@ -496,7 +500,9 @@ class _EmptyFeed extends StatelessWidget {
       body =
           'Follows, subs, cheers, Super Chats and KICKs on your own channels '
           'show up here - Kick and Twitch follows also from while the app '
-          'was closed.';
+          'was closed.'
+          '${_ownYouTubeChannel() ? ' YouTube Super Chats and memberships '
+                    'arrive while your own YouTube chat is open.' : ''}';
     }
     return Center(
       child: SingleChildScrollView(
@@ -533,7 +539,21 @@ class _EmptyFeed extends StatelessWidget {
         getIt<KickChatStore>().ownChannelSlug != null) {
       return true;
     }
+    if (_ownYouTubeChannel()) return true;
     return activityStoreOrNull()?.allEvents.isNotEmpty ?? false;
+  }
+
+  /// Signed in to YouTube with a channel - read off the stored session, so
+  /// the YouTube store (whose poll spends API quota) isn't created here.
+  static bool _ownYouTubeChannel() {
+    if (lazySingletonCreated<YouTubeChatStore>()) {
+      return GetIt.instance<YouTubeChatStore>().ownChannel != null;
+    }
+    if (!Hive.isBoxOpen(HiveKeys.YouTubeAuth.name)) return false;
+    return Hive.box<YouTubeAuth>(
+          HiveKeys.YouTubeAuth.name,
+        ).get(YouTubeAuth.kBoxKey)?.channelId !=
+        null;
   }
 }
 
