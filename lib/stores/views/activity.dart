@@ -360,7 +360,7 @@ abstract class _ActivityStore with Store {
       await this._persistence.open();
       this._load();
     } catch (e) {
-      GeneralHelper.advLog('Activity feed: could not open storage - $e');
+      GeneralHelper.logFailure('Activity feed: could not open storage', e);
     }
     runInAction(() => this.loaded = true);
     for (final event in List.of(this._pending)) {
@@ -493,7 +493,7 @@ abstract class _ActivityStore with Store {
         getIt<KickChatStore>();
       }
     } catch (e) {
-      GeneralHelper.advLog('Activity feed: store start failed - $e');
+      GeneralHelper.logFailure('Activity feed: store start failed', e);
     }
     this.chatStoreCreated();
   }
@@ -951,7 +951,7 @@ abstract class _ActivityStore with Store {
         this._saveState();
       } catch (e) {
         if (epoch != this._relayEpoch) return;
-        GeneralHelper.advLog('Kick relay sign-in failed - $e');
+        GeneralHelper.logFailure('Kick relay sign-in failed', e);
         this._relayRegisterFailedAt = this._clock();
         this._relayRunning = false;
         runInAction(() => this.relayState = KickRelayState.retrying);

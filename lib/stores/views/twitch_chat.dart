@@ -641,7 +641,7 @@ abstract class _TwitchChatStore with Store {
       }
     } on TwitchAuthException catch (e) {
       if (!_TwitchChatStore._isDeadRefresh(e)) {
-        GeneralHelper.advLog('Twitch token restore failed - $e');
+        GeneralHelper.logFailure('Twitch token restore failed', e);
         if (auth.userId == null) return;
         valid = true;
       } else {
@@ -654,7 +654,7 @@ abstract class _TwitchChatStore with Store {
       /// its own, a failed refresh offers retry), and a dead token still
       /// ends the session on its first 401. A record without the user id
       /// can't be restored blind.
-      GeneralHelper.advLog('Twitch token validation failed (offline?) - $e');
+      GeneralHelper.logFailure('Twitch token validation failed (offline?)', e);
       if (auth.userId == null) return;
       valid = true;
     }
@@ -728,7 +728,7 @@ abstract class _TwitchChatStore with Store {
       }
     } catch (e) {
       if (flow != this._loginFlow) return;
-      GeneralHelper.advLog('Twitch login failed unexpectedly - $e');
+      GeneralHelper.logFailure('Twitch login failed unexpectedly', e);
       this.pendingUserCode = null;
       this.authState = TwitchAuthState.error;
       this.authError = 'Unexpected login error';
@@ -751,17 +751,17 @@ abstract class _TwitchChatStore with Store {
     try {
       this._badgeStoreResolver().clear();
     } catch (e) {
-      GeneralHelper.advLog('Twitch badge catalog clear failed - $e');
+      GeneralHelper.logFailure('Twitch badge catalog clear failed', e);
     }
     try {
       this._emoteStoreResolver().clear();
     } catch (e) {
-      GeneralHelper.advLog('Third-party emote catalog clear failed - $e');
+      GeneralHelper.logFailure('Third-party emote catalog clear failed', e);
     }
     try {
       this._userEmoteStoreResolver().clear();
     } catch (e) {
-      GeneralHelper.advLog('Twitch user emote catalog clear failed - $e');
+      GeneralHelper.logFailure('Twitch user emote catalog clear failed', e);
     }
     this.user = null;
     this.authState = TwitchAuthState.loggedOut;
@@ -834,13 +834,13 @@ abstract class _TwitchChatStore with Store {
       if (e.statusCode == null || _TwitchChatStore._isDeadRefresh(e)) {
         await this._handleInvalidAuth(e.message);
       } else {
-        GeneralHelper.advLog('Twitch chat connect failed - $e');
+        GeneralHelper.logFailure('Twitch chat connect failed', e);
         this.chatConnection = TwitchChatConnectionState.failed;
         this.chatError = 'Could not connect to Twitch chat';
         this.chatConnectedAt = null;
       }
     } catch (e) {
-      GeneralHelper.advLog('Twitch chat connect failed - $e');
+      GeneralHelper.logFailure('Twitch chat connect failed', e);
       this.chatConnection = TwitchChatConnectionState.failed;
       this.chatError = 'Could not connect to Twitch chat';
       this.chatConnectedAt = null;
@@ -905,7 +905,7 @@ abstract class _TwitchChatStore with Store {
       this.selectedChannelIsLive = live.containsKey(id);
       this.selectedChannelViewerCount = live[id];
     } catch (e) {
-      GeneralHelper.advLog('Twitch live status refresh failed - $e');
+      GeneralHelper.logFailure('Twitch live status refresh failed', e);
     }
   }
 
@@ -971,11 +971,11 @@ abstract class _TwitchChatStore with Store {
             ._badgeStoreResolver()
             .fetch(accessToken: token, broadcasterId: broadcasterId)
             .catchError((Object e) {
-              GeneralHelper.advLog('Twitch badge fetch failed - $e');
+              GeneralHelper.logFailure('Twitch badge fetch failed', e);
             }),
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch badge fetch could not start - $e');
+      GeneralHelper.logFailure('Twitch badge fetch could not start', e);
     }
 
     /// Third-party emote catalogs (7TV/BTTV/FFZ) — skipped entirely when the
@@ -991,12 +991,12 @@ abstract class _TwitchChatStore with Store {
               ._emoteStoreResolver()
               .fetch(broadcasterId: broadcasterId)
               .catchError((Object e) {
-                GeneralHelper.advLog('Third-party emote fetch failed - $e');
+                GeneralHelper.logFailure('Third-party emote fetch failed', e);
               }),
         );
       }
     } catch (e) {
-      GeneralHelper.advLog('Third-party emote fetch could not start - $e');
+      GeneralHelper.logFailure('Third-party emote fetch could not start', e);
     }
 
     /// First-party emote catalog (picker) — skipped entirely when the
@@ -1013,12 +1013,12 @@ abstract class _TwitchChatStore with Store {
                 broadcasterId: broadcasterId,
               )
               .catchError((Object e) {
-                GeneralHelper.advLog('Twitch user emote fetch failed - $e');
+                GeneralHelper.logFailure('Twitch user emote fetch failed', e);
               }),
         );
       }
     } catch (e) {
-      GeneralHelper.advLog('Twitch user emote fetch could not start - $e');
+      GeneralHelper.logFailure('Twitch user emote fetch could not start', e);
     }
   }
 
@@ -1043,7 +1043,7 @@ abstract class _TwitchChatStore with Store {
             ..addAll(moderated.map((ref) => ref.id));
         });
       } catch (e) {
-        GeneralHelper.advLog('Twitch moderated-channels fetch failed - $e');
+        GeneralHelper.logFailure('Twitch moderated-channels fetch failed', e);
       } finally {
         this._moderatedChannelsFetching = false;
       }
@@ -1082,7 +1082,7 @@ abstract class _TwitchChatStore with Store {
         this.selectedChannelId = selected;
       }
     } catch (e) {
-      GeneralHelper.advLog('Multi-chat settings load failed - $e');
+      GeneralHelper.logFailure('Multi-chat settings load failed', e);
     }
   }
 
@@ -1093,7 +1093,7 @@ abstract class _TwitchChatStore with Store {
         [for (final ref in this.channels) ref.toJson()],
       );
     } catch (e) {
-      GeneralHelper.advLog('Multi-chat channel persist failed - $e');
+      GeneralHelper.logFailure('Multi-chat channel persist failed', e);
     }
   }
 
@@ -1109,7 +1109,7 @@ abstract class _TwitchChatStore with Store {
         );
       }
     } catch (e) {
-      GeneralHelper.advLog('Multi-chat selection persist failed - $e');
+      GeneralHelper.logFailure('Multi-chat selection persist failed', e);
     }
   }
 
@@ -1229,7 +1229,7 @@ abstract class _TwitchChatStore with Store {
         } catch (e) {
           /// Switch failed — the pane shows the error state (with retry);
           /// the selection is kept (no silent revert, spec §5).
-          GeneralHelper.advLog('Twitch channel switch failed - $e');
+          GeneralHelper.logFailure('Twitch channel switch failed', e);
           this.chatConnection = TwitchChatConnectionState.failed;
           this.chatError = 'Could not switch to that channel';
           this.chatConnectedAt = null;
@@ -1288,10 +1288,10 @@ abstract class _TwitchChatStore with Store {
       if (e.statusCode == null || _TwitchChatStore._isDeadRefresh(e)) {
         await this._handleInvalidAuth(e.message);
       } else {
-        GeneralHelper.advLog('Twitch token refresh on switch failed - $e');
+        GeneralHelper.logFailure('Twitch token refresh on switch failed', e);
       }
     } catch (e) {
-      GeneralHelper.advLog('Twitch token refresh on switch failed - $e');
+      GeneralHelper.logFailure('Twitch token refresh on switch failed', e);
     }
     unawaited(this._backfillHistory());
     unawaited(this.refreshSelectedChannelLive());
@@ -1368,7 +1368,7 @@ abstract class _TwitchChatStore with Store {
       }
       return false;
     } catch (e) {
-      GeneralHelper.advLog('Twitch chat send failed - $e');
+      GeneralHelper.logFailure('Twitch chat send failed', e);
       if (sameChannel()) {
         this.sendChatError = 'Could not send - try again';
       }
@@ -1413,7 +1413,7 @@ abstract class _TwitchChatStore with Store {
         messageId: event.messageId,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch message delete failed - $e');
+      GeneralHelper.logFailure('Twitch message delete failed', e);
       return false;
     }
     this._moderationKeyIsNew(
@@ -1455,7 +1455,7 @@ abstract class _TwitchChatStore with Store {
         durationSeconds: durationSeconds,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch ban/timeout failed - $e');
+      GeneralHelper.logFailure('Twitch ban/timeout failed', e);
       return false;
     }
     this._moderationKeyIsNew(
@@ -1483,7 +1483,7 @@ abstract class _TwitchChatStore with Store {
         moderatorId: this.user!.id,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch chat clear failed - $e');
+      GeneralHelper.logFailure('Twitch chat clear failed', e);
       return false;
     }
     this.applyChatClear();
@@ -1524,7 +1524,7 @@ abstract class _TwitchChatStore with Store {
         uniqueChatMode: uniqueChatMode,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch chat settings update failed - $e');
+      GeneralHelper.logFailure('Twitch chat settings update failed', e);
       return false;
     }
     if (this.effectiveBroadcasterIdSafe != broadcasterId) return true;
@@ -1571,7 +1571,7 @@ abstract class _TwitchChatStore with Store {
         isActive: isActive,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch Shield Mode update failed - $e');
+      GeneralHelper.logFailure('Twitch Shield Mode update failed', e);
       return false;
     }
     if (this.effectiveBroadcasterIdSafe != broadcasterId) return true;
@@ -1598,7 +1598,7 @@ abstract class _TwitchChatStore with Store {
         color: color,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch chat announcement failed - $e');
+      GeneralHelper.logFailure('Twitch chat announcement failed', e);
       return false;
     }
     return true;
@@ -1639,7 +1639,7 @@ abstract class _TwitchChatStore with Store {
         this.roomShieldModeActive = shield;
       }
     } catch (e) {
-      GeneralHelper.advLog('Twitch room mod state refresh failed - $e');
+      GeneralHelper.logFailure('Twitch room mod state refresh failed', e);
     }
   }
 
@@ -1676,7 +1676,7 @@ abstract class _TwitchChatStore with Store {
         moderatorId: this.user!.id,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch pinned message refresh failed - $e');
+      GeneralHelper.logFailure('Twitch pinned message refresh failed', e);
     }
   }
 
@@ -1696,7 +1696,7 @@ abstract class _TwitchChatStore with Store {
         messageId: event.messageId,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch message pin failed - $e');
+      GeneralHelper.logFailure('Twitch message pin failed', e);
       return false;
     }
     await this._fetchPinnedMessage();
@@ -1723,7 +1723,7 @@ abstract class _TwitchChatStore with Store {
         messageId: pinned.messageId,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch message unpin failed - $e');
+      GeneralHelper.logFailure('Twitch message unpin failed', e);
       return false;
     }
     this.pinnedMessage = null;
@@ -1781,7 +1781,7 @@ abstract class _TwitchChatStore with Store {
         ..clear()
         ..addAll(requests);
     } catch (e) {
-      GeneralHelper.advLog('Twitch ban inbox refresh failed - $e');
+      GeneralHelper.logFailure('Twitch ban inbox refresh failed', e);
       if (sameChannel()) {
         this.banInboxError = 'Could not load bans and requests';
       }
@@ -1806,7 +1806,7 @@ abstract class _TwitchChatStore with Store {
         userId: userId,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch unban failed - $e');
+      GeneralHelper.logFailure('Twitch unban failed', e);
       return false;
     }
     this.bannedUsers.removeWhere((user) => user.userId == userId);
@@ -1842,7 +1842,7 @@ abstract class _TwitchChatStore with Store {
         approved: approved,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch unban-request resolve failed - $e');
+      GeneralHelper.logFailure('Twitch unban-request resolve failed', e);
       return false;
     }
     this.unbanRequests.removeWhere((request) => request.id == requestId);
@@ -1874,7 +1874,7 @@ abstract class _TwitchChatStore with Store {
         reason: trimmed,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch warn failed - $e');
+      GeneralHelper.logFailure('Twitch warn failed', e);
       return false;
     }
     return true;
@@ -1899,7 +1899,7 @@ abstract class _TwitchChatStore with Store {
         userId: userId,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch warnings fetch failed - $e');
+      GeneralHelper.logFailure('Twitch warnings fetch failed', e);
       return null;
     }
   }
@@ -1927,7 +1927,7 @@ abstract class _TwitchChatStore with Store {
         allow: allow,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch automod resolve failed - $e');
+      GeneralHelper.logFailure('Twitch automod resolve failed', e);
       return false;
     }
     this.autoModQueue.removeWhere((held) => held.messageId == messageId);
@@ -2067,7 +2067,7 @@ abstract class _TwitchChatStore with Store {
       );
       return [for (final row in rows) ?twitchActivityFromFollower(row, ownId)];
     } catch (e) {
-      GeneralHelper.advLog('Twitch follower backfill failed - $e');
+      GeneralHelper.logFailure('Twitch follower backfill failed', e);
       return const [];
     }
   }
@@ -2160,7 +2160,7 @@ abstract class _TwitchChatStore with Store {
         limit: kHistoryLimit,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch chat history backfill failed - $e');
+      GeneralHelper.logFailure('Twitch chat history backfill failed', e);
       this._backfilledBroadcasters.remove(broadcasterId);
       return;
     }
@@ -2258,7 +2258,7 @@ abstract class _TwitchChatStore with Store {
         channelLogin: this.effectiveBroadcasterLogin,
       );
     } catch (e) {
-      GeneralHelper.advLog('Twitch IRC sidecar connect failed - $e');
+      GeneralHelper.logFailure('Twitch IRC sidecar connect failed', e);
     }
   }
 

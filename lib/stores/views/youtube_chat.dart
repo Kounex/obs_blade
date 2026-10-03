@@ -299,8 +299,9 @@ abstract class _YouTubeChatStore with Store {
               );
             })
             .catchError((Object e) {
-              GeneralHelper.advLog(
-                'YouTube live preview failed for $label - $e',
+              GeneralHelper.logFailure(
+                'YouTube live preview failed for $label',
+                e,
               );
             }),
     ]);
@@ -495,7 +496,7 @@ abstract class _YouTubeChatStore with Store {
         apiKey: YouTubeLiveChatService.resolveApiKey(),
       );
     } catch (e) {
-      GeneralHelper.advLog('YouTube channel fetch failed - $e');
+      GeneralHelper.logFailure('YouTube channel fetch failed', e);
       return null;
     }
   }
@@ -577,11 +578,11 @@ abstract class _YouTubeChatStore with Store {
 
       /// Transient 5xx: the record stays usable — the next write
       /// refreshes again — and reads need only the API key.
-      GeneralHelper.advLog('YouTube token refresh on init failed - $e');
+      GeneralHelper.logFailure('YouTube token refresh on init failed', e);
     } catch (e) {
       /// Offline at launch (no HTTP answer at all) — same as a 5xx.
       /// Letting it escape left the store `unconfigured` with no poll.
-      GeneralHelper.advLog('YouTube token refresh on init failed - $e');
+      GeneralHelper.logFailure('YouTube token refresh on init failed', e);
     }
     this.authState = YouTubeAuthState.signedIn;
     this._syncOwnChannel();
@@ -606,7 +607,7 @@ abstract class _YouTubeChatStore with Store {
       await current.save();
       this._syncOwnChannel();
     } catch (e) {
-      GeneralHelper.advLog('YouTube own channel backfill failed - $e');
+      GeneralHelper.logFailure('YouTube own channel backfill failed', e);
     }
   }
 
@@ -692,7 +693,7 @@ abstract class _YouTubeChatStore with Store {
         ownChannel = await this._authService.fetchOwnChannel(token.accessToken);
         channelLookedUp = true;
       } catch (e) {
-        GeneralHelper.advLog('YouTube own channel fetch failed - $e');
+        GeneralHelper.logFailure('YouTube own channel fetch failed', e);
       }
       await this._persistAuth(token, ownChannel);
       this.pendingUserCode = null;
@@ -700,6 +701,13 @@ abstract class _YouTubeChatStore with Store {
 
       /// Before signedIn: the sign-in dialog reads both in the same frame
       this.signedInWithoutChannel = channelLookedUp && ownChannel == null;
+      if (this.signedInWithoutChannel) {
+        GeneralHelper.logFailure(
+          'YouTube sign-in without a channel',
+          'channels.list mine=true returned no channel - personal account '
+              'picked for a Brand Account channel?',
+        );
+      }
       this.authState = YouTubeAuthState.signedIn;
       this._ensureChannelsLoaded();
       this._syncOwnChannel();
@@ -725,7 +733,7 @@ abstract class _YouTubeChatStore with Store {
       }
     } catch (e) {
       if (flow != this._loginFlow) return;
-      GeneralHelper.advLog('YouTube login failed unexpectedly - $e');
+      GeneralHelper.logFailure('YouTube login failed unexpectedly', e);
       this.pendingUserCode = null;
       this.authState = YouTubeAuthState.error;
       this.authError = 'Unexpected login error';
@@ -966,7 +974,7 @@ abstract class _YouTubeChatStore with Store {
             liveVideoId = await this._liveResolver.resolveLiveVideoId(target);
           } on YouTubeLiveResolveException catch (e) {
             if (superseded()) return _PassOutcome.stopped;
-            GeneralHelper.advLog('YouTube live lookup failed - $e');
+            GeneralHelper.logFailure('YouTube live lookup failed', e);
             if (e.statusCode == 404) {
               failed(e.message);
               return _PassOutcome.stopped;
@@ -1003,7 +1011,7 @@ abstract class _YouTubeChatStore with Store {
         return _PassOutcome.stopped;
       } catch (e) {
         if (superseded()) return _PassOutcome.stopped;
-        GeneralHelper.advLog('YouTube live chat resolve failed - $e');
+        GeneralHelper.logFailure('YouTube live chat resolve failed', e);
         if (_isTransientReadFailure(e)) {
           retrying('Could not reach YouTube - retrying');
           return _PassOutcome.retry;
@@ -1087,7 +1095,7 @@ abstract class _YouTubeChatStore with Store {
         return ended();
       } catch (e) {
         if (superseded()) return _PassOutcome.stopped;
-        GeneralHelper.advLog('YouTube chat poll failed - $e');
+        GeneralHelper.logFailure('YouTube chat poll failed', e);
         if (!_isTransientReadFailure(e)) {
           failed('Lost connection to YouTube chat');
           return _PassOutcome.stopped;
@@ -1177,7 +1185,7 @@ abstract class _YouTubeChatStore with Store {
         }
       });
     } catch (e) {
-      GeneralHelper.advLog('YouTube viewer count refresh failed - $e');
+      GeneralHelper.logFailure('YouTube viewer count refresh failed', e);
     }
   }
 
@@ -1427,7 +1435,7 @@ abstract class _YouTubeChatStore with Store {
         this.selectedChannelLabel = selected;
       }
     } catch (e) {
-      GeneralHelper.advLog('YouTube chat selection load failed - $e');
+      GeneralHelper.logFailure('YouTube chat selection load failed', e);
     }
   }
 
@@ -1449,7 +1457,7 @@ abstract class _YouTubeChatStore with Store {
         });
       }
     } catch (e) {
-      GeneralHelper.advLog('YouTube chat channels load failed - $e');
+      GeneralHelper.logFailure('YouTube chat channels load failed', e);
     }
     return parsed;
   }
@@ -1466,7 +1474,7 @@ abstract class _YouTubeChatStore with Store {
         );
       }
     } catch (e) {
-      GeneralHelper.advLog('YouTube chat selection persist failed - $e');
+      GeneralHelper.logFailure('YouTube chat selection persist failed', e);
     }
   }
 
@@ -1529,13 +1537,13 @@ abstract class _YouTubeChatStore with Store {
       }
       return true;
     } on YouTubeApiException catch (e) {
-      GeneralHelper.advLog('YouTube chat send failed - $e');
+      GeneralHelper.logFailure('YouTube chat send failed', e);
       if (sameChannel()) {
         this.sendChatError = e.message;
       }
       return false;
     } catch (e) {
-      GeneralHelper.advLog('YouTube chat send failed - $e');
+      GeneralHelper.logFailure('YouTube chat send failed', e);
       if (sameChannel()) {
         this.sendChatError = 'Could not send - try again';
       }
@@ -1560,12 +1568,12 @@ abstract class _YouTubeChatStore with Store {
       final token = await this._validAccessToken();
       await this._chatService.delete(accessToken: token, messageId: messageId);
     } on YouTubeApiException catch (e) {
-      GeneralHelper.advLog('YouTube message delete failed - $e');
+      GeneralHelper.logFailure('YouTube message delete failed', e);
       this.moderationError = e.message;
       this.moderationForbidden = e is YouTubeForbiddenException;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('YouTube message delete failed - $e');
+      GeneralHelper.logFailure('YouTube message delete failed', e);
       this.moderationError = 'Could not delete the message';
       return false;
     }
@@ -1602,12 +1610,12 @@ abstract class _YouTubeChatStore with Store {
         durationSeconds: durationSeconds,
       );
     } on YouTubeApiException catch (e) {
-      GeneralHelper.advLog('YouTube ban failed - $e');
+      GeneralHelper.logFailure('YouTube ban failed', e);
       this.moderationError = e.message;
       this.moderationForbidden = e is YouTubeForbiddenException;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('YouTube ban failed - $e');
+      GeneralHelper.logFailure('YouTube ban failed', e);
       this.moderationError = 'Could not ban the user';
       return false;
     }
@@ -1653,12 +1661,12 @@ abstract class _YouTubeChatStore with Store {
       this.recentBans.removeWhere((ban) => ban.banId == banId);
       this._syncModerationToBuffer();
     } on YouTubeApiException catch (e) {
-      GeneralHelper.advLog('YouTube unban failed - $e');
+      GeneralHelper.logFailure('YouTube unban failed', e);
       this.moderationError = e.message;
       this.moderationForbidden = e is YouTubeForbiddenException;
       return false;
     } catch (e) {
-      GeneralHelper.advLog('YouTube unban failed - $e');
+      GeneralHelper.logFailure('YouTube unban failed', e);
       this.moderationError = 'Could not lift the ban';
       return false;
     }
@@ -1707,14 +1715,14 @@ abstract class _YouTubeChatStore with Store {
       await call(await this._validAccessToken(), liveChatId);
       return true;
     } on YouTubeApiException catch (e) {
-      GeneralHelper.advLog('YouTube channel mod action failed - $e');
+      GeneralHelper.logFailure('YouTube channel mod action failed', e);
       runInAction(() {
         this.moderationError = e.message;
         this.moderationForbidden = e is YouTubeForbiddenException;
       });
       return false;
     } catch (e) {
-      GeneralHelper.advLog('YouTube channel mod action failed - $e');
+      GeneralHelper.logFailure('YouTube channel mod action failed', e);
       runInAction(() => this.moderationError = failure);
       return false;
     }

@@ -53,7 +53,7 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
     } on MissingPluginException {
       return;
     } on PlatformException catch (e) {
-      GeneralHelper.advLog('Chat TTS $method failed - $e');
+      GeneralHelper.logFailure('Chat TTS $method failed', e);
     }
   }
 
@@ -74,7 +74,7 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
     } on MissingPluginException {
       return const [];
     } on PlatformException catch (e) {
-      GeneralHelper.advLog('Chat TTS voices failed - $e');
+      GeneralHelper.logFailure('Chat TTS voices failed', e);
       return const [];
     }
   }
@@ -114,7 +114,7 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
     } on MissingPluginException {
       return false;
     } on PlatformException catch (e) {
-      GeneralHelper.advLog('Chat TTS $method failed - $e');
+      GeneralHelper.logFailure('Chat TTS $method failed', e);
       return false;
     }
   }
@@ -132,7 +132,7 @@ class PlatformTtsSpeaker implements ChatTtsSpeaker {
     } on MissingPluginException {
       return true;
     } on PlatformException catch (e) {
-      GeneralHelper.advLog('Chat TTS speak failed - $e');
+      GeneralHelper.logFailure('Chat TTS speak failed', e);
       return true;
     }
   }
@@ -237,7 +237,7 @@ abstract class _ChatTtsStore with Store {
         ]),
       );
     } catch (e) {
-      GeneralHelper.advLog('Chat TTS voice export failed - $e');
+      GeneralHelper.logFailure('Chat TTS voice export failed', e);
     }
   }
 
