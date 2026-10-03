@@ -7,8 +7,11 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/youtube_native_channel_dropdown.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_add_chat_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -152,5 +155,38 @@ void main() {
           .menuMaxHeight,
       kChatChannelMenuMaxHeight,
     );
+  });
+
+  Future<void> tapAddChat(WidgetTester tester) async {
+    await tester.pumpWidget(
+      wrap(const Column(children: [YouTubeNativeChannelDropdown()])),
+    );
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add chat…').last);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('"Add chat…" with an API key opens the YouTube Add chat sheet', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.YouTubeApiKey.name, 'key-1'),
+    );
+    await tapAddChat(tester);
+
+    expect(find.byType(YouTubeAddChatSheet), findsOneWidget);
+    expect(find.byType(AddEditYouTubeUsernameDialog), findsNothing);
+  });
+
+  testWidgets('"Add chat…" without an API key keeps the add dialog', (
+    tester,
+  ) async {
+    await tapAddChat(tester);
+
+    expect(find.byType(AddEditYouTubeUsernameDialog), findsOneWidget);
+    expect(find.byType(YouTubeAddChatSheet), findsNothing);
   });
 }

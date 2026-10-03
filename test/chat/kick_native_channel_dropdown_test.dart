@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/kick_native_channel_dropdown.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_add_chat_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -206,5 +207,17 @@ void main() {
     final added = tester.getTopLeft(find.text('aaa').last);
     expect(kicker.dy, lessThan(added.dy));
     expect(find.text('You'), findsWidgets);
+  });
+
+  testWidgets('"Add chat…" opens the Kick Add chat sheet', (tester) async {
+    await tester.pumpWidget(
+      wrap(const Column(children: [KickNativeChannelDropdown()])),
+    );
+    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add chat…').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KickAddChatSheet), findsOneWidget);
   });
 }

@@ -19,6 +19,7 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../dialogs/youtube_add_chat_sheet.dart';
 import 'dialogs/add_edit_youtube_username.dart';
 
 /// Multi-chat channel picker for the native YouTube chat bar — a fork of
@@ -30,9 +31,9 @@ import 'dialogs/add_edit_youtube_username.dart';
 /// unknown). No Mod chip: the API has no cheap "am I a mod" lookup.
 /// When signed in, the account's own channel leads the list, marked "You"
 /// (native-only — [YouTubeChatStore.ownChannel], not part of the WebView
-/// list, so it has no remove long-press). "Add chat…" opens the existing
-/// YouTube username dialog (entries are per-entry — channel entries follow
-/// their current stream). Long-press removes an added entry. Disabled
+/// list, so it has no remove long-press). "Add chat…" opens the YouTube
+/// Add chat sheet (search, subscriptions, paste a link — channel entries
+/// follow their current stream). Long-press removes an added entry. Disabled
 /// while a switch is in flight.
 class YouTubeNativeChannelDropdown extends StatelessWidget {
   /// "Add chat…" is an action sentinel (never a selection).
@@ -43,8 +44,13 @@ class YouTubeNativeChannelDropdown extends StatelessWidget {
   void _addChat(BuildContext context) {
     /// The dropdown route has already popped itself by the time
     /// [onChanged] runs. Another pop here dismisses the page under the
-    /// dialog.
+    /// sheet. The sheet needs the API key the native chat runs on; the
+    /// dialog stays as the keyless fallback.
     final store = GetIt.instance<YouTubeChatStore>();
+    if (store.isConfigured) {
+      showYouTubeAddChatSheet(context);
+      return;
+    }
     final before = [for (final channel in store.channels) channel.label];
     ModalHandler.showBaseDialog(
       context: context,

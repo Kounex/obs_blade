@@ -37,6 +37,7 @@ import 'chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_owncast_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_twitch_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
+import 'dialogs/kick_add_chat_sheet.dart';
 import 'chat_completion_sources.dart';
 import 'combined_chat_input.dart';
 import 'chat_emote_picker.dart';
@@ -559,20 +560,11 @@ class _StreamChatState extends State<StreamChat>
 
     /// Native Kick chat: anonymous reads (no account, no API key) — the
     /// only prerequisite is a channel in the Kick list, so the
-    /// unselected state offers the add dialog directly. The optional
+    /// unselected state offers the Add chat sheet directly. The optional
     /// Kick sign-in (setup sheet) unlocks the input dock; signed out,
     /// the dock is a read-only strip with a sign-in affordance.
     if (chatType == ChatType.Kick) {
-      void addKickChannel() {
-        final store = GetIt.instance<KickChatStore>();
-        final before = List<String>.of(store.channels);
-        ModalHandler.showBaseDialog(
-          context: context,
-          dialogWidget: AddEditKickUsernameDialog(
-            settingsBox: Hive.box(HiveKeys.Settings.name),
-          ),
-        ).then((_) => store.showAddedChannel(before));
-      }
+      void addKickChannel() => showKickAddChatSheet(context);
 
       return Observer(
         builder: (_) {

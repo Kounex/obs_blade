@@ -21,14 +21,16 @@ import '../../../../../types/classes/twitch/twitch_channel_search_result.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/combined/combined_match_finder.dart';
+import '../../../../../utils/youtube/youtube_channel_search_service.dart';
 import '../../../../../utils/youtube/youtube_entry_name.dart';
 import '../../../../../utils/modal_handler.dart';
 import '../../../../../utils/twitch/twitch_channel_service.dart';
 import '../../../../../utils/youtube_target.dart';
 import 'chat_type_brand.dart';
-import 'chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'dialogs/add_chat_sheet.dart';
+import 'dialogs/kick_add_chat_sheet.dart';
+import 'dialogs/youtube_add_chat_sheet.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_text_field.dart';
 
@@ -83,12 +85,20 @@ class CombinedChatBuilderSheet extends StatefulWidget {
   /// Twitch's Add chat sheet behind "Other…" (test seam)
   final TwitchChannelService? twitchChannelService;
 
+  /// YouTube's Add chat sheet behind "Other…" (test seam)
+  final YouTubeChannelSearchService? youTubeSearchService;
+
+  /// Kick's Add chat sheet "Popular live now" language (test seam)
+  final String? kickLanguageCode;
+
   const CombinedChatBuilderSheet({
     super.key,
     this.combo,
     this.matchFinder,
     this.youTubeNamer,
     this.twitchChannelService,
+    this.youTubeSearchService,
+    this.kickLanguageCode,
   });
 
   @override
@@ -356,10 +366,8 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   }
 
   /// "Other … channel…": the same picker the platform's own chat uses -
-  /// Twitch's Add chat sheet (follows, moderated, live, search), the
-  /// YouTube / Kick add dialogs. The dialogs add the channel to their
-  /// platform's list (as on the platform) but must not switch the WebView
-  /// chat's selection - that is put back.
+  /// each platform's Add chat sheet in pick mode (nothing saved until the
+  /// combo is: saving registers each source in its platform's list).
   Future<void> _pickOther(ChatType platform) async {
     switch (platform) {
       case ChatType.Twitch:
@@ -381,45 +389,33 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
           ),
         );
       case ChatType.YouTube:
-        final settings = Hive.box(HiveKeys.Settings.name);
-        final selected = settings.get(
-          SettingsKeys.SelectedYouTubeUsername.name,
+        if (!this._youTube.isConfigured) return this._pickYouTubeByDialog();
+        final pick = await showYouTubeAddChatSheet(
+          this.context,
+          searchService: this.widget.youTubeSearchService,
+          namer: this.widget.youTubeNamer,
+          pickOnly: true,
         );
-        final label = await ModalHandler.showBaseDialog<String>(
-          context: this.context,
-          dialogWidget: AddEditYouTubeUsernameDialog(
-            settingsBox: settings,
-            namer: this.widget.youTubeNamer,
-          ),
-        );
-        if (label == null) return;
-        _restoreSetting(
-          settings,
-          SettingsKeys.SelectedYouTubeUsername,
-          selected,
-        );
-        this._youTube.reloadChannels();
-        final entries = settings.get(SettingsKeys.YouTubeUsernames.name);
-        final value = entries is Map ? entries[label] : null;
-        if (value is! String || !this.mounted) return;
+        if (pick == null || !this.mounted) return;
         this._setPick(
           platform,
           _Pick(
-            label: label,
-            youTube: CombinedYouTubeSource(label: label, value: value),
+            label: pick.label,
+            own: pick.own,
+            youTube: CombinedYouTubeSource(
+              label: pick.label,
+              value: pick.value,
+              own: pick.own,
+            ),
           ),
         );
       case ChatType.Kick:
-        final settings = Hive.box(HiveKeys.Settings.name);
-        final selected = settings.get(SettingsKeys.SelectedKickUsername.name);
-        final slug = await ModalHandler.showBaseDialog<String>(
-          context: this.context,
-          dialogWidget: AddEditKickUsernameDialog(settingsBox: settings),
+        final slug = await showKickAddChatSheet(
+          this.context,
+          pickOnly: true,
+          languageCode: this.widget.kickLanguageCode,
         );
-        if (slug == null) return;
-        _restoreSetting(settings, SettingsKeys.SelectedKickUsername, selected);
-        this._kick.reloadChannels();
-        if (!this.mounted) return;
+        if (slug == null || !this.mounted) return;
         this._setPick(
           platform,
           _Pick(
@@ -432,6 +428,34 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
       case ChatType.Combined:
         break;
     }
+  }
+
+  /// Without an API key there is no YouTube search: the add dialog adds
+  /// the channel to the list (as on the platform) but must not switch the
+  /// WebView chat's selection - that is put back.
+  Future<void> _pickYouTubeByDialog() async {
+    final settings = Hive.box(HiveKeys.Settings.name);
+    final selected = settings.get(SettingsKeys.SelectedYouTubeUsername.name);
+    final label = await ModalHandler.showBaseDialog<String>(
+      context: this.context,
+      dialogWidget: AddEditYouTubeUsernameDialog(
+        settingsBox: settings,
+        namer: this.widget.youTubeNamer,
+      ),
+    );
+    if (label == null) return;
+    _restoreSetting(settings, SettingsKeys.SelectedYouTubeUsername, selected);
+    this._youTube.reloadChannels();
+    final entries = settings.get(SettingsKeys.YouTubeUsernames.name);
+    final value = entries is Map ? entries[label] : null;
+    if (value is! String || !this.mounted) return;
+    this._setPick(
+      ChatType.YouTube,
+      _Pick(
+        label: label,
+        youTube: CombinedYouTubeSource(label: label, value: value),
+      ),
+    );
   }
 
   static void _restoreSetting(Box settings, SettingsKeys key, Object? value) {

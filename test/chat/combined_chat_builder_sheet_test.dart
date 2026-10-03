@@ -21,10 +21,11 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/combined/combined_match_finder.dart';
 import 'package:obs_blade/utils/youtube/youtube_entry_name.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/dialogs/add_edit_youtube_username.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/combined_chat_builder_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/add_chat_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_add_chat_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_add_chat_sheet.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
@@ -305,10 +306,9 @@ void main() {
     expect(find.text('Sign in to Twitch to find channels'), findsOneWidget);
   });
 
-  testWidgets('"Other YouTube channel…" opens the YouTube add dialog; the '
-      'entry is named by the channel title and the WebView selection stays', (
-    tester,
-  ) async {
+  testWidgets('"Other YouTube channel…" without an API key opens the add '
+      'dialog; the entry is named by the channel title and the WebView '
+      'selection stays', (tester) async {
     await tester.runAsync(() async {
       await Hive.box(
         HiveKeys.Settings.name,
@@ -344,25 +344,69 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('"Other Kick channel…" opens the Kick add dialog; the WebView '
-      'selection stays', (tester) async {
-    await pumpBuilder(tester);
-    await openOther(tester, ChatType.Kick);
+  testWidgets('"Other YouTube channel…" with an API key opens the YouTube '
+      'Add chat sheet; a pasted link becomes the pick, nothing is saved', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      await Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.YouTubeApiKey.name, 'key-1');
+    });
+    final namer = FakeNamer();
+    await pumpBuilder(tester, namer: namer);
+    await openOther(tester, ChatType.YouTube);
 
-    expect(find.text('Add Kick Channel'), findsOneWidget);
+    expect(find.byType(YouTubeAddChatSheet), findsOneWidget);
     await tester.enterText(
       find
           .descendant(
-            of: find.byType(AddEditKickUsernameDialog),
+            of: find.byType(YouTubeAddChatSheet),
+            matching: find.byType(EditableText),
+          )
+          .first,
+      'https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('UCLA_DiR1FfKNvjuUpBHmylQ'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(YouTubeAddChatSheet), findsNothing);
+    expect(namer.asked.single, isA<YouTubeChannelTarget>());
+    expect(find.text('NASA'), findsOneWidget);
+    expect(
+      Hive.box(HiveKeys.Settings.name).get(SettingsKeys.YouTubeUsernames.name),
+      isNull,
+      reason: 'saving the combo registers the source, not the pick',
+    );
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('"Other Kick channel…" opens the Kick Add chat sheet; the '
+      'pasted channel becomes the pick, nothing is saved', (tester) async {
+    await pumpBuilder(tester);
+    await openOther(tester, ChatType.Kick);
+
+    expect(find.byType(KickAddChatSheet), findsOneWidget);
+    await tester.enterText(
+      find
+          .descendant(
+            of: find.byType(KickAddChatSheet),
             matching: find.byType(EditableText),
           )
           .first,
       'kick.com/friend',
     );
-    await tester.tap(find.text('Save').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('kick-add-chat-direct-friend')));
     await tester.pumpAndSettle();
 
+    expect(find.byType(KickAddChatSheet), findsNothing);
     expect(find.text('friend'), findsOneWidget);
+    expect(
+      Hive.box(HiveKeys.Settings.name).get(SettingsKeys.KickUsernames.name),
+      isNot(contains('friend')),
+    );
     expect(
       Hive.box(
         HiveKeys.Settings.name,

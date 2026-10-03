@@ -16,7 +16,7 @@ import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
 import '../native_chat_chrome.dart';
-import 'dialogs/add_edit_kick_username.dart';
+import '../dialogs/kick_add_chat_sheet.dart';
 
 /// Multi-chat channel picker for the native Kick chat bar — a fork of
 /// [YouTubeNativeChannelDropdown] bound to [KickChatStore] (the slugs of
@@ -30,7 +30,7 @@ import 'dialogs/add_edit_kick_username.dart';
 /// lookup. When signed in, the account's own channel leads the list,
 /// marked "You" (native-only — [KickChatStore.ownChannelSlug], not part
 /// of the WebView list, so it has no remove long-press). "Add chat…" opens
-/// the existing Kick username dialog. Long-press removes an added entry.
+/// the Kick Add chat sheet (search, popular live, paste a link). Long-press removes an added entry.
 /// Disabled while a switch is in flight.
 class KickNativeChannelDropdown extends StatelessWidget {
   /// "Add chat…" is an action sentinel (never a selection).
@@ -41,15 +41,8 @@ class KickNativeChannelDropdown extends StatelessWidget {
   void _addChat(BuildContext context) {
     /// The dropdown route has already popped itself by the time
     /// [onChanged] runs. Another pop here dismisses the chat page and
-    /// leaves an empty view under the dialog.
-    final store = GetIt.instance<KickChatStore>();
-    final before = List<String>.of(store.channels);
-    ModalHandler.showBaseDialog(
-      context: context,
-      dialogWidget: AddEditKickUsernameDialog(
-        settingsBox: Hive.box(HiveKeys.Settings.name),
-      ),
-    ).then((_) => store.showAddedChannel(before));
+    /// leaves an empty view under the sheet.
+    showKickAddChatSheet(context);
   }
 
   void _confirmRemove(BuildContext context, String slug) {
