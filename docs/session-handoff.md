@@ -41,7 +41,7 @@ own YouTube channel in saved combos = "You", no `UC…` ids as names,
 activity empty state, adding a channel shows it, YouTube dead-session /
 no-channel states, transport failures in Settings → Logs. The dogfood
 phone was offline, so at the user's request these went straight out as
-**build 2026100304** (TestFlight `VALID` + Play internal, 4.1.0; store
+**build 2026100305** (TestFlight `VALID` + Play internal, 4.1.0; build 5 adds the chat bar without account chip; store
 notes unchanged, TestFlight "What to Test" = the device check list). Next:
 the user's on-device verdict, then `release-promote` 4.1.0 (after 4.0.1 is
 published).
