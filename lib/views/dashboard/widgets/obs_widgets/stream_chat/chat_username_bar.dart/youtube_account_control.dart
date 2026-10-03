@@ -26,6 +26,10 @@ class YouTubeAccountControl extends StatelessWidget {
 
         return Align(
           alignment: Alignment.centerRight,
+
+          /// Hug the pill: a full-width Align left a gap next to the
+          /// options button in the chat bar row.
+          widthFactor: 1.0,
           child: switch (store.authState) {
             YouTubeAuthState.unconfigured => const _SetupPill(),
             YouTubeAuthState.signedIn => const SizedBox.shrink(),

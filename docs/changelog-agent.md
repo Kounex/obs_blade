@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - native chat bar: the channel dropdown fills its row
+
+User request: with sign-out in the header sheet, the native bar's right
+side is only options (+ the mod shield), yet the channel dropdown stayed
+in the left column (max 256 pt, about half the bar) - long names and the
+menu's LIVE / OFFLINE chips were cut. Native mode is now two rows:
+platform dropdown + engine switch, then the channel dropdown filling all
+the width the right cluster leaves (the menu matches the button, so the
+chips get it too). User decisions: fill on tablets too (no cap), WebView
+mode keeps its two columns. Signed out: the cluster is capped at 60% of
+the row and the sign-in pills hug their content (their full-width
+`Align` left a gap next to the options button); without a dropdown
+(Twitch signed out) options + pill sit right. Tests:
+`channel_mod_entry_test.dart` (row geometry at 320 / 400 / 800 pt, the
+signed-out pill); shots: `chat_bar_shots_test.dart` (long names, phone /
+narrow / tablet, open Kick menu, signed out).
+
 ## 2026-10-03 - YouTube + Kick Add chat sheets (search, suggestions)
 
 User request: native YouTube (with an API key) and Kick get an Add chat

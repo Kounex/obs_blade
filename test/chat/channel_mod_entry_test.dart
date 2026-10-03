@@ -20,6 +20,8 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_u
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/channel_mod_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart';
 
+import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_username_bar.dart/native_channel_dropdown.dart';
 import '../persistence/support/hive_test_harness.dart';
 import '../pro/support/fake_pro_purchase_gateway.dart';
 import 'support/fake_twitch_services.dart';
@@ -180,6 +182,65 @@ void main() {
           .widget<NativeChatOptionsButton>(find.byType(NativeChatOptionsButton))
           .modFoldedIntoOptions,
       isFalse,
+    );
+  });
+
+  testWidgets('native: the channel dropdown fills the row next to the '
+      'shield + options, at phone and tablet widths', (tester) async {
+    await tester.runAsync(() async {
+      await seedLoggedIn();
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
+    });
+
+    for (final width in [320.0, 400.0, 800.0]) {
+      await tester.pumpWidget(wrap(const ChatUsernameBar(), width: width));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final dropdown = tester.getRect(find.byType(NativeChannelDropdown));
+      final shield = tester.getRect(find.byType(ChannelModButton));
+      final options = tester.getRect(find.byType(NativeChatOptionsButton));
+
+      /// Dropdown from the left edge up to the shield (one gap), shield
+      /// then options flush right - no space left unused.
+      expect(dropdown.left, 0.0, reason: 'width $width');
+      expect(shield.left - dropdown.right, AppSpacing.sm, reason: '$width');
+      expect(options.left - shield.right, AppSpacing.sm, reason: '$width');
+      expect(options.right, width, reason: 'width $width');
+    }
+  });
+
+  testWidgets('native signed out: no dropdown, options + Connect pill hug '
+      'the right edge', (tester) async {
+    await tester.runAsync(() async {
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.Twitch,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
+    });
+
+    await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 400));
+    await tester.pump();
+
+    expect(find.byType(NativeChannelDropdown), findsNothing);
+    final options = tester.getRect(find.byType(NativeChatOptionsButton));
+    final pill = tester.getRect(find.text('Connect Twitch'));
+    expect(pill.right, lessThanOrEqualTo(400.0));
+    expect(
+      pill.left - options.right,
+      lessThan(AppSpacing.sm + AppSpacing.lg + 1),
+      reason: 'the pill sits next to the options (gap + its own padding)',
     );
   });
 

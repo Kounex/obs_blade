@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_ce/hive.dart';
 
 import '../../../../../../models/enums/chat_engine.dart';
 import '../../../../../../models/enums/chat_type.dart';
@@ -39,11 +40,10 @@ import 'youtube_native_channel_dropdown.dart';
 /// WebView mode (default): username dropdown + add/edit/delete actions -
 /// the classic behavior, unchanged.
 ///
-/// Native mode (see [nativeChatAvailableFor]): the engine
-/// switch plus the native controls (options sheet button + account
-/// control where the platform has one) - never the username
-/// controls. While available, the multi-chat channel dropdown
-/// takes the username dropdown's slot.
+/// Native mode (see [nativeChatAvailableFor]): the engine switch on the
+/// top row, then the multi-chat channel dropdown filling a second row
+/// next to the native controls (mod shield, options sheet button, the
+/// sign-in pill while signed out) - never the username controls.
 ///
 /// Native engines are a Pro entitlement: without [ProStore.isPro] the
 /// native cluster (channel dropdown, options, account control) stays
@@ -123,6 +123,24 @@ class ChatUsernameBar extends StatelessWidget {
         /// so the bar's controls align edge-to-edge with the chat window
         /// below (Chat tab: [BaseConstrainedBox] padding; streaming mode:
         /// the floating header panel's uniform padding).
+        ///
+        /// Native mode: the platform dropdown + engine switch on top, then
+        /// one row with the channel dropdown filling everything the
+        /// right cluster (shield / options / sign-in pill) leaves - long
+        /// names and the menu's LIVE chips get the room. WebView keeps
+        /// its two columns (username dropdown under the platform, the
+        /// add / edit / delete actions under the switch).
+        if (nativeMode) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ChatBarTopRow(settingsBox: settingsBox, chatType: chatType),
+              _NativeChannelRow(chatType: chatType),
+            ],
+          );
+        }
+
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
@@ -139,54 +157,8 @@ class ChatUsernameBar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ChatTypeDropdown(settingsBox: settingsBox),
-                    if (!nativeMode) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      UsernameDropdown(settingsBox: settingsBox),
-                    ] else
-                      /// Native-mode channel dropdown slot — per
-                      /// platform. Twitch gates on login; YouTube reads
-                      /// work signed-out, so it gates on configuration.
-                      /// Both gate on the Pro entitlement: without it
-                      /// the slot stays empty (no dead-end controls).
-                      Observer(
-                        builder: (_) {
-                          if (!GetIt.instance<ProStore>().isPro) {
-                            return const SizedBox.shrink();
-                          }
-
-                          final showDropdown = switch (chatType) {
-                            ChatType.Twitch =>
-                              GetIt.instance<TwitchChatStore>().isLoggedIn,
-                            ChatType.YouTube =>
-                              GetIt.instance<YouTubeChatStore>().authState !=
-                                  YouTubeAuthState.unconfigured,
-                            ChatType.Kick =>
-                              GetIt.instance<KickChatStore>()
-                                  .nativeChannels
-                                  .isNotEmpty,
-                            _ => false,
-                          };
-
-                          /// Inner Column: the channel dropdowns root
-                          /// in a Flexible (like [UsernameDropdown]), so
-                          /// they need a direct Flex ancestor
-                          return showDropdown
-                              ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const SizedBox(height: AppSpacing.sm),
-                                    if (chatType == ChatType.Kick)
-                                      const KickNativeChannelDropdown()
-                                    else if (chatType == ChatType.YouTube)
-                                      const YouTubeNativeChannelDropdown()
-                                    else
-                                      const NativeChannelDropdown(),
-                                  ],
-                                )
-                              : const SizedBox.shrink();
-                        },
-                      ),
+                    const SizedBox(height: AppSpacing.sm),
+                    UsernameDropdown(settingsBox: settingsBox),
                   ],
                 ),
               ),
@@ -204,21 +176,113 @@ class ChatUsernameBar extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
-                  if (nativeMode)
-                    /// Native cluster hidden without the entitlement -
-                    /// login pills / options would be dead ends while
-                    /// the pane shows the Pro upsell
-                    Observer(
-                      builder: (_) => GetIt.instance<ProStore>().isPro
-                          ? _NativeRightCluster(chatType: chatType)
-                          : const SizedBox.shrink(),
-                    )
-                  else
-                    UsernameActionRow(settingsBox: settingsBox),
+                  UsernameActionRow(settingsBox: settingsBox),
                 ],
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+}
+
+/// Native mode's first row: platform dropdown left, engine switch right -
+/// laid out like the WebView columns' tops, so neither moves when the
+/// engine switch swaps the layout below.
+class _ChatBarTopRow extends StatelessWidget {
+  final Box<dynamic> settingsBox;
+  final ChatType chatType;
+
+  const _ChatBarTopRow({required this.settingsBox, required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 256.0),
+            child: ChatTypeDropdown(settingsBox: this.settingsBox),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        if (nativeChatAvailableFor(this.chatType))
+          Flexible(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: ChatEngineSwitch(
+                settingsBox: this.settingsBox,
+                chatType: this.chatType,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Native mode's second row: the channel dropdown takes all the width the
+/// right cluster doesn't need (Twitch gates it on login; YouTube reads
+/// work signed out, so it gates on configuration; Kick on having a
+/// channel). Without a dropdown the cluster stays right-aligned. Both
+/// need the Pro entitlement - without it the row is gone (no dead-end
+/// controls while the pane shows the Pro upsell).
+///
+/// The cluster is capped at [_kClusterMaxFraction] of the row: its
+/// sign-in pill is [Flexible] and the shield fit check reads the cap
+/// ([nativeModClusterFitsWithShield]).
+class _NativeChannelRow extends StatelessWidget {
+  static const double _kClusterMaxFraction = 0.6;
+
+  final ChatType chatType;
+
+  const _NativeChannelRow({required this.chatType});
+
+  @override
+  Widget build(BuildContext context) {
+    return Observer(
+      builder: (_) {
+        if (!GetIt.instance<ProStore>().isPro) return const SizedBox.shrink();
+
+        final showDropdown = switch (this.chatType) {
+          ChatType.Twitch => GetIt.instance<TwitchChatStore>().isLoggedIn,
+          ChatType.YouTube =>
+            GetIt.instance<YouTubeChatStore>().authState !=
+                YouTubeAuthState.unconfigured,
+          ChatType.Kick =>
+            GetIt.instance<KickChatStore>().nativeChannels.isNotEmpty,
+          _ => false,
+        };
+
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.sm),
+          child: LayoutBuilder(
+            builder: (context, constraints) => Row(
+              children: [
+                /// The channel dropdowns root in a [Flexible] themselves -
+                /// the only flexible child here, so it gets the rest.
+                if (showDropdown) ...[
+                  if (this.chatType == ChatType.Kick)
+                    const KickNativeChannelDropdown()
+                  else if (this.chatType == ChatType.YouTube)
+                    const YouTubeNativeChannelDropdown()
+                  else
+                    const NativeChannelDropdown(),
+                  const SizedBox(width: AppSpacing.sm),
+                ] else
+                  const Spacer(),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: constraints.maxWidth * _kClusterMaxFraction,
+                  ),
+                  child: _NativeRightCluster(chatType: this.chatType),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

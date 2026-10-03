@@ -7,6 +7,10 @@ import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/types/classes/kick/kick_channel.dart';
+import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
@@ -154,4 +158,109 @@ void main() {
       );
     });
   }
+
+  /// A long channel name selected on each platform - the native dropdown
+  /// fills the row next to the shield + options.
+  void selectLongChannels() {
+    runInAction(() {
+      twitch.channels.add(
+        TwitchChannelRef(
+          id: '77',
+          login: 'averyveryverylongtwitchname',
+          displayName: 'AVeryVeryVeryLongTwitchName',
+          addedAt: DateTime.utc(2026, 10, 3),
+        ),
+      );
+      twitch.selectedChannelId = '77';
+      youTube.channels.add(
+        const YouTubeChatChannel(
+          label: 'Markiplier Clips and Highlights',
+          target: YouTubeChannelTarget('@markiplierclips'),
+        ),
+      );
+      youTube.selectedChannelLabel = 'Markiplier Clips and Highlights';
+      kick.channels.addAll(['xqcow-waiting-room-x', 'trainwreckstv']);
+      kick.selectedChannelSlug = 'xqcow-waiting-room-x';
+      kick.channelLivePreview['xqcow-waiting-room-x'] = const KickChannelInfo(
+        id: 1,
+        slug: 'xqcow-waiting-room-x',
+        chatroom: KickChatroom(id: 2),
+        livestream: KickLivestreamInfo(isLive: true, viewerCount: 12400),
+      );
+      kick.channelLivePreview['trainwreckstv'] = const KickChannelInfo(
+        id: 3,
+        slug: 'trainwreckstv',
+        chatroom: KickChatroom(id: 4),
+      );
+    });
+  }
+
+  for (final type in [ChatType.Twitch, ChatType.YouTube, ChatType.Kick]) {
+    testWidgets('${type.name} long channel name (phone, narrow, tablet)', (
+      tester,
+    ) async {
+      await tester.runAsync(
+        () => Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.SelectedChatType.name, type),
+      );
+      selectLongChannels();
+      final name = 'chat_bar_${type.name.toLowerCase()}_long';
+      await harness.shot(tester, name, bar());
+      await harness.shot(
+        tester,
+        '${name}_narrow',
+        bar(),
+        size: const Size(320, 640),
+      );
+      await harness.shot(tester, '${name}_tablet', bar(), size: kShotTablet);
+    });
+  }
+
+  testWidgets('Kick open channel menu: LIVE chips get the row width', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.SelectedChatType.name, ChatType.Kick),
+    );
+    selectLongChannels();
+    await harness.shot(tester, 'chat_bar_kick_menu_closed', bar());
+    await tester.tap(find.text('xqcow-waiting-room-x').first);
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('../../build/widget_shots/chat_bar_kick_menu_open.png'),
+    );
+  });
+
+  testWidgets('signed out: YouTube dropdown next to the sign-in pill, '
+      'Twitch pill right-aligned', (tester) async {
+    await tester.runAsync(
+      () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.SelectedChatType.name, ChatType.YouTube),
+    );
+    selectLongChannels();
+    runInAction(() {
+      youTube.authState = YouTubeAuthState.signedOut;
+      twitch.authState = TwitchAuthState.loggedOut;
+    });
+    await harness.shot(tester, 'chat_bar_youtube_signed_out', bar());
+    await harness.shot(
+      tester,
+      'chat_bar_youtube_signed_out_narrow',
+      bar(),
+      size: const Size(320, 640),
+    );
+    await tester.runAsync(
+      () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.SelectedChatType.name, ChatType.Twitch),
+    );
+    await harness.shot(tester, 'chat_bar_twitch_signed_out', bar());
+  });
 }
