@@ -18,16 +18,16 @@ import '../../../../stores/views/kick_chat.dart';
 import '../../../../stores/views/twitch_chat.dart';
 import '../../../../stores/views/youtube_chat.dart';
 import '../../../../types/classes/activity/activity_event.dart';
+import '../../../../utils/activity/activity_ledger.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/get_it_helper.dart';
 import '../../../../utils/icons/jam_icons.dart';
-import '../../../../utils/kick/kick_events_relay_client.dart';
 import '../../../../utils/routing_helper.dart';
 import '../../../dashboard/widgets/obs_widgets/stream_chat/chat_type_brand.dart';
-import '../../../dashboard/widgets/obs_widgets/stream_chat/twitch_device_code_dialog.dart';
 import '../../../settings/widgets/accent_icon_tile.dart';
 import 'activity_formatting.dart';
 import 'activity_sheets.dart';
+import 'activity_status_banner.dart';
 
 ActivityStore? activityStoreOrNull() =>
     GetIt.instance.isRegistered<ActivityStore>()
@@ -165,13 +165,15 @@ class _FeedBody extends StatelessWidget {
             _FeedHeader(store: this.store, toThank: toThank),
             const BaseDivider(),
             _FilterRow(store: this.store),
-            _FeedNotices(store: this.store),
             Expanded(
-              child: !this.store.loaded
-                  ? const Center(child: CupertinoActivityIndicator())
-                  : groups.isEmpty
-                  ? _EmptyFeed(store: this.store)
-                  : _GroupedList(store: this.store, groups: groups),
+              child: ActivityStatusBanner(
+                store: this.store,
+                child: !this.store.loaded
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : groups.isEmpty
+                    ? _EmptyFeed(store: this.store)
+                    : _GroupedList(store: this.store, groups: groups),
+              ),
             ),
           ],
         );
@@ -362,124 +364,18 @@ class _FilterRow extends StatelessWidget {
   }
 }
 
-/// What the feed can't see right now, and the fix where there is one.
-class _FeedNotices extends StatelessWidget {
-  final ActivityStore store;
-
-  const _FeedNotices({required this.store});
-
-  /// Own Observer: reads store observables the parent doesn't track
-  @override
-  Widget build(BuildContext context) =>
-      Observer(builder: (context) => this._content(context));
-
-  Widget _content(BuildContext context) {
-    final getIt = GetIt.instance;
-    final notices = <Widget>[];
-    if (getIt.isRegistered<TwitchChatStore>() &&
-        getIt.checkLazySingletonInstanceExists<TwitchChatStore>()) {
-      final twitch = getIt<TwitchChatStore>();
-
-      /// The scope list lives in Hive - authState flips on a new sign-in
-      twitch.authState;
-      if (twitch.isLoggedIn && twitch.missingActivityScopes.isNotEmpty) {
-        notices.add(
-          _Notice(
-            key: const Key('activity-notice-twitch-scopes'),
-            icon: JamIcons.twitch,
-            text:
-                'Sign in to Twitch again to add cheers, Power-ups, channel points and hype trains.',
-            action: 'Sign in again',
-            onAction: () => startTwitchLogin(context),
-          ),
-        );
-      }
-    }
-
-    /// Read first: relayWanted can short-circuit before any observable
-    final relayState = this.store.relayState;
-    if (relayState == KickRelayState.retrying && this.store.relayWanted) {
-      notices.add(
-        const _Notice(
-          key: Key('activity-notice-kick-relay'),
-          icon: CupertinoIcons.arrow_2_circlepath,
-          text: 'Reconnecting to Kick follows, KICKs and subs…',
-        ),
-      );
-    }
-    if (notices.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0.0,
-        AppSpacing.md,
-        AppSpacing.sm,
-      ),
-      child: Column(children: notices),
-    );
-  }
-}
-
-class _Notice extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final String? action;
-  final VoidCallback? onAction;
-
-  const _Notice({
-    super.key,
-    required this.icon,
-    required this.text,
-    this.action,
-    this.onAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        children: [
-          Icon(this.icon, size: 16.0),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              this.text,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          if (this.action != null)
-            Pressable(
-              springy: false,
-              onTap: this.onAction,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                child: Text(
-                  this.action!,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EmptyFeed extends StatelessWidget {
   final ActivityStore store;
 
   const _EmptyFeed({required this.store});
 
+  /// Own Observer: the sign-in state it reads changes without any feed
+  /// row changing (signing in next to it on a tablet)
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Observer(builder: (context) => this._content(context));
+
+  Widget _content(BuildContext context) {
     final filtered =
         this.store.filter != ActivityFilter.all || this.store.toThankOnly;
     final String title;
@@ -492,17 +388,14 @@ class _EmptyFeed extends StatelessWidget {
     } else if (!_anyOwnChannel()) {
       title = 'No channel connected';
       body =
-          'Sign in to Twitch or Kick, or connect your own YouTube channel, in '
-          'the chat. Follows, subs, cheers, Super Chats and KICKs on your '
-          'channels show up here.';
+          'Sign in to Twitch, YouTube or Kick in the chat. Follows, subs, '
+          'cheers, Super Chats and KICKs on your channels show up here.';
     } else {
       title = 'Nothing yet';
       body =
           'Follows, subs, cheers, Super Chats and KICKs on your own channels '
-          'show up here - Kick and Twitch follows also from while the app '
-          'was closed.'
-          '${_ownYouTubeChannel() ? ' YouTube Super Chats and memberships '
-                    'arrive while your own YouTube chat is open.' : ''}';
+          'show up here while you\'re live - Twitch and Kick follows also '
+          'from while the app was closed.';
     }
     return Center(
       child: SingleChildScrollView(
@@ -529,7 +422,8 @@ class _EmptyFeed extends StatelessWidget {
     );
   }
 
-  static bool _anyOwnChannel() {
+  bool _anyOwnChannel() {
+    this.store.setupRevision;
     final getIt = GetIt.instance;
     if (lazySingletonCreated<TwitchChatStore>() &&
         getIt<TwitchChatStore>().isLoggedIn) {
@@ -578,7 +472,24 @@ class _GroupedList extends StatelessWidget {
     var sawNew = false;
     for (final group in this.groups) {
       items.add(group);
+
+      /// Newest first, like the rows: a gap's marker sits above the first
+      /// row older than its end
+      final session = group.session;
+      final gaps = session == null
+          ? <ActivityGap>[]
+          : this.store.gapsOf(session).reversed.toList();
+      void placeGaps(DateTime? before) {
+        while (gaps.isNotEmpty &&
+            (before == null ||
+                gaps.first.end == null ||
+                !before.isAfter(gaps.first.end!))) {
+          items.add(_GapMarker(gap: gaps.removeAt(0)));
+        }
+      }
+
       for (final event in group.events) {
+        placeGaps(event.timestamp);
         final isNew = this.store.isNew(event);
 
         /// Under the newest run of unseen rows: everything above is new
@@ -590,6 +501,7 @@ class _GroupedList extends StatelessWidget {
         rowIndex[event.id] = items.length;
         items.add((event, isNew));
       }
+      placeGaps(null);
     }
     return ListView.builder(
       key: const Key('activity-list'),
@@ -600,7 +512,15 @@ class _GroupedList extends StatelessWidget {
       findChildIndexCallback: (key) =>
           key is ValueKey<String> ? rowIndex[key.value] : null,
       itemBuilder: (context, index) => switch (items[index]) {
-        final ActivityGroup group => _GroupHeader(group: group, now: now),
+        final ActivityGroup group => _GroupHeader(
+          group: group,
+          now: now,
+
+          /// The banner's tucked button (40 + 8 from the edge) floats over
+          /// the first header's end
+          trailingInset: index == 0 ? 36.0 : 0.0,
+          onThankAll: () => this.store.markThanked(group.events),
+        ),
         (final ActivityEvent event, final bool isNew) => ActivityRow(
           key: ValueKey(event.id),
           event: event,
@@ -619,21 +539,31 @@ class _GroupedList extends StatelessWidget {
 class _GroupHeader extends StatelessWidget {
   final ActivityGroup group;
   final DateTime now;
+  final double trailingInset;
+  final VoidCallback onThankAll;
 
-  const _GroupHeader({required this.group, required this.now});
+  const _GroupHeader({
+    required this.group,
+    required this.now,
+    required this.onThankAll,
+    this.trailingInset = 0.0,
+  });
 
   @override
   Widget build(BuildContext context) {
     final totals = formatActivityTotals(this.group.totals);
+    final open = this.group.events
+        .where((event) => event.isBig && !event.thanked)
+        .length;
     final live = this.group.session?.isOpen ?? false;
     final statusColors =
         Theme.of(context).extension<AppStatusColors>() ??
         AppStatusColors.standard;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.md,
         AppSpacing.md,
-        AppSpacing.md,
+        AppSpacing.md + this.trailingInset,
         AppSpacing.xs,
       ),
       child: Column(
@@ -665,14 +595,112 @@ class _GroupHeader extends StatelessWidget {
               ),
             ],
           ),
-          if (totals != null) ...[
+          if (totals != null || open > 0) ...[
             const SizedBox(height: 2.0),
-            Text(
-              totals,
-              key: Key('activity-totals-${this.group.key}'),
-              style: Theme.of(context).textTheme.bodySmall,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: totals == null
+                      ? const SizedBox.shrink()
+                      : Text(
+                          totals,
+                          key: Key('activity-totals-${this.group.key}'),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                ),
+                if (open > 0)
+                  Flexible(
+                    child: Semantics(
+                      button: true,
+                      label: open == 1
+                          ? 'Mark 1 thanked'
+                          : 'Mark all $open thanked',
+                      excludeSemantics: true,
+                      child: Pressable(
+                        key: Key('activity-thank-all-${this.group.key}'),
+                        haptic: true,
+                        springy: false,
+                        onTap: this.onThankAll,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: AppSpacing.sm),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                CupertinoIcons.checkmark_circle,
+                                size: 14.0,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Flexible(
+                                child: Text(
+                                  'Mark $open thanked',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.secondary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Where the app wasn't listening during a stream - rows from then may be
+/// missing.
+class _GapMarker extends StatelessWidget {
+  final ActivityGap gap;
+
+  const _GapMarker({required this.gap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final warning =
+        (theme.extension<AppStatusColors>() ?? AppStatusColors.standard)
+            .warning;
+    final name = chatTypeOf(this.gap.platform).text;
+    final end = this.gap.end;
+    final span = end == null
+        ? 'since ${formatActivityClock(context, this.gap.start)}'
+        : '${formatActivityClock(context, this.gap.start)}–'
+              '${formatActivityClock(context, end)}';
+    return Padding(
+      key: Key('activity-gap-${this.gap.id}'),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            CupertinoIcons.waveform_path_badge_minus,
+            size: 14.0,
+            color: warning,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Not listening on $name $span - rows may be missing',
+              style: theme.textTheme.labelSmall?.copyWith(color: warning),
+            ),
+          ),
         ],
       ),
     );

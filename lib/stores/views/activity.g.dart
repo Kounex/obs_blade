@@ -264,6 +264,42 @@ mixin _$ActivityStore on _ActivityStore, Store {
     });
   }
 
+  late final _$clockTickAtom = Atom(
+    name: '_ActivityStore.clockTick',
+    context: context,
+  );
+
+  @override
+  int get clockTick {
+    _$clockTickAtom.reportRead();
+    return super.clockTick;
+  }
+
+  @override
+  set clockTick(int value) {
+    _$clockTickAtom.reportWrite(value, super.clockTick, () {
+      super.clockTick = value;
+    });
+  }
+
+  late final _$setupRevisionAtom = Atom(
+    name: '_ActivityStore.setupRevision',
+    context: context,
+  );
+
+  @override
+  int get setupRevision {
+    _$setupRevisionAtom.reportRead();
+    return super.setupRevision;
+  }
+
+  @override
+  set setupRevision(int value) {
+    _$setupRevisionAtom.reportWrite(value, super.setupRevision, () {
+      super.setupRevision = value;
+    });
+  }
+
   late final _$clearHistoryAsyncAction = AsyncAction(
     '_ActivityStore.clearHistory',
     context: context,
@@ -352,6 +388,18 @@ mixin _$ActivityStore on _ActivityStore, Store {
   }
 
   @override
+  void acknowledgeStatus(Iterable<String> ids) {
+    final _$actionInfo = _$_ActivityStoreActionController.startAction(
+      name: '_ActivityStore.acknowledgeStatus',
+    );
+    try {
+      return super.acknowledgeStatus(ids);
+    } finally {
+      _$_ActivityStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void markThanked(Iterable<ActivityEvent> events) {
     final _$actionInfo = _$_ActivityStoreActionController.startAction(
       name: '_ActivityStore.markThanked',
@@ -402,6 +450,8 @@ toThankOnly: ${toThankOnly},
 relayState: ${relayState},
 relaySubscribed: ${relaySubscribed},
 coverageRevision: ${coverageRevision},
+clockTick: ${clockTick},
+setupRevision: ${setupRevision},
 allEvents: ${allEvents},
 unseenCount: ${unseenCount},
 toThankCount: ${toThankCount},

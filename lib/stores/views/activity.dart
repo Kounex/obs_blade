@@ -273,6 +273,25 @@ abstract class _ActivityStore with Store {
   /// Bumped when coverage changes (gaps read it)
   @observable
   int coverageRevision = 0;
+
+  /// Bumped every 30 s tick - a running gap crosses the 1-minute floor
+  /// without any other change
+  @observable
+  int clockTick = 0;
+
+  /// Bumped when a sign-in / setup value in Hive changes (YouTube session,
+  /// API key, OAuth client, the Kick relay switch) - the status banner
+  /// reads those off Hive
+  @observable
+  int setupRevision = 0;
+
+  /// Status banner lines the user has seen (expanded or tucked away) -
+  /// the tucked button badges the others
+  final ObservableSet<String> acknowledgedStatus = ObservableSet();
+
+  /// A YouTube chat's first page re-sends recent history: attaching
+  /// covers about this much before it
+  static const Duration _youTubeHistoryReach = Duration(minutes: 2);
   DateTime? _lastFollowerBackfill;
   Timer? _ticker;
   int _ticks = 0;
@@ -452,19 +471,29 @@ abstract class _ActivityStore with Store {
   /// The sign-in (own channel id) or the API key changed: the poller
   /// follows. Read off Hive - never creates the YouTube store.
   void _watchYouTubeSetup() {
+    void changed() {
+      this._syncYouTubeOwn();
+      runInAction(() => this.setupRevision++);
+    }
+
+    const settingKeys = {
+      SettingsKeys.YouTubeApiKey,
+      SettingsKeys.YouTubeOAuthClientId,
+      SettingsKeys.ActivityKickRelay,
+    };
     try {
       if (Hive.isBoxOpen(HiveKeys.YouTubeAuth.name)) {
         this._boxWatches.add(
           Hive.box<YouTubeAuth>(
             HiveKeys.YouTubeAuth.name,
-          ).watch().listen((_) => this._syncYouTubeOwn()),
+          ).watch().listen((_) => changed()),
         );
       }
       if (Hive.isBoxOpen(HiveKeys.Settings.name)) {
         this._boxWatches.add(
-          Hive.box(HiveKeys.Settings.name)
-              .watch(key: SettingsKeys.YouTubeApiKey.name)
-              .listen((_) => this._syncYouTubeOwn()),
+          Hive.box(HiveKeys.Settings.name).watch().listen((event) {
+            if (settingKeys.any((key) => key.name == event.key)) changed();
+          }),
         );
       }
     } catch (e) {
@@ -539,8 +568,12 @@ abstract class _ActivityStore with Store {
     }
 
     final seen = this._persistence.loadMeta('seen');
+    final statusSeen = this._persistence.loadMeta('statusSeen');
     final rawSessions = this._persistence.loadMeta('sessions');
     runInAction(() {
+      if (statusSeen is List) {
+        this.acknowledgedStatus.addAll(statusSeen.whereType<String>());
+      }
       if (seen is Map) {
         this.seenMarks.addAll({
           for (final entry in seen.entries)
@@ -766,6 +799,9 @@ abstract class _ActivityStore with Store {
         if (p == platform) channel,
     };
     final open = this._nativeOpen.putIfAbsent(platform, () => {});
+    final openAt = platform == ActivityPlatform.youtube
+        ? now.subtract(_youTubeHistoryReach)
+        : now;
     var changed = false;
     for (final channel in open.difference(wanted)) {
       changed |= this._ledger.coverage.close(
@@ -780,7 +816,7 @@ abstract class _ActivityStore with Store {
         ActivitySource.native,
         platform,
         channel,
-        now,
+        openAt,
       );
     }
     open
@@ -926,6 +962,7 @@ abstract class _ActivityStore with Store {
   void _onTick() {
     this._ticks++;
     this._catchUpFreeze(this._clock());
+    runInAction(() => this.clockTick++);
 
     /// OBS streaming counts as live too (no platform needed)
     final obsLive =
@@ -1034,6 +1071,28 @@ abstract class _ActivityStore with Store {
     unawaited(this._persistence.putEvent(updated));
     this.revision++;
   }
+
+  /// The status banner showed [ids] (expanded, or the user tucked it):
+  /// they stop badging. Lines that went away drop out, so one coming back
+  /// later badges again.
+  @action
+  void acknowledgeStatus(Iterable<String> ids) {
+    final next = ids.toSet();
+    if (next.length == this.acknowledgedStatus.length &&
+        next.containsAll(this.acknowledgedStatus)) {
+      return;
+    }
+    this.acknowledgedStatus
+      ..clear()
+      ..addAll(next);
+    unawaited(this._persistence.putMeta('statusSeen', next.toList()));
+  }
+
+  /// The store's clock (tests drive it)
+  DateTime get now => this._clock();
+
+  /// The Kick relay switch (options sheet / status banner)
+  bool get relayEnabled => this._relayEnabled();
 
   /// Mark [events] thanked in one go (a stream's / day's header).
   @action

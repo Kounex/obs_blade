@@ -114,10 +114,9 @@ void main() {
 
     expect(find.text('No channel connected'), findsNothing);
     expect(find.text('Nothing yet'), findsOneWidget);
-    expect(
-      find.textContaining('arrive while your own YouTube chat is open'),
-      findsOneWidget,
-    );
+
+    /// YouTube is collected without its chat open now - no such caveat
+    expect(find.textContaining('chat is open'), findsNothing);
   });
 
   testWidgets('empty feed without any own channel says so', (tester) async {
@@ -302,7 +301,9 @@ void main() {
     await tester.pumpWidget(_wrap(const ChatView()));
     await tester.pump();
     expect(find.byType(ActivityFeed), findsOneWidget);
-    expect(tester.takeException(), isNull);
+    final error = tester.takeException();
+    if (error is FlutterError) debugPrint(error.toStringDeep());
+    expect(error, isNull);
   });
 
   group('formatting', () {

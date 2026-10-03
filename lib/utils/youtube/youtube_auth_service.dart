@@ -90,7 +90,11 @@ class YouTubeAuthService {
   /// OAuth client id resolution: the user's own client
   /// ([SettingsKeys.YouTubeOAuthClientId]) wins over the app-owned
   /// [kYouTubeOAuthClientId] constant.
-  String resolveClientId() =>
+  String resolveClientId() => YouTubeAuthService.configuredClientId();
+
+  /// [resolveClientId] without an instance (no HTTP client) - for UI that
+  /// only asks whether sign-in is possible.
+  static String configuredClientId() =>
       YouTubeAuthService._settingsValue(SettingsKeys.YouTubeOAuthClientId) ??
       kYouTubeOAuthClientId;
 
