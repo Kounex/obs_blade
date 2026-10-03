@@ -97,6 +97,20 @@ NativeChatConnectionStatus youTubeChatWindowStatus(
   };
 }
 
+/// The YouTube header sheet's offline text: the chat, not the account -
+/// reads need no sign-in, so offline means no live chat to show.
+String youTubeChatOfflineNote(YouTubeChatStore store) {
+  final selected = store.selectedChannel;
+  if (selected == null) {
+    return 'No channel picked - choose one in the channel list.';
+  }
+  if (store.awaitingLiveStream) {
+    return '${selected.displayName} isn\'t live right now. The chat connects '
+        'on its own when the stream starts.';
+  }
+  return 'No live chat right now - the video isn\'t live or its chat is off.';
+}
+
 /// Maps the Kick store's connection state onto the chat window's
 /// platform-agnostic status. Kick reads are anonymous (no account, no API
 /// key) — the only gates are the entitlement and a channel selection,
@@ -587,6 +601,12 @@ class _StreamChatState extends State<StreamChat>
                 : null,
             onRetry: kickStore.connectChat,
             onConnect: addKickChannel,
+            offlineNote: switch (kickStore.chatConnection) {
+              KickChatConnectionState.offline =>
+                'This Kick channel can\'t be found - check the name.',
+              _ => 'No Kick channel picked yet.',
+            },
+            connectLabel: 'Add Kick channel',
             child: hasChannel
                 ? NativeKickChatView(
                     /// Fresh scroll state per channel — avoids
@@ -681,9 +701,19 @@ class _StreamChatState extends State<StreamChat>
                 ? youTubeStore.selectedChannelViewerCount
                 : null,
             onRetry: youTubeStore.connectChat,
-            onConnect: () => configured
-                ? startYouTubeLogin(context)
-                : showYouTubeSetupSheet(context),
+            offlineNote: configured
+                ? youTubeChatOfflineNote(youTubeStore)
+                : null,
+
+            /// Signed in: nothing to connect (the sheet offers sign-out)
+            onConnect: signedIn
+                ? null
+                : () => configured
+                      ? startYouTubeLogin(context)
+                      : showYouTubeSetupSheet(context),
+            connectLabel: configured
+                ? 'Sign in to write and moderate'
+                : 'Set up YouTube chat',
             onLogout: signedIn
                 ? () => ModalHandler.showBaseDialog(
                     context: context,

@@ -135,6 +135,57 @@ void main() {
     expect(connected, isTrue);
   });
 
+  testWidgets('offline chat with a note: signed in, explains the chat, '
+      'offers sign-out instead of connect', (tester) async {
+    var signedOut = false;
+    await tester.pumpWidget(
+      wrap(
+        NativeChatWindow(
+          chatType: ChatType.YouTube,
+          status: NativeChatConnectionStatus.offline,
+          accountLabel: 'Brand Channel',
+          offlineNote: 'Brand Channel isn\'t live right now.',
+          onLogout: () => signedOut = true,
+          child: const Center(child: Text('chat content')),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('offline'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Signed in as Brand Channel'), findsOneWidget);
+    expect(find.text('Brand Channel isn\'t live right now.'), findsOneWidget);
+    expect(find.textContaining('Not connected'), findsNothing);
+    expect(find.text('Connect YouTube'), findsNothing);
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(signedOut, isTrue);
+  });
+
+  testWidgets('offline chat with a note, read-only: the connect action '
+      'uses its own label', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        NativeChatWindow(
+          chatType: ChatType.YouTube,
+          status: NativeChatConnectionStatus.offline,
+          offlineNote: 'No live chat right now.',
+          onConnect: () {},
+          connectLabel: 'Sign in to write and moderate',
+          child: const Center(child: Text('chat content')),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('offline'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Signed in as'), findsNothing);
+    expect(find.text('Sign in to write and moderate'), findsOneWidget);
+    expect(find.text('Sign out'), findsNothing);
+  });
+
   testWidgets('failed without selfUserId keeps the connection sheet', (
     tester,
   ) async {

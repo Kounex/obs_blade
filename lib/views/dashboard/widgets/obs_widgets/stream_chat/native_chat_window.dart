@@ -77,6 +77,16 @@ class NativeChatWindow extends StatelessWidget {
   final VoidCallback? onLogout;
   final VoidCallback? onConnect;
 
+  /// What [NativeChatConnectionStatus.offline] means for this engine, in
+  /// the sheet. Null keeps the account wording ("Not connected - connect
+  /// your account"), right for Twitch where offline = signed out. YouTube
+  /// and Kick read without an account: offline there is the chat (no live
+  /// stream, no channel), not the sign-in.
+  final String? offlineNote;
+
+  /// Label of the [onConnect] action (default "Connect <platform>")
+  final String? connectLabel;
+
   /// The engine's content (message view or connect prompt)
   final Widget child;
 
@@ -112,6 +122,8 @@ class NativeChatWindow extends StatelessWidget {
     this.onRetry,
     this.onLogout,
     this.onConnect,
+    this.offlineNote,
+    this.connectLabel,
     this.selfUserId,
     this.userService,
     this.onStatusTapOverride,
@@ -203,6 +215,8 @@ class NativeChatWindow extends StatelessWidget {
                       onRetry: this.onRetry,
                       onLogout: this.onLogout,
                       onConnect: this.onConnect,
+                      offlineNote: this.offlineNote,
+                      connectLabel: this.connectLabel,
                     ),
                   );
                 },
@@ -289,6 +303,8 @@ class _NativeChatConnectionSheet extends StatelessWidget {
   final VoidCallback? onRetry;
   final VoidCallback? onLogout;
   final VoidCallback? onConnect;
+  final String? offlineNote;
+  final String? connectLabel;
 
   const _NativeChatConnectionSheet({
     required this.chatType,
@@ -301,6 +317,8 @@ class _NativeChatConnectionSheet extends StatelessWidget {
     this.onRetry,
     this.onLogout,
     this.onConnect,
+    this.offlineNote,
+    this.connectLabel,
   });
 
   void _popThen(BuildContext context, VoidCallback? action) {
@@ -434,17 +452,40 @@ class _NativeChatConnectionSheet extends StatelessWidget {
             ),
           ],
           if (this.status == NativeChatConnectionStatus.offline) ...[
+            /// Signed in while the chat itself is offline (YouTube / Kick)
+            if (this.offlineNote != null && this.accountLabel != null) ...[
+              Text(
+                'Signed in as ${this.accountLabel}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+            ],
             Text(
-              'Not connected - connect your ${this.chatType.text} account to see chat natively.',
+              this.offlineNote ??
+                  'Not connected - connect your ${this.chatType.text} account to see chat natively.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: AppSpacing.md),
-            this._actionRow(
-              context,
-              icon: CupertinoIcons.link,
-              label: 'Connect ${this.chatType.text}',
-              onTap: this.onConnect,
-            ),
+            if (this.onConnect != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              this._actionRow(
+                context,
+                icon: CupertinoIcons.link,
+                label: this.connectLabel ?? 'Connect ${this.chatType.text}',
+                onTap: this.onConnect,
+              ),
+            ],
+            if (this.offlineNote != null && this.onLogout != null) ...[
+              SizedBox(
+                height: this.onConnect != null ? AppSpacing.xs : AppSpacing.md,
+              ),
+              this._actionRow(
+                context,
+                icon: CupertinoIcons.square_arrow_right,
+                label: 'Sign out',
+                destructive: true,
+                onTap: this.onLogout,
+              ),
+            ],
           ],
         ],
       ),

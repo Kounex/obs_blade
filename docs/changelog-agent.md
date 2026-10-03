@@ -2,6 +2,39 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - YouTube own chat: brand accounts, channel names, header sheet
+
+Dogfood (Kounex iOS), three findings around the signed-in YouTube chat:
+
+- **No "You" after sign-in:** the token was fine (scope `youtube`), but
+  `channels.list?mine=true` returned 0 items - the user picked the
+  personal Google account, the channel is a **Brand Account**. Picking
+  the channel at Google's account step fixed it. The app now says so:
+  `YouTubeChatStore.signedInWithoutChannel` (set only when the lookup
+  answered with no channel, not on a failed lookup; cleared on sign-in /
+  sign-out), and the sign-in dialog stays open with the explanation +
+  "Sign in again" (signs out, restarts the device flow) / "Keep".
+  Diagnosed by pulling `youtube-auth.hive` with `devicectl device copy
+  from --domain-type appDataContainer` (Documents) and replaying the call
+  - `GeneralHelper.advLog` only prints, it never reaches the app log.
+- **"UCKp5… isn't live right now":** the empty-chat copy used the
+  target's form (a bare `UC…` id for the own entry); it now uses the
+  entry's name (own entry: channel title). Same slip in the combined
+  builder's cross-platform name search (a `UC…` id falls back to the
+  pick's label).
+- **Header sheet said "Not connected" while signed in:** the sheet read
+  the chat state as the account state - right for Twitch (offline =
+  signed out), wrong for YouTube / Kick, which read without an account.
+  `NativeChatWindow.offlineNote` / `connectLabel`: YouTube explains the
+  chat ("<name> isn't live right now…", no channel picked, video without
+  chat), shows "Signed in as …" + Sign out when signed in, and "Sign in
+  to write and moderate" when read-only; Kick: channel not found / no
+  channel picked + "Add Kick channel".
+- Test fixes on the way: widget tests that sign in need real time
+  between pumps (Hive writes) and an `isProResolver` (no ProStore in
+  GetIt) - the earlier Save & connect test had silently ended in the
+  error state.
+
 ## 2026-10-03 - Kick client secret rotated
 
 The old secret shipped in store builds (entry below). 4.0.x builds could
