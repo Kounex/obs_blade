@@ -16,7 +16,8 @@ rules, versioning, notes, where the tool runs. Maintainers also need
 2. **Version.** Set the name in `pubspec.yaml` (the user's, or per the
    playbook's rules), then `release bump` for the build number.
 3. **Notes.** Draft from the commits since the last release tag (playbook §
-   Release notes), write both files, show them to the user. Android's copy
+   Release notes), write both files plus the TestFlight checklist
+   (`fastlane/testflight_notes.txt`), show them to the user. Android's copy
    is final once uploaded - get it right now.
 4. **Commit + push** `release: <name> build <build>`.
 5. **Preflight.** `release preflight` on the build machine (after pulling

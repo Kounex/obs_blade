@@ -69,6 +69,12 @@ identical).
   versionCode twice, so after that they can only be changed in the Play
   Console. The iOS notes are set by `metadata ios` and lock once
   `submit ios` sent the version to review.
+- **TestFlight "What to Test"** comes from `fastlane/testflight_notes.txt`
+  when it exists (falls back to the iOS release notes): a tester checklist
+  for the beta - what's new and what to try, internal names allowed, no
+  length limit worth worrying about (4,000). Rewrite it for every beta -
+  a stale one ships with the next build. It never reaches the App Store
+  listing.
 - Show the notes to the user before the first upload.
 
 ## Stores, briefly

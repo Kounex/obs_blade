@@ -36,7 +36,11 @@ platform :ios do
     pilot(
       api_key: asc_api_key,
       ipa: options.fetch(:ipa),
-      changelog: File.read("metadata/ios/en-US/release_notes.txt"),
+      # "What to Test": the tester checklist when there is one, else the
+      # store release notes (lanes run from the fastlane/ directory)
+      changelog: File.read(
+        File.exist?("testflight_notes.txt") ? "testflight_notes.txt" : "metadata/ios/en-US/release_notes.txt",
+      ),
       distribute_external: false,
       skip_waiting_for_build_processing: false,
     )
