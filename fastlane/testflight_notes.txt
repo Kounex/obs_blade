@@ -1,10 +1,18 @@
-4.1.0 test build 4 - chat fixes since build 3. What to test:
+4.1.0 test build 5. What to test:
+
+NEW IN BUILD 5 - CHAT BAR
+- Signed in on Twitch, YouTube or Kick: no account name chip in the chat bar any more - the mod shield and the options button sit there, also on a phone
+- YouTube / Kick signed in: the shield opens the channel tools (polls, moderators, bans)
+- Account + sign-out: tap the chat header - YouTube / Kick show "Connected as ..." with Sign out, Twitch opens your own card with Log out
+- Signed out: the "Connect ..." / "Set up YouTube" pill is still there
+
+FROM BUILD 4 - chat fixes since build 3:
 
 YOUTUBE
 - Native chat on a live stream: switch to another channel and quickly back - the chat keeps running, no "quota" message
 - Background the app for a minute in the Chat tab (no OBS connection), come back: the chat picks up again
 - Setup sheet: the sign-in steps match today's Google Cloud Console (Credentials page, consent screen, test user)
-- Sign in with the personal account instead of the Brand Account and tap "Keep": the input, account chip, header sheet and Combined sources all say there is no channel and offer "Switch account"
+- Sign in with the personal account instead of the Brand Account and tap "Keep": the input, header sheet and Combined sources all say there is no channel and offer "Switch account"
 - Your own channel shows by its title, never a UC... id - also in the "not live" screen of the WebView chat
 - Header sheet: an offline chat is not shown as signed out
 
