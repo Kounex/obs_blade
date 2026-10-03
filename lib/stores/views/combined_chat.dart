@@ -737,7 +737,7 @@ abstract class _CombinedChatStore with Store {
             break;
         }
       } catch (e) {
-        GeneralHelper.advLog('Combined chat restore failed - $e');
+        GeneralHelper.logFailure('Combined chat restore failed', e);
       }
       if (generation != this._generation) return;
       this._restore.remove(entry.key);
@@ -889,7 +889,7 @@ abstract class _CombinedChatStore with Store {
         }
       }
     } catch (e) {
-      GeneralHelper.advLog('Combined chat source registration failed - $e');
+      GeneralHelper.logFailure('Combined chat source registration failed', e);
     }
   }
 

@@ -2641,6 +2641,7 @@ abstract class _TwitchChatStore with Store {
   }
 
   void _onEventSubRevoked(String reason) {
+    GeneralHelper.logFailure('Twitch chat subscription ended', reason);
     if (reason.contains('authorization_revoked') ||
         reason.contains('user_removed') ||
         reason.startsWith('subscription_failed:401')) {

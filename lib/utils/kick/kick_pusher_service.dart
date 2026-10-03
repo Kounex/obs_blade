@@ -92,7 +92,7 @@ class KickPusherService {
         ),
       );
     } catch (e) {
-      GeneralHelper.advLog('Kick pusher connect failed - $e');
+      GeneralHelper.logFailure('Kick chat socket connect failed', e);
       this._scheduleReconnect();
       return;
     }
@@ -102,7 +102,7 @@ class KickPusherService {
         if (identical(this._channel, channel)) this._onData(raw);
       },
       onError: (Object error) {
-        GeneralHelper.advLog('Kick pusher socket error - $error');
+        GeneralHelper.logFailure('Kick chat socket error', error);
         this._onSocketClosed(channel);
       },
       onDone: () => this._onSocketClosed(channel),

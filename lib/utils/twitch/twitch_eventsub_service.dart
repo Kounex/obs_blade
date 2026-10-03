@@ -352,7 +352,7 @@ class TwitchEventSubService {
     try {
       this._accessToken = await provider();
     } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: token refresh failed - $e');
+      GeneralHelper.logFailure('Twitch EventSub token refresh failed', e);
     }
   }
 
@@ -466,7 +466,10 @@ class TwitchEventSubService {
           }
       }
     } catch (e) {
-      GeneralHelper.advLog('Twitch EventSub: could not parse $type event - $e');
+      GeneralHelper.logFailure(
+        'Twitch EventSub event dropped (unparseable)',
+        '$type: $e',
+      );
     }
   }
 
@@ -749,8 +752,9 @@ class TwitchEventSubService {
         }
       } catch (e) {
         if (mandatory) {
-          GeneralHelper.advLog(
-            'Twitch EventSub: subscription POST failed - $e',
+          GeneralHelper.logFailure(
+            'Twitch EventSub chat subscription failed',
+            e,
           );
           this.onRevoked('subscription_failed:$e');
           return false;
