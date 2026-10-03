@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 
 const String _kApiBase = 'https://www.googleapis.com/youtube/v3';
 
@@ -80,11 +81,18 @@ class YouTubeChannelSearchService {
   static const int kSubscriptionPages = 4;
   static const int _kCacheSize = 50;
 
-  final http.Client _client;
-  final Map<String, List<YouTubeChannelSuggestion>> _cache = {};
+  /// Long enough to save most repeat searches, short enough that LIVE
+  /// chips don't go stale over a streaming session.
+  static const Duration kCacheTtl = Duration(minutes: 10);
 
-  YouTubeChannelSearchService({http.Client? client})
-    : _client = client ?? http.Client();
+  final http.Client _client;
+  final DateTime Function() _now;
+  final Map<String, ({DateTime at, List<YouTubeChannelSuggestion> results})>
+  _cache = {};
+
+  YouTubeChannelSearchService({http.Client? client, DateTime Function()? now})
+    : _client = client ?? http.Client(),
+      _now = now ?? DateTime.now;
 
   Uri _uri(String path, Map<String, String> query, {String? apiKey}) =>
       Uri.parse('$_kApiBase/$path').replace(
@@ -95,8 +103,16 @@ class YouTubeChannelSearchService {
       );
 
   /// Cached answer for [query] without a request, if any.
-  List<YouTubeChannelSuggestion>? cached(String query) =>
-      this._cache[query.trim().toLowerCase()];
+  List<YouTubeChannelSuggestion>? cached(String query) {
+    final key = query.trim().toLowerCase();
+    final hit = this._cache[key];
+    if (hit == null) return null;
+    if (this._now().difference(hit.at) > kCacheTtl) {
+      this._cache.remove(key);
+      return null;
+    }
+    return hit.results;
+  }
 
   Future<List<YouTubeChannelSuggestion>> searchChannels(
     String query, {
@@ -105,7 +121,7 @@ class YouTubeChannelSearchService {
     final trimmed = query.trim();
     if (trimmed.length < kSearchMinLength) return const [];
     final cacheKey = trimmed.toLowerCase();
-    if (this._cache[cacheKey] case final hit?) return hit;
+    if (this.cached(cacheKey) case final hit?) return hit;
 
     final response = await this._client.get(
       this._uri('search', {
@@ -142,8 +158,49 @@ class YouTubeChannelSearchService {
     if (this._cache.length >= _kCacheSize) {
       this._cache.remove(this._cache.keys.first);
     }
-    this._cache[cacheKey] = result;
+    this._cache[cacheKey] = (at: this._now(), results: result);
     return result;
+  }
+
+  /// The other stored form of a pasted channel (see
+  /// `youTubeEntryLabelFor`): an `@handle`'s `UC…` id via
+  /// `channels.list?forHandle=` (the `@` is accepted), or a `UC…` id's
+  /// `@handle` via `customUrl` - 1 unit, best-effort (empty on any
+  /// failure, legacy `c/` / `user/` paths aren't looked up).
+  Future<Set<String>> aliasKeysFor(
+    YouTubeChannelTarget target, {
+    required String apiKey,
+  }) async {
+    final path = target.path;
+    final Map<String, String> query;
+    if (path.startsWith('@')) {
+      query = {'part': 'snippet', 'forHandle': path};
+    } else if (path.startsWith('channel/')) {
+      query = {'part': 'snippet', 'id': path.substring('channel/'.length)};
+    } else {
+      return const {};
+    }
+    try {
+      final response = await this._client.get(
+        this._uri('channels', query, apiKey: apiKey),
+      );
+      if (response.statusCode != 200) return const {};
+      final items = (json.decode(response.body) as Map)['items'];
+      if (items is! List || items.isEmpty || items.first is! Map) {
+        return const {};
+      }
+      final item = items.first as Map;
+      final id = item['id'];
+      final snippet = item['snippet'];
+      final customUrl = snippet is Map ? snippet['customUrl'] : null;
+      return {
+        if (id is String) YouTubeChannelTarget('channel/$id').key,
+        if (customUrl is String && customUrl.startsWith('@'))
+          YouTubeChannelTarget(customUrl).key,
+      }..remove(target.key);
+    } catch (_) {
+      return const {};
+    }
   }
 
   /// The account's subscriptions, A–Z. A Google account without a channel

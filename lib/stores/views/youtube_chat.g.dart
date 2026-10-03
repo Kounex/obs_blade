@@ -447,9 +447,13 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   );
 
   @override
-  Future<String?> addChannelEntry(YouTubeTarget target, String name) {
+  Future<String?> addChannelEntry(
+    YouTubeTarget target,
+    String name, {
+    Iterable<String> aliasKeys = const [],
+  }) {
     return _$addChannelEntryAsyncAction.run(
-      () => super.addChannelEntry(target, name),
+      () => super.addChannelEntry(target, name, aliasKeys: aliasKeys),
     );
   }
 

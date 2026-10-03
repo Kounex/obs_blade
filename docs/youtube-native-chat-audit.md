@@ -110,6 +110,12 @@ scalable read path but its quota cost is undocumented — the spike tool
 - `subscriptions.list?mine=true&order=alphabetical` (1 unit / 50, scope
   `youtube` covers it): `snippet.title` + `snippet.resourceId.channelId`.
   A Google account without a channel answers 404 `subscriberNotFound`.
+- A channel can be stored as `@handle` or `UC…` id - different target
+  keys. Picks carry the other form as an alias (a search hit's handle; a
+  pasted channel's `channels.list?forHandle=@x` / `?id=` lookup, 1 unit,
+  `@` accepted) so an already listed channel / the own channel is found
+  either way (`youTubeEntryLabelFor`).
+- Search answers are cached 10 min (LIVE chips must not go stale).
 - Not verified with a live key on the maintainer machine (none there):
   shapes are from Google's reference; check on device.
 

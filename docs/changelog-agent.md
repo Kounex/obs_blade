@@ -27,6 +27,12 @@ shows "Popular live now" when empty, native chat + combo builder only
 - Journey walk fixes: a dead session while loading subscriptions / the
   live listing signs out (no endless Retry); a pasted `UC…` id isn't shown
   as a name; YouTube search failures reach Settings → Logs.
+- Fresh-context review fixes: `@handle` vs `UC…` forms of one channel
+  never matched (a subscription already listed by handle came back as a
+  second entry, an own `@handle` added a plain copy) - picks carry the
+  other form as an alias (search hit handle / `forHandle` lookup); names
+  with "." or "/" ("Mr. Beast") are searched, not taken as links; search
+  cache expires after 10 min (stale LIVE).
 - Facts: `kick-chat-audit.md` § Channel discovery,
   `youtube-native-chat-audit.md` § Channel discovery. Shots:
   `tool/widget_shots/add_chat_shots_test.dart`.

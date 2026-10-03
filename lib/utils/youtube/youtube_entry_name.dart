@@ -148,18 +148,26 @@ String uniqueYouTubeEntryLabel(String name, Iterable<String> taken) {
 }
 
 /// The label a picked YouTube [target] gets in [entries] (label → stored
-/// value): the existing entry's label when that target is already listed
-/// (`@handle` and `UC…` compare by target, case-insensitively), else
-/// [name] made unique. [existing] tells the two apart.
-({String label, bool existing}) youTubeEntryLabelFor(
+/// value): the existing entry when that channel is already listed, else
+/// [name] made unique (and [target]'s own value). A channel can be stored
+/// as `@handle` or `UC…` id, whose target keys differ - [aliasKeys] are
+/// the other form's keys when known (a search hit's handle, a resolved
+/// handle's id), so both forms find the same entry.
+({String label, String value, bool existing}) youTubeEntryLabelFor(
   YouTubeTarget target,
   String name,
-  Map<String, String> entries,
-) {
+  Map<String, String> entries, {
+  Iterable<String> aliasKeys = const [],
+}) {
+  final keys = {target.key, ...aliasKeys};
   for (final MapEntry(:key, :value) in entries.entries) {
-    if (parseYouTubeTarget(value)?.key == target.key) {
-      return (label: key, existing: true);
+    if (keys.contains(parseYouTubeTarget(value)?.key)) {
+      return (label: key, value: value, existing: true);
     }
   }
-  return (label: uniqueYouTubeEntryLabel(name, entries.keys), existing: false);
+  return (
+    label: uniqueYouTubeEntryLabel(name, entries.keys),
+    value: target.storageValue,
+    existing: false,
+  );
 }

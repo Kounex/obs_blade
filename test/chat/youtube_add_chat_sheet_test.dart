@@ -289,4 +289,77 @@ void main() {
     expect(entries(), {'Alpha': '@someoneelse'});
     await closeHiveInZone(tester);
   });
+
+  testWidgets('a name with "." or "/" is searched, not taken as a link', (
+    tester,
+  ) async {
+    await open(tester);
+    await type(tester, 'Mr. Beast');
+
+    expect(search.searchCalls, ['Mr. Beast']);
+    expect(find.text('Not a YouTube channel or stream link'), findsNothing);
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('pick mode: a subscription already listed by @handle comes '
+      'back as that entry, not a second copy', (tester) async {
+    YouTubeAddChatPick? picked;
+    await signIn(tester);
+    search.subscriptions = const [
+      YouTubeChannelSuggestion(channelId: kUcB, title: 'Beta', handle: '@beta'),
+    ];
+    await tester.runAsync(
+      () => settings().put(SettingsKeys.YouTubeUsernames.name, {
+        'Beta Stream': '@beta',
+      }),
+    );
+    await open(tester, pickOnly: true, result: (pick) => picked = pick);
+    await tester.tap(find.text('Beta'));
+    await tester.pumpAndSettle();
+
+    expect(picked?.label, 'Beta Stream');
+    expect(picked?.value, '@beta');
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('a pasted @handle of a channel listed by UC id switches to '
+      'that entry instead of adding a copy', (tester) async {
+    await tester.runAsync(
+      () => settings().put(SettingsKeys.YouTubeUsernames.name, {'Beta': kUcB}),
+    );
+    store.reloadChannels();
+    search.aliases['@beta'] = {const YouTubeChannelTarget('channel/$kUcB').key};
+    await open(tester);
+    await type(tester, '@beta');
+    await tester.tap(
+      find.byKey(const Key('youtube-add-chat-direct-channel:@beta')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(entries(), {'Beta': kUcB});
+    expect(store.selectedChannelLabel, 'Beta');
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('a pasted own @handle selects the own channel ("You")', (
+    tester,
+  ) async {
+    store.ownChannel = const YouTubeChatChannel(
+      label: kYouTubeOwnChannelLabel,
+      target: YouTubeChannelTarget('channel/$kUcA'),
+      isOwn: true,
+      title: 'Me',
+    );
+    search.aliases['@mine'] = {const YouTubeChannelTarget('channel/$kUcA').key};
+    await open(tester);
+    await type(tester, '@mine');
+    await tester.tap(
+      find.byKey(const Key('youtube-add-chat-direct-channel:@mine')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(entries(), isEmpty);
+    expect(store.selectedChannelLabel, kYouTubeOwnChannelLabel);
+    await closeHiveInZone(tester);
+  });
 }

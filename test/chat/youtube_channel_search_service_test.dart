@@ -254,6 +254,100 @@ void main() {
     });
   });
 
+  group('cache + aliases', () {
+    test(
+      'cached answers expire after the TTL (LIVE must not go stale)',
+      () async {
+        var now = DateTime.utc(2026, 10, 3, 12);
+        var calls = 0;
+        final client = MockClient((request) async {
+          if (request.url.path.endsWith('/search')) calls++;
+          return http.Response(
+            json.encode({
+              'items': [searchHit(kUcA, 'Alpha', live: 'live')],
+            }),
+            200,
+          );
+        });
+        final service = YouTubeChannelSearchService(
+          client: client,
+          now: () => now,
+        );
+
+        await service.searchChannels('alpha', apiKey: 'k');
+        now = now.add(const Duration(minutes: 9));
+        expect(service.cached('alpha'), isNotNull);
+        await service.searchChannels('alpha', apiKey: 'k');
+        expect(calls, 1);
+
+        now = now.add(const Duration(minutes: 2));
+        expect(service.cached('alpha'), isNull);
+        await service.searchChannels('alpha', apiKey: 'k');
+        expect(calls, 2);
+      },
+    );
+
+    test('an @handle resolves to its UC id (forHandle), an id to its '
+        'handle (customUrl)', () async {
+      final client = MockClient((request) async {
+        final query = request.url.queryParameters;
+        if (query['forHandle'] == '@beta') {
+          return http.Response(
+            json.encode({
+              'items': [channelItem(kUcB, customUrl: '@beta')],
+            }),
+            200,
+          );
+        }
+        if (query['id'] == kUcB) {
+          return http.Response(
+            json.encode({
+              'items': [channelItem(kUcB, customUrl: '@beta')],
+            }),
+            200,
+          );
+        }
+        return http.Response('{"items": []}', 200);
+      });
+      final service = YouTubeChannelSearchService(client: client);
+
+      expect(
+        await service.aliasKeysFor(
+          const YouTubeChannelTarget('@beta'),
+          apiKey: 'k',
+        ),
+        {const YouTubeChannelTarget('channel/$kUcB').key},
+      );
+      expect(
+        await service.aliasKeysFor(
+          const YouTubeChannelTarget('channel/$kUcB'),
+          apiKey: 'k',
+        ),
+        {const YouTubeChannelTarget('@beta').key},
+      );
+      expect(
+        await service.aliasKeysFor(
+          const YouTubeChannelTarget('@nobody'),
+          apiKey: 'k',
+        ),
+        isEmpty,
+      );
+    });
+
+    test('a failed alias lookup is empty, never an error', () async {
+      final client = MockClient(
+        (request) async => errorResponse(403, 'quotaExceeded'),
+      );
+
+      expect(
+        await YouTubeChannelSearchService(
+          client: client,
+        ).aliasKeysFor(const YouTubeChannelTarget('@beta'), apiKey: 'k'),
+        isEmpty,
+      );
+    });
+  });
+
   group('youTubeEntryLabelFor', () {
     test('an already listed target keeps its label, by id or handle', () {
       final entries = {'Mark': '@markiplier', 'Other': kUcB};
@@ -264,7 +358,7 @@ void main() {
           'Markiplier',
           entries,
         ),
-        (label: 'Mark', existing: true),
+        (label: 'Mark', value: '@markiplier', existing: true),
       );
       expect(
         youTubeEntryLabelFor(
@@ -272,7 +366,30 @@ void main() {
           'Beta',
           entries,
         ),
-        (label: 'Other', existing: true),
+        (label: 'Other', value: kUcB, existing: true),
+      );
+    });
+
+    test('the other stored form finds the entry through its alias', () {
+      final entries = {'Beta': '@beta'};
+
+      expect(
+        youTubeEntryLabelFor(
+          const YouTubeChannelTarget('channel/$kUcB'),
+          'Beta TV',
+          entries,
+          aliasKeys: {const YouTubeChannelTarget('@beta').key},
+        ),
+        (label: 'Beta', value: '@beta', existing: true),
+      );
+      expect(
+        youTubeEntryLabelFor(
+          const YouTubeChannelTarget('channel/$kUcB'),
+          'Beta TV',
+          entries,
+        ).existing,
+        isFalse,
+        reason: 'without the alias the two forms are different targets',
       );
     });
 
@@ -283,7 +400,7 @@ void main() {
           'Mark',
           {'Mark': '@markiplier'},
         ),
-        (label: 'Mark (2)', existing: false),
+        (label: 'Mark (2)', value: kUcA, existing: false),
       );
     });
   });

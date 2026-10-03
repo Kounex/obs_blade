@@ -1552,10 +1552,17 @@ abstract class _YouTubeChatStore with Store {
   /// entry already pointing at it keeps its label) and switch to it.
   /// Native only: the WebView selection stays as it was. Returns the
   /// label, null when saving failed.
+  /// [aliasKeys]: the channel's other stored form (see
+  /// [youTubeEntryLabelFor]) - an `@handle` pick finds a `UC…` entry and
+  /// the own channel.
   @action
-  Future<String?> addChannelEntry(YouTubeTarget target, String name) async {
+  Future<String?> addChannelEntry(
+    YouTubeTarget target,
+    String name, {
+    Iterable<String> aliasKeys = const [],
+  }) async {
     final own = this.ownChannel;
-    if (own != null && own.target.key == target.key) {
+    if (own != null && {target.key, ...aliasKeys}.contains(own.target.key)) {
       await this.selectChannel(kYouTubeOwnChannelLabel);
       return kYouTubeOwnChannelLabel;
     }
@@ -1568,7 +1575,12 @@ abstract class _YouTubeChatStore with Store {
           defaultValue: <String, String>{},
         ),
       );
-      final pick = youTubeEntryLabelFor(target, name, entries);
+      final pick = youTubeEntryLabelFor(
+        target,
+        name,
+        entries,
+        aliasKeys: aliasKeys,
+      );
       label = pick.label;
       if (!pick.existing) {
         entries[label] = target.storageValue;

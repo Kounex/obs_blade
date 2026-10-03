@@ -378,6 +378,16 @@ class FakeChannelSearchService extends YouTubeChannelSearchService {
   @override
   List<YouTubeChannelSuggestion>? cached(String query) => null;
 
+  /// Pasted channel path → its other form's target keys (the real lookup
+  /// is `channels.list?forHandle=` / `?id=`); missing = lookup failed.
+  final Map<String, Set<String>> aliases = {};
+
+  @override
+  Future<Set<String>> aliasKeysFor(
+    YouTubeChannelTarget target, {
+    required String apiKey,
+  }) async => this.aliases[target.path] ?? const {};
+
   @override
   Future<List<YouTubeChannelSuggestion>> searchChannels(
     String query, {

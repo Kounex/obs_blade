@@ -157,10 +157,14 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
   }
 
   /// Links, `@handles` and `UC…` ids are taken as they are — no search.
-  static bool _isLinkLike(String query) =>
-      query.contains('/') ||
-      query.contains('.') ||
-      parseYouTubeTarget(query) is YouTubeChannelTarget;
+  /// A name may contain `.` or `/` ("Mr. Beast", "AC/DC") and is searched.
+  static bool _isLinkLike(String query) {
+    final lower = query.toLowerCase();
+    return lower.contains('://') ||
+        lower.contains('youtube.com') ||
+        lower.contains('youtu.be') ||
+        parseYouTubeTarget(query) is YouTubeChannelTarget;
+  }
 
   void _onQueryChanged(String query) {
     this._debounce?.cancel();
@@ -231,27 +235,41 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
       (channel.handle != null &&
           added.contains(YouTubeChannelTarget(channel.handle!).key));
 
+  /// [aliasKeys]: the channel's other stored form when known (a search
+  /// hit's handle). A pasted channel looks its other form up while it is
+  /// named, so an `@handle` finds a `UC…` entry (and the own channel).
   Future<void> _pick(
     YouTubeTarget target, {
     String? name,
     String? busyKey,
+    Set<String> aliasKeys = const {},
   }) async {
     if (this._busyKey != null) return;
     var label = name;
+    var aliases = aliasKeys;
     if (label == null) {
       this.setState(() => this._busyKey = busyKey);
-      label = await this._namer.nameFor(target);
+      final lookups = await Future.wait([
+        this._namer.nameFor(target),
+        if (target is YouTubeChannelTarget)
+          this._searchService.aliasKeysFor(
+            target,
+            apiKey: YouTubeLiveChatService.resolveApiKey(),
+          ),
+      ]);
       if (!this.mounted) return;
+      label = lookups.first as String;
+      if (lookups.length > 1) aliases = lookups[1] as Set<String>;
     }
     final navigator = Navigator.of(this.context);
     final store = this._store;
     if (!this.widget.pickOnly) {
-      unawaited(store.addChannelEntry(target, label));
+      unawaited(store.addChannelEntry(target, label, aliasKeys: aliases));
       navigator.pop();
       return;
     }
     final own = store.ownChannel;
-    if (own != null && own.target.key == target.key) {
+    if (own != null && {target.key, ...aliases}.contains(own.target.key)) {
       navigator.pop(
         YouTubeAddChatPick(
           label: own.displayName,
@@ -264,14 +282,16 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
     final entries = Hive.box(
       HiveKeys.Settings.name,
     ).get(SettingsKeys.YouTubeUsernames.name, defaultValue: <String, String>{});
+
+    /// An already listed channel comes back as that entry (its label and
+    /// value), so saving the combo doesn't add a second copy.
     final pick = youTubeEntryLabelFor(
       target,
       label,
       entries is Map ? Map<String, String>.from(entries) : const {},
+      aliasKeys: aliases,
     );
-    navigator.pop(
-      YouTubeAddChatPick(label: pick.label, value: target.storageValue),
-    );
+    navigator.pop(YouTubeAddChatPick(label: pick.label, value: pick.value));
   }
 
   static String _subtitle(YouTubeChannelSuggestion channel) => [
@@ -413,7 +433,13 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
     subtitle: _subtitle(channel),
     live: channel.isLive,
     added: this._suggestionAdded(added, channel),
-    onAdd: () => this._pick(_targetOf(channel), name: channel.title),
+    onAdd: () => this._pick(
+      _targetOf(channel),
+      name: channel.title,
+      aliasKeys: {
+        if (channel.handle case final handle?) YouTubeChannelTarget(handle).key,
+      },
+    ),
   );
 
   /// One row that adds exactly what was typed / pasted.
