@@ -40,6 +40,9 @@ void main() {
   late ProStore proStore;
   final now = DateTime.now().toUtc();
 
+  /// The store's clock - shots that need coverage history step it
+  DateTime? clockNow;
+
   setUpAll(ShotsHarness.loadFonts);
 
   Future<void> setPro(bool pro) async {
@@ -58,7 +61,7 @@ void main() {
     store = ActivityStore(
       persistence: MemoryActivityPersistence(),
       isProResolver: () => true,
-      clock: () => DateTime.now(),
+      clock: () => clockNow ?? DateTime.now(),
       relayClient: _NoRelay(),
       relayEnabledResolver: () => true,
       attachPlatformStores: false,
@@ -214,12 +217,55 @@ void main() {
     );
     store.setThanked(store.allEvents.firstWhere((e) => e.id == 'n3'), true);
 
-    /// Live since an hour ago (rows from today fall in it)
-    store.setLiveForTest(
-      'twitch',
-      true,
-      since: now.subtract(const Duration(hours: 1)),
-    );
+    /// Live since an hour ago (rows from today fall in it), listened to
+    /// all along
+    clockNow = now.subtract(const Duration(hours: 1));
+    store.setLiveForTest('twitch', true, since: clockNow);
+    store.setNativeCoverageForTest(ActivityPlatform.twitch, 'twitch');
+
+    /// The app ran all along: a tick every 30 s (a jump reads as a freeze)
+    while (clockNow!.isBefore(now)) {
+      clockNow = clockNow!.add(const Duration(seconds: 30));
+      store.tickForTest();
+    }
+    clockNow = null;
+  }
+
+  /// [fill], but the phone was locked from 30 to 18 minutes ago
+  Future<void> fillWithGap() async {
+    await store.init();
+    clockNow = now.subtract(const Duration(hours: 1));
+    store.setLiveForTest('twitch', true, since: clockNow);
+    store.setNativeCoverageForTest(ActivityPlatform.twitch, 'twitch');
+    void runTo(Duration ago) {
+      final target = now.subtract(ago);
+      while (clockNow!.isBefore(target)) {
+        clockNow = clockNow!.add(const Duration(seconds: 30));
+        store.tickForTest();
+      }
+    }
+
+    runTo(const Duration(minutes: 30));
+
+    /// Suspended: no ticks, then the socket comes back
+    clockNow = now.subtract(const Duration(minutes: 18));
+    store.tickForTest();
+    runTo(Duration.zero);
+    clockNow = null;
+    for (final (id, kind, actor, ago) in [
+      ('g1', ActivityKind.sub, 'BeforeTheLock', 35),
+      ('g2', ActivityKind.resub, 'AfterTheLock', 10),
+      ('g3', ActivityKind.follow, 'Newcomer', 5),
+    ]) {
+      store.ingest(
+        event(
+          id,
+          kind,
+          actor: actor,
+          ago: Duration(minutes: ago),
+        ),
+      );
+    }
   }
 
   Widget framed(Widget child) =>
@@ -425,5 +471,100 @@ void main() {
         ],
       ),
     );
+  });
+
+  group('status banner', () {
+    testWidgets('calm: tucked button only', (tester) async {
+      await tester.runAsync(fill);
+      await harness.shot(
+        tester,
+        'activity_status_tucked',
+        framed(const ActivityFeed()),
+      );
+    });
+
+    testWidgets('live on YouTube without setup: pops out', (tester) async {
+      await tester.runAsync(fill);
+      store.setObsLiveForTest(true, platform: ActivityPlatform.youtube);
+      await harness.shot(
+        tester,
+        'activity_status_popped',
+        framed(const ActivityFeed()),
+      );
+    });
+
+    testWidgets('popped, narrow phone', (tester) async {
+      await tester.runAsync(fill);
+      store.setObsLiveForTest(true, platform: ActivityPlatform.youtube);
+      await harness.shot(
+        tester,
+        'activity_status_popped_narrow',
+        framed(const ActivityFeed()),
+        size: const Size(320, 640),
+      );
+    });
+
+    testWidgets('expanded: setup, gap, Kick reconnecting', (tester) async {
+      await tester.runAsync(fillWithGap);
+      GetIt.instance.registerLazySingleton<KickChatStore>(
+        () => KickChatStore(
+          channelService: FakeKickChannelService(),
+          authService: FakeKickAuthService(),
+          apiService: FakeKickApiService(),
+          pusherFactory: ({required onEvent, required onStateChanged}) =>
+              FakeKickPusherService(
+                onEvent: onEvent,
+                onStateChanged: onStateChanged,
+              ),
+          isProResolver: () => true,
+          emoteStoreResolver: () =>
+              ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
+          kickEmoteStoreResolver: () =>
+              KickEmoteStore(service: FakeKickEmoteService()),
+        ),
+      );
+      final kick = GetIt.instance<KickChatStore>();
+      runInAction(() {
+        kick.ownChannelSlug = 'kicker';
+        store.relayState = KickRelayState.retrying;
+      });
+      store.setObsLiveForTest(true, platform: ActivityPlatform.youtube);
+      await harness.shot(
+        tester,
+        'activity_status_expanded_base',
+        framed(const ActivityFeed()),
+      );
+      await tester.tap(find.byKey(const Key('activity-status-collapsed')));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile(
+          '../../build/widget_shots/activity_status_expanded.png',
+        ),
+      );
+    });
+
+    testWidgets('gap: badge, marker in the list, mark thanked', (tester) async {
+      await tester.runAsync(fillWithGap);
+      await harness.shot(
+        tester,
+        'activity_status_gap',
+        framed(const ActivityFeed()),
+      );
+    });
+
+    testWidgets('tablet side by side with the banner out', (tester) async {
+      await tester.runAsync(fillWithGap);
+      store.setObsLiveForTest(true, platform: ActivityPlatform.twitch);
+      store.setObsLiveForTest(true, platform: ActivityPlatform.youtube);
+      await harness.shot(
+        tester,
+        'activity_status_tablet',
+        const ChatView(),
+        size: kShotTablet,
+      );
+    });
   });
 }
