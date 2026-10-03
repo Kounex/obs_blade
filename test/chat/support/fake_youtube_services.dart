@@ -60,6 +60,7 @@ class FakeYouTubeAuthService extends YouTubeAuthService {
   Future<YouTubeOwnChannel?> fetchOwnChannel(String accessToken) async {
     this.fetchOwnChannelCalls++;
     if (this.failChannelTitleWith != null) throw this.failChannelTitleWith!;
+    if (this.noChannel) return null;
     return YouTubeOwnChannel(
       id: this.channelIdResult,
       title: this.channelTitleResult,
@@ -67,6 +68,10 @@ class FakeYouTubeAuthService extends YouTubeAuthService {
   }
 
   int fetchOwnChannelCalls = 0;
+
+  /// The account has no YouTube channel (`channels.list?mine=true` → no
+  /// items)
+  bool noChannel = false;
 
   @override
   Future<YouTubeToken> refreshToken(String refreshToken) async {

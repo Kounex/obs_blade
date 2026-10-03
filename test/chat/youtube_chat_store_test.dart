@@ -1175,6 +1175,46 @@ void main() {
       expect(authBox().get(YouTubeAuth.kBoxKey)?.channelTitle, isNull);
     });
 
+    test('an account without a channel signs in but is flagged; sign-out '
+        'clears it', () async {
+      configure();
+      authService.noChannel = true;
+
+      await store.startLogin();
+
+      expect(store.authState, YouTubeAuthState.signedIn);
+      expect(store.signedInWithoutChannel, isTrue);
+      expect(store.ownChannel, isNull);
+
+      await store.logout();
+      expect(store.signedInWithoutChannel, isFalse);
+    });
+
+    test('a failed channel lookup is not "no channel"', () async {
+      configure();
+      authService.failChannelTitleWith = const YouTubeAuthException(
+        'Fetching the YouTube channel failed (500)',
+      );
+
+      await store.startLogin();
+
+      expect(store.signedInWithoutChannel, isFalse);
+    });
+
+    test('a new sign-in with a channel clears the flag', () async {
+      configure();
+      authService.noChannel = true;
+      await store.startLogin();
+      expect(store.signedInWithoutChannel, isTrue);
+
+      await store.logout();
+      authService.noChannel = false;
+      await store.startLogin();
+
+      expect(store.signedInWithoutChannel, isFalse);
+      expect(store.ownChannel, isNotNull);
+    });
+
     test('cancelLogin returns to signed out without an error', () async {
       configure();
       final login = store.startLogin();

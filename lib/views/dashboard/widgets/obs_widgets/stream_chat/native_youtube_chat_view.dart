@@ -39,9 +39,11 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
   /// Empty-timeline copy for a channel entry between streams — a lookup
   /// failure (network / consent wall) stays visible in [chatError].
   String _awaitingStreamCopy() {
-    final channel = this._store.selectedChannel?.target;
-    final name = channel is YouTubeChannelTarget
-        ? channel.displayName
+    /// The entry's name (the own entry: its channel title) - the target's
+    /// own form is a bare `UC…` id for channel-id entries
+    final selected = this._store.selectedChannel;
+    final name = selected != null && selected.target is YouTubeChannelTarget
+        ? selected.displayName
         : 'This channel';
     final lookupError = this._store.chatError;
     return lookupError != null

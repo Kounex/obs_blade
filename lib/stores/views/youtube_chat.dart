@@ -390,6 +390,13 @@ abstract class _YouTubeChatStore with Store {
   @observable
   YouTubeChatChannel? ownChannel;
 
+  /// Signed in, but YouTube answered "no channel" for the account (a
+  /// Brand Account channel's owner picked as the personal account at
+  /// Google's account step) - no "You" entry and nothing to write as.
+  /// Not set when the lookup failed (that retries on the next launch).
+  @observable
+  bool signedInWithoutChannel = false;
+
   /// The native channel list: [ownChannel] first, then the added
   /// [channels].
   @computed
@@ -590,6 +597,7 @@ abstract class _YouTubeChatStore with Store {
     try {
       final token = await this._validAccessToken();
       final own = await this._authService.fetchOwnChannel(token);
+      runInAction(() => this.signedInWithoutChannel = own == null);
       final current = this._authBox.get(YouTubeAuth.kBoxKey);
       if (own == null || current == null) return;
       current
@@ -650,6 +658,7 @@ abstract class _YouTubeChatStore with Store {
       return;
     }
     this._loginCancelled = false;
+    this.signedInWithoutChannel = false;
     final flow = ++this._loginFlow;
     this._ensureAuthBoxWatcher();
     this.authError = null;
@@ -678,14 +687,19 @@ abstract class _YouTubeChatStore with Store {
       /// The own channel feeds the "You" entry + display — a fetch
       /// failure must not fail the sign-in.
       YouTubeOwnChannel? ownChannel;
+      var channelLookedUp = false;
       try {
         ownChannel = await this._authService.fetchOwnChannel(token.accessToken);
+        channelLookedUp = true;
       } catch (e) {
         GeneralHelper.advLog('YouTube own channel fetch failed - $e');
       }
       await this._persistAuth(token, ownChannel);
       this.pendingUserCode = null;
       this.pendingVerificationUrl = null;
+
+      /// Before signedIn: the sign-in dialog reads both in the same frame
+      this.signedInWithoutChannel = channelLookedUp && ownChannel == null;
       this.authState = YouTubeAuthState.signedIn;
       this._ensureChannelsLoaded();
       this._syncOwnChannel();
@@ -728,6 +742,7 @@ abstract class _YouTubeChatStore with Store {
     // Supersede any in-flight login flow so its stale continuations bail.
     this._loginFlow++;
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);
+    this.signedInWithoutChannel = false;
     this._stopPolling();
     this.messages.clear();
     this._channelBuffers.clear();
@@ -1819,6 +1834,7 @@ abstract class _YouTubeChatStore with Store {
       this._appliedModerationOrder.clear();
       this.authState = YouTubeAuthState.signedOut;
       this.authError = message;
+      this.signedInWithoutChannel = false;
     });
     final wasOwn = this.selectedChannelLabel == kYouTubeOwnChannelLabel;
     this._syncOwnChannel();

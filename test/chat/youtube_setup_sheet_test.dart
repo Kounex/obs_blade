@@ -396,6 +396,17 @@ void main() {
     },
   );
 
+  /// Pumps with real time in between - the sign-in's Hive writes are real
+  /// I/O that never completes on the fake clock alone
+  Future<void> settle(WidgetTester tester, int rounds) async {
+    for (var i = 0; i < rounds; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+  }
+
   group('read-only (API key, no OAuth client)', () {
     late YouTubeChatStore store;
     late FakeYouTubeAuthService authService;
@@ -406,6 +417,9 @@ void main() {
         authService: authService,
         chatService: chatService,
         sleep: (duration) async {},
+
+        /// No ProStore in GetIt here - and no polling after sign-in
+        isProResolver: () => false,
       );
       await tester.runAsync(
         () => Hive.openBox<YouTubeAuth>(HiveKeys.YouTubeAuth.name),
@@ -510,6 +524,49 @@ void main() {
           await tester.pump(const Duration(milliseconds: 200));
         }
         expect(find.text('Connect YouTube'), findsOneWidget);
+      } finally {
+        await cleanUp(tester);
+      }
+    });
+
+    testWidgets('signing in to an account without a channel keeps the '
+        'dialog open and explains; Sign in again restarts', (tester) async {
+      await registerStore(tester);
+      try {
+        await tester.runAsync(
+          () => settingsBox().put(SettingsKeys.YouTubeApiKey.name, 'key'),
+        );
+        authService
+          ..clientId = 'cid'
+          ..noChannel = true;
+        await tester.pumpWidget(opener(startYouTubeLogin));
+        await tester.tap(find.text('open'));
+        await settle(tester, 10);
+
+        expect(store.authState, YouTubeAuthState.signedIn);
+        expect(
+          find.byKey(const Key('youtube-sign-in-no-channel')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.text('Sign in again'));
+        await settle(tester, 10);
+        expect(authService.revokedToken, isNotNull);
+        expect(authService.fetchOwnChannelCalls, 2);
+
+        /// Still no channel on the second try - still explained
+        expect(
+          find.byKey(const Key('youtube-sign-in-no-channel')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.text('Keep'));
+        await settle(tester, 5);
+        expect(
+          find.byKey(const Key('youtube-sign-in-no-channel')),
+          findsNothing,
+        );
+        expect(store.authState, YouTubeAuthState.signedIn);
       } finally {
         await cleanUp(tester);
       }

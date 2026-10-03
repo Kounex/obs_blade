@@ -11,6 +11,7 @@ import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_youtube_chat_view.dart';
@@ -113,6 +114,24 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('own channel between streams is named by its title, not '
+      'its UC id', (tester) async {
+    const ownId = 'UCKp5ownchannel000000000';
+    store.ownChannel = YouTubeChatChannel(
+      label: kYouTubeOwnChannelLabel,
+      target: parseYouTubeTarget(ownId)!,
+      isOwn: true,
+      title: 'Brand Channel',
+    );
+    store.selectedChannelLabel = kYouTubeOwnChannelLabel;
+    store.awaitingLiveStream = true;
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(find.textContaining('Brand Channel isn\'t live'), findsOneWidget);
+    expect(find.textContaining(ownId), findsNothing);
   });
 
   testWidgets('error with an empty buffer shows the error and a retry', (

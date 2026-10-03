@@ -339,6 +339,28 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
     });
   }
 
+  late final _$signedInWithoutChannelAtom = Atom(
+    name: '_YouTubeChatStore.signedInWithoutChannel',
+    context: context,
+  );
+
+  @override
+  bool get signedInWithoutChannel {
+    _$signedInWithoutChannelAtom.reportRead();
+    return super.signedInWithoutChannel;
+  }
+
+  @override
+  set signedInWithoutChannel(bool value) {
+    _$signedInWithoutChannelAtom.reportWrite(
+      value,
+      super.signedInWithoutChannel,
+      () {
+        super.signedInWithoutChannel = value;
+      },
+    );
+  }
+
   late final _$selectedChannelLabelAtom = Atom(
     name: '_YouTubeChatStore.selectedChannelLabel',
     context: context,
@@ -654,6 +676,7 @@ moderationForbidden: ${moderationForbidden},
 activePoll: ${activePoll},
 moderators: ${moderators},
 ownChannel: ${ownChannel},
+signedInWithoutChannel: ${signedInWithoutChannel},
 selectedChannelLabel: ${selectedChannelLabel},
 pollingPaused: ${pollingPaused},
 nativeChannels: ${nativeChannels},

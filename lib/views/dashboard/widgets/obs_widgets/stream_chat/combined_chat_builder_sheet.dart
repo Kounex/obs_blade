@@ -191,7 +191,10 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
         pick.twitch?.login ??
         pick.kickSlug ??
         switch (parseYouTubeTarget(pick.youTube?.value)) {
-          YouTubeChannelTarget(:final displayName) => displayName,
+          /// A bare `UC…` id is no name to search other platforms for
+          YouTubeChannelTarget(:final displayName)
+              when !displayName.startsWith('UC') =>
+            displayName,
           _ => pick.label,
         };
     final seq = ++this._matchSeq;

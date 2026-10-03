@@ -77,8 +77,13 @@ class YouTubeDeviceCodeDialog extends StatelessWidget {
 
     return Observer(
       builder: (_) {
+        /// Signed in, but the account has no channel - stays open to say so
+        final noChannel =
+            store.authState == YouTubeAuthState.signedIn &&
+            store.signedInWithoutChannel;
+
         /// Auto-close once the flow finished
-        if (store.authState == YouTubeAuthState.signedIn) {
+        if (store.authState == YouTubeAuthState.signedIn && !noChannel) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted && Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
@@ -109,8 +114,10 @@ class YouTubeDeviceCodeDialog extends StatelessWidget {
               return current;
             },
             child: KeyedSubtree(
-              key: ValueKey(store.authState),
+              key: ValueKey((store.authState, noChannel)),
               child: switch (store.authState) {
+                YouTubeAuthState.signedIn when noChannel =>
+                  const _NoChannelState(),
                 YouTubeAuthState.awaitingAuthorization => _CodeEntryState(
                   store: store,
                 ),
@@ -122,21 +129,38 @@ class YouTubeDeviceCodeDialog extends StatelessWidget {
               },
             ),
           ),
-          actions: [
-            if (store.authState == YouTubeAuthState.error)
-              DialogActionConfig(
-                onPressed: (_) => store.startLogin(),
-                popOnAction: false,
-                child: const Text('Try again'),
-              ),
-            DialogActionConfig(
-              onPressed: (_) => store.cancelLogin(),
-              isDefaultAction: true,
-              child: Text(
-                store.authState == YouTubeAuthState.error ? 'Close' : 'Cancel',
-              ),
-            ),
-          ],
+          actions: noChannel
+              ? [
+                  DialogActionConfig(
+                    onPressed: (_) async {
+                      await store.logout();
+                      store.startLogin();
+                    },
+                    popOnAction: false,
+                    child: const Text('Sign in again'),
+                  ),
+                  DialogActionConfig(
+                    isDefaultAction: true,
+                    child: const Text('Keep'),
+                  ),
+                ]
+              : [
+                  if (store.authState == YouTubeAuthState.error)
+                    DialogActionConfig(
+                      onPressed: (_) => store.startLogin(),
+                      popOnAction: false,
+                      child: const Text('Try again'),
+                    ),
+                  DialogActionConfig(
+                    onPressed: (_) => store.cancelLogin(),
+                    isDefaultAction: true,
+                    child: Text(
+                      store.authState == YouTubeAuthState.error
+                          ? 'Close'
+                          : 'Cancel',
+                    ),
+                  ),
+                ],
         );
       },
     );
@@ -300,6 +324,24 @@ class _ProgressState extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         Text(this.text, style: Theme.of(context).textTheme.bodySmall),
       ],
+    );
+  }
+}
+
+/// Signed in to a Google account without a YouTube channel of its own
+class _NoChannelState extends StatelessWidget {
+  const _NoChannelState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Signed in - but this Google account has no YouTube channel, so '
+      'there is no "You" chat and nothing to write as.\n\nIf your channel '
+      'is a Brand Account, sign in again and pick the channel itself when '
+      'Google asks which account to use.',
+      key: const Key('youtube-sign-in-no-channel'),
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.bodyMedium,
     );
   }
 }
