@@ -9,8 +9,13 @@ picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
 Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 
-**Update 2026-10-03 — 4.1.0 beta for dogfooding:** build 2026100301 on
-TestFlight (internal, `VALID`) + Play internal - activity feed, TTS,
+**Update 2026-10-03 — 4.1.0 beta for dogfooding:** build **2026100302**
+on TestFlight + Play internal (2026100301 had the Kick client secret
+compiled in - sign-in broke; see changelog "Kick sign-in: client secret").
+**Open, user decision: rotate the Kick client secret** - it is very likely
+extractable from the live 4.0.0 and the in-review 4.0.1; rotating breaks
+Kick sign-in / refresh on 4.0.x builds (they exchange with Kick directly).
+Build 2026100302: activity feed, TTS,
 canvases, plus paywall cards / FAQ / store listings / release notes for
 them (details: `changelog-agent.md` 2026-10-03 "4.1.0 beta"). The Play
 "what's new" is locked for this build. Nothing submitted; 4.0.1 is still

@@ -2,6 +2,29 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - Kick sign-in: client secret was compiled into store builds
+
+The 4.1.0 TestFlight build (2026100301) ended Kick sign-in on
+`kick-auth.obs-blade.com`'s "Kick did not approve the login" page.
+Cause: `docs/private/kick_oauth.json` (since 2026-09-22) held the client
+**secret** next to the id, and `tool/release` compiles that file in. With
+a secret compiled in, the app skips the exchange host (no
+`/oauth/session` registration, paste flow), so the host saw an unknown
+state on Kick's redirect (400 page). Checked: the secret is in plain text
+in the 4.1.0 ipa (`App.framework/App`) and aab (`libapp.so`, all ABIs).
+The release tool passed the same file for 4.0.0 / 4.0.1, so those store
+builds very likely carry it too.
+
+- `kick_oauth.json` now holds the client id only; the secret moved to
+  `docs/private/kick_oauth_server.json` (host env only, never a define).
+- `release preflight` refuses a defines file with any non-empty
+  `*SECRET*` key (`Project.forbiddenDefines`, tests).
+- Host flow verified with curl: register 204 → poll 202 → callback 302 →
+  Kick exchange → poll result; unknown state → the 400 page.
+- 4.1.0 rebuilt as 2026100302 without the secret.
+- Open: rotating the Kick client secret (it is extractable from the
+  shipped binaries) - user decision, see handoff.
+
 ## 2026-10-03 - 4.1.0 beta: Pro copy, store listings, release notes
 
 4.1.0 (2026100301) built for dogfooding: TestFlight internal + Play
