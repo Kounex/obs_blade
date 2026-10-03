@@ -26,7 +26,15 @@ scalable read path but its quota cost is undocumented — the spike tool
 - **`liveChatMessages.list` (REST polling)** — `GET /youtube/v3/liveChat/messages`
   with `liveChatId`, `part=id,snippet,authorDetails`; follow `nextPageToken`,
   honor server-provided `pollingIntervalMillis` (faster polling →
-  `rateLimitExceeded`). ~5 units/call (community-verified; Google removed the
+  `rateLimitExceeded`). The interval counts from the answer ("the time the
+  client should wait before polling again"), and a poll resumed by a
+  channel switch / un-pause / app resume waits out the rest of it.
+  `rateLimitExceeded` on this method means **"sent too quickly after the
+  previous request"** (Google's errors table, checked 2026-10-03) - back
+  off and retry, it is not a used-up quota; only `quotaExceeded` /
+  `dailyLimitExceeded` are. The daily quota resets at **midnight Pacific
+  time** (07:00 UTC in US DST, 08:00 UTC otherwise) - the app restarts a
+  quota-stopped chat then (`nextYouTubeQuotaReset`). ~5 units/call (community-verified; Google removed the
   live rows from the quota table). First page returns recent history;
   `offlineAt` signals stream end; `activePollItem` carries the active poll.
 - **`liveChatMessages.streamList` (gRPC server-streaming)** — documented,

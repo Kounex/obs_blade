@@ -30,7 +30,7 @@ end (a button that only reopens the same failure).
 | Platform | States to walk |
 |---|---|
 | Twitch | signed out · signed in · token from before a scope upgrade (missing scopes → "sign in again" notice) · token expired / revoked · viewing own channel vs another · mod vs not |
-| YouTube | no API key · **API key only (read-only)** · key + OAuth client, not signed in · signed in with a channel · **signed in without a channel** (personal account picked for a Brand Account channel - `channels.list?mine=true` has no `items`) · "Testing" OAuth app: refresh token dies after 7 days · quota exhausted · own-channel lookup failed (retries on next launch) |
+| YouTube | no API key · **API key only (read-only)** · key + OAuth client, not signed in · signed in with a channel · **signed in without a channel** (personal account picked for a Brand Account channel - `channels.list?mine=true` has no `items`; read-only everywhere, "Switch account") · "Testing" OAuth app: refresh token dies after 7 days - **also while the app stays open** (the next write ends the session) · quota exhausted (restarts after midnight PT) vs polled too soon (`rateLimitExceeded` - back off, not quota) · own-channel lookup failed (retries on next launch) |
 | Kick | anonymous (reads need no account) · signed in · no channel picked · channel not found · build without the app client (bring-your-own setup) |
 | Pro | not Pro · Pro · Pro lapsed while a native engine runs |
 
@@ -50,6 +50,8 @@ the account - Twitch is the only engine where offline means signed out
 | Channel entry vs pinned video | video entries don't roll over; copy says "video" |
 | Multi-chat switch | per-channel history; selection persisted; switching back restores |
 | Combined chat | the change behaves the same inside the combined timeline and its pickers / builder |
+| Own channel in a combo / picker | resolves to the "You" entry (activity feed, owner-only tools), never a plain copy in the platform's list |
+| Adding a channel | from every entry point (empty state, "can't be found", channel menu) the chat then shows the added channel |
 
 ## Entry points (same state → same answer everywhere)
 
@@ -60,7 +62,7 @@ the account - Twitch is the only engine where offline means signed out
 | Native chat options sheet | sign-in / sign-out rows, setup row |
 | Setup sheets | full setup vs the sign-in-only part; steps match today's third-party console |
 | Empty-state CTA | the next step for the actual missing piece |
-| Combined sources sheet / builder | per-source state and fixes |
+| Combined sources sheet / builder | per-source state and fixes - every fix button does what it says ("Sign in" opens a sign-in) in "My chats" **and** saved combos |
 | Activity feed | sign-in notices, Pro upsell, relay switch |
 | Streaming mode + Chat tab + dashboard pane | same behavior in all three hosts |
 | Phone vs tablet | side-by-side layouts, sheet heights |
@@ -90,6 +92,13 @@ mod sheets, input / read-only strip, pickers, LIVE chips), walk it for
 - Failures go through `GeneralHelper.logFailure` (Settings → Logs,
   redacted, rate-limited) - never console-only. A dogfood bug must be
   diagnosable from the user's log export.
+- Throttle answers are not quota: map each error `reason` per method
+  from the platform's errors table. A stop that promises to resume
+  ("after the daily reset") must resume on its own (timer + app resume).
+- Creating a platform store starts its chat (YouTube polls on the user's
+  API quota, Kick opens a socket). Nothing may read a store that isn't on
+  screen - watch computeds / reactions created at app start
+  (`lazySingletonCreated` before `GetIt.instance<…>()`).
 - Live smoke for new endpoints: a throwaway `flutter test` file; the
   Kick / Cloudflare user-agent notes are in the handoff § Chat
   conventions.

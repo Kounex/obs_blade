@@ -2,6 +2,52 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - chat review fixes (`/code-review high` + journey walk)
+
+A `/code-review high` plus a walk of every chat journey against
+`chat-journey-checklist.md` and the platforms' current docs turned up 8
+verified findings; all fixed (`5e72ca18..`). Not on a device yet (the
+dogfood phone was offline) - device check list in the session report.
+
+- **YouTube quota vs throttle:** `rateLimitExceeded` on
+  `liveChatMessages.list` means "polled too soon" (Google's errors table),
+  not a used-up quota - it backs off now instead of stopping the chat for
+  the day. Polls wait the full interval from the answer; a resumed poll
+  (switch back, un-pause, app resume) waits out the rest. A real quota
+  stop restarts after midnight PT (timer + app resume), says so, and is
+  logged. The resume hook moved app-wide (`LifecycleWatcher`) - the Chat
+  tab runs without an OBS dashboard.
+- **No chats started at launch:** `CombinedChatStore` (created at app
+  start) read its sources in a reaction, which created all three platform
+  stores - Pro users got a hidden YouTube poll on their API quota and a
+  Kick socket + polls, whatever chat was open. The reaction now reads only
+  while Combined is active.
+- **Own YouTube channel in saved combos** resolves to "You" (activity
+  feed rows, session tracking, owner-only moderators) instead of a plain
+  copy; copies older builds added for combos are removed once the own
+  channel is known (user decision), selection / restore point move to "You".
+- **Names, never ids:** the WebView waiting panel (free users) names the
+  entry; the combo builder's "Other…" YouTube pick is named by the channel
+  title (`YouTubeEntryNamer`); `/live` lookup errors carry no id.
+- **Activity empty state** counts a signed-in YouTube channel.
+- **Adding a channel shows it** (Kick "can't be found" → Add, Kick /
+  YouTube channel menus).
+- **YouTube session edges:** a dead refresh token on a write ends the
+  session (was "Could not send" forever); a Data API 401 expires the token
+  and isn't "not a moderator". A Google account without a channel is
+  read-only everywhere with "Switch account" (input strip, header sheet,
+  chip, options, combined sources / mod sheets - user decision).
+- **Siblings:** combined mod sheet "Sign in to YouTube / Kick" for saved
+  combos only retried - opens sign-in now; the shared read-only strip
+  overflowed narrow phones - wraps; the combo builder's "Other…" dialog
+  disposed its controller mid-animation.
+- **Logs:** Kick socket, Twitch EventSub (token refresh, chat subscription,
+  dropped events, revocations), IRC sidecar and combined restore failures
+  reach Settings → Logs.
+- Checklist rows added (throttle ≠ quota, stores start chats, own channel
+  in combos, adding shows it, fix buttons in saved combos); facts in
+  `youtube-native-chat-audit.md`.
+
 ## 2026-10-03 - `feature-work` skill, chat journey checklist, chat logs
 
 Six chat / sign-in misses reached the user past two `/code-review high`
