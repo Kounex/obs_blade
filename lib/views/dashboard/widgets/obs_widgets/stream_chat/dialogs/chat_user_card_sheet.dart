@@ -548,6 +548,19 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             const SizedBox(height: AppSpacing.xs),
             _ChatUserCardUptimeLine(connectedAt: connection.connectedAt!),
           ],
+
+          /// The chat bar has no account chip - signing out of a healthy
+          /// chat happens here (same as the header sheet)
+          if (connection.onLogout != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            this._connectionAction(
+              context,
+              icon: CupertinoIcons.square_arrow_right,
+              label: 'Sign out',
+              destructive: true,
+              onTap: connection.onLogout,
+            ),
+          ],
         ],
         if (degraded) ...[
           if (connection.statusDetail != null) ...[
@@ -564,14 +577,16 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
             label: 'Retry',
             onTap: connection.onRetry,
           ),
-          const SizedBox(height: AppSpacing.xs),
-          this._connectionAction(
-            context,
-            icon: CupertinoIcons.square_arrow_right,
-            label: 'Log out',
-            destructive: true,
-            onTap: connection.onLogout,
-          ),
+          if (connection.onLogout != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            this._connectionAction(
+              context,
+              icon: CupertinoIcons.square_arrow_right,
+              label: 'Sign out',
+              destructive: true,
+              onTap: connection.onLogout,
+            ),
+          ],
         ],
         if (connection.status == NativeChatConnectionStatus.offline) ...[
           const SizedBox(height: AppSpacing.sm),

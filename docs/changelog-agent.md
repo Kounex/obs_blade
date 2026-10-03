@@ -15,8 +15,9 @@ chat header already shows the account). Signed in, the right side is
 shield + options (~96pt, fits a 320pt phone); signed out keeps the sign-in
 / setup pills. Sign-out moved: the header sheet's healthy state has a
 Sign out row (YouTube, Kick - Kick's sheet now shows the account; Twitch's
-header opens the self card with Log out); the degraded state no longer
-shows a dead Log out row without a session. Widget test at phone width
+header opens the self card); the degraded state no longer shows a dead
+Log out row without a session. Dogfood (build 5): the Twitch self card
+only offered sign-out while degraded - it has Sign out while live now too. Widget test at phone width
 reproduces the missing shield; shots in `tool/widget_shots/chat_bar_shots_test.dart`.
 
 ## 2026-10-03 - chat review fixes (`/code-review high` + journey walk)

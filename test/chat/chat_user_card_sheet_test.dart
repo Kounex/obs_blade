@@ -233,7 +233,7 @@ void main() {
     expect(userService.fetchUserCalls, 1);
   });
 
-  testWidgets('self footer exposes Log out when degraded', (tester) async {
+  testWidgets('self footer exposes Sign out when degraded', (tester) async {
     var loggedOut = false;
     userService.userResult = const TwitchUser(
       id: 'self-1',
@@ -257,9 +257,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Could not connect'), findsOneWidget);
-    await tester.tap(find.text('Log out'));
+    await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
     expect(loggedOut, isTrue);
+  });
+
+  /// The reported case: the chat bar has no account chip, so the self
+  /// card the header opens must offer sign-out while the chat is healthy
+  testWidgets('self footer exposes Sign out while live', (tester) async {
+    var signedOut = false;
+    userService.userResult = const TwitchUser(
+      id: 'self-1',
+      login: 'selflogin',
+      displayName: 'SelfUser',
+    );
+
+    await openCard(
+      tester,
+      userId: 'self-1',
+      connection: ChatUserCardConnection(
+        chatType: ChatType.Twitch,
+        status: NativeChatConnectionStatus.live,
+        statusLabel: '',
+        statusColor: Colors.grey,
+        accountLabel: 'SelfUser',
+        onLogout: () => signedOut = true,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connected as SelfUser'), findsOneWidget);
+    await tester.ensureVisible(find.text('Sign out'));
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(signedOut, isTrue);
   });
 
   testWidgets('mod view lists the user\'s warnings (newest channel '
