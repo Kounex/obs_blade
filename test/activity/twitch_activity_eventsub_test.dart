@@ -110,7 +110,7 @@ void main() {
       )
       ..onActivity = ((type, event, messageId, sentAt) =>
           activity.add((type, messageId)))
-      ..activityTypes = {'channel.follow', 'channel.cheer'};
+      ..activityTypes = {'channel.follow', 'channel.bits.use'};
   }
 
   setUp(() {
@@ -142,7 +142,8 @@ void main() {
         'broadcaster_user_id': 'me',
         'moderator_user_id': 'me',
       });
-      final cheer = postsOf('channel.cheer').single;
+      final cheer = postsOf('channel.bits.use').single;
+      expect(postsOf('channel.cheer'), isEmpty);
       expect(cheer['condition'], {'broadcaster_user_id': 'me'});
 
       /// Only the channel-scoped one (409 for a duplicate condition)
@@ -232,17 +233,17 @@ void main() {
     channels.single.incoming.add(_welcome());
     await pumpEventQueue();
     channels.single.incoming.add(
-      _notice('channel.cheer', {
+      _notice('channel.bits.use', {
         'broadcaster_user_id': 'me',
-        'is_anonymous': false,
         'user_id': '9',
         'user_name': 'Fan',
         'bits': 100,
-        'message': 'Cheer100',
+        'type': 'cheer',
+        'message': {'text': 'Cheer100', 'fragments': []},
       }, id: 'cheer-msg'),
     );
     await pumpEventQueue();
-    expect(activity, [('channel.cheer', 'cheer-msg')]);
+    expect(activity, [('channel.bits.use', 'cheer-msg')]);
     await service.dispose();
   });
 

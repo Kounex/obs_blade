@@ -92,15 +92,30 @@ ActivityEvent? twitchActivityFromEventSub({
         timestamp: _time(event['followed_at'], sentAt),
       );
 
-    case 'channel.cheer':
+    /// Cheers and Power-ups (Twitch EventSub reference 2026-10): `type`
+    /// cheer / power_up / custom_power_up, `message` optional
+    case 'channel.bits.use':
       final bits = _int(event['bits']);
       if (bits == null || bits <= 0) return null;
+      final powerUp = _map(event['power_up']);
+      final customPowerUp = _map(event['custom_power_up']);
+      final String? title = switch (_str(event['type'])) {
+        'power_up' => switch (_str(powerUp?['type'])) {
+          'message_effect' => 'Message Effect',
+          'celebration' => 'On-Screen Celebration',
+          'gigantify_an_emote' => 'Gigantify an Emote',
+          _ => 'a Power-up',
+        },
+        'custom_power_up' => _str(customPowerUp?['title']) ?? 'a Power-up',
+        _ => null,
+      };
       return build(
-        id: 'cheer:$messageId',
+        id: 'bits:$messageId',
         kind: ActivityKind.cheer,
-        actor: user('user', anonymous: event['is_anonymous'] == true),
+        actor: user('user'),
         amount: ActivityAmount(bits, ActivityUnit.bits),
-        message: _str(event['message']),
+        title: title,
+        message: _str(_map(event['message'])?['text']),
       );
 
     case 'channel.channel_points_custom_reward_redemption.add':

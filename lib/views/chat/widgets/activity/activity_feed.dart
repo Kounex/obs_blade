@@ -388,7 +388,7 @@ class _FeedNotices extends StatelessWidget {
             key: const Key('activity-notice-twitch-scopes'),
             icon: JamIcons.twitch,
             text:
-                'Sign in to Twitch again to add cheers, channel points and hype trains.',
+                'Sign in to Twitch again to add cheers, Power-ups, channel points and hype trains.',
             action: 'Sign in again',
             onAction: () => startTwitchLogin(context),
           ),

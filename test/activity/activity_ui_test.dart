@@ -328,6 +328,16 @@ void main() {
         'cheered 1,200 bits',
       );
       expect(
+        activityActionText(
+          _event(
+            'p',
+            ActivityKind.cheer,
+            amount: const ActivityAmount(50, ActivityUnit.bits),
+          ).copyWith(title: 'Gigantify an Emote'),
+        ),
+        'used Gigantify an Emote for 50 bits',
+      );
+      expect(
         formatActivityAmount(const ActivityAmount(25.5, 'USD')),
         r'$25.50',
       );

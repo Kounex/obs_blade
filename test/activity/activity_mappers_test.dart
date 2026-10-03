@@ -72,19 +72,53 @@ void main() {
       expect(live.timestamp, DateTime.utc(2026, 10, 2, 19, 59, 58));
     });
 
-    test('cheer: bits, anonymous', () {
-      final event = _twitch('channel.cheer', {
-        'is_anonymous': true,
-        'user_id': null,
-        'user_name': null,
-        'message': 'Cheer100 gg',
+    test('bits use: a cheer', () {
+      final event = _twitch('channel.bits.use', {
+        'user_id': '99',
+        'user_login': 'fan',
+        'user_name': 'Fan',
         'bits': 100,
+        'type': 'cheer',
+        'message': {'text': 'Cheer100 gg', 'fragments': []},
       })!;
       expect(event.kind, ActivityKind.cheer);
-      expect(event.actor.anonymous, isTrue);
+      expect(event.actor.name, 'Fan');
       expect(event.amount!.value, 100);
       expect(event.amount!.unit, ActivityUnit.bits);
+      expect(event.title, isNull);
       expect(event.message, 'Cheer100 gg');
+      expect(event.isBig, isTrue);
+    });
+
+    test('bits use: Power-ups carry their name, no message', () {
+      final gigantify = _twitch('channel.bits.use', {
+        'user_id': '99',
+        'user_login': 'fan',
+        'user_name': 'Fan',
+        'bits': 50,
+        'type': 'power_up',
+        'power_up': {'type': 'gigantify_an_emote', 'emote': null},
+      })!;
+      expect(gigantify.kind, ActivityKind.cheer);
+      expect(gigantify.title, 'Gigantify an Emote');
+      expect(gigantify.message, isNull);
+      final custom = _twitch('channel.bits.use', {
+        'user_id': '99',
+        'user_login': 'fan',
+        'user_name': 'Fan',
+        'bits': 300,
+        'type': 'custom_power_up',
+        'custom_power_up': {'title': 'Hydrate', 'reward_id': 'r'},
+      })!;
+      expect(custom.title, 'Hydrate');
+      final unknown = _twitch('channel.bits.use', {
+        'user_id': '99',
+        'user_name': 'Fan',
+        'bits': 10,
+        'type': 'power_up',
+        'power_up': {'type': 'something_new'},
+      })!;
+      expect(unknown.title, 'a Power-up');
     });
 
     test('channel points redemption', () {

@@ -92,6 +92,13 @@ String activityActionText(ActivityEvent event) {
     case ActivityKind.host:
       return amount == null ? 'hosted' : 'hosted with $amountText';
     case ActivityKind.cheer:
+      /// A Power-up carries its name as the title, a cheer none
+      final powerUp = event.title;
+      if (powerUp != null) {
+        return amount == null
+            ? 'used $powerUp'
+            : 'used $powerUp for $amountText';
+      }
       return amount == null ? 'cheered' : 'cheered $amountText';
     case ActivityKind.redemption:
       return event.title == null

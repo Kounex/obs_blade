@@ -75,7 +75,9 @@ class TwitchEventSubService {
       scope: 'moderator:read:followers',
       moderator: true,
     ),
-    'channel.cheer': (version: '1', scope: 'bits:read', moderator: false),
+    /// Cheers AND Power-ups (`channel.cheer` misses Power-ups) - same
+    /// scope, so old tokens with `bits:read` get them without a sign-in
+    'channel.bits.use': (version: '1', scope: 'bits:read', moderator: false),
     'channel.channel_points_custom_reward_redemption.add': (
       version: '1',
       scope: 'channel:read:redemptions',
