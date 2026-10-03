@@ -72,6 +72,28 @@ Redirect handling is manual-paste (no deep-link infra) — see "open
 decisions" below.
 Numeric rate limits are unpublished; handle 429.
 
+## Channel discovery (Add chat sheet) — verified 2026-10-03
+
+The official API has **no channel search and no follows / "channels I
+moderate" list** (checked against `/swagger/doc.yaml`). What exists:
+
+- **Search:** `GET kick.com/api/search?searched_word=` (the website's own,
+  anonymous, same Cloudflare rules as `/api/v2` — app User-Agent). 3+
+  characters (shorter: 400 "Please enter at least 3 characters"); answers
+  `channels[]` (top 20 by followers: `slug`, `isLive`, `followers_count`,
+  `verified` object-or-null, `user.username`), plus `categories[]` /
+  `livestreams[]`. Undocumented — the picker keeps a paste-the-slug row.
+- **Popular live:** official `GET /public/v1/livestreams?sort=viewer_count&
+  language=de&limit=25` filters by ISO 639-1 language; needs **a token**
+  (any user token, no scope; or an app token). Marked deprecated; v2 has
+  `language_code` but no viewer sort (oldest first, cursor). The anonymous
+  website listing (`kick.com/stream/livestreams/{lang}`) **ignores the
+  language** (global top 32) — not usable for "in your language". Top
+  lists are dominated by `has_mature_content` casino streams; the picker
+  drops those.
+- **Follows:** `kick.com/api/v2/channels/followed` needs the website
+  session cookie (401 with nothing else) — no list possible.
+
 ## Twitch → Kick capability map
 
 | Twitch native feature | Kick | Notes |

@@ -286,6 +286,15 @@ YouTube viewers 30 s (quota) — constants `kTwitchLivePollInterval`,
 `kKickSelectedLiveInterval` / `kKickListLiveInterval`,
 `kViewerRefreshInterval`.
 
+**Add chat sheets (all 3 engines):** the native channel menus and the
+combo builder's "Other…" open a searchable picker per platform on shared
+chrome (`stream_chat/dialogs/add_chat_sheet_chrome.dart`): Twitch (Helix
+search + moderated / followed), YouTube (`search.list`, own 100/day
+bucket, + subscriptions when signed in; keyless keeps the dialog), Kick
+(the website's anonymous search + the official live listing when signed
+in - Kick has no follows API). WebView mode keeps the add dialogs. Facts:
+the audits' § Channel discovery.
+
 **General native chat (all 3 engines):** every store answers
 `isViewingOwnChannel` (the "You" entry — groundwork for the merged
 timeline, see `chatterino-comparison.md`); self-mention/keyword row

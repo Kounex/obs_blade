@@ -22,39 +22,6 @@ import 'support/fake_youtube_services.dart';
 const String kUcA = 'UCaaaaaaaaaaaaaaaaaaaaaa';
 const String kUcB = 'UCbbbbbbbbbbbbbbbbbbbbbb';
 
-class FakeChannelSearchService extends YouTubeChannelSearchService {
-  final Map<String, List<YouTubeChannelSuggestion>> results = {};
-  final List<String> searchCalls = [];
-  Object? searchThrows;
-
-  List<YouTubeChannelSuggestion> subscriptions = const [];
-  int subscriptionCalls = 0;
-  Object? subscriptionsThrows;
-
-  @override
-  List<YouTubeChannelSuggestion>? cached(String query) => null;
-
-  @override
-  Future<List<YouTubeChannelSuggestion>> searchChannels(
-    String query, {
-    required String apiKey,
-  }) async {
-    this.searchCalls.add(query);
-    if (this.searchThrows != null) throw this.searchThrows!;
-    return this.results[query] ?? const [];
-  }
-
-  @override
-  Future<List<YouTubeChannelSuggestion>> listSubscriptions({
-    required String accessToken,
-    String? apiKey,
-  }) async {
-    this.subscriptionCalls++;
-    if (this.subscriptionsThrows != null) throw this.subscriptionsThrows!;
-    return this.subscriptions;
-  }
-}
-
 class FakeNamer extends YouTubeEntryNamer {
   final List<YouTubeTarget> calls = [];
 

@@ -1047,6 +1047,33 @@ void main() {
       expect(authBox().get(KickAuth.kBoxKey), isNull);
     });
 
+    test('Add chat live listing with a dead session signs out instead of '
+        'failing', () async {
+      await connectSignedIn();
+      apiService.popularThrows = const KickAuthException(
+        'Token refresh failed (400)',
+        statusCode: 400,
+      );
+
+      final popular = await store.loadPopularLive(languageCode: 'de');
+
+      expect(popular, isEmpty);
+      expect(store.authState, KickAuthState.signedOut);
+      expect(authBox().get(KickAuth.kBoxKey), isNull);
+    });
+
+    test('Add chat live listing: a non-auth failure rethrows for the retry '
+        'row', () async {
+      await connectSignedIn();
+      apiService.popularThrows = const KickApiException('Kick 500');
+
+      await expectLater(
+        store.loadPopularLive(languageCode: 'de'),
+        throwsA(isA<KickApiException>()),
+      );
+      expect(store.authState, KickAuthState.signedIn);
+    });
+
     test('an access token that expired after restore still allows writes '
         '(the send refreshes it)', () async {
       await connectSignedIn();

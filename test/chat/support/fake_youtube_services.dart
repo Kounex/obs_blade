@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
 
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_device_code.dart';
@@ -360,5 +361,40 @@ class FakeYouTubeLiveResolver extends YouTubeLiveResolver {
     this._next++;
     if (answer is Exception) throw answer;
     return answer as String?;
+  }
+}
+
+/// The YouTube Add chat sheet's reads, scripted: [results] per query,
+/// [subscriptions], optional throws. No cache (each query reaches it).
+class FakeChannelSearchService extends YouTubeChannelSearchService {
+  final Map<String, List<YouTubeChannelSuggestion>> results = {};
+  final List<String> searchCalls = [];
+  Object? searchThrows;
+
+  List<YouTubeChannelSuggestion> subscriptions = const [];
+  int subscriptionCalls = 0;
+  Object? subscriptionsThrows;
+
+  @override
+  List<YouTubeChannelSuggestion>? cached(String query) => null;
+
+  @override
+  Future<List<YouTubeChannelSuggestion>> searchChannels(
+    String query, {
+    required String apiKey,
+  }) async {
+    this.searchCalls.add(query);
+    if (this.searchThrows != null) throw this.searchThrows!;
+    return this.results[query] ?? const [];
+  }
+
+  @override
+  Future<List<YouTubeChannelSuggestion>> listSubscriptions({
+    required String accessToken,
+    String? apiKey,
+  }) async {
+    this.subscriptionCalls++;
+    if (this.subscriptionsThrows != null) throw this.subscriptionsThrows!;
+    return this.subscriptions;
   }
 }

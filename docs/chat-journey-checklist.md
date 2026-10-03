@@ -52,6 +52,7 @@ the account - Twitch is the only engine where offline means signed out
 | Combined chat | the change behaves the same inside the combined timeline and its pickers / builder |
 | Own channel in a combo / picker | resolves to the "You" entry (activity feed, owner-only tools), never a plain copy in the platform's list |
 | Adding a channel | from every entry point (empty state, "can't be found", channel menu) the chat then shows the added channel |
+| Add chat sheets (Twitch / YouTube / Kick) | every state: empty (signed out / in), typing < 3 chars, results (LIVE, already-listed checked off, own channel), no hits, failure (the typed handle / slug still offered), link pasted, dead session (signs out, no endless Retry), pick mode for the combo builder (nothing saved) |
 
 ## Entry points (same state → same answer everywhere)
 
@@ -93,6 +94,9 @@ mod sheets, input / read-only strip, pickers, LIVE chips), walk it for
 - Failures go through `GeneralHelper.logFailure` (Settings → Logs,
   redacted, rate-limited) - never console-only. A dogfood bug must be
   diagnosable from the user's log export.
+- A list a sheet loads with the session token (subscriptions, live
+  listing) ends a dead session like a write does - otherwise its Retry
+  is a dead end.
 - Throttle answers are not quota: map each error `reason` per method
   from the platform's errors table. A stop that promises to resume
   ("after the daily reset") must resume on its own (timer + app resume).

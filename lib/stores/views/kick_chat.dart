@@ -1657,6 +1657,13 @@ abstract class _KickChatStore with Store {
         if (local.isNotEmpty) return local;
       }
       return await this._apiService.fetchPopularLivestreams();
+    } on KickAuthException catch (e) {
+      /// A dead session signs out (same rule as writes) - the picker then
+      /// shows its signed-out state instead of a Retry that can't work.
+      GeneralHelper.logFailure('Kick live listing failed', e);
+      await this._endSessionIfDead(e);
+      if (!this.canWrite) return const [];
+      rethrow;
     } catch (e) {
       GeneralHelper.logFailure('Kick live listing failed', e);
       rethrow;

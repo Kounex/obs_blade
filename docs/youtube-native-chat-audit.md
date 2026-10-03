@@ -96,6 +96,23 @@ scalable read path but its quota cost is undocumented — the spike tool
   (`YouTubeLiveResolver`, 2026-09-24), so binding stays one cheap call per
   stream — see [`chatterino-comparison.md`](chatterino-comparison.md).
 
+### Channel discovery (Add chat sheet, 2026-10-03)
+
+- `search.list?type=channel&q=` works with an API key; 1 unit from the
+  **separate 100-calls/day bucket** (quota table, updated 2026-09-15), so
+  it never eats chat polling. Channel hits carry `id.channelId`, `title`,
+  `liveBroadcastContent` (`live` / `upcoming` / `none` — documented for
+  channels too), **no handle**. The picker debounces 700 ms, needs 3+
+  chars and caches per query; `quotaExceeded` = the day's 100 are gone.
+- `channels.list?part=snippet,statistics&id=a,b,…` (1 unit / 50 ids) adds
+  `snippet.customUrl` (`@handle`) and `statistics.subscriberCount`
+  (`hiddenSubscriberCount` → don't show it).
+- `subscriptions.list?mine=true&order=alphabetical` (1 unit / 50, scope
+  `youtube` covers it): `snippet.title` + `snippet.resourceId.channelId`.
+  A Google account without a channel answers 404 `subscriberNotFound`.
+- Not verified with a live key on the maintainer machine (none there):
+  shapes are from Google's reference; check on device.
+
 ## Feature parity vs the Twitch native engine
 
 | Feature | YouTube | Verdict |

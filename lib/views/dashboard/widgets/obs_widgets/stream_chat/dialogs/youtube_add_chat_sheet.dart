@@ -10,6 +10,7 @@ import '../../../../../../shared/design/design.dart';
 import '../../../../../../stores/views/youtube_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
+import '../../../../../../utils/general_helper.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/youtube/youtube_channel_search_service.dart';
 import '../../../../../../utils/youtube/youtube_entry_name.dart';
@@ -204,6 +205,7 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
         });
       }
     } catch (e) {
+      GeneralHelper.logFailure('YouTube channel search failed', e);
       if (this.mounted && seq == this._searchSeq) {
         this.setState(() {
           this._searchError = e;
@@ -214,9 +216,12 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
   }
 
   /// Every target key the native list already shows (own channel too).
-  Set<String> _addedKeys(YouTubeChatStore store) => this.widget.pickOnly
-      ? const {}
-      : {for (final channel in store.nativeChannels) channel.target.key};
+  /// Pick mode greys nothing out, but [channels] is read either way so
+  /// the Observer always tracks the list.
+  Set<String> _addedKeys(List<YouTubeChatChannel> channels) {
+    final keys = {for (final channel in channels) channel.target.key};
+    return this.widget.pickOnly ? const {} : keys;
+  }
 
   static YouTubeChannelTarget _targetOf(YouTubeChannelSuggestion channel) =>
       YouTubeChannelTarget('channel/${channel.channelId}');
@@ -287,7 +292,7 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
           final store = this._store;
 
           /// Read up front so the Observer always tracks something.
-          final added = this._addedKeys(store);
+          final added = this._addedKeys(store.nativeChannels);
           final query = this._lastQuery;
           if (query.isEmpty) return this._buildEmpty(context, added);
           if (_isLinkLike(query)) return this._buildDirect(context, added);
@@ -414,6 +419,13 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
   /// One row that adds exactly what was typed / pasted.
   Widget _targetRow(YouTubeTarget target, Set<String> added) {
     final (title, subtitle, icon) = switch (target) {
+      /// A pasted `UC…` id is no name - the entry gets the channel's title
+      /// when added.
+      YouTubeChannelTarget(:final path) when path.startsWith('channel/') => (
+        'Channel from this link',
+        'Follows its current livestream',
+        CupertinoIcons.person_crop_circle,
+      ),
       YouTubeChannelTarget() => (
         target.displayName,
         'Follows its current livestream',

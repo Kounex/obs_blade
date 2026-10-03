@@ -368,7 +368,7 @@ void main() {
       'https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ',
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('UCLA_DiR1FfKNvjuUpBHmylQ'));
+    await tester.tap(find.text('Channel from this link'));
     await tester.pumpAndSettle();
 
     expect(find.byType(YouTubeAddChatSheet), findsNothing);

@@ -259,6 +259,46 @@ void main() {
       expect(authBox().get(YouTubeAuth.kBoxKey), isNull);
     });
 
+    test('Add chat subscriptions with a dead refresh token sign out '
+        'instead of failing', () async {
+      configure();
+      await seedAuth();
+      await store.init();
+      final auth = authBox().get(YouTubeAuth.kBoxKey)!;
+      auth.expiresAtMs = DateTime.now().millisecondsSinceEpoch - 1000;
+      await auth.save();
+      authService.failRefreshWith = const YouTubeAuthException(
+        'Token refresh failed (400)',
+        statusCode: 400,
+      );
+      final search = FakeChannelSearchService();
+
+      final subscriptions = await store.loadSubscriptions(search);
+
+      expect(subscriptions, isEmpty);
+      expect(search.subscriptionCalls, 0);
+      expect(store.authState, YouTubeAuthState.signedOut);
+      expect(authBox().get(YouTubeAuth.kBoxKey), isNull);
+    });
+
+    test('Add chat subscriptions: a transient failure keeps the session '
+        'and rethrows for the retry row', () async {
+      configure();
+      await seedAuth();
+      await store.init();
+      final search = FakeChannelSearchService()
+        ..subscriptionsThrows = const YouTubeApiException(
+          'boom',
+          statusCode: 503,
+        );
+
+      await expectLater(
+        store.loadSubscriptions(search),
+        throwsA(isA<YouTubeApiException>()),
+      );
+      expect(store.authState, YouTubeAuthState.signedIn);
+    });
+
     test('dead refresh token still starts reading (API key only)', () async {
       configure();
       await seedAuth();

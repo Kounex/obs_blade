@@ -2,6 +2,37 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - YouTube + Kick Add chat sheets (search, suggestions)
+
+User request: native YouTube (with an API key) and Kick get an Add chat
+sheet like Twitch's instead of the plain dialog. Decisions: Kick sheet
+always (its search needs no sign-in), YouTube type-ahead search, Kick
+shows "Popular live now" when empty, native chat + combo builder only
+(WebView keeps the dialogs; YouTube without a key keeps the dialog).
+
+- Shared sheet pieces (`dialogs/add_chat_sheet_chrome.dart`), Twitch's
+  sheet moved onto them unchanged.
+- YouTube (`youtube_add_chat_sheet.dart`, `YouTubeChannelSearchService`):
+  subscriptions when signed in with a channel; `search.list` type-ahead
+  (700 ms, 3+ chars, cached; its own 100/day bucket, never chat quota) with
+  LIVE, `@handle` + subscribers via one `channels.list`; links / handles /
+  video ids taken as is; used-up searches say so and offer `@<word>`.
+  Picks stored by `UC…` id under the channel title; native only (the
+  WebView selection is left alone).
+- Kick (`kick_add_chat_sheet.dart`): anonymous website search (LIVE,
+  verified, followers); signed in: official live listing in the device
+  language (falls back to all, mature streams dropped); links taken as is;
+  the typed slug offered when search fails / finds nothing. No follows API
+  exists (website session only).
+- Journey walk fixes: a dead session while loading subscriptions / the
+  live listing signs out (no endless Retry); a pasted `UC…` id isn't shown
+  as a name; YouTube search failures reach Settings → Logs.
+- Facts: `kick-chat-audit.md` § Channel discovery,
+  `youtube-native-chat-audit.md` § Channel discovery. Shots:
+  `tool/widget_shots/add_chat_shots_test.dart`.
+- Not verified live: YouTube search / subscriptions (no key on the
+  maintainer machine) - documented shapes; check on device.
+
 ## 2026-10-03 - combo builder "Other…" reuses the platforms' own pickers
 
 User request: adding a channel that isn't listed yet in the combined chat

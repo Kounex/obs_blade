@@ -1596,6 +1596,11 @@ abstract class _YouTubeChatStore with Store {
       );
     } catch (e) {
       GeneralHelper.logFailure('YouTube subscriptions load failed', e);
+
+      /// A dead session signs out (same rule as writes) - the picker then
+      /// shows its signed-out state instead of a Retry that can't work.
+      if (e is YouTubeApiException) await this._expireRejectedToken(e);
+      if (await this._endSessionIfDead(e)) return const [];
       rethrow;
     }
   }
