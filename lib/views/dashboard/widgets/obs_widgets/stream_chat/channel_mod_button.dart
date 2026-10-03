@@ -45,27 +45,10 @@ class ChannelModButton extends StatelessWidget {
   }
 }
 
-/// Preferred width of the connected-account chip for the right-cluster
-/// fit check (padding + icon + gap + ellipsized name ≤ 96).
-double accountChipPreferredWidth(BuildContext context, String? displayName) {
-  final style = Theme.of(
-    context,
-  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600);
-  final painter = TextPainter(
-    text: TextSpan(text: displayName ?? 'Twitch', style: style),
-    textDirection: Directionality.of(context),
-    textScaler: MediaQuery.textScalerOf(context),
-    maxLines: 1,
-  )..layout(maxWidth: 96.0);
-  return AppSpacing.md * 2 + 18.0 + AppSpacing.xs + painter.width;
-}
-
-/// Whether options + shield + account fit in [maxWidth] without overflow.
-bool nativeModClusterFitsWithShield({
-  required double maxWidth,
-  required double accountWidth,
-}) {
+/// Whether the shield + options fit in [maxWidth] without overflow (the
+/// signed-in bar has no account chip next to them).
+bool nativeModClusterFitsWithShield({required double maxWidth}) {
   const tile = kMinInteractiveDimensionCupertino;
   const gap = AppSpacing.sm;
-  return tile + gap + tile + gap + accountWidth <= maxWidth;
+  return tile + gap + tile <= maxWidth;
 }

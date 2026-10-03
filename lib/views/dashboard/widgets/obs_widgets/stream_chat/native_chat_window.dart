@@ -427,6 +427,19 @@ class _NativeChatConnectionSheet extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               _UptimeLine(connectedAt: this.connectedAt!),
             ],
+
+            /// The chat bar has no account chip - the account is managed
+            /// here
+            if (this.onLogout != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              this._actionRow(
+                context,
+                icon: CupertinoIcons.square_arrow_right,
+                label: 'Sign out',
+                destructive: true,
+                onTap: this.onLogout,
+              ),
+            ],
           ],
           if (degraded) ...[
             if (this.statusDetail != null) ...[
@@ -442,14 +455,16 @@ class _NativeChatConnectionSheet extends StatelessWidget {
               label: 'Retry',
               onTap: this.onRetry,
             ),
-            const SizedBox(height: AppSpacing.xs),
-            this._actionRow(
-              context,
-              icon: CupertinoIcons.square_arrow_right,
-              label: 'Log out',
-              destructive: true,
-              onTap: this.onLogout,
-            ),
+            if (this.onLogout != null) ...[
+              const SizedBox(height: AppSpacing.xs),
+              this._actionRow(
+                context,
+                icon: CupertinoIcons.square_arrow_right,
+                label: 'Sign out',
+                destructive: true,
+                onTap: this.onLogout,
+              ),
+            ],
           ],
           if (this.status == NativeChatConnectionStatus.offline) ...[
             /// Signed in while the chat itself is offline (YouTube / Kick)

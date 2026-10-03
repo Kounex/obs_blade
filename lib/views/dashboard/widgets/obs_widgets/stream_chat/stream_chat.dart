@@ -585,6 +585,27 @@ class _StreamChatState extends State<StreamChat>
             status: kickChatWindowStatus(kickStore.chatConnection),
             statusDetail: kickStore.chatError,
             connectedAt: kickStore.chatConnectedAt,
+
+            /// The account lives here (the chat bar has no account chip);
+            /// reads are anonymous, so signed out just shows no account
+            accountLabel: kickStore.isSignedInState
+                ? kickStore.selfUsername
+                : null,
+            onLogout: kickStore.isSignedInState
+                ? () => ModalHandler.showBaseDialog(
+                    context: context,
+                    dialogWidget: ConfirmationDialog(
+                      title: 'Sign out of Kick?',
+                      body:
+                          'Signed in as ${kickStore.selfUsername ?? 'your Kick account'}. '
+                          'Chat stays readable - sending and moderating need '
+                          'the sign-in.',
+                      okText: 'Sign out',
+                      isYesDestructive: true,
+                      onOk: (_) => kickStore.logout(),
+                    ),
+                  )
+                : null,
             channelIsLive: channelInfo?.isLive ?? false,
             channelViewerCount: (channelInfo?.isLive ?? false)
                 ? channelInfo?.viewerCount

@@ -9,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
@@ -385,7 +386,8 @@ void main() {
   );
 
   testWidgets(
-    'username bar shows the connected account in native mode and offers disconnect',
+    'signed in, the username bar has no account chip - the account lives in '
+    'the chat header',
     (tester) async {
       await tester.runAsync(() async {
         await settingsBox().put(
@@ -403,23 +405,52 @@ void main() {
       await tester.pumpWidget(wrap(const ChatUsernameBar()));
       await tester.pumpAndSettle();
 
-      /// Account chip instead of a bare status icon — reads as tappable
-      expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
+      expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsNothing);
+      expect(find.text('Connect Twitch'), findsNothing);
 
-      /// The display name shows twice: the channel dropdown's own-channel row
-      /// and the account chip
-      expect(find.text('Kounex'), findsNWidgets(2));
-
-      await tester.tap(
-        find.descendant(
-          of: find.byType(TwitchAccountControl),
-          matching: find.text('Kounex'),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Disconnect Twitch?'), findsOneWidget);
+      /// The display name shows once: the channel dropdown's own row
+      expect(find.text('Kounex'), findsOneWidget);
     },
   );
+
+  /// The bug that removed the chip: YouTube reserved a fixed 140pt for
+  /// it, so on a phone the shield never fit (Twitch measured its name).
+  testWidgets('phone width, signed in to YouTube: the mod shield shows', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+    await tester.runAsync(() async {
+      await settingsBox().put(
+        SettingsKeys.SelectedChatType.name,
+        ChatType.YouTube,
+      );
+      await settingsBox().put(
+        SettingsKeys.SelectedChatEngine.name,
+        ChatEngine.native,
+      );
+      await settingsBox().put(SettingsKeys.YouTubeApiKey.name, 'api-key');
+      await Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name).put(
+        YouTubeAuth.kBoxKey,
+        YouTubeAuth(
+          accessToken: 'a',
+          refreshToken: 'r',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600000,
+          scopes: kYouTubeChatScopes,
+          channelTitle: 'My Channel With A Long Title',
+          channelId: 'UCownchannel000000000000',
+        ),
+      );
+    });
+    youTubeStore.authState = YouTubeAuthState.signedIn;
+
+    await tester.pumpWidget(wrap(const ChatUsernameBar()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('channel-mod-button-YouTube')), findsOneWidget);
+    expect(find.text('My Channel With A Long Title'), findsNothing);
+  });
 
   testWidgets('switching engines swaps the bar controls and persists the key', (
     tester,
@@ -517,55 +548,18 @@ void main() {
     },
   );
 
-  testWidgets(
-    'native account control shows the connected account and disconnects on confirm',
-    (tester) async {
-      store.authState = TwitchAuthState.loggedIn;
-      store.user = FakeTwitchAuthService.user;
+  testWidgets('native account control shows nothing while logged in', (
+    tester,
+  ) async {
+    store.authState = TwitchAuthState.loggedIn;
+    store.user = FakeTwitchAuthService.user;
 
-      await tester.pumpWidget(wrap(const TwitchAccountControl()));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(wrap(const TwitchAccountControl()));
+    await tester.pumpAndSettle();
 
-      expect(find.byIcon(CupertinoIcons.checkmark_circle_fill), findsOneWidget);
-      expect(find.text('Kounex'), findsOneWidget);
-
-      await tester.tap(find.text('Kounex'));
-      await tester.pumpAndSettle();
-      expect(find.text('Disconnect Twitch?'), findsOneWidget);
-
-      await tester.tap(find.text('Disconnect'));
-      await tester.pumpAndSettle();
-      expect(find.text('Disconnect Twitch?'), findsNothing);
-
-      /// logout() awaits the chat disconnect, the TwitchAuth box delete and
-      /// the (faked) revoke — real I/O window, then the zone resumes the
-      /// continuations
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)),
-      );
-      await tester.pump();
-      expect(store.authState, TwitchAuthState.loggedOut);
-
-      /// The tap-driven box delete ran in the test's FakeAsync zone and
-      /// Hive's write-queue Completers only dispatch through the zone they
-      /// were created in - a real-zone harness.close() in tearDown would
-      /// hang. Same close-inside-the-zone dance as the login test above.
-      await tester.pumpWidget(const SizedBox());
-      await tester.runAsync(() => store.dispose());
-      await tester.pump();
-
-      var closed = false;
-      unawaited(harness.close().then((_) => closed = true));
-      for (var i = 0; i < 10 && !closed; i++) {
-        await tester.pump();
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 100)),
-        );
-      }
-      await tester.pump();
-      expect(closed, isTrue);
-    },
-  );
+    expect(find.text('Kounex'), findsNothing);
+    expect(find.text('Connect Twitch'), findsNothing);
+  });
 
   testWidgets(
     'not-Pro native mode shows the Pro upsell pane instead of the login CTAs',

@@ -210,6 +210,38 @@ void main() {
     expect(retried, isTrue);
   });
 
+  /// The chat bar has no account chip - signing out of a healthy chat
+  /// happens in this sheet (YouTube / Kick; Twitch's header opens its
+  /// self card, which has its own Log out)
+  testWidgets('live: the sheet shows the account and signs out', (
+    tester,
+  ) async {
+    var signedOut = false;
+    await tester.pumpWidget(
+      wrap(
+        buildWindow(accountLabel: 'kounex', onLogout: () => signedOut = true),
+      ),
+    );
+    await tester.tap(find.text('Stream Chat'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connected as kounex'), findsOneWidget);
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(signedOut, isTrue);
+  });
+
+  testWidgets('degraded without a session offers no sign-out', (tester) async {
+    await tester.pumpWidget(
+      wrap(buildWindow(status: NativeChatConnectionStatus.failed)),
+    );
+    await tester.tap(find.text('failed'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Sign out'), findsNothing);
+  });
+
   testWidgets('live with selfUserId routes through the merged card entry', (
     tester,
   ) async {

@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - chat bar: no account chip, the mod shield fits on phones
+
+Dogfood (TestFlight build 2026100304): the signed-in YouTube chat had no
+mod shield and no Moderation entry in its options, while Twitch in the
+same space had one. The fit check reserved a fixed 140pt for the YouTube /
+Kick account chip (Twitch measured its name), so on phones the shield was
+always dropped - and only Twitch folds Mod into its options.
+
+User decision: drop the signed-in account chip on every platform (the
+chat header already shows the account). Signed in, the right side is
+shield + options (~96pt, fits a 320pt phone); signed out keeps the sign-in
+/ setup pills. Sign-out moved: the header sheet's healthy state has a
+Sign out row (YouTube, Kick - Kick's sheet now shows the account; Twitch's
+header opens the self card with Log out); the degraded state no longer
+shows a dead Log out row without a session. Widget test at phone width
+reproduces the missing shield; shots in `tool/widget_shots/chat_bar_shots_test.dart`.
+
 ## 2026-10-03 - chat review fixes (`/code-review high` + journey walk)
 
 A `/code-review high` plus a walk of every chat journey against

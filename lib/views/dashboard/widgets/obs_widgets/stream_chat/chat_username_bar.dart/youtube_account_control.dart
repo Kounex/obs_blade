@@ -1,23 +1,20 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
-import 'package:obs_blade/shared/dialogs/confirmation.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
-import '../../../../../../utils/modal_handler.dart';
-import '../../../../../../utils/styling_helper.dart';
 import '../chat_type_brand.dart';
 import '../youtube_device_code_dialog.dart';
 import '../youtube_setup_sheet.dart';
 
-/// Native-mode YouTube account control for the username bar — mirrors
-/// [TwitchAccountControl]: the connected channel chip (tap → disconnect
-/// confirmation) while signed in, a "Connect YouTube" pill while signed
-/// out, or a setup pill when no API key is configured yet.
+/// Native-mode YouTube sign-in control for the username bar — mirrors
+/// [TwitchAccountControl]: a "Connect YouTube" pill while signed out, a
+/// setup pill when no API key is configured yet, nothing while signed in
+/// (the account, a channel-less account's "Switch account" and sign-out
+/// live in the chat header's sheet).
 class YouTubeAccountControl extends StatelessWidget {
   const YouTubeAccountControl({super.key});
 
@@ -31,113 +28,9 @@ class YouTubeAccountControl extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: switch (store.authState) {
             YouTubeAuthState.unconfigured => const _SetupPill(),
-            YouTubeAuthState.signedIn => _AccountChip(
-              displayName: store.signedInWithoutChannel
-                  ? 'No channel'
-                  : store.selfChannelTitle,
-              noChannel: store.signedInWithoutChannel,
-            ),
+            YouTubeAuthState.signedIn => const SizedBox.shrink(),
             _ => const _ConnectPill(),
           },
-        );
-      },
-    );
-  }
-}
-
-/// The connected channel, styled like the bar's other control containers
-/// (checkmark + channel title, tap → disconnect confirmation).
-class _AccountChip extends StatelessWidget {
-  final String? displayName;
-
-  /// The account has no YouTube channel - a tap offers another account
-  final bool noChannel;
-
-  const _AccountChip({this.displayName, this.noChannel = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final enabledColor =
-        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
-            .highlightText;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final textMax = constraints.maxWidth.isFinite
-            ? (constraints.maxWidth - AppSpacing.md * 2 - 18.0 - AppSpacing.xs)
-                  .clamp(0.0, 96.0)
-            : 96.0;
-
-        return Tooltip(
-          message: this.noChannel
-              ? 'This Google account has no YouTube channel - tap to switch'
-              : 'Connected as ${this.displayName ?? 'YouTube'} - tap to disconnect',
-          child: Pressable(
-            haptic: true,
-            onTap: () => ModalHandler.showBaseDialog(
-              context: context,
-              dialogWidget: this.noChannel
-                  ? ConfirmationDialog(
-                      title: 'No YouTube channel',
-                      body: kYouTubeNoChannelText,
-                      okText: 'Switch account',
-                      onOk: (_) => switchYouTubeAccount(context),
-                    )
-                  : ConfirmationDialog(
-                      title: 'Disconnect YouTube?',
-                      body:
-                          'Connected as ${GetIt.instance<YouTubeChatStore>().accountDescription}. You will be signed out of your Google account.',
-                      okText: 'Disconnect',
-                      isYesDestructive: true,
-                      onOk: (_) => GetIt.instance<YouTubeChatStore>().logout(),
-                    ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.md,
-              ),
-              decoration: BoxDecoration(
-                color: StylingHelper.lightenDarkenColor(
-                  Theme.of(context).cardColor,
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: Theme.of(context).dividerColor.withValues(alpha: 0.4),
-                  width: 0.0,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    this.noChannel
-                        ? CupertinoIcons.exclamationmark_circle_fill
-                        : CupertinoIcons.checkmark_circle_fill,
-                    size: 18.0,
-                    color: this.noChannel
-                        ? (Theme.of(context).extension<AppStatusColors>() ??
-                                  AppStatusColors.standard)
-                              .warning
-                        : enabledColor,
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: textMax),
-                    child: Text(
-                      this.displayName ?? 'YouTube',
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: enabledColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         );
       },
     );

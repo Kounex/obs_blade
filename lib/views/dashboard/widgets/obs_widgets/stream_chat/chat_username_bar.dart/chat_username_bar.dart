@@ -225,14 +225,18 @@ class ChatUsernameBar extends StatelessWidget {
   }
 }
 
-/// Native right cluster: optional Mod shield (fit-gated) + options + account.
-/// Shield shows when moderating and the cluster fits; otherwise Mod folds
-/// into a combined options chip ([NativeChatOptionsButton.modFoldedIntoOptions]).
+/// Native right cluster: optional Mod shield + options, plus the sign-in
+/// pill while signed out. Signed in there is no account chip - the
+/// account and its sign-out live in the chat header's sheet - so the
+/// shield + options (~96pt) fit any phone.
 ///
-/// YouTube and Kick: shield + options + account. Neither has a cheap "am
-/// I a mod" lookup, so the shield shows whenever the account may write;
-/// a refused action toasts why ([chatNotModeratorText]). The shield drops
-/// first when the cluster doesn't fit.
+/// Twitch: the shield shows when moderating; should it ever not fit, Mod
+/// folds into a combined options chip
+/// ([NativeChatOptionsButton.modFoldedIntoOptions]).
+///
+/// YouTube and Kick: neither has a cheap "am I a mod" lookup, so the
+/// shield shows whenever the account may write; a refused action toasts
+/// why ([chatNotModeratorText]).
 ///
 /// Combined: shield (whenever the combo has sources — its tabbed sheet
 /// explains per platform) + options.
@@ -271,19 +275,17 @@ class _NativeRightCluster extends StatelessWidget {
       return LayoutBuilder(
         builder: (context, constraints) => Observer(
           builder: (_) {
-            final canWrite = kick
-                ? GetIt.instance<KickChatStore>().isSignedInState &&
-                      GetIt.instance<KickChatStore>().canWrite
-                : GetIt.instance<YouTubeChatStore>().isSignedInState &&
-                      GetIt.instance<YouTubeChatStore>().canWrite;
-
-            /// The account chip is at most ~140pt wide.
+            final signedIn = kick
+                ? GetIt.instance<KickChatStore>().isSignedInState
+                : GetIt.instance<YouTubeChatStore>().isSignedInState;
+            final canWrite =
+                signedIn &&
+                (kick
+                    ? GetIt.instance<KickChatStore>().canWrite
+                    : GetIt.instance<YouTubeChatStore>().canWrite);
             final showShield =
                 canWrite &&
-                nativeModClusterFitsWithShield(
-                  maxWidth: constraints.maxWidth,
-                  accountWidth: 140.0,
-                );
+                nativeModClusterFitsWithShield(maxWidth: constraints.maxWidth);
             return Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -299,12 +301,14 @@ class _NativeRightCluster extends StatelessWidget {
                 kick
                     ? const KickChatOptionsButton()
                     : const YouTubeChatOptionsButton(),
-                const SizedBox(width: AppSpacing.sm),
-                Flexible(
-                  child: kick
-                      ? const KickAccountControl()
-                      : const YouTubeAccountControl(),
-                ),
+                if (!signedIn) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: kick
+                        ? const KickAccountControl()
+                        : const YouTubeAccountControl(),
+                  ),
+                ],
               ],
             );
           },
@@ -322,17 +326,9 @@ class _NativeRightCluster extends StatelessWidget {
             store.selectedChannelId;
             store.moderatedChannelIds.length;
             final canMod = store.canModerateSelectedChannel;
-            final displayName = store.user?.displayName ?? store.user?.login;
-            final accountWidth = accountChipPreferredWidth(
-              context,
-              displayName,
-            );
             final showShield =
                 canMod &&
-                nativeModClusterFitsWithShield(
-                  maxWidth: constraints.maxWidth,
-                  accountWidth: accountWidth,
-                );
+                nativeModClusterFitsWithShield(maxWidth: constraints.maxWidth);
             final modFoldedIntoOptions = canMod && !showShield;
 
             return Row(
@@ -346,8 +342,10 @@ class _NativeRightCluster extends StatelessWidget {
                   chatType: this.chatType,
                   modFoldedIntoOptions: modFoldedIntoOptions,
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                const Flexible(child: TwitchAccountControl()),
+                if (!store.isLoggedIn) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  const Flexible(child: TwitchAccountControl()),
+                ],
               ],
             );
           },

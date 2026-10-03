@@ -150,9 +150,8 @@ void main() {
     },
   );
 
-  testWidgets('narrow cluster folds Mod into a combined options chip', (
-    tester,
-  ) async {
+  testWidgets('a long display name keeps the shield (no account chip in '
+      'the signed-in bar)', (tester) async {
     await tester.runAsync(() async {
       await seedLoggedIn();
       store.user = const TwitchUser(
@@ -170,34 +169,23 @@ void main() {
       );
     });
 
-    /// Long display name + mid width: three controls do not fit the right
-    /// cluster; options + (compressed) account still do.
     await tester.pumpWidget(wrap(const ChatUsernameBar(), width: 400));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(store.canModerateSelectedChannel, isTrue);
-    expect(find.byType(ChannelModButton), findsNothing);
-    final options = tester.widget<NativeChatOptionsButton>(
-      find.byType(NativeChatOptionsButton),
+    expect(find.byType(ChannelModButton), findsOneWidget);
+    expect(
+      tester
+          .widget<NativeChatOptionsButton>(find.byType(NativeChatOptionsButton))
+          .modFoldedIntoOptions,
+      isFalse,
     );
-    expect(options.modFoldedIntoOptions, isTrue);
+  });
 
-    /// Combined chip: gear + shield inside the options control.
-    expect(
-      find.descendant(
-        of: find.byType(NativeChatOptionsButton),
-        matching: find.byIcon(CupertinoIcons.slider_horizontal_3),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(NativeChatOptionsButton),
-        matching: shieldFinder(),
-      ),
-      findsOneWidget,
-    );
+  test('Mod folds into options only below shield + options (96pt)', () {
+    expect(nativeModClusterFitsWithShield(maxWidth: 96.0), isTrue);
+    expect(nativeModClusterFitsWithShield(maxWidth: 95.0), isFalse);
   });
 
   testWidgets(
