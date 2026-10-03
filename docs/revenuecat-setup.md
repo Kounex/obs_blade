@@ -49,11 +49,17 @@ walkthrough below doubles as the verification checklist afterwards.
 
 Pricing is locked and already provisioned store-side (2026-09): **$4.99/mo,
 $49.99/yr, $99.99 lifetime** — the defaults in `tool/provisioning`.
-Per-region pricing is pinned everywhere: ASC 175/175 territories (nominal
-or equalized-tier fallback), Play 173/173 regions — default driven by
-Apple's equalized tier table per currency for exact cross-store parity
-(`play-products --price-source apple`; `--price-source google` keeps
-Play's converted table + EUR/GBP/USD nominal parity). Strategy
+Per-region pricing is pinned everywhere from one reviewed table
+(`tool/provisioning/lib/src/pricing_targets.dart`, re-applied to the live
+stores 2026-10): anchors USD/EUR/GBP at the USD nominal, every other
+currency at Google's `convertRegionPrices` values (FX-current, tax-aware),
+CNY at Apple's China pricing, CHF split CH/LI; ASC 175/175 territories
+snapped to the nearest price point, Play ~174 regions exact. The iOS
+lifetime IAP follows Apple's auto-equalized schedule instead (maintained
+FX-current by Apple). Apple's own equalized tier matrix was dropped after
+a 2026-10 audit found >20% deviations in ~30 currencies in both
+directions (TRY monthly came through at ~€0.80). Refresh cadence +
+workflow: `tool/provisioning/README.md` § Pricing table. Strategy
 rationale: `docs/private/monetization-strategy.md`.
 
 ## 3. Entitlement + offering (dashboard)

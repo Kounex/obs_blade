@@ -2,6 +2,44 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-03 - Global Pro pricing overhaul (both stores re-priced)
+
+A Turkish buyer got Pro monthly for ~0.80 EUR. Root cause chain, found by
+auditing every live price on both stores against Google's conversion table
+and independent FX rates (`tool/provisioning/bin/audit_prices.dart`):
+1. `asc-products`' nominal-parity rule was currency-blind — a literal 4.99
+   in TRY/EGP/ZAR/... (~12 weak currencies).
+2. Apple's equalized-tier matrix (the fallback that priced TRY at ~$0.90)
+   deviates >20% from FX+tax reality in ~30 currencies in BOTH directions
+   (DKK yearly came out at ~$153 for a $49.99 sub).
+3. Play inherited Apple's matrix via `--price-source apple`.
+
+Fix: both stores now price from ONE checked-in, reviewed table
+(`tool/provisioning/lib/src/pricing_targets.dart`) generated from Google's
+`convertRegionPrices` (table version 2026/01 — FX-current, tax-aware,
+market-rounded; `bin/generate_pricing_targets.dart`). Anchors USD/EUR/GBP
+stay at the nominal 4.99/49.99/99.99; CNY keeps Apple's China pricing (no
+Play there); CHF is split per territory (CH/LI price differently on
+Google). Over-priced markets (DKK/NOK/SEK/HKD/TWD/COP/ILS/THB) were
+corrected DOWN, under-priced ones (TRY/EGP/JPY/...) up. The iOS lifetime
+IAP stays on Apple's auto-equalized schedule (that one IS FX-current).
+`asc-products` snaps table values to the nearest App Store price point
+(>2% deviations are called out); `play-products` pins exact values per
+region with the table's regionsVersion.
+
+Live-run gotcha: Apple rejects immediate price POSTs on an APPROVED
+subscription (409 STATE_ERROR "Initial price cannot be created again
+after subscription is approved") — those territories get a scheduled
+price change instead (startDate +2 days, the soonest Apple schedules;
+`preserveCurrentPrice: true` — existing subscribers grandfathered, only
+new buyers see the new price). The single existing subscriber (Turkish,
+Play monthly at the old cheap price) keeps their price. Play takes base
+plan price updates on ACTIVE plans directly.
+
+Refresh cadence: re-run the audit + generator when FX moves
+(quarterly-ish); workflow in `tool/provisioning/README.md` § Pricing
+table. Verification: post-run audit + `inspect_products.dart` parity.
+
 ## 2026-10-03 - Kick services on obs-blade.com
 
 The first webhook test delivered nothing: kounex.com runs Cloudflare

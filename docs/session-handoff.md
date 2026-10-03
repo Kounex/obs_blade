@@ -9,6 +9,27 @@ picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
 Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 
+**Update 2026-10-03 — global Pro pricing overhaul (both stores
+re-priced):** a Turkish monthly sub came through at ~€0.80; the audit
+found nominal parity was currency-blind AND Apple's equalized-tier matrix
+deviates >20% from FX+tax reality in ~30 currencies in both directions.
+Both stores now price from one reviewed table
+(`tool/provisioning/lib/src/pricing_targets.dart`, Google
+convertRegionPrices 2026/01; anchors USD/EUR/GBP nominal, CNY Apple
+China, CHF split CH/LI). Applied live: Play fully re-priced (174
+regions × all 3 products, instant); App Store subs re-priced via
+**scheduled** changes effective **2026-10-05** (approved subscriptions
+reject immediate price POSTs — 409 STATE_ERROR; `preserveCurrentPrice`
+grandfathers existing subscribers). The one existing subscriber
+(Turkish, Play monthly, old cheap price) keeps their price. Post-run
+audit: zero subscription outliers; `inspect_products.dart` 175/175
+parity on both subs. The iOS lifetime IAP stays on Apple's
+auto-equalized schedule (its COP/PEN deviations are Apple's own,
+deliberately untouched). Recurring duty: re-run
+`bin/audit_prices.dart` + `bin/generate_pricing_targets.dart` when FX
+moves (quarterly-ish), workflow in `tool/provisioning/README.md`
+§ Pricing table. Details: `changelog-agent.md` 2026-10-03 entry.
+
 **Update 2026-09-27 — intro v2 shipped to dogfood** (awaiting the
 user's on-device verdict): the intro was rebuilt as 4 swipeable screens
 with code-drawn animated mockups; every user sees it once via the new

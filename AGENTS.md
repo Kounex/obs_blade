@@ -431,8 +431,13 @@ tips/blacksmith).
 - **Provisioning automation:** `tool/provisioning/` (standalone package,
   creds-by-path, `--dry-run`, idempotent) — `gcp-youtube` (GCP project +
   YouTube API + restricted key), `asc-products` (subscription group +
-  subs + IAP + US pricing via ASC API), `play-products` (Play
-  subscription + base plans + one-time product). Usage + creds
+  subs + IAP + per-territory pricing via ASC API), `play-products` (Play
+  subscription + base plans + one-time product + per-region pricing).
+  Both stores price from one reviewed table
+  (`tool/provisioning/lib/src/pricing_targets.dart`, generated from
+  Google's convertRegionPrices + hand-reviewed; refresh workflow in the
+  README § Pricing table, `bin/audit_prices.dart` cross-checks the live
+  stores). Usage + creds
   acquisition: `tool/provisioning/README.md`.
 - **Store releases:** `tool/release/` (status, preflight, build, TestFlight
   / Play internal, submit, promote, publish; every store write is a dry run
