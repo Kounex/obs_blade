@@ -13,10 +13,8 @@ import '../../../../../../types/classes/twitch/twitch_channel_ref.dart';
 import '../../../../../../types/classes/twitch/twitch_channel_search_result.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
-import '../../../../../../utils/styling_helper.dart';
 import '../../../../../../utils/twitch/twitch_channel_service.dart';
-import '../native_chat_chrome.dart';
-import '../native_chat_text_field.dart';
+import 'add_chat_sheet_chrome.dart';
 import '../twitch_device_code_dialog.dart';
 
 /// Opens the "Add chat" picker sheet (multi-chat) — the entry behind
@@ -281,59 +279,25 @@ class _AddChatSheetState extends State<AddChatSheet> {
   Widget build(BuildContext context) {
     final store = this._store;
     final locked = !store.canReadModeratedChannels || !store.canReadFollows;
-    final listMaxHeight = MediaQuery.sizeOf(context).height * 0.45;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.sm,
-        AppSpacing.lg,
-        AppSpacing.lg,
+    return AddChatSheetFrame(
+      title: this.widget.pickOnly ? 'Twitch channel' : 'Add chat',
+      controller: this._searchController,
+      onChanged: this._onQueryChanged,
+      hintText: 'Search channels',
+      body: Observer(
+        builder: (_) {
+          /// Read an observable up front — the loading/error
+          /// branches build no rows, which would otherwise leave
+          /// the Observer with nothing tracked.
+          final ownId = store.user?.id;
+          return this._searchController.text.trim().isNotEmpty
+              ? this._buildSearchResults(context, store, ownId)
+              : this._buildSections(context, store, ownId);
+        },
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          nativeChatSheetDragHandle(context),
-          Text(
-            this.widget.pickOnly ? 'Twitch channel' : 'Add chat',
-            style: nativeChatSheetTitleStyle(context),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.sm,
-              bottom: AppSpacing.md,
-            ),
-            child: NativeChatTextField(
-              controller: this._searchController,
-              onChanged: this._onQueryChanged,
-              hintText: 'Search channels',
-              prefixIcon: const Icon(CupertinoIcons.search, size: 16.0),
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 36.0,
-                minHeight: 0.0,
-              ),
-            ),
-          ),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: listMaxHeight),
-            child: SingleChildScrollView(
-              child: Observer(
-                builder: (_) {
-                  /// Read an observable up front — the loading/error
-                  /// branches build no rows, which would otherwise leave
-                  /// the Observer with nothing tracked.
-                  final ownId = store.user?.id;
-                  return this._searchController.text.trim().isNotEmpty
-                      ? this._buildSearchResults(context, store, ownId)
-                      : this._buildSections(context, store, ownId);
-                },
-              ),
-            ),
-          ),
-          if (locked) ...[
-            const SizedBox(height: AppSpacing.sm),
-            Row(
+      footer: locked
+          ? Row(
               children: [
                 Icon(
                   CupertinoIcons.lock_fill,
@@ -350,31 +314,13 @@ class _AddChatSheetState extends State<AddChatSheet> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-                Pressable(
-                  haptic: true,
+                AddChatTextAction(
+                  label: 'Re-login',
                   onTap: () => startTwitchLogin(context),
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minHeight: kMinInteractiveDimensionCupertino,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Re-login',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:
-                            (Theme.of(context).extension<AppTextColors>() ??
-                                    AppTextColors.standard)
-                                .highlightText,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ),
               ],
-            ),
-          ],
-        ],
-      ),
+            )
+          : null,
     );
   }
 
@@ -388,7 +334,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (store.canReadModeratedChannels) ...[
-          this._sectionHeader(context, 'Channels you moderate'),
+          const AddChatSectionHeader('Channels you moderate'),
           this._sectionBody(
             context,
             chipScope: 'mod',
@@ -406,7 +352,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
           const SizedBox(height: AppSpacing.sm),
         ],
         if (store.canReadFollows) ...[
-          this._sectionHeader(context, 'Channels you follow'),
+          const AddChatSectionHeader('Channels you follow'),
           this._sectionBody(
             context,
             chipScope: 'fol',
@@ -429,55 +375,19 @@ class _AddChatSheetState extends State<AddChatSheet> {
     TwitchChatStore store,
     String? ownId,
   ) {
-    if (this._searching) {
-      return Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Center(
-          child: StylingHelper.isApple(context)
-              ? const CupertinoActivityIndicator()
-              : const CircularProgressIndicator(),
-        ),
-      );
-    }
+    if (this._searching) return const AddChatLoading(large: true);
     if (this._searchError != null) {
-      return this._errorRow(
-        context,
-        onRetry: () => this._search(this._lastQuery),
-      );
+      return AddChatErrorRow(onRetry: () => this._search(this._lastQuery));
     }
     if (this._results.isEmpty) {
-      final textColors =
-          Theme.of(context).extension<AppTextColors>() ??
-          AppTextColors.standard;
-      return StaggeredEntrance(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            children: [
-              Icon(
-                CupertinoIcons.search,
-                size: 28.0,
-                color: textColors.textOrnament,
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'No channels found',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: textColors.textTertiary),
-              ),
-            ],
-          ),
-        ),
-      );
+      return const AddChatHint(text: 'No channels found');
     }
     final modIds = store.moderatedChannelIds;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final result in this._results)
-          this._channelRow(
-            context,
+          AddChatChannelRow(
             chipScope: 'search',
             id: result.id,
             displayName: result.displayName,
@@ -500,11 +410,6 @@ class _AddChatSheetState extends State<AddChatSheet> {
     );
   }
 
-  Widget _sectionHeader(BuildContext context, String title) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-    child: Text(title, style: nativeChatSheetSectionStyle(context)),
-  );
-
   Widget _sectionBody(
     BuildContext context, {
     required String chipScope,
@@ -517,17 +422,8 @@ class _AddChatSheetState extends State<AddChatSheet> {
     required TwitchChatStore store,
     required String? ownId,
   }) {
-    if (loading) {
-      return Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Center(
-          child: StylingHelper.isApple(context)
-              ? const CupertinoActivityIndicator()
-              : const CircularProgressIndicator(),
-        ),
-      );
-    }
-    if (error != null) return this._errorRow(context, onRetry: onRetry);
+    if (loading) return const AddChatLoading();
+    if (error != null) return AddChatErrorRow(onRetry: onRetry);
     if (refs.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
@@ -539,8 +435,7 @@ class _AddChatSheetState extends State<AddChatSheet> {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (final ref in refs)
-          this._channelRow(
-            context,
+          AddChatChannelRow(
             chipScope: chipScope,
             id: ref.id,
             displayName: ref.displayName,
@@ -555,136 +450,10 @@ class _AddChatSheetState extends State<AddChatSheet> {
     );
   }
 
-  Widget _errorRow(BuildContext context, {required VoidCallback onRetry}) =>
-      Row(
-        children: [
-          Icon(
-            CupertinoIcons.exclamationmark_triangle,
-            size: 14.0,
-            color:
-                (Theme.of(context).extension<AppStatusColors>() ??
-                        AppStatusColors.standard)
-                    .destructive,
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Expanded(
-            child: Text(
-              'Could not load this list',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-          Pressable(
-            haptic: true,
-            onTap: onRetry,
-            child: Container(
-              constraints: const BoxConstraints(
-                minHeight: kMinInteractiveDimensionCupertino,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Retry',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color:
-                      (Theme.of(context).extension<AppTextColors>() ??
-                              AppTextColors.standard)
-                          .highlightText,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-
   /// Already-added channels — and the user's own — are checked off (the
   /// store dedupes by id, but adding yourself would duplicate the own
   /// channel in the dropdown).
   bool _isAdded(TwitchChatStore store, String? ownId, String id) =>
       !this.widget.pickOnly &&
       (id == ownId || store.channels.any((channel) => channel.id == id));
-
-  Widget _channelRow(
-    BuildContext context, {
-    required String chipScope,
-    required String id,
-    required String displayName,
-    required String subtitle,
-    required bool added,
-    bool live = false,
-    int? viewerCount,
-    bool mod = false,
-    required VoidCallback onAdd,
-  }) {
-    final statusColors =
-        Theme.of(context).extension<AppStatusColors>() ??
-        AppStatusColors.standard;
-    return Pressable(
-      haptic: true,
-      onTap: added ? null : onAdd,
-      child: Container(
-        constraints: const BoxConstraints(
-          minHeight: kMinInteractiveDimensionCupertino,
-        ),
-        alignment: Alignment.centerLeft,
-        child: Opacity(
-          opacity: added ? 0.5 : 1.0,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.fade,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.fade,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-
-              /// Reserved check slot left of LIVE so viewer chips share a
-              /// column whether or not the channel is already added.
-              SizedBox(
-                width: 18.0 + AppSpacing.xs,
-                child: added
-                    ? Icon(
-                        Icons.check,
-                        size: 18.0,
-                        color:
-                            (Theme.of(context).extension<AppTextColors>() ??
-                                    AppTextColors.standard)
-                                .highlightText,
-                      )
-                    : null,
-              ),
-              if (live) ...[
-                NativeChatStatusChip.live(
-                  key: Key('add-chat-live-$chipScope-$id'),
-                  color: statusColors.live,
-                  viewerCount: viewerCount,
-                ),
-              ],
-              if (mod) ...[
-                const SizedBox(width: AppSpacing.xs),
-                NativeChatStatusChip.mod(
-                  key: Key('add-chat-mod-$chipScope-$id'),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
