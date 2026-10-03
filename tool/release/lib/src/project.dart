@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 /// The app's repo as the release tool sees it: version, artifacts and the
@@ -70,6 +71,21 @@ class Project {
   String get playReleaseNotes =>
       path('fastlane/metadata/android/en-US/changelogs/default.txt');
 
-  /// App-owned Kick OAuth client (maintainer machines only).
+  /// App-owned Kick OAuth client (maintainer machines only). Client id
+  /// only - the secret lives on the exchange host.
   String get kickOauthDefines => path('docs/private/kick_oauth.json');
+
+  /// Defines in [json] that must never be compiled into a store build:
+  /// a Kick client secret ends up readable in the binary, and the app
+  /// then skips the exchange host (its sign-in lands on the host's
+  /// "did not approve" page).
+  static List<String> forbiddenDefines(String json) {
+    final decoded = jsonDecode(json);
+    if (decoded is! Map) return const [];
+    return [
+      for (final MapEntry(:key, :value) in decoded.entries)
+        if (key.toString().contains('SECRET') && '$value'.trim().isNotEmpty)
+          key.toString(),
+    ];
+  }
 }

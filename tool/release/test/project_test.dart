@@ -18,4 +18,29 @@ void main() {
       expect(Project.nextBuild(2026093001, day), 2026093002);
     });
   });
+
+  group('forbiddenDefines', () {
+    test('client id alone is fine', () {
+      expect(
+        Project.forbiddenDefines('{"KICK_OAUTH_CLIENT_ID": "abc"}'),
+        isEmpty,
+      );
+    });
+
+    test('a non-empty secret is refused', () {
+      expect(
+        Project.forbiddenDefines(
+          '{"KICK_OAUTH_CLIENT_ID": "abc", "KICK_OAUTH_CLIENT_SECRET": "s"}',
+        ),
+        ['KICK_OAUTH_CLIENT_SECRET'],
+      );
+    });
+
+    test('an empty secret is fine', () {
+      expect(
+        Project.forbiddenDefines('{"KICK_OAUTH_CLIENT_SECRET": " "}'),
+        isEmpty,
+      );
+    });
+  });
 }

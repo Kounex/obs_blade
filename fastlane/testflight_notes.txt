@@ -5,7 +5,7 @@ ACTIVITY FEED (Pro)
 - Chat tab: Chat | Activity switch, the bell with the unseen count in the chat header, the "N new" chip in streaming mode, side by side on iPad
 - A real follow, sub, cheer and raid each arrive once - swipe marks thanked, big ones wait in "To thank"
 - Kick: follows / KICKs / subs that came in while the app was closed show up on the next open
-- Kick sign-in (first real sign-in on the new login callback)
+- Kick sign-in: the browser should say "Signed in" and the app picks it up by itself (build 2026100301 failed here)
 
 TEXT-TO-SPEECH (Pro)
 - Speaker in the native chat header: tap on/off, long press for settings

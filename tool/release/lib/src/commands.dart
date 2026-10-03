@@ -151,11 +151,22 @@ class Release {
       'HEAD is pushed (origin/$branch)',
       'git push',
     );
+    final kickDefines = File(project.kickOauthDefines);
     check(
-      File(project.kickOauthDefines).existsSync(),
+      kickDefines.existsSync(),
       'app-owned Kick OAuth client present',
       'docs/private/kick_oauth.json',
     );
+    if (kickDefines.existsSync()) {
+      final forbidden = Project.forbiddenDefines(
+        kickDefines.readAsStringSync(),
+      );
+      check(
+        forbidden.isEmpty,
+        'no secrets in the Kick defines',
+        'remove ${forbidden.join(', ')} from docs/private/kick_oauth.json',
+      );
+    }
     check(
       (await Process.run('bundle', [
             'exec',
