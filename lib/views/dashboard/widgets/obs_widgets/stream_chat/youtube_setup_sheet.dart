@@ -25,6 +25,15 @@ import 'youtube_device_code_dialog.dart';
 /// working key regardless of the video's live state, 400/403 for a bad one.
 const String kYouTubeApiKeyProbeVideoId = 'dQw4w9WgXcQ';
 
+/// YouTube Data API v3 in the Cloud Console library (the Enable button) -
+/// the console opens it in the last used project
+const String kYouTubeApiLibraryUrl =
+    'https://console.cloud.google.com/apis/library/youtube.googleapis.com';
+
+/// The API's own Credentials page (API keys and OAuth clients)
+const String kYouTubeApiCredentialsUrl =
+    'https://console.cloud.google.com/apis/api/youtube.googleapis.com/credentials';
+
 /// Opens the native YouTube chat setup sheet — the single entry point for
 /// the "unconfigured" CTAs (empty state, account control, options sheet).
 Future<void> showYouTubeSetupSheet(BuildContext context) =>
@@ -347,12 +356,16 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     );
   }
 
-  /// Link out to the Google Cloud Console
-  Widget _consoleLink(BuildContext context) {
+  /// Link out to a Google Cloud Console page
+  Widget _consoleLink(
+    BuildContext context, {
+    required String url,
+    required String label,
+  }) {
     return Pressable(
       haptic: true,
       onTap: () async {
-        final uri = Uri.parse('https://console.cloud.google.com');
+        final uri = Uri.parse(url);
         if (await launcher.canLaunchUrl(uri)) {
           await launcher.launchUrl(
             uri,
@@ -375,7 +388,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
             ),
             const SizedBox(width: AppSpacing.xs),
             Text(
-              'Open console.cloud.google.com',
+              label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color:
                     (Theme.of(context).extension<AppTextColors>() ??
@@ -411,6 +424,52 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
     );
   }
 
+  /// How to get an OAuth client - the Google Cloud Console path as it is
+  /// laid out today (Credentials of the YouTube API, the consent screen in
+  /// Google Auth Platform first, a test user, the TV client type)
+  List<Widget> _signInSteps(BuildContext context) {
+    return [
+      this._stepRow(
+        context,
+        '1',
+        'Open the Credentials page of the YouTube Data API v3 (link below) in the project of your API key',
+      ),
+      this._stepRow(
+        context,
+        '2',
+        'Create credentials → OAuth client ID. Google asks for the consent screen first: "Configure consent screen" → Get started, any app name (e.g. OBS Blade), your email, audience "External", accept and Create',
+      ),
+      this._stepRow(
+        context,
+        '3',
+        'Under Audience → Test users, add the Google account of your YouTube channel',
+      ),
+      this._stepRow(
+        context,
+        '4',
+        'Back on Credentials: Create credentials → OAuth client ID, type "TVs and Limited Input devices", Create',
+      ),
+      this._stepRow(
+        context,
+        '5',
+        'Copy the client ID and client secret into the fields below',
+      ),
+      this._consoleLink(
+        context,
+        url: kYouTubeApiCredentialsUrl,
+        label: 'Open YouTube Data API credentials',
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        'Tip: while the app is in "Testing", Google signs you out after 7 '
+        'days. "Publish app" under Audience keeps you signed in - Google '
+        'then shows an "unverified app" note during sign-in that you can '
+        'continue past.',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    ];
+  }
+
   /// Sign-in sheet body: why, how, the two fields, Save / Save & connect
   List<Widget> _signInBody(BuildContext context, Color accent) {
     return [
@@ -421,18 +480,7 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
         style: Theme.of(context).textTheme.bodyMedium,
       ),
       const SizedBox(height: AppSpacing.sm),
-      this._stepRow(
-        context,
-        '1',
-        'In the Google Cloud project of your API key, set up the OAuth consent screen and add your Google account as a test user',
-      ),
-      this._stepRow(
-        context,
-        '2',
-        'Create an OAuth client (Credentials → Create credentials → OAuth client ID) of the type "TVs and Limited Input devices"',
-      ),
-      this._stepRow(context, '3', 'Paste its client id and secret below'),
-      this._consoleLink(context),
+      ...this._signInSteps(context),
       const SizedBox(height: AppSpacing.md),
       this._clientFields(context, accent),
       const SizedBox(height: AppSpacing.md),
@@ -522,19 +570,23 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                       this._stepRow(
                         context,
                         '1',
-                        'Open the Google Cloud Console and create (or select) a project',
+                        'Open the YouTube Data API v3 page (link below), create or pick a project and press Enable',
                       ),
                       this._stepRow(
                         context,
                         '2',
-                        'Enable the "YouTube Data API v3" for that project',
+                        'On that API page open Credentials → Create credentials → API key',
                       ),
                       this._stepRow(
                         context,
                         '3',
-                        'Create an API key (Credentials → Create credentials) and paste it below',
+                        'Paste the key below and test it',
                       ),
-                      this._consoleLink(context),
+                      this._consoleLink(
+                        context,
+                        url: kYouTubeApiLibraryUrl,
+                        label: 'Open YouTube Data API v3',
+                      ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Tip: add a channel (@handle or channel link) instead of a '
@@ -585,12 +637,12 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
                           children: [
                             Text(
                               'Reading chat works with the API key alone. Sending '
-                              'messages and moderating need a Google OAuth "TVs and '
-                              'Limited Input" client - create one in the same console '
-                              '(Credentials → Create credentials → OAuth client ID) '
-                              'and paste its credentials here.',
+                              'messages, moderating and your own chat as "You" '
+                              'need a sign-in with your own Google OAuth client:',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
+                            const SizedBox(height: AppSpacing.sm),
+                            ...this._signInSteps(context),
                             const SizedBox(height: AppSpacing.sm),
                             this._clientFields(context, accent),
                           ],

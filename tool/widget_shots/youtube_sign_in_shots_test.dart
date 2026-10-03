@@ -57,4 +57,21 @@ void main() {
       size: const Size(320, 640),
     );
   });
+
+  testWidgets('full setup sheet', (tester) async {
+    await harness.shot(
+      tester,
+      'youtube_setup_sheet_full',
+      Builder(
+        builder: (context) => Align(
+          alignment: Alignment.bottomCenter,
+          child: Material(
+            color: Theme.of(context).cardColor,
+            child: YouTubeSetupSheet(hostContext: context),
+          ),
+        ),
+      ),
+      size: const Size(390, 1100),
+    );
+  });
 }

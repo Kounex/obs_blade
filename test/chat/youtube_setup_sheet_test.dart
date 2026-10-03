@@ -471,6 +471,10 @@ void main() {
         await tester.tap(find.text('open'));
         await tester.pumpAndSettle();
 
+        await tester.ensureVisible(
+          find.byKey(const Key('youtube-sign-in-connect')),
+        );
+        await tester.pump();
         await tester.tap(find.byKey(const Key('youtube-sign-in-connect')));
         await tester.pumpAndSettle();
         expect(find.text('YouTube sign-in'), findsOneWidget);
@@ -482,6 +486,10 @@ void main() {
         /// The fake resolves the client the way the real service would -
         /// from what was just saved
         authService.clientId = 'cid';
+        await tester.ensureVisible(
+          find.byKey(const Key('youtube-sign-in-connect')),
+        );
+        await tester.pump();
         await tester.tap(find.byKey(const Key('youtube-sign-in-connect')));
         await tester.pump();
 
@@ -496,6 +504,7 @@ void main() {
         expect(settingsBox().get(SettingsKeys.YouTubeApiKey.name), 'key');
         expect(find.text('Read-only for now'), findsNothing);
         expect(store.authState, isNot(YouTubeAuthState.unconfigured));
+
         /// The device-code dialog spins while it polls - pump, don't settle
         for (var i = 0; i < 5; i++) {
           await tester.pump(const Duration(milliseconds: 200));

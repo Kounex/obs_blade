@@ -48,6 +48,16 @@ id configured"; the bar pill kept reopening that.
   project, not a YouTube account (`channels.list?mine=true` is OAuth-only).
 - Tests in `youtube_setup_sheet_test.dart`, shots
   `tool/widget_shots/youtube_sign_in_shots_test.dart`.
+- Follow-up (first real setup hit "configure your consent screen
+  first"): the steps now follow today's console - the API's own
+  Credentials page (`kYouTubeApiCredentialsUrl`), consent screen via
+  Google Auth Platform "Get started" (External), Audience → Test users,
+  then the "TVs and Limited Input devices" client; the API key steps link
+  the API's library page (Enable). Same steps in the full sheet's advanced
+  section. Tip: "Testing" apps get 7-day refresh tokens (Google OAuth
+  docs) - "Publish app" avoids weekly sign-outs. Verified: the `youtube`
+  scope is on Google's device-flow allow list; the token poll needs the
+  client secret.
 
 ## 2026-10-03 - Kick sign-in: client secret was compiled into store builds
 
