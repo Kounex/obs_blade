@@ -9,14 +9,14 @@ picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
 Details: `changelog-agent.md` 2026-09-24 / 25 entries).
 
-**Update 2026-10-03 — 4.1.0 beta for dogfooding:** build **2026100302**
-on TestFlight + Play internal (2026100301 had the Kick client secret
-compiled in - sign-in broke; see changelog "Kick sign-in: client secret").
+**Update 2026-10-03 — 4.1.0 beta for dogfooding:** build **2026100303**
+on TestFlight + Play internal (verified `VALID` / internal, no secret in
+either binary; 2026100301 had the Kick client secret compiled in - see
+changelog "Kick sign-in: client secret"; 2026100302 lacked the YouTube
+read-only fix).
 **Kick client secret rotated 2026-10-03** (server side verified, see
 changelog); new builds never carry it (`release preflight` guard).
-Since build 2026100302, `master` also has the YouTube read-only fix
-(not in a build yet).
-Build 2026100302: activity feed, TTS,
+Build 2026100303: activity feed, TTS, YouTube read-only setup flow,
 canvases, plus paywall cards / FAQ / store listings / release notes for
 them (details: `changelog-agent.md` 2026-10-03 "4.1.0 beta"). The Play
 "what's new" is locked for this build. Nothing submitted; 4.0.1 is still
