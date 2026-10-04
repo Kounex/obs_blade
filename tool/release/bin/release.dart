@@ -24,7 +24,8 @@ Usage: release <command> [ios|android] [--yes]
   metadata ios|android        listing text + screenshots
   preview ios <file.mp4> [--poster 5]   iPhone App Preview (en-US)
   submit ios                  attach the build (+ subscriptions), submit for review
-  publish ios                 release the approved version (manual release)
+  publish ios [--version 4.0.1]   release the approved version (manual
+                              release; default: pubspec's version)
   promote android [--rollout 1.0]   internal -> production
   halt android                halt the production rollout
 
@@ -36,6 +37,7 @@ Future<void> main(List<String> argv) async {
     ..addFlag('yes', negatable: false)
     ..addOption('rollout', defaultsTo: '1')
     ..addOption('poster', defaultsTo: '5')
+    ..addOption('version')
     ..addFlag('help', abbr: 'h', negatable: false);
   final args = parser.parse(argv);
   final rest = args.rest;
@@ -85,7 +87,10 @@ Future<void> main(List<String> argv) async {
             }(),
     ).$2,
     'submit' => (needPlatform({'ios'}), await release.submit()).$2,
-    'publish' => (needPlatform({'ios'}), await release.publish()).$2,
+    'publish' => (
+      needPlatform({'ios'}),
+      await release.publish(args['version'] as String?),
+    ).$2,
     'promote' => (
       needPlatform({'android'}),
       await release.promote(args['rollout'] as String),

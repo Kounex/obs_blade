@@ -564,8 +564,10 @@ class Release {
   }
 
   /// Releases the approved version (manual release) to everyone.
-  Future<int> publish() async {
-    final v = project.version;
+  /// [versionName] defaults to pubspec's - pass it when the repo already
+  /// moved on to the next version while this one waited for review.
+  Future<int> publish([String? versionName]) async {
+    final v = (name: versionName ?? project.version.name);
     final asc = AppStore.connect();
     final version = await asc.version(v.name);
     final state = version == null
