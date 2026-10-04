@@ -101,8 +101,8 @@ auth subscription.
 - `eventSubscriptions: EventSubscription.appDefault` (all categories +
   `InputVolumeMeters`)
 
-See also [`websocket-connect-audit.md`](websocket-connect-audit.md) for
-handshake hardening and failure mapping.
+See also [`archive/websocket-connect-audit.md`](archive/websocket-connect-audit.md)
+for handshake hardening and failure mapping.
 
 
 ## Connection lifecycle
@@ -178,6 +178,31 @@ works for current recipes; fragile if two batch kinds share the same type set.
 Typed helpers: `StatsBatchResponse`, `InputsBatchResponse`,
 `FilterListBatchResponse`, etc.
 
+### Command-ack layer (mutations)
+
+`makeRequest` is fire-and-forget (void) — fine for polling reads, wrong for
+mutations. Mutations go through `DashboardStore.sendMutation` /
+`sendBatchMutation`: `NetworkHelper` keeps a static `_pendingByUUID` map of
+completers keyed by requestId (symmetric to `_requestBodyByUUID`); the
+central response dispatch completes them, and a ~10s timeout counts as
+failure. A definitive failure (rejected `requestStatus` or timeout) triggers
+a re-read of the matching `Get*` so confirmed state self-heals, plus a deduped
+failure toast (settings kill-switch, default on; storms aggregate into one).
+Continuous controls: slider **ticks** stay fire-and-forget, the `onChangeEnd`
+commit rides the acked path — socket order makes the final write win. Ack
+DTO: `lib/types/classes/obs_request_ack.dart` (`ObsRequestAck.notSent` —
+returned when a send was refused, e.g. while stale — skips both the re-read
+and the toast).
+
+### Canvas-scoped requests
+
+`NetworkHelper.makeScopedRequest` sends a request on behalf of a non-main
+canvas (e.g. Aitum Vertical) and awaits its ack with `responseData`;
+`DashboardStore._handleResponse` **skips** scoped responses, so they never
+touch main-canvas state. `CanvasViewStore` (per dashboard view) uses them for
+canvas-scene reads, keyed by UUID. Details:
+[`obs-protocol-gotchas.md`](obs-protocol-gotchas.md).
+
 ## Receiving messages
 
 ```dart
@@ -208,40 +233,22 @@ Freezed API models (`lib/types/classes/api/`) are for **objects inside**
 responseData, plus app-only fields (e.g. `SceneItem.displayGroup`,
 `Input.inputMuted` defaults).
 
-## Request inventory (what exists in code)
+## Request & event catalogs
 
-`RequestType` documents parameters in comments. Rough split:
+The catalogs live in code — treat these as the source of truth (this doc
+deliberately doesn't enumerate them):
 
-**Getters with response classes** under `classes/stream/responses/`  
-(GetVersion, GetSceneList, GetInputList, GetInputVolume/Mute,
-GetSpecialInputs, GetSceneTransitionList, GetCurrentSceneTransition,
-GetSourceScreenshot, SaveSourceScreenshot, GetRecordDirectory,
-GetRecordStatus, GetStreamStatus, GetStudioModeEnabled,
-GetSceneCollectionList, GetProfileList, GetReplayBufferStatus,
-GetSceneItemList, GetGroupSceneItemList, GetInputDefaultSettings,
-GetStats, GetVirtualCamStatus, GetHotkeyList, GetInputAudioSyncOffset,
-GetSourceFilterList, GetSourceFilterDefaultSettings).
+- `lib/types/enums/request_type.dart` — every request the app can send,
+  parameters documented in comments per value. Enum `.name` **is** the wire
+  `requestType` string.
+- `lib/types/enums/event_type.dart` — every event the app knows; `.name`
+  **is** the wire `eventType` string. Typed wrappers under
+  `classes/stream/events/`; unknown events decode to `null` and log NOT
+  HANDLED.
 
-**Setters / toggles (no response class)**  
-SetCurrentProgramScene, SetCurrentPreviewScene, SetInputVolume/Mute,
-SetSceneItemEnabled, ToggleStream/Record/RecordPause/ReplayBuffer/VirtualCam,
-PlayPauseMedia, SetCurrentSceneTransition(+Duration), SetStudioModeEnabled,
-TransitionToProgram, SetCurrentSceneCollection/Profile, SaveReplayBuffer,
-TriggerHotkeyByName, SetInputAudioSyncOffset, SetSourceFilterEnabled/Settings.
-
-Not every official obs-websocket request exists — **by design**. Add only when
-a feature needs it (enum + optional response class + dashboard/UI wiring).
-
-## Event inventory
-
-`EventType` names must **exactly** match protocol `eventType` strings (Dart
-enum `.name`). Typed files under `classes/stream/events/`.
-
-**Actively used in `DashboardStore._handleEvent` today** (non-exhaustive but
-practical): ReplayBuffer/VirtualCam state, scene collection changing/changed +
-list, profile changed/list, transition changed/duration, studio mode,
-program/preview scene, scene item create/remove/reindex/enable, input
-name/volume/mute/meters/sync, filter enable, ExitStarted.
+Not every official obs-websocket request exists — **by design**. Add only
+when a feature needs it (enum + optional response class + dashboard/UI
+wiring).
 
 **Stream/Record state events exist as classes** (`StreamStateChanged`,
 `RecordStateChanged`) but the corresponding switch cases in the dashboard are
@@ -261,16 +268,45 @@ Some enum names or event **classes** still look like WebSocket **4.x**:
 `EventType.SceneListChanged` matches the protocol (renamed from the old
 `ScenesChanged` miss). Stream/Record UI state is driven by the Stats batch,
 not `StreamStateChanged` / `RecordStateChanged` — see
-[`dashboard-store-websocket-audit.md`](dashboard-store-websocket-audit.md).
+[`archive/dashboard-store-websocket-audit.md`](archive/dashboard-store-websocket-audit.md).
 
 
 When adding an event: **name the enum exactly like the protocol**, add a
 typed class with **camelCase v5 field names**, handle in dashboard (or a future
 split store).
 
+## Read ordering (events beat stale reads)
+
+`lib/utils/event_read_ordering.dart` (`EventOrdering`) guarantees that a slow
+`Get*` response never overwrites state a newer event already set. Each read
+send captures an `(epoch, seq)` tag **per individual send** into a per-target
+FIFO queue (the socket answers in send order; each response pops its send's
+tag); at apply time a read lands only if no event for that key arrived after
+the tag was captured. `newEpoch()` (reconnect, scene-collection / scene-list /
+name changes) kills all in-flight tags. `DashboardStore` holds instances for
+scenes (program / preview / studio mode), scene-item visibility, and audio
+volume/mute, gating each apply field-by-field. UX stays optimistic — no
+pending indicators.
+
+## Stale-state honesty (reconnect)
+
+While the reconnect loop runs, displayed values may not reflect OBS and
+mutations can't be delivered. `DashboardStore.obsStateStale` (driven by
+`reconnecting`) is the single predicate: `sendMutation` early-returns with
+`ObsRequestAck.notSent` (nothing on the wire, no re-read, no toast),
+`StaleGuard` disables the OBS controls, and the Scenes / Scene Items / Audio
+pane headers show a "LAST KNOWN" `StaleStateBadge`. Values are **never
+dimmed, hidden, or recolored** — the badge and the locked controls carry the
+signal; the reconnect burst re-confirms everything.
+
+Full designs (historical, archived):
+`archive/specs/2026-09-14-command-ack-layer-design.md`,
+`archive/specs/2026-09-18-confirmed-state-ordering-design.md`,
+`archive/specs/2026-09-20-stale-state-honesty-design.md`.
+
 ## DashboardStore (consumer hub)
 
-Path: `lib/stores/views/dashboard.dart` (~1.7k lines). Author note: **could be
+Path: `lib/stores/views/dashboard.dart`. Author note: **could be
 split later; do not refactor casually** — it is the live control plane for
 500k+ users’ sessions.
 
@@ -290,9 +326,9 @@ Responsibilities lumped together:
 UI generally:
 
 - **Reads** store via `GetIt.instance<DashboardStore>()` + MobX `Observer`
-- **Writes** to OBS via `NetworkHelper.makeRequest` directly from widgets
-  (volume sliders, scene buttons, toggles) — store then converges via events /
-  follow-up Gets
+- **Writes** to OBS via `DashboardStore.sendMutation` (ack-waiting mutations)
+  or `NetworkHelper.makeRequest` (fire-and-forget reads/slider ticks) — the
+  store then converges via events / follow-up Gets
 
 Dashboard is registered as a **lazy singleton** and **reset** when entering the
 dashboard view so each session starts clean.
@@ -347,7 +383,8 @@ Both listen to the broadcast socket stream independently after connect.
 ## Out of scope here
 
 - Hive persistence / upgrade (see other `docs/` entries)
-- Chat (Twitch/YouTube/Owncast WebViews) — not OBS WebSocket
+- Chat — WebView embeds plus native Twitch / YouTube / Kick engines; not OBS
+  WebSocket (see `docs/chat-*.md`)
 - Purchases / themes / intro
 
 Personal author notes may be appended later; prefer updating **this** doc when
