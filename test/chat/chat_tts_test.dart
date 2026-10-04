@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
+import 'package:obs_blade/utils/chat_tts/chat_tts_adapters.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_combine.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_phrases.dart';
 import 'package:obs_blade/utils/chat_tts/chat_tts_queue.dart';
@@ -127,6 +128,25 @@ void main() {
       expect(
         _say(message, settings: const ChatTtsSettings(skipEmotes: false)),
         'Viewer: nice Kappa play OMEGALUL :hand-pink-waving: gg',
+      );
+    });
+
+    test('YouTube :codes: are emote parts (emote-only, skip rules)', () {
+      final parts = youTubeTtsParts(
+        'gg :yt::medal-yellow-first-red: at 10:30:45',
+      );
+      expect(
+        [for (final p in parts) (p.text, p.isEmote)],
+        [
+          ('gg ', false),
+          ('yt', true),
+          ('medal-yellow-first-red', true),
+          (' at 10:30:45', false),
+        ],
+      );
+      expect(
+        _say(_msg('', parts: youTubeTtsParts(':face-blue-smiling: :yt:'))),
+        isNull,
       );
     });
 

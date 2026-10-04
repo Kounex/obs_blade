@@ -2,6 +2,7 @@ import '../../models/enums/chat_type.dart';
 import '../../types/classes/kick/kick_chat_message.dart';
 import '../../types/classes/twitch/eventsub/channel_chat_message.dart';
 import '../../types/classes/youtube/youtube_chat_message.dart';
+import '../youtube/youtube_emoji.dart';
 import 'chat_tts_utterance.dart';
 
 /// Twitch EventSub row → [ChatTtsMessage]. Emote / cheermote fragments
@@ -51,12 +52,30 @@ ChatTtsMessage? chatTtsFromYouTube(
     platform: ChatType.YouTube,
     author: author,
     authorNames: [author],
-    parts: [ChatTtsPart.text(message.copyText)],
+    parts: youTubeTtsParts(message.copyText),
     isModerator: message.isModerator,
     isBroadcaster: message.isOwner,
     isOwn: selfChannelId != null && message.authorChannelId == selfChannelId,
     selfNames: selfNames,
   );
+}
+
+/// YouTube text → parts: every `:code:` (YouTube's emojis and channels'
+/// member emojis - the API sends only the code) is an emote part, so
+/// "skip emotes" / emote-only rules apply instead of reading it out.
+List<ChatTtsPart> youTubeTtsParts(String text) {
+  final parts = <ChatTtsPart>[];
+  var cursor = 0;
+  for (final match in kYouTubeEmojiCodePattern.allMatches(text)) {
+    if (match.start > cursor) {
+      parts.add(ChatTtsPart.text(text.substring(cursor, match.start)));
+    }
+    final code = match.group(0)!;
+    parts.add(ChatTtsPart.emote(code.substring(1, code.length - 1)));
+    cursor = match.end;
+  }
+  if (cursor < text.length) parts.add(ChatTtsPart.text(text.substring(cursor)));
+  return parts;
 }
 
 /// Kick row → [ChatTtsMessage]. `[emote:id:name]` tokens become emote

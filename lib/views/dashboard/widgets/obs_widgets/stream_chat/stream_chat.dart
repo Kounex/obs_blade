@@ -43,6 +43,7 @@ import 'chat_completion_sources.dart';
 import 'combined_chat_input.dart';
 import 'chat_emote_picker.dart';
 import 'kick_emote_picker.dart';
+import 'youtube_emote_picker.dart';
 import 'kick_chat_mode_strip.dart';
 import 'kick_reply_strip.dart';
 import 'kick_setup_sheet.dart';
@@ -762,6 +763,10 @@ class _StreamChatState extends State<StreamChat>
                 ? NativeChatInput(
                     controller: this._chatInputController,
                     focusNode: this._chatInputFocusNode,
+                    leading: YouTubeEmotePickerButton(
+                      controller: this._chatInputController,
+                      focusNode: this._chatInputFocusNode,
+                    ),
                     canSend: signedIn && youTubeStore.canWrite,
                     inFlight: youTubeStore.sendingChat,
                     errorText: youTubeStore.sendChatError,

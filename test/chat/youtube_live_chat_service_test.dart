@@ -316,7 +316,10 @@ void main() {
     test('parses liveStreamingDetails.activeLiveChatId', () async {
       final client = MockClient((request) async {
         expect(request.url.path, '/youtube/v3/videos');
-        expect(request.url.queryParameters['part'], 'liveStreamingDetails');
+        expect(
+          request.url.queryParameters['part'],
+          'snippet,liveStreamingDetails',
+        );
         expect(request.url.queryParameters['id'], 'video-1');
         expect(request.url.queryParameters['key'], 'api-key-1');
         return http.Response(

@@ -38,6 +38,7 @@ import 'stores/views/canvas_view.dart';
 import 'stores/views/chat_tts.dart';
 import 'stores/views/combined_chat.dart';
 import 'stores/views/activity.dart';
+import 'stores/views/youtube_emojis.dart';
 import 'stores/views/kick_chat.dart';
 import 'stores/views/kick_emotes.dart';
 import 'stores/views/logs.dart';
@@ -158,6 +159,13 @@ void _initializeStores() {
   );
   GetIt.instance.registerLazySingleton<ChatTtsStore>(
     () => ChatTtsStore(),
+    dispose: (store) => store.dispose(),
+  );
+
+  /// YouTube chat emojis (bundled set + learned) - light, no network on
+  /// its own
+  GetIt.instance.registerLazySingleton<YouTubeEmojiStore>(
+    () => YouTubeEmojiStore()..init(),
     dispose: (store) => store.dispose(),
   );
   GetIt.instance.registerLazySingleton<ActivityStore>(

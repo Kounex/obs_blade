@@ -35,6 +35,28 @@ class KickEmotePickerButton extends StatelessWidget {
   });
 
   @override
+  Widget build(BuildContext context) => EmotePickerDockButton(
+    focusNode: this.focusNode,
+    sheet: (context) => KickEmotePickerSheet(
+      controller: this.controller,
+      accentColor: this.accentColor,
+    ),
+  );
+}
+
+/// The smiley dock button that opens an emote picker sheet ([sheet]
+/// returns true when it applied a draft) and puts the focus back.
+class EmotePickerDockButton extends StatelessWidget {
+  final FocusNode focusNode;
+  final WidgetBuilder sheet;
+
+  const EmotePickerDockButton({
+    super.key,
+    required this.focusNode,
+    required this.sheet,
+  });
+
+  @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: 'Emotes',
@@ -47,10 +69,7 @@ class KickEmotePickerButton extends StatelessWidget {
             barrierDismissible: true,
             enableDrag: true,
             maxHeightFraction: 0.85,
-            builder: (context) => KickEmotePickerSheet(
-              controller: this.controller,
-              accentColor: this.accentColor,
-            ),
+            builder: this.sheet,
           );
           if ((applied ?? false) && this.focusNode.canRequestFocus) {
             this.focusNode.requestFocus();

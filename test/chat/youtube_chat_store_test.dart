@@ -3,6 +3,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:obs_blade/stores/views/youtube_emojis.dart';
+
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
@@ -408,6 +413,38 @@ void main() {
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
       expect(store.messages.map((m) => m.id), ['m1', 'm2', 'm3', 'm4']);
       expect(chatService.listPageTokens, [null, 't1', null]);
+    });
+
+    test('emojis: attaching reads the chat page once; an unknown code in a '
+        'message waits for the 2-minute limit', () async {
+      final pages = <Uri>[];
+      final emojis = YouTubeEmojiStore(
+        client: MockClient((request) async {
+          pages.add(request.url);
+          return http.Response('<html></html>', 200);
+        }),
+        persistence: MemoryYouTubeEmojiPersistence(),
+      );
+      GetIt.instance.registerSingleton<YouTubeEmojiStore>(emojis);
+      addTearDown(() async {
+        emojis.dispose();
+        await GetIt.instance.reset();
+      });
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.addAll([
+        page([ytMessage('m1', text: 'gg :zz-test-only-medal:')]),
+      ]);
+
+      await store.init();
+      await until(() => pages.isNotEmpty);
+      expect(pages.single.queryParameters['v'], 'video-a-001');
+
+      /// The unknown code's read is held by the per-stream limit
+      await Future<void>.delayed(
+        kYouTubeEmojiUnknownDebounce + const Duration(milliseconds: 100),
+      );
+      expect(pages, hasLength(1));
     });
 
     test('liveMessages skips the first (history) page', () async {

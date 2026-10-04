@@ -14,6 +14,7 @@ import 'chat_emote_picker.dart';
 import 'chat_type_brand.dart';
 import 'combined_sources_sheet.dart';
 import 'kick_emote_picker.dart';
+import 'youtube_emote_picker.dart';
 import 'kick_reply_strip.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_input.dart';
@@ -71,6 +72,10 @@ class CombinedChatInput extends StatelessWidget {
             controller: this.controller,
             focusNode: this.focusNode,
             accentColor: accent,
+          ),
+          ChatType.YouTube => YouTubeEmotePickerButton(
+            controller: this.controller,
+            focusNode: this.focusNode,
           ),
           _ => null,
         };

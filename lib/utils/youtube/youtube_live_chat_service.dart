@@ -72,10 +72,15 @@ class YouTubeLiveStreamingDetails {
   /// it went live
   final DateTime? actualStartTime;
 
+  /// The broadcasting channel (`snippet.channelId`) - its member emojis
+  /// are the ones usable in this chat
+  final String? channelId;
+
   const YouTubeLiveStreamingDetails({
     this.liveChatId,
     this.concurrentViewers,
     this.actualStartTime,
+    this.channelId,
   });
 }
 
@@ -446,7 +451,8 @@ class YouTubeLiveChatService {
   }) async {
     final response = await this._client.get(
       this._uri('videos', {
-        'part': 'liveStreamingDetails',
+        /// videos.list costs 1 unit whatever the parts
+        'part': 'snippet,liveStreamingDetails',
         'id': videoId,
       }, apiKey: apiKey),
       headers: this._headers(accessToken: accessToken),
@@ -459,8 +465,9 @@ class YouTubeLiveChatService {
     if (items is! List || items.isEmpty) {
       return const YouTubeLiveStreamingDetails();
     }
-    final details =
-        (items.first as Map<String, dynamic>)['liveStreamingDetails'];
+    final item = items.first as Map<String, dynamic>;
+    final channelId = (item['snippet'] as Map?)?['channelId'] as String?;
+    final details = item['liveStreamingDetails'];
     if (details is! Map<String, dynamic>) {
       return const YouTubeLiveStreamingDetails();
     }
@@ -477,6 +484,7 @@ class YouTubeLiveChatService {
       actualStartTime: DateTime.tryParse(
         '${details['actualStartTime'] ?? ''}',
       )?.toUtc(),
+      channelId: channelId,
     );
   }
 

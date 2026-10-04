@@ -14,6 +14,7 @@ import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/stores/views/youtube_emojis.dart';
 import 'package:obs_blade/utils/activity/activity_mappers.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
@@ -196,6 +197,9 @@ class _ChannelBuffer {
   /// Video the current [liveChatId] belongs to (resolved per stream for
   /// channel entries).
   String? videoId;
+
+  /// Channel broadcasting [videoId] (its member emojis work here)
+  String? channelId;
 
   /// Last video whose chat ended — a channel's `/live` page can keep
   /// pointing at the finished stream for a while, so re-resolving to it
@@ -393,6 +397,18 @@ abstract class _YouTubeChatStore with Store {
   /// id for video entries, the resolved stream for channel entries).
   @observable
   String? selectedLiveVideoId;
+
+  /// Channel broadcasting [selectedLiveVideoId] - whose member emojis the
+  /// picker offers. Plain read (the picker reads it when it opens).
+  String? get selectedLiveChannelId => this.selectedLiveVideoId == null
+      ? null
+      : this._channelBuffers[this.selectedChannelLabel]?.channelId;
+
+  /// The emoji catalog, when registered (tests without it skip emojis)
+  YouTubeEmojiStore? get _emojis =>
+      GetIt.instance.isRegistered<YouTubeEmojiStore>()
+      ? GetIt.instance<YouTubeEmojiStore>()
+      : null;
 
   /// True after a [YouTubeQuotaExceededException] stopped the poll loop —
   /// polling restarts on its own after the midnight-PT quota reset
@@ -1173,6 +1189,7 @@ abstract class _YouTubeChatStore with Store {
         );
         buffer.liveChatId = resolved.liveChatId;
         buffer.viewerCount = resolved.concurrentViewers;
+        buffer.channelId = resolved.channelId;
       } on YouTubeQuotaExceededException catch (e) {
         if (superseded()) return _PassOutcome.stopped;
         quotaExhausted(e);
@@ -1205,6 +1222,11 @@ abstract class _YouTubeChatStore with Store {
       runInAction(() {
         this.selectedChannelViewerCount = buffer.viewerCount;
         this.selectedLiveVideoId = buffer.videoId;
+        final videoId = buffer.videoId;
+
+        /// Attached: learn this chat's emojis (member ones too) - rate
+        /// limited, quota-free
+        if (videoId != null) unawaited(this._emojis?.learn(videoId));
       });
     }
 
@@ -1418,6 +1440,10 @@ abstract class _YouTubeChatStore with Store {
             this.messages.removeAt(0);
           }
           this._emitActivity(label, item);
+          this._emojis?.noteText(
+            item.copyText,
+            videoId: this._channelBuffers[label]?.videoId,
+          );
           if (!item.isHistorical &&
               this.selectedChannelLabel == label &&
               !this._liveMessages.isClosed) {

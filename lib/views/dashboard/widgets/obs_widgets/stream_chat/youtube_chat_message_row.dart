@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
@@ -11,6 +12,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_l
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_emoji_spans.dart';
 
 /// YouTube's published Super Chat / Super Sticker tier color table
 /// (support.google.com/youtube/answer/7277005 — tiers map to price bands,
@@ -268,14 +270,17 @@ class YouTubeChatMessageRow extends StatelessWidget {
     );
   }
 
-  List<InlineSpan> _messageSpans(BuildContext context) => chatLinkTextSpans(
+  List<InlineSpan> _messageSpans(BuildContext context) => youTubeEmojiTextSpans(
     context,
     ChatFilterSettings.of(this.settingsBox).display(
       this.message.snippet.textMessageDetails?.messageText ??
           this.message.displayText ??
           '',
     ),
+    emojiSize: this._emojiSize,
   );
+
+  double get _emojiSize => NativeChatAppearance.emoteSize(this.settingsBox);
 
   /// Tombstone treatment — the content stays visible but dims (same UX
   /// as the Twitch row), with the italic marker appended.
@@ -469,7 +474,11 @@ class YouTubeChatMessageRow extends StatelessWidget {
                 Text.rich(
                   TextSpan(
                     style: baseStyle,
-                    children: chatLinkTextSpans(context, comment),
+                    children: youTubeEmojiTextSpans(
+                      context,
+                      comment,
+                      emojiSize: this._emojiSize,
+                    ),
                   ),
                 ),
               ],
@@ -558,7 +567,11 @@ class YouTubeChatMessageRow extends StatelessWidget {
           amountDisplayString: details?.amountDisplayString,
           bodySpans: comment == null
               ? const []
-              : chatLinkTextSpans(context, comment),
+              : youTubeEmojiTextSpans(
+                  context,
+                  comment,
+                  emojiSize: this._emojiSize,
+                ),
         );
       case YouTubeChatMessageType.superSticker:
 
@@ -678,9 +691,19 @@ class YouTubeChatMessageRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    /// A code in the text: watch the emoji catalog, so one learned after
+    /// the row was built swaps in its image
+    final text =
+        this.message.snippet.textMessageDetails?.messageText ??
+        this.message.snippet.superChatDetails?.userComment ??
+        this.message.snippet.memberMilestoneChatDetails?.userComment ??
+        this.message.displayText ??
+        '';
     final padded = Padding(
       padding: EdgeInsets.symmetric(vertical: this._spacing),
-      child: this._buildByType(context),
+      child: mayHaveYouTubeEmoji(text) && youTubeEmojiStoreOrNull() != null
+          ? Observer(builder: (context) => this._buildByType(context))
+          : this._buildByType(context),
     );
 
     Widget child;
