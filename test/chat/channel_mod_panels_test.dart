@@ -448,6 +448,21 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('search-kick:k-1')), findsNothing);
       expect(find.byKey(const Key('search-youtube:yt-1')), findsOneWidget);
+      expect(find.byKey(const Key('chat-search-hidden-hint')), findsOneWidget);
+
+      /// "Show hidden messages": the ignored user's match comes back,
+      /// dimmed, and the hint goes
+      await tester.tap(find.byKey(const Key('chat-search-show-hidden')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('search-kick:k-1')), findsOneWidget);
+      expect(
+        find.ancestor(
+          of: find.byKey(const Key('search-kick:k-1')),
+          matching: find.byType(Opacity),
+        ),
+        findsWidgets,
+      );
+      expect(find.byKey(const Key('chat-search-hidden-hint')), findsNothing);
     });
   });
 }

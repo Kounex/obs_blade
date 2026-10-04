@@ -6,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/design/design.dart';
+import '../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
@@ -57,6 +58,9 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
   final TextEditingController _controller = TextEditingController();
   String _query = '';
 
+  /// Include what the chat hides (ignored users, muted words) - dimmed
+  bool _showHidden = false;
+
   @override
   void dispose() {
     this._controller.dispose();
@@ -95,6 +99,26 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
               ),
             ),
           ),
+
+          /// Ignored users / muted words stay out of the results like
+          /// they stay out of the chat - unless asked for
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Show hidden messages',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              BaseAdaptiveSwitch(
+                key: const Key('chat-search-show-hidden'),
+                value: this._showHidden,
+                onChanged: (value) =>
+                    this.setState(() => this._showHidden = value),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: listMaxHeight),
             child: SingleChildScrollView(
@@ -150,6 +174,7 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
       );
     }
 
+    this._hiddenMatches = 0;
     final rows = switch (this.widget.chatType) {
       ChatType.Twitch => this._twitchResults(settingsBox),
       ChatType.Kick => this._kickResults(settingsBox),
@@ -157,6 +182,26 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
       ChatType.Combined => this._combinedResults(settingsBox),
       _ => const <Widget>[],
     };
+    final hidden = this._hiddenMatches;
+
+    /// "3 hidden in chat - Show" while hidden matches are left out
+    final Widget? hiddenHint = hidden > 0 && !this._showHidden
+        ? Padding(
+            key: const Key('chat-search-hidden-hint'),
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(
+              hidden == 1
+                  ? '1 more match is hidden in the chat (ignored user or '
+                        'muted word)'
+                  : '$hidden more matches are hidden in the chat (ignored '
+                        'users or muted words)',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: textColors.textTertiary),
+            ),
+          )
+        : null;
 
     if (rows.isEmpty) {
       return Padding(
@@ -176,6 +221,7 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
                   context,
                 ).textTheme.bodySmall?.copyWith(color: textColors.textTertiary),
               ),
+              ?hiddenHint,
             ],
           ),
         ),
@@ -189,57 +235,25 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: rows,
+      children: [...rows, ?hiddenHint],
     );
   }
 
-  List<Widget> _twitchResults(Box settingsBox) {
-    if (!GetIt.instance.isRegistered<TwitchChatStore>()) return const [];
-    final store = GetIt.instance<TwitchChatStore>();
-    final query = this._query;
-    final filters = this._filters(settingsBox);
-    return [
-      for (final event in store.messages)
-        if (!filters.hides([
-              event.chatterUserLogin,
-              event.chatterUserName,
-            ], event.message.text) &&
-            chatSearchMatches(
-              query: query,
-              author: event.chatterUserName,
-              content: event.message.text,
-            ))
-          this._twitchRow(event, settingsBox, 'search-${event.messageId}'),
-    ];
-  }
+  /// Matches the chat hides, counted while [_showHidden] is off
+  int _hiddenMatches = 0;
 
-  List<Widget> _kickResults(Box settingsBox) {
-    if (!GetIt.instance.isRegistered<KickChatStore>()) return const [];
-    final store = GetIt.instance<KickChatStore>();
-    final query = this._query;
-    final filters = this._filters(settingsBox);
-    return [
-      for (final message in store.messages)
-        if (message.type != KickChatMessageType.system &&
-            !filters.hides([
-              message.sender?.username,
-              message.sender?.slug,
-            ], message.content) &&
-            chatSearchMatches(
-              query: query,
-              author: message.authorName,
-              content: message.content,
-            ))
-          KickChatMessageRow(
-            key: ValueKey('search-${message.id}'),
-            message: message,
-            settingsBox: settingsBox,
-          ),
-    ];
+  /// A match's row as the search shows it: left out (and counted) when
+  /// the chat hides it and "Show hidden" is off, dimmed when it's on
+  Widget? _shown(Widget row, {required bool hidden}) {
+    if (!hidden) return row;
+    if (!this._showHidden) {
+      this._hiddenMatches++;
+      return null;
+    }
+    return Opacity(opacity: 0.45, child: row);
   }
 
   /// What the chat itself hides (ignored users, mute words in hide mode)
-  /// stays hidden here too - search shows what the chat shows.
   ChatFilterSettings _filters(Box settingsBox) =>
       ChatFilterSettings.of(settingsBox);
 
@@ -264,82 +278,53 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     );
   }
 
-  /// The combined chat's merged timeline (every platform in the combo,
-  /// in time order): its messages that match, each in its platform's row
-  /// with the platform badge - as in the combined chat itself.
-  List<Widget> _combinedResults(Box settingsBox) {
-    if (!GetIt.instance.isRegistered<CombinedChatStore>()) return const [];
+  List<Widget> _twitchResults(Box settingsBox) {
+    if (!GetIt.instance.isRegistered<TwitchChatStore>()) return const [];
+    final store = GetIt.instance<TwitchChatStore>();
     final query = this._query;
     final filters = this._filters(settingsBox);
-    final rows = <Widget>[];
-    for (final item in GetIt.instance<CombinedChatStore>().timeline) {
-      final badge = CombinedPlatformBadge(platform: item.platform);
-      switch (item.payload) {
-        case final ChatMessageEvent event
-            when !filters.hides([
-                  event.chatterUserLogin,
-                  event.chatterUserName,
-                ], event.message.text) &&
-                chatSearchMatches(
-                  query: query,
-                  author: event.chatterUserName,
-                  content: event.message.text,
-                ):
-          rows.add(
-            this._twitchRow(
-              event,
-              settingsBox,
-              'search-${item.key}',
-              leading: badge,
-            ),
-          );
-        case final YouTubeChatMessage message
-            when !filters.hides(
-                  [message.authorName],
-                  message.snippet.textMessageDetails?.messageText ??
-                      message.displayText ??
-                      '',
-                ) &&
-                chatSearchMatches(
-                  query: query,
-                  author: message.authorName ?? '',
-                  content:
-                      message.snippet.textMessageDetails?.messageText ??
-                      message.displayText ??
-                      '',
-                ):
-          rows.add(
-            YouTubeChatMessageRow(
-              key: ValueKey('search-${item.key}'),
-              message: message,
-              settingsBox: settingsBox,
-              leading: badge,
-            ),
-          );
-        case final KickChatMessage message
-            when message.type != KickChatMessageType.system &&
-                !filters.hides([
-                  message.sender?.username,
-                  message.sender?.slug,
-                ], message.content) &&
-                chatSearchMatches(
-                  query: query,
-                  author: message.authorName,
-                  content: message.content,
-                ):
-          rows.add(
+    return [
+      for (final event in store.messages)
+        if (chatSearchMatches(
+          query: query,
+          author: event.chatterUserName,
+          content: event.message.text,
+        ))
+          ?this._shown(
+            this._twitchRow(event, settingsBox, 'search-${event.messageId}'),
+            hidden: filters.hides([
+              event.chatterUserLogin,
+              event.chatterUserName,
+            ], event.message.text),
+          ),
+    ];
+  }
+
+  List<Widget> _kickResults(Box settingsBox) {
+    if (!GetIt.instance.isRegistered<KickChatStore>()) return const [];
+    final store = GetIt.instance<KickChatStore>();
+    final query = this._query;
+    final filters = this._filters(settingsBox);
+    return [
+      for (final message in store.messages)
+        if (message.type != KickChatMessageType.system &&
+            chatSearchMatches(
+              query: query,
+              author: message.authorName,
+              content: message.content,
+            ))
+          ?this._shown(
             KickChatMessageRow(
-              key: ValueKey('search-${item.key}'),
+              key: ValueKey('search-${message.id}'),
               message: message,
               settingsBox: settingsBox,
-              leading: badge,
             ),
-          );
-        default:
-          break;
-      }
-    }
-    return rows;
+            hidden: filters.hides([
+              message.sender?.username,
+              message.sender?.slug,
+            ], message.content),
+          ),
+    ];
   }
 
   List<Widget> _youTubeResults(Box settingsBox) {
@@ -349,25 +334,106 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     final filters = this._filters(settingsBox);
     return [
       for (final message in store.messages)
-        if (!filters.hides(
-              [message.authorName],
-              message.snippet.textMessageDetails?.messageText ??
-                  message.displayText ??
-                  '',
-            ) &&
-            chatSearchMatches(
-              query: query,
-              author: message.authorName ?? '',
-              content:
-                  message.snippet.textMessageDetails?.messageText ??
-                  message.displayText ??
-                  '',
-            ))
-          YouTubeChatMessageRow(
-            key: ValueKey('search-${message.id}'),
-            message: message,
-            settingsBox: settingsBox,
+        if (chatSearchMatches(
+          query: query,
+          author: message.authorName ?? '',
+          content: _youTubeText(message),
+        ))
+          ?this._shown(
+            YouTubeChatMessageRow(
+              key: ValueKey('search-${message.id}'),
+              message: message,
+              settingsBox: settingsBox,
+            ),
+            hidden: filters.hides([message.authorName], _youTubeText(message)),
           ),
     ];
+  }
+
+  static String _youTubeText(YouTubeChatMessage message) =>
+      message.snippet.textMessageDetails?.messageText ??
+      message.displayText ??
+      '';
+
+  /// The combined chat's merged timeline (every platform in the combo,
+  /// in time order): its messages that match, each in its platform's row
+  /// with the platform badge - as in the combined chat itself.
+  List<Widget> _combinedResults(Box settingsBox) {
+    if (!GetIt.instance.isRegistered<CombinedChatStore>()) return const [];
+    final query = this._query;
+    final filters = this._filters(settingsBox);
+    final rows = <Widget>[];
+    void add(Widget? row) {
+      if (row != null) rows.add(row);
+    }
+
+    for (final item in GetIt.instance<CombinedChatStore>().timeline) {
+      final badge = CombinedPlatformBadge(platform: item.platform);
+      switch (item.payload) {
+        case final ChatMessageEvent event
+            when chatSearchMatches(
+              query: query,
+              author: event.chatterUserName,
+              content: event.message.text,
+            ):
+          add(
+            this._shown(
+              this._twitchRow(
+                event,
+                settingsBox,
+                'search-${item.key}',
+                leading: badge,
+              ),
+              hidden: filters.hides([
+                event.chatterUserLogin,
+                event.chatterUserName,
+              ], event.message.text),
+            ),
+          );
+        case final YouTubeChatMessage message
+            when chatSearchMatches(
+              query: query,
+              author: message.authorName ?? '',
+              content: _youTubeText(message),
+            ):
+          add(
+            this._shown(
+              YouTubeChatMessageRow(
+                key: ValueKey('search-${item.key}'),
+                message: message,
+                settingsBox: settingsBox,
+                leading: badge,
+              ),
+              hidden: filters.hides([
+                message.authorName,
+              ], _youTubeText(message)),
+            ),
+          );
+        case final KickChatMessage message
+            when message.type != KickChatMessageType.system &&
+                chatSearchMatches(
+                  query: query,
+                  author: message.authorName,
+                  content: message.content,
+                ):
+          add(
+            this._shown(
+              KickChatMessageRow(
+                key: ValueKey('search-${item.key}'),
+                message: message,
+                settingsBox: settingsBox,
+                leading: badge,
+              ),
+              hidden: filters.hides([
+                message.sender?.username,
+                message.sender?.slug,
+              ], message.content),
+            ),
+          );
+        default:
+          break;
+      }
+    }
+    return rows;
   }
 }

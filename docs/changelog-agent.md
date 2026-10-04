@@ -20,7 +20,9 @@ the whole combined timeline, account rows stay in the chat header.
 - `ChatSearchSheet(Combined)` searches `CombinedChatStore.timeline`
   (time order, each match in its platform's row with the badge).
 - Review fixes: every search (Twitch / YouTube / Kick / combined) hides
-  what the chat hides (ignored users, mute words in hide mode) and draws
+  what the chat hides (ignored users, mute words in hide mode) - with a
+  "Show hidden messages" switch (user request; off by default, a line
+  counts the left-out matches, shown ones are dimmed) - and draws
   deleted Twitch messages with their marker; the combined row says "in
   the combined chat" (it reaches back as far as that timeline, 500).
 - Tests: `native_chat_options_sheet_test` (rows scroll into view now),

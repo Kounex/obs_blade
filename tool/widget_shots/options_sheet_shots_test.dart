@@ -10,6 +10,11 @@ import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_search_sheet.dart';
+
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
@@ -132,6 +137,69 @@ void main() {
       find.byType(MaterialApp),
       matchesGoldenFile(
         '../../build/widget_shots/options_combined_narrow_kick.png',
+      ),
+    );
+  });
+
+  testWidgets('combined search with a hidden match', (tester) async {
+    final kick = GetIt.instance<KickChatStore>();
+    final youTube = GetIt.instance<YouTubeChatStore>();
+    youTube.messages.add(
+      YouTubeChatMessage(
+        id: 'yt-1',
+        snippet: YouTubeChatMessageSnippet(
+          type: YouTubeChatMessageType.textMessage,
+          publishedAt: DateTime.utc(2026, 10, 5, 12),
+          authorChannelId: 'chan-1',
+          displayMessage: 'gg that was clean',
+          textMessageDetails: const YouTubeTextMessageDetails(
+            messageText: 'gg that was clean',
+          ),
+        ),
+        authorDetails: const YouTubeChatAuthorDetails(
+          channelId: 'chan-1',
+          displayName: 'Tuber',
+        ),
+      ),
+    );
+    kick.messages.add(
+      KickChatMessage(
+        id: 'k-1',
+        content: 'gg ez noobs',
+        type: KickChatMessageType.message,
+        createdAt: DateTime.utc(2026, 10, 5, 12, 1),
+        sender: const KickChatSender(id: 5, username: 'troll'),
+      ),
+    );
+    await tester.runAsync(() async {
+      await Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.ChatIgnoredUsers.name, 'troll');
+      await Hive.box(HiveKeys.Settings.name).flush();
+    });
+    await harness.shot(
+      tester,
+      'search_combined_hidden_base',
+      const ChatSearchSheet(chatType: ChatType.Combined),
+    );
+    await tester.enterText(find.byKey(const Key('chat-search-field')), 'gg');
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile(
+        '../../build/widget_shots/search_combined_hidden_off.png',
+      ),
+    );
+    await tester.tap(find.byKey(const Key('chat-search-show-hidden')));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile(
+        '../../build/widget_shots/search_combined_hidden_on.png',
       ),
     );
   });
