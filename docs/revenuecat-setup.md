@@ -1,54 +1,24 @@
-# RevenueCat wiring — how to take Pro live
+# RevenueCat wiring — reference
 
-The app side is done (2026-09-04, `feat(pro): revenuecat gateway …`).
-Everything below is dashboard/config work — **no app-code changes needed**
-except pasting two API keys. When the keys are filled, the app switches
-from the legacy direct-IAP path to RevenueCat automatically
-(`revenueCatConfigured` in `lib/utils/revenuecat_config.dart`).
+**Pro is live since 2026-09:** products created + approved on both stores
+(ASC approved with 4.0, Play ACTIVE), the public SDK keys are pasted in
+`lib/utils/revenuecat_config.dart`, and per-region pricing was re-applied to
+the live stores 2026-10. The app runs the RevenueCat path
+(`purchases_flutter`, entitlement `pro`); the legacy direct-IAP path remains
+as the key-less fallback (foss strip, dev platforms). This doc is now
+reference — what's wired, what to dogfood, and the gotchas.
 
-**Scripted path (preferred):** `tool/provisioning/` creates the store
-products for you — see its README for creds-by-path setup, then:
+**Re-provisioning / price refreshes:** `tool/provisioning/` is idempotent —
+creds-by-path setup, the RC account/store-connection walkthrough, product
+creation (exact ids from `lib/utils/pro_ids.dart`; Play subscription `pro` +
+base plans `pro-yearly`/`pro-monthly` + one-time `pro_lifetime`, with the
+RC package mapping), and the pricing-table workflow all live in
+`tool/provisioning/README.md`.
 
-```bash
-# With creds exported (e.g. from ~/.localrc — collection walkthrough:
-# tool/provisioning/CREDENTIALS.md):
-dart run tool/provisioning/bin/provision.dart asc-products
-dart run tool/provisioning/bin/provision.dart play-products
-# …or pass --key-path/--key-id/--issuer-id/--app-id /
-# --service-account-json explicitly; flags win over env.
-```
+## Pricing
 
-Both are idempotent (re-runs are no-ops), create the exact ids from
-`lib/utils/pro_ids.dart` (Play uses subscription `pro` + base plans
-`pro-yearly`/`pro-monthly` — the RevenueCat package mapping is in the tool
-README), and set US base prices. **Console-only remainder:** paid-apps
-agreement + tax/banking, and product review submission. The manual
-walkthrough below doubles as the verification checklist afterwards.
-
-## 1. RevenueCat account + project
-
-1. Create a RevenueCat account → new project "OBS Blade".
-2. Add two apps: iOS (bundle id from `ios/Runner.xcodeproj`) and Android
-   (applicationId from `android/app/build.gradle`).
-3. Connect the stores:
-   - **App Store:** App Store Connect API key (in-app purchase key) +
-     App-Specific Shared Secret (optional but recommended — only needed to
-     read legacy receipts; there is nothing to migrate, see §3); enable
-     App Store Server Notifications V2 with the RevenueCat URL so
-     renewals/refunds reach RC.
-   - **Google Play:** Play service-account JSON + Real-time developer
-     notifications topic wired to RC.
-
-## 2. Store products (exact ids — already in `lib/utils/pro_ids.dart`)
-
-| Store product | Type | RC package |
-|---|---|---|
-| `pro_yearly` | auto-renewable subscription (App Store: subscription group "Pro"; Play: base plan) | attach |
-| `pro_monthly` | same subscription group | attach |
-| `pro_lifetime` | non-consumable (Play: one-time product) | attach |
-
-Pricing is locked and already provisioned store-side (2026-09): **$4.99/mo,
-$49.99/yr, $99.99 lifetime** — the defaults in `tool/provisioning`.
+**$4.99/mo, $49.99/yr, $99.99 lifetime** — the defaults in
+`tool/provisioning`.
 Per-region pricing is pinned everywhere from one reviewed table
 (`tool/provisioning/lib/src/pricing_targets.dart`, re-applied to the live
 stores 2026-10): anchors USD/EUR/GBP at the USD nominal, every other
@@ -62,7 +32,7 @@ directions (TRY monthly came through at ~€0.80). Refresh cadence +
 workflow: `tool/provisioning/README.md` § Pricing table. Strategy
 rationale: `docs/private/monetization-strategy.md`.
 
-## 3. Entitlement + offering (dashboard)
+## 1. Entitlement + offering (dashboard)
 
 - Create **entitlement `pro`** — the identifier must equal
   `kProEntitlementId` (`lib/utils/revenuecat_config.dart`). Attach all
@@ -80,23 +50,17 @@ rationale: `docs/private/monetization-strategy.md`.
   also fires `InAppPurchase.restorePurchases()` so blacksmith `restored`
   events still reach `PurchaseBase`). Attaching `pro_lifetime` to the
   `pro` entitlement is still required — for all FUTURE lifetime buyers.
-  Double-check this linkage before shipping the keys.
+  Double-check this linkage if the products are ever re-created.
 
-## 4. API keys → app
+## 2. API keys → app — done
 
-Paste the **public SDK keys** (RevenueCat dashboard → Apps → API keys;
-the "apple_" / "goog_" public app keys, NOT secret keys) into
-`lib/utils/revenuecat_config.dart`:
+The **public SDK keys** (RevenueCat dashboard → Apps → API keys; the
+"apple_" / "goog_" public app keys, NOT secret keys) are pasted in
+`lib/utils/revenuecat_config.dart`. Public keys are safe to commit (they
+identify the project, purchases are validated server-side). macOS uses the
+Apple key too.
 
-```dart
-const String kRevenueCatAppleApiKey = 'appl_…';
-const String kRevenueCatGoogleApiKey = 'goog_…';
-```
-
-Public keys are safe to commit (they identify the project, purchases are
-validated server-side). macOS uses the Apple key too.
-
-## 5. Verify
+## 3. Verify
 
 1. `flutter test test/pro/` — the backend-selection tests now pin the
    real-keys default (RevenueCat on iOS/Android/macOS, legacy on
