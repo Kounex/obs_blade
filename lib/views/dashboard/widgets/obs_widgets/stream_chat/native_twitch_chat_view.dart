@@ -417,6 +417,21 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                 : null;
             String? mentionHexFor(String userId) =>
                 this._store.chatterColor(userId);
+
+            /// Row identity, same scheme as CombinedChatStore's item keys:
+            /// with the keys on the outermost row widget and
+            /// [ListView.findItemIndexCallback] below, a row follows its
+            /// message across the cap's eviction shift instead of
+            /// rematching by index (which replayed the notice rows'
+            /// entrance on every arrival).
+            String keyOf(Object item) => switch (item) {
+              final ChatMessageEvent event => 'twitch:${event.messageId}',
+              final ChatNotificationNotice notice =>
+                'twitch:notice:${notice.event.messageId}',
+              final ChatSystemNotice notice =>
+                'twitch:system:${notice.kind.name}:${notice.afterSeq}',
+              _ => 'twitch:other:${identityHashCode(item)}',
+            };
             return Stack(
               children: [
                 ListView.separated(
@@ -426,6 +441,15 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     vertical: AppSpacing.xs,
                   ),
                   itemCount: visibleItems.length,
+                  findItemIndexCallback: (key) {
+                    if (key is ValueKey<String>) {
+                      final index = visibleItems.indexWhere(
+                        (item) => keyOf(item) == key.value,
+                      );
+                      return index < 0 ? null : index;
+                    }
+                    return null;
+                  },
                   separatorBuilder: (context, index) => separators
                       ? Divider(
                           height: 1.0,
@@ -437,25 +461,30 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
                     final item = visibleItems[index];
+                    final rowKey = ValueKey(keyOf(item));
+                    Widget keyed(Widget row) =>
+                        KeyedSubtree(key: rowKey, child: row);
                     if (item is ChatSystemNotice) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.sm,
-                        ),
-                        child: Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.sm,
+                      return keyed(
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.sm,
+                          ),
+                          child: Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.sm,
+                                ),
+                                child: Text(
+                                  'Chat was cleared by a moderator',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
                               ),
-                              child: Text(
-                                'Chat was cleared by a moderator',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                            const Expanded(child: Divider()),
-                          ],
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -478,24 +507,26 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                       final attachedOnNotice =
                           item.event.message != null &&
                           item.event.message!.text.trim().isNotEmpty;
-                      return TwitchChatNotificationRow(
-                        event: item.event,
-                        settingsBox: settingsBox,
-                        accentContinues: continues,
+                      return keyed(
+                        TwitchChatNotificationRow(
+                          event: item.event,
+                          settingsBox: settingsBox,
+                          accentContinues: continues,
 
-                        /// Prefer the body on the announce banner; hide the
-                        /// duplicate `channel.chat.message` with the same id
-                        /// below. Other notices keep the prior split layout.
-                        showAttachedMessage: announce
-                            ? attachedOnNotice
-                            : !chatMessageIds.contains(item.event.messageId),
-                        mentionHexFor: mentionHexFor,
-                        onAuthorTap: () => showChatUserCardSheet(
-                          context,
-                          userId: item.event.chatterUserId,
+                          /// Prefer the body on the announce banner; hide the
+                          /// duplicate `channel.chat.message` with the same id
+                          /// below. Other notices keep the prior split layout.
+                          showAttachedMessage: announce
+                              ? attachedOnNotice
+                              : !chatMessageIds.contains(item.event.messageId),
+                          mentionHexFor: mentionHexFor,
+                          onAuthorTap: () => showChatUserCardSheet(
+                            context,
+                            userId: item.event.chatterUserId,
+                          ),
+                          onMentionTap: (userId) =>
+                              showChatUserCardSheet(context, userId: userId),
                         ),
-                        onMentionTap: (userId) =>
-                            showChatUserCardSheet(context, userId: userId),
                       );
                     }
                     final event = item as ChatMessageEvent;
@@ -566,16 +597,18 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     final withTint = tinted == null
                         ? row
                         : chatAlternateRow(context, tinted[index], row);
-                    return index == historyDivider
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ChatHistoryDivider(color: brand),
-                              withTint,
-                            ],
-                          )
-                        : withTint;
+                    return keyed(
+                      index == historyDivider
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ChatHistoryDivider(color: brand),
+                                withTint,
+                              ],
+                            )
+                          : withTint,
+                    );
                   },
                 ),
                 if (!this._pinnedToBottom)

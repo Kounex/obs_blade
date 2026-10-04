@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/shared/design/staggered_entrance.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
@@ -1040,6 +1041,64 @@ void main() {
 
       expect(store.messages.length, 500);
       expect(position.pixels, closeTo(position.maxScrollExtent, 1.0));
+    });
+
+    /// User report: at the 500-row cap every arrival replays a notice
+    /// row's fade-in - unkeyed rows match by index, so the eviction shift
+    /// rebuilds the notice's element (and its StaggeredEntrance) from
+    /// scratch.
+    testWidgets('a capped buffer does not replay a notice row entrance', (
+      tester,
+    ) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(textEvent('m$i', 'Filler', 'x'));
+      }
+      store.appendChatNotificationForTest(
+        noticeEvent(id: 'n1', author: 'Alice'),
+      );
+
+      await tester.pumpWidget(
+        wrap(const SizedBox(height: 600.0, child: NativeTwitchChatView())),
+      );
+      await tester.pumpAndSettle();
+
+      final entrance = find.descendant(
+        of: find.byType(TwitchChatNotificationRow),
+        matching: find.byType(StaggeredEntrance),
+      );
+      expect(entrance, findsOneWidget);
+      final settled = tester.state(entrance);
+
+      /// One arrival at the cap evicts the oldest row; every index shifts.
+      store.appendChatMessageForTest(textEvent('m500', 'Late', 'new'));
+      await tester.pump();
+      await tester.pump();
+      expect(store.messages.length, 500);
+      expect(tester.state(entrance), same(settled));
+
+      /// A genuinely new notice still plays the entrance from zero.
+      store.appendChatNotificationForTest(noticeEvent(id: 'n2', author: 'Bob'));
+      await tester.pump();
+      final fresh = find.descendant(
+        of: find.byWidgetPredicate(
+          (widget) =>
+              widget is TwitchChatNotificationRow &&
+              widget.event.messageId == 'n2',
+        ),
+        matching: find.byType(StaggeredEntrance),
+      );
+      expect(fresh, findsOneWidget);
+      expect(tester.state(fresh), isNot(same(settled)));
+      double opacityOf(Finder entrance) => tester
+          .widgetList<Opacity>(
+            find.descendant(of: entrance, matching: find.byType(Opacity)),
+          )
+          .first
+          .opacity;
+      expect(opacityOf(fresh), lessThan(1.0));
+      await tester.pumpAndSettle();
+      expect(opacityOf(fresh), 1.0);
     });
 
     /// User report: in a busy chat, an old message read while scrolled up

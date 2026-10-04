@@ -367,6 +367,15 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     vertical: AppSpacing.xs,
                   ),
                   itemCount: visibleItems.length,
+                  findItemIndexCallback: (key) {
+                    if (key is ValueKey<String>) {
+                      final index = visibleItems.indexWhere(
+                        (message) => message.id == key.value,
+                      );
+                      return index < 0 ? null : index;
+                    }
+                    return null;
+                  },
                   separatorBuilder: (context, index) => separators
                       ? Divider(
                           height: 1.0,
@@ -380,7 +389,6 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     final message = visibleItems[index];
                     final channelId = message.authorChannelId;
                     final row = YouTubeChatMessageRow(
-                      key: ValueKey(message.id),
                       message: message,
                       settingsBox: settingsBox,
                       selfDisplayNames: [this._store.selfChannelTitle],
@@ -406,16 +414,22 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
                     final withTint = tinted == null
                         ? row
                         : chatAlternateRow(context, tinted[index], row);
-                    return index == historyDivider
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ChatHistoryDivider(color: brand),
-                              withTint,
-                            ],
-                          )
-                        : withTint;
+
+                    /// Keyed on the outermost wrapper, so the tint/divider
+                    /// variants don't break the sliver's child matching.
+                    return KeyedSubtree(
+                      key: ValueKey(message.id),
+                      child: index == historyDivider
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ChatHistoryDivider(color: brand),
+                                withTint,
+                              ],
+                            )
+                          : withTint,
+                    );
                   },
                 ),
                 if (awaitingStream)

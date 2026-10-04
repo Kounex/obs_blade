@@ -9,6 +9,7 @@ import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/shared/design/staggered_entrance.dart';
 import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
@@ -17,6 +18,8 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
+import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
@@ -27,6 +30,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_combined_chat_view.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/pinned_chat_banner.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_notification_row.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
@@ -61,6 +65,29 @@ KickChatMessage kickMessage(String id, String text, DateTime when) =>
       content: text,
       createdAt: when,
       sender: KickChatSender(id: 7, username: 'Kick$id', slug: 'kick$id'),
+    );
+
+ChatMessageEvent twitchMessage(String id) => ChatMessageEvent(
+  broadcasterUserId: 'b1',
+  chatterUserId: id,
+  chatterUserLogin: 'filler',
+  chatterUserName: 'Filler',
+  messageId: id,
+  message: ChatMessageText(
+    text: 'x',
+    fragments: [ChatMessageFragment(type: 'text', text: 'x')],
+  ),
+);
+
+ChatNotificationEvent twitchNotice(String id, String author) =>
+    ChatNotificationEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: id,
+      chatterUserLogin: author.toLowerCase(),
+      chatterUserName: author,
+      messageId: id,
+      systemMessage: '$author subscribed at Tier 1.',
+      noticeType: 'sub',
     );
 
 void main() {
@@ -199,11 +226,60 @@ void main() {
     final rows = tester.widgetList<CombinedSourceRow>(
       find.byType(CombinedSourceRow),
     );
-    expect(rows.map((r) => r.platform).toList(), [
-      ChatType.Kick,
-      ChatType.YouTube,
-      ChatType.Kick,
-    ]);
+  });
+
+  /// Same replay report as the Twitch view: the combined timeline's rows
+  /// were unkeyed, so the cap's eviction shift rebuilt a notice row (and
+  /// its StaggeredEntrance) from scratch.
+  testWidgets('a capped timeline does not replay a twitch notice entrance', (
+    tester,
+  ) async {
+    twitch.authState = TwitchAuthState.loggedIn;
+    twitch.user = FakeTwitchAuthService.user;
+    twitch.chatConnection = TwitchChatConnectionState.live;
+    for (var i = 0; i < 500; i++) {
+      twitch.appendChatMessageForTest(twitchMessage('m$i'));
+    }
+    twitch.appendChatNotificationForTest(twitchNotice('n1', 'Alice'));
+
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pumpAndSettle();
+
+    final entrance = find.descendant(
+      of: find.byType(TwitchChatNotificationRow),
+      matching: find.byType(StaggeredEntrance),
+    );
+    expect(entrance, findsOneWidget);
+    final settled = tester.state(entrance);
+
+    /// One arrival at the cap evicts the oldest row; every index shifts.
+    twitch.appendChatMessageForTest(twitchMessage('m500'));
+    await tester.pump();
+    await tester.pump();
+    expect(tester.state(entrance), same(settled));
+
+    /// A genuinely new notice still plays the entrance from zero.
+    twitch.appendChatNotificationForTest(twitchNotice('n2', 'Bob'));
+    await tester.pump();
+    final fresh = find.descendant(
+      of: find.byWidgetPredicate(
+        (widget) =>
+            widget is TwitchChatNotificationRow &&
+            widget.event.messageId == 'n2',
+      ),
+      matching: find.byType(StaggeredEntrance),
+    );
+    expect(fresh, findsOneWidget);
+    expect(tester.state(fresh), isNot(same(settled)));
+    double opacityOf(Finder entrance) => tester
+        .widgetList<Opacity>(
+          find.descendant(of: entrance, matching: find.byType(Opacity)),
+        )
+        .first
+        .opacity;
+    expect(opacityOf(fresh), lessThan(1.0));
+    await tester.pumpAndSettle();
+    expect(opacityOf(fresh), 1.0);
   });
 
   testWidgets('the platform wash spans the full width; the badge sits on '

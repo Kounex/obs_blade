@@ -348,6 +348,15 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
                   /// edge to edge and pads its own content.
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   itemCount: visible.length,
+                  findItemIndexCallback: (key) {
+                    if (key is ValueKey<String>) {
+                      final index = visible.indexWhere(
+                        (item) => item.key == key.value,
+                      );
+                      return index < 0 ? null : index;
+                    }
+                    return null;
+                  },
                   separatorBuilder: (context, index) => separators
                       ? Divider(
                           height: 1.0,
@@ -366,18 +375,29 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
                     if (tinted != null) {
                       row = chatAlternateRow(context, tinted[index], row);
                     }
-                    return index == historyDivider
-                        ? Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ChatHistoryDivider(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                              row,
-                            ],
-                          )
-                        : row;
+
+                    /// Keyed by the item's stable key (+ the list's
+                    /// findItemIndexCallback), so a row follows its message
+                    /// across the cap's eviction shift instead of rematching
+                    /// by index (which replayed the notice rows' entrance on
+                    /// every arrival).
+                    return KeyedSubtree(
+                      key: ValueKey(item.key),
+                      child: index == historyDivider
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ChatHistoryDivider(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.secondary,
+                                ),
+                                row,
+                              ],
+                            )
+                          : row,
+                    );
                   },
                 ),
                 if (!this._pinnedToBottom)
