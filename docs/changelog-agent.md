@@ -20,6 +20,9 @@ only, stays in `obs-blade-site/pending-4.1/`).
   names; promo text and FAQ no longer claim "tips" (no tip source is
   built - StreamElements / Streamlabs are still waiting on API access).
 - Tablet benefit grid: an odd last card lines up with the column above.
+- Privacy policy (live site, deployed 2026-10-04): the activity feed line
+  lists what is really kept (follows, subs, raids, cheers, Super Chats,
+  KICKs) instead of "tips"; "Last updated" 4 October 2026.
 - Tests: `test/pro/pro_story_test.dart`; shots `pro_locked_*`,
   `pro_benefits_*`.
 
