@@ -85,7 +85,7 @@ moves (quarterly-ish), workflow in `tool/provisioning/README.md`
 user's on-device verdict): the intro was rebuilt as 4 swipeable screens
 with code-drawn animated mockups; every user sees it once via the new
 `HasUserSeenIntro202609` key. Spec:
-`superpowers/specs/2026-09-27-intro-v2-design.md`, details:
+`archive/specs/2026-09-27-intro-v2-design.md`, details:
 `changelog-agent.md` 2026-09-27 "Intro v2". Verified on the Pixel 7
 emulator (full flow + relaunch) and installed on Kounex iOS. Watch
 first: tablet/landscape on a real iPad, copy wording, and mockup loop
@@ -302,16 +302,16 @@ in `docs/private/maintainer-workflow.md`.
 |---|---|
 | [`AGENTS.md`](../AGENTS.md) | Short project rules + index |
 | [`changelog-agent.md`](changelog-agent.md) | History of agent changes |
-| [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md) | 4.0 cold-start briefing (read first) |
-| [`redesign/2026-iteration/ui-polish-audit-2026-09-21.md`](redesign/2026-iteration/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, leftovers |
+| [`redesign/2026-iteration/state-and-plan.md`](redesign/2026-iteration/state-and-plan.md) | 4.0 shipped; the doc now holds the phase-4 backlog + open decisions |
+| [`archive/redesign/ui-polish-audit-2026-09-21.md`](archive/redesign/ui-polish-audit-2026-09-21.md) | 4.0 polish wave: findings→fixes map, calibrations, leftovers (archived) |
 | [`chatterino-comparison.md`](chatterino-comparison.md) | Chatterino feature verdicts + YouTube channel→live design (2026-09-24 wave) |
-| [`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md) | Combined chat design (waves 1–3 shipped; plans next to it) |
-| [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, gate decision + wave 4 next |
+| [`superpowers/specs/2026-09-24-combined-chat-design.md`](superpowers/specs/2026-09-24-combined-chat-design.md) | Combined chat design (waves 1–3 shipped; plans in `archive/plans/`) |
+| [`chat-native-roadmap.md`](chat-native-roadmap.md) | Native chat API roadmap — waves 1–3 shipped, Pro gate live; wave-4 item selection next |
 | [`redesign-astra-audit.md`](redesign-astra-audit.md) | Astra redesign audit + ratified progressive-adoption verdict, verified master defects, harvest list |
-| [`superpowers/specs/2026-09-14-command-ack-layer-design.md`](superpowers/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 |
-| [`superpowers/specs/2026-08-09-mod-overflow-options-design.md`](superpowers/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options |
-| [`superpowers/specs/2026-08-09-chat-notice-meta-design.md`](superpowers/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome |
-| [`superpowers/specs/2026-08-09-chat-user-card-design.md`](superpowers/specs/2026-08-09-chat-user-card-design.md) | User card |
+| [`archive/specs/2026-09-14-command-ack-layer-design.md`](archive/specs/2026-09-14-command-ack-layer-design.md) | Command-ack layer (astra phase 2) — ratified design, merged 2026-09-18 (archived) |
+| [`archive/specs/2026-08-09-mod-overflow-options-design.md`](archive/specs/2026-08-09-mod-overflow-options-design.md) | Mod overflow into Options (archived) |
+| [`archive/specs/2026-08-09-chat-notice-meta-design.md`](archive/specs/2026-08-09-chat-notice-meta-design.md) | Notice meta + announce chrome (archived) |
+| [`archive/specs/2026-08-09-chat-user-card-design.md`](archive/specs/2026-08-09-chat-user-card-design.md) | User card (archived) |
 | [`chat-webview-audit.md`](chat-webview-audit.md) | Chat strategy |
 | [`revenuecat-setup.md`](revenuecat-setup.md) | Pro subscription wiring + sandbox dogfood |
 | [`private/`](private/) | Gitignored — monetization / backend / maintainer workflow |
