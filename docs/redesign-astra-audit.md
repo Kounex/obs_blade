@@ -78,17 +78,18 @@ redesign at the final gate per its session-handoff).
 
 ## Verified master defects astra surfaced
 
-All six confirmed against master source; **none fixed on `4.0-liquid-glass`**
-(4.0 is a token/surface restyle over identical structure):
+All six confirmed against master source at audit time. **Status update
+(2026-10):** 4.0 merged 2026-09-22 and released; #2 and #6 are fixed, #5
+partially — do not re-harvest those:
 
-| # | Defect | Evidence |
-|---|---|---|
-| 1 | Scene tile multiplexes hide-edit + optimistic selection + live command on one tap | `scene_button.dart` (master ~:68-85, 4.0 :74-96) |
-| 2 | "Studio mode transition" button sends `SetCurrentProgramScene`, not a transition request | `studio_mode_transition_button.dart` (:68-76) |
-| 3 | Command layer fire-and-forget: `makeRequest` returns void, failures log-only, optimistic scene state never rolled back | `network_helper.dart:322-356`, `dashboard.dart` `_handleResponse` |
-| 4 | Chat WebView gesture arbitration hardcodes Y 150–450 | `stream_chat.dart:513-514` |
-| 5 | Statistics: `DurationFilter.Between` returns true for everything; filter state reset on every rebuild (`resetLazySingleton` in `build`) | `statistics.dart` (:188, :211) |
-| 6 | "Delete all user data" omits `PastRecordData`, `Hotkey`, `PurchasedTip` boxes | `data_management.dart:31-53` |
+| # | Defect | Evidence | Status |
+|---|---|---|---|
+| 1 | Scene tile multiplexes hide-edit + optimistic selection + live command on one tap | `scene_button.dart` (master ~:68-85, 4.0 :74-96) | open |
+| 2 | "Studio mode transition" button sends `SetCurrentProgramScene`, not a transition request | `studio_mode_transition_button.dart` (:68-76) | **fixed** — sends the real `TriggerStudioModeTransition` (code comment cites this defect) |
+| 3 | Command layer fire-and-forget: `makeRequest` returns void, failures log-only, optimistic scene state never rolled back | `network_helper.dart:322-356`, `dashboard.dart` `_handleResponse` | **fixed** — command-ack layer (`sendMutation` + `_pendingByUUID`), see `docs/obs-websocket-architecture.md` |
+| 4 | Chat WebView gesture arbitration hardcodes Y 150–450 | `stream_chat.dart:513-514` | open |
+| 5 | Statistics: `DurationFilter.Between` returns true for everything; filter state reset on every rebuild (`resetLazySingleton` in `build`) | `statistics.dart` (:188, :211) | **partially fixed** — the always-true `Between` is gone; the reset-in-build remains |
+| 6 | "Delete all user data" omits `PastRecordData`, `Hotkey`, `PurchasedTip` boxes | `data_management.dart:31-53` | **fixed** |
 
 ## What to keep from the current UI
 
@@ -119,9 +120,11 @@ cherry-pick candidates:
 - Dirty tree (finish first): `chat_emote_picker.dart` injected stores/settings
   + real emote-insertion spacing fix (`hiKappa` → `hi Kappa`).
 
-**Sequencing note:** 4.0's tree-wide format migration means landing these on
-master now guarantees merge friction with `4.0-liquid-glass`. Land them on
-the 4.0 branch or right after it merges.
+**Sequencing note (resolved):** 4.0 merged 2026-09-22 and released; the
+phase-1 harvest (incl. `TriggerStudioModeTransition`) and the #2/#5/#6 defect
+fixes landed with it and the command-ack wave. The remaining harvest items
+above are still valid cherry-pick candidates only if not yet applied — check
+the code before re-harvesting.
 
 ## Verdict + staged path
 
@@ -129,11 +132,16 @@ the 4.0 branch or right after it merges.
 
 1. **Harvest** the production fixes above; fix the six verified master
    defects (independent of UI direction; #3 is the strategic one — the
-   missing command-acknowledgement layer).
-2. **After 4.0 merges**, port into the dashboard wearing the 4.0 skin:
-   confirmed-state OBS projection (additive, next to DashboardStore), scene
-   inspect-vs-command separation + persistent Take bar, chat independence +
-   conversation-owned drafts, stale-state honesty in reconnect surfaces.
+   missing command-acknowledgement layer). **Done** — see the defect table.
+2. **Port into the dashboard wearing the 4.0 skin** (4.0 merged 2026-09-22
+   and released as 4.0.0):
+   confirmed-state OBS projection (**shipped** — `EventOrdering`, see
+   `docs/obs-websocket-architecture.md`), stale-state honesty in reconnect
+   surfaces (**shipped** — `obsStateStale` + `StaleStateBadge`), chat
+   independence (**shipped** — chat is a dedicated tab, `Tabs.Chat`).
+   The inspect-vs-command separation + persistent Take bar was **dropped**
+   (user-ratified, see the 2026-09-18 addendum below);
+   conversation-owned drafts remain open.
 3. **Astra stays a design lab.** Its remaining roadmap (account/setup,
    stream/record, settings hosting) only earns its keep if full shell
    replacement becomes a live candidate — revisit as a 5.0 decision with real

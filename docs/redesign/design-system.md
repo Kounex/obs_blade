@@ -1,6 +1,7 @@
 # OBS Blade Redesign — "On Air" Design System
 
-Branch: `redesign` · 2026-07-27 · Source audit: `docs/redesign/audit-digest.md`
+Shipped on `master` as **4.0** (merged 2026-09-22; the `redesign` branch is
+history) · Source audit: `docs/archive/redesign/audit-digest.md`
 
 ## Concept
 
@@ -115,37 +116,11 @@ When editing dashboard layout or the order feature, route through `ResponsiveWid
 - Dialogs/sheets: unified radius (12 sheets / 16 dialogs), entrance fade+scale 250ms;
   keep `BaseAdaptiveDialog` API + adaptive semantics + `onOk(bool)` signature.
 
-## Per-surface direction (summary for implementers)
+## Per-surface direction
 
-- **Shared kit** (`lib/shared/**`): add design module; restyle internals of BaseButton/
-  BaseCard/BaseIconButton/FormattedText (keep APIs; FormattedText gains animated value
-  change); Pressable adopted; BaseResult animated; FullOverlay spring; fix `Fader`
-  build side-effect; dialogs entrance motion.
-- **Intro**: cinematic stages (no dead gap), staggered copy, primary CTA
-  hierarchy, unified WS-setup + light app-tour slides (no OBS version fork).
-- **Home**: branded stretchy app bar (themed refresh indicator), connection cards with
-  press-scale + ambient reachability + connect-progress button, staggered entrances,
-  animated re-sort.
-- **Dashboard shell**: on-air status cluster in app bar, designed quick-action sheet
-  (same entries/hiding rules), scene switcher with moving selection + haptics, studio
-  mode PVW/PGM language, preview crossfade + hero-to-fullscreen.
-- **Scene content**: audio mixer (gradient dB meter, peak hold, animated mute), scene
-  item rows with press feedback + animated groups, keep NestedScrollManager.
-- **Obs widgets**: stats as telemetry tiles (count-up tweens — cheap, 1s cadence),
-  chat chrome polish + branded empty states + crossfade on reload (WebView internals
-  untouched), kill dead PLACEHOLDERs only where purely visual.
-- **Statistics**: chart draw-in + gradients + scrub, staggered list, animated star,
-  stat tiles replacing disabled TextFields (keep `FormattedText` API or migrate
-  call sites within scope), filter panel restyle — all 14 controls + semantics intact.
-- **Settings**: inset-grouped modern sections, press fade, staggered sections,
-  support dialog with loading skeleton + state AnimatedSwitchers (purchase logic
-  untouched), subpage header unification.
-- **Custom theme editor**: theme entries as preview cards (incl. appBar bubble),
-  app-wide crossfade on activation, picker polish (checkerboard for transparent),
-  editor section IA. Live-preview pane only if cheap — stretch goal.
-- **Data mgmt / logs / customisation**: danger-zone IA (same double-confirm), log
-  readability (level gutters, no perpetual pulse on static data — pulse only when
-  "live"), order editor drag polish (spring lift + haptics).
+The per-surface implementation plan shipped with 4.0 (see the changelog +
+`docs/archive/redesign/` for the historical detail). Living design rules:
+
 - **Pro paywall — colour (2026-09-27).** Colour lives only in solid
   squircle icon tiles (iOS settings-icon idiom): platform brand fills
   (Twitch / Kick / YouTube) and one fill per benefit card (`ProPalette`,
@@ -159,10 +134,32 @@ When editing dashboard layout or the order feature, route through `ResponsiveWid
   accent text - accent-as-text drops under 3:1 on the selected row in
   several built-in themes.
 
+## User calibrations (ratified — do not reopen)
+
+From the 2026-09-21 full-app polish wave (detail:
+`docs/archive/redesign/ui-polish-audit-2026-09-21.md`):
+
+1. **Green for online/reachable/connected is wanted** — saved-card Online
+   pill, chat "connected" state keep green. Use the tokens
+   (`AppStatusColors.reachable` / `.live`), never framework swatches; hue
+   kept. Don't gatekeep.
+2. **Hit-target fixes must be visually invisible** — visual size/padding of
+   an element never changes; reach 44pt via transparent hit padding,
+   un-clamped `BaseIconButton`, or `HitTestBehavior.translucent`. If a fix
+   would bloat the element, skip it.
+3. **`destructive` / `destructiveText` / `info`** on `AppStatusColors` are
+   the canonical error/action reds; `unreachable` is for reachability
+   states only.
+4. Chat brand-text fixes landed (accent grammar); the **brand-fill strategy
+   is deferred** to the Phase-4 chat-bar frame.
+5. Paywall hero keeps the bolt glyph + "OBS Blade Pro" headline (the v12
+   wordmark change was deliberately not ratified).
+
 ## Verification
 
-`./flutterw analyze` clean for touched files (infos OK pre-existing),
-`./flutterw test test/chat test/websocket test/persistence` green, plus a manual
+`flutter analyze` clean for touched files (infos OK pre-existing),
+`dart tool/test_gate.dart test/chat test/websocket test/persistence` green,
+plus a manual
 simulator pass on: intro, connect flow, dashboard (studio mode, hide mode), statistics
 detail, custom theme forge + activate, settings toggles — **and** one wide / Force
 Tablet Mode check that Scene Items/Audio and Chat/Stats stay side-by-side when adjacent.
