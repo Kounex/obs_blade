@@ -226,6 +226,11 @@ void main() {
     final rows = tester.widgetList<CombinedSourceRow>(
       find.byType(CombinedSourceRow),
     );
+    expect(rows.map((r) => r.platform).toList(), [
+      ChatType.Kick,
+      ChatType.YouTube,
+      ChatType.Kick,
+    ]);
   });
 
   /// Same replay report as the Twitch view: the combined timeline's rows
