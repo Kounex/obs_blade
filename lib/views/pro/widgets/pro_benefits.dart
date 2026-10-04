@@ -9,9 +9,14 @@ import '../../../shared/general/responsive_widget_wrapper.dart';
 import '../../dashboard/widgets/obs_widgets/stream_chat/combined_chat_icon.dart';
 import 'pro_palette.dart';
 
+/// The Pro feature groups - one paywall card each, the same names on the
+/// locked panes, the website's Pro list and the store listings.
+enum ProFeature { chat, activity, speech, moderation, themes }
+
 /// One browsable Pro benefit. Copy rule (monetization strategy):
 /// honest, no dates promised for unreleased features.
 class ProBenefit {
+  final ProFeature feature;
   final IconData icon;
   final String title;
   final String body;
@@ -23,6 +28,7 @@ class ProBenefit {
   final bool showPlatforms;
 
   const ProBenefit({
+    required this.feature,
     required this.icon,
     required this.title,
     required this.body,
@@ -31,19 +37,21 @@ class ProBenefit {
   });
 }
 
-/// Themed cards (was eight single-feature cards). The native-chat upsell
-/// in the chat pane lists the titles of the 2nd-4th card as its benefit
-/// taste.
+/// The Pro story in five groups (was eight single-feature cards, then
+/// six). Order = importance; the locked panes list the titles in this
+/// order.
 const List<ProBenefit> kProBenefits = [
   ProBenefit(
+    feature: ProFeature.chat,
     icon: CupertinoIcons.chat_bubble_2_fill,
     title: 'Every Chat, One Place',
     body:
-        'Native Twitch, Kick and YouTube chat - on their own or merged into one timeline. Save your channel combos, see who\'s live, and replies land on the right platform.',
+        'Native Twitch, Kick and YouTube chat - on their own or merged into one timeline, with saved combos and who\'s live. Plus 7TV, BTTV and FFZ emotes, an emote picker, badges, highlights and chat search.',
     color: ProPalette.twitch,
     showPlatforms: true,
   ),
   ProBenefit(
+    feature: ProFeature.activity,
     icon: CupertinoIcons.bell_fill,
     title: 'Never Miss a Supporter',
     body:
@@ -51,6 +59,7 @@ const List<ProBenefit> kProBenefits = [
     color: ProPalette.activity,
   ),
   ProBenefit(
+    feature: ProFeature.speech,
     icon: CupertinoIcons.speaker_2_fill,
     title: 'Hear Your Chat',
     body:
@@ -58,6 +67,7 @@ const List<ProBenefit> kProBenefits = [
     color: ProPalette.speech,
   ),
   ProBenefit(
+    feature: ProFeature.moderation,
     icon: CupertinoIcons.shield_fill,
     title: 'Moderate From Your Pocket',
     body:
@@ -65,13 +75,7 @@ const List<ProBenefit> kProBenefits = [
     color: ProPalette.moderation,
   ),
   ProBenefit(
-    icon: CupertinoIcons.smiley_fill,
-    title: 'Chat, Supercharged',
-    body:
-        '7TV, BTTV and FFZ emotes, an emote picker and badges - plus mention highlights, muted words and chat search.',
-    color: ProPalette.chatTools,
-  ),
-  ProBenefit(
+    feature: ProFeature.themes,
     icon: CupertinoIcons.paintbrush_fill,
     title: 'Make It Yours',
     body:
@@ -79,6 +83,13 @@ const List<ProBenefit> kProBenefits = [
     color: ProPalette.themes,
   ),
 ];
+
+/// The small-form Pro story for a locked pane: the group titles in order,
+/// without the pane's own feature (its headline already names it).
+List<ProBenefit> proBenefitTaste({ProFeature? except, int max = 4}) => [
+  for (final benefit in kProBenefits)
+    if (benefit.feature != except) benefit,
+].take(max).toList();
 
 /// Browsable benefits: a swipeable card carousel with page dots on phone,
 /// a two-column grid on tablet (design system § Responsive layouts).
@@ -191,12 +202,14 @@ class _ProBenefitsBrowserState extends State<ProBenefitsBrowser> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(child: ProBenefitCard(benefit: kProBenefits[i])),
-                    if (i + 1 < kProBenefits.length) ...[
-                      const SizedBox(width: AppSpacing.lg),
+                    const SizedBox(width: AppSpacing.lg),
+                    if (i + 1 < kProBenefits.length)
                       Expanded(
                         child: ProBenefitCard(benefit: kProBenefits[i + 1]),
-                      ),
-                    ] else
+                      )
+                    /// Same gap as a full row: the odd card lines up with
+                    /// the column above
+                    else
                       const Spacer(),
                   ],
                 ),

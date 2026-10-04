@@ -1195,9 +1195,8 @@ class _ChatProUpsell extends StatelessWidget {
             'Native chat is part of OBS Blade Pro - unlock it to read, write '
             'and moderate right here.',
 
-        /// Skips the first (platform) benefit - the headline already names
-        /// this platform's native chat
-        benefits: kProBenefits.skip(1).take(3).toList(),
+        /// The headline already names this platform's native chat
+        benefits: proBenefitTaste(except: ProFeature.chat),
         proRoute: this.proRoute,
       ),
     );

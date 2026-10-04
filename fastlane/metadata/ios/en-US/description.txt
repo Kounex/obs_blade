@@ -20,16 +20,13 @@ EVERYTHING YOU NEED - FREE, FOREVER
 
 OBS BLADE PRO
 
-Chat is where your stream lives, so Pro makes it native:
+Chat is where your stream lives, so Pro makes it native - and makes sure no supporter gets missed:
 
-- Native chat for Twitch, Kick and YouTube - read and write without a browser in sight
-- Combined chat: all your chats in one live timeline, and replies land on the right platform
-- Every channel you mod or follow, saved combos and who's live at a glance
-- An activity feed for your own channels: follows, subs, raids, cheers, Super Chats and KICKs in one list, with a to-thank queue for your shout-outs
-- Chat read out loud while you play, in each message's own language if you like
-- A full moderation toolkit: delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch
-- 7TV, BTTV and FFZ emotes, an emote picker, autocomplete and role badges
-- Highlights, mute words, chat search - and custom themes for the whole app
+- Every chat, one place: native Twitch, Kick and YouTube chat, on their own or merged into one live timeline where replies land on the right platform. Every channel you mod or follow, saved combos and who's live at a glance - plus 7TV, BTTV and FFZ emotes, an emote picker, autocomplete, role badges, highlights, mute words and chat search
+- Never miss a supporter: an activity feed for your own channels - follows, subs, raids, cheers, Super Chats and KICKs in one list, with a to-thank queue for your shout-outs
+- Hear your chat: read out loud while you play, in each message's own language if you like
+- Moderate from your pocket: delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch
+- Make it yours: custom themes for the whole app
 
 Pro comes monthly, yearly or as a one-time lifetime unlock. Cancel anytime in your App Store account settings.
 

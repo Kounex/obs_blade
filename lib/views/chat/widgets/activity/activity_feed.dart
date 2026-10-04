@@ -937,9 +937,7 @@ class ActivityProUpsell extends StatelessWidget {
               'Super Chat and KICKs gift on your channels in one list, with a '
               'to-thank queue so nobody gets missed on stream.',
 
-          /// The 2nd card ("Never Miss a Supporter") is this feed - the
-          /// neighbours instead
-          benefits: [kProBenefits[0], ...kProBenefits.skip(2).take(2)],
+          benefits: proBenefitTaste(except: ProFeature.activity),
           proRoute: this.proRoute,
         ),
       ),
