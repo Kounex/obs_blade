@@ -316,6 +316,100 @@ void main() {
     expect(tester.getTopLeft(signOut), signOutBefore);
   });
 
+  /// Review finding: on a small phone with large text, the footer used
+  /// to take all the room - the history vanished, Sign out overflowed
+  testWidgets('small phone, large text, reconnecting: the history keeps '
+      'room and nothing overflows', (tester) async {
+    tester.view.physicalSize = const Size(375.0, 667.0);
+    tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    for (var i = 0; i < 30; i++) {
+      store.appendChatMessageForTest(
+        cardMessage('m$i', 'self-1', 'message number $i'),
+      );
+    }
+    userService.userResult = const TwitchUser(
+      id: 'self-1',
+      login: 'selflogin',
+      displayName: 'SelfUser',
+    );
+    await openCard(
+      tester,
+      userId: 'self-1',
+      connection: ChatUserCardConnection(
+        chatType: ChatType.Twitch,
+        status: NativeChatConnectionStatus.failed,
+        statusLabel: 'failed',
+        statusColor: Colors.red,
+        statusDetail:
+            'Could not connect - the chat server closed the '
+            'connection. Check your network and try again.',
+        accountLabel: 'SelfUser',
+        onRetry: () {},
+        onLogout: () {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    final newest = find.textContaining('message number 29', findRichText: true);
+    final live = tester.getRect(find.text('LIVE'));
+    final history = tester.getRect(newest);
+    expect(history.top, greaterThan(live.bottom));
+    final screen =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    expect(
+      tester.getRect(find.byType(ChatUserCardSheet)).bottom,
+      lessThanOrEqualTo(screen),
+    );
+
+    /// The history keeps at least a third of the room: its newest row is
+    /// on screen above the footer
+    expect(history.bottom, lessThan(screen));
+    await tester.ensureVisible(find.text('Sign out'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets('small phone, normal text: Sign out shows without scrolling '
+      'the footer', (tester) async {
+    tester.view.physicalSize = const Size(375.0, 667.0);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (var i = 0; i < 30; i++) {
+      store.appendChatMessageForTest(
+        cardMessage('m$i', 'self-1', 'message number $i'),
+      );
+    }
+    userService.userResult = const TwitchUser(
+      id: 'self-1',
+      login: 'selflogin',
+      displayName: 'SelfUser',
+    );
+    await openCard(
+      tester,
+      userId: 'self-1',
+      connection: ChatUserCardConnection(
+        chatType: ChatType.Twitch,
+        status: NativeChatConnectionStatus.live,
+        statusLabel: '',
+        statusColor: Colors.grey,
+        accountLabel: 'SelfUser',
+        onLogout: () {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Sign out').hitTestable(), findsOneWidget);
+    expect(
+      find
+          .textContaining('message number 29', findRichText: true)
+          .hitTestable(),
+      findsOneWidget,
+    );
+  });
+
   /// The reported case: the chat bar has no account chip, so the self
   /// card the header opens must offer sign-out while the chat is healthy
   testWidgets('self footer exposes Sign out while live', (tester) async {
