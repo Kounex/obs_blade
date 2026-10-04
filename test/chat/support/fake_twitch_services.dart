@@ -305,11 +305,13 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
 
   /// When set, the matching fetch throws this error.
   Object? sevenTvGlobalThrows;
+  Object? sevenTvChannelThrows;
   Object? bttvChannelThrows;
 
   /// When set, [fetchSevenTvGlobal] parks on this completer — lets a test
   /// resolve the fetch at a chosen moment (stale-fetch tests).
   Completer<Map<String, ThirdPartyEmote>>? sevenTvGlobalGate;
+  Completer<Map<String, ThirdPartyEmote>>? sevenTvChannelGate;
 
   String? lastBroadcasterId;
   String? lastKickUserId;
@@ -355,6 +357,8 @@ class FakeThirdPartyEmoteService extends ThirdPartyEmoteService {
   ) async {
     this.sevenTvChannelCalls++;
     this.lastBroadcasterId = broadcasterId;
+    if (this.sevenTvChannelThrows != null) throw this.sevenTvChannelThrows!;
+    if (this.sevenTvChannelGate != null) return this.sevenTvChannelGate!.future;
     return this.sevenTvChannel;
   }
 

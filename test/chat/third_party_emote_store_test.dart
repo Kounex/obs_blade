@@ -157,16 +157,17 @@ void main() {
     expect(store.catalogVersion, 1);
   });
 
-  test('a superseded fetch cannot overwrite the newer catalog', () async {
+  test('a superseded fetch of the same channel cannot overwrite the newer '
+      'catalog', () async {
     final gate = Completer<Map<String, ThirdPartyEmote>>();
-    service.sevenTvGlobalGate = gate;
+    service.sevenTvChannelGate = gate;
     final first = store.fetch(broadcasterId: 'user-1');
 
-    service.sevenTvGlobalGate = null;
-    service.sevenTvGlobal = {
+    service.sevenTvChannelGate = null;
+    service.sevenTvChannel = {
       FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
     };
-    await store.fetch(broadcasterId: 'user-2');
+    await store.fetch(broadcasterId: 'user-1');
 
     gate.complete({
       FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
@@ -174,15 +175,57 @@ void main() {
     await first;
 
     expect(
-      store.emoteImageUrl('peepoHappy', broadcasterId: 'user-2'),
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
       isNotNull,
     );
-    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-2'), isNull);
-
-    /// The superseded fetch returned before applying — only the newer
-    /// fetch bumped the version.
-    expect(store.catalogVersion, 1);
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'user-1'), isNull);
   });
+
+  /// User report: in a combined chat ohnePixel's 7TV / BTTV emotes showed
+  /// as text - Twitch's and Kick's connect fetches threw each other's
+  /// channel catalogs away
+  test('fetches of two channels at once both land (combined chat)', () async {
+    final gate = Completer<Map<String, ThirdPartyEmote>>();
+    service.sevenTvChannelGate = gate;
+    final twitch = store.fetch(broadcasterId: 'twitch-1');
+
+    service.sevenTvKickChannel = {
+      FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
+    };
+    await store.fetch(broadcasterId: 'kick-1', isKick: true);
+
+    gate.complete({
+      FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
+    });
+    await twitch;
+
+    expect(store.emoteImageUrl('monkaS', broadcasterId: 'twitch-1'), isNotNull);
+    expect(
+      store.emoteImageUrl('peepoHappy', broadcasterId: 'kick-1'),
+      isNotNull,
+    );
+  });
+
+  test(
+    'a source that fails on a refetch keeps its last good catalog',
+    () async {
+      service.sevenTvChannel = {
+        FakeThirdPartyEmoteService.peepo.name: FakeThirdPartyEmoteService.peepo,
+      };
+      await store.fetch(broadcasterId: 'user-1');
+      expect(
+        store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
+        isNotNull,
+      );
+
+      service.sevenTvChannelThrows = Exception('Bad file descriptor');
+      await store.fetch(broadcasterId: 'user-1');
+      expect(
+        store.emoteImageUrl('peepoHappy', broadcasterId: 'user-1'),
+        isNotNull,
+      );
+    },
+  );
 
   test('clear drops the catalogs and bumps the version', () async {
     service.sevenTvGlobal = {

@@ -2,6 +2,31 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - Combined chat: each platform keeps its channel emotes
+
+User report: in ohnePixel's Twitch chat, lines like "SunflowerJam Dance"
+showed as text while other emotes rendered. Checked live: SunflowerJam
+is in ohnePixel's 7TV set (since 2022-02), Dance in his BTTV channel
+set - both channel emotes, neither global; the user watched the
+channel in a combined chat with Kick.
+
+- Cause: `ThirdPartyEmoteStore` is shared by Twitch and Kick, and its
+  "a superseded fetch must not apply" guard was one counter for the
+  whole store - in a combined chat the first platform's connect fetch
+  was discarded when the second started, so only the globals rendered.
+  Now each source (FFZ / BTTV / 7TV) of each scope (global, a
+  broadcaster) remembers the fetch it came from; a result applies only
+  over an older one, and a source that fails on a refetch keeps its last
+  good catalog (the background network failures used to blank a scope).
+- Twitch sign-out no longer clears the shared catalogs (public data;
+  it wiped Kick's channel emotes too).
+- Not covered (known gaps): 7TV personal emotes (EventAPI), a shared
+  chat's source channel's emotes (rows use the viewed channel's set).
+- Tests: `third_party_emote_store_test` (two channels at once both land,
+  a failed source keeps its catalog - both fail on the old store; the
+  same channel's superseded fetch still can't overwrite),
+  `twitch_chat_store_test` (logout keeps the shared catalogs).
+
 ## 2026-10-04 - Chat after the background; grouped scene item toggles
 
 User reports: (1) after a while in the background, a combined chat with

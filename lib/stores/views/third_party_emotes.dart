@@ -16,9 +16,20 @@ class ThirdPartyEmoteStore = _ThirdPartyEmoteStore with _$ThirdPartyEmoteStore;
 abstract class _ThirdPartyEmoteStore with Store {
   final ThirdPartyEmoteService _service;
 
-  /// Identifies the active fetch — a superseded fetch's late results must
-  /// not overwrite the newer catalog (rapid reconnect / account switch).
-  int _fetchGeneration = 0;
+  /// Fetches are numbered; each source (FFZ, BTTV, 7TV) of each scope
+  /// (global, a broadcaster) keeps the number of the fetch it came from.
+  /// A result applies only over an older one - a superseded fetch's late
+  /// answer never overwrites a newer catalog (rapid reconnect), and a
+  /// source that failed keeps its last good catalog. Per scope: one
+  /// "newest fetch wins" for the whole store let Twitch's and Kick's
+  /// connects in a combined chat throw each other's channel catalogs away
+  /// (ohnePixel's 7TV / BTTV emotes as text, 2026-10-04).
+  int _fetchSeq = 0;
+
+  /// Fetches started up to here were cleared away ([clear])
+  int _clearedSeq = 0;
+  final List<_Applied> _globalSources = [_Applied(), _Applied(), _Applied()];
+  final Map<String, List<_Applied>> _channelSources = {};
 
   _ThirdPartyEmoteStore({ThirdPartyEmoteService? service})
     : _service = service ?? ThirdPartyEmoteService();
@@ -67,7 +78,7 @@ abstract class _ThirdPartyEmoteStore with Store {
     required String broadcasterId,
     bool isKick = false,
   }) async {
-    final generation = ++this._fetchGeneration;
+    final seq = ++this._fetchSeq;
 
     final results = await Future.wait([
       this._tryFetch(this._service.fetchBttvGlobal(), 'bttv-global'),
@@ -95,10 +106,6 @@ abstract class _ThirdPartyEmoteStore with Store {
             ),
     ]);
 
-    /// A newer fetch superseded this one — it owns the catalog (and
-    /// [catalogVersion]) now.
-    if (generation != this._fetchGeneration) return;
-
     /// Merge order decides precedence on name ties — later wins:
     /// FFZ -> BTTV -> 7TV within each scope; the channel scope wins at
     /// lookup.
@@ -109,25 +116,72 @@ abstract class _ThirdPartyEmoteStore with Store {
       results[3],
     );
     final (ffzGlobal, ffzChannel) = (results[4], results[5]);
-    this.globalEmotes
-      ..clear()
-      ..addEntries([
-        for (final result in [ffzGlobal, bttvGlobal, sevenTvGlobal])
-          if (result != null) ...result.entries,
-      ]);
+
+    if (seq <= this._clearedSeq) return;
+    final globalChanged = _apply(this._globalSources, seq, [
+      ffzGlobal,
+      bttvGlobal,
+      sevenTvGlobal,
+    ]);
+    if (globalChanged) {
+      this.globalEmotes
+        ..clear()
+        ..addEntries(_merged(this._globalSources));
+    }
+    final channel = this._channelSources[broadcasterId] ??= [
+      _Applied(),
+      _Applied(),
+      _Applied(),
+    ];
 
     /// Only the fetched broadcaster's slot is replaced — other channels'
-    /// catalogs (multi-chat) survive the refetch.
-    this.channelEmotes[broadcasterId] = Map.fromEntries([
-      for (final result in [ffzChannel, bttvChannel, sevenTvChannel])
-        if (result != null) ...result.entries,
+    /// catalogs (multi-chat, the other platform) survive the refetch.
+    final channelChanged = _apply(channel, seq, [
+      ffzChannel,
+      bttvChannel,
+      sevenTvChannel,
     ]);
-    this.catalogVersion++;
+    if (channelChanged) {
+      this.channelEmotes[broadcasterId] = Map.fromEntries(_merged(channel));
+    }
+    if (globalChanged || channelChanged) this.catalogVersion++;
   }
+
+  /// Applies each [fresh] source that answered and is newer than what the
+  /// slot holds; true when anything changed
+  static bool _apply(
+    List<_Applied> slots,
+    int seq,
+    List<Map<String, ThirdPartyEmote>?> fresh,
+  ) {
+    var changed = false;
+    for (var i = 0; i < slots.length; i++) {
+      final emotes = fresh[i];
+      if (emotes == null || seq <= slots[i].seq) continue;
+      slots[i]
+        ..seq = seq
+        ..emotes = emotes;
+      changed = true;
+    }
+    return changed;
+  }
+
+  static Iterable<MapEntry<String, ThirdPartyEmote>> _merged(
+    List<_Applied> sources,
+  ) => [
+    for (final source in sources)
+      if (source.emotes case final emotes?) ...emotes.entries,
+  ];
 
   @action
   void clear() {
-    this._fetchGeneration++;
+    this._clearedSeq = this._fetchSeq;
+    for (final slot in this._globalSources) {
+      slot
+        ..seq = 0
+        ..emotes = null;
+    }
+    this._channelSources.clear();
     this.globalEmotes.clear();
     this.channelEmotes.clear();
     this.catalogVersion++;
@@ -146,4 +200,10 @@ abstract class _ThirdPartyEmoteStore with Store {
       return null;
     }
   }
+}
+
+/// One source's catalog in a scope, and the fetch it came from
+class _Applied {
+  int seq = 0;
+  Map<String, ThirdPartyEmote>? emotes;
 }

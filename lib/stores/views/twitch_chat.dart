@@ -762,11 +762,9 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.logFailure('Twitch badge catalog clear failed', e);
     }
-    try {
-      this._emoteStoreResolver().clear();
-    } catch (e) {
-      GeneralHelper.logFailure('Third-party emote catalog clear failed', e);
-    }
+    /// The third-party emote catalogs stay: public data, no account in
+    /// them - and the store is shared with Kick, whose channel emotes a
+    /// clear here wiped
     try {
       this._userEmoteStoreResolver().clear();
     } catch (e) {

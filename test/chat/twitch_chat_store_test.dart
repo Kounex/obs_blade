@@ -1071,15 +1071,20 @@ void main() {
       expect(emoteService.bttvChannelCalls, 0);
     });
 
-    test('logout clears the catalog', () async {
+    /// The store is shared with Kick: a Twitch sign-out used to wipe
+    /// Kick's channel emotes with it - the catalogs are public data
+    test('logout keeps the shared third-party catalogs', () async {
       await logIn();
       emoteStore.globalEmotes[FakeThirdPartyEmoteService.peepo.name] =
           FakeThirdPartyEmoteService.peepo;
+      emoteStore.channelEmotes['kick-user'] = {
+        FakeThirdPartyEmoteService.monka.name: FakeThirdPartyEmoteService.monka,
+      };
 
       await store.logout();
 
-      expect(emoteStore.globalEmotes, isEmpty);
-      expect(emoteStore.channelEmotes, isEmpty);
+      expect(emoteStore.globalEmotes, isNotEmpty);
+      expect(emoteStore.channelEmotes['kick-user'], isNotEmpty);
     });
   });
 
