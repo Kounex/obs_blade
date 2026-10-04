@@ -24,6 +24,7 @@ import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
@@ -434,6 +435,19 @@ void main() {
       expect(find.byKey(const Key('search-kick:k-2')), findsNothing);
       expect(find.byKey(const Key('combined-row-icon-YouTube')), findsNothing);
       expect(find.byType(CombinedPlatformBadge), findsNWidgets(2));
+
+      /// Search shows what the chat shows: an ignored user stays hidden
+      await tester.runAsync(() async {
+        await Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.ChatIgnoredUsers.name, 'kickfan');
+        await Hive.box(HiveKeys.Settings.name).flush();
+      });
+      await tester.enterText(find.byKey(const Key('chat-search-field')), 'gg ');
+      await tester.enterText(find.byKey(const Key('chat-search-field')), 'gg');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('search-kick:k-1')), findsNothing);
+      expect(find.byKey(const Key('search-youtube:yt-1')), findsOneWidget);
     });
   });
 }

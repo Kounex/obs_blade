@@ -16,8 +16,10 @@ import '../../../../../types/classes/youtube/youtube_chat_message.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../utils/chat_search_helper.dart';
 import '../../../../../utils/modal_handler.dart';
+import 'chat_tombstone.dart';
 import 'kick_chat_message_row.dart';
 import 'native_combined_chat_view.dart' show CombinedPlatformBadge;
+import 'native_chat_appearance.dart' show ChatFilterSettings;
 import 'native_chat_chrome.dart';
 import 'native_chat_text_field.dart';
 import 'twitch_chat_message_row.dart';
@@ -195,18 +197,19 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     if (!GetIt.instance.isRegistered<TwitchChatStore>()) return const [];
     final store = GetIt.instance<TwitchChatStore>();
     final query = this._query;
+    final filters = this._filters(settingsBox);
     return [
       for (final event in store.messages)
-        if (chatSearchMatches(
-          query: query,
-          author: event.chatterUserName,
-          content: event.message.text,
-        ))
-          TwitchChatMessageRow(
-            key: ValueKey('search-${event.messageId}'),
-            event: event,
-            settingsBox: settingsBox,
-          ),
+        if (!filters.hides([
+              event.chatterUserLogin,
+              event.chatterUserName,
+            ], event.message.text) &&
+            chatSearchMatches(
+              query: query,
+              author: event.chatterUserName,
+              content: event.message.text,
+            ))
+          this._twitchRow(event, settingsBox, 'search-${event.messageId}'),
     ];
   }
 
@@ -214,9 +217,14 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     if (!GetIt.instance.isRegistered<KickChatStore>()) return const [];
     final store = GetIt.instance<KickChatStore>();
     final query = this._query;
+    final filters = this._filters(settingsBox);
     return [
       for (final message in store.messages)
         if (message.type != KickChatMessageType.system &&
+            !filters.hides([
+              message.sender?.username,
+              message.sender?.slug,
+            ], message.content) &&
             chatSearchMatches(
               query: query,
               author: message.authorName,
@@ -230,39 +238,76 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     ];
   }
 
+  /// What the chat itself hides (ignored users, mute words in hide mode)
+  /// stays hidden here too - search shows what the chat shows.
+  ChatFilterSettings _filters(Box settingsBox) =>
+      ChatFilterSettings.of(settingsBox);
+
+  /// A Twitch row with its delete state, like the timelines draw it
+  Widget _twitchRow(
+    ChatMessageEvent event,
+    Box settingsBox,
+    String key, {
+    Widget? leading,
+  }) {
+    final store = GetIt.instance<TwitchChatStore>();
+    final tombstone = store.tombstoneInfo(event.messageId);
+    return TwitchChatMessageRow(
+      key: ValueKey(key),
+      event: event,
+      settingsBox: settingsBox,
+      leading: leading,
+      isDeleted: store.isMessageDeleted(event.messageId),
+      deletedMarker: tombstone == null
+          ? ' -Deleted'
+          : chatTombstoneMarker(tombstone),
+    );
+  }
+
   /// The combined chat's merged timeline (every platform in the combo,
   /// in time order): its messages that match, each in its platform's row
   /// with the platform badge - as in the combined chat itself.
   List<Widget> _combinedResults(Box settingsBox) {
     if (!GetIt.instance.isRegistered<CombinedChatStore>()) return const [];
     final query = this._query;
+    final filters = this._filters(settingsBox);
     final rows = <Widget>[];
     for (final item in GetIt.instance<CombinedChatStore>().timeline) {
       final badge = CombinedPlatformBadge(platform: item.platform);
       switch (item.payload) {
         case final ChatMessageEvent event
-            when chatSearchMatches(
-              query: query,
-              author: event.chatterUserName,
-              content: event.message.text,
-            ):
+            when !filters.hides([
+                  event.chatterUserLogin,
+                  event.chatterUserName,
+                ], event.message.text) &&
+                chatSearchMatches(
+                  query: query,
+                  author: event.chatterUserName,
+                  content: event.message.text,
+                ):
           rows.add(
-            TwitchChatMessageRow(
-              key: ValueKey('search-${item.key}'),
-              event: event,
-              settingsBox: settingsBox,
+            this._twitchRow(
+              event,
+              settingsBox,
+              'search-${item.key}',
               leading: badge,
             ),
           );
         case final YouTubeChatMessage message
-            when chatSearchMatches(
-              query: query,
-              author: message.authorName ?? '',
-              content:
+            when !filters.hides(
+                  [message.authorName],
                   message.snippet.textMessageDetails?.messageText ??
-                  message.displayText ??
-                  '',
-            ):
+                      message.displayText ??
+                      '',
+                ) &&
+                chatSearchMatches(
+                  query: query,
+                  author: message.authorName ?? '',
+                  content:
+                      message.snippet.textMessageDetails?.messageText ??
+                      message.displayText ??
+                      '',
+                ):
           rows.add(
             YouTubeChatMessageRow(
               key: ValueKey('search-${item.key}'),
@@ -273,6 +318,10 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
           );
         case final KickChatMessage message
             when message.type != KickChatMessageType.system &&
+                !filters.hides([
+                  message.sender?.username,
+                  message.sender?.slug,
+                ], message.content) &&
                 chatSearchMatches(
                   query: query,
                   author: message.authorName,
@@ -297,16 +346,23 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
     if (!GetIt.instance.isRegistered<YouTubeChatStore>()) return const [];
     final store = GetIt.instance<YouTubeChatStore>();
     final query = this._query;
+    final filters = this._filters(settingsBox);
     return [
       for (final message in store.messages)
-        if (chatSearchMatches(
-          query: query,
-          author: message.authorName ?? '',
-          content:
+        if (!filters.hides(
+              [message.authorName],
               message.snippet.textMessageDetails?.messageText ??
-              message.displayText ??
-              '',
-        ))
+                  message.displayText ??
+                  '',
+            ) &&
+            chatSearchMatches(
+              query: query,
+              author: message.authorName ?? '',
+              content:
+                  message.snippet.textMessageDetails?.messageText ??
+                  message.displayText ??
+                  '',
+            ))
           YouTubeChatMessageRow(
             key: ValueKey('search-${message.id}'),
             message: message,

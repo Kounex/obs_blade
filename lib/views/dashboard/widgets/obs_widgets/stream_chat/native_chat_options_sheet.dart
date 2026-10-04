@@ -297,7 +297,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           context,
           label: 'Search chat',
           subtitle: this._isCombined
-              ? 'Find messages or names across every platform'
+              ? 'Find messages or names in the combined chat'
               : 'Find messages or names in the buffered history',
           onTap: () {
             final host = this.widget.hostContext ?? context;
