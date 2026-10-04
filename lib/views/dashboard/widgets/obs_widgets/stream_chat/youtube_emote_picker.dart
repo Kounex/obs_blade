@@ -34,10 +34,10 @@ class YouTubeEmotePickerButton extends StatelessWidget {
   );
 }
 
-/// YouTube's emoji picker: recently used, YouTube's standard set (bundled
-/// + learned from chat pages) and the member emojis of the channel whose
-/// chat is open (seen in its chat so far - YouTube only lets that
-/// channel's members send them). A tap appends the `:code:` to a draft,
+/// YouTube's emoji picker: recently used, the member emojis of the
+/// channel whose chat is open (seen in its chat so far - YouTube only
+/// lets that channel's members send them), then YouTube's standard set
+/// (bundled + learned from chat pages). A tap appends the `:code:` to a draft,
 /// Done hands it to the input - the same mechanics as the Kick picker.
 class YouTubeEmotePickerSheet extends StatefulWidget {
   final TextEditingController controller;
@@ -169,14 +169,9 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                               if (this._matches(emoji, query)) emoji,
                           ],
                         ),
-                        (
-                          'YouTube',
-                          null,
-                          [
-                            for (final emoji in store.standard)
-                              if (this._matches(emoji, query)) emoji,
-                          ],
-                        ),
+
+                        /// The channel's own first (like Kick / Twitch channel
+                        /// emotes) - YouTube's set is long
                         (
                           'Members only',
                           members.isEmpty
@@ -185,6 +180,14 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                                     'members can send these',
                           [
                             for (final emoji in members)
+                              if (this._matches(emoji, query)) emoji,
+                          ],
+                        ),
+                        (
+                          'YouTube',
+                          null,
+                          [
+                            for (final emoji in store.standard)
                               if (this._matches(emoji, query)) emoji,
                           ],
                         ),
