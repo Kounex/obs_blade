@@ -1,6 +1,6 @@
 # Media hub (soundboard) — design
 
-**Status:** approved direction 2026-09-27, building. Process tier S+.
+**Status:** shipped 2026-09-27 (changelog "Media hub (soundboard)"). Process tier S+.
 
 ## Goal
 

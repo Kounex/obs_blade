@@ -33,33 +33,6 @@ Three audiences, one flow:
 | Leaving Combined | **Restore + focus shortcut.** Switching the chat type back to a platform restores what that platform showed before the combo. Separately, tapping a source icon in the status strip "focuses" that platform on the combo's channel, with a **"↩ Combined" chip** to come back. |
 | Background while in a single-platform view | **Twitch + Kick keep running** (connections are free), **YouTube pauses** (quota) and catches up on its next poll when you come back. |
 
-## ⚠ Conflict to resolve at review: "shared" vs. "restore" + "keep running"
-
-With **shared** coupling, a platform store can only show one channel. Once
-the user switches from Combined to plain Twitch and that view **restores**
-the previous channel (not the combo's), the Twitch store is now on the
-previous channel, so it **can't** also keep the combo's Twitch source
-running in the background. Two of the ratified answers can't both hold as
-stated.
-
-**Proposal (default unless you say otherwise):**
-
-- **Focus shortcut** (tap a source icon): the platform view shows the
-  **combo's** channel. Background sources keep running (Twitch/Kick) or
-  pause (YouTube), as ratified. "↩ Combined" returns with no reconnect and
-  no gap.
-- **Explicit type switch** (chat-type dropdown → Twitch): restores the
-  previous channel. That platform's combo source is **dropped** while
-  you're away (its store now serves the restored channel); the **other**
-  sources follow the background rule. Returning to Combined re-selects the
-  combo's channel on that store. Twitch/Kick backfill history, and the
-  per-channel buffers restore what was seen before, so the gap is at most
-  the time spent away.
-
-The alternative (store-per-channel instances, so both can live at once) is
-the "independent" option already turned down: a large refactor for all
-three stores.
-
 ## Architecture
 
 ### Data model
@@ -92,7 +65,10 @@ timeline and the saved pre-combo selections for "restore".
 - **Activation** (select a combo while type = Combined): for each source,
   remember the store's current selection (`_restoreSelections`) and call
   `selectChannel(source)` on it. Deactivation (explicit type switch)
-  restores them, following the rule above.
+  restores them; while you're away that platform's combo source is dropped
+  (its store serves the restored channel) and the other sources follow the
+  background rule — returning to Combined re-selects the combo's channel,
+  and backfill + per-channel buffers bound the gap to the time spent away.
 - **Merged timeline**: a computed, ordered view over the three stores'
   visible message lists, wrapped in a `CombinedItem` sealed type
   (`{platform, sortKey, payload}`). Sort key = the platform's timestamp
