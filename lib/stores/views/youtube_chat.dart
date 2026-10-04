@@ -461,6 +461,20 @@ abstract class _YouTubeChatStore with Store {
   @observable
   bool signedInWithoutChannel = false;
 
+  /// [signedInWithoutChannel], mirrored to the settings box: the activity
+  /// feed's status banner reads it without creating this store (that
+  /// would start a poll).
+  void _setNoChannel(bool value) {
+    this.signedInWithoutChannel = value;
+    try {
+      if (Hive.isBoxOpen(HiveKeys.Settings.name)) {
+        Hive.box(
+          HiveKeys.Settings.name,
+        ).put(SettingsKeys.YouTubeSignedInWithoutChannel.name, value);
+      }
+    } catch (_) {}
+  }
+
   /// The native channel list: [ownChannel] first, then the added
   /// [channels].
   @computed
@@ -670,7 +684,7 @@ abstract class _YouTubeChatStore with Store {
     try {
       final token = await this._validAccessToken();
       final own = await this._authService.fetchOwnChannel(token);
-      runInAction(() => this.signedInWithoutChannel = own == null);
+      runInAction(() => this._setNoChannel(own == null));
       final current = this._authBox.get(YouTubeAuth.kBoxKey);
       if (own == null || current == null) return;
       current
@@ -785,7 +799,7 @@ abstract class _YouTubeChatStore with Store {
       return;
     }
     this._loginCancelled = false;
-    this.signedInWithoutChannel = false;
+    this._setNoChannel(false);
     final flow = ++this._loginFlow;
     this._ensureAuthBoxWatcher();
     this.authError = null;
@@ -826,7 +840,7 @@ abstract class _YouTubeChatStore with Store {
       this.pendingVerificationUrl = null;
 
       /// Before signedIn: the sign-in dialog reads both in the same frame
-      this.signedInWithoutChannel = channelLookedUp && ownChannel == null;
+      this._setNoChannel(channelLookedUp && ownChannel == null);
       if (this.signedInWithoutChannel) {
         GeneralHelper.logFailure(
           'YouTube sign-in without a channel',
@@ -876,7 +890,7 @@ abstract class _YouTubeChatStore with Store {
     // Supersede any in-flight login flow so its stale continuations bail.
     this._loginFlow++;
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);
-    this.signedInWithoutChannel = false;
+    this._setNoChannel(false);
     this._stopPolling();
     this.messages.clear();
     this._channelBuffers.clear();
@@ -2139,7 +2153,7 @@ abstract class _YouTubeChatStore with Store {
       this._appliedModerationOrder.clear();
       this.authState = YouTubeAuthState.signedOut;
       this.authError = message;
-      this.signedInWithoutChannel = false;
+      this._setNoChannel(false);
     });
     final wasOwn = this.selectedChannelLabel == kYouTubeOwnChannelLabel;
     this._syncOwnChannel();

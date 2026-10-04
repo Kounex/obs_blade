@@ -102,6 +102,20 @@ void main() {
           ActivityStatusAction.youTubeSwitchAccount,
         );
 
+        /// Unknown while live on YouTube: worth acting on
+        expect(
+          _item(
+            const ActivityStatusInput(
+              youTubeConfigured: true,
+              youTubeSignedIn: true,
+              obsLive: true,
+              obsLivePlatform: ActivityPlatform.youtube,
+            ),
+            'youtube-nochannel-yet',
+          ).level,
+          ActivityStatusLevel.action,
+        );
+
         /// Not known to be channel-less (lookup pending): no wrong advice
         expect(
           _ids(

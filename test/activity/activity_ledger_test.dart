@@ -462,4 +462,36 @@ void main() {
       );
     });
   });
+
+  group('coverage window cap', () {
+    DateTime at(int minute) =>
+        DateTime.utc(2026, 10, 2, 20).add(Duration(minutes: minute));
+
+    test('reopened where it ended: one window', () {
+      final coverage = ActivityCoverage()
+        ..open(ActivitySource.native, ActivityPlatform.twitch, '1', at(0))
+        ..close(ActivitySource.native, ActivityPlatform.twitch, '1', at(5))
+        ..open(ActivitySource.native, ActivityPlatform.twitch, '1', at(5));
+      expect(coverage.windowsFor(ActivityPlatform.twitch), [(at(0), null)]);
+    });
+
+    test('dropped history is unknown, survives a restart', () {
+      final coverage = ActivityCoverage();
+      for (var i = 0; i < 501; i++) {
+        coverage
+          ..open(ActivitySource.native, ActivityPlatform.twitch, '1', at(2 * i))
+          ..close(
+            ActivitySource.native,
+            ActivityPlatform.twitch,
+            '1',
+            at(2 * i + 1),
+          );
+      }
+      expect(coverage.windowsFor(ActivityPlatform.twitch), hasLength(500));
+      expect(coverage.truncatedBefore(ActivityPlatform.twitch), at(1));
+      final restored = ActivityCoverage.fromJson(coverage.toJson());
+      expect(restored.truncatedBefore(ActivityPlatform.twitch), at(1));
+      expect(restored.truncatedBefore(ActivityPlatform.youtube), isNull);
+    });
+  });
 }

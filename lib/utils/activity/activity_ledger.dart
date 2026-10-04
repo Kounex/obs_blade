@@ -75,10 +75,39 @@ class ActivityCoverage {
   /// interval has a null end.
   final Map<String, List<(DateTime, DateTime?)>> _windows;
 
-  static const int _maxWindowsPerKey = 100;
+  /// Bounds memory / the persisted JSON. Every return from the background
+  /// can add a window, so heavy users reach this within the 30 days.
+  static const int _maxWindowsPerKey = 500;
+  static const Duration _seamTolerance = Duration(seconds: 1);
 
-  ActivityCoverage([Map<String, List<(DateTime, DateTime?)>>? windows])
-    : _windows = windows ?? {};
+  /// Per key: windows before this were dropped by the cap - what happened
+  /// earlier is unknown, not "not listened"
+  final Map<String, DateTime> _truncated;
+
+  ActivityCoverage([
+    Map<String, List<(DateTime, DateTime?)>>? windows,
+    Map<String, DateTime>? truncated,
+  ]) : _windows = windows ?? {},
+       _truncated = truncated ?? {};
+
+  /// Drop the oldest window of [key]'s [list] when over the cap.
+  void _cap(String key, List<(DateTime, DateTime?)> list) {
+    if (list.length <= _maxWindowsPerKey) return;
+    final dropped = list.removeAt(0);
+    final end = dropped.$2 ?? dropped.$1;
+    final before = this._truncated[key];
+    if (before == null || end.isAfter(before)) this._truncated[key] = end;
+  }
+
+  /// Latest point before which [platform]'s history was cut by the cap
+  DateTime? truncatedBefore(ActivityPlatform platform) {
+    DateTime? latest;
+    for (final entry in this._truncated.entries) {
+      if (entry.key.split('|').elementAtOrNull(1) != platform.name) continue;
+      if (latest == null || entry.value.isAfter(latest)) latest = entry.value;
+    }
+    return latest;
+  }
 
   static String key(
     ActivitySource source,
@@ -98,13 +127,20 @@ class ActivityCoverage {
     String channelId,
     DateTime at,
   ) {
-    final list = this._windows.putIfAbsent(
-      key(source, platform, channelId),
-      () => [],
-    );
+    final windowKey = key(source, platform, channelId);
+    final list = this._windows.putIfAbsent(windowKey, () => []);
     if (list.isNotEmpty && list.last.$2 == null) return false;
-    list.add((at.toUtc(), null));
-    if (list.length > _maxWindowsPerKey) list.removeAt(0);
+    final moment = at.toUtc();
+
+    /// Reopened where the last one ended (a coverer handing over): one
+    /// window, not two
+    final last = list.isEmpty ? null : list.last;
+    if (last != null && !moment.isAfter(last.$2!.add(_seamTolerance))) {
+      list[list.length - 1] = (last.$1, null);
+      return true;
+    }
+    list.add((moment, null));
+    this._cap(windowKey, list);
     return true;
   }
 
@@ -167,7 +203,7 @@ class ActivityCoverage {
       final end = from.toUtc();
       list[list.length - 1] = (start, end.isAfter(start) ? end : start);
       list.add((to.toUtc(), null));
-      if (list.length > _maxWindowsPerKey) list.removeAt(0);
+      this._cap(entry.key, list);
     }
     return any;
   }
@@ -208,7 +244,10 @@ class ActivityCoverage {
       });
     }
     this._windows.removeWhere((_, list) => list.isEmpty);
+    this._truncated.removeWhere((_, at) => at.isBefore(olderThan));
   }
+
+  static const String _truncatedJsonKey = '#truncated';
 
   Map<String, Object?> toJson() => {
     for (final entry in this._windows.entries)
@@ -216,11 +255,26 @@ class ActivityCoverage {
         for (final (start, end) in entry.value)
           [start.toIso8601String(), end?.toIso8601String()],
       ],
+    if (this._truncated.isNotEmpty)
+      _truncatedJsonKey: {
+        for (final entry in this._truncated.entries)
+          entry.key: entry.value.toIso8601String(),
+      },
   };
 
   factory ActivityCoverage.fromJson(Object? json) {
     final windows = <String, List<(DateTime, DateTime?)>>{};
+    final truncated = <String, DateTime>{};
     if (json is Map) {
+      final rawTruncated = json[_truncatedJsonKey];
+      if (rawTruncated is Map) {
+        for (final entry in rawTruncated.entries) {
+          final at = DateTime.tryParse('${entry.value}');
+          if (entry.key is String && at != null) {
+            truncated[entry.key as String] = at.toUtc();
+          }
+        }
+      }
       for (final entry in json.entries) {
         final list = entry.value;
         if (entry.key is! String || list is! List) continue;
@@ -237,7 +291,7 @@ class ActivityCoverage {
         if (parsed.isNotEmpty) windows[entry.key as String] = parsed;
       }
     }
-    return ActivityCoverage(windows);
+    return ActivityCoverage(windows, truncated);
   }
 }
 

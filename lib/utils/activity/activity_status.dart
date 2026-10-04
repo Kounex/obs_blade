@@ -248,11 +248,13 @@ List<ActivityStatusItem> _youTube(
     }
 
     /// The lookup at sign-in failed (network) - a new sign-in repeats it
-    return const [
+    return [
       ActivityStatusItem(
         id: 'youtube-nochannel-yet',
         platform: platform,
-        level: ActivityStatusLevel.info,
+        level: liveThere
+            ? ActivityStatusLevel.action
+            : ActivityStatusLevel.info,
         text:
             'YouTube · your channel couldn\'t be looked up at sign-in - sign '
             'in again so Super Chats on it land here.',

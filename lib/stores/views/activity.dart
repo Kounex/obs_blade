@@ -479,6 +479,7 @@ abstract class _ActivityStore with Store {
     const settingKeys = {
       SettingsKeys.YouTubeApiKey,
       SettingsKeys.YouTubeOAuthClientId,
+      SettingsKeys.YouTubeSignedInWithoutChannel,
       SettingsKeys.ActivityKickRelay,
     };
     try {
@@ -1135,6 +1136,10 @@ abstract class _ActivityStore with Store {
       if (platform == ActivityPlatform.kick && this._relayToken != null) {
         continue;
       }
+
+      /// Older coverage was dropped (window cap): unknown, not a gap
+      final truncated = this._ledger.coverage.truncatedBefore(platform);
+      if (truncated != null && session.start.isBefore(truncated)) continue;
       gaps.addAll(
         coverageGaps(
           platform,

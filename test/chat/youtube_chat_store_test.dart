@@ -1500,8 +1500,15 @@ void main() {
       expect(store.signedInWithoutChannel, isTrue);
       expect(store.ownChannel, isNull);
 
+      /// Mirrored for readers without this store (activity status banner)
+      bool? mirrored() => Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.YouTubeSignedInWithoutChannel.name);
+      expect(mirrored(), isTrue);
+
       await store.logout();
       expect(store.signedInWithoutChannel, isFalse);
+      expect(mirrored(), isFalse);
     });
 
     test('a failed channel lookup is not "no channel"', () async {

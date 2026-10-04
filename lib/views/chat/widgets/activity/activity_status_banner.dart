@@ -73,9 +73,16 @@ ActivityStatusInput readActivityStatusInput(ActivityStore store) {
       ).get(YouTubeAuth.kBoxKey);
     }
   } catch (_) {}
-  final youTubeNoChannel =
-      lazySingletonCreated<YouTubeChatStore>() &&
-      getIt<YouTubeChatStore>().signedInWithoutChannel;
+
+  /// The YouTube chat knows best; without it, what it last found
+  /// (mirrored to the settings box)
+  final youTubeNoChannel = lazySingletonCreated<YouTubeChatStore>()
+      ? getIt<YouTubeChatStore>().signedInWithoutChannel
+      : Hive.isBoxOpen(HiveKeys.Settings.name) &&
+            Hive.box(
+                  HiveKeys.Settings.name,
+                ).get(SettingsKeys.YouTubeSignedInWithoutChannel.name) ==
+                true;
 
   var kickSignedIn = false;
   var kickUsed = false;
@@ -139,8 +146,11 @@ void runActivityStatusAction(
       }
     case ActivityStatusAction.youTubeSetUp:
       showYouTubeSetupSheet(context);
+
+    /// The OAuth client is set (that's when this action is offered): go
+    /// straight to Google's sign-in, not the client form
     case ActivityStatusAction.youTubeSignIn:
-      showYouTubeSignInSheet(context);
+      startYouTubeLogin(context);
     case ActivityStatusAction.youTubeSwitchAccount:
       switchYouTubeAccount(context);
     case ActivityStatusAction.kickSignIn:

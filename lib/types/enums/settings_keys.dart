@@ -83,6 +83,10 @@ enum SettingsKeys {
   /// exists)
   YouTubeOAuthClientId,
 
+  /// [bool]: Signed in to YouTube with an account that has no channel (the
+  /// YouTube store's `signedInWithoutChannel`, for readers without it)
+  YouTubeSignedInWithoutChannel,
+
   /// [String]: The user's own Google OAuth client secret paired with
   /// [YouTubeOAuthClientId] - Google's device flow for TVs/limited-input
   /// clients requires one. Falls back to the app-owned
@@ -548,6 +552,8 @@ enum SettingsKeys {
     SettingsKeys.SelectedYouTubeUsername: 'selected-youtube-username',
     SettingsKeys.YouTubeApiKey: 'youtube-api-key',
     SettingsKeys.YouTubeOAuthClientId: 'youtube-oauth-client-id',
+    SettingsKeys.YouTubeSignedInWithoutChannel:
+        'youtube-signed-in-without-channel',
     SettingsKeys.YouTubeOAuthClientSecret: 'youtube-oauth-client-secret',
     SettingsKeys.SelectedYouTubeNativeChannelId:
         'selected-youtube-native-channel-id',

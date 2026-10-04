@@ -45,6 +45,7 @@ class YouTubeOwnActivityPoller {
   static const Duration fastCheck = Duration(seconds: 30);
   static const Duration pollInterval = Duration(seconds: 30);
   static const Duration _maxBackoff = Duration(minutes: 5);
+  static const Duration _upcomingCheck = Duration(minutes: 5);
 
   /// A suspended timer never fires on iOS - the quota wait re-checks at
   /// least this often (and on [wake])
@@ -214,6 +215,19 @@ class YouTubeOwnActivityPoller {
   /// One step of the poller; returns how long to wait before the next.
   /// Public for tests (they drive it without timers).
   Future<Duration> step() async {
+    final generation = this._generation;
+    final delay = await this._step();
+
+    /// Turned off (sign-out, key removed, Pro lapsed) while a request was
+    /// out: what it found must not bring the state back
+    if (generation != this._generation && !this._enabled) {
+      this._resetChat(clearEnded: false);
+      this._setState(YouTubeOwnActivityState.off);
+    }
+    return delay;
+  }
+
+  Future<Duration> _step() async {
     final channelId = this._channelId;
     if (!this._enabled || channelId == null) {
       return idleCheck;
@@ -239,6 +253,8 @@ class YouTubeOwnActivityPoller {
   }
 
   Future<Duration> _attach(String channelId) async {
+    final generation = this._generation;
+    bool stale() => generation != this._generation || !this._enabled;
     this._setState(YouTubeOwnActivityState.waiting);
 
     /// The `/live` check runs only while someone may look (or OBS streams)
@@ -252,6 +268,7 @@ class YouTubeOwnActivityPoller {
       GeneralHelper.logFailure('Activity: YouTube live check failed', e);
       return this._waitingDelay();
     }
+    if (stale()) return idleCheck;
     if (videoId == null || videoId == this._endedVideoId) {
       return this._waitingDelay();
     }
@@ -267,10 +284,17 @@ class YouTubeOwnActivityPoller {
       GeneralHelper.logFailure('Activity: YouTube live chat lookup failed', e);
       return this._backOff();
     }
+    if (stale()) return idleCheck;
     final liveChatId = details.liveChatId;
 
-    /// Scheduled but not started yet, or chat turned off: check again
-    if (liveChatId == null) return this._waitingDelay();
+    /// Chat turned off, or a scheduled stream that hasn't started (its
+    /// `/live` page can point at the upcoming video, whose waiting-room
+    /// chat may already have an id): nothing to collect yet. Each look
+    /// costs 1 unit - an upcoming stream is checked every 5 min at most.
+    if (liveChatId == null || details.actualStartTime == null) {
+      final wait = this._waitingDelay();
+      return wait < _upcomingCheck ? _upcomingCheck : wait;
+    }
     this._videoId = videoId;
     this._liveChatId = liveChatId;
     this._pageToken = null;
@@ -282,6 +306,7 @@ class YouTubeOwnActivityPoller {
   }
 
   Future<Duration> _poll(String channelId) async {
+    final generation = this._generation;
     final YouTubeLiveChatPage page;
     try {
       page = await this._chatService.listMessages(
@@ -304,6 +329,7 @@ class YouTubeOwnActivityPoller {
       if (status == 403 || status == 404) return this._ended();
       return this._backOff();
     }
+    if (generation != this._generation || !this._enabled) return idleCheck;
     this._backoff = Duration.zero;
     this._pageToken = page.nextPageToken;
     final emit = this.onEvent;

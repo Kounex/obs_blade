@@ -34,6 +34,15 @@ while live, gaps in the banner + a list marker, banner tucked when calm.
 - **Mark N thanked** per stream / day header; the empty state follows
   sign-ins (it read them outside an Observer - stale on a tablet).
 
+Fresh-context review fixes: the poller attaches only to a started
+broadcast (`actualStartTime`; an upcoming stream's waiting-room chat
+made a fake session and burned quota), ignores answers that land after
+it was switched off; the coverage cap (500 windows, seam merge) records
+where history was cut so old streams get no invented gaps; "signed in
+without a channel" is mirrored to the settings box so the banner knows
+it after a restart; the banner's YouTube "Sign in" starts Google's
+sign-in instead of opening the OAuth client form.
+
 Tests: `youtube_own_activity_poller_test.dart`, `activity_status_test.dart`,
 store gap / freeze / kill tests; shots in `activity_shots_test.dart`
 (`activity_status_*`). Gate: activity + chat + persistence 1,640 clean.

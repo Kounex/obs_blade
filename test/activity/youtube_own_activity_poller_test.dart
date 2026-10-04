@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +27,20 @@ class _Resolver extends YouTubeLiveResolver {
         : this.answers.firstOrNull;
     if (answer is Exception) throw answer;
     return answer as String?;
+  }
+}
+
+/// Holds the `/live` answer until [release]
+class _GatedResolver extends YouTubeLiveResolver {
+  String? answer;
+  final _gate = Completer<void>();
+
+  void release() => this._gate.complete();
+
+  @override
+  Future<String?> resolveLiveVideoId(YouTubeChannelTarget channel) async {
+    await this._gate.future;
+    return this.answer;
   }
 }
 
@@ -94,6 +109,12 @@ YouTubeChatMessage _text(String id) => YouTubeChatMessage.fromJson({
   'authorDetails': {'channelId': 'UCfan', 'displayName': 'Fan'},
 });
 
+/// A broadcast that has started (an upcoming one has no actualStartTime)
+final _live = YouTubeLiveStreamingDetails(
+  liveChatId: 'chat1',
+  actualStartTime: DateTime.utc(2026, 10, 2, 19, 55),
+);
+
 YouTubeLiveChatPage _page(
   List<YouTubeChatMessage> messages, {
   String? token,
@@ -147,7 +168,7 @@ void main() {
 
     /// ...unless OBS streams
     poller.fast = true;
-    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+    chat.details = _live;
     await poller.step();
     expect(poller.state, YouTubeOwnActivityState.live);
   });
@@ -180,11 +201,36 @@ void main() {
     expect(poller.state, YouTubeOwnActivityState.waiting);
   });
 
+  test('upcoming stream with a waiting-room chat: not live, checked '
+      'every 5 min at most (1 unit each)', () async {
+    resolver.answers.add('upcoming');
+    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'waiting');
+    poller.fast = true;
+    expect(await poller.step(), const Duration(minutes: 5));
+    expect(poller.state, YouTubeOwnActivityState.waiting);
+    expect(chat.tokens, isEmpty);
+  });
+
+  test('turned off while a request is out: stays off', () async {
+    final gate = _GatedResolver()..answer = 'vid1';
+    final gated = YouTubeOwnActivityPoller(
+      resolver: gate,
+      chatService: chat,
+      clock: () => now,
+    )..enabledForTest(channelId: 'UCme', apiKey: 'key');
+    chat.details = _live;
+    final pending = gated.step();
+    gated.configure(channelId: null, apiKey: 'key', enabled: true);
+    gate.release();
+    await pending;
+    expect(gated.state, YouTubeOwnActivityState.off);
+  });
+
   test(
     'chat ended: back to waiting, the ended video isn\'t re-attached',
     () async {
       resolver.answers.add('vid1');
-      chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+      chat.details = _live;
       await poller.step();
       chat.pages.add(const YouTubeChatEndedException('ended'));
       await poller.step();
@@ -199,7 +245,7 @@ void main() {
 
   test('offlineAt on a page ends the chat after its rows', () async {
     resolver.answers.add('vid1');
-    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+    chat.details = _live;
     await poller.step();
     chat.pages.add(_page([_superChat('last')], offlineAt: now));
     await poller.step();
@@ -209,7 +255,7 @@ void main() {
 
   test('quota used up: stops until the reset, no calls meanwhile', () async {
     resolver.answers.add('vid1');
-    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+    chat.details = _live;
     await poller.step();
     chat.pages.add(const YouTubeQuotaExceededException('quota'));
     await poller.step();
@@ -229,7 +275,7 @@ void main() {
 
   test('throttled or offline network: backs off, keeps the chat', () async {
     resolver.answers.add('vid1');
-    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+    chat.details = _live;
     await poller.step();
     chat.pages
       ..add(const YouTubeRateLimitedException('slow down'))
@@ -244,7 +290,7 @@ void main() {
 
   test('standby while the YouTube chat reads the own chat', () async {
     resolver.answers.add('vid1');
-    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+    chat.details = _live;
     await poller.step();
     poller.standby = true;
     await poller.step();
@@ -261,7 +307,7 @@ void main() {
     resolver.answers
       ..add(const YouTubeLiveResolveException('consent wall'))
       ..add('vid1');
-    chat.details = const YouTubeLiveStreamingDetails(liveChatId: 'chat1');
+    chat.details = _live;
     await poller.step();
     expect(poller.state, YouTubeOwnActivityState.waiting);
     await poller.step();
