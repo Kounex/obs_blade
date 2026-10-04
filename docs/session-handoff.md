@@ -46,6 +46,14 @@ notes unchanged, TestFlight "What to Test" = the device check list). Next:
 the user's on-device verdict, then `release-promote` 4.1.0 (after 4.0.1 is
 published).
 
+**Update 2026-10-04 — activity feed status banner + own YouTube
+collection** (`2531ef9e..2666bb89`, changelog 2026-10-04; spec
+`superpowers/specs/2026-10-04-activity-feed-status.md`): built, tested,
+reviewed, pushed. **Not on a device yet** - the Kounex iOS install
+timed out (phone unreachable); the release build on the workstation is
+ready, re-run the `devicectl device install` from the dogfood recipe.
+Then the user's on-device check before any test build.
+
 **Update 2026-10-03 — global Pro pricing overhaul (both stores
 re-priced):** a Turkish monthly sub came through at ~€0.80; the audit
 found nominal parity was currency-blind AND Apple's equalized-tier matrix
