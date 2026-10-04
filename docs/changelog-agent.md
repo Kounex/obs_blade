@@ -4,6 +4,44 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-04 - Chat: notice rows re-faded on every arrival at the buffer cap
+
+User report (dogfood): in combined chat, social rows (subs,
+announcements) replayed their fade-in entrance on every new message -
+suspected correctly that it starts once the buffer is full and drops
+the oldest row.
+
+- Cause: the Twitch and Combined timeline `ListView.separated`s built
+  rows **without keys**. At the 500-row cap every arrival evicts the
+  oldest row, shifting every row one index up; unkeyed sliver children
+  rematch by index, and wherever the row type at an index flipped
+  (message ↔ notice ↔ history-divider wrapper), the subtree - including
+  the notice row's one-shot `StaggeredEntrance` controller - was
+  discarded and rebuilt, replaying the entrance for rows already on
+  screen. Kick / YouTube keyed only the *inner* row widget, which the
+  zebra-tint / divider wrappers defeat at the sliver-child level.
+- Fix: all four native timelines wrap the outermost row in a
+  `KeyedSubtree` with a stable per-item key (Twitch view uses the
+  combined store's scheme: `twitch:<id>` / `twitch:notice:<id>` /
+  `twitch:system:<kind>:<seq>`; combined uses `CombinedItem.key`) **plus
+  `findItemIndexCallback`** on the `ListView.separated` - keys alone do
+  nothing in a builder-backed sliver: `SliverChildBuilderDelegate`
+  relocates keyed children only via `findIndexByKey`, which returns null
+  without the callback (verified against SDK `sliver.dart` /
+  `scroll_view.dart`; `ListView.separated` maps item index → child index
+  ×2 itself). New row in `chat-journey-checklist.md`.
+- Tests: regression tests in `native_twitch_chat_view_test.dart` +
+  `native_combined_chat_view_test.dart` (500-row cap, settle a notice's
+  entrance, one more arrival → same `StaggeredEntrance` State instance;
+  a genuinely new notice still animates) - both failed pre-fix (state
+  defunct/recreated), pass now; each half of the fix is pinned
+  separately. Full chat gate clean (1508 tests).
+- Known leftover: a row that gains / loses the history-divider `Column`
+  wrapper rebuilds once (wrapper type changes below the key) - rare,
+  only when the first-live row itself is evicted.
+- Not on a device yet - on-device check: busy capped Twitch / combined
+  chat, watch a sub or announcement stay put when new messages arrive.
+
 ## 2026-10-04 - Docs restructure: archive moves, deletions, changelog split
 
 New `docs/archive/` holds concluded records: the three one-shot audits
