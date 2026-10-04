@@ -131,3 +131,48 @@ polls/predictions UI (read-only events), BTTV bridge (no Kick namespace —
   `User-Agent: OBSBlade`. Datacenter IPs can still 403.
 - Kick Developer Terms are gated behind app creation — review before store
   submission of the write path.
+
+## Shipped state (from AGENTS.md)
+
+Moved from `AGENTS.md` (2026-10 docs restructure).
+
+A native engine (read + write/mod) ships next to the WebView
+embed (`nativeChatAvailableFor` covers `ChatType.Kick`). Reads are **anonymous**
+(no auth, no API key): `KickChannelService` resolves slugs +
+backfills history via `kick.com/api/v2`, `KickPusherService` rides Kick's
+public Pusher socket (`chatrooms.{id}.v2`, scraped-but-stable app key,
+injectable connector). `KickChatStore` mirrors `YouTubeChatStore`
+(per-channel buffers, tombstone/ban reconcile, `/clear` notice, Pro-gated
+`connectChat`); rows render `badges_v2` artwork + `[emote:id:name]` inline
+images. Writes/mod ride the **official API** (`api.kick.com/public/v1`) behind
+an optional sign-in: **manual-paste PKCE OAuth** (Kick has no device flow; the
+app-owned client is compiled in from gitignored
+`docs/private/kick_oauth.json` via `--dart-define-from-file`, and a build
+without it falls back to BYO client id/secret in the setup sheet, scope
+bundle `user:read chat:write
+moderation:ban moderation:chat_message:manage`, tokens in the `KickAuth` box,
+refresh rotates BOTH tokens — single-flight in `KickAuthService`).
+`KickApiService` sends/replies/deletes/bans/timeouts/unbans with typed
+statusCode errors + 401→refresh-once→retry-once; no optimistic append (the
+Pusher echo renders own messages); the mod long-press shows for any signed-in
+user and 403s surface honestly (no "am I a mod" lookup exists). Sub/gift-sub/
+host notification rows (`KickChatroomEventKind`) and a read-only chat-mode
+awareness banner (slow/followers/subs/emote-only, `KickChatModeStrip` — Kick
+exposes no write API for these) round out parity with Twitch's notice
+rows; third-party (7TV) emotes render inline via the same
+`ThirdPartyEmoteStore` Twitch uses, and a single Badges master toggle
+(per-category values unverified) sits in the options sheet. Pins
+show on the shared banner (history + live create/delete; no Kick unpin
+API). The banner overlays the timeline (glass, same as the nav bars); its
+✕ tucks it to a glass pin button at the top-right, and tapping the
+pin brings the banner back. The scroll pills (Paused / New messages)
+use that same glass. An emote picker (`KickEmoteService.fetchChannelEmotes`
+— channel + Kick-wide Global + Emojis in one anonymous call, plus a
+Third-party/7TV section) docks in the Kick input, mirroring Twitch's
+picker mechanics. The channel list
+shares `SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView
+path (slug == identity). Signed in, the account's **own channel** leads
+the native list marked "You" (`KickChatStore.ownChannelSlug`, verified
+against the channel's `user_id` and stored as `KickAuth.channelSlug`;
+native-only — its selection persists as `SelectedKickNativeOwnChannel`,
+not in the shared WebView keys).

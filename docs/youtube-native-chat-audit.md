@@ -239,3 +239,30 @@ Captured from public live chats (`tool/youtube_emoji_harvest/`):
 - [Quota costs](https://developers.google.com/youtube/v3/determine_quota_cost) · [Audit & quota extension](https://developers.google.com/youtube/v3/guides/quota_and_compliance_audits)
 - [Live API revision history](https://developers.google.com/youtube/v3/live/revision_history)
 - Community quota measurements: [SO liveChatMessages.list cost](https://stackoverflow.com/questions/67232262/how-much-quota-cost-does-the-livechatmessages-list-method-incur), [willusher.io](https://www.willusher.io/general/2020/11/13/vis2020-streaming-infrastructure/)
+
+## Shipped state (from AGENTS.md)
+
+Moved from `AGENTS.md` (2026-10 docs restructure).
+
+A native engine ships next to the WebView embed
+(`nativeChatAvailableFor` covers `ChatType.YouTube`).
+Reads poll `liveChatMessages.list` with a **user-supplied API key**
+(Settings → YouTube setup sheet — quota is per-GCP-project, so no app-owned
+default key until the `streamList` spike says otherwise); writes/mod
+(delete/timeout/ban) ride Google OAuth **device flow** (BYO OAuth client
+id/secret in the setup sheet's advanced section). `YouTubeChatStore`
+mirrors `TwitchChatStore` (per-video buffers, tombstone/ban reconcile, echo
+dedup). No badge artwork/pins/AutoMod/emotes — the API doesn't expose
+them. Entries are a **channel** (`@handle` / `UC…` / channel URL —
+`parseYouTubeTarget` in `lib/utils/youtube_target.dart`) or a pinned
+video; channel entries resolve their current stream via
+`YouTubeLiveResolver` (quota-free `/live` page scrape → 1-unit
+`videos.list`) and **auto-roll over** to the next stream
+(`kYouTubeLiveRecheckSchedule`); the WebView follows via
+`YouTubeWebLiveTracker`. The entry name is optional — left empty, it's
+the channel's display name (`YouTubeEntryNamer`, never an `@handle`). Signed in, the account's **own channel**
+leads the native list marked "You" (`YouTubeChatStore.ownChannel`,
+reserved label `kYouTubeOwnChannelLabel`, id from `YouTubeAuth.channelId`;
+native-only, not in `YouTubeUsernames`).
+Design: `docs/chatterino-comparison.md` § YouTube. Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
+quota question before any default-on rollout.

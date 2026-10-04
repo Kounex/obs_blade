@@ -32,6 +32,41 @@ directions (TRY monthly came through at ~€0.80). Refresh cadence +
 workflow: `tool/provisioning/README.md` § Pricing table. Strategy
 rationale: `docs/private/monetization-strategy.md`.
 
+## Gate mechanics (from AGENTS.md)
+
+Moved from `AGENTS.md` (2026-10 docs restructure); stale store-state claims
+updated to the live state above.
+
+Native chat engines are gated behind the **Pro
+entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only
+override via long-press on the paywall hero, also reachable in a release
+build compiled with `--dart-define=PRO_RELEASE_TEST_UNLOCK=true` —
+`kProReleaseTestUnlock` in `pro_ids.dart` — for dogfooding Pro-gated paths
+without a purchase). Product ids
+(`lib/utils/pro_ids.dart`): `pro_yearly` / `pro_monthly` (subs) +
+`pro_lifetime` (non-consumable) — **created + priced store-side**
+(2026-09, via `tool/provisioning/`; approved on both stores — ASC approved
+with 4.0, Play ACTIVE), and the RevenueCat keys are pasted
+(`lib/utils/revenuecat_config.dart`) so the app runs the **RevenueCat**
+path (`purchases_flutter`, entitlement `pro`) instead of the legacy
+direct-IAP fallback.
+Gates: the chat-bar
+engine switch always applies (lock badge on the Native segment), and
+enforcement sits behind it — the native chat pane renders the locked
+upsell widget (`Observer` over `ProStore.isPro`, incl. legacy persisted
+`SelectedChatEngine=native`), the username-bar native cluster hides, and
+the stores refuse to connect without the entitlement (`connectChat`
+gates on `isPro` via an injectable `isProResolver` seam — persisted
+engine selections and cold-start session restores can't bring native
+chat up behind the locked pane). WebView chat stays free forever
+(strategy:
+`docs/private/monetization-strategy.md`). Restore = RC restore / cold-start
+guarded `restorePurchases()` (legacy path) + explicit button. On the RC
+path, CustomerInfo entitlement state is the truth (lapsed subscriptions
+revoke — the direct-IAP blind spot is fixed); `BoughtPro` is the offline
+mirror. foss branch: strip this additively (same pattern as
+tips/blacksmith).
+
 ## 1. Entitlement + offering (dashboard)
 
 - Create **entitlement `pro`** — the identifier must equal
