@@ -124,6 +124,9 @@ void main() {
     final first = store.standard.first;
     await tester.tap(find.byTooltip(first.code).first);
     await tester.pump();
+
+    /// Recent stays as it was when the sheet opened - nothing moves
+    expect(find.byKey(const Key('yt-emoji-section-Recent')), findsNothing);
     await tester.tap(find.byKey(const Key('yt-emoji-done')));
     await tester.pump();
     expect(controller.text, 'gg ${first.code} ');
@@ -149,5 +152,22 @@ void main() {
       find.byKey(const Key('yt-emoji-section-Members only')),
       findsNothing,
     );
+  });
+
+  testWidgets('picker: never past 200 characters', (tester) async {
+    final controller = TextEditingController(text: 'x' * 195);
+    await tester.pumpWidget(
+      wrap(
+        SizedBox(
+          height: 700,
+          child: YouTubeEmotePickerSheet(controller: controller),
+        ),
+      ),
+    );
+    await tester.tap(find.byTooltip(store.standard.first.code).first);
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('yt-emoji-done')));
+    await tester.pump();
+    expect(controller.text.length, lessThanOrEqualTo(200));
   });
 }

@@ -81,11 +81,7 @@ void main() {
   group('page parser', () {
     test('standard and member emojis, unicode skipped, size suffix cut', () {
       final emojis = parseYouTubeEmojis(
-        _page([
-          _standard('medal1', ':zz-test-only-medal:'),
-          _member,
-          _unicode,
-        ]),
+        _page([_standard('medal1', ':zz-test-only-medal:'), _member, _unicode]),
       );
       expect(emojis, hasLength(2));
       final medal = emojis.firstWhere((e) => e.isStandard);
@@ -157,7 +153,9 @@ void main() {
         expect(requests.single.queryParameters['v'], 'vid1');
         expect(store.lookup(':zz-test-only-medal:'), isNotNull);
         expect(
-          store.lookup(':omg:')?.ownerChannelId,
+          store
+              .lookup(':omg:', channelId: 'UCHnGh6ClNwEy4aK-bnufo1w')
+              ?.ownerChannelId,
           'UCHnGh6ClNwEy4aK-bnufo1w',
         );
         expect(store.membersOf('UCHnGh6ClNwEy4aK-bnufo1w'), hasLength(1));
@@ -176,7 +174,10 @@ void main() {
       await first.learn('vid1');
       final second = build();
       await second.init();
-      expect(second.lookup(':_addiOmg:'), isNotNull);
+      expect(
+        second.lookup(':_addiOmg:', channelId: 'UCHnGh6ClNwEy4aK-bnufo1w'),
+        isNotNull,
+      );
     });
 
     test(
@@ -222,6 +223,61 @@ void main() {
       final again = build();
       await again.init();
       expect(again.recent.map((e) => e.id), [a.id, b.id]);
+    });
+  });
+
+  group('review fixes', () {
+    late List<Uri> requests;
+    late String body;
+    late DateTime now;
+
+    YouTubeEmojiStore build() => YouTubeEmojiStore(
+      client: MockClient((request) async {
+        requests.add(request.url);
+        return http.Response(body, 200);
+      }),
+      clock: () => now,
+      persistence: MemoryYouTubeEmojiPersistence(),
+    );
+
+    setUp(() {
+      requests = [];
+      now = DateTime.utc(2026, 10, 4, 12);
+      body = _page([_member]);
+    });
+
+    test('member codes resolve only in their own channel', () async {
+      final store = build();
+      await store.init();
+      await store.learn('vid1');
+      expect(
+        store.lookup(':omg:', channelId: 'UCHnGh6ClNwEy4aK-bnufo1w'),
+        isNotNull,
+      );
+      expect(store.lookup(':omg:', channelId: 'UCsomeoneelse'), isNull);
+      expect(store.lookup(':omg:'), isNull);
+
+      /// Standard codes resolve everywhere
+      final standard = store.standard.first.code;
+      expect(store.lookup(standard, channelId: 'UCsomeoneelse'), isNotNull);
+    });
+
+    test('a code the page never has stops triggering reads', () async {
+      final store = build();
+      await store.init();
+      store.noteText('hand typed :skull:', videoId: 'vid1');
+      await Future<void>.delayed(
+        kYouTubeEmojiUnknownDebounce + const Duration(milliseconds: 50),
+      );
+      expect(requests, hasLength(1));
+
+      now = now.add(const Duration(minutes: 10));
+      store.noteText('again :skull:', videoId: 'vid1');
+      await Future<void>.delayed(
+        kYouTubeEmojiUnknownDebounce + const Duration(milliseconds: 50),
+      );
+      expect(requests, hasLength(1));
+      store.dispose();
     });
   });
 }

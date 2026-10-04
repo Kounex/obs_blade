@@ -767,6 +767,7 @@ class _StreamChatState extends State<StreamChat>
                       controller: this._chatInputController,
                       focusNode: this._chatInputFocusNode,
                     ),
+                    maxLength: kYouTubeChatMessageMaxLength,
                     canSend: signedIn && youTubeStore.canWrite,
                     inFlight: youTubeStore.sendingChat,
                     errorText: youTubeStore.sendChatError,

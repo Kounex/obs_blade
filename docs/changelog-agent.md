@@ -2,6 +2,43 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - YouTube chat emojis: drawn + emote picker
+
+User request: a YouTube chat showed "Thanks Remy
+:medal-yellow-first-red:" as text - render those and add an emote
+button for YouTube. Decisions: bundled set + learned live; member
+emojis rendered and in the picker ("Members only"); YouTube emojis only
+(regular emoji stay on the keyboard); combined chat too.
+
+- Facts (audit § YouTube emojis): the Data API sends only `:code:`;
+  images only in the web chat page's data; no public complete list.
+- `YouTubeEmojiStore`: bundled standard set (33, `tool/youtube_emoji_harvest`)
+  + learned from `/live_chat?v=` on attach and on unknown codes (4 s
+  debounce, max every 2 min per stream, quota-free), persisted in the
+  untyped `youtube-emojis` box (member emojis capped at 1,500).
+- Rendering in `YouTubeChatMessageRow` (chat, combined, search, user
+  card, Super Chat / milestone comments) via `youTubeEmojiTextSpans`;
+  rows watch the catalog only when they hold a code.
+- Picker (`YouTubeEmotePickerSheet`) in the native YouTube input and
+  for a YouTube target in combined chat; Kick's dock button became the
+  shared `EmotePickerDockButton`.
+- `videos.list` asks `snippet,liveStreamingDetails` (still 1 unit) for
+  the broadcasting channel (member section).
+- TTS: `:codes:` are emote parts.
+- Review fixes: member codes resolve only in their own channel's chat
+  (`:_omg:` exists in many channels; standard codes stay global); the
+  picker's Recent is a snapshot (no grid moving under the finger); a
+  code a page read didn't resolve never triggers another read of that
+  stream (hand-typed `:skull:` was ~7 MB/h); a page without chat data is
+  logged; YouTube input + picker + send stop at 200 characters
+  (YouTube's chat limit - not in the API reference).
+- Open: the bundle has 33 of YouTube's set; a live-chat page saved while
+  signed in completes it (`tool/youtube_emoji_harvest/README.md`) -
+  worth doing before the store release.
+- Tests: `youtube_emoji_test`, `youtube_emoji_ui_test`, store + TTS
+  additions; shots `youtube_emoji_*` (placeholder circles - no YouTube
+  artwork in the repo).
+
 ## 2026-10-04 - 4.0.1 live on both stores
 
 4.0.1 build 2026093001 (the `ws://` domain-mode hotfix + connection

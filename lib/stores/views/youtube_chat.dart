@@ -49,6 +49,12 @@ enum YouTubeChatConnectionState {
   error,
 }
 
+/// YouTube chat messages are at most 200 characters - the limit YouTube's
+/// own chat input enforces. The API reference doesn't state one; longer
+/// text is answered `messageTextInvalid` (community reports, unverified
+/// here), so the app stops it before sending.
+const int kYouTubeChatMessageMaxLength = 200;
+
 class YouTubeChatStore = _YouTubeChatStore with _$YouTubeChatStore;
 
 /// Channel entries re-check for a (new) live stream on this escalating
@@ -1443,6 +1449,7 @@ abstract class _YouTubeChatStore with Store {
           this._emojis?.noteText(
             item.copyText,
             videoId: this._channelBuffers[label]?.videoId,
+            channelId: this._channelBuffers[label]?.channelId,
           );
           if (!item.isHistorical &&
               this.selectedChannelLabel == label &&
@@ -1777,6 +1784,12 @@ abstract class _YouTubeChatStore with Store {
   Future<bool> sendChatMessage(String text) async {
     final trimmed = text.trim();
     if (!this.canWrite || trimmed.isEmpty || this.sendingChat) {
+      return false;
+    }
+    if (trimmed.length > kYouTubeChatMessageMaxLength) {
+      this.sendChatError =
+          'YouTube messages can be up to $kYouTubeChatMessageMaxLength '
+          'characters';
       return false;
     }
     final label = this.selectedChannelLabel;

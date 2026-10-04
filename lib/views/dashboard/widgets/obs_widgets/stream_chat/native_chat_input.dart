@@ -40,6 +40,9 @@ class NativeChatInput extends StatefulWidget {
   /// toggle). Only shown in the send-ready state, not on the lock strip.
   final Widget? leading;
 
+  /// Characters the platform takes per message
+  final int maxLength;
+
   /// Optional strip rendered above the input row (e.g. a "replying to…"
   /// context line). Only shown in the send-ready state, before the
   /// [errorText] row.
@@ -79,6 +82,7 @@ class NativeChatInput extends StatefulWidget {
     this.controller,
     this.focusNode,
     this.leading,
+    this.maxLength = 500,
     this.contextStrip,
     this.completionSource,
     this.lockedHintText = 'Logged in read-only',
@@ -220,7 +224,7 @@ class _NativeChatInputState extends State<NativeChatInput> {
                   enabled: !this.widget.inFlight,
                   minLines: 1,
                   maxLines: 5,
-                  maxLength: 500,
+                  maxLength: this.widget.maxLength,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => this._submit(),
                   hintText: this.widget.hintText,

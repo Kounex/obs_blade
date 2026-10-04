@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../stores/views/youtube_emojis.dart';
 import '../../../../../utils/youtube/youtube_emoji.dart';
 import 'chat_link.dart';
 import 'twitch_chat_message_row.dart' show chatImageFadeIn;
+
+/// The broadcaster of the YouTube chat on screen (its member emojis
+/// resolve there) - read off the YouTube chat only when it already runs
+String? youTubeEmojiChannelId() {
+  final getIt = GetIt.instance;
+  if (!getIt.isRegistered<YouTubeChatStore>() ||
+      !getIt.checkLazySingletonInstanceExists<YouTubeChatStore>()) {
+    return null;
+  }
+  return getIt<YouTubeChatStore>().selectedLiveChannelId;
+}
 
 YouTubeEmojiStore? youTubeEmojiStoreOrNull() =>
     GetIt.instance.isRegistered<YouTubeEmojiStore>()
@@ -25,6 +37,9 @@ List<InlineSpan> youTubeEmojiTextSpans(
   String text, {
   required double emojiSize,
   YouTubeEmojiStore? store,
+
+  /// Broadcaster of the chat (member emojis); the open chat's when null
+  String? channelId,
 }) {
   final catalog = store ?? youTubeEmojiStoreOrNull();
   if (catalog == null || !mayHaveYouTubeEmoji(text)) {
@@ -35,7 +50,10 @@ List<InlineSpan> youTubeEmojiTextSpans(
   var cursor = 0;
   for (final match in kYouTubeEmojiCodePattern.allMatches(text)) {
     final code = match.group(0)!;
-    final emoji = catalog.lookup(code);
+    final emoji = catalog.lookup(
+      code,
+      channelId: channelId ?? youTubeEmojiChannelId(),
+    );
     if (emoji == null) continue;
     if (match.start > cursor) {
       spans.addAll(

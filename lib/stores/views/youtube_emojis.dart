@@ -132,8 +132,14 @@ abstract class _YouTubeEmojiStore with Store {
     }
   }
 
-  /// `:code:` → emoji (every code of every emoji)
+  /// `:code:` → YouTube's standard emojis (every code, global)
   final ObservableMap<String, YouTubeEmoji> _byCode = ObservableMap();
+
+  /// Owner channel → `:code:` → that channel's member emojis. Member codes
+  /// are per-channel names (`:_omg:` / `:omg:` exist in many channels),
+  /// so they resolve only in their own channel's chat.
+  final ObservableMap<String, ObservableMap<String, YouTubeEmoji>> _members =
+      ObservableMap();
 
   /// Emoji id → emoji, insertion order = learned order
   final Map<String, YouTubeEmoji> _byId = {};
@@ -147,12 +153,21 @@ abstract class _YouTubeEmojiStore with Store {
   final Map<String, DateTime> _learnedAt = {};
   final Set<String> _learning = {};
   final Map<String, Timer> _pending = {};
+
+  /// Per stream: codes asked for since the last read / codes a read
+  /// didn't find (typed by hand, gone from the page) - those never
+  /// trigger another read of that stream's page
+  final Map<String, Set<String>> _wanted = {};
+  final Map<String, Set<String>> _unresolved = {};
   bool _initialized = false;
 
   void _add(YouTubeEmoji emoji) {
     this._byId[emoji.id] = emoji;
+    final index = emoji.isStandard
+        ? this._byCode
+        : this._members.putIfAbsent(emoji.ownerChannelId, ObservableMap.new);
     for (final code in emoji.codes) {
-      this._byCode[code] = emoji;
+      index[code] = emoji;
     }
   }
 
@@ -175,8 +190,12 @@ abstract class _YouTubeEmojiStore with Store {
     }
   }
 
-  /// The emoji written as [code] (with its colons), if known. Reactive.
-  YouTubeEmoji? lookup(String code) => this._byCode[code];
+  /// The emoji written as [code] (with its colons) in the chat of
+  /// [channelId] (the broadcaster - its member emojis count there),
+  /// if known. Standard codes win. Reactive.
+  YouTubeEmoji? lookup(String code, {String? channelId}) =>
+      this._byCode[code] ??
+      (channelId == null ? null : this._members[channelId]?[code]);
 
   /// YouTube's standard set, A-Z
   List<YouTubeEmoji> get standard {
@@ -191,10 +210,8 @@ abstract class _YouTubeEmojiStore with Store {
   List<YouTubeEmoji> membersOf(String? ownerChannelId) {
     this.revision;
     if (ownerChannelId == null) return const [];
-    return [
-      for (final emoji in this._byId.values)
-        if (emoji.ownerChannelId == ownerChannelId) emoji,
-    ]..sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
+    return {...?this._members[ownerChannelId]?.values}.toList()
+      ..sort((a, b) => a.code.toLowerCase().compareTo(b.code.toLowerCase()));
   }
 
   /// Recently picked, newest first
@@ -216,12 +233,18 @@ abstract class _YouTubeEmojiStore with Store {
   /// A message of stream [videoId] arrived: a `:code:` we can't draw
   /// yet makes the store read that stream's chat page (soon, once per
   /// burst, at most every [learnInterval]).
-  void noteText(String text, {required String? videoId}) {
+  void noteText(String text, {required String? videoId, String? channelId}) {
     if (videoId == null || !text.contains(':')) return;
-    final unknown = kYouTubeEmojiCodePattern
-        .allMatches(text)
-        .any((match) => this._byCode[match.group(0)!] == null);
-    if (!unknown || this._pending.containsKey(videoId)) return;
+    final unresolved = this._unresolved[videoId] ?? const <String>{};
+    final unknown = [
+      for (final match in kYouTubeEmojiCodePattern.allMatches(text))
+        if (this.lookup(match.group(0)!, channelId: channelId) == null &&
+            !unresolved.contains(match.group(0)!))
+          match.group(0)!,
+    ];
+    if (unknown.isEmpty) return;
+    this._wanted.putIfAbsent(videoId, () => {}).addAll(unknown);
+    if (this._pending.containsKey(videoId)) return;
     this._pending[videoId] = Timer(kYouTubeEmojiUnknownDebounce, () {
       this._pending.remove(videoId);
       unawaited(this.learn(videoId));
@@ -254,11 +277,26 @@ abstract class _YouTubeEmojiStore with Store {
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}');
       }
+      if (!response.body.contains('ytInitialData')) {
+        /// Consent wall / layout change - say so, a silent "nothing
+        /// found" would hide a broken page format
+        throw Exception('chat page without chat data');
+      }
       this.addAll(parseYouTubeEmojis(response.body));
     } catch (e) {
       GeneralHelper.logFailure('YouTube emojis: chat page read failed', e);
     } finally {
       this._learning.remove(videoId);
+
+      /// What was asked for and still isn't known: don't read again for it
+      final wanted = this._wanted.remove(videoId) ?? const <String>{};
+      final unresolved = this._unresolved.putIfAbsent(videoId, () => {});
+      for (final code in wanted) {
+        final known =
+            this._byCode.containsKey(code) ||
+            this._members.values.any((index) => index.containsKey(code));
+        if (!known) unresolved.add(code);
+      }
     }
   }
 
@@ -291,8 +329,12 @@ abstract class _YouTubeEmojiStore with Store {
     for (final emoji in members.take(members.length - maxMemberEmojis)) {
       this._byId.remove(emoji.id);
       unawaited(this._persistence.remove(emoji.id));
+      final index = this._members[emoji.ownerChannelId];
       for (final code in emoji.codes) {
-        if (this._byCode[code]?.id == emoji.id) this._byCode.remove(code);
+        if (index?[code]?.id == emoji.id) index!.remove(code);
+      }
+      if (index != null && index.isEmpty) {
+        this._members.remove(emoji.ownerChannelId);
       }
     }
   }

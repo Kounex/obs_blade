@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
@@ -60,9 +61,14 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
   String _query = '';
   late final TextEditingController _draft;
 
+  /// Recently used as the sheet opened - picking reorders the store's
+  /// list, the grid must not move under the finger
+  late final List<YouTubeEmoji> _recent;
+
   @override
   void initState() {
     super.initState();
+    this._recent = youTubeEmojiStoreOrNull()?.recent ?? const [];
     final seed = this.widget.controller.text;
     this._draft = TextEditingController(text: seed)
       ..selection = TextSelection.collapsed(offset: seed.length);
@@ -85,8 +91,6 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
   }
 
   void _insert(YouTubeEmojiStore store, YouTubeEmoji emoji) {
-    store.used(emoji);
-
     /// A code glued to the word before it isn't converted by YouTube
     final text = this._draft.text;
     final selection = this._draft.selection;
@@ -94,9 +98,15 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
     final end = selection.isValid ? selection.end : text.length;
     final needsSpace = at > 0 && text[at - 1] != ' ';
     final insert = '${needsSpace ? ' ' : ''}${emoji.code} ';
+    if (text.length - (end - at) + insert.length >
+        kYouTubeChatMessageMaxLength) {
+      HapticFeedback.heavyImpact();
+      return;
+    }
     this._draft
       ..text = text.replaceRange(at, end, insert)
       ..selection = TextSelection.collapsed(offset: at + insert.length);
+    store.used(emoji);
   }
 
   void _done() {
@@ -155,7 +165,7 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                           'Recent',
                           null,
                           [
-                            for (final emoji in store.recent)
+                            for (final emoji in this._recent)
                               if (this._matches(emoji, query)) emoji,
                           ],
                         ),
@@ -254,9 +264,7 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                     controller: this._draft,
                     minLines: 1,
                     maxLines: 5,
-
-                    /// liveChatMessages.insert takes 200 characters
-                    maxLength: 200,
+                    maxLength: kYouTubeChatMessageMaxLength,
                     textInputAction: TextInputAction.done,
                     onSubmitted: (_) => this._done(),
                     hintText: 'Add emotes…',

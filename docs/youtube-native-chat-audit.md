@@ -132,7 +132,8 @@ scalable read path but its quota cost is undocumented — the spike tool
 | Polls | read (`pollEvent`, `activePollItem`) + create; tallies owner-only | ⚠️ partial |
 | Badges | booleans only (`isChatOwner/Moderator/Sponsor/Verified`) — no artwork | ⚠️ icon-based badges |
 | Tombstones / ban events | `tombstone` (content-free), `userBannedEvent` | ✅ |
-| Custom emoji / 7TV / BTTV | not exposed; plain text only | ❌ cut |
+| YouTube emojis (standard set + channel member emojis) | API sends only the `:code:` text; images come from the web chat page `/live_chat?v=` (quota-free, see § YouTube emojis) | ✅ 2026-10-04 (render + picker) |
+| 7TV / BTTV | not exposed | ❌ cut |
 | Pinned messages | not exposed (Innertube only) | ❌ cut |
 | AutoMod queue / warn / unban requests / shield / chat modes | **no API surface at all** | ❌ cut (wave-3 Twitch features have no YouTube analog) |
 | Multi-chat (multiple videos) | per-video `liveChatId` buffers | ✅ same store pattern |
@@ -186,6 +187,31 @@ client (no Google API exists for those). Then run the spike per
 - Moderator enumeration for non-owners (`liveChatModerators.list` owner-only).
 - Embedding an app-owned API key as the default read path before the
   streamList quota measurement exists.
+
+## YouTube emojis (2026-10-04)
+
+Captured from public live chats (`tool/youtube_emoji_harvest/`):
+
+- YouTube's own emojis (`:yt:`, `:face-blue-smiling:`,
+  `:medal-yellow-first-red:`, ...) are custom emojis of channel
+  `UCkszU2WH9gy1mb0dV-11UJg`, usable by everyone. Channel member emojis
+  are owned by the channel (`UC<channel>/<id>`) with several codes each
+  (`:_addiOmg:`, `:addiOmg:`, `:_omg:`, `:omg:`).
+- The Data API's `textMessageDetails.messageText` carries only the code
+  (seen in our native chat: "Thanks Remy :medal-yellow-first-red:").
+- The web chat page's `ytInitialData` message runs hold
+  `{emojiId, shortcuts, image.thumbnails (yt3.ggpht.com ...=w48-h48-c-k-nd),
+  isCustomEmoji: true}`; unicode emoji have no `isCustomEmoji` (Noto
+  images; the text already has the character). ggpht scales via
+  `=w<n>-h<n>`.
+- No public, complete list exists (Emojipedia lists an old 27-item set);
+  the anonymous page carries only the emojis of its recent messages - a
+  page saved while signed in carries the full picker.
+- App: bundled set + learned on chat attach / unknown code (max every
+  2 min per stream, ~250 KB, no quota), kept on device
+  (`YouTubeEmojiStore`, box `youtube-emojis`).
+- **Unverified:** that `liveChatMessages.insert` with `:code:` shows the
+  emoji (typing the code on the web does) - device check.
 
 ## Sources
 

@@ -15,6 +15,7 @@ import 'chat_type_brand.dart';
 import 'combined_sources_sheet.dart';
 import 'kick_emote_picker.dart';
 import 'youtube_emote_picker.dart';
+import '../../../../../stores/views/youtube_chat.dart';
 import 'kick_reply_strip.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_input.dart';
@@ -88,6 +89,9 @@ class CombinedChatInput extends StatelessWidget {
           errorText: store.sendChatError,
           accentColor: accent,
           hintText: 'Send to ${target.text}…',
+          maxLength: target == ChatType.YouTube
+              ? kYouTubeChatMessageMaxLength
+              : 500,
           leading: Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
