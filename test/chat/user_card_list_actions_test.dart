@@ -17,11 +17,14 @@ import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_user_card_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart'
+    show formatChatMessageTime;
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_kick_services.dart';
 import 'support/fake_twitch_services.dart' show FakeThirdPartyEmoteService;
 import 'support/fake_youtube_services.dart';
+import 'kick_chat_message_row_test.dart' show kickMessage;
 import 'youtube_chat_message_row_test.dart' show ytMessage;
 
 /// Highlight / ignore from the user card on YouTube and Kick, like Twitch:
@@ -209,6 +212,36 @@ void main() {
       expect(tester.getTopLeft(live).dy, lessThan(liveBefore.dy));
     });
 
+    testWidgets('history rows prefix the message timestamp (setting off)', (
+      tester,
+    ) async {
+      final stamp = DateTime(2026, 8, 9, 12, 29);
+      final store = GetIt.instance<YouTubeChatStore>();
+      runInAction(() {
+        store.messages.add(
+          ytMessage(
+            'm1',
+            author: 'UCremy',
+            authorName: 'Remy',
+            text: 'hello',
+            publishedAt: stamp,
+          ),
+        );
+      });
+      await tester.pumpWidget(
+        host(
+          (context) =>
+              YouTubeUserCardSheet(channelId: 'UCremy', fallbackName: 'Remy'),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.textContaining('${formatChatMessageTime(stamp)} '),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('own card: no highlight / ignore', (tester) async {
       await tester.pumpWidget(
         host(
@@ -280,6 +313,34 @@ void main() {
       expect(
         settings().get(SettingsKeys.ChatIgnoredUsers.name) as String,
         contains('kickfan'),
+      );
+    });
+
+    testWidgets('history rows prefix the message timestamp (setting off)', (
+      tester,
+    ) async {
+      final stamp = DateTime(2026, 8, 9, 12, 29);
+      final store = GetIt.instance<KickChatStore>();
+      runInAction(() {
+        store.messages.add(
+          kickMessage(
+            'm1',
+            author: 'kickfan',
+            content: 'hello',
+            createdAt: stamp,
+          ),
+        );
+      });
+      await tester.pumpWidget(
+        host(
+          (context) => KickUserCardSheet(userId: 1, fallbackName: 'kickfan'),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.textContaining('${formatChatMessageTime(stamp)} '),
+        findsOneWidget,
       );
     });
 

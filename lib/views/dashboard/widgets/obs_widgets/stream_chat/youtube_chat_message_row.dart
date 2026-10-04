@@ -78,6 +78,9 @@ class YouTubeChatMessageRow extends StatelessWidget {
   /// don't pass it just never self-match.
   final List<String?> selfDisplayNames;
 
+  /// Prefix [message.publishedAt] as `12:29 PM` (user-card LIVE list).
+  final bool showTimestamp;
+
   /// Inline widget in front of the line (before timestamp and badges),
   /// on the text's middle line — the combined chat's platform badge.
   final Widget? leading;
@@ -90,6 +93,7 @@ class YouTubeChatMessageRow extends StatelessWidget {
     this.onAuthorTap,
     this.highlighted = false,
     this.selfDisplayNames = const [],
+    this.showTimestamp = false,
     this.leading,
   });
 
@@ -102,6 +106,14 @@ class YouTubeChatMessageRow extends StatelessWidget {
   /// semantic label of their own, and the author name flips between a
   /// plain [TextSpan] and a [WidgetSpan] depending on [onAuthorTap].
   String get _semanticsLabel {
+    final label = this._typeLabel;
+    if (this.showTimestamp && label.isNotEmpty) {
+      return '${formatChatMessageTime(this.message.publishedAt)}. $label';
+    }
+    return label;
+  }
+
+  String get _typeLabel {
     final author = this.message.authorName ?? 'Unknown';
     final snippet = this.message.snippet;
     switch (this.message.type) {
@@ -310,7 +322,16 @@ class YouTubeChatMessageRow extends StatelessWidget {
                 child: leading,
               ),
             ),
-          if (NativeChatAppearance.timestamps(this.settingsBox))
+          if (this.showTimestamp)
+            TextSpan(
+              text: '${formatChatMessageTime(this.message.publishedAt)} ',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+                fontSize: this._textSize * 0.9,
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          else if (NativeChatAppearance.timestamps(this.settingsBox))
             chatLineTimeSpan(context, this.message.publishedAt, this._textSize),
           if (this.onAuthorTap == null) ...this._badgeSpans(),
           this._authorSpan(context),

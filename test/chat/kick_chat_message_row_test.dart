@@ -9,6 +9,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/kick_chat_message_row.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 
@@ -16,11 +17,13 @@ KickChatMessage kickMessage(
   String id, {
   String author = 'Chatter',
   String? content,
+  DateTime? createdAt,
   List<KickChatBadgeV2> badgesV2 = const [],
   List<KickChatLegacyBadge> legacyBadges = const [],
 }) => KickChatMessage(
   id: id,
   content: content ?? 'text $id',
+  createdAt: createdAt,
   sender: KickChatSender(
     id: 1,
     username: author,
@@ -37,6 +40,14 @@ void main() {
   Widget wrap(Widget child) => MaterialApp(
     home: Scaffold(body: Column(children: [child])),
   );
+
+  /// Plain-text of every rendered RichText — the rows build their content
+  /// as Text.rich, which `find.text` doesn't see (same idiom as
+  /// youtube_chat_message_row_test).
+  String renderedRichText(WidgetTester tester) => tester
+      .widgetList<RichText>(find.byType(RichText))
+      .map((rich) => rich.text.toPlainText())
+      .join('\n');
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('kick_row_test');
@@ -239,6 +250,76 @@ void main() {
         );
       },
     );
+  });
+
+  group('forced timestamp (user card)', () {
+    final stamp = DateTime(2026, 8, 9, 12, 29);
+
+    testWidgets('showTimestamp prefixes the time with the setting off', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          KickChatMessageRow(
+            message: kickMessage('m1', content: 'hello', createdAt: stamp),
+            settingsBox: settingsBox(),
+            showTimestamp: true,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        renderedRichText(tester),
+        contains('${formatChatMessageTime(stamp)} '),
+      );
+    });
+
+    testWidgets('without showTimestamp the setting-off row has no time', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          KickChatMessageRow(
+            message: kickMessage('m1', content: 'hello', createdAt: stamp),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        renderedRichText(tester),
+        isNot(contains(formatChatMessageTime(stamp))),
+      );
+    });
+
+    testWidgets('the semantics label announces the time', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          KickChatMessageRow(
+            message: kickMessage(
+              'm1',
+              author: 'Viewer1',
+              content: 'hello',
+              createdAt: stamp,
+            ),
+            settingsBox: settingsBox(),
+            showTimestamp: true,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(KickChatMessageRow));
+      expect(
+        semantics.label,
+        '${formatChatMessageTime(stamp)}. Viewer1: hello',
+      );
+      handle.dispose();
+    });
   });
 
   group('screen-reader semantics', () {

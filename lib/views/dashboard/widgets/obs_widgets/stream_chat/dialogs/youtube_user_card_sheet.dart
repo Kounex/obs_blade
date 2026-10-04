@@ -155,6 +155,7 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
                 key: ValueKey('card-msg-${messages[i].id}'),
                 message: messages[i],
                 settingsBox: settingsBox,
+                showTimestamp: true,
               ),
             ],
           ],

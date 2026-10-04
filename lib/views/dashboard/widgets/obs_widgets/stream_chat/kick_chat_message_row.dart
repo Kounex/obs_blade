@@ -66,6 +66,9 @@ class KickChatMessageRow extends StatelessWidget {
   /// don't pass it just never self-match.
   final List<String?> selfDisplayNames;
 
+  /// Prefix [message.createdAt] as `12:29 PM` (user-card LIVE list).
+  final bool showTimestamp;
+
   /// Inline widget in front of the line (before timestamp and badges),
   /// on the text's middle line — the combined chat's platform badge.
   final Widget? leading;
@@ -80,6 +83,7 @@ class KickChatMessageRow extends StatelessWidget {
     this.broadcasterId,
     this.emoteStore,
     this.selfDisplayNames = const [],
+    this.showTimestamp = false,
     this.leading,
   });
 
@@ -100,6 +104,9 @@ class KickChatMessageRow extends StatelessWidget {
           : 'Chat was cleared by a moderator';
     }
     final buffer = StringBuffer();
+    if (this.showTimestamp && this.message.createdAt != null) {
+      buffer.write('${formatChatMessageTime(this.message.createdAt!)}. ');
+    }
     final reply = this.message.metadata;
     final senderName = reply?.originalSenderName;
     if (this.message.type == KickChatMessageType.reply &&
@@ -394,7 +401,16 @@ class KickChatMessageRow extends StatelessWidget {
                 child: leading,
               ),
             ),
-          if (NativeChatAppearance.timestamps(this.settingsBox) &&
+          if (this.showTimestamp && this.message.createdAt != null)
+            TextSpan(
+              text: '${formatChatMessageTime(this.message.createdAt!)} ',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+                fontSize: this._textSize * 0.9,
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          else if (NativeChatAppearance.timestamps(this.settingsBox) &&
               this.message.createdAt != null)
             chatLineTimeSpan(context, this.message.createdAt!, this._textSize),
           if (this.onAuthorTap == null) ...this._badgeSpans(),

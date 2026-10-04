@@ -18,6 +18,7 @@ YouTubeChatMessage ytMessage(
   String author = 'chan-1',
   String? authorName,
   String? text,
+  DateTime? publishedAt,
   bool owner = false,
   bool moderator = false,
   bool sponsor = false,
@@ -28,7 +29,7 @@ YouTubeChatMessage ytMessage(
   isTombstoned: tombstoned,
   snippet: YouTubeChatMessageSnippet(
     type: YouTubeChatMessageType.textMessage,
-    publishedAt: DateTime.utc(2026, 9, 3),
+    publishedAt: publishedAt ?? DateTime.utc(2026, 9, 3),
     authorChannelId: author,
     displayMessage: text ?? 'text $id',
     textMessageDetails: YouTubeTextMessageDetails(
@@ -458,6 +459,73 @@ void main() {
 
     expect(first, isNotNull);
     expect(first, second);
+  });
+
+  group('forced timestamp (user card)', () {
+    final stamp = DateTime(2026, 8, 9, 12, 29);
+
+    testWidgets('showTimestamp prefixes the time with the setting off', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage('m1', text: 'hello', publishedAt: stamp),
+            settingsBox: settingsBox(),
+            showTimestamp: true,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        renderedRichText(tester),
+        contains('${formatChatMessageTime(stamp)} '),
+      );
+    });
+
+    testWidgets('without showTimestamp the setting-off row has no time', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage('m1', text: 'hello', publishedAt: stamp),
+            settingsBox: settingsBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        renderedRichText(tester),
+        isNot(contains(formatChatMessageTime(stamp))),
+      );
+    });
+
+    testWidgets('the semantics label announces the time', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      await tester.pumpWidget(
+        wrap(
+          YouTubeChatMessageRow(
+            message: ytMessage(
+              'm1',
+              authorName: 'Viewer',
+              text: 'hello',
+              publishedAt: stamp,
+            ),
+            settingsBox: settingsBox(),
+            showTimestamp: true,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final semantics = tester.getSemantics(find.byType(YouTubeChatMessageRow));
+      expect(semantics.label, '${formatChatMessageTime(stamp)}. Viewer: hello');
+      handle.dispose();
+    });
   });
 
   group('screen-reader semantics', () {

@@ -140,6 +140,7 @@ class _KickUserCardSheetState extends State<KickUserCardSheet> {
                 key: ValueKey('card-msg-${messages[i].id}'),
                 message: messages[i],
                 settingsBox: settingsBox,
+                showTimestamp: true,
               ),
             ],
           ],
