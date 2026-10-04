@@ -3,7 +3,7 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-25**, top block
-updated **2026-10-04** (4.0.1 live, 4.1.0 build 2026100401 in testing) (end of
+updated **2026-10-04** (4.0.1 live, 4.1.0 build 2026100402 in testing) (end of
 the combined-chat session: combined chat waves 1–3, channel mod sheets,
 picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
@@ -48,8 +48,13 @@ published).
 **Update 2026-10-04 (later) — releases:** **4.0.1 is live on both
 stores** (App Store `READY_FOR_SALE`, Play production 2026093001 at
 100%; tag `4.0.1`). Watch crash reports / reviews. **4.1.0 build
-2026100401** (`7f652104`) is on TestFlight (internal testers) + Play
-internal; TestFlight "What to Test" = `fastlane/testflight_notes.txt`.
+2026100402** (`64aa7fa4`) is on TestFlight (internal testers) + Play
+internal (supersedes 2026100401; adds the post-`7f652104` chat wave -
+YouTube emojis + picker, user cards on YouTube/Kick, one options sheet,
+scrolled-up reading fixes, background chat recovery, grouped scene-item
+toggles, the capped-buffer notice re-fade fix; notes re-approved by the
+user, Play what's new adds the emoji bullet). TestFlight "What to Test" =
+`fastlane/testflight_notes.txt`.
 Next: the user's verdict on that build, then `release-promote` 4.1.0
 (also pushes the regrouped store descriptions + promo text), and at the
 store release the website's `pending-4.1/` goes live
