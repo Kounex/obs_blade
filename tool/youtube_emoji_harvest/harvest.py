@@ -10,7 +10,8 @@ reads + a few `get_live_chat` continuations - maintainer side only, the app
 never calls innertube) and merges what it finds into
 `lib/utils/youtube/youtube_standard_emojis.dart`.
 
-    python3 tool/youtube_emoji_harvest/harvest.py              # sample live chats
+    python3 tool/youtube_emoji_harvest/harvest.py              # busiest live chats
+    python3 tool/youtube_emoji_harvest/harvest.py --chats=15 --minutes=3
     python3 tool/youtube_emoji_harvest/harvest.py page.html ...  # saved pages
 
 A page saved from a live chat while signed in carries the full emoji picker
@@ -64,10 +65,85 @@ def initial_data(html):
     return json.loads(m.group(1)) if m else None
 
 
-def sample_live(found, chats=40, rounds=6):
-    hub = get(LIVE_HUB)
-    ids = list(dict.fromkeys(re.findall(r'"videoId":"([A-Za-z0-9_-]{11})"', hub)))
-    for vid in ids[:chats]:
+LIVE_QUERIES = ['live', 'gaming live', 'just chatting live', 'music live',
+                'news live', 'minecraft live', 'fortnite live', 'vtuber live',
+                'sports live', 'football live']
+
+
+def _viewers(text):
+    """'1,234 watching' / '12K watching' -> number (0 when unknown)."""
+    m = re.search(r'([\d.,]+)\s*([KkMm])?\s*watching', text)
+    if not m:
+        return 0
+    value = float(m.group(1).replace(',', ''))
+    unit = (m.group(2) or '').upper()
+    return int(value * (1000 if unit == 'K' else 1000000 if unit == 'M' else 1))
+
+
+def busiest_live(limit):
+    """Live video ids with the most viewers, from live searches + the hub."""
+    viewers = {}
+    pages = [LIVE_HUB] + [
+        'https://www.youtube.com/results?search_query='
+        + urllib.request.quote(q) + '&sp=EgJAAQ%253D%253D' for q in LIVE_QUERIES]
+    for url in pages:
+        try:
+            data = initial_data(get(url))
+        except Exception:
+            continue
+
+        def walk(node):
+            if isinstance(node, dict):
+                for key in ('videoRenderer', 'gridVideoRenderer'):
+                    video = node.get(key)
+                    if isinstance(video, dict) and video.get('videoId'):
+                        label = video.get('viewCountText') or {}
+                        text = label.get('simpleText') or ''.join(
+                            run.get('text', '') for run in label.get('runs', []))
+                        count = _viewers(text)
+                        vid = video['videoId']
+                        viewers[vid] = max(viewers.get(vid, 0), count)
+                for value in node.values():
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+        if data:
+            walk(data)
+        time.sleep(1)
+    ranked = sorted(viewers.items(), key=lambda item: -item[1])
+    return [(vid, count) for vid, count in ranked if count > 0][:limit]
+
+
+def live_chat_token(data):
+    """The 'Live chat' (every message) view's token - the page opens on
+    'Top chat', a filtered sample."""
+    found = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            for item in node.get('subMenuItems') or []:
+                if item.get('title') == 'Live chat':
+                    token = ((item.get('continuation') or {})
+                             .get('reloadContinuationData') or {}).get('continuation')
+                    if token:
+                        found.append(token)
+            for value in node.values():
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+    walk(data)
+    if found:
+        return found[0]
+    cont = re.search(r'"continuation":"([^"]+)"', json.dumps(data))
+    return cont.group(1) if cont else None
+
+
+def sample_live(found, chats=15, minutes=3.0):
+    """Follow the busiest live chats for [minutes] each (a request every
+    5 s) - only YouTube's own emojis are kept (see [collect])."""
+    for vid, count in busiest_live(chats):
         try:
             html = get(f'https://www.youtube.com/live_chat?v={vid}&is_popout=1')
         except Exception:
@@ -77,13 +153,12 @@ def sample_live(found, chats=40, rounds=6):
         version = re.search(r'"INNERTUBE_CLIENT_VERSION":"([^"]+)"', html)
         if not data or not key:
             continue
+        before = len(found)
         collect(data, found)
-        cont = re.search(r'"continuation":"([^"]+)"', json.dumps(data))
-        token = cont.group(1) if cont else None
-        for _ in range(rounds):
-            if not token:
-                break
-            time.sleep(5)
+        token = live_chat_token(data)
+        deadline = time.time() + minutes * 60
+        messages = 0
+        while token and time.time() < deadline:
             body = json.dumps({'context': {'client': {
                 'clientName': 'WEB',
                 'clientVersion': version.group(1) if version else '2.20260101'}},
@@ -94,10 +169,14 @@ def sample_live(found, chats=40, rounds=6):
                     f'?key={key.group(1)}', body))
             except Exception:
                 break
-            collect(answer, found)
-            nxt = re.search(r'"continuation":"([^"]+)"', json.dumps(answer))
-            token = nxt.group(1) if nxt else None
-        print(f'{vid}: {len(found)}', flush=True)
+            chat = (answer.get('continuationContents') or {}).get('liveChatContinuation') or {}
+            messages += len(chat.get('actions') or [])
+            collect(chat, found)
+            nxt = next(iter(((chat.get('continuations') or [{}])[0]).values()), {})
+            token = nxt.get('continuation')
+            time.sleep(max(2.0, (nxt.get('timeoutMs') or 5000) / 1000))
+        print(f'{vid} ({count} watching, {messages} chat actions): '
+              f'+{len(found) - before} -> {len(found)}', flush=True)
 
 
 def existing():
@@ -133,8 +212,9 @@ def write(found):
 def main():
     found = existing()
     before = len(found)
-    if len(sys.argv) > 1:
-        for path in sys.argv[1:]:
+    files = [a for a in sys.argv[1:] if not a.startswith('--')]
+    if files:
+        for path in files:
             html = Path(path).read_text(errors='replace')
             data = initial_data(html)
             if data:
@@ -145,7 +225,9 @@ def main():
                 except Exception:
                     pass
     else:
-        sample_live(found)
+        chats = int(next((a.split('=')[1] for a in sys.argv if a.startswith('--chats=')), 15))
+        minutes = float(next((a.split('=')[1] for a in sys.argv if a.startswith('--minutes=')), 3))
+        sample_live(found, chats, minutes)
     write(found)
     print(f'{before} -> {len(found)} standard emojis in {OUT}')
 
