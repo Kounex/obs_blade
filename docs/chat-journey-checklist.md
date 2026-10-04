@@ -105,6 +105,12 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   missing keys (not empty lists), no channel, error bodies, 401 / 403 /
   429. Capture a real answer (ids changed) when in doubt; a fake that
   agrees with the code proves nothing.
+- Numeric model fields: check the discovery doc's wire type, not the
+  prose docs - a Google `uint64` is a JSON **string** on the wire
+  (`banDurationSeconds`, `concurrentViewers`, `amountMicros`, poll
+  `tally`), a cast `as num` kills the poll on the first real event
+  (2026-10-05: YouTube chat Failed after a timeout in the read chat).
+  Parse both forms.
 - Failures go through `GeneralHelper.logFailure` (Settings → Logs,
   redacted, rate-limited) - never console-only. A dogfood bug must be
   diagnosable from the user's log export.

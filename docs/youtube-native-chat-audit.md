@@ -37,6 +37,15 @@ scalable read path but its quota cost is undocumented — the spike tool
   quota-stopped chat then (`nextYouTubeQuotaReset`). ~5 units/call (community-verified; Google removed the
   live rows from the quota table). First page returns recent history;
   `offlineAt` signals stream end; `activePollItem` carries the active poll.
+  **Wire types come from the discovery doc, not the prose reference**:
+  Google serializes `uint64` fields as JSON **strings** — in chat pages
+  that's `userBannedDetails.banDurationSeconds` (a `uint64`; a `as num`
+  cast crashed the poll on the first real timeout, 2026-10-05) and
+  `concurrentViewers`; `amountMicros` (Super Chat / Sticker /
+  Fan-Funding) and poll `tally` are 64-bit strings too — keep them typed
+  `String?`. `pollingIntervalMillis`, super-chat `tier` etc. are
+  `uint32`/`int32` and arrive as numbers. Parse 64-bit fields from
+  both forms (`_uint64FromJson` in `youtube_chat_message.dart`).
 - **`liveChatMessages.streamList` (gRPC server-streaming)** — documented,
   production-present, actively maintained (guide refreshed 2026-06). Service
   `V3DataLiveChatMessageService.StreamList` on `youtube.googleapis.com:443`;

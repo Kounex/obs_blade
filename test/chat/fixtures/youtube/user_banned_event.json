@@ -16,7 +16,7 @@
         "profileImageUrl": "https://yt3.ggpht.com/troll-user=s88-c-k"
       },
       "banType": "temporary",
-      "banDurationSeconds": 300
+      "banDurationSeconds": "300"
     }
   },
   "authorDetails": {

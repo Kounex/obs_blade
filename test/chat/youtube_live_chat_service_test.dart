@@ -73,6 +73,28 @@ void main() {
       );
     });
 
+    test('parses a userBannedEvent page - banDurationSeconds is a uint64 '
+        'and arrives as a JSON string', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          json.encode({
+            'pollingIntervalMillis': 5000,
+            'items': [fixture('user_banned_event')],
+          }),
+          200,
+        );
+      });
+
+      final page = await serviceWith(
+        client,
+      ).listMessages('chat-1', null, apiKey: 'k');
+
+      final banned = page.messages.single.snippet.userBannedDetails;
+      expect(page.messages.single.type, YouTubeChatMessageType.userBanned);
+      expect(banned?.banType, 'temporary');
+      expect(banned?.banDurationSeconds, 300);
+    });
+
     test(
       'bearer token goes to the Authorization header, no key param',
       () async {

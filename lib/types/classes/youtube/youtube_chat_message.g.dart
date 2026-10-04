@@ -192,7 +192,7 @@ _YouTubeUserBannedDetails _$YouTubeUserBannedDetailsFromJson(
           json['bannedUserDetails'] as Map<String, dynamic>,
         ),
   banType: json['banType'] as String?,
-  banDurationSeconds: (json['banDurationSeconds'] as num?)?.toInt(),
+  banDurationSeconds: _uint64FromJson(json['banDurationSeconds']),
 );
 
 _YouTubeBannedUserDetails _$YouTubeBannedUserDetailsFromJson(

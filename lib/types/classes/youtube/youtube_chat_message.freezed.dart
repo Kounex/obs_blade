@@ -4092,8 +4092,9 @@ as String?,
 mixin _$YouTubeUserBannedDetails {
 
  YouTubeBannedUserDetails? get bannedUserDetails;/// `permanent` | `temporary`
- String? get banType;/// Only present for temporary bans (timeouts).
- int? get banDurationSeconds;
+ String? get banType;/// Only present for temporary bans (timeouts). A YouTube `uint64` -
+/// arrives as a JSON string ([_uint64FromJson]).
+@JsonKey(fromJson: _uint64FromJson) int? get banDurationSeconds;
 /// Create a copy of YouTubeUserBannedDetails
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -4124,7 +4125,7 @@ abstract mixin class $YouTubeUserBannedDetailsCopyWith<$Res>  {
   factory $YouTubeUserBannedDetailsCopyWith(YouTubeUserBannedDetails value, $Res Function(YouTubeUserBannedDetails) _then) = _$YouTubeUserBannedDetailsCopyWithImpl;
 @useResult
 $Res call({
- YouTubeBannedUserDetails? bannedUserDetails, String? banType, int? banDurationSeconds
+ YouTubeBannedUserDetails? bannedUserDetails, String? banType,@JsonKey(fromJson: _uint64FromJson) int? banDurationSeconds
 });
 
 
@@ -4243,7 +4244,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( YouTubeBannedUserDetails? bannedUserDetails,  String? banType,  int? banDurationSeconds)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( YouTubeBannedUserDetails? bannedUserDetails,  String? banType, @JsonKey(fromJson: _uint64FromJson)  int? banDurationSeconds)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _YouTubeUserBannedDetails() when $default != null:
 return $default(_that.bannedUserDetails,_that.banType,_that.banDurationSeconds);case _:
@@ -4264,7 +4265,7 @@ return $default(_that.bannedUserDetails,_that.banType,_that.banDurationSeconds);
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( YouTubeBannedUserDetails? bannedUserDetails,  String? banType,  int? banDurationSeconds)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( YouTubeBannedUserDetails? bannedUserDetails,  String? banType, @JsonKey(fromJson: _uint64FromJson)  int? banDurationSeconds)  $default,) {final _that = this;
 switch (_that) {
 case _YouTubeUserBannedDetails():
 return $default(_that.bannedUserDetails,_that.banType,_that.banDurationSeconds);case _:
@@ -4284,7 +4285,7 @@ return $default(_that.bannedUserDetails,_that.banType,_that.banDurationSeconds);
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( YouTubeBannedUserDetails? bannedUserDetails,  String? banType,  int? banDurationSeconds)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( YouTubeBannedUserDetails? bannedUserDetails,  String? banType, @JsonKey(fromJson: _uint64FromJson)  int? banDurationSeconds)?  $default,) {final _that = this;
 switch (_that) {
 case _YouTubeUserBannedDetails() when $default != null:
 return $default(_that.bannedUserDetails,_that.banType,_that.banDurationSeconds);case _:
@@ -4299,14 +4300,15 @@ return $default(_that.bannedUserDetails,_that.banType,_that.banDurationSeconds);
 @JsonSerializable(createToJson: false)
 
 class _YouTubeUserBannedDetails implements YouTubeUserBannedDetails {
-  const _YouTubeUserBannedDetails({this.bannedUserDetails, this.banType, this.banDurationSeconds});
+  const _YouTubeUserBannedDetails({this.bannedUserDetails, this.banType, @JsonKey(fromJson: _uint64FromJson) this.banDurationSeconds});
   factory _YouTubeUserBannedDetails.fromJson(Map<String, dynamic> json) => _$YouTubeUserBannedDetailsFromJson(json);
 
 @override final  YouTubeBannedUserDetails? bannedUserDetails;
 /// `permanent` | `temporary`
 @override final  String? banType;
-/// Only present for temporary bans (timeouts).
-@override final  int? banDurationSeconds;
+/// Only present for temporary bans (timeouts). A YouTube `uint64` -
+/// arrives as a JSON string ([_uint64FromJson]).
+@override@JsonKey(fromJson: _uint64FromJson) final  int? banDurationSeconds;
 
 /// Create a copy of YouTubeUserBannedDetails
 /// with the given fields replaced by the non-null parameter values.
@@ -4338,7 +4340,7 @@ abstract mixin class _$YouTubeUserBannedDetailsCopyWith<$Res> implements $YouTub
   factory _$YouTubeUserBannedDetailsCopyWith(_YouTubeUserBannedDetails value, $Res Function(_YouTubeUserBannedDetails) _then) = __$YouTubeUserBannedDetailsCopyWithImpl;
 @override @useResult
 $Res call({
- YouTubeBannedUserDetails? bannedUserDetails, String? banType, int? banDurationSeconds
+ YouTubeBannedUserDetails? bannedUserDetails, String? banType,@JsonKey(fromJson: _uint64FromJson) int? banDurationSeconds
 });
 
 

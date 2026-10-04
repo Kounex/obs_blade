@@ -4,6 +4,40 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-05 - Chat: YouTube poll died on a timeout/ban event (uint64 as string)
+
+User report (dogfood, after the background-recovery work): a YouTube
+chat in combined chat went to Failed after backgrounding, Retry and even
+an app restart failed again at once; Settings → Logs showed
+`YouTube chat poll failed - _CastError: type 'String' is not a subtype
+of type 'num' in type cast`.
+
+- Root cause: `userBannedEvent` messages carry
+  `userBannedDetails.banDurationSeconds`, a YouTube **`uint64`** - and
+  Google serializes 64-bit fields as JSON **strings** (discovery doc:
+  `type: string, format: uint64`, same rule as `concurrentViewers`,
+  which the code already parsed defensively). The model cast
+  `as num?` threw on the first timeout/ban in the read chat; the poll
+  loop treats an `Error` as a bug, not a network state, so the chat went
+  terminal-Failed. A restart failed again because the first page of a
+  poll is recent history - the offending event was still in it. The
+  docs-built fixture encoded the wrong assumption (`300` as a number),
+  so tests passed against a body YouTube never sends.
+- Fix: `banDurationSeconds` parses from both forms
+  (`_uint64FromJson` in `lib/types/classes/youtube/youtube_chat_message.dart`);
+  the fixture now carries the wire-realistic `"300"` string; a
+  service-level test parses a banned-event page end to end. Checked the
+  whole YouTube layer against the discovery doc: the other numeric chat
+  fields (`pollingIntervalMillis`, super-chat `tier`, `memberMonth`,
+  `giftMembershipsCount`) are `uint32`/`int32` = JSON numbers, correctly
+  cast as-is. Rule + sibling list noted in
+  `docs/youtube-native-chat-audit.md` (§ Receive) and a checklist row in
+  `docs/chat-journey-checklist.md` § Network-facing code.
+- Open (verify on device): the ban *request* sends the duration as a
+  JSON number - Google accepts both forms for `uint64` inputs, but a
+  live timeout via the mod sheet is still unproven (handoff's
+  unverified list).
+
 ## 2026-10-04 - Chat: notice rows re-faded on every arrival at the buffer cap
 
 User report (dogfood): in combined chat, social rows (subs,

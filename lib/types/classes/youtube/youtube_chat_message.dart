@@ -271,6 +271,16 @@ abstract class YouTubePollOption with _$YouTubePollOption {
       _$YouTubePollOptionFromJson(json);
 }
 
+/// YouTube serializes `uint64` fields as JSON **strings** (Google's JSON
+/// style: 64-bit ints go over the wire as strings, per the discovery
+/// doc's `type: string, format: uint64`). Parse a raw number too in case
+/// it ever arrives as one.
+int? _uint64FromJson(Object? value) => value is num
+    ? value.toInt()
+    : value == null
+    ? null
+    : int.tryParse(value.toString());
+
 @Freezed(fromJson: true, toJson: false)
 abstract class YouTubeUserBannedDetails with _$YouTubeUserBannedDetails {
   const factory YouTubeUserBannedDetails({
@@ -279,8 +289,9 @@ abstract class YouTubeUserBannedDetails with _$YouTubeUserBannedDetails {
     /// `permanent` | `temporary`
     String? banType,
 
-    /// Only present for temporary bans (timeouts).
-    int? banDurationSeconds,
+    /// Only present for temporary bans (timeouts). A YouTube `uint64` -
+    /// arrives as a JSON string ([_uint64FromJson]).
+    @JsonKey(fromJson: _uint64FromJson) int? banDurationSeconds,
   }) = _YouTubeUserBannedDetails;
 
   factory YouTubeUserBannedDetails.fromJson(Map<String, Object?> json) =>
