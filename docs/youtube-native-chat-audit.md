@@ -125,10 +125,10 @@ scalable read path but its quota cost is undocumented — the spike tool
   also points at a scheduled stream); `concurrentViewers` is a string and
   missing when the owner hides it (→ LIVE without a number). A failed
   read leaves the channel unknown (the search's own LIVE stays), nothing
-  cached; answers are remembered 1 min. Subscriptions sort live first by
-  viewers, the rest keep YouTube's A-Z - once, after the whole list is
-  checked (rows are keyed; a reorder per chunk moved rows under a
-  finger). Without an API key `videos.list` reads with the sign-in
+  cached; answers are remembered 1 min. Subscriptions stay A-Z (any
+  reorder moved channels away from where the user was scrolling); a
+  progress line runs while checking, then a "Live now" filter lists the
+  live ones by viewers. Rows are keyed by channel. Without an API key `videos.list` reads with the sign-in
   token; a `/live` read gives up after 8 s.
 - Not verified with a live key on the maintainer machine (none there):
   shapes are from Google's reference; check on device.

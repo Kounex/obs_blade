@@ -28,11 +28,11 @@ class YouTubeLiveStatusService {
 
   static const Duration ttl = Duration(minutes: 1);
 
-  /// `/live` reads in flight at once
-  static const int concurrency = 6;
+  /// `/live` reads in flight at once (~3 KB each)
+  static const int concurrency = 10;
 
   /// Channels per `videos.list` round (and per update)
-  static const int chunkSize = 24;
+  static const int chunkSize = 30;
 
   /// One `/live` read; a stalled one counts as unknown instead of holding
   /// up the rest
@@ -65,7 +65,9 @@ class YouTubeLiveStatusService {
 
   /// Check [channelIds] (`UC…`); fresh answers come back at once through
   /// [onUpdate], the rest per chunk. Stops between chunks once
-  /// [cancelled] says so (the sheet closed). `videos.list` reads with
+  /// [cancelled] says so (the sheet closed). [onProgress] gets how many
+  /// of the channels are done (answered or given up on) after each step.
+  /// `videos.list` reads with
   /// [apiKey], else a signed-in [accessToken]; with neither nothing is
   /// read (`/live` alone can't tell a scheduled stream from a live one).
   Future<void> check(
@@ -73,6 +75,7 @@ class YouTubeLiveStatusService {
     required String apiKey,
     Future<String?> Function()? accessToken,
     required void Function(Map<String, YouTubeLiveStatus> update) onUpdate,
+    void Function(int done, int total)? onProgress,
     bool Function()? cancelled,
   }) async {
     final known = <String, YouTubeLiveStatus>{};
@@ -85,10 +88,15 @@ class YouTubeLiveStatusService {
         pending.add(id);
       }
     }
+    final total = known.length + pending.length;
     if (known.isNotEmpty) onUpdate(known);
+    onProgress?.call(known.length, total);
     if (pending.isEmpty) return;
     final token = apiKey.isEmpty ? await accessToken?.call() : null;
-    if (apiKey.isEmpty && token == null) return;
+    if (apiKey.isEmpty && token == null) {
+      onProgress?.call(total, total);
+      return;
+    }
     for (var start = 0; start < pending.length; start += chunkSize) {
       if (cancelled?.call() ?? false) return;
       final chunk = pending.sublist(
@@ -100,9 +108,12 @@ class YouTubeLiveStatusService {
         apiKey: apiKey,
         token: token,
       );
-      if (update.isNotEmpty && !(cancelled?.call() ?? false)) {
-        onUpdate(update);
-      }
+      if (cancelled?.call() ?? false) return;
+      if (update.isNotEmpty) onUpdate(update);
+      onProgress?.call(
+        known.length + (start + chunk.length).clamp(0, pending.length),
+        total,
+      );
     }
   }
 

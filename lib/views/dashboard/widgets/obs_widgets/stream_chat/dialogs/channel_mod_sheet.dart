@@ -286,7 +286,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
   }
 
   Widget _sectionHeader(BuildContext context, String title) => Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+    padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs),
     child: Text(title, style: nativeChatSheetSectionStyle(context)),
   );
 

@@ -17,7 +17,7 @@ class ChannelModSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+    padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs),
     child: Text(this.title, style: nativeChatSheetSectionStyle(context)),
   );
 }

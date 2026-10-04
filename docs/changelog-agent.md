@@ -2,6 +2,31 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - Gray headings; YouTube subscriptions never reorder
+
+User feedback on the previous two: the 17 pt headings read like one more
+entry; and live subscriptions jumping to the top (after a 15-30 s check
+with no sign of it running) hid channels the user was scrolling to.
+Decisions: gray bold headings with more room above; A-Z stays put with
+a "Live now" filter.
+
+- `nativeChatSheetSectionStyle`: 17/w700 on the secondary text level;
+  section headers get `AppSpacing.lg` above (was `sm`).
+- YouTube Add chat: the subscriptions list is A-Z, always - LIVE chips
+  fill in place. Under the heading: "Checking who's live 48/200" with a
+  spinner while the check runs (`YouTubeLiveStatusService.check(
+  onProgress:)`), then All / "Live now N" pills (only when someone is
+  live) - Live now lists the live ones, most viewers first. Both take
+  the same height, so the rows don't shift when one turns into the
+  other. The check runs 10 pages at a time (was 6), 30 per videos.list.
+- Shot harness: `MaterialApp` keyed per shot - the route was generated
+  once per test, so a second `harness.shot` in the same test showed the
+  first shot's widget (older multi-shot specs were affected too).
+- Tests: `youtube_add_chat_sheet_test` "LIVE + viewers" (A-Z kept,
+  Live now order, progress then pills with rows unmoved, no pills when
+  nobody is live), service progress; shots
+  `add_chat_youtube_{checking_narrow,subscriptions_narrow,live_only}`.
+
 ## 2026-10-04 - YouTube Add chat: LIVE + viewers, live subscriptions first
 
 User request: show whether a channel is live and how many watch, in

@@ -118,6 +118,7 @@ void main() {
   Future<void> open(
     WidgetTester tester, {
     bool pickOnly = false,
+    bool settle = true,
     void Function(YouTubeAddChatPick?)? result,
   }) async {
     await tester.pumpWidget(
@@ -142,7 +143,15 @@ void main() {
       ),
     );
     await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
+
+    /// A held live check spins its indicator - no settling then
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
   }
 
   Future<void> type(WidgetTester tester, String query) async {
@@ -410,8 +419,9 @@ void main() {
       (widget) => widget is CountUpText && widget.value == label,
     );
 
-    testWidgets('subscriptions: live ones first, most viewers on top, the '
-        'rest A-Z; a hidden count is LIVE without a number', (tester) async {
+    testWidgets('subscriptions stay A-Z with LIVE filled in; Live now '
+        'lists the live ones, most viewers first; a hidden count is LIVE '
+        'without a number', (tester) async {
       await signIn(tester);
       search.subscriptions = const [
         YouTubeChannelSuggestion(channelId: 'UCalpha', title: 'Alpha'),
@@ -436,15 +446,17 @@ void main() {
       });
       await open(tester);
 
-      double top(String title) => tester.getTopLeft(find.text(title)).dy;
-      final order = ['Gamma', 'Beta', 'Delta', 'Alpha', 'Charlie', 'Scheduled'];
-      for (var i = 1; i < order.length; i++) {
-        expect(
-          top(order[i - 1]),
-          lessThan(top(order[i])),
-          reason: '${order[i - 1]} above ${order[i]}',
-        );
+      void expectOrder(List<String> order) {
+        for (var i = 1; i < order.length; i++) {
+          expect(
+            tester.getTopLeft(find.text(order[i - 1])).dy,
+            lessThan(tester.getTopLeft(find.text(order[i])).dy),
+            reason: '${order[i - 1]} above ${order[i]}',
+          );
+        }
       }
+
+      expectOrder(['Alpha', 'Beta', 'Charlie', 'Delta', 'Gamma', 'Scheduled']);
       expect(viewers('1.2k'), findsOneWidget);
       expect(viewers('50'), findsOneWidget);
       expect(
@@ -455,6 +467,18 @@ void main() {
         expect(find.byKey(Key('add-chat-live-sub-$id')), findsNothing);
       }
       expect(videosCalls, hasLength(1), reason: 'one videos.list per chunk');
+      expect(find.byKey(const Key('add-chat-live-progress')), findsNothing);
+
+      await tester.tap(find.text('Live now 3'));
+      await tester.pumpAndSettle();
+      expectOrder(['Gamma', 'Beta', 'Delta']);
+      for (final title in ['Alpha', 'Charlie', 'Scheduled']) {
+        expect(find.text(title), findsNothing);
+      }
+
+      await tester.tap(find.text('All'));
+      await tester.pumpAndSettle();
+      expect(find.text('Alpha'), findsOneWidget);
       await closeHiveInZone(tester);
     });
 
@@ -479,8 +503,8 @@ void main() {
       await closeHiveInZone(tester);
     });
 
-    testWidgets('a press stays with its channel when the list reorders '
-        'under it (rows move once, after the check)', (tester) async {
+    testWidgets('while checking: progress in the heading, rows stay '
+        'where they are; no filter when nobody is live', (tester) async {
       await signIn(tester);
       search.subscriptions = const [
         YouTubeChannelSuggestion(channelId: 'UCalpha', title: 'Alpha'),
@@ -489,23 +513,32 @@ void main() {
       liveVideos['channel/UCzed'] = 'vZed';
       liveDetails['vZed'] = {...live, 'concurrentViewers': '500'};
       liveGate = Completer<void>();
-      await open(tester);
+      await open(tester, settle: false);
 
+      expect(find.text('Checking who\'s live 0/2'), findsOneWidget);
       final alphaTop = tester.getTopLeft(find.text('Alpha')).dy;
-      expect(alphaTop, lessThan(tester.getTopLeft(find.text('Zed')).dy));
-      final press = await tester.startGesture(
-        tester.getCenter(find.text('Alpha')),
-      );
+      final zedTop = tester.getTopLeft(find.text('Zed')).dy;
+
       liveGate!.complete();
       await tester.pumpAndSettle();
-      expect(
-        tester.getTopLeft(find.text('Zed')).dy,
-        lessThan(tester.getTopLeft(find.text('Alpha')).dy),
-      );
+      expect(find.byKey(const Key('add-chat-live-progress')), findsNothing);
+      expect(find.byKey(const Key('add-chat-live-sub-UCzed')), findsOneWidget);
+      expect(tester.getTopLeft(find.text('Alpha')).dy, alphaTop);
+      expect(tester.getTopLeft(find.text('Zed')).dy, zedTop);
+      expect(find.text('Live now 1'), findsOneWidget);
+      await closeHiveInZone(tester);
+    });
 
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(entries(), {'Alpha': 'UCalpha'});
+    testWidgets('nobody live: no filter pills', (tester) async {
+      await signIn(tester);
+      search.subscriptions = const [
+        YouTubeChannelSuggestion(channelId: 'UCalpha', title: 'Alpha'),
+      ];
+      liveVideos['channel/UCalpha'] = null;
+      await open(tester);
+
+      expect(find.byKey(const Key('add-chat-filter-live')), findsNothing);
+      expect(find.byKey(const Key('add-chat-live-progress')), findsNothing);
       await closeHiveInZone(tester);
     });
   });

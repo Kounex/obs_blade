@@ -126,13 +126,20 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
   /// LIVE + viewers per channel id, filled in as checks answer
   final Map<String, YouTubeLiveStatus> _live = {};
 
-  /// Subscriptions live first, set once their check is done (null
-  /// until then: A-Z, chips fill in place)
-  List<YouTubeChannelSuggestion>? _subscriptionsSorted;
+  /// The subscriptions' live check: (done, total) while it runs, null
+  /// once done (or not started)
+  (int, int)? _liveProgress;
+
+  /// "Live now" picked: only live subscriptions, most viewers first. The
+  /// list itself never reorders - a channel can't move while scrolled to.
+  bool _liveOnly = false;
 
   /// Ask for LIVE + viewers of [channels] (quota-free page reads + one
   /// 1-unit videos.list per chunk); chips fill in as answers come in.
-  Future<void> _checkLive(List<YouTubeChannelSuggestion> channels) async {
+  Future<void> _checkLive(
+    List<YouTubeChannelSuggestion> channels, {
+    void Function(int done, int total)? onProgress,
+  }) async {
     if (channels.isEmpty) return;
     await this.widget.liveStatus.check(
       [for (final channel in channels) channel.channelId],
@@ -141,26 +148,21 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
       onUpdate: (update) {
         if (this.mounted) this.setState(() => this._live.addAll(update));
       },
+      onProgress: onProgress,
       cancelled: () => !this.mounted,
     );
   }
 
-  /// [subscriptions] with live ones first (most viewers on top), the
-  /// rest A-Z as YouTube listed them
-  List<YouTubeChannelSuggestion> _liveFirst(
-    List<YouTubeChannelSuggestion> subscriptions,
-  ) {
-    bool live(YouTubeChannelSuggestion channel) =>
-        this._live[channel.channelId]?.live ?? false;
-    return [
-      ...subscriptions.where(live).toList()..sort(
+  /// Live subscriptions, most viewers on top
+  List<YouTubeChannelSuggestion> get _liveSubscriptions =>
+      [
+        for (final channel in this._subscriptions)
+          if (this._live[channel.channelId]?.live ?? false) channel,
+      ]..sort(
         (a, b) => (this._live[b.channelId]?.viewers ?? -1).compareTo(
           this._live[a.channelId]?.viewers ?? -1,
         ),
-      ),
-      ...subscriptions.where((channel) => !live(channel)),
-    ];
-  }
+      );
 
   YouTubeChatStore get _store => GetIt.instance<YouTubeChatStore>();
 
@@ -192,17 +194,22 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
       if (this.mounted) {
         this.setState(() {
           this._subscriptions = subscriptions;
-          this._subscriptionsSorted = null;
+          this._liveOnly = false;
+          this._liveProgress = subscriptions.isEmpty
+              ? null
+              : (0, subscriptions.length);
           this._loadingSubscriptions = false;
         });
-
-        /// One reorder when the whole list is checked - not per chunk,
-        /// which would move rows under a finger
-        await this._checkLive(subscriptions);
+        await this._checkLive(
+          subscriptions,
+          onProgress: (done, total) {
+            if (this.mounted && identical(this._subscriptions, subscriptions)) {
+              this.setState(() => this._liveProgress = (done, total));
+            }
+          },
+        );
         if (this.mounted && identical(this._subscriptions, subscriptions)) {
-          this.setState(
-            () => this._subscriptionsSorted = this._liveFirst(subscriptions),
-          );
+          this.setState(() => this._liveProgress = null);
         }
       }
     } catch (e) {
@@ -399,6 +406,16 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const AddChatSectionHeader('Channels you subscribe to'),
+        if (!this._loadingSubscriptions)
+          if (this._liveControl(context) case final control?)
+            /// Progress and pills take the same height - rows don't
+            /// shift when one becomes the other
+            Container(
+              height: _FilterPill.height,
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              alignment: Alignment.centerLeft,
+              child: control,
+            ),
         if (this._loadingSubscriptions)
           const AddChatLoading()
         else if (this._subscriptionsError != null)
@@ -410,8 +427,47 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
           )
         else
           for (final channel
-              in this._subscriptionsSorted ?? this._subscriptions)
+              in this._liveOnly ? this._liveSubscriptions : this._subscriptions)
             this._suggestionRow(channel, added, chipScope: 'sub'),
+      ],
+    );
+  }
+
+  /// Under the subscriptions heading: the live check's progress while it
+  /// runs, then All / Live now (n) - only when someone is live
+  Widget? _liveControl(BuildContext context) {
+    if (this._liveProgress case (final done, final total)) {
+      return Row(
+        key: const Key('add-chat-live-progress'),
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CupertinoActivityIndicator(radius: 7.0),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            'Checking who\'s live $done/$total',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      );
+    }
+    final live = this._liveSubscriptions.length;
+    if (live == 0) return null;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _FilterPill(
+          key: const Key('add-chat-filter-all'),
+          label: 'All',
+          selected: !this._liveOnly,
+          onTap: () => this.setState(() => this._liveOnly = false),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        _FilterPill(
+          key: const Key('add-chat-filter-live'),
+          label: 'Live now $live',
+          selected: this._liveOnly,
+          onTap: () => this.setState(() => this._liveOnly = true),
+        ),
       ],
     );
   }
@@ -540,6 +596,58 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
       added: added.contains(target.key),
       busy: this._busyKey == target.key,
       onAdd: () => this._pick(target, busyKey: target.key),
+    );
+  }
+}
+
+/// All / Live now - the activity feed's filter pill
+class _FilterPill extends StatelessWidget {
+  static const double height = 28.0;
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterPill({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = Theme.of(context).colorScheme.secondary;
+    return Semantics(
+      button: true,
+      selected: this.selected,
+      label: '${this.label} filter',
+      excludeSemantics: true,
+      child: Pressable(
+        springy: false,
+        onTap: this.onTap,
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          height: height,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: this.selected
+                ? accent
+                : Theme.of(context).dividerColor.withValues(alpha: 0.12),
+            borderRadius: AppRadius.pill,
+          ),
+          child: Text(
+            this.label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: this.selected
+                  ? Theme.of(context).colorScheme.onSecondary
+                  : null,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

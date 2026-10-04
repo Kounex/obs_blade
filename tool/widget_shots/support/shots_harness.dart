@@ -106,6 +106,9 @@ class ShotsHarness {
 
     await tester.pumpWidget(
       MaterialApp(
+        /// Keyed per shot: the route below is generated once per app, so
+        /// a second shot in the same test kept showing the first child
+        key: ValueKey(name),
         debugShowCheckedModeBanner: false,
         theme: App.buildTheme(Hive.box(HiveKeys.Settings.name)).copyWith(
           /// Roboto is the font flutter_test can load here - the app uses

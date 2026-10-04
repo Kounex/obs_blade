@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_status_service.dart';
+import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_add_chat_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_add_chat_sheet.dart';
 
@@ -141,31 +143,35 @@ void main() {
 
   /// Ludwig and Markiplier live with viewers, NASA live with the count
   /// hidden, the rest offline - no real `/live` reads in the shots
-  YouTubeLiveStatusService liveStatus() => YouTubeLiveStatusService(
-    resolver: KeyedLiveResolver({'channel/$ucA': 'vA', 'channel/$ucB': 'vB'}),
-    client: MockClient(
-      (request) async => http.Response(
-        json.encode({
-          'items': [
-            {
-              'id': 'vA',
-              'liveStreamingDetails': {
-                'actualStartTime': '2026-10-04T10:00:00Z',
-                'concurrentViewers': '23456',
-              },
-            },
-            {
-              'id': 'vB',
-              'liveStreamingDetails': {
-                'actualStartTime': '2026-10-04T10:00:00Z',
-              },
-            },
-          ],
+  YouTubeLiveStatusService liveStatus({Completer<void>? gate}) =>
+      YouTubeLiveStatusService(
+        resolver: _GatedResolver(gate, {
+          'channel/$ucA': 'vA',
+          'channel/$ucB': 'vB',
         }),
-        200,
-      ),
-    ),
-  );
+        client: MockClient(
+          (request) async => http.Response(
+            json.encode({
+              'items': [
+                {
+                  'id': 'vA',
+                  'liveStreamingDetails': {
+                    'actualStartTime': '2026-10-04T10:00:00Z',
+                    'concurrentViewers': '23456',
+                  },
+                },
+                {
+                  'id': 'vB',
+                  'liveStreamingDetails': {
+                    'actualStartTime': '2026-10-04T10:00:00Z',
+                  },
+                },
+              ],
+            }),
+            200,
+          ),
+        ),
+      );
 
   void scriptYouTubeSearch() {
     search.results['markiplier'] = const [
@@ -225,6 +231,7 @@ void main() {
         'add_chat_youtube_empty_narrow',
         sheet(
           YouTubeAddChatSheet(
+            key: UniqueKey(),
             searchService: search,
             liveStatusService: liveStatus(),
           ),
@@ -271,11 +278,49 @@ void main() {
           ),
         ),
       );
+      await tester.tap(find.text('Live now 2'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile(
+          '../../build/widget_shots/add_chat_youtube_live_only.png',
+        ),
+      );
+      await harness.shot(
+        tester,
+        'add_chat_youtube_subscriptions_narrow',
+        sheet(
+          YouTubeAddChatSheet(
+            key: UniqueKey(),
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
+        size: const Size(320, 640),
+      );
+      final gate = Completer<void>();
+      await harness.shot(
+        tester,
+        'add_chat_youtube_checking_narrow',
+        sheet(
+          YouTubeAddChatSheet(
+            key: UniqueKey(),
+            searchService: search,
+            liveStatusService: liveStatus(gate: gate),
+          ),
+        ),
+        size: const Size(320, 640),
+      );
+      gate.complete();
+      await tester.pump(const Duration(seconds: 1));
       await harness.shot(
         tester,
         'add_chat_youtube_subscriptions_tablet',
         sheet(
           YouTubeAddChatSheet(
+            key: UniqueKey(),
             searchService: search,
             liveStatusService: liveStatus(),
           ),
@@ -420,4 +465,17 @@ void main() {
       await typeAndShoot(tester, 'somestreamer', 'add_chat_kick_error');
     });
   });
+}
+
+/// [KeyedLiveResolver] holding its answers until [gate] completes
+class _GatedResolver extends KeyedLiveResolver {
+  final Completer<void>? gate;
+
+  _GatedResolver(this.gate, super.answers);
+
+  @override
+  Future<String?> resolveLiveVideoId(YouTubeChannelTarget channel) async {
+    await this.gate?.future;
+    return super.resolveLiveVideoId(channel);
+  }
 }

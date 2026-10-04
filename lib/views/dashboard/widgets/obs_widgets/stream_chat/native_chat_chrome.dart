@@ -222,12 +222,18 @@ TextStyle? nativeChatSheetTitleStyle(BuildContext context) => Theme.of(context)
     ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3);
 
 /// Section headings inside a native chat sheet ("All chats", TTS's Who /
-/// What, emote groups, mod sections ...): title3 (`headlineSmall`
-/// 17/w600), a step above the 15 pt rows they head and below the sheet
-/// title - not the app's 11 pt caption, which read smaller than the
-/// rows. Sentence case, as written.
+/// What, emote groups, mod sections ...): title3 size (17) in bold on the
+/// secondary text level - bigger than the 15 pt rows they head (the
+/// app's 11 pt caption read smaller), gray so it reads as a label, not
+/// one more entry. Sentence case, as written; give it room above.
 TextStyle? nativeChatSheetSectionStyle(BuildContext context) =>
-    Theme.of(context).textTheme.headlineSmall;
+    Theme.of(context).textTheme.headlineSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      color:
+          (Theme.of(context).extension<AppTextColors>() ??
+                  AppTextColors.standard)
+              .textSecondary,
+    );
 
 /// Bottom overlay chip: "Paused" while scrolled up, "New messages" once
 /// something arrives. Glass, same surface as the nav bars — it floats

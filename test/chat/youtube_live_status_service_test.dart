@@ -64,11 +64,14 @@ void main() {
       'vHidden': {'actualStartTime': '2026-10-04T10:00:00Z'},
     });
     final got = <String, YouTubeLiveStatus>{};
+    final progress = <(int, int)>[];
     await s.check(
       ['UClive', 'UCscheduled', 'UCended', 'UChidden', 'UCoffline'],
       apiKey: 'key',
       onUpdate: got.addAll,
+      onProgress: (done, total) => progress.add((done, total)),
     );
+    expect(progress, [(0, 5), (5, 5)]);
 
     expect(got, {
       'UClive': (live: true, viewers: 1234),

@@ -55,7 +55,7 @@ the account - Twitch is the only engine where offline means signed out
 | User card actions | highlight / ignore (and the platform's mod actions) on the card of **every** platform, never on your own card; the name written is the one that platform's rows match (Twitch login, YouTube display name, Kick username) |
 | Own sent message | shows our name + badges at once and after the platform's echo (YouTube's insert answer has no authorDetails - the instant copy is filled in, the poll copy replaces it), in the platform chat **and** combined chat |
 | Emotes / emojis per platform | Twitch / Kick / YouTube rows draw them (YouTube: `:codes:` from the emoji catalog, unknown ones stay text until learned), the emote button is in every writable input incl. combined chat's targets, TTS treats them as emotes |
-| Add chat sheets (Twitch / YouTube / Kick) | every state: empty (signed out / in), typing < 3 chars, results (LIVE + viewers - YouTube checks each hit / subscription, live subscriptions first; a hidden count = LIVE alone; a failed check = no claim, already-listed checked off, own channel), no hits, failure (the typed handle / slug still offered), link pasted, dead session (signs out, no endless Retry), pick mode for the combo builder (nothing saved) |
+| Add chat sheets (Twitch / YouTube / Kick) | every state: empty (signed out / in), typing < 3 chars, results (LIVE + viewers - YouTube checks each hit / subscription with visible progress, subscriptions stay A-Z with a Live now filter; a hidden count = LIVE alone; a failed check = no claim, already-listed checked off, own channel), no hits, failure (the typed handle / slug still offered), link pasted, dead session (signs out, no endless Retry), pick mode for the combo builder (nothing saved) |
 
 ## Entry points (same state → same answer everywhere)
 
@@ -79,6 +79,11 @@ A widget written for one platform carries that platform's assumptions.
 When a change touches a shared one (`NativeChatWindow`, user card,
 mod sheets, input / read-only strip, pickers, LIVE chips), walk it for
 **every** platform that uses it, not just the one in the request.
+
+Lists that fill in after they show (live checks, lookups): say it's
+running (progress, not a silent wait), and never reorder rows the user
+may be scrolling or pressing - fill in place, offer a filter / sort
+instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
 
 ## Copy
 
