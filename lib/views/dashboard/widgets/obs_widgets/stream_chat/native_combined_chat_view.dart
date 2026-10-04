@@ -279,7 +279,11 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
 
         /// What the list shows - the live rows, or the rows it stopped
         /// at while scrolled up (the unread count above stays live)
-        final shown = this._scrollback.rows(items, buffered: items.length);
+        final shown = this._scrollback.rows(
+          items,
+          buffered: items.length,
+          keyOf: (item) => item.key,
+        );
 
         final twitch = GetIt.instance<TwitchChatStore>();
         final kick = GetIt.instance<KickChatStore>();

@@ -797,8 +797,8 @@ void main() {
       },
     );
 
-    test('a scrolled-up reader holds the merged cut and every platform '
-        'buffer; release puts the caps back', () async {
+    test('a scrolled-up reader anchors the merged cut and holds every '
+        'platform buffer; release puts the caps back', () async {
       await store.activate();
       await until(
         () => kick.chatConnection == KickChatConnectionState.connected,
@@ -815,7 +815,16 @@ void main() {
       expect(store.timeline, hasLength(500));
 
       store.holdScrollback();
-      expect(store.timeline, hasLength(600));
+
+      /// Rows cut off before the hold don't come back above the reader
+      /// (that jumped the list); new ones land below
+      expect(store.timeline, hasLength(500));
+      expect(store.timeline.first.key, 'kick:k100');
+      kick.messages.add(
+        kickMessage('k600', DateTime.utc(2026, 9, 24, 12, 10, 0)),
+      );
+      expect(store.timeline, hasLength(501));
+      expect(store.timeline.first.key, 'kick:k100');
       expect(twitch.messageCap.holding, isTrue);
       expect(youTube.messageCap.holding, isTrue);
       expect(kick.messageCap.holding, isTrue);
@@ -824,6 +833,7 @@ void main() {
       expect(store.timeline, hasLength(500));
       expect(kick.messageCap.holding, isFalse);
       expect(kick.messages, hasLength(500));
+      expect(store.timeline.first.key, 'kick:k101');
     });
 
     test('status maps each source', () async {

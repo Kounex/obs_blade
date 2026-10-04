@@ -6,9 +6,11 @@ import '../../../../../../stores/shared/chat_buffer_cap.dart';
 /// is away from the newest row the store keeps every row ([hold] →
 /// [ChatBufferCap]), so nothing above them is dropped - each dropped row
 /// used to shift what they read up by its height - and new rows keep
-/// landing below. Just before the held cap the view stops taking rows:
-/// [rows] keeps returning the same list (the "N new messages" pill still
-/// counts the live ones) until the reader is back at the bottom.
+/// landing below. Before the held cap the view stops taking rows: [rows]
+/// keeps the same rows in the same order (the "N new messages" pill still
+/// counts the live ones) until the reader is back at the bottom - each
+/// drawn from the store's latest copy while it has one, so deletes / bans
+/// (Kick and YouTube swap the row object) still show.
 class ChatScrollback {
   final VoidCallback _hold;
   final VoidCallback _release;
@@ -17,8 +19,9 @@ class ChatScrollback {
   Object? _frozen;
 
   /// The view stops taking rows here; the store drops past
-  /// [kChatHeldRows], and the margin covers a burst between two frames.
-  static const int freezeAt = kChatHeldRows - 100;
+  /// [kChatHeldRows], and the margin covers a burst between two frames
+  /// (one YouTube poll can bring hundreds).
+  static const int freezeAt = kChatHeldRows - 500;
 
   ChatScrollback({
     required VoidCallback hold,
@@ -42,12 +45,24 @@ class ChatScrollback {
   }
 
   /// What the view renders for the store's [items]; [buffered] is how
-  /// many rows the store holds (what its cap counts).
-  List<T> rows<T>(List<T> items, {required int buffered}) {
+  /// many rows the store holds (what its cap counts), [keyOf] a row's
+  /// identity across copies.
+  List<T> rows<T>(
+    List<T> items, {
+    required int buffered,
+    required Object keyOf(T row),
+  }) {
     if (!this._holding) return items;
-    if (this._frozen case final List<T> frozen) return frozen;
-    if (buffered >= freezeAt) this._frozen = items;
-    return items;
+    final frozen = this._frozen;
+    if (frozen is! List<T>) {
+      if (buffered >= freezeAt) this._frozen = items;
+      return items;
+    }
+
+    /// Cleared (Kick /clear): nothing of it stays on screen
+    if (items.isEmpty) return items;
+    final latest = {for (final row in items) keyOf(row): row};
+    return [for (final row in frozen) latest[keyOf(row)] ?? row];
   }
 
   /// A view that goes away while scrolled up must not leave the store

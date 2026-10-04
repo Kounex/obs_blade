@@ -306,7 +306,11 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
 
         /// What the list shows - the live rows, or the rows it stopped
         /// at while scrolled up (the unread count above stays live)
-        final shown = this._scrollback.rows(items, buffered: items.length);
+        final shown = this._scrollback.rows(
+          items,
+          buffered: items.length,
+          keyOf: (message) => message.id,
+        );
 
         /// Signed-in users get the reply/mod long-press — Kick has no
         /// cheap mod lookup, so a non-mod's action 403s into the

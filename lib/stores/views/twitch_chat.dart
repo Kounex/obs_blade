@@ -2115,6 +2115,11 @@ abstract class _TwitchChatStore with Store {
       final evicted = this.messages.first.messageId;
       if (this.messageCap.holding) {
         this._evictedWhileHeld.add(evicted);
+
+        /// Only rows a frozen view can still show need their records
+        if (this._evictedWhileHeld.length > kChatHeldRows) {
+          this._forgetEvicted(this._evictedWhileHeld.removeAt(0));
+        }
       } else {
         this._forgetEvicted(evicted);
       }

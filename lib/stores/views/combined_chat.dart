@@ -171,10 +171,19 @@ abstract class _CombinedChatStore with Store {
   /// [kMaxItems], raised while a reader is scrolled up ([holdScrollback])
   final ChatBufferCap itemCap = ChatBufferCap(base: kMaxItems);
 
+  /// While held, the timeline starts at the row that was oldest when the
+  /// hold began - merged rows past [kMaxItems] that were cut off must not
+  /// come back above the reader (that would jump the list)
+  final Observable<String?> _heldFrom = Observable(null);
+
   /// A reader scrolled up in the combined chat: neither the merged cut
   /// nor any platform buffer drops rows under them ([ChatBufferCap]).
   /// Pair with [releaseScrollback].
   void holdScrollback() {
+    if (!this.itemCap.holding) {
+      final oldest = this.timeline.firstOrNull?.key;
+      runInAction(() => this._heldFrom.value = oldest);
+    }
     this.itemCap.hold();
     this._twitch().holdScrollback();
     this._youTube().holdScrollback();
@@ -183,7 +192,9 @@ abstract class _CombinedChatStore with Store {
 
   /// The reader is back at the newest row: everything trims back.
   void releaseScrollback() {
-    this.itemCap.release();
+    if (this.itemCap.release()) {
+      runInAction(() => this._heldFrom.value = null);
+    }
     this._twitch().releaseScrollback();
     this._youTube().releaseScrollback();
     this._kick().releaseScrollback();
@@ -542,8 +553,15 @@ abstract class _CombinedChatStore with Store {
           },
     ];
     final merged = mergeCombinedStreams(streams);
+    final from = this.itemCap.holding ? this._heldFrom.value : null;
+    final start = from == null
+        ? -1
+        : merged.indexWhere((item) => item.key == from);
+    final anchored = start > 0 ? merged.sublist(start) : merged;
     final cap = this.itemCap.value;
-    return merged.length > cap ? merged.sublist(merged.length - cap) : merged;
+    return anchored.length > cap
+        ? anchored.sublist(anchored.length - cap)
+        : anchored;
   }
 
   List<CombinedItem> _twitchItems() {

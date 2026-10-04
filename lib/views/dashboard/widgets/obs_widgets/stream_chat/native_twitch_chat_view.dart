@@ -320,7 +320,11 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
 
         /// What the list shows - the live rows, or the rows it stopped
         /// at while scrolled up (the unread count above stays live)
-        final shown = this._scrollback.rows(items, buffered: this._store.messages.length);
+        final shown = this._scrollback.rows(
+          items,
+          buffered: this._store.messages.length,
+          keyOf: (item) => item is ChatMessageEvent ? item.messageId : item,
+        );
 
         /// Tracked so the pinned-message banner appears/clears with the
         /// store's refetch (connect/switch and local pin mutations).

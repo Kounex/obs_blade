@@ -20,8 +20,16 @@ adding below; past ~2,000 rows the view stops taking new ones.
   release. Release trims back to 500 (the reader is at the bottom then).
 - `ChatScrollback` (view side, all four native views): holds while not
   pinned to the newest row, releases on the way back (and on dispose);
-  100 rows before the held cap the list stops taking rows - the unread
+  500 rows before the held cap the list stops taking rows - same rows,
+  same order, each drawn from the store's latest copy (Kick / YouTube
+  deletes swap the row object), a cleared chat empties it; the unread
   pill keeps counting the live ones.
+- Combined: the merged cut is anchored at the row that was oldest when
+  the hold began - raising its cap used to bring ~500 cut-off rows back
+  above the reader (a jump, and a fake "500 new messages").
+- Known limit: a Twitch row that dropped out of the store (past 2,000)
+  can't be tombstoned anymore - the store ignores deletes for ids it no
+  longer has.
 - Review fix of the previous entry: the user card's pinned / body /
   footer column is a measuring layout (`_PinnedSheetLayout`) - the
   history keeps at least a third next to a tall footer (small phone,
