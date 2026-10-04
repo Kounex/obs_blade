@@ -1,6 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_search_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_combined_chat_view.dart'
+    show CombinedPlatformBadge;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -297,5 +305,135 @@ void main() {
 
     twitch.moderatedChannelIds.add('chan-1');
     expect(combinedModBlock(source), isNull);
+  });
+
+  group('combined options sheet', () {
+    Widget sheet() => MaterialApp(
+      theme: ThemeData(
+        extensions: const [AppStatusColors.standard, AppTextColors.standard],
+      ),
+      home: const Scaffold(
+        body: NativeChatOptionsSheet(chatType: ChatType.Combined),
+      ),
+    );
+
+    Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+      await tester.ensureVisible(finder);
+      await tester.pumpAndSettle();
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('All chats rows, then a tab per platform of the combo with '
+        'that platform\'s own pages', (tester) async {
+      await tester.pumpWidget(sheet());
+      await tester.pumpAndSettle();
+      expect(find.text('Search chat'), findsOneWidget);
+      for (final label in [
+        'Appearance',
+        'Highlights',
+        'Mute words',
+        'Text to speech',
+      ]) {
+        expect(find.text(label), findsOneWidget);
+      }
+      final platforms = [
+        for (final source in combined.activeSources) source.platform,
+      ];
+      for (final platform in platforms) {
+        expect(find.byKey(Key('options-tab-${platform.name}')), findsOneWidget);
+      }
+
+      /// Kick: its Emotes page is Kick's (7TV only), not Twitch's
+      await tapVisible(tester, find.byKey(const Key('options-tab-Kick')));
+      await tapVisible(tester, find.text('Emotes'));
+      expect(find.text('Third-party emotes (7TV)'), findsOneWidget);
+      await tapVisible(tester, find.byIcon(CupertinoIcons.chevron_back));
+
+      /// YouTube: setup, no account rows (they live in the chat header)
+      await tapVisible(tester, find.byKey(const Key('options-tab-YouTube')));
+      expect(find.text('Chat setup'), findsOneWidget);
+      expect(find.text('Emotes'), findsNothing);
+      expect(find.textContaining('Sign out'), findsNothing);
+    });
+
+    testWidgets('YouTube\'s own sheet: the same split, setup in its section', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            extensions: const [
+              AppStatusColors.standard,
+              AppTextColors.standard,
+            ],
+          ),
+          home: const Scaffold(
+            body: NativeChatOptionsSheet(chatType: ChatType.YouTube),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Appearance'), findsOneWidget);
+      expect(find.text('Chat setup'), findsOneWidget);
+      expect(find.textContaining('Sign out'), findsNothing);
+    });
+
+    testWidgets('search over the whole combined timeline', (tester) async {
+      youTube.messages.add(
+        YouTubeChatMessage(
+          id: 'yt-1',
+          snippet: YouTubeChatMessageSnippet(
+            type: YouTubeChatMessageType.textMessage,
+            publishedAt: DateTime.utc(2026, 10, 5, 12),
+            authorChannelId: 'chan-1',
+            displayMessage: 'gg from youtube',
+            textMessageDetails: const YouTubeTextMessageDetails(
+              messageText: 'gg from youtube',
+            ),
+          ),
+          authorDetails: const YouTubeChatAuthorDetails(
+            channelId: 'chan-1',
+            displayName: 'Tuber',
+          ),
+        ),
+      );
+      kick.messages.addAll([
+        KickChatMessage(
+          id: 'k-1',
+          content: 'gg from kick',
+          type: KickChatMessageType.message,
+          createdAt: DateTime.utc(2026, 10, 5, 12, 1),
+          sender: const KickChatSender(id: 5, username: 'kickfan'),
+        ),
+        KickChatMessage(
+          id: 'k-2',
+          content: 'hello',
+          type: KickChatMessageType.message,
+          createdAt: DateTime.utc(2026, 10, 5, 12, 2),
+          sender: const KickChatSender(id: 6, username: 'other'),
+        ),
+      ]);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            extensions: const [
+              AppStatusColors.standard,
+              AppTextColors.standard,
+            ],
+          ),
+          home: const Scaffold(
+            body: ChatSearchSheet(chatType: ChatType.Combined),
+          ),
+        ),
+      );
+      await tester.enterText(find.byKey(const Key('chat-search-field')), 'gg');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('search-youtube:yt-1')), findsOneWidget);
+      expect(find.byKey(const Key('search-kick:k-1')), findsOneWidget);
+      expect(find.byKey(const Key('search-kick:k-2')), findsNothing);
+      expect(find.byKey(const Key('combined-row-icon-YouTube')), findsNothing);
+      expect(find.byType(CombinedPlatformBadge), findsNWidgets(2));
+    });
   });
 }

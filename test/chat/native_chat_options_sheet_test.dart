@@ -15,6 +15,14 @@ import '../persistence/support/hive_test_harness.dart';
 
 Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
+/// Root rows sit in sections now (All chats, the platform's own) - the
+/// lower ones need scrolling into view first
+Future<void> tapRow(WidgetTester tester, String label) async {
+  await tester.ensureVisible(find.text(label));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+}
+
 void main() {
   late Directory tempDir;
   late HiveTestHarness harness;
@@ -83,7 +91,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
-    await tester.tap(find.text('Appearance'));
+    await tapRow(tester, 'Appearance');
     await tester.pumpAndSettle();
 
     expect(
@@ -128,7 +136,7 @@ void main() {
     await tester.pumpWidget(
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
-    await tester.tap(find.text('Appearance'));
+    await tapRow(tester, 'Appearance');
     await tester.pumpAndSettle();
 
     await tester.drag(find.byType(Slider).first, const Offset(80, 0));
@@ -149,7 +157,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
-    await tester.tap(find.text('Emotes'));
+    await tapRow(tester, 'Emotes');
     await tester.pumpAndSettle();
     expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsOneWidget);
 
@@ -168,7 +176,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Native chat options'), findsOneWidget);
 
-    await tester.tap(find.text('Badges'));
+    await tapRow(tester, 'Badges');
     await tester.pumpAndSettle();
     expect(find.text('Moderator'), findsOneWidget);
 
@@ -193,7 +201,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
-    await tester.tap(find.text('Event messages'));
+    await tapRow(tester, 'Event messages');
     await tester.pumpAndSettle();
 
     expect(
@@ -242,7 +250,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
     );
 
-    await tester.tap(find.text('Badges'));
+    await tapRow(tester, 'Badges');
     await tester.pumpAndSettle();
     expect(find.text('Role badge artwork'), findsOneWidget);
 
@@ -263,7 +271,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
     );
 
-    await tester.tap(find.text('Emotes'));
+    await tapRow(tester, 'Emotes');
     await tester.pumpAndSettle();
     expect(find.text('Third-party emotes (7TV)'), findsOneWidget);
     expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsNothing);
@@ -295,7 +303,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
     );
 
-    await tester.tap(find.text('Event messages'));
+    await tapRow(tester, 'Event messages');
     await tester.pumpAndSettle();
 
     expect(find.text('Subs & gifts'), findsOneWidget);
@@ -325,7 +333,7 @@ void main() {
     );
 
     expect(find.text('Highlights'), findsOneWidget);
-    await tester.tap(find.text('Highlights'));
+    await tapRow(tester, 'Highlights');
     await tester.pumpAndSettle();
 
     expect(find.text('Highlight my name'), findsOneWidget);
@@ -364,7 +372,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
     );
 
-    await tester.tap(find.text('Highlights'));
+    await tapRow(tester, 'Highlights');
     await tester.pumpAndSettle();
 
     await tester.enterText(
@@ -388,7 +396,7 @@ void main() {
       wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
     );
 
-    await tester.tap(find.text('Mute words'));
+    await tapRow(tester, 'Mute words');
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('chat-mute-words-field')), findsOneWidget);
@@ -414,7 +422,7 @@ void main() {
         wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
       );
 
-      await tester.tap(find.text('Search chat'));
+      await tapRow(tester, 'Search chat');
       await tester.pumpAndSettle();
 
       expect(find.text('Native chat options'), findsNothing);

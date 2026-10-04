@@ -23,14 +23,12 @@ import 'chat_engine_switch.dart';
 import 'chat_type_dropdown.dart';
 import 'combined_chat_picker.dart';
 import 'kick_account_control.dart';
-import 'kick_chat_options_sheet.dart';
 import 'kick_native_channel_dropdown.dart';
 import 'native_channel_dropdown.dart';
 import 'twitch_account_control.dart';
 import 'username_action_row.dart';
 import 'username_dropdown.dart';
 import 'youtube_account_control.dart';
-import 'youtube_chat_options_sheet.dart';
 import 'youtube_native_channel_dropdown.dart';
 
 /// Chat control section. The platform dropdown is the single major
@@ -386,8 +384,8 @@ class _NativeRightCluster extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                 ],
                 kick
-                    ? const KickChatOptionsButton()
-                    : const YouTubeChatOptionsButton(),
+                    ? const NativeChatOptionsButton(chatType: ChatType.Kick)
+                    : const NativeChatOptionsButton(chatType: ChatType.YouTube),
                 if (!signedIn) ...[
                   const SizedBox(width: AppSpacing.sm),
                   Flexible(

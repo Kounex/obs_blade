@@ -14,13 +14,17 @@ import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
 import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/styling_helper.dart';
+import '../../../../../../stores/views/combined_chat.dart';
 import 'chat_search_sheet.dart';
 import 'chat_tts_controls.dart';
 import 'debug_chat_samples.dart';
+import 'dialogs/channel_mod_chrome.dart';
 import 'dialogs/channel_mod_sheet.dart';
+import 'dialogs/combined_channel_mod_sheet.dart' show CombinedPlatformTab;
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
 import 'native_chat_text_field.dart';
+import 'youtube_setup_sheet.dart';
 
 export 'native_chat_appearance.dart' show NativeChatAppearance;
 
@@ -54,9 +58,10 @@ class NativeChatOptionsButton extends StatelessWidget {
           barrierDismissible: true,
           enableDrag: true,
           maxHeightFraction: 0.72,
-          builder: (context) => NativeChatOptionsSheet(
+          builder: (_) => NativeChatOptionsSheet(
             chatType: this.chatType,
             modFoldedIntoOptions: folded,
+            hostContext: context,
           ),
         ),
         child: Container(
@@ -137,10 +142,15 @@ class NativeChatOptionsSheet extends StatefulWidget {
   /// When false, Moderation is not listed — the bar shield is the entry.
   final bool modFoldedIntoOptions;
 
+  /// The chat view that opened the sheet - follow-up sheets (YouTube's
+  /// chat setup) open on it once this sheet is gone
+  final BuildContext? hostContext;
+
   const NativeChatOptionsSheet({
     super.key,
     required this.chatType,
     this.modFoldedIntoOptions = false,
+    this.hostContext,
   });
 
   /// (label, settings key) pairs in display order
@@ -183,9 +193,19 @@ class NativeChatOptionsSheet extends StatefulWidget {
 class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   _OptionsPage _page = _OptionsPage.root;
 
-  bool get _isTwitch => this.widget.chatType == ChatType.Twitch;
+  /// Combined chat: the platform tab picked (its pages open from it)
+  ChatType? _tab;
 
-  bool get _isKick => this.widget.chatType == ChatType.Kick;
+  bool get _isCombined => this.widget.chatType == ChatType.Combined;
+
+  /// Platform the platform pages (emotes, badges, event messages,
+  /// history) belong to: this sheet's, or the combined chat's tab
+  ChatType get _platform =>
+      this._isCombined ? (this._tab ?? ChatType.Twitch) : this.widget.chatType;
+
+  bool get _isTwitch => this._platform == ChatType.Twitch;
+
+  bool get _isKick => this._platform == ChatType.Kick;
 
   void _open(_OptionsPage page) => this.setState(() => this._page = page);
 
@@ -267,8 +287,30 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (this._isTwitch && this.widget.modFoldedIntoOptions)
+        if (this.widget.chatType == ChatType.Twitch &&
+            this.widget.modFoldedIntoOptions)
           this._foldedModCard(context),
+
+        /// An action on the chat on screen - the combined one searches
+        /// its whole merged timeline
+        this._navRow(
+          context,
+          label: 'Search chat',
+          subtitle: this._isCombined
+              ? 'Find messages or names across every platform'
+              : 'Find messages or names in the buffered history',
+          onTap: () {
+            final host = this.widget.hostContext ?? context;
+            Navigator.of(context).pop();
+            showChatSearchSheet(host, chatType: this.widget.chatType);
+          },
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const ChannelModSectionHeader('All chats'),
+        Text(
+          'Apply to every platform and the combined chat.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         this._navRow(
           context,
           label: 'Appearance',
@@ -287,81 +329,150 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           subtitle: 'Hide or censor words, ignore users',
           onTap: () => this._open(_OptionsPage.muteWords),
         ),
-
         this._navRow(
           context,
           label: 'Text to speech',
           subtitle: 'Read chat aloud - also: hold the speaker in the header',
           onTap: () => this._open(_OptionsPage.textToSpeech),
         ),
-
-        /// Search reads one engine's buffer - the merged timeline gets
-        /// its own search later.
-        if (this.widget.chatType != ChatType.Combined)
-          this._navRow(
-            context,
-            label: 'Search chat',
-            subtitle: 'Find messages or names in the buffered history',
-            onTap: () {
-              Navigator.of(context).pop();
-              showChatSearchSheet(context, chatType: this.widget.chatType);
-            },
-          ),
-        if (this._isTwitch) ...[
-          this._navRow(
-            context,
-            label: 'Emotes',
-            subtitle: 'Third-party emotes in chat',
-            onTap: () => this._open(_OptionsPage.emotes),
-          ),
-          this._navRow(
-            context,
-            label: 'Badges',
-            subtitle: 'Which role badges appear next to names',
-            onTap: () => this._open(_OptionsPage.badges),
-          ),
-          this._navRow(
-            context,
-            label: 'Event messages',
-            subtitle: 'Subs, raids, streaks, and similar system lines',
-            onTap: () => this._open(_OptionsPage.eventMessages),
-          ),
-          this._navRow(
-            context,
-            label: 'Chat history',
-            subtitle: 'Recent messages from before you joined',
-            onTap: () => this._open(_OptionsPage.history),
-          ),
-          if (kDebugMode && GetIt.instance.isRegistered<TwitchChatStore>())
-            this._navRow(
-              context,
-              label: 'Debug samples',
-              subtitle: 'Inject crafted messages (GIF, power-up, shared chat)',
-              onTap: () => this._open(_OptionsPage.debugSamples),
-            ),
-        ],
-        if (this._isKick) ...[
-          this._navRow(
-            context,
-            label: 'Emotes',
-            subtitle: 'Third-party (7TV) emotes in chat',
-            onTap: () => this._open(_OptionsPage.emotes),
-          ),
-          this._navRow(
-            context,
-            label: 'Badges',
-            subtitle: 'Role badge artwork next to names',
-            onTap: () => this._open(_OptionsPage.badges),
-          ),
-          this._navRow(
-            context,
-            label: 'Event messages',
-            subtitle: 'Subs, gifts, and host notices',
-            onTap: () => this._open(_OptionsPage.eventMessages),
-          ),
+        const SizedBox(height: AppSpacing.md),
+        if (this._isCombined)
+          this._combinedPlatformSection(context)
+        else ...[
+          ChannelModSectionHeader(this.widget.chatType.text),
+          ...this._platformRows(context, this.widget.chatType),
         ],
       ],
     );
+  }
+
+  /// Combined chat: one tab per platform in the combo, its own rows below
+  Widget _combinedPlatformSection(BuildContext context) {
+    final getIt = GetIt.instance;
+    if (!getIt.isRegistered<CombinedChatStore>()) {
+      return const SizedBox.shrink();
+    }
+    return Observer(
+      builder: (context) {
+        final platforms = [
+          for (final source in getIt<CombinedChatStore>().activeSources)
+            source.platform,
+        ];
+        if (platforms.isEmpty) return const SizedBox.shrink();
+        final selected = platforms.contains(this._tab)
+            ? this._tab!
+            : platforms.first;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ChannelModSectionHeader('Per platform'),
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              children: [
+                for (final platform in platforms)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs / 2,
+                      ),
+                      child: CombinedPlatformTab(
+                        keyPrefix: 'options-tab',
+                        platform: platform,
+                        label: platform.text,
+                        selected: platform == selected,
+                        onTap: () => this.setState(() => this._tab = platform),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            ...this._platformRows(context, selected),
+          ],
+        );
+      },
+    );
+  }
+
+  /// [platform]'s own pages. Opening one remembers the platform, so the
+  /// page (emotes / badges / event messages) is that platform's.
+  List<Widget> _platformRows(BuildContext context, ChatType platform) {
+    void open(_OptionsPage page) => this.setState(() {
+      this._tab = platform;
+      this._page = page;
+    });
+    return switch (platform) {
+      ChatType.Twitch => [
+        this._navRow(
+          context,
+          label: 'Emotes',
+          subtitle: 'Third-party emotes in chat',
+          onTap: () => open(_OptionsPage.emotes),
+        ),
+        this._navRow(
+          context,
+          label: 'Badges',
+          subtitle: 'Which role badges appear next to names',
+          onTap: () => open(_OptionsPage.badges),
+        ),
+        this._navRow(
+          context,
+          label: 'Event messages',
+          subtitle: 'Subs, raids, streaks, and similar system lines',
+          onTap: () => open(_OptionsPage.eventMessages),
+        ),
+        this._navRow(
+          context,
+          label: 'Chat history',
+          subtitle: 'Recent messages from before you joined',
+          onTap: () => open(_OptionsPage.history),
+        ),
+        if (kDebugMode && GetIt.instance.isRegistered<TwitchChatStore>())
+          this._navRow(
+            context,
+            label: 'Debug samples',
+            subtitle: 'Inject crafted messages (GIF, power-up, shared chat)',
+            onTap: () => open(_OptionsPage.debugSamples),
+          ),
+      ],
+      ChatType.Kick => [
+        this._navRow(
+          context,
+          label: 'Emotes',
+          subtitle: 'Third-party (7TV) emotes in chat',
+          onTap: () => open(_OptionsPage.emotes),
+        ),
+        this._navRow(
+          context,
+          label: 'Badges',
+          subtitle: 'Role badge artwork next to names',
+          onTap: () => open(_OptionsPage.badges),
+        ),
+        this._navRow(
+          context,
+          label: 'Event messages',
+          subtitle: 'Subs, gifts, and host notices',
+          onTap: () => open(_OptionsPage.eventMessages),
+        ),
+      ],
+
+      /// No emote / badge / event settings exist for YouTube (the API
+      /// has none of those to toggle) - its setup is what's per platform.
+      /// Signing in / out stays in the chat header.
+      ChatType.YouTube => [
+        this._navRow(
+          context,
+          label: 'Chat setup',
+          subtitle: 'API key and sign-in client',
+          onTap: () {
+            final host = this.widget.hostContext ?? context;
+            Navigator.of(context).pop();
+            showYouTubeSetupSheet(host);
+          },
+        ),
+      ],
+      _ => const [],
+    };
   }
 
   /// Featured Mod entry when the bar shield is folded into Options.

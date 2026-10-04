@@ -2,6 +2,26 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-05 - Native chat options: All chats + per platform, combined search
+
+User request: the platform sheets offered more than the combined chat's.
+Decisions: "All chats" + platform tabs in combined (like the combined
+mod sheet), the same split without tabs per platform, one search over
+the whole combined timeline, account rows stay in the chat header.
+
+- `NativeChatOptionsSheet` for every platform: Search chat, "All chats"
+  (shared settings), the platform's section; combined: a
+  `CombinedPlatformTab` per platform in the combo (shared with the mod
+  sheet), pages (Emotes / Badges / Event messages) follow the tab.
+- YouTube's own wrapper sheet (whose "Appearance" row opened the whole
+  sheet, plus a sign-out row) and the YouTube / Kick option buttons are
+  gone - every platform uses `NativeChatOptionsButton`; YouTube's
+  "Chat setup" sits in its section.
+- `ChatSearchSheet(Combined)` searches `CombinedChatStore.timeline`
+  (time order, each match in its platform's row with the badge).
+- Tests: `native_chat_options_sheet_test` (rows scroll into view now),
+  `channel_mod_panels_test` "combined options sheet"; shots `options_*`.
+
 ## 2026-10-05 - Highlight / ignore on the YouTube and Kick user cards
 
 User question: why only on Twitch's user card? The lists were shared
@@ -9,7 +29,10 @@ and honored by every platform's rows (and the YouTube / Kick long-press
 message sheets had the rows) - only the YouTube and Kick cards never got
 `ChatUserListActions`. Both cards now show them (not on your own card),
 writing YouTube's display name / Kick's username - what those rows are
-matched by. Tests `user_card_list_actions_test`; shots `user_card_*`.
+matched by. Every user card (Twitch too) stops at 2/3 of the screen
+(`kChatUserCardMaxHeightFraction`, was 85%); a long history scrolls
+under the pinned name. Tests `user_card_list_actions_test` (incl. a
+20-message viewer); shots `user_card_*`.
 Review fix to the entry below: the instant copy's owner crown follows
 the chat the message went to (`isOwnChannel(label)`), not the selection.
 

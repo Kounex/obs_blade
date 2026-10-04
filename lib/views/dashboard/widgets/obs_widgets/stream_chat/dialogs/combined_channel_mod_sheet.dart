@@ -265,7 +265,7 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.xs / 2,
                           ),
-                          child: _PlatformTab(
+                          child: CombinedPlatformTab(
                             platform: platform,
                             label: labels[platform] ?? platform.text,
                             selected: platform == selected,
@@ -297,7 +297,9 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
   }
 }
 
-class _PlatformTab extends StatelessWidget {
+/// One platform tab of a combined sheet (mod sheet, options sheet): the
+/// platform badge + the source's label, brand-tinted when selected.
+class CombinedPlatformTab extends StatelessWidget {
   final ChatType platform;
   final String label;
   final bool selected;
@@ -306,12 +308,17 @@ class _PlatformTab extends StatelessWidget {
   final bool blocked;
   final VoidCallback onTap;
 
-  const _PlatformTab({
+  /// Keys the tab `<keyPrefix>-<platform>` (tests / shots find it)
+  final String keyPrefix;
+
+  const CombinedPlatformTab({
+    super.key,
     required this.platform,
     required this.label,
     required this.selected,
-    required this.blocked,
     required this.onTap,
+    this.blocked = false,
+    this.keyPrefix = 'combined-mod-tab',
   });
 
   @override
@@ -319,7 +326,7 @@ class _PlatformTab extends StatelessWidget {
     final brand =
         this.platform.brandColor ?? Theme.of(context).colorScheme.secondary;
     return Pressable(
-      key: Key('combined-mod-tab-${this.platform.name}'),
+      key: Key('${this.keyPrefix}-${this.platform.name}'),
       haptic: true,
       onTap: this.onTap,
       child: AnimatedContainer(

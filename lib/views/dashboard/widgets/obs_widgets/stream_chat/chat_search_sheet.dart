@@ -6,14 +6,18 @@ import 'package:hive_ce/hive.dart';
 
 import '../../../../../models/enums/chat_type.dart';
 import '../../../../../shared/design/design.dart';
+import '../../../../../stores/views/combined_chat.dart';
 import '../../../../../stores/views/kick_chat.dart';
 import '../../../../../stores/views/twitch_chat.dart';
 import '../../../../../stores/views/youtube_chat.dart';
 import '../../../../../types/classes/kick/kick_chat_message.dart';
+import '../../../../../types/classes/twitch/eventsub/channel_chat_message.dart';
+import '../../../../../types/classes/youtube/youtube_chat_message.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../utils/chat_search_helper.dart';
 import '../../../../../utils/modal_handler.dart';
 import 'kick_chat_message_row.dart';
+import 'native_combined_chat_view.dart' show CombinedPlatformBadge;
 import 'native_chat_chrome.dart';
 import 'native_chat_text_field.dart';
 import 'twitch_chat_message_row.dart';
@@ -118,6 +122,10 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
       GetIt.instance.isRegistered<YouTubeChatStore>()
           ? GetIt.instance<YouTubeChatStore>().messages.length
           : 0,
+    ChatType.Combined =>
+      GetIt.instance.isRegistered<CombinedChatStore>()
+          ? GetIt.instance<CombinedChatStore>().timeline.length
+          : 0,
     _ => 0,
   };
 
@@ -144,6 +152,7 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
       ChatType.Twitch => this._twitchResults(settingsBox),
       ChatType.Kick => this._kickResults(settingsBox),
       ChatType.YouTube => this._youTubeResults(settingsBox),
+      ChatType.Combined => this._combinedResults(settingsBox),
       _ => const <Widget>[],
     };
 
@@ -219,6 +228,69 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
             settingsBox: settingsBox,
           ),
     ];
+  }
+
+  /// The combined chat's merged timeline (every platform in the combo,
+  /// in time order): its messages that match, each in its platform's row
+  /// with the platform badge - as in the combined chat itself.
+  List<Widget> _combinedResults(Box settingsBox) {
+    if (!GetIt.instance.isRegistered<CombinedChatStore>()) return const [];
+    final query = this._query;
+    final rows = <Widget>[];
+    for (final item in GetIt.instance<CombinedChatStore>().timeline) {
+      final badge = CombinedPlatformBadge(platform: item.platform);
+      switch (item.payload) {
+        case final ChatMessageEvent event
+            when chatSearchMatches(
+              query: query,
+              author: event.chatterUserName,
+              content: event.message.text,
+            ):
+          rows.add(
+            TwitchChatMessageRow(
+              key: ValueKey('search-${item.key}'),
+              event: event,
+              settingsBox: settingsBox,
+              leading: badge,
+            ),
+          );
+        case final YouTubeChatMessage message
+            when chatSearchMatches(
+              query: query,
+              author: message.authorName ?? '',
+              content:
+                  message.snippet.textMessageDetails?.messageText ??
+                  message.displayText ??
+                  '',
+            ):
+          rows.add(
+            YouTubeChatMessageRow(
+              key: ValueKey('search-${item.key}'),
+              message: message,
+              settingsBox: settingsBox,
+              leading: badge,
+            ),
+          );
+        case final KickChatMessage message
+            when message.type != KickChatMessageType.system &&
+                chatSearchMatches(
+                  query: query,
+                  author: message.authorName,
+                  content: message.content,
+                ):
+          rows.add(
+            KickChatMessageRow(
+              key: ValueKey('search-${item.key}'),
+              message: message,
+              settingsBox: settingsBox,
+              leading: badge,
+            ),
+          );
+        default:
+          break;
+      }
+    }
+    return rows;
   }
 
   List<Widget> _youTubeResults(Box settingsBox) {
