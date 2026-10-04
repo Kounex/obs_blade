@@ -306,6 +306,27 @@ void main() {
     );
   });
 
+  testWidgets('subs filter with a gap', (tester) async {
+    await tester.runAsync(fillWithGap);
+    store.setFilter(ActivityFilter.subs);
+    await harness.shot(
+      tester,
+      'activity_feed_subs_gap',
+      framed(const ActivityFeed()),
+    );
+  });
+
+  testWidgets('filter with nothing in it', (tester) async {
+    await tester.runAsync(fill);
+    store.setFilter(ActivityFilter.points);
+    store.setToThankOnly(true);
+    await harness.shot(
+      tester,
+      'activity_feed_filter_empty',
+      framed(const ActivityFeed()),
+    );
+  });
+
   testWidgets('empty', (tester) async {
     await tester.runAsync(store.init);
     await harness.shot(

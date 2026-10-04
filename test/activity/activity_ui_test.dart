@@ -374,4 +374,22 @@ void main() {
       expect(title(DateTime(2026, 3, 28)), isNot('Yesterday'));
     });
   });
+
+  testWidgets('to-thank under a filter: never "All thanked" while some wait', (
+    tester,
+  ) async {
+    store.ingest(_event('s', ActivityKind.sub));
+    store.ingest(_event('f', ActivityKind.follow, actor: 'F'));
+    store.setToThankOnly(true);
+    store.setFilter(ActivityFilter.points);
+    await tester.pumpWidget(_wrap(const ActivityFeed()));
+    await tester.pump();
+    expect(find.text('All thanked'), findsNothing);
+    expect(find.text('Nothing to thank here'), findsOneWidget);
+    expect(find.textContaining('1 more are waiting under All'), findsOneWidget);
+
+    store.setThanked(store.allEvents.firstWhere((e) => e.id == 's'), true);
+    await tester.pump();
+    expect(find.text('All thanked'), findsOneWidget);
+  });
 }

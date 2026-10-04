@@ -2,6 +2,23 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - activity filters: hidden rows stay new, honest empty state
+
+Filter chip check after the status banner work. Leaving the feed marked
+*everything* seen, also rows the chip / "To thank" hid - with "Money"
+picked in the Chat tab, the streaming "N new" chip's sheet showed only
+money and the hidden follows / subs were gone from the badge unseen.
+Now only what the view could show is seen (per-channel high-water mark
+stops below the oldest hidden unseen row; "Mark all as seen" stays the
+full reset). The To-thank empty state no longer says "All thanked" under
+a chip while others wait ("Nothing to thank here - N more under All").
+Checked fine: every kind's chip (Power-ups / KICKs / stickers / charity
+= Money, YouTube member kinds = Subs, Kick host = Raids, hype trains =
+Points), "Mark N thanked" marks only the rows the chip shows, gap
+markers and the banner under filters. Tests in `activity_store_test`
+(matrix + seen) and `activity_ui_test`; shots `activity_feed_subs_gap`,
+`activity_feed_filter_empty`.
+
 ## 2026-10-04 - one Pro story: paywall, locked panes, store, website
 
 User request: the shared Pro locked pane, the paywall and the marketing

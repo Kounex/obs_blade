@@ -573,6 +573,149 @@ void main() {
     await free.dispose();
   });
 
+  group('filters and the seen marks', () {
+    ActivityEvent kind(
+      String id,
+      ActivityKind kind, {
+      ActivityPlatform platform = ActivityPlatform.twitch,
+      ActivityAmount? amount,
+      String? title,
+    }) => ActivityEvent(
+      id: id,
+      platform: platform,
+      channelId: '1',
+      kind: kind,
+      actor: ActivityActor(id: id, login: id, name: id),
+      amount: amount,
+      title: title,
+      timestamp: now,
+      sources: {ActivitySource.native: id},
+      primarySource: ActivitySource.native,
+    );
+
+    test('every kind lands in the chip it belongs to', () {
+      for (final event in [
+        kind(
+          'powerup',
+          ActivityKind.cheer,
+          amount: const ActivityAmount(50, ActivityUnit.bits),
+          title: 'Gigantify an Emote',
+        ),
+        kind(
+          'kicks',
+          ActivityKind.kicks,
+          platform: ActivityPlatform.kick,
+          amount: const ActivityAmount(100, ActivityUnit.kicks),
+        ),
+        kind(
+          'sticker',
+          ActivityKind.superSticker,
+          platform: ActivityPlatform.youtube,
+        ),
+        kind('charity', ActivityKind.charity),
+        kind(
+          'members',
+          ActivityKind.memberGift,
+          platform: ActivityPlatform.youtube,
+        ),
+        kind(
+          'milestone',
+          ActivityKind.memberMilestone,
+          platform: ActivityPlatform.youtube,
+        ),
+        kind('host', ActivityKind.host, platform: ActivityPlatform.kick),
+        kind('train', ActivityKind.hypeTrain),
+        kind('points', ActivityKind.redemption),
+      ]) {
+        store.ingest(event);
+      }
+      List<String> ids(ActivityFilter filter) {
+        store.setFilter(filter);
+        return store.visibleEvents.map((e) => e.id).toList()..sort();
+      }
+
+      expect(ids(ActivityFilter.money), [
+        'charity',
+        'kicks',
+        'powerup',
+        'sticker',
+      ]);
+      expect(ids(ActivityFilter.subs), ['members', 'milestone']);
+      expect(ids(ActivityFilter.raids), ['host']);
+      expect(ids(ActivityFilter.points), ['points', 'train']);
+      expect(ids(ActivityFilter.all), hasLength(9));
+    });
+
+    test('leaving a filtered feed keeps the hidden rows new', () {
+      store.ingest(kind('follow', ActivityKind.follow));
+      store.ingest(
+        kind(
+          'cheer',
+          ActivityKind.cheer,
+          amount: const ActivityAmount(100, ActivityUnit.bits),
+        ),
+      );
+      store.setFilter(ActivityFilter.money);
+      store.beginVisit();
+      store.endVisit();
+
+      /// The follow came first (lower seq): the channel mark stops below
+      /// it, so the cheer reads new too - nothing hidden is lost
+      expect(store.unseenCount, 2);
+
+      store.ingest(
+        kind(
+          'cheer2',
+          ActivityKind.cheer,
+          amount: const ActivityAmount(5, ActivityUnit.bits),
+        ),
+      );
+      store.setFilter(ActivityFilter.all);
+      store.beginVisit();
+      store.endVisit();
+      expect(store.unseenCount, 0);
+    });
+
+    test('a filter that hides nothing new marks everything seen', () {
+      store.ingest(
+        kind(
+          'cheer',
+          ActivityKind.cheer,
+          amount: const ActivityAmount(100, ActivityUnit.bits),
+        ),
+      );
+      store.setFilter(ActivityFilter.money);
+      store.beginVisit();
+      store.endVisit();
+      expect(store.unseenCount, 0);
+    });
+
+    test('"To thank" view: follows stay new, thanked rows count as shown', () {
+      store.ingest(kind('sub', ActivityKind.sub));
+      store.ingest(kind('follow', ActivityKind.follow));
+      store.setToThankOnly(true);
+      store.beginVisit();
+      store.endVisit();
+      expect(store.unseenCount, 1);
+      expect(store.allEvents.where((e) => store.isNew(e)).single.id, 'follow');
+    });
+
+    test('"Mark N thanked" under a filter marks only what it shows', () {
+      store.ingest(kind('sub', ActivityKind.sub));
+      store.ingest(
+        kind(
+          'cheer',
+          ActivityKind.cheer,
+          amount: const ActivityAmount(100, ActivityUnit.bits),
+        ),
+      );
+      store.setFilter(ActivityFilter.money);
+      store.markThanked(store.groups.single.events);
+      expect(store.toThankCount, 1);
+      expect(store.allEvents.firstWhere((e) => e.id == 'sub').thanked, isFalse);
+    });
+  });
+
   test('mark thanked: big rows of a group in one go', () {
     store.ingest(_event('a', at: now));
     store.ingest(_event('b', at: now, actor: 'B'));

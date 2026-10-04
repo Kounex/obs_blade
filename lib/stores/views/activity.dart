@@ -1080,7 +1080,45 @@ abstract class _ActivityStore with Store {
     this._visits--;
     if (this._visits > 0) return;
     this.visitMarks = null;
-    this.markAllSeen();
+    this._markShownSeen();
+  }
+
+  /// Whether [event] is on screen in the current view (filter chip +
+  /// "To thank")
+  bool _shown(ActivityEvent event) =>
+      this.filter.matches(event) &&
+      (!this.toThankOnly || (event.isBig && !event.thanked));
+
+  /// Leaving the feed: what it could show is seen - rows the filter or
+  /// "To thank" hid stay new (the badge / "N new" chip promised them). The
+  /// mark is a per-channel high-water seq, so it stops below the oldest
+  /// hidden unseen row of that channel.
+  void _markShownSeen() {
+    final top = <String, int>{};
+    final cap = <String, int>{};
+    for (final event in this._ledger.events) {
+      if (!this._unseenIn(this.seenMarks, event)) continue;
+      final key = this._channelKey(event);
+      if (this._shown(event)) {
+        if (event.seq > (top[key] ?? 0)) top[key] = event.seq;
+      } else if (event.seq < (cap[key] ?? 1 << 62)) {
+        cap[key] = event.seq;
+      }
+    }
+    var changed = false;
+    for (final entry in top.entries) {
+      final limit = cap[entry.key];
+      final mark = limit == null || limit > entry.value
+          ? entry.value
+          : limit - 1;
+      if ((this.seenMarks[entry.key] ?? 0) < mark) {
+        this.seenMarks[entry.key] = mark;
+        changed = true;
+      }
+    }
+    if (changed) {
+      unawaited(this._persistence.putMeta('seen', Map.of(this.seenMarks)));
+    }
   }
 
   @action

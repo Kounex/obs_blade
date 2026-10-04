@@ -383,10 +383,26 @@ class _EmptyFeed extends StatelessWidget {
     final String title;
     final String body;
     if (filtered && this.store.allEvents.isNotEmpty) {
-      title = this.store.toThankOnly ? 'All thanked' : 'Nothing here';
-      body = this.store.toThankOnly
-          ? 'Every sub, gift, cheer and Super Chat has been thanked.'
-          : 'Nothing of this kind yet.';
+      final open = this.store.toThankCount;
+      final narrowed = this.store.filter != ActivityFilter.all;
+      if (this.store.toThankOnly && open == 0) {
+        title = 'All thanked';
+        body = 'Every sub, gift, cheer and Super Chat has been thanked.';
+      } else if (this.store.toThankOnly && narrowed) {
+        /// The rest of the queue sits under another chip - say so, the
+        /// header counts all of it
+        final neverQueued =
+            this.store.filter == ActivityFilter.follows ||
+            this.store.filter == ActivityFilter.points;
+        title = 'Nothing to thank here';
+        body = neverQueued
+            ? 'Follows, channel points and hype trains aren\'t in the '
+                  'to-thank queue - $open more are waiting under All.'
+            : '$open more to thank under All.';
+      } else {
+        title = 'Nothing here';
+        body = 'Nothing of this kind yet.';
+      }
     } else if (!_anyOwnChannel()) {
       title = 'No channel connected';
       body =
