@@ -14,7 +14,7 @@ data-safety checks (see `persistence-risk.md`).
 | Analyze | **0 errors** (deprecation infos remain) |
 | Package majors | Largely bumped (see below) |
 | iOS E2E | Simulator + real OBS + real-device install verified (macOS workstation) |
-| Android | **Not yet built/tested** — deferred, do before store release |
+| Android | Shipped — 4.0.x on Play production, 4.1.0 beta on Play internal |
 
 ## Persistence tests
 
@@ -52,8 +52,7 @@ a future pass, expected to resolve itself as upstream releases catch up.
 
 ## Open after last session
 
-See [`session-handoff.md`](session-handoff.md). Chat Phase 0 done; Phase 1 (native
-Twitch) needs credentials. **Before store release:** Android build/test +
+See [`session-handoff.md`](session-handoff.md). **Before store release:**
 version/build-number bump. Upgrade branch merged to `master` 2026-07-27.
 
 ## Do not run
