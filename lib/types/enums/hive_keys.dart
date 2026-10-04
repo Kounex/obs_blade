@@ -46,6 +46,10 @@ enum HiveKeys {
   /// Activity feed bookkeeping (seen marks, sessions, coverage, relay
   /// session) - JSON strings, no adapter
   ActivityMeta,
+
+  /// YouTube live-chat emojis learned from chat pages + recently used -
+  /// JSON strings, no adapter (see `YouTubeEmoji.toJson`)
+  YouTubeEmojis,
 }
 
 extension HiveKeysFunctions on HiveKeys {
@@ -65,5 +69,6 @@ extension HiveKeysFunctions on HiveKeys {
     HiveKeys.KickAuth: 'kick-auth',
     HiveKeys.ActivityEvents: 'activity-events',
     HiveKeys.ActivityMeta: 'activity-meta',
+    HiveKeys.YouTubeEmojis: 'youtube-emojis',
   }[this]!;
 }
