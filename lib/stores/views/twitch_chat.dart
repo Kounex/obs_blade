@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
@@ -103,6 +104,14 @@ const Duration kTwitchLivePollInterval = Duration(seconds: 10);
 
 abstract class _TwitchChatStore with Store {
   static const int kMaxMessages = 500;
+
+  /// The selected channel's cap - raised while a reader is scrolled up
+  /// in it ([holdScrollback]); background channel buffers keep 500
+  final ChatBufferCap messageCap = ChatBufferCap(base: kMaxMessages);
+
+  /// Ids dropped past the held cap: their delete / tombstone records stay
+  /// until [releaseScrollback] (the scrolled-up view may still show them)
+  final List<String> _evictedWhileHeld = [];
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
   /// The shared refresh behind [_validAccessToken] while one is running.
@@ -2096,13 +2105,42 @@ abstract class _TwitchChatStore with Store {
           : event,
     );
     this._arrivalSeq++;
-    while (this.messages.length > kMaxMessages) {
+    this._trimMessages();
+  }
+
+  /// Drops the oldest rows past [messageCap] with their delete /
+  /// tombstone records - kept for now while a reader is scrolled up
+  void _trimMessages() {
+    while (this.messages.length > this.messageCap.value) {
       final evicted = this.messages.first.messageId;
-      this._deletedMessageIds.remove(evicted);
-      this._deletedMessageActors.remove(evicted);
-      this._tombstoneInfos.remove(evicted);
+      if (this.messageCap.holding) {
+        this._evictedWhileHeld.add(evicted);
+      } else {
+        this._forgetEvicted(evicted);
+      }
       this.messages.removeAt(0);
     }
+  }
+
+  void _forgetEvicted(String messageId) {
+    this._deletedMessageIds.remove(messageId);
+    this._deletedMessageActors.remove(messageId);
+    this._tombstoneInfos.remove(messageId);
+  }
+
+  /// A reader scrolled up in the chat: stop dropping the oldest rows
+  /// under them ([ChatBufferCap]). Pair with [releaseScrollback].
+  void holdScrollback() => this.messageCap.hold();
+
+  /// The reader is back at the newest row: trim back to 500.
+  void releaseScrollback() {
+    if (!this.messageCap.release()) return;
+    runInAction(() {
+      this._evictedWhileHeld
+        ..forEach(this._forgetEvicted)
+        ..clear();
+      this._trimMessages();
+    });
   }
 
   /// Route a live EventSub row into the matching channel buffer so the

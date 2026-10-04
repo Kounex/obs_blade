@@ -1042,6 +1042,99 @@ void main() {
       expect(position.pixels, closeTo(position.maxScrollExtent, 1.0));
     });
 
+    /// User report: in a busy chat, an old message read while scrolled up
+    /// kept "scrolling away" - every arrival at the cap dropped a row
+    /// above it
+    testWidgets('scrolled up in a full chat: the row being read stays put '
+        'while rows keep arriving; back at the bottom the buffer trims', (
+      tester,
+    ) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(textEvent('m$i', 'V', 'row-$i-end'));
+      }
+      await tester.pumpWidget(
+        wrap(const SizedBox(height: 600.0, child: NativeTwitchChatView())),
+      );
+      await tester.pumpAndSettle();
+      final position = tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position;
+      await tester.drag(find.byType(ListView), const Offset(0.0, 3000.0));
+      await tester.pumpAndSettle();
+
+      final read = [
+        for (var i = 0; i < 500; i++)
+          if (find
+              .textContaining('row-$i-end', findRichText: true)
+              .hitTestable()
+              .evaluate()
+              .isNotEmpty)
+            i,
+      ].first;
+      final row = find.textContaining('row-$read-end', findRichText: true);
+      final before = tester.getTopLeft(row).dy;
+
+      for (var i = 500; i < 560; i++) {
+        store.appendChatMessageForTest(textEvent('m$i', 'V', 'row-$i-end'));
+        await tester.pump();
+        await tester.pump();
+      }
+      expect(store.messages.length, 560);
+      expect(tester.getTopLeft(row).dy, before);
+      expect(find.text('60 new messages ↓'), findsOneWidget);
+
+      await tester.tap(find.text('60 new messages ↓'));
+      await tester.pumpAndSettle();
+      expect(store.messages.length, 500);
+      expect(position.pixels, closeTo(position.maxScrollExtent, 1.0));
+
+      /// Following again: the cap drops rows as before
+      store.appendChatMessageForTest(textEvent('m560', 'V', 'row-560-end'));
+      await tester.pumpAndSettle();
+      expect(store.messages.length, 500);
+    });
+
+    testWidgets('scrolled up past the held cap: the list stops taking rows, '
+        'the store stays bounded, the pill keeps counting', (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(textEvent('m$i', 'V', 'row-$i-end'));
+      }
+      await tester.pumpWidget(
+        wrap(const SizedBox(height: 600.0, child: NativeTwitchChatView())),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView), const Offset(0.0, 3000.0));
+      await tester.pumpAndSettle();
+      final read = [
+        for (var i = 0; i < 500; i++)
+          if (find
+              .textContaining('row-$i-end', findRichText: true)
+              .hitTestable()
+              .evaluate()
+              .isNotEmpty)
+            i,
+      ].first;
+      final row = find.textContaining('row-$read-end', findRichText: true);
+      final before = tester.getTopLeft(row).dy;
+
+      for (var i = 500; i < 2100; i++) {
+        store.appendChatMessageForTest(textEvent('m$i', 'V', 'row-$i-end'));
+        if (i % 50 == 0) await tester.pump();
+      }
+      await tester.pump();
+      await tester.pump();
+      expect(store.messages.length, 2000);
+      expect(tester.getTopLeft(row).dy, before);
+      final list = tester.widget<ListView>(find.byType(ListView));
+      expect(
+        (list.childrenDelegate as SliverChildBuilderDelegate).childCount,
+        lessThan(2 * 2000),
+      );
+      expect(find.textContaining('new messages ↓'), findsOneWidget);
+    });
+
     testWidgets('scrolling up shows the paused chip; tapping it resumes', (
       tester,
     ) async {

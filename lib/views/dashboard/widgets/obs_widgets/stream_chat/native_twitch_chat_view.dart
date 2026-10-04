@@ -20,6 +20,7 @@ import 'chat_tombstone.dart';
 import 'dialogs/chat_user_card_sheet.dart';
 import 'dialogs/mod_action_sheet.dart';
 import '../../../../../models/enums/chat_type.dart';
+import 'chat_scrollback.dart';
 import 'chat_type_brand.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
@@ -70,6 +71,12 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
   String? _modTargetMessageId;
 
   TwitchChatStore get _store => GetIt.instance<TwitchChatStore>();
+
+  /// Scrolled up: the store stops dropping rows above the reader
+  late final ChatScrollback _scrollback = ChatScrollback(
+    hold: () => this._store.holdScrollback(),
+    release: () => this._store.releaseScrollback(),
+  );
 
   Future<void> _openModActions(ChatMessageEvent event) async {
     this.setState(() => this._modTargetMessageId = event.messageId);
@@ -132,6 +139,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
     } else if (!atBottom && this._pinnedToBottom) {
       setState(() => this._pinnedToBottom = false);
     }
+    this._scrollback.update(scrolledUp: !this._pinnedToBottom);
   }
 
   /// Instant pin to the newest message. Prefer [jumpTo] over [animateTo]
@@ -152,6 +160,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
       this._unreadWhileScrolledUp = false;
       this._unreadCount = 0;
     });
+    this._scrollback.update(scrolledUp: false);
     this._jumpToBottomIfPossible();
 
     /// Layout may still be settling after the chip disappears — one
@@ -163,6 +172,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
 
   @override
   void dispose() {
+    this._scrollback.dispose();
     this._scrollController.dispose();
     super.dispose();
   }
@@ -308,6 +318,10 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
         this._lastRenderedCount = items.length;
         this._lastRenderedNewest = newest;
 
+        /// What the list shows - the live rows, or the rows it stopped
+        /// at while scrolled up (the unread count above stays live)
+        final shown = this._scrollback.rows(items, buffered: this._store.messages.length);
+
         /// Tracked so the pinned-message banner appears/clears with the
         /// store's refetch (connect/switch and local pin mutations).
         final pinned = this._store.pinnedMessage;
@@ -354,7 +368,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
             /// `channel.chat.message` with the same id so it doesn't show
             /// as a plain line under the notice.
             final announceBodyIds = <String>{
-              for (final item in items)
+              for (final item in shown)
                 if (item is ChatNotificationNotice &&
                     chatNoticeChrome(item.event.noticeType).color ==
                         ChatNoticeColorSeed.announce &&
@@ -363,7 +377,7 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                   item.event.messageId,
             };
             final filters = ChatFilterSettings.of(settingsBox);
-            final visibleItems = items.where((item) {
+            final visibleItems = shown.where((item) {
               if (item is ChatNotificationNotice) {
                 return isChatNoticeTypeVisible(
                   settingsBox,

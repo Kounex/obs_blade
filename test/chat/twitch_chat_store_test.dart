@@ -1272,6 +1272,30 @@ void main() {
       expect(store.deletedMessageActor('m0'), isNull);
     });
 
+    test('while a reader is scrolled up, rows and their tombstones stay; '
+        'release trims both', () {
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm0',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
+      store.holdScrollback();
+      store.appendChatMessageForTest(chatMessage('m500', 'u1'));
+      expect(store.messages, hasLength(501));
+      expect(store.isMessageDeleted('m0'), isTrue);
+
+      store.releaseScrollback();
+      expect(store.messages, hasLength(500));
+      expect(store.messages.first.messageId, 'm1');
+      expect(store.isMessageDeleted('m0'), isFalse);
+      expect(store.deletedMessageActor('m0'), isNull);
+    });
+
     test('logout clears tombstones, notices and the arrival counter', () async {
       store.appendChatMessageForTest(chatMessage('m1', 'u1'));
       store.applyMessageDelete(

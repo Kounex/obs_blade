@@ -15,6 +15,7 @@ import 'dialogs/mod_action_sheet.dart';
 import 'dialogs/youtube_mod_action_sheet.dart';
 import 'dialogs/youtube_user_card_sheet.dart';
 import '../../../../../models/enums/chat_type.dart';
+import 'chat_scrollback.dart';
 import 'chat_type_brand.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
@@ -71,6 +72,12 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
   String? _modTargetMessageId;
 
   YouTubeChatStore get _store => GetIt.instance<YouTubeChatStore>();
+
+  /// Scrolled up: the store stops dropping rows above the reader
+  late final ChatScrollback _scrollback = ChatScrollback(
+    hold: () => this._store.holdScrollback(),
+    release: () => this._store.releaseScrollback(),
+  );
 
   Future<void> _openModActions(String messageId) async {
     final index = this._store.messages.indexWhere(
@@ -130,6 +137,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
     } else if (!atBottom && this._pinnedToBottom) {
       setState(() => this._pinnedToBottom = false);
     }
+    this._scrollback.update(scrolledUp: !this._pinnedToBottom);
   }
 
   /// Instant pin to the newest message. Prefer [jumpTo] over [animateTo]
@@ -149,6 +157,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
       this._unreadWhileScrolledUp = false;
       this._unreadCount = 0;
     });
+    this._scrollback.update(scrolledUp: false);
     this._jumpToBottomIfPossible();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       this._jumpToBottomIfPossible();
@@ -157,6 +166,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
 
   @override
   void dispose() {
+    this._scrollback.dispose();
     this._scrollController.dispose();
     super.dispose();
   }
@@ -297,6 +307,10 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
         this._lastRenderedCount = items.length;
         this._lastRenderedNewest = newest;
 
+        /// What the list shows - the live rows, or the rows it stopped
+        /// at while scrolled up (the unread count above stays live)
+        final shown = this._scrollback.rows(items, buffered: items.length);
+
         /// Signed-in users get the mod long-press — YouTube has no cheap
         /// mod lookup, so a non-mod's action 403s into the snackbar
         /// (plan §7). Signed-out/read-only viewers still get a
@@ -321,7 +335,7 @@ class _NativeYouTubeChatViewState extends State<NativeYouTubeChatView> {
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
             final filters = ChatFilterSettings.of(settingsBox);
-            final visibleItems = items
+            final visibleItems = shown
                 .where(
                   (message) => !filters.hides(
                     [message.authorName],

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
@@ -166,6 +167,27 @@ class CombinedChatStore = _CombinedChatStore with _$CombinedChatStore;
 abstract class _CombinedChatStore with Store {
   /// Merged view cap — each store keeps its own 500-row buffer.
   static const int kMaxItems = 500;
+
+  /// [kMaxItems], raised while a reader is scrolled up ([holdScrollback])
+  final ChatBufferCap itemCap = ChatBufferCap(base: kMaxItems);
+
+  /// A reader scrolled up in the combined chat: neither the merged cut
+  /// nor any platform buffer drops rows under them ([ChatBufferCap]).
+  /// Pair with [releaseScrollback].
+  void holdScrollback() {
+    this.itemCap.hold();
+    this._twitch().holdScrollback();
+    this._youTube().holdScrollback();
+    this._kick().holdScrollback();
+  }
+
+  /// The reader is back at the newest row: everything trims back.
+  void releaseScrollback() {
+    this.itemCap.release();
+    this._twitch().releaseScrollback();
+    this._youTube().releaseScrollback();
+    this._kick().releaseScrollback();
+  }
 
   final TwitchChatStore Function() _twitch;
   final YouTubeChatStore Function() _youTube;
@@ -520,9 +542,8 @@ abstract class _CombinedChatStore with Store {
           },
     ];
     final merged = mergeCombinedStreams(streams);
-    return merged.length > kMaxItems
-        ? merged.sublist(merged.length - kMaxItems)
-        : merged;
+    final cap = this.itemCap.value;
+    return merged.length > cap ? merged.sublist(merged.length - cap) : merged;
   }
 
   List<CombinedItem> _twitchItems() {

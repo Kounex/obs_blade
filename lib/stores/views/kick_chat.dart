@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
@@ -97,6 +98,10 @@ typedef KickPusherFactory =
 /// via Kick's official API.
 abstract class _KickChatStore with Store {
   static const int kMaxMessages = 500;
+
+  /// The selected channel's cap - raised while a reader is scrolled up
+  /// in it ([holdScrollback]); background channel buffers keep 500
+  final ChatBufferCap messageCap = ChatBufferCap(base: kMaxMessages);
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
   /// Rolling cap for the sent-message id bookkeeping (echo marker).
@@ -1024,9 +1029,23 @@ abstract class _KickChatStore with Store {
   }
 
   void _trimMessages() {
-    while (this.messages.length > kMaxMessages) {
+    while (this.messages.length > this.messageCap.value) {
       this.messages.removeAt(0);
     }
+  }
+
+  /// A reader scrolled up in the chat: stop dropping the oldest rows
+  /// under them ([ChatBufferCap]). Pair with [releaseScrollback].
+  void holdScrollback() => this.messageCap.hold();
+
+  /// The reader is back at the newest row: trim back to 500.
+  void releaseScrollback() {
+    if (!this.messageCap.release()) return;
+    runInAction(() {
+      while (this.messages.length > this.messageCap.value) {
+        this.messages.removeAt(0);
+      }
+    });
   }
 
   /// Fire-and-forget 7TV catalog refetch for the resolved channel's Kick

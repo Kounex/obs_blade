@@ -15,6 +15,7 @@ import 'package:obs_blade/utils/styling_helper.dart';
 import 'kick_chat_message_row.dart';
 import 'kick_chat_notice_visibility.dart';
 import '../../../../../models/enums/chat_type.dart';
+import 'chat_scrollback.dart';
 import 'chat_type_brand.dart';
 import 'native_chat_appearance.dart';
 import 'native_chat_chrome.dart';
@@ -66,6 +67,12 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
   String? _modTargetMessageId;
 
   KickChatStore get _store => GetIt.instance<KickChatStore>();
+
+  /// Scrolled up: the store stops dropping rows above the reader
+  late final ChatScrollback _scrollback = ChatScrollback(
+    hold: () => this._store.holdScrollback(),
+    release: () => this._store.releaseScrollback(),
+  );
 
   Future<void> _openModActions(String messageId) async {
     final index = this._store.messages.indexWhere(
@@ -132,6 +139,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
     } else if (!atBottom && this._pinnedToBottom) {
       setState(() => this._pinnedToBottom = false);
     }
+    this._scrollback.update(scrolledUp: !this._pinnedToBottom);
   }
 
   /// Instant pin to the newest message. Prefer [jumpTo] over [animateTo]
@@ -151,6 +159,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
       this._unreadWhileScrolledUp = false;
       this._unreadCount = 0;
     });
+    this._scrollback.update(scrolledUp: false);
     this._jumpToBottomIfPossible();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       this._jumpToBottomIfPossible();
@@ -159,6 +168,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
 
   @override
   void dispose() {
+    this._scrollback.dispose();
     this._scrollController.dispose();
     super.dispose();
   }
@@ -294,6 +304,10 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
         this._lastRenderedCount = items.length;
         this._lastRenderedNewest = newest;
 
+        /// What the list shows - the live rows, or the rows it stopped
+        /// at while scrolled up (the unread count above stays live)
+        final shown = this._scrollback.rows(items, buffered: items.length);
+
         /// Signed-in users get the reply/mod long-press — Kick has no
         /// cheap mod lookup, so a non-mod's action 403s into the
         /// snackbar (same honest-403 model as YouTube).
@@ -322,7 +336,7 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
           builder: (context, settingsBox, child) {
             final separators = NativeChatAppearance.separators(settingsBox);
             final filters = ChatFilterSettings.of(settingsBox);
-            final visibleItems = items.where((message) {
+            final visibleItems = shown.where((message) {
               if (!isKickChatNoticeVisible(settingsBox, message.id)) {
                 return false;
               }

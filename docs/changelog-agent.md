@@ -2,6 +2,35 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - Busy chat: what you read while scrolled up stays put
+
+User report: in a very busy chat, an old message read while scrolled
+up kept "scrolling away". Cause: every view is a top-down list at a
+fixed offset, and at the 500-row cap each arrival dropped the oldest
+row above the reader - the content shifted up by that row's height,
+several times a second. Decision (user): keep the old rows and keep
+adding below; past ~2,000 rows the view stops taking new ones.
+
+- `ChatBufferCap` (`lib/stores/shared/`): a buffer's cap, 500 normally,
+  2,000 while held. Twitch / Kick / YouTube hold the selected channel's
+  buffer (`holdScrollback` / `releaseScrollback`; background buffers keep
+  500), the combined store holds its merged cut and all three. The rows
+  stay in the store, so deletes / bans / tombstones keep reaching them;
+  Twitch keeps the delete records of rows dropped past 2,000 until
+  release. Release trims back to 500 (the reader is at the bottom then).
+- `ChatScrollback` (view side, all four native views): holds while not
+  pinned to the newest row, releases on the way back (and on dispose);
+  100 rows before the held cap the list stops taking rows - the unread
+  pill keeps counting the live ones.
+- Review fix of the previous entry: the user card's pinned / body /
+  footer column is a measuring layout (`_PinnedSheetLayout`) - the
+  history keeps at least a third next to a tall footer (small phone,
+  large text), instead of vanishing with Sign out overflowing.
+- Tests: Twitch view (the read row's position is unchanged across 60
+  arrivals at the cap, pill count, trim on return, freeze past the held
+  cap), Twitch / Kick / combined store hold + release; user card at 1.6x
+  text on a 375x667 screen, Sign out unscrolled at 1.0x.
+
 ## 2026-10-04 - Sheet pages hop like Search; user cards pin all but the history; clear platform tabs
 
 User feedback: Search chat's transition (the options slide down, the

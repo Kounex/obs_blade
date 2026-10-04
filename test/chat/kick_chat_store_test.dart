@@ -365,6 +365,37 @@ void main() {
       await sub.cancel();
     });
 
+    test('a scrolled-up reader holds the oldest rows; release trims back '
+        'to 500', () async {
+      configure();
+      channelService.backfills[101] = [
+        for (var i = 0; i < 500; i++)
+          KickChatMessage.fromJson(
+            messageData(
+              'm$i',
+              createdAt: DateTime.utc(
+                2026,
+                9,
+                22,
+                12,
+              ).add(Duration(seconds: i)).toIso8601String(),
+            ),
+          ),
+      ];
+      await store.init();
+      await until(() => store.messages.length == 500);
+
+      store.holdScrollback();
+      pusher().emitEvent(messageEvent('overflow'));
+      await until(() => store.messages.any((m) => m.id == 'overflow'));
+      expect(store.messages.length, 501);
+      expect(store.messages.first.id, 'm0');
+
+      store.releaseScrollback();
+      expect(store.messages.length, 500);
+      expect(store.messages.first.id, 'm1');
+    });
+
     test(
       'the buffer caps at kMaxMessages (500), dropping the oldest',
       () async {

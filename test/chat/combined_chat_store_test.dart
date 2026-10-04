@@ -797,6 +797,35 @@ void main() {
       },
     );
 
+    test('a scrolled-up reader holds the merged cut and every platform '
+        'buffer; release puts the caps back', () async {
+      await store.activate();
+      await until(
+        () => kick.chatConnection == KickChatConnectionState.connected,
+      );
+      kick.messages
+        ..clear()
+        ..addAll([
+          for (var i = 0; i < 600; i++)
+            kickMessage(
+              'k$i',
+              DateTime.utc(2026, 9, 24, 12).add(Duration(seconds: i)),
+            ),
+        ]);
+      expect(store.timeline, hasLength(500));
+
+      store.holdScrollback();
+      expect(store.timeline, hasLength(600));
+      expect(twitch.messageCap.holding, isTrue);
+      expect(youTube.messageCap.holding, isTrue);
+      expect(kick.messageCap.holding, isTrue);
+
+      store.releaseScrollback();
+      expect(store.timeline, hasLength(500));
+      expect(kick.messageCap.holding, isFalse);
+      expect(kick.messages, hasLength(500));
+    });
+
     test('status maps each source', () async {
       await store.activate();
       await until(

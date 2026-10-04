@@ -20,6 +20,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import '../../../../../models/enums/chat_type.dart';
 import 'chat_notice_visibility.dart';
 import 'chat_tombstone.dart';
+import 'chat_scrollback.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/combined_chat_picker.dart'
     show CombinedIssueMarker, combinedIssueLabel, combinedIssueOf;
@@ -74,6 +75,12 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
 
   CombinedChatStore get _store => GetIt.instance<CombinedChatStore>();
 
+  /// Scrolled up: the store stops dropping rows above the reader
+  late final ChatScrollback _scrollback = ChatScrollback(
+    hold: () => this._store.holdScrollback(),
+    release: () => this._store.releaseScrollback(),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +89,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
 
   @override
   void dispose() {
+    this._scrollback.dispose();
     this._scrollController.dispose();
     super.dispose();
   }
@@ -100,6 +108,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
     } else if (!atBottom && this._pinnedToBottom) {
       setState(() => this._pinnedToBottom = false);
     }
+    this._scrollback.update(scrolledUp: !this._pinnedToBottom);
   }
 
   void _jumpToBottomIfPossible() {
@@ -117,6 +126,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
       this._unreadWhileScrolledUp = false;
       this._unreadCount = 0;
     });
+    this._scrollback.update(scrolledUp: false);
     this._jumpToBottomIfPossible();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       this._jumpToBottomIfPossible();
@@ -267,6 +277,10 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
 
         this._trackArrivals(items);
 
+        /// What the list shows - the live rows, or the rows it stopped
+        /// at while scrolled up (the unread count above stays live)
+        final shown = this._scrollback.rows(items, buffered: items.length);
+
         final twitch = GetIt.instance<TwitchChatStore>();
         final kick = GetIt.instance<KickChatStore>();
         final twitchPin = sources.any((s) => s.platform == ChatType.Twitch)
@@ -306,7 +320,7 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
           ],
           builder: (context, settingsBox, child) {
             final visible = combinedVisibleItems(
-              items,
+              shown,
               filters: ChatFilterSettings.of(settingsBox),
               twitchNoticeVisible: (type) =>
                   isChatNoticeTypeVisible(settingsBox, type),

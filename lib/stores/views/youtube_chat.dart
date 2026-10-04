@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
@@ -238,6 +239,24 @@ class _ChannelBuffer {
 /// `liveChatMessages.list` poll loop with per-channel buffers.
 abstract class _YouTubeChatStore with Store {
   static const int kMaxMessages = 500;
+
+  /// The selected channel's cap - raised while a reader is scrolled up
+  /// in it ([holdScrollback]); background channel buffers keep 500
+  final ChatBufferCap messageCap = ChatBufferCap(base: kMaxMessages);
+
+  /// A reader scrolled up in the chat: stop dropping the oldest rows
+  /// under them ([ChatBufferCap]). Pair with [releaseScrollback].
+  void holdScrollback() => this.messageCap.hold();
+
+  /// The reader is back at the newest row: trim back to 500.
+  void releaseScrollback() {
+    if (!this.messageCap.release()) return;
+    runInAction(() {
+      while (this.messages.length > this.messageCap.value) {
+        this.messages.removeAt(0);
+      }
+    });
+  }
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
   /// Backoff ceiling — rate limiting and transient read failures double
@@ -1457,7 +1476,7 @@ abstract class _YouTubeChatStore with Store {
             continue;
           }
           this.messages.add(item);
-          while (this.messages.length > kMaxMessages) {
+          while (this.messages.length > this.messageCap.value) {
             this.messages.removeAt(0);
           }
           this._emitActivity(label, item);
@@ -1865,7 +1884,10 @@ abstract class _YouTubeChatStore with Store {
         final destination = sameChannel() ? this.messages : buffer.messages;
         if (!destination.any((message) => message.id == sent.id)) {
           destination.add(sent);
-          while (destination.length > kMaxMessages) {
+          final cap = identical(destination, this.messages)
+              ? this.messageCap.value
+              : kMaxMessages;
+          while (destination.length > cap) {
             destination.removeAt(0);
           }
         }
