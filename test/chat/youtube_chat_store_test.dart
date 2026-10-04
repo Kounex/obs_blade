@@ -1048,6 +1048,42 @@ void main() {
       },
     );
 
+    test('own message in someone else\'s chat shows our name at once; '
+        'YouTube\'s copy from the poll replaces it (badges)', () async {
+      configure();
+      await seedAuth();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(page(const []));
+
+      await store.init();
+      await until(
+        () => store.chatConnection == YouTubeChatConnectionState.connected,
+      );
+
+      /// The insert answer has no authorDetails (like the real API)
+      expect(await store.sendChatMessage('gg'), isTrue);
+      final local = store.messages.last;
+      expect(local.authorName, 'My Channel');
+      expect(local.isOwner, isFalse);
+
+      chatService.pushPollResponse(
+        page([
+          YouTubeChatMessage(
+            id: local.id,
+            snippet: local.snippet,
+            authorDetails: const YouTubeChatAuthorDetails(
+              channelId: 'self',
+              displayName: 'Kounex',
+              isChatModerator: true,
+            ),
+          ),
+        ]),
+      );
+      await until(() => store.messages.last.authorName == 'Kounex');
+      expect(store.messages.where((m) => m.id == local.id), hasLength(1));
+      expect(store.messages.last.isModerator, isTrue);
+    });
+
     test('not attached to a live chat → the refusal says why, and clears '
         'once the chat attaches', () async {
       configure();

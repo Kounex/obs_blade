@@ -410,6 +410,10 @@ abstract class _YouTubeChatStore with Store {
       ? null
       : this._channelBuffers[this.selectedChannelLabel]?.channelId;
 
+  /// Ids of messages we sent, shown from the insert answer until the poll
+  /// delivers YouTube's own copy (bounded by the 500-message buffers)
+  final Set<String> _localEchoIds = {};
+
   /// The emoji catalog, when registered (tests without it skip emojis)
   YouTubeEmojiStore? get _emojis =>
       GetIt.instance.isRegistered<YouTubeEmojiStore>()
@@ -1438,7 +1442,18 @@ abstract class _YouTubeChatStore with Store {
         case YouTubeChatMessageType.userBanned:
           this._applyUserBanned(label, item);
         default:
-          if (this.messages.any((message) => message.id == item.id)) {
+          final known = this.messages.indexWhere(
+            (message) => message.id == item.id,
+          );
+          if (known >= 0) {
+            /// Our own sent message comes back from the poll with the
+            /// real author details (badges) - it replaces the instant copy
+            if (this._localEchoIds.remove(item.id)) {
+              this.messages[known] = item.copyWith(
+                isTombstoned: this.messages[known].isTombstoned,
+                isHistorical: this.messages[known].isHistorical,
+              );
+            }
             continue;
           }
           this.messages.add(item);
@@ -1825,11 +1840,25 @@ abstract class _YouTubeChatStore with Store {
     try {
       final token = await this._validAccessToken();
       if (!ownsDestination()) return false;
-      final sent = await this._chatService.insert(
+      final inserted = await this._chatService.insert(
         accessToken: token,
         liveChatId: liveChatId,
         message: trimmed,
       );
+
+      /// `liveChatMessages.insert` answers with the snippet only - no
+      /// authorDetails, so the instant copy would read "Unknown". Fill in
+      /// who we are; the poll's copy (real badges) replaces it later.
+      final sent = inserted.authorDetails != null
+          ? inserted
+          : inserted.copyWith(
+              authorDetails: YouTubeChatAuthorDetails(
+                channelId: inserted.authorChannelId ?? this.selfChannelId,
+                displayName: this.selfChannelTitle ?? 'You',
+                isChatOwner: this.isViewingOwnChannel,
+              ),
+            );
+      this._localEchoIds.add(sent.id);
       if (ownsDestination()) {
         final destination = sameChannel() ? this.messages : buffer.messages;
         if (!destination.any((message) => message.id == sent.id)) {
