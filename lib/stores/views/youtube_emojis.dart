@@ -9,6 +9,7 @@ import '../../types/enums/hive_keys.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/youtube/youtube_emoji.dart';
 import '../../utils/youtube/youtube_standard_emojis.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 part 'youtube_emojis.g.dart';
 
@@ -124,7 +125,7 @@ abstract class _YouTubeEmojiStore with Store {
     http.Client? client,
     DateTime Function()? clock,
     YouTubeEmojiPersistence? persistence,
-  }) : _client = client ?? http.Client(),
+  }) : _client = client ?? RenewingHttpClient(),
        _clock = clock ?? DateTime.now,
        _persistence = persistence ?? HiveYouTubeEmojiPersistence() {
     for (final emoji in kYouTubeStandardEmojis) {

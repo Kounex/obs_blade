@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 /// The chat services' HTTP client: an [http.Client] that throws its
 /// connections away after a connection-level failure, and on
@@ -9,24 +10,37 @@ import 'package:http/http.dart' as http;
 ///
 /// Why: iOS takes a suspended app's sockets away. After a while in the
 /// background every YouTube poll and Retry failed with
-/// `ClientException: Write failed` (Settings → Logs, 2026-10-04) until the
-/// app was restarted - a fresh client worked at once. The pooled
+/// `ClientException: Write failed` / `Bad file descriptor` (Settings →
+/// Logs, 2026-10-04: the same client failing again and again for minutes)
+/// until the app was restarted - a fresh client worked at once. The pooled
 /// connections of the long-lived `dart:io` client were what broke, so a
 /// failure like that renews the client, and the caller's own retry (the
 /// poll loop's backoff, a Retry button) goes out on new connections.
 /// Requests are not repeated here - a POST may already have arrived.
 class RenewingHttpClient extends http.BaseClient {
-  final http.Client Function() _create;
-  http.Client _inner;
+  /// Test seam - a client given here is closed with its own `close()`
+  final http.Client Function()? _create;
+
+  late http.Client _inner;
+
+  /// The default client's `dart:io` client: closed without force on
+  /// [renew] - `IOClient.close()` always forces, which would abort the
+  /// requests still running (a send, a token poll, a refresh)
+  HttpClient? _io;
   bool _closed = false;
 
   static final List<WeakReference<RenewingHttpClient>> _instances = [];
 
-  RenewingHttpClient({http.Client Function()? create})
-    : this._(create ?? http.Client.new);
-
-  RenewingHttpClient._(this._create) : _inner = _create() {
+  RenewingHttpClient({http.Client Function()? create}) : _create = create {
+    this._inner = this._newInner();
     _instances.add(WeakReference(this));
+  }
+
+  http.Client _newInner() {
+    if (this._create case final create?) return create();
+    final io = HttpClient();
+    this._io = io;
+    return IOClient(io);
   }
 
   /// App resume: every live client starts over on fresh connections
@@ -42,8 +56,13 @@ class RenewingHttpClient extends http.BaseClient {
   void renew() {
     if (this._closed) return;
     final old = this._inner;
-    this._inner = this._create();
-    old.close();
+    final oldIo = this._io;
+    this._inner = this._newInner();
+    if (oldIo != null) {
+      oldIo.close();
+    } else {
+      old.close();
+    }
   }
 
   /// Connection-level: the socket or the HTTP exchange broke, not an

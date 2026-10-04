@@ -20,8 +20,17 @@ nothing.
   caller's own retry goes out on new connections (nothing is resent -
   a POST may have arrived); `renewAll()` on app resume, before
   `reconnectAfterResume`. Default client of every YouTube / Kick /
-  Twitch service (21). Related: flutter/flutter#116101 (iOS sockets
-  defunct after ~5 min in the background).
+  Twitch service (21) + the YouTube emoji store. Related:
+  flutter/flutter#116101 (iOS sockets defunct after ~5 min in the
+  background). The log shows the same long-lived clients failing with
+  `Bad file descriptor` again and again for minutes - a dead pool, not a
+  one-off; still to be confirmed on the device.
+- Review fix: `IOClient.close()` always closes with force (http 1.6.0),
+  so renewing aborted requests still running (a send, a device-code
+  token poll, a refresh). The client now owns its `HttpClient` and
+  closes it without force - idle connections go, running requests
+  finish. Resume renews only after a real paused / hidden (not Control
+  Center, Face ID, a system sheet).
 - (2) obs-websocket names a grouped item's change by its group (a group
   is a scene - source checked, see the gotchas), and the dashboard -
   which confirms a toggle only through that event - dropped every event

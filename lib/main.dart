@@ -63,6 +63,10 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
     with WidgetsBindingObserver {
   late AppLifecycleState _lastLifecycleState;
 
+  /// Set by paused / hidden, cleared on resume - an inactive blip (Control
+  /// Center, Face ID, a system sheet) doesn't suspend the app
+  bool _wasInBackground = false;
+
   @override
   void initState() {
     super.initState();
@@ -79,15 +83,21 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _lastLifecycleState = state;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _wasInBackground = true;
+    }
     GeneralHelper.advLog(_lastLifecycleState);
 
     if (state == AppLifecycleState.resumed) {
       /// The OS may drop the wake lock while the app is in the background
       applyWakeLockSetting();
 
-      /// iOS takes a suspended app's sockets away - the chat services'
-      /// pooled connections start over before anything polls again
-      RenewingHttpClient.renewAll();
+      /// iOS takes a suspended app's sockets away - after a real stay in
+      /// the background (not Control Center / Face ID / a system sheet)
+      /// the chat services' pooled connections start over
+      if (_wasInBackground) RenewingHttpClient.renewAll();
+      _wasInBackground = false;
 
       /// A YouTube poll that failed or backed off while suspended restarts
       /// now - app-wide, the Chat tab runs without an OBS dashboard. Only a

@@ -105,6 +105,31 @@ void main() {
     },
   );
 
+  /// Review finding: IOClient.close() always forces - renewing must not
+  /// abort a request still running (a send, a token poll, a refresh)
+  test('renew / renewAll let a running request finish (real dart:io '
+      'client against a local server)', () async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(() => server.close(force: true));
+    server.listen((request) async {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      request.response.write('slow ok');
+      await request.response.close();
+    });
+    final url = Uri.parse('http://127.0.0.1:${server.port}/');
+    final client = RenewingHttpClient();
+    addTearDown(client.close);
+
+    final running = client.get(url);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    client.renew();
+    RenewingHttpClient.renewAll();
+    expect((await running).body, 'slow ok');
+
+    /// And the fresh client works
+    expect((await client.get(url)).body, 'slow ok');
+  });
+
   /// The reported case end to end: after the background stretch the poll
   /// failed with "Write failed" - and every retry with it, until restart
   test('YouTube chat poll: the retry after "Write failed" reads again, '
