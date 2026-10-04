@@ -43,8 +43,8 @@ Upstream: [obs-websocket protocol](https://github.com/obsproject/obs-websocket/b
 
 ## Related code
 
-- [`lib/utils/authentication_helper.dart`](../lib/utils/authentication_helper.dart)
-- [`lib/stores/shared/network.dart`](../lib/stores/shared/network.dart)
-- [`lib/utils/network_helper.dart`](../lib/utils/network_helper.dart)
-- [`lib/types/classes/connection_attempt_result.dart`](../lib/types/classes/connection_attempt_result.dart)
-- Architecture overview: [`obs-websocket-architecture.md`](obs-websocket-architecture.md)
+- [`lib/utils/authentication_helper.dart`](../../lib/utils/authentication_helper.dart)
+- [`lib/stores/shared/network.dart`](../../lib/stores/shared/network.dart)
+- [`lib/utils/network_helper.dart`](../../lib/utils/network_helper.dart)
+- [`lib/types/classes/connection_attempt_result.dart`](../../lib/types/classes/connection_attempt_result.dart)
+- Architecture overview: [`obs-websocket-architecture.md`](../obs-websocket-architecture.md)

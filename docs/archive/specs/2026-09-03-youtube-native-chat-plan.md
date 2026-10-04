@@ -1,7 +1,7 @@
 # Plan — native YouTube chat engine (2026-09-03)
 
 **Tier: L** — multi-subsystem (new platform across types/services/store/UI/persistence),
-precedent: chat waves. Feasibility + sources: [`../../youtube-native-chat-audit.md`](../youtube-native-chat-audit.md).
+precedent: chat waves. Feasibility + sources: [`../../youtube-native-chat-audit.md`](../../youtube-native-chat-audit.md).
 Named constraints: `docs/superpowers/plan-defect-checklist.md` §2/§3 apply to every
 task (verify shapes against repo, codegen regen after last annotated edit, `.g.dart`
 in commit lists, mutation tests positive-before/negative-after, no vacuous asserts).

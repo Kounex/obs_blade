@@ -154,7 +154,7 @@ scalable read path but its quota cost is undocumented — the spike tool
 
 ## What we build (this wave) — **SHIPPED 2026-09-03**
 
-Plan: [`archive/specs/2026-09-03-youtube-native-chat-plan.md`](../archive/specs/2026-09-03-youtube-native-chat-plan.md).
+Plan: [`archive/specs/2026-09-03-youtube-native-chat-plan.md`](archive/specs/2026-09-03-youtube-native-chat-plan.md).
 All five items landed (see `changelog-agent.md` 2026-09-03 entry for commits):
 spike tool (pending a real-key measurement run), core layer,
 `YouTubeChatStore`, UI + setup sheet, gates. Remaining before any

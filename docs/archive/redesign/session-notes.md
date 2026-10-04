@@ -7,7 +7,7 @@ What happened, in order, and what's worth knowing before continuing.
 1. **Audit swarm** — 15 read-only agents covered every view, the shared UI kit,
    motion primitives, theme system, and state bindings. Raw output condensed into
    [`audit-digest.md`](audit-digest.md) (625 lines; read it before touching UI).
-2. **Design spec** — [`design-system.md`](design-system.md): "On Air" concept
+2. **Design spec** — [`design-system.md`](../../redesign/design-system.md): "On Air" concept
    (broadcast control room), token values, motion language, per-surface direction,
    hard rules (zero functional change; custom-theme hex→slot semantics frozen).
 3. **Wave 0 (foundation)** — new `lib/shared/design/` module; theme factory

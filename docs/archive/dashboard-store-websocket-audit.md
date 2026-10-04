@@ -1,6 +1,6 @@
 # DashboardStore WebSocket handling audit
 
-Scope: [`lib/stores/views/dashboard.dart`](../lib/stores/views/dashboard.dart)
+Scope: [`lib/stores/views/dashboard.dart`](../../lib/stores/views/dashboard.dart)
 (~1.7k lines) — where almost all OBS events, request responses, and batches
 are applied to UI state. Not a proposal to split the store (still intentional
 monolith); this is about **correctness, cost, and agent maintainability**.

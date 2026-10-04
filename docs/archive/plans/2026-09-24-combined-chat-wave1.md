@@ -1,6 +1,6 @@
 # Combined chat — Wave 1 (read-only merge + "My chats") plan
 
-> Spec: [`../specs/2026-09-24-combined-chat-design.md`](../specs/2026-09-24-combined-chat-design.md)
+> Spec: [`../../superpowers/specs/2026-09-24-combined-chat-design.md`](../../superpowers/specs/2026-09-24-combined-chat-design.md)
 > (approved 2026-09-24 incl. the "shared" vs. "restore" resolution).
 > **Tier L** (persistence + all three chat stores). Executed in-session by
 > the controller with commit-per-task; one end reviewer subagent on the

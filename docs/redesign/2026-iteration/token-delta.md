@@ -2,10 +2,10 @@
 
 Status: **ratified direction, pre-implementation** · v3 after the user-run
 independent evaluation of v9 (12 findings, all accepted — see
-[`gate-reports.md`](gate-reports.md) § Gate 2b). Earlier rounds: v2 after Gate 2,
+[`gate-reports.md`](../../archive/redesign/gate-reports.md) § Gate 2b). Earlier rounds: v2 after Gate 2,
 v1 after Gate 1. Sources: mock `all-views-v10.html` (visual companion),
-[`dashboard-composition.md`](dashboard-composition.md),
-[`../2026-iteration-audit.md`](../2026-iteration-audit.md).
+`dashboard-composition.md` (deleted),
+[`../../archive/redesign/2026-iteration-audit.md`](../../archive/redesign/2026-iteration-audit.md).
 
 This doc is the contract between the mockups and `lib/shared/design/`. **Tie-breaker:
 this doc wins.** If the mock contradicts a value here, the mock is stale — report it

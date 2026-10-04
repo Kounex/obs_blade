@@ -1,6 +1,6 @@
 # Combined chat — Wave 2 (saved combos, other streamers, focus shortcut) plan
 
-> Spec: [`../specs/2026-09-24-combined-chat-design.md`](../specs/2026-09-24-combined-chat-design.md).
+> Spec: [`../../superpowers/specs/2026-09-24-combined-chat-design.md`](../../superpowers/specs/2026-09-24-combined-chat-design.md).
 > Wave 1: [`2026-09-24-combined-chat-wave1.md`](2026-09-24-combined-chat-wave1.md).
 > Tier L, executed in-session (commit per task, end self-review + full gate;
 > the reviewer subagent is rate-limited on the secondary model).
