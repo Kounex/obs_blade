@@ -17,22 +17,37 @@ import '../native_chat_text_field.dart';
 import '../twitch_device_code_dialog.dart';
 import 'automod_queue_sheet.dart';
 import 'channel_bans_sheet.dart';
-import 'mod_action_sheet.dart';
 
 /// Opens the channel-level Mod actions sheet (clear / modes / shield /
 /// announce). Failures surface as a snackbar on the caller's [context].
-void showChannelModSheet(BuildContext context) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
-      builder: (_) => ChannelModSheet(
+/// Its steps (presets, Announce) replace it as sheets of their own
+/// ([showChatSheetRun]); their back chevron brings it back.
+Future<void> showChannelModSheet(BuildContext context) =>
+    showChatSheetRun<ChannelModStep>(
+      context,
+      first: ChannelModStep.root,
+      open: (step) => showChannelModStepSheet(
+        context,
+        step,
         onFailure: (message) => ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(message))),
       ),
     );
+
+/// One [ChannelModSheet] of a run - completes with the step it popped
+/// with (the next one, or [ChannelModStep.root] from its back chevron).
+Future<ChannelModStep?> showChannelModStepSheet(
+  BuildContext context,
+  ChannelModStep step, {
+  required void Function(String message) onFailure,
+}) => ModalHandler.showBaseBottomSheet<ChannelModStep>(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (_) => ChannelModSheet(step: step, onFailure: onFailure),
+);
 
 /// Follower wait presets (label → minutes). Twitch max is 129600.
 const List<(String, int)> kFollowerWaitPresets = [
@@ -66,7 +81,7 @@ const List<String> kAnnounceColors = [
 
 const int kAnnounceMaxLength = 500;
 
-enum _ChannelModStep { root, followerPresets, slowPresets, announceCompose }
+enum ChannelModStep { root, followerPresets, slowPresets, announceCompose }
 
 /// Room Mod actions: clear chat, chat modes, Shield Mode, announce.
 /// Final Helix mutations confirm first (except Announce **Send**, which
@@ -80,10 +95,16 @@ class ChannelModSheet extends StatefulWidget {
   /// padding / drag handle / scroll cap — the host provides them.
   final bool embedded;
 
+  /// The page this sheet shows. Another one is a sheet of its own: this
+  /// one pops with it, and whoever opened this sheet opens it (the run in
+  /// [showChannelModSheet] / the combined mod sheet).
+  final ChannelModStep step;
+
   const ChannelModSheet({
     super.key,
     required this.onFailure,
     this.embedded = false,
+    this.step = ChannelModStep.root,
   });
 
   @override
@@ -91,7 +112,7 @@ class ChannelModSheet extends StatefulWidget {
 }
 
 class _ChannelModSheetState extends State<ChannelModSheet> {
-  _ChannelModStep _step = _ChannelModStep.root;
+  ChannelModStep get _step => this.widget.step;
 
   /// Re-entrancy guard — a double-tap must not fire two Helix calls.
   bool _running = false;
@@ -104,8 +125,14 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
   @override
   void initState() {
     super.initState();
-    this._refresh();
+
+    /// Only the root shows the room's modes
+    if (this._step == ChannelModStep.root) this._refresh();
   }
+
+  /// Hands [step] to whoever opened this sheet, which opens it in this
+  /// sheet's place
+  void _go(ChannelModStep step) => Navigator.of(context).pop(step);
 
   Future<void> _refresh() async {
     await this._store.refreshRoomModState();
@@ -128,12 +155,11 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
     this.setState(() => this._running = true);
     final ok = await action();
     if (!this.mounted) return;
-    this.setState(() {
-      this._running = false;
-      if (ok && returnToRoot) this._step = _ChannelModStep.root;
-    });
+    this.setState(() => this._running = false);
     if (closeSheet) {
       Navigator.of(context).pop();
+    } else if (ok && returnToRoot) {
+      this._go(ChannelModStep.root);
     }
     if (!ok) this.widget.onFailure(failureText);
   }
@@ -194,20 +220,12 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
         uniqueChatMode: false,
       );
 
-  Widget _body(BuildContext context) => AnimatedSwitcher(
-    duration: AppMotion.medium,
-    transitionBuilder: (child, animation) =>
-        chatSheetPaneTransition(context, child, animation),
-    child: KeyedSubtree(
-      key: ValueKey(this._step),
-      child: switch (this._step) {
-        _ChannelModStep.root => this._buildRoot(context),
-        _ChannelModStep.followerPresets => this._buildFollowerPresets(context),
-        _ChannelModStep.slowPresets => this._buildSlowPresets(context),
-        _ChannelModStep.announceCompose => this._buildAnnounceCompose(context),
-      },
-    ),
-  );
+  Widget _body(BuildContext context) => switch (this._step) {
+    ChannelModStep.root => this._buildRoot(context),
+    ChannelModStep.followerPresets => this._buildFollowerPresets(context),
+    ChannelModStep.slowPresets => this._buildSlowPresets(context),
+    ChannelModStep.announceCompose => this._buildAnnounceCompose(context),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -247,41 +265,19 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
   }
 
   Widget _titleRow(BuildContext context) {
-    final isRoot = this._step == _ChannelModStep.root;
+    final isRoot = this._step == ChannelModStep.root;
     final title = switch (this._step) {
-      _ChannelModStep.root => this._channelTitle,
-      _ChannelModStep.followerPresets => 'Followers-only wait',
-      _ChannelModStep.slowPresets => 'Slow mode delay',
-      _ChannelModStep.announceCompose => 'Announce',
+      ChannelModStep.root => this._channelTitle,
+      ChannelModStep.followerPresets => 'Followers-only wait',
+      ChannelModStep.slowPresets => 'Slow mode delay',
+      ChannelModStep.announceCompose => 'Announce',
     };
     if (isRoot) {
       return Text(title, style: nativeChatSheetTitleStyle(context));
     }
-    return Row(
-      children: [
-        Pressable(
-          haptic: true,
-          onTap: this._running
-              ? null
-              : () => this.setState(() => this._step = _ChannelModStep.root),
-          child: Padding(
-            padding: const EdgeInsets.only(
-              right: AppSpacing.sm,
-              top: AppSpacing.md,
-              bottom: AppSpacing.md,
-            ),
-            child: Icon(
-              CupertinoIcons.chevron_back,
-              size: 20.0,
-              color:
-                  (Theme.of(context).extension<AppTextColors>() ??
-                          AppTextColors.standard)
-                      .highlightText,
-            ),
-          ),
-        ),
-        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
-      ],
+    return NativeChatSheetBackTitle(
+      title: title,
+      onBack: this._running ? null : () => this._go(ChannelModStep.root),
     );
   }
 
@@ -390,8 +386,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           label: 'Followers-only',
           active: settings.followerMode,
           can: this._store.canManageChatSettings,
-          onEnable: () =>
-              this.setState(() => this._step = _ChannelModStep.followerPresets),
+          onEnable: () => this._go(ChannelModStep.followerPresets),
           onDisable: () => this._confirmThenRun(
             title: 'Disable followers-only?',
             body: 'Anyone will be able to chat again.',
@@ -407,8 +402,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           label: 'Slow mode',
           active: settings.slowMode,
           can: this._store.canManageChatSettings,
-          onEnable: () =>
-              this.setState(() => this._step = _ChannelModStep.slowPresets),
+          onEnable: () => this._go(ChannelModStep.slowPresets),
           onDisable: () => this._confirmThenRun(
             title: 'Disable slow mode?',
             body: 'Viewers will be able to chat at full speed again.',
@@ -477,9 +471,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
           label: 'Announce…',
           onTap: () => this._requireScopeOr(
             this._store.canSendAnnouncements,
-            () => this.setState(
-              () => this._step = _ChannelModStep.announceCompose,
-            ),
+            () => this._go(ChannelModStep.announceCompose),
           ),
         ),
       ],

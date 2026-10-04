@@ -28,18 +28,21 @@ import 'youtube_chat_message_row.dart';
 
 /// Opens the chat search sheet — the entry behind [NativeChatOptionsSheet]'s
 /// "Search chat" row.
-/// [onBack] (opened from the options sheet): a back chevron that closes
-/// this sheet and calls it.
-void showChatSearchSheet(
+/// [back] (opened in a run of sheets, [showChatSheetRun]): a back chevron
+/// that pops this sheet with it - the page it came from.
+Future<T?> showChatSearchSheet<T extends Object>(
   BuildContext context, {
   required ChatType chatType,
-  VoidCallback? onBack,
-}) => ModalHandler.showBaseBottomSheet(
+  T? back,
+}) => ModalHandler.showBaseBottomSheet<T>(
   context: context,
   barrierDismissible: true,
   enableDrag: true,
   maxHeightFraction: 0.86,
-  builder: (context) => ChatSearchSheet(chatType: chatType, onBack: onBack),
+  builder: (sheet) => ChatSearchSheet(
+    chatType: chatType,
+    onBack: back == null ? null : () => Navigator.of(sheet).pop(back),
+  ),
 );
 
 /// Search over the currently buffered chat history (no persistence across
@@ -53,7 +56,8 @@ void showChatSearchSheet(
 class ChatSearchSheet extends StatefulWidget {
   final ChatType chatType;
 
-  /// Back to where it was opened from (the options sheet)
+  /// Back to where it was opened from (the options sheet) - pops this
+  /// sheet with that page
   final VoidCallback? onBack;
 
   const ChatSearchSheet({super.key, required this.chatType, this.onBack});
@@ -91,35 +95,10 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           nativeChatSheetDragHandle(context),
-          Row(
-            children: [
-              if (this.widget.onBack case final onBack?)
-                Pressable(
-                  key: const Key('chat-search-back'),
-                  haptic: true,
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    onBack();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      right: AppSpacing.sm,
-                      top: AppSpacing.md,
-                      bottom: AppSpacing.md,
-                    ),
-                    child: Icon(
-                      CupertinoIcons.chevron_back,
-                      size: 20.0,
-                      color:
-                          (Theme.of(context).extension<AppTextColors>() ??
-                                  AppTextColors.standard)
-                              .highlightText,
-                    ),
-                  ),
-                ),
-              Text('Search chat', style: nativeChatSheetTitleStyle(context)),
-            ],
-          ),
+          if (this.widget.onBack case final onBack?)
+            NativeChatSheetBackTitle(title: 'Search chat', onBack: onBack)
+          else
+            Text('Search chat', style: nativeChatSheetTitleStyle(context)),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: NativeChatTextField(

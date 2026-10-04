@@ -226,6 +226,57 @@ void main() {
     expect(find.byType(ModActionSheet), findsNothing);
   });
 
+  testWidgets('Timeout… replaces the actions as a sheet of its own; back '
+      'brings them back; the opener waits for the last sheet', (tester) async {
+    final event = chatMessage('m1', 'u1');
+    store.appendChatMessageForTest(event);
+    var closed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () async {
+                  await showModActionSheet(context, event);
+                  closed = true;
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Timeout…'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    /// Both on screen mid-hop: the actions slide down, the presets up
+    expect(find.text('Moderate Useru1'), findsOneWidget);
+    expect(find.text('Timeout Useru1'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Moderate Useru1'), findsNothing);
+    expect(find.byType(ModActionSheet), findsOneWidget);
+
+    /// The message's selection chrome stays while a step is open
+    expect(closed, isFalse);
+
+    await tester.tap(find.byKey(const Key('chat-sheet-back')));
+    await tester.pumpAndSettle();
+    expect(find.text('Moderate Useru1'), findsOneWidget);
+    expect(find.text('Timeout Useru1'), findsNothing);
+    expect(closed, isFalse);
+
+    await tester.tapAt(const Offset(10.0, 10.0));
+    await tester.pumpAndSettle();
+    expect(find.byType(ModActionSheet), findsNothing);
+    expect(closed, isTrue);
+  });
+
   testWidgets('Ban hits the service without a duration', (tester) async {
     final event = chatMessage('m1', 'u1');
     store.appendChatMessageForTest(event);

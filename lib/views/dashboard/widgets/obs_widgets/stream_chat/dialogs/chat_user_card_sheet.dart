@@ -52,7 +52,7 @@ class ChatUserCardConnection {
 }
 
 /// Height cap of every platform's user card: the chat stays visible above
-/// it; a long history scrolls under the pinned name.
+/// it; a long history scrolls under the pinned name, facts and LIVE.
 const double kChatUserCardMaxHeightFraction = 2 / 3;
 
 /// Opens the native chat user card for [userId]. Pass [connection] when
@@ -252,7 +252,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     return NativeChatSheetScaffold(
       headerGap: AppSpacing.lg,
       header: this._header(context, newest),
-      body: Column(
+
+      /// Only the messages scroll
+      pinned: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           this._factsBlock(context),
@@ -272,6 +274,11 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
           const SizedBox(height: AppSpacing.lg),
           this._liveDivider(context),
           const SizedBox(height: AppSpacing.sm),
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           if (this._bufferedMessages.isEmpty)
             Text(
               'No messages in this chat yet',
@@ -291,14 +298,19 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
               ),
             ],
           ],
-          if (this.widget.connection != null) ...[
-            const SizedBox(height: AppSpacing.lg),
-            nativeChatHairline(context),
-            const SizedBox(height: AppSpacing.lg),
-            this._connectionFooter(context, this.widget.connection!),
-          ],
         ],
       ),
+      footer: this.widget.connection == null
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AppSpacing.lg),
+                nativeChatHairline(context),
+                const SizedBox(height: AppSpacing.lg),
+                this._connectionFooter(context, this.widget.connection!),
+              ],
+            ),
     );
   }
 

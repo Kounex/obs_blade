@@ -2,6 +2,44 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - Sheet pages hop like Search; user cards pin all but the history; clear platform tabs
+
+User feedback: Search chat's transition (the options slide down, the
+search sheet slides up) felt good, every other sub-page swapped content
+in the same sheet and jumped to the new height. Decisions: that hop for
+every sheet with a back chevron; on user cards only the messages below
+LIVE scroll, the self card's account footer pinned under them; the
+selected platform tab must read at a glance.
+
+- `showChatSheetRun` (`native_chat_chrome.dart`): a run of sheets that
+  replace each other. A sheet pops with the page to show next (its back
+  chevron with the page it came from), null ends the run; the returned
+  future waits for the last sheet (message selection chrome stays while
+  Timeout / Warn is open). `NativeChatSheetBackTitle` is the shared
+  chevron + title.
+- Runs: native chat options (every page + Search; coming back restores
+  the combined chat's platform tab), channel mod sheet (presets,
+  Announce; an applied preset returns to the root), combined Moderate (a
+  Twitch step opens standalone, back reopens Moderate on the Twitch
+  tab), message mod sheets on Twitch (Timeout, Warn), Kick and YouTube
+  (Timeout). The in-sheet `AnimatedSwitcher` step swaps and
+  `chatSheetPaneTransition` are gone. Swiping a page down closes the run
+  (as Search did).
+- `NativeChatSheetScaffold` takes `pinned` (between header and body)
+  and `footer`: user cards (Twitch / Kick / YouTube) pin facts,
+  Highlight / Ignore and LIVE; the Twitch self card pins its account
+  footer. Under 320 pt of room (phone in landscape) all of it scrolls
+  together; a pinned block taller than half the room scrolls on its own.
+- `CombinedPlatformTab`: selected = solid brand fill, glyph + label in
+  the color that reads on it (dark on Kick's green); others neutral
+  outline, muted label, brand badge.
+- Tests: options pages / combined tab restore / channel mod steps /
+  mod action steps (mid-hop both sheets, back, opener future), user
+  cards (LIVE + footer stay while the history scrolls, landscape
+  fallback); shots `options_page_{midway,sheet}`,
+  `user_card_youtube_chatty_{scrolled,narrow,tablet,landscape}`,
+  `user_card_twitch_self_chatty`.
+
 ## 2026-10-04 - Gray headings; YouTube subscriptions never reorder
 
 User feedback on the previous two: the 17 pt headings read like one more

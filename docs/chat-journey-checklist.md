@@ -66,6 +66,8 @@ the account - Twitch is the only engine where offline means signed out
 | Header sheet / self card | signed in on the selected platform: **Sign out in every chat state** (live, connecting, failed, offline) and on every viewed channel; signed in + chat offline never says "connect your account" |
 | Header status row → sheet | what "offline" means for this platform; actions match the state (no "Connect" while signed in) |
 | Native chat options sheet | one sheet for every platform: Search chat, "All chats" (Appearance, Highlights, Mute words, TTS - shared settings), then the platform's own section (Twitch: Emotes, Badges, Event messages, Chat history; Kick: Emotes, Badges, Event messages; YouTube: Chat setup); combined: platform tabs for the combo + search over the merged timeline. Account rows live in the chat header, not here |
+| Sheet pages (back chevron) | every page of a sheet - options pages, Search, channel mod presets / Announce, Timeout / Warn - opens as its own sheet in the old one's place (both slide), back reopens where it came from (combined: same platform tab), an action / dismiss ends the run, the selected message stays marked until the last sheet closes |
+| User cards | long history: only the messages below LIVE scroll (name, facts, lists, LIVE pinned; self card: account footer pinned below); phone in landscape: all scrolls together |
 | Setup sheets | full setup vs the sign-in-only part; steps match today's third-party console |
 | Empty-state CTA | the next step for the actual missing piece |
 | Combined sources sheet / builder | per-source state and fixes - every fix button does what it says ("Sign in" opens a sign-in) in "My chats" **and** saved combos |

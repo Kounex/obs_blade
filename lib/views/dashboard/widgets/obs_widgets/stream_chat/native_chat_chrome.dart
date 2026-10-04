@@ -359,28 +359,169 @@ Widget nativeChatSheetDragHandle(BuildContext context) => Center(
   ),
 );
 
+/// A run of chat sheets that replace each other, the way Search chat
+/// opens from the options: the old sheet slides down while the next one
+/// slides up, instead of one sheet swapping its content and jumping to
+/// the new height. [open] shows the sheet for a page and completes with
+/// what that sheet popped - the page to show next (a back chevron pops
+/// with the page it came from), or null (dismissed, or its action done),
+/// which ends the run. Completes when the run ends, so a caller awaiting
+/// the sheet (message selection chrome) waits for the last one.
+Future<void> showChatSheetRun<P extends Object>(
+  BuildContext context, {
+  required P first,
+  required Future<P?> Function(P page) open,
+}) async {
+  P? page = first;
+  while (page != null && context.mounted) {
+    page = await open(page);
+  }
+}
+
+/// Back chevron + [title] - the header of a sheet another one hopped to
+/// ([showChatSheetRun]); [onBack] pops it with the page it came from.
+class NativeChatSheetBackTitle extends StatelessWidget {
+  final String title;
+  final VoidCallback? onBack;
+
+  /// After the title (e.g. a Reset action)
+  final Widget? trailing;
+
+  const NativeChatSheetBackTitle({
+    super.key,
+    required this.title,
+    required this.onBack,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Pressable(
+          key: const Key('chat-sheet-back'),
+          haptic: true,
+          onTap: this.onBack,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              right: AppSpacing.sm,
+              top: AppSpacing.md,
+              bottom: AppSpacing.md,
+            ),
+            child: Icon(
+              CupertinoIcons.chevron_back,
+              size: 20.0,
+              color:
+                  (Theme.of(context).extension<AppTextColors>() ??
+                          AppTextColors.standard)
+                      .highlightText,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(this.title, style: nativeChatSheetTitleStyle(context)),
+        ),
+        ?this.trailing,
+      ],
+    );
+  }
+}
+
 /// Standard chat sheet layout: drag handle + [header] (title, back
 /// chevron, actions) pinned at the top, only [body] scrolls. The shared
 /// modal body caps the sheet height and still turns a pull past the top
 /// of [body] into a sheet drag (same setup as the YouTube setup sheet).
 /// Rule: sheets with a handle / title / back chevron never put those
 /// inside the scroll view.
+///
+/// [pinned] sits between the header and [body] and [footer] under it,
+/// neither scrolling (user cards: facts + LIVE above the messages, the
+/// self card's account footer below) - unless the sheet is too short for
+/// that to leave room (a phone in landscape), then all of it scrolls
+/// together. A [pinned] taller than half the room scrolls on its own.
 class NativeChatSheetScaffold extends StatelessWidget {
   final Widget header;
   final Widget body;
+  final Widget? pinned;
+  final Widget? footer;
 
   /// Gap between the pinned header and the scrolling body.
   final double headerGap;
+
+  /// Below this much room under the header, [pinned] / [footer] scroll
+  /// with [body] - a pinned block would leave the messages a sliver.
+  static const double minHeightToPin = 320.0;
 
   const NativeChatSheetScaffold({
     super.key,
     required this.header,
     required this.body,
+    this.pinned,
+    this.footer,
     this.headerGap = AppSpacing.sm,
   });
 
+  static const EdgeInsets _sidePadding = EdgeInsets.symmetric(
+    horizontal: AppSpacing.lg,
+  );
+
+  Widget _scroll(Widget child, {EdgeInsets? padding}) => SingleChildScrollView(
+    primary: false,
+    physics: const ClampingScrollPhysics(
+      parent: AlwaysScrollableScrollPhysics(),
+    ),
+    padding:
+        padding ??
+        const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0.0,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+    child: child,
+  );
+
+  Widget _allScrolling() => this._scroll(
+    Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [?this.pinned, this.body, ?this.footer],
+    ),
+  );
+
+  Widget _pinnedLayout(double maxHeight) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (this.pinned case final pinned?)
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight / 2),
+          child: this._scroll(pinned, padding: _sidePadding),
+        ),
+      Flexible(
+        child: this._scroll(
+          this.body,
+          padding: this.footer == null
+              ? null
+              : const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+        ),
+      ),
+      if (this.footer case final footer?)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0.0,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          child: footer,
+        ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
+    final hasPinned = this.pinned != null || this.footer != null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -399,19 +540,14 @@ class NativeChatSheetScaffold extends StatelessWidget {
           ),
         ),
         Flexible(
-          child: SingleChildScrollView(
-            primary: false,
-            physics: const ClampingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              0.0,
-              AppSpacing.lg,
-              AppSpacing.lg,
-            ),
-            child: this.body,
-          ),
+          child: !hasPinned
+              ? this._scroll(this.body)
+              : LayoutBuilder(
+                  builder: (context, constraints) =>
+                      constraints.maxHeight < minHeightToPin
+                      ? this._allScrolling()
+                      : this._pinnedLayout(constraints.maxHeight),
+                ),
         ),
       ],
     );

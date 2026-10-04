@@ -309,12 +309,21 @@ void main() {
   });
 
   group('combined options sheet', () {
+    /// Opened the way the chat bar does - a sheet run
     Widget sheet() => MaterialApp(
       theme: ThemeData(
         extensions: const [AppStatusColors.standard, AppTextColors.standard],
       ),
-      home: const Scaffold(
-        body: NativeChatOptionsSheet(chatType: ChatType.Combined),
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showNativeChatOptionsSheet(
+              context,
+              chatType: ChatType.Combined,
+            ),
+            child: const Text('open'),
+          ),
+        ),
       ),
     );
 
@@ -328,6 +337,7 @@ void main() {
     testWidgets('All chats rows, then a tab per platform of the combo with '
         'that platform\'s own pages', (tester) async {
       await tester.pumpWidget(sheet());
+      await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
       expect(find.text('Search chat'), findsOneWidget);
       for (final label in [
@@ -350,6 +360,10 @@ void main() {
       await tapVisible(tester, find.text('Emotes'));
       expect(find.text('Third-party emotes (7TV)'), findsOneWidget);
       await tapVisible(tester, find.byIcon(CupertinoIcons.chevron_back));
+
+      /// Back on the options, still on the Kick tab
+      expect(find.text('Third-party emotes (7TV)'), findsNothing);
+      expect(find.text('Subs, gifts, and host notices'), findsOneWidget);
 
       /// YouTube: setup, no account rows (they live in the chat header)
       await tapVisible(tester, find.byKey(const Key('options-tab-YouTube')));

@@ -120,7 +120,9 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
     return NativeChatSheetScaffold(
       headerGap: AppSpacing.lg,
       header: this._header(context),
-      body: Column(
+
+      /// Only the messages scroll
+      pinned: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           this._factsBlock(context),
@@ -135,6 +137,11 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
           const SizedBox(height: AppSpacing.lg),
           this._liveDivider(context),
           const SizedBox(height: AppSpacing.sm),
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           if (messages.isEmpty)
             Text(
               'No messages in this chat yet',

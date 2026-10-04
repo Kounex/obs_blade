@@ -26,23 +26,30 @@ import 'chat_user_list_actions.dart';
 /// host it. Same idiom as [showYouTubeModActionSheet].
 /// Returns when the sheet is dismissed (so callers can clear selection
 /// chrome on the target message).
+/// Timeout replaces the actions as a sheet of its own
+/// ([showChatSheetRun]) - the returned future waits for the last one.
 Future<void> showKickModActionSheet(
   BuildContext context,
   KickChatMessage message, {
   VoidCallback? onReply,
-}) => ModalHandler.showBaseBottomSheet(
-  context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
-  builder: (_) => KickModActionSheet(
-    message: message,
-    onReply: onReply,
-    hostContext: context,
-    onCopy: () => copyMessageTextAndNotify(context, message.content),
-    onFailure: (message) => ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message))),
+}) => showChatSheetRun<ModActionStep>(
+  context,
+  first: ModActionStep.root,
+  open: (step) => ModalHandler.showBaseBottomSheet<ModActionStep>(
+    context: context,
+    barrierDismissible: true,
+    enableDrag: true,
+    maxHeightFraction: 0.72,
+    builder: (_) => KickModActionSheet(
+      message: message,
+      step: step,
+      onReply: onReply,
+      hostContext: context,
+      onCopy: () => copyMessageTextAndNotify(context, message.content),
+      onFailure: (message) => ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message))),
+    ),
   ),
 );
 
@@ -61,7 +68,8 @@ const List<(String, int)> kKickTimeoutPresets = [
 ];
 
 /// Mod actions for one Kick chat message: reply to it, delete it, or
-/// timeout/ban its author. "Timeout…" swaps to a preset step. Final
+/// timeout/ban its author. "Timeout…" opens a preset step, a sheet of
+/// its own ([step]). Final
 /// actions (delete / timeout duration / ban) ask for confirmation first.
 /// On failure the local state is untouched (the Pusher lifecycle events
 /// reconcile on success) and [onFailure] explains via snackbar.
@@ -84,6 +92,9 @@ class KickModActionSheet extends StatefulWidget {
   /// under Copy (their snackbar is hosted here).
   final BuildContext? hostContext;
 
+  /// The page this sheet shows - another one pops this sheet with it
+  final ModActionStep step;
+
   const KickModActionSheet({
     super.key,
     required this.message,
@@ -91,6 +102,7 @@ class KickModActionSheet extends StatefulWidget {
     required this.onCopy,
     this.onReply,
     this.hostContext,
+    this.step = ModActionStep.root,
   });
 
   @override
@@ -98,7 +110,11 @@ class KickModActionSheet extends StatefulWidget {
 }
 
 class _KickModActionSheetState extends State<KickModActionSheet> {
-  bool _timeoutStep = false;
+  bool get _timeoutStep => this.widget.step == ModActionStep.timeout;
+
+  /// Hands [step] to [showChatSheetRun], which opens it in this sheet's
+  /// place
+  void _go(ModActionStep step) => Navigator.of(context).pop(step);
 
   /// Re-entrancy guard — a double-tap must not fire two API calls.
   bool _running = false;
@@ -166,17 +182,9 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: AnimatedSwitcher(
-                duration: AppMotion.medium,
-                transitionBuilder: (child, animation) =>
-                    chatSheetPaneTransition(context, child, animation),
-                child: KeyedSubtree(
-                  key: ValueKey<bool>(this._timeoutStep),
-                  child: this._timeoutStep
+              child: this._timeoutStep
                       ? this._buildTimeoutPresets(context)
                       : this._buildRootActions(context),
-                ),
-              ),
             ),
           ),
         ],
@@ -273,7 +281,7 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
               context,
               icon: CupertinoIcons.timer,
               label: 'Timeout…',
-              onTap: () => this.setState(() => this._timeoutStep = true),
+              onTap: () => this._go(ModActionStep.timeout),
             ),
           ),
           this._actionRow(
@@ -305,31 +313,9 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
     if (!this._timeoutStep) {
       return Text(title, style: nativeChatSheetTitleStyle(context));
     }
-    return Row(
-      children: [
-        Pressable(
-          haptic: true,
-          onTap: this._running
-              ? null
-              : () => this.setState(() => this._timeoutStep = false),
-          child: Padding(
-            padding: const EdgeInsets.only(
-              right: AppSpacing.sm,
-              top: AppSpacing.md,
-              bottom: AppSpacing.md,
-            ),
-            child: Icon(
-              CupertinoIcons.chevron_back,
-              size: 20.0,
-              color:
-                  (Theme.of(context).extension<AppTextColors>() ??
-                          AppTextColors.standard)
-                      .highlightText,
-            ),
-          ),
-        ),
-        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
-      ],
+    return NativeChatSheetBackTitle(
+      title: title,
+      onBack: this._running ? null : () => this._go(ModActionStep.root),
     );
   }
 

@@ -262,6 +262,60 @@ void main() {
     expect(loggedOut, isTrue);
   });
 
+  /// User request: only the history below LIVE scrolls - name, facts,
+  /// LIVE and the self card's account footer stay where they are
+  testWidgets('a long history scrolls between the pinned LIVE line and the '
+      'pinned account footer', (tester) async {
+    /// A portrait phone - a short sheet scrolls as a whole
+    tester.view.physicalSize = const Size(390.0, 844.0);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    for (var i = 0; i < 30; i++) {
+      store.appendChatMessageForTest(
+        cardMessage('m$i', 'self-1', 'message number $i with a few words'),
+      );
+    }
+    userService.userResult = const TwitchUser(
+      id: 'self-1',
+      login: 'selflogin',
+      displayName: 'SelfUser',
+    );
+
+    await openCard(
+      tester,
+      userId: 'self-1',
+      connection: ChatUserCardConnection(
+        chatType: ChatType.Twitch,
+        status: NativeChatConnectionStatus.live,
+        statusLabel: '',
+        statusColor: Colors.grey,
+        accountLabel: 'SelfUser',
+        onLogout: () {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final screen =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final live = find.text('LIVE');
+    final signOut = find.text('Sign out');
+    final liveBefore = tester.getTopLeft(live);
+    final signOutBefore = tester.getTopLeft(signOut);
+    expect(signOutBefore.dy, lessThan(screen));
+
+    final newest = find.textContaining(
+      'message number 29 ',
+      findRichText: true,
+    );
+    final newestBefore = tester.getTopLeft(newest);
+    await tester.drag(newest, const Offset(0.0, -200.0));
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(newest).dy, lessThan(newestBefore.dy));
+    expect(tester.getTopLeft(live), liveBefore);
+    expect(tester.getTopLeft(signOut), signOutBefore);
+  });
+
   /// The reported case: the chat bar has no account chip, so the self
   /// card the header opens must offer sign-out while the chat is healthy
   testWidgets('self footer exposes Sign out while live', (tester) async {

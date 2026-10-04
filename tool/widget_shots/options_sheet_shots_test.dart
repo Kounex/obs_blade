@@ -222,4 +222,40 @@ void main() {
       ),
     );
   });
+
+  /// A page is a sheet of its own: mid-hop (options sliding down, the
+  /// page up) and settled
+  testWidgets('options page as its own sheet', (tester) async {
+    await harness.shot(
+      tester,
+      'options_page_base',
+      Builder(
+        builder: (context) => Center(
+          child: TextButton(
+            onPressed: () =>
+                showNativeChatOptionsSheet(context, chatType: ChatType.Twitch),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.tap(find.text('Appearance'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('../../build/widget_shots/options_page_midway.png'),
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile('../../build/widget_shots/options_page_sheet.png'),
+    );
+  });
 }

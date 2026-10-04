@@ -29,24 +29,36 @@ import 'chat_user_list_actions.dart';
 /// host it.
 /// Returns when the sheet is dismissed (so callers can clear selection
 /// chrome on the target message).
+/// Timeout / Warn replace the actions as sheets of their own
+/// ([showChatSheetRun]) - the returned future waits for the last one.
 Future<void> showModActionSheet(
   BuildContext context,
   ChatMessageEvent event, {
   VoidCallback? onReply,
-}) => ModalHandler.showBaseBottomSheet(
-  context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
-  builder: (_) => ModActionSheet(
-    event: event,
-    onReply: onReply,
-    onCopy: () => copyMessageTextAndNotify(context, event.message.text),
-    onFailure: (message) => ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message))),
+}) => showChatSheetRun<ModActionStep>(
+  context,
+  first: ModActionStep.root,
+  open: (step) => ModalHandler.showBaseBottomSheet<ModActionStep>(
+    context: context,
+    barrierDismissible: true,
+    enableDrag: true,
+    maxHeightFraction: 0.72,
+    builder: (_) => ModActionSheet(
+      event: event,
+      step: step,
+      onReply: onReply,
+      onCopy: () => copyMessageTextAndNotify(context, event.message.text),
+      onFailure: (message) => ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message))),
+    ),
   ),
 );
+
+/// A page of a message's mod sheet (Twitch / Kick / YouTube). Timeout /
+/// Warn are sheets of their own that replace the actions; their back
+/// chevron pops with [root], which brings the actions back.
+enum ModActionStep { root, timeout, warn }
 
 /// Opens the lightweight message sheet for non-moderators: Copy always,
 /// plus Reply when the account may write chat (mod users get
@@ -103,8 +115,8 @@ const List<(String, int)> kModTimeoutPresets = [
 const int kWarnReasonMaxLength = 500;
 
 /// Mod actions for one chat message: delete it, or timeout/warn/ban its
-/// author. "Timeout…" swaps to a preset step, "Warn…" to a reason-compose
-/// step (its send is the confirm). Final actions (delete / timeout
+/// author. "Timeout…" opens a preset step, "Warn…" a reason-compose step
+/// (its send is the confirm) - each a sheet of its own ([step]). Final actions (delete / timeout
 /// duration / ban) ask for confirmation first. The Warn row needs the
 /// Wave 3 manage scope — a pre-upgrade token gets the re-login flow on
 /// tap. On failure the local state is untouched and [onFailure] explains
@@ -124,12 +136,16 @@ class ModActionSheet extends StatefulWidget {
   /// — copying never needs any capability.
   final VoidCallback onCopy;
 
+  /// The page this sheet shows - another one pops this sheet with it
+  final ModActionStep step;
+
   const ModActionSheet({
     super.key,
     required this.event,
     required this.onFailure,
     required this.onCopy,
     this.onReply,
+    this.step = ModActionStep.root,
   });
 
   @override
@@ -137,8 +153,12 @@ class ModActionSheet extends StatefulWidget {
 }
 
 class _ModActionSheetState extends State<ModActionSheet> {
-  bool _timeoutStep = false;
-  bool _warnStep = false;
+  bool get _timeoutStep => this.widget.step == ModActionStep.timeout;
+  bool get _warnStep => this.widget.step == ModActionStep.warn;
+
+  /// Hands [step] to [showChatSheetRun], which opens it in this sheet's
+  /// place
+  void _go(ModActionStep step) => Navigator.of(context).pop(step);
 
   /// Re-entrancy guard — a double-tap must not fire two Helix calls.
   bool _running = false;
@@ -219,25 +239,11 @@ class _ModActionSheetState extends State<ModActionSheet> {
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: AnimatedSwitcher(
-                duration: AppMotion.medium,
-                transitionBuilder: (child, animation) =>
-                    chatSheetPaneTransition(context, child, animation),
-                child: KeyedSubtree(
-                  key: ValueKey<String>(
-                    this._timeoutStep
-                        ? 'timeout'
-                        : this._warnStep
-                        ? 'warn'
-                        : 'root',
-                  ),
-                  child: this._timeoutStep
+              child: this._timeoutStep
                       ? this._buildTimeoutPresets(context)
                       : this._warnStep
                       ? this._buildWarnCompose(context)
                       : this._buildRootActions(context),
-                ),
-              ),
             ),
           ),
         ],
@@ -331,7 +337,7 @@ class _ModActionSheetState extends State<ModActionSheet> {
             context,
             icon: CupertinoIcons.timer,
             label: 'Timeout…',
-            onTap: () => this.setState(() => this._timeoutStep = true),
+            onTap: () => this._go(ModActionStep.timeout),
           ),
         ),
         Padding(
@@ -342,7 +348,7 @@ class _ModActionSheetState extends State<ModActionSheet> {
             label: 'Warn…',
             onTap: () => this._requireScopeOr(
               this._store.canWarnUsers,
-              () => this.setState(() => this._warnStep = true),
+              () => this._go(ModActionStep.warn),
             ),
           ),
         ),
@@ -421,34 +427,9 @@ class _ModActionSheetState extends State<ModActionSheet> {
     if (!this._timeoutStep && !this._warnStep) {
       return Text(title, style: nativeChatSheetTitleStyle(context));
     }
-    return Row(
-      children: [
-        Pressable(
-          haptic: true,
-          onTap: this._running
-              ? null
-              : () => this.setState(() {
-                  this._timeoutStep = false;
-                  this._warnStep = false;
-                }),
-          child: Padding(
-            padding: const EdgeInsets.only(
-              right: AppSpacing.sm,
-              top: AppSpacing.md,
-              bottom: AppSpacing.md,
-            ),
-            child: Icon(
-              CupertinoIcons.chevron_back,
-              size: 20.0,
-              color:
-                  (Theme.of(context).extension<AppTextColors>() ??
-                          AppTextColors.standard)
-                      .highlightText,
-            ),
-          ),
-        ),
-        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
-      ],
+    return NativeChatSheetBackTitle(
+      title: title,
+      onBack: this._running ? null : () => this._go(ModActionStep.root),
     );
   }
 
@@ -683,32 +664,4 @@ class MessageActionSheet extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Pane-switch idiom for chat sheet step swaps (token-delta §4 delta 4,
-/// mirrored from `switcher_card.dart`): 12px rise + fade at
-/// [AppMotion.medium] + [AppMotion.emphasized]; reduced motion =
-/// fade-only. Use as an [AnimatedSwitcher.transitionBuilder] with the
-/// pane keyed by step.
-Widget chatSheetPaneTransition(
-  BuildContext context,
-  Widget child,
-  Animation<double> animation,
-) {
-  final CurvedAnimation curved = CurvedAnimation(
-    parent: animation,
-    curve: AppMotion.emphasized,
-  );
-  Widget current = FadeTransition(opacity: curved, child: child);
-  if (!AppMotion.reduce(context)) {
-    current = AnimatedBuilder(
-      animation: curved,
-      child: current,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0.0, (1.0 - curved.value) * 12.0),
-        child: child,
-      ),
-    );
-  }
-  return current;
 }

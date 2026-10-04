@@ -19,18 +19,35 @@ import 'channel_mod_sheet.dart';
 import 'kick_channel_mod_sheet.dart';
 import 'youtube_channel_mod_sheet.dart';
 
-/// Opens the combined chat's channel mod sheet on [context].
-void showCombinedChannelModSheet(BuildContext context) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.85,
-      builder: (_) => CombinedChannelModSheet(
-        hostContext: context,
-        onToast: (message) => showChannelModToast(context, message),
-      ),
-    );
+/// Opens the combined chat's channel mod sheet on [context]. A step of
+/// the Twitch panel (presets, Announce) replaces it as a sheet of its own
+/// ([showChatSheetRun]); its back chevron brings this one back on the
+/// Twitch tab.
+Future<void> showCombinedChannelModSheet(BuildContext context) {
+  void onToast(String message) => showChannelModToast(context, message);
+  ChatType? tab;
+  return showChatSheetRun<ChannelModStep>(
+    context,
+    first: ChannelModStep.root,
+    open: (step) {
+      if (step != ChannelModStep.root) {
+        tab = ChatType.Twitch;
+        return showChannelModStepSheet(context, step, onFailure: onToast);
+      }
+      return ModalHandler.showBaseBottomSheet<ChannelModStep>(
+        context: context,
+        barrierDismissible: true,
+        enableDrag: true,
+        maxHeightFraction: 0.85,
+        builder: (_) => CombinedChannelModSheet(
+          hostContext: context,
+          onToast: onToast,
+          initialTab: tab,
+        ),
+      );
+    },
+  );
+}
 
 /// Why a combined source can't be moderated from here — null when it
 /// can (its panel shows).
@@ -127,10 +144,15 @@ class CombinedChannelModSheet extends StatefulWidget {
   /// the sheet pops.
   final BuildContext? hostContext;
 
+  /// The tab to show (coming back from a Twitch step) - else the first
+  /// moderatable one
+  final ChatType? initialTab;
+
   const CombinedChannelModSheet({
     super.key,
     required this.onToast,
     this.hostContext,
+    this.initialTab,
   });
 
   @override
@@ -139,7 +161,7 @@ class CombinedChannelModSheet extends StatefulWidget {
 }
 
 class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
-  ChatType? _selected;
+  late ChatType? _selected = this.widget.initialTab;
 
   Widget _blocked(
     BuildContext context,
@@ -204,6 +226,7 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
   }
 
   Widget _panel(ChatType platform) => switch (platform) {
+    /// Its steps pop this sheet with the step - the run opens it
     ChatType.Twitch => ChannelModSheet(
       key: const ValueKey('combined-mod-Twitch'),
       embedded: true,
@@ -297,8 +320,11 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
   }
 }
 
-/// One platform tab of a combined sheet (mod sheet, options sheet): the
-/// platform badge + the source's label, brand-tinted when selected.
+/// One platform tab of a combined sheet (mod sheet, options sheet). The
+/// selected one is filled with the brand color (glyph + label in the
+/// color that reads on it - dark on Kick's green), the others stay
+/// neutral with the small brand badge, so the active tab reads at a
+/// glance: a filled tab against outlined ones, not 18 % vs 5 % tint.
 class CombinedPlatformTab extends StatelessWidget {
   final ChatType platform;
   final String label;
@@ -325,51 +351,70 @@ class CombinedPlatformTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final brand =
         this.platform.brandColor ?? Theme.of(context).colorScheme.secondary;
-    return Pressable(
-      key: Key('${this.keyPrefix}-${this.platform.name}'),
-      haptic: true,
-      onTap: this.onTap,
-      child: AnimatedContainer(
-        duration: AppMotion.fast,
-        constraints: const BoxConstraints(
-          minHeight: kMinInteractiveDimensionCupertino,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: brand.withValues(alpha: this.selected ? 0.18 : 0.05),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: brand.withValues(alpha: this.selected ? 0.9 : 0.25),
-            width: this.selected ? 1.5 : 1.0,
+    final onBrand =
+        ThemeData.estimateBrightnessForColor(brand) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    final textColors =
+        Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
+    final foreground = this.selected ? onBrand : textColors.textSecondary;
+    return Semantics(
+      selected: this.selected,
+      button: true,
+      child: Pressable(
+        key: Key('${this.keyPrefix}-${this.platform.name}'),
+        haptic: true,
+        onTap: this.onTap,
+        child: AnimatedContainer(
+          duration: AppMotion.fast,
+          constraints: const BoxConstraints(
+            minHeight: kMinInteractiveDimensionCupertino,
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Opacity(
-              opacity: this.blocked ? 0.5 : 1.0,
-              child: CombinedPlatformBadge(platform: this.platform),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          decoration: BoxDecoration(
+            color: this.selected ? brand : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: this.selected
+                  ? brand
+                  : Theme.of(context).dividerColor.withValues(alpha: 0.6),
             ),
-            const SizedBox(width: AppSpacing.xs),
-            if (this.blocked) ...[
-              Icon(
-                CupertinoIcons.lock_fill,
-                size: 11.0,
-                color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Opacity(
+                opacity: this.blocked ? 0.5 : 1.0,
+
+                /// The badge's own box would vanish on the brand fill
+                child: this.selected
+                    ? Icon(this.platform.icon, size: 14.0, color: onBrand)
+                    : CombinedPlatformBadge(platform: this.platform),
               ),
-              const SizedBox(width: AppSpacing.xs / 2),
-            ],
-            Flexible(
-              child: Text(
-                this.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: this.selected ? FontWeight.w700 : null,
+              const SizedBox(width: AppSpacing.xs),
+              if (this.blocked) ...[
+                Icon(
+                  CupertinoIcons.lock_fill,
+                  size: 11.0,
+                  color: foreground.withValues(alpha: 0.8),
+                ),
+                const SizedBox(width: AppSpacing.xs / 2),
+              ],
+              Flexible(
+                child: Text(
+                  this.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: foreground,
+                    fontWeight: this.selected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

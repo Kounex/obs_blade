@@ -15,6 +15,24 @@ import '../persistence/support/hive_test_harness.dart';
 
 Widget wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
+/// Opens the options the way the chat bar does - as a sheet run, so its
+/// pages open as sheets of their own
+Future<void> openOptions(WidgetTester tester, ChatType chatType) async {
+  await tester.pumpWidget(
+    wrap(
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () =>
+              showNativeChatOptionsSheet(context, chatType: chatType),
+          child: const Text('open'),
+        ),
+      ),
+    ),
+  );
+  await tester.tap(find.text('open'));
+  await tester.pumpAndSettle();
+}
+
 /// Root rows sit in sections now (All chats, the platform's own) - the
 /// lower ones need scrolling into view first
 Future<void> tapRow(WidgetTester tester, String label) async {
@@ -59,9 +77,7 @@ void main() {
   testWidgets('root lists Appearance / Emotes / Badges / Event messages', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-    );
+    await openOptions(tester, ChatType.Twitch);
 
     expect(find.text('Native chat options'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
@@ -87,9 +103,7 @@ void main() {
   testWidgets('Appearance page shows preview, sliders, separators', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-    );
+    await openOptions(tester, ChatType.Twitch);
 
     await tapRow(tester, 'Appearance');
     await tester.pumpAndSettle();
@@ -133,9 +147,7 @@ void main() {
   });
 
   testWidgets('text size slider writes the settings box', (tester) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-    );
+    await openOptions(tester, ChatType.Twitch);
     await tapRow(tester, 'Appearance');
     await tester.pumpAndSettle();
 
@@ -153,9 +165,7 @@ void main() {
   testWidgets('Emotes and Badges pages keep the existing toggles', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-    );
+    await openOptions(tester, ChatType.Twitch);
 
     await tapRow(tester, 'Emotes');
     await tester.pumpAndSettle();
@@ -197,9 +207,7 @@ void main() {
   testWidgets('Event messages page toggles write the settings box', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-    );
+    await openOptions(tester, ChatType.Twitch);
 
     await tapRow(tester, 'Event messages');
     await tester.pumpAndSettle();
@@ -231,9 +239,7 @@ void main() {
 
   testWidgets('Kick root lists Appearance + Emotes + Badges + Event '
       'messages', (tester) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
-    );
+    await openOptions(tester, ChatType.Kick);
 
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Emotes'), findsOneWidget);
@@ -246,9 +252,7 @@ void main() {
 
   testWidgets('Kick Badges page is a single toggle for KickChatBadges, not '
       'the per-category Twitch layout', (tester) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
-    );
+    await openOptions(tester, ChatType.Kick);
 
     await tapRow(tester, 'Badges');
     await tester.pumpAndSettle();
@@ -267,9 +271,7 @@ void main() {
   testWidgets('Kick Emotes page toggles KickChatThirdPartyEmotes', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
-    );
+    await openOptions(tester, ChatType.Kick);
 
     await tapRow(tester, 'Emotes');
     await tester.pumpAndSettle();
@@ -299,9 +301,7 @@ void main() {
 
   testWidgets('Kick Event messages page shows the smaller row set and '
       'writes Kick-prefixed keys', (tester) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
-    );
+    await openOptions(tester, ChatType.Kick);
 
     await tapRow(tester, 'Event messages');
     await tester.pumpAndSettle();
@@ -328,9 +328,7 @@ void main() {
 
   testWidgets('Highlights page toggles self-mention and shows for YouTube too '
       '(not gated per-engine)', (tester) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.YouTube)),
-    );
+    await openOptions(tester, ChatType.YouTube);
 
     expect(find.text('Highlights'), findsOneWidget);
     await tapRow(tester, 'Highlights');
@@ -368,9 +366,7 @@ void main() {
   testWidgets('Highlights keyword field writes ChatHighlightKeywords', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-    );
+    await openOptions(tester, ChatType.Twitch);
 
     await tapRow(tester, 'Highlights');
     await tester.pumpAndSettle();
@@ -392,9 +388,7 @@ void main() {
   testWidgets('Mute words page writes ChatMuteWords and resets it', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      wrap(const NativeChatOptionsSheet(chatType: ChatType.Kick)),
-    );
+    await openOptions(tester, ChatType.Kick);
 
     await tapRow(tester, 'Mute words');
     await tester.pumpAndSettle();
@@ -418,9 +412,7 @@ void main() {
   testWidgets(
     'Search chat closes the options sheet and opens the search sheet',
     (tester) async {
-      await tester.pumpWidget(
-        wrap(const NativeChatOptionsSheet(chatType: ChatType.Twitch)),
-      );
+      await openOptions(tester, ChatType.Twitch);
 
       await tapRow(tester, 'Search chat');
       await tester.pumpAndSettle();
@@ -455,9 +447,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('chat-search-field')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('chat-search-back')));
+    await tester.tap(find.byKey(const Key('chat-sheet-back')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('chat-search-field')), findsNothing);
     expect(find.text('Native chat options'), findsOneWidget);
+  });
+
+  testWidgets('a page replaces the options as a sheet of its own; its back '
+      'chevron brings the options back', (tester) async {
+    await openOptions(tester, ChatType.Twitch);
+
+    await tapRow(tester, 'Emotes');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    /// The options slide down while the page slides up (no in-place swap)
+    expect(find.text('Native chat options'), findsOneWidget);
+    expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.text('Native chat options'), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('chat-sheet-back')));
+    await tester.pumpAndSettle();
+    expect(find.text('Native chat options'), findsOneWidget);
+    expect(find.text('Third-party emotes (7TV/BTTV/FFZ)'), findsNothing);
+    expect(find.byType(BottomSheet), findsOneWidget);
+
+    /// A barrier tap ends the run - nothing reopens
+    await tester.tapAt(const Offset(10.0, 10.0));
+    await tester.pumpAndSettle();
+    expect(find.text('Native chat options'), findsNothing);
+    expect(find.byType(BottomSheet), findsNothing);
   });
 }

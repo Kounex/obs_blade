@@ -278,6 +278,40 @@ void main() {
       expect(moderationService.lastUpdateFollowerDurationMinutes, 10);
     });
 
+    testWidgets('a preset step is a sheet of its own: back brings the root '
+        'back, and so does applying a preset', (tester) async {
+      moderationService.chatSettings = const TwitchChatSettings(
+        emoteMode: false,
+        followerMode: false,
+        followerModeDurationMinutes: null,
+        subscriberMode: false,
+        slowMode: false,
+        slowModeWaitTimeSeconds: null,
+        uniqueChatMode: false,
+      );
+      store.roomChatSettings = moderationService.chatSettings;
+
+      await openSheet(tester);
+      final root = find.text('Moderate #${store.effectiveBroadcasterLogin}');
+      expect(root, findsOneWidget);
+
+      await tapVisible(tester, find.textContaining('Slow mode').first);
+      expect(root, findsNothing);
+      expect(find.text('Slow mode delay'), findsOneWidget);
+      expect(find.byType(ChannelModSheet), findsOneWidget);
+
+      await tapVisible(tester, find.byKey(const Key('chat-sheet-back')));
+      expect(root, findsOneWidget);
+      expect(find.text('Slow mode delay'), findsNothing);
+
+      await tapVisible(tester, find.textContaining('Slow mode').first);
+      await tapVisible(tester, find.text('30 seconds'));
+      await tapVisible(tester, find.text('Enable').last);
+      expect(moderationService.lastUpdateSlowModeWaitSeconds, 30);
+      expect(root, findsOneWidget);
+      expect(find.byType(ChannelModSheet), findsOneWidget);
+    });
+
     testWidgets('Shield on → confirm → update shield', (tester) async {
       moderationService.shieldModeActive = false;
       store.roomShieldModeActive = false;

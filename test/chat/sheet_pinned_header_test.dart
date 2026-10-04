@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
-import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -42,13 +41,9 @@ void main() {
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () => ModalHandler.showBaseBottomSheet(
-                context: context,
-                barrierDismissible: true,
-                enableDrag: true,
-                maxHeightFraction: 0.72,
-                builder: (_) =>
-                    const NativeChatOptionsSheet(chatType: ChatType.Twitch),
+              onPressed: () => showNativeChatOptionsSheet(
+                context,
+                chatType: ChatType.Twitch,
               ),
               child: const Text('open'),
             ),

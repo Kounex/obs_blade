@@ -28,23 +28,116 @@ import 'youtube_setup_sheet.dart';
 
 export 'native_chat_appearance.dart' show NativeChatAppearance;
 
-/// Opens [NativeChatOptionsSheet] over [context] (the chat view) - the
-/// bar's button, and Search chat's back chevron.
-void showNativeChatOptionsSheet(
+/// Where the options run is: a page, plus the combined chat's platform
+/// tab (the platform pages belong to it; coming back restores it)
+typedef _OptionsStop = ({_OptionsPage page, ChatType? tab});
+
+/// Opens [NativeChatOptionsSheet] over [context] (the chat view). Each
+/// page - Search chat included - is a sheet of its own that replaces the
+/// options ([showChatSheetRun]); its back chevron brings the options back.
+Future<void> showNativeChatOptionsSheet(
   BuildContext context, {
   required ChatType chatType,
   bool modFoldedIntoOptions = false,
-}) => ModalHandler.showBaseBottomSheet(
-  context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
-  builder: (_) => NativeChatOptionsSheet(
-    chatType: chatType,
-    modFoldedIntoOptions: modFoldedIntoOptions,
-    hostContext: context,
-  ),
+}) => showChatSheetRun<_OptionsStop>(
+  context,
+  first: (page: _OptionsPage.root, tab: null),
+  open: (stop) {
+    final back = (page: _OptionsPage.root, tab: stop.tab);
+    if (stop.page == _OptionsPage.search) {
+      return showChatSearchSheet<_OptionsStop>(
+        context,
+        chatType: chatType,
+        back: back,
+      );
+    }
+    return ModalHandler.showBaseBottomSheet<_OptionsStop>(
+      context: context,
+      barrierDismissible: true,
+      enableDrag: true,
+      maxHeightFraction: 0.72,
+      builder: (sheet) => stop.page == _OptionsPage.root
+          ? NativeChatOptionsSheet(
+              chatType: chatType,
+              modFoldedIntoOptions: modFoldedIntoOptions,
+              hostContext: context,
+              initialTab: stop.tab,
+            )
+          : _optionsPage(
+              stop.page,
+              platform: chatType == ChatType.Combined
+                  ? (stop.tab ?? ChatType.Twitch)
+                  : chatType,
+              onBack: () => Navigator.of(sheet).pop(back),
+            ),
+    );
+  },
 );
+
+/// The sheet for [page] (not root / search) - [platform] is the one the
+/// platform pages (emotes, badges, event messages) are for.
+Widget _optionsPage(
+  _OptionsPage page, {
+  required ChatType platform,
+  required VoidCallback onBack,
+}) {
+  final isKick = platform == ChatType.Kick;
+  return switch (page) {
+    _OptionsPage.root || _OptionsPage.search => const SizedBox.shrink(),
+    _OptionsPage.appearance => _AppearancePage(onBack: onBack),
+    _OptionsPage.emotes => _SingleTogglePage(
+      onBack: onBack,
+      title: 'Emotes',
+      settingsKey: isKick
+          ? SettingsKeys.KickChatThirdPartyEmotes
+          : SettingsKeys.TwitchChatThirdPartyEmotes,
+      rowLabel: isKick
+          ? 'Third-party emotes (7TV)'
+          : 'Third-party emotes (7TV/BTTV/FFZ)',
+      description: isKick
+          ? 'Choose whether 7TV emotes render inline in chat.'
+          : 'Choose whether 7TV, BTTV and FFZ emotes render inline in '
+                'chat.',
+    ),
+    _OptionsPage.badges =>
+      isKick
+          ? _SingleTogglePage(
+              onBack: onBack,
+              title: 'Badges',
+              settingsKey: SettingsKeys.KickChatBadges,
+              rowLabel: 'Role badge artwork',
+              description:
+                  'Choose whether role badges (moderator, '
+                  'subscriber, and similar) appear next to names.',
+            )
+          : _BadgesPage(onBack: onBack),
+    _OptionsPage.history => _SingleTogglePage(
+      onBack: onBack,
+      title: 'Chat history',
+      settingsKey: SettingsKeys.TwitchChatLoadHistory,
+      rowLabel: 'Load recent messages on join',
+      description:
+          'Show the last messages sent before you joined a '
+          'channel (dimmed), from the community '
+          'recent-messages service Chatterino uses.',
+    ),
+    _OptionsPage.eventMessages => _EventMessagesPage(
+      onBack: onBack,
+      rows: isKick
+          ? NativeChatOptionsSheet.kickNoticeRows
+          : NativeChatOptionsSheet.twitchNoticeRows,
+    ),
+    _OptionsPage.highlights => _HighlightsPage(onBack: onBack),
+    _OptionsPage.muteWords => _MuteWordsPage(onBack: onBack),
+    _OptionsPage.textToSpeech => _PageScaffold(
+      title: 'Text to speech',
+      description: ChatTtsSettingsRows.intro,
+      onBack: onBack,
+      children: const [ChatTtsSettingsRows(showIntro: false)],
+    ),
+    _OptionsPage.debugSamples => _DebugSamplesPage(onBack: onBack),
+  };
+}
 
 /// Entry point in the native-mode chat bar: opens [NativeChatOptionsSheet].
 /// Styled like the bar's other control containers, 44pt touch target.
@@ -135,12 +228,13 @@ enum _OptionsPage {
   muteWords,
   textToSpeech,
   debugSamples,
+  search,
 }
 
 /// Options for the native chat engines. Root lists short groups; each
-/// drills into a sub-page (page-swap, no nested Navigator) — except
-/// "Search chat", which closes this sheet and opens the dedicated
-/// [ChatSearchSheet] instead (an action, not a settings page). Appearance
+/// opens a sheet of its own in this one's place (pops with the page,
+/// [showNativeChatOptionsSheet] opens it) - "Search chat" too, the
+/// dedicated [ChatSearchSheet]. Appearance
 /// + Highlights (self-mention/keyword row wash) + Mute words (drops
 /// matching rows entirely) + Search chat are common to every engine;
 /// Twitch additionally gets Emotes + per-category Badges + Event
@@ -158,11 +252,15 @@ class NativeChatOptionsSheet extends StatefulWidget {
   /// chat setup) open on it once this sheet is gone
   final BuildContext? hostContext;
 
+  /// Combined chat: the platform tab to show (coming back from its page)
+  final ChatType? initialTab;
+
   const NativeChatOptionsSheet({
     super.key,
     required this.chatType,
     this.modFoldedIntoOptions = false,
     this.hostContext,
+    this.initialTab,
   });
 
   /// (label, settings key) pairs in display order
@@ -203,84 +301,20 @@ class NativeChatOptionsSheet extends StatefulWidget {
 }
 
 class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
-  _OptionsPage _page = _OptionsPage.root;
-
   /// Combined chat: the platform tab picked (its pages open from it)
-  ChatType? _tab;
+  late ChatType? _tab = this.widget.initialTab;
 
   bool get _isCombined => this.widget.chatType == ChatType.Combined;
 
-  /// Platform the platform pages (emotes, badges, event messages,
-  /// history) belong to: this sheet's, or the combined chat's tab
-  ChatType get _platform =>
-      this._isCombined ? (this._tab ?? ChatType.Twitch) : this.widget.chatType;
+  /// Hands [page] to [showNativeChatOptionsSheet], which opens it in this
+  /// sheet's place - for [tab]'s platform when given
+  void _open(_OptionsPage page, {ChatType? tab}) =>
+      Navigator.of(context).pop((page: page, tab: tab ?? this._tab));
 
-  bool get _isKick => this._platform == ChatType.Kick;
-
-  void _open(_OptionsPage page) => this.setState(() => this._page = page);
-
-  void _back() => this.setState(() => this._page = _OptionsPage.root);
-
-  /// Every page renders through [NativeChatSheetScaffold]: handle +
-  /// title / back chevron stay pinned, only the page body scrolls.
+  /// Root only: every other page is its own sheet ([_optionsPage]).
+  /// Handle + title stay pinned, only the body scrolls.
   @override
-  Widget build(BuildContext context) {
-    return switch (this._page) {
-      _OptionsPage.root => this._buildRoot(context),
-      _OptionsPage.appearance => _AppearancePage(onBack: this._back),
-      _OptionsPage.emotes => _SingleTogglePage(
-        onBack: this._back,
-        title: 'Emotes',
-        settingsKey: this._isKick
-            ? SettingsKeys.KickChatThirdPartyEmotes
-            : SettingsKeys.TwitchChatThirdPartyEmotes,
-        rowLabel: this._isKick
-            ? 'Third-party emotes (7TV)'
-            : 'Third-party emotes (7TV/BTTV/FFZ)',
-        description: this._isKick
-            ? 'Choose whether 7TV emotes render inline in chat.'
-            : 'Choose whether 7TV, BTTV and FFZ emotes render inline in '
-                  'chat.',
-      ),
-      _OptionsPage.badges =>
-        this._isKick
-            ? _SingleTogglePage(
-                onBack: this._back,
-                title: 'Badges',
-                settingsKey: SettingsKeys.KickChatBadges,
-                rowLabel: 'Role badge artwork',
-                description:
-                    'Choose whether role badges (moderator, '
-                    'subscriber, and similar) appear next to names.',
-              )
-            : _BadgesPage(onBack: this._back),
-      _OptionsPage.history => _SingleTogglePage(
-        onBack: this._back,
-        title: 'Chat history',
-        settingsKey: SettingsKeys.TwitchChatLoadHistory,
-        rowLabel: 'Load recent messages on join',
-        description:
-            'Show the last messages sent before you joined a '
-            'channel (dimmed), from the community '
-            'recent-messages service Chatterino uses.',
-      ),
-      _OptionsPage.eventMessages => _EventMessagesPage(
-        onBack: this._back,
-        rows: this._isKick
-            ? NativeChatOptionsSheet.kickNoticeRows
-            : NativeChatOptionsSheet.twitchNoticeRows,
-      ),
-      _OptionsPage.highlights => _HighlightsPage(onBack: this._back),
-      _OptionsPage.muteWords => _MuteWordsPage(onBack: this._back),
-      _OptionsPage.textToSpeech => _PageScaffold(
-        title: 'Text to speech',
-        description: ChatTtsSettingsRows.intro,
-        onBack: this._back,
-        children: const [ChatTtsSettingsRows(showIntro: false)],
-      ),
-      _OptionsPage.debugSamples => _DebugSamplesPage(onBack: this._back),
-    };
-  }
+  Widget build(BuildContext context) => this._buildRoot(context);
 
   Widget _buildRoot(BuildContext context) {
     return NativeChatSheetScaffold(
@@ -309,23 +343,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           subtitle: this._isCombined
               ? 'Find messages or names in the combined chat'
               : 'Find messages or names in the buffered history',
-          onTap: () {
-            final host = this.widget.hostContext ?? context;
-            Navigator.of(context).pop();
-            showChatSearchSheet(
-              host,
-              chatType: this.widget.chatType,
-
-              /// Back to these options, on the chat view again
-              onBack: this.widget.hostContext == null
-                  ? null
-                  : () => showNativeChatOptionsSheet(
-                      host,
-                      chatType: this.widget.chatType,
-                      modFoldedIntoOptions: this.widget.modFoldedIntoOptions,
-                    ),
-            );
-          },
+          onTap: () => this._open(_OptionsPage.search),
         ),
         const SizedBox(height: AppSpacing.sm),
         const ChannelModSectionHeader('All chats'),
@@ -419,10 +437,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   /// [platform]'s own pages. Opening one remembers the platform, so the
   /// page (emotes / badges / event messages) is that platform's.
   List<Widget> _platformRows(BuildContext context, ChatType platform) {
-    void open(_OptionsPage page) => this.setState(() {
-      this._tab = platform;
-      this._page = page;
-    });
+    void open(_OptionsPage page) => this._open(page, tab: platform);
     return switch (platform) {
       ChatType.Twitch => [
         this._navRow(
@@ -626,49 +641,31 @@ class _PageScaffold extends StatelessWidget {
         Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
     return NativeChatSheetScaffold(
       headerGap: 0.0,
-      header: Row(
-        children: [
-          Pressable(
-            haptic: true,
-            onTap: this.onBack,
-            child: Padding(
-              padding: const EdgeInsets.only(
-                right: AppSpacing.sm,
-                top: AppSpacing.md,
-                bottom: AppSpacing.md,
-              ),
-              child: Icon(
-                CupertinoIcons.chevron_back,
-                size: 20.0,
-                color: textColors.highlightText,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(this.title, style: nativeChatSheetTitleStyle(context)),
-          ),
-          if (this.onReset != null)
-            Tooltip(
-              message: 'Reset to defaults',
-              child: Pressable(
-                haptic: true,
-                onTap: this.onReset,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                    vertical: AppSpacing.md,
-                  ),
-                  child: Text(
-                    'Reset',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: textColors.highlightText,
-                      fontWeight: FontWeight.w600,
+      header: NativeChatSheetBackTitle(
+        title: this.title,
+        onBack: this.onBack,
+        trailing: this.onReset == null
+            ? null
+            : Tooltip(
+                message: 'Reset to defaults',
+                child: Pressable(
+                  haptic: true,
+                  onTap: this.onReset,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xs,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Text(
+                      'Reset',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: textColors.highlightText,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,

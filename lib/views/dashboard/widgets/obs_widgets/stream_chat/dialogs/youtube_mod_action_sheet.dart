@@ -21,21 +21,28 @@ import 'chat_user_list_actions.dart';
 /// host it. Same idiom as [showModActionSheet].
 /// Returns when the sheet is dismissed (so callers can clear selection
 /// chrome on the target message).
+/// Timeout replaces the actions as a sheet of its own
+/// ([showChatSheetRun]) - the returned future waits for the last one.
 Future<void> showYouTubeModActionSheet(
   BuildContext context,
   YouTubeChatMessage message,
-) => ModalHandler.showBaseBottomSheet(
-  context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
-  builder: (_) => YouTubeModActionSheet(
-    message: message,
-    hostContext: context,
-    onCopy: () => copyMessageTextAndNotify(context, message.copyText),
-    onFailure: (message) => ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message))),
+) => showChatSheetRun<ModActionStep>(
+  context,
+  first: ModActionStep.root,
+  open: (step) => ModalHandler.showBaseBottomSheet<ModActionStep>(
+    context: context,
+    barrierDismissible: true,
+    enableDrag: true,
+    maxHeightFraction: 0.72,
+    builder: (_) => YouTubeModActionSheet(
+      message: message,
+      step: step,
+      hostContext: context,
+      onCopy: () => copyMessageTextAndNotify(context, message.copyText),
+      onFailure: (message) => ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message))),
+    ),
   ),
 );
 
@@ -50,7 +57,7 @@ const List<(String, int)> kYouTubeTimeoutPresets = [
 ];
 
 /// Mod actions for one YouTube chat message: delete it, or timeout/ban its
-/// author. "Timeout…" swaps to a preset step. Final actions (delete /
+/// author. "Timeout…" opens a preset step, a sheet of its own ([step]). Final actions (delete /
 /// timeout duration / ban) ask for confirmation first. On failure the local
 /// state is untouched and [onFailure] explains via snackbar.
 class YouTubeModActionSheet extends StatefulWidget {
@@ -66,12 +73,16 @@ class YouTubeModActionSheet extends StatefulWidget {
 
   final BuildContext? hostContext;
 
+  /// The page this sheet shows - another one pops this sheet with it
+  final ModActionStep step;
+
   const YouTubeModActionSheet({
     super.key,
     required this.message,
     required this.onFailure,
     required this.onCopy,
     this.hostContext,
+    this.step = ModActionStep.root,
   });
 
   @override
@@ -79,7 +90,11 @@ class YouTubeModActionSheet extends StatefulWidget {
 }
 
 class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
-  bool _timeoutStep = false;
+  bool get _timeoutStep => this.widget.step == ModActionStep.timeout;
+
+  /// Hands [step] to [showChatSheetRun], which opens it in this sheet's
+  /// place
+  void _go(ModActionStep step) => Navigator.of(context).pop(step);
 
   /// Re-entrancy guard — a double-tap must not fire two API calls.
   bool _running = false;
@@ -147,17 +162,9 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
-              child: AnimatedSwitcher(
-                duration: AppMotion.medium,
-                transitionBuilder: (child, animation) =>
-                    chatSheetPaneTransition(context, child, animation),
-                child: KeyedSubtree(
-                  key: ValueKey<bool>(this._timeoutStep),
-                  child: this._timeoutStep
+              child: this._timeoutStep
                       ? this._buildTimeoutPresets(context)
                       : this._buildRootActions(context),
-                ),
-              ),
             ),
           ),
         ],
@@ -267,7 +274,7 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
             context,
             icon: CupertinoIcons.timer,
             label: 'Timeout…',
-            onTap: () => this.setState(() => this._timeoutStep = true),
+            onTap: () => this._go(ModActionStep.timeout),
           ),
         ),
         this._actionRow(
@@ -299,31 +306,9 @@ class _YouTubeModActionSheetState extends State<YouTubeModActionSheet> {
     if (!this._timeoutStep) {
       return Text(title, style: nativeChatSheetTitleStyle(context));
     }
-    return Row(
-      children: [
-        Pressable(
-          haptic: true,
-          onTap: this._running
-              ? null
-              : () => this.setState(() => this._timeoutStep = false),
-          child: Padding(
-            padding: const EdgeInsets.only(
-              right: AppSpacing.sm,
-              top: AppSpacing.md,
-              bottom: AppSpacing.md,
-            ),
-            child: Icon(
-              CupertinoIcons.chevron_back,
-              size: 20.0,
-              color:
-                  (Theme.of(context).extension<AppTextColors>() ??
-                          AppTextColors.standard)
-                      .highlightText,
-            ),
-          ),
-        ),
-        Expanded(child: Text(title, style: nativeChatSheetTitleStyle(context))),
-      ],
+    return NativeChatSheetBackTitle(
+      title: title,
+      onBack: this._running ? null : () => this._go(ModActionStep.root),
     );
   }
 

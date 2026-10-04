@@ -109,6 +109,10 @@ void main() {
 
     testWidgets('a chatty viewer: the card stops at 2/3 of the screen and '
         'the history scrolls under the pinned name', (tester) async {
+      /// A portrait phone - a short sheet scrolls as a whole
+      tester.view.physicalSize = const Size(390.0, 844.0);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
       final store = GetIt.instance<YouTubeChatStore>();
       runInAction(() {
         for (var i = 0; i < 20; i++) {
@@ -150,6 +154,7 @@ void main() {
         findRichText: true,
       );
       expect(tester.getTopLeft(oldest).dy, greaterThan(screen));
+      final liveBefore = tester.getTopLeft(find.text('LIVE'));
       await tester.scrollUntilVisible(
         oldest,
         300,
@@ -157,6 +162,51 @@ void main() {
       );
       expect(tester.getTopLeft(oldest).dy, lessThan(screen));
       expect(find.text('Remy'), findsWidgets);
+
+      /// Only the history scrolls - LIVE stays put
+      expect(tester.getTopLeft(find.text('LIVE')), liveBefore);
+    });
+
+    testWidgets('a short sheet (phone in landscape): facts, LIVE and the '
+        'history scroll together', (tester) async {
+      tester.view.physicalSize = const Size(844.0, 390.0);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final store = GetIt.instance<YouTubeChatStore>();
+      runInAction(() {
+        for (var i = 0; i < 20; i++) {
+          store.messages.add(
+            ytMessage(
+              'm$i',
+              author: 'UCremy',
+              authorName: 'Remy',
+              text: 'message number $i with some words to wrap the line',
+            ),
+          );
+        }
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () =>
+                    showYouTubeUserCardSheet(context, channelId: 'UCremy'),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final live = find.text('LIVE');
+      final liveBefore = tester.getTopLeft(live);
+      await tester.drag(find.text('LIVE'), const Offset(0.0, -120.0));
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(live).dy, lessThan(liveBefore.dy));
     });
 
     testWidgets('own card: no highlight / ignore', (tester) async {
