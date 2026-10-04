@@ -26,6 +26,8 @@ import '../../../../utils/routing_helper.dart';
 import '../../../dashboard/widgets/obs_widgets/stream_chat/chat_type_brand.dart';
 import '../../../settings/widgets/accent_icon_tile.dart';
 import 'activity_formatting.dart';
+import '../../../pro/widgets/pro_benefits.dart';
+import '../../../pro/widgets/pro_locked_pane.dart';
 import 'activity_sheets.dart';
 import 'activity_status_banner.dart';
 
@@ -915,7 +917,9 @@ class ActivityRow extends StatelessWidget {
   }
 }
 
-/// Activity for non-Pro users: what it is, and the way to Pro.
+/// Activity for non-Pro users - the same locked pane as the native chat:
+/// what it is, a taste of the other benefits, the way to Pro. Nothing is
+/// collected meanwhile (every source behind the feed is Pro).
 class ActivityProUpsell extends StatelessWidget {
   final String proRoute;
 
@@ -926,31 +930,17 @@ class ActivityProUpsell extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AccentIconTile(
-              icon: JamIcons.padlock,
-              size: 64.0,
-              iconSize: 30.0,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text('Activity', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Every follow, sub, cheer, Super Chat and KICKs gift on your '
-              'channels in one list - with a to-thank queue so nobody gets '
-              'missed on stream. Part of OBS Blade Pro.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            const SizedBox(height: AppSpacing.md),
-            BaseButton(
-              text: 'Explore Pro',
-              onPressed: () => Navigator.of(context).pushNamed(this.proRoute),
-            ),
-          ],
+        child: ProLockedPane(
+          title: 'Activity',
+          body:
+              'Activity is part of OBS Blade Pro - every follow, sub, cheer, '
+              'Super Chat and KICKs gift on your channels in one list, with a '
+              'to-thank queue so nobody gets missed on stream.',
+
+          /// The 2nd card ("Never Miss a Supporter") is this feed - the
+          /// neighbours instead
+          benefits: [kProBenefits[0], ...kProBenefits.skip(2).take(2)],
+          proRoute: this.proRoute,
         ),
       ),
     );

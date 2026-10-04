@@ -31,6 +31,7 @@ import '../../../../../utils/routing_helper.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../../../../pro/widgets/pro_benefits.dart';
 import '../../../../settings/widgets/accent_icon_tile.dart';
+import '../../../../pro/widgets/pro_locked_pane.dart';
 import 'chat_type_brand.dart';
 import 'chat_username_bar.dart/chat_username_bar.dart';
 import 'chat_username_bar.dart/dialogs/add_edit_kick_username.dart';
@@ -1185,65 +1186,19 @@ class _ChatProUpsell extends StatelessWidget {
   Widget build(BuildContext context) {
     /// Centered in the chat viewport, like [_ChatEmptyState]
     return _CenteredChatPlaceholder(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const AccentIconTile(
-            icon: JamIcons.padlock,
-            size: 64.0,
-            iconSize: 30.0,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            /// Combined is native-only - "Native" would be redundant there
-            isNativeOnly(this.chatType)
-                ? '${this.chatType.text} Chat'
-                : 'Native ${this.chatType.text} Chat',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Native chat is part of OBS Blade Pro - unlock it to read, write and moderate right here.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.lg),
+      child: ProLockedPane(
+        /// Combined is native-only - "Native" would be redundant there
+        title: isNativeOnly(this.chatType)
+            ? '${this.chatType.text} Chat'
+            : 'Native ${this.chatType.text} Chat',
+        body:
+            'Native chat is part of OBS Blade Pro - unlock it to read, write '
+            'and moderate right here.',
 
-          /// Compact benefit taste - titles only; the paywall carries
-          /// the full copy. Icons stay neutral (rule 5 - the padlock
-          /// tile is the pane's one accent moment; the paywall's colour
-          /// is its own exception). Skips the first (platform) benefit -
-          /// the headline above already names this platform's native chat.
-          for (final ProBenefit benefit in kProBenefits.skip(1).take(3))
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    benefit.icon,
-                    size: 16.0,
-                    color:
-                        (Theme.of(context).extension<AppTextColors>() ??
-                                AppTextColors.standard)
-                            .textSecondary,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: Text(
-                      benefit.title,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: AppSpacing.md),
-          BaseButton(
-            text: 'Explore Pro',
-            onPressed: () => Navigator.of(context).pushNamed(this.proRoute),
-          ),
-        ],
+        /// Skips the first (platform) benefit - the headline already names
+        /// this platform's native chat
+        benefits: kProBenefits.skip(1).take(3).toList(),
+        proRoute: this.proRoute,
       ),
     );
   }

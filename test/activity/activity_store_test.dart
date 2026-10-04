@@ -554,6 +554,25 @@ void main() {
     });
   });
 
+  test('not Pro: no stream sessions from OBS, no heartbeats', () async {
+    var pro = false;
+    final free = ActivityStore(
+      persistence: MemoryActivityPersistence(),
+      isProResolver: () => pro,
+      clock: () => now,
+      relayClient: _NoRelay(),
+      relayEnabledResolver: () => true,
+      attachPlatformStores: false,
+    );
+    await free.init();
+    free.setObsLiveForTest(true);
+    free.tickForTest();
+    expect(free.obsLive, isFalse);
+    expect(free.currentSession, isNull);
+    pro = true;
+    await free.dispose();
+  });
+
   test('mark thanked: big rows of a group in one go', () {
     store.ingest(_event('a', at: now));
     store.ingest(_event('b', at: now, actor: 'B'));

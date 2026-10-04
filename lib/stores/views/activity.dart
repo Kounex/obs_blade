@@ -971,6 +971,18 @@ abstract class _ActivityStore with Store {
     this._catchUpFreeze(this._clock());
     runInAction(() => this.clockTick++);
 
+    /// Every 6 h while running
+    if (this._ticks % 720 == 0) this._prune();
+
+    /// Not Pro: nothing is collected, so no stream sessions either (no
+    /// OBS reads, no heartbeats)
+    if (!this._isProResolver()) {
+      this._setLive('obs', false);
+      this._syncObs(false);
+      this._syncYouTubeOwn();
+      return;
+    }
+
     /// OBS streaming counts as live too (no platform needed)
     final obsLive =
         lazySingletonCreated<DashboardStore>() &&
@@ -983,9 +995,6 @@ abstract class _ActivityStore with Store {
     if (this.currentSession != null || this._ledger.coverage.anyOpen) {
       this._writeHeartbeat();
     }
-
-    /// Every 6 h while running
-    if (this._ticks % 720 == 0) this._prune();
   }
 
   /// OBS went live (or is live when first seen): ask once where it
