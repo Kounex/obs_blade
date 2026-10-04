@@ -32,9 +32,9 @@ emojis rendered and in the picker ("Members only"); YouTube emojis only
   stream (hand-typed `:skull:` was ~7 MB/h); a page without chat data is
   logged; YouTube input + picker + send stop at 200 characters
   (YouTube's chat limit - not in the API reference).
-- Open: the bundle has 33 of YouTube's set; a live-chat page saved while
-  signed in completes it (`tool/youtube_emoji_harvest/README.md`) -
-  worth doing before the store release.
+- Bundle: 65 of YouTube's public set, harvested from the busiest live
+  chats' full Live chat view (member emojis are never bundled - the app
+  learns them per chat); missing ones are learned at runtime.
 - Tests: `youtube_emoji_test`, `youtube_emoji_ui_test`, store + TTS
   additions; shots `youtube_emoji_*` (placeholder circles - no YouTube
   artwork in the repo).

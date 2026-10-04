@@ -23,4 +23,5 @@ several live searches, ranked by "watching"; each chat is followed in its
 chat) for the given minutes. Only YouTube's own emojis are kept; channel
 member emojis are left to the app, which learns them per chat while it's
 open. Busy chats reuse the same popular emojis - expect diminishing
-returns (2026-10-05: 15 chats x 3 min added 6, total 39).
+returns (2026-10-05: 15 chats x 3 min added 6; the top 40 x 2 min
+then took it to 65).
