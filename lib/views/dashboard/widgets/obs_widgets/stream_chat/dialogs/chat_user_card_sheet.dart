@@ -51,6 +51,10 @@ class ChatUserCardConnection {
   });
 }
 
+/// Height cap of every platform's user card: the chat stays visible above
+/// it; a long history scrolls under the pinned name.
+const double kChatUserCardMaxHeightFraction = 2 / 3;
+
 /// Opens the native chat user card for [userId]. Pass [connection] when
 /// showing the logged-in user's merged self sheet (status + actions).
 void showChatUserCardSheet(
@@ -62,7 +66,7 @@ void showChatUserCardSheet(
   context: context,
   barrierDismissible: true,
   enableDrag: true,
-  maxHeightFraction: 0.85,
+  maxHeightFraction: kChatUserCardMaxHeightFraction,
   builder: (_) => ChatUserCardSheet(
     userId: userId,
     connection: connection,

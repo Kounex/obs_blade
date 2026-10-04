@@ -17,6 +17,9 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_chat_message_row.dart';
 
+import 'chat_user_card_sheet.dart' show kChatUserCardMaxHeightFraction;
+import 'chat_user_list_actions.dart';
+
 /// Opens the native YouTube chat user card for [channelId].
 void showYouTubeUserCardSheet(
   BuildContext context, {
@@ -27,11 +30,12 @@ void showYouTubeUserCardSheet(
   context: context,
   barrierDismissible: true,
   enableDrag: true,
-  maxHeightFraction: 0.85,
+  maxHeightFraction: kChatUserCardMaxHeightFraction,
   builder: (_) => YouTubeUserCardSheet(
     channelId: channelId,
     fallbackName: fallbackName,
     fallbackAvatarUrl: fallbackAvatarUrl,
+    hostContext: context,
   ),
 );
 
@@ -46,11 +50,16 @@ class YouTubeUserCardSheet extends StatefulWidget {
   final String? fallbackName;
   final String? fallbackAvatarUrl;
 
+  /// The chat view that opened the card - hosts the highlight / ignore
+  /// confirmation (the sheet is gone by then)
+  final BuildContext? hostContext;
+
   const YouTubeUserCardSheet({
     super.key,
     required this.channelId,
     this.fallbackName,
     this.fallbackAvatarUrl,
+    this.hostContext,
   });
 
   @override
@@ -90,6 +99,11 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
       this._channelInfo?.title ??
       'Chatter';
 
+  /// The name the highlight / ignore lists hold for this viewer - the
+  /// display name YouTube rows are matched by
+  String? get _listName =>
+      this._newestBuffered?.authorName ?? this.widget.fallbackName;
+
   String? _avatarUrl() =>
       this._newestBuffered?.authorProfileImageUrl ??
       this.widget.fallbackAvatarUrl ??
@@ -110,6 +124,14 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           this._factsBlock(context),
+
+          /// Same lists as on Twitch - YouTube rows match the display name
+          if (this.widget.hostContext case final host?
+              when this.widget.channelId != this._store.selfChannelId &&
+                  this._listName != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            ChatUserListActions(userName: this._listName!, hostContext: host),
+          ],
           const SizedBox(height: AppSpacing.lg),
           this._liveDivider(context),
           const SizedBox(height: AppSpacing.sm),

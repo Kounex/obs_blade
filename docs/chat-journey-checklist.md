@@ -52,6 +52,8 @@ the account - Twitch is the only engine where offline means signed out
 | Combined chat | the change behaves the same inside the combined timeline and its pickers / builder |
 | Own channel in a combo / picker | resolves to the "You" entry (activity feed, owner-only tools), never a plain copy in the platform's list |
 | Adding a channel | from every entry point (empty state, "can't be found", channel menu) the chat then shows the added channel |
+| User card actions | highlight / ignore (and the platform's mod actions) on the card of **every** platform, never on your own card; the name written is the one that platform's rows match (Twitch login, YouTube display name, Kick username) |
+| Own sent message | shows our name + badges at once and after the platform's echo (YouTube's insert answer has no authorDetails - the instant copy is filled in, the poll copy replaces it), in the platform chat **and** combined chat |
 | Emotes / emojis per platform | Twitch / Kick / YouTube rows draw them (YouTube: `:codes:` from the emoji catalog, unknown ones stay text until learned), the emote button is in every writable input incl. combined chat's targets, TTS treats them as emotes |
 | Add chat sheets (Twitch / YouTube / Kick) | every state: empty (signed out / in), typing < 3 chars, results (LIVE, already-listed checked off, own channel), no hits, failure (the typed handle / slug still offered), link pasted, dead session (signs out, no endless Retry), pick mode for the combo builder (nothing saved) |
 

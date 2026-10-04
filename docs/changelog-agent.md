@@ -2,6 +2,29 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-05 - Highlight / ignore on the YouTube and Kick user cards
+
+User question: why only on Twitch's user card? The lists were shared
+and honored by every platform's rows (and the YouTube / Kick long-press
+message sheets had the rows) - only the YouTube and Kick cards never got
+`ChatUserListActions`. Both cards now show them (not on your own card),
+writing YouTube's display name / Kick's username - what those rows are
+matched by. Tests `user_card_list_actions_test`; shots `user_card_*`.
+Review fix to the entry below: the instant copy's owner crown follows
+the chat the message went to (`isOwnChannel(label)`), not the selection.
+
+## 2026-10-05 - YouTube: own sent message read "Unknown"
+
+User report (dogfood, combined chat of another streamer): a message
+sent via YouTube showed "Unknown" as author; the user card had the name.
+Root cause: `liveChatMessages.insert` (part=snippet) answers without
+`authorDetails`; that answer was appended at once and the poll's full
+copy skipped as a duplicate id. Fix: the instant copy carries our
+channel id + title (`isChatOwner` when it's our chat), and the poll copy
+replaces it (real badges). Twitch / Kick don't append locally - checked.
+Test: `youtube_chat_store_test` "own message in someone else's chat".
+Checklist row "Own sent message".
+
 ## 2026-10-04 - YouTube chat emojis: drawn + emote picker
 
 User request: a YouTube chat showed "Thanks Remy

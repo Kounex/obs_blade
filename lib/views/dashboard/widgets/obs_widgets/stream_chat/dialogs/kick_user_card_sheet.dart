@@ -16,6 +16,9 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/kick_c
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
+import 'chat_user_card_sheet.dart' show kChatUserCardMaxHeightFraction;
+import 'chat_user_list_actions.dart';
+
 /// Opens the native Kick chat user card for [userId].
 void showKickUserCardSheet(
   BuildContext context, {
@@ -25,8 +28,12 @@ void showKickUserCardSheet(
   context: context,
   barrierDismissible: true,
   enableDrag: true,
-  maxHeightFraction: 0.85,
-  builder: (_) => KickUserCardSheet(userId: userId, fallbackName: fallbackName),
+  maxHeightFraction: kChatUserCardMaxHeightFraction,
+  builder: (_) => KickUserCardSheet(
+    userId: userId,
+    fallbackName: fallbackName,
+    hostContext: context,
+  ),
 );
 
 /// Minimal Kick viewer card — avatar, name, recent chat history. There's
@@ -40,7 +47,16 @@ class KickUserCardSheet extends StatefulWidget {
   final int userId;
   final String? fallbackName;
 
-  const KickUserCardSheet({super.key, required this.userId, this.fallbackName});
+  /// The chat view that opened the card - hosts the highlight / ignore
+  /// confirmation (the sheet is gone by then)
+  final BuildContext? hostContext;
+
+  const KickUserCardSheet({
+    super.key,
+    required this.userId,
+    this.fallbackName,
+    this.hostContext,
+  });
 
   @override
   State<KickUserCardSheet> createState() => _KickUserCardSheetState();
@@ -73,6 +89,11 @@ class _KickUserCardSheetState extends State<KickUserCardSheet> {
     });
   }
 
+  /// The name the highlight / ignore lists hold for this viewer - the
+  /// username Kick rows are matched by
+  String? get _listName =>
+      this._newestBuffered?.sender?.username ?? this.widget.fallbackName;
+
   String _displayName() =>
       this._profile?.name ??
       this.widget.fallbackName ??
@@ -90,6 +111,13 @@ class _KickUserCardSheetState extends State<KickUserCardSheet> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /// Same lists as on Twitch - Kick rows match the username
+          if (this.widget.hostContext case final host?
+              when this.widget.userId != this._store.selfUserId &&
+                  this._listName != null) ...[
+            ChatUserListActions(userName: this._listName!, hostContext: host),
+            const SizedBox(height: AppSpacing.lg),
+          ],
           this._liveDivider(context),
           const SizedBox(height: AppSpacing.sm),
           if (messages.isEmpty)

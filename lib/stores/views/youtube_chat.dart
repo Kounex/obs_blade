@@ -411,7 +411,7 @@ abstract class _YouTubeChatStore with Store {
       : this._channelBuffers[this.selectedChannelLabel]?.channelId;
 
   /// Ids of messages we sent, shown from the insert answer until the poll
-  /// delivers YouTube's own copy (bounded by the 500-message buffers)
+  /// delivers YouTube's own copy (removed then) - one id per own message
   final Set<String> _localEchoIds = {};
 
   /// The emoji catalog, when registered (tests without it skip emojis)
@@ -1855,7 +1855,9 @@ abstract class _YouTubeChatStore with Store {
               authorDetails: YouTubeChatAuthorDetails(
                 channelId: inserted.authorChannelId ?? this.selfChannelId,
                 displayName: this.selfChannelTitle ?? 'You',
-                isChatOwner: this.isViewingOwnChannel,
+
+                /// The chat it went to, not whatever is selected by now
+                isChatOwner: this.isOwnChannel(label),
               ),
             );
       this._localEchoIds.add(sent.id);
