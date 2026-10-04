@@ -46,13 +46,21 @@ notes unchanged, TestFlight "What to Test" = the device check list). Next:
 the user's on-device verdict, then `release-promote` 4.1.0 (after 4.0.1 is
 published).
 
+**Update 2026-10-04 (later) — releases:** **4.0.1 live on the App
+Store** (`release publish ios --version 4.0.1`, new option; tag `4.0.1`
+on `35a0040f` pushed); Play: the user presses Publish in the Play
+Console - confirm with `release status`, then the 4.0.1 changelog
+entry. **4.1.0 build 2026100401** (`7f652104`) on TestFlight (`VALID`,
+internal testers) + Play internal: everything through the activity
+filters + Pro story; TestFlight "What to Test" = `fastlane/testflight_notes.txt`.
+Next: the user's verdict on that build, then `release-promote` 4.1.0
+(also pushes the regrouped store descriptions + promo text; the website's
+`pending-4.1/` goes live at the store release).
+
 **Update 2026-10-04 — activity feed status banner + own YouTube
 collection** (`2531ef9e..2666bb89`, changelog 2026-10-04; spec
 `superpowers/specs/2026-10-04-activity-feed-status.md`): built, tested,
-reviewed, pushed. **Not on a device yet** - the Kounex iOS install
-timed out (phone unreachable); the release build on the workstation is
-ready, re-run the `devicectl device install` from the dogfood recipe.
-Then the user's on-device check before any test build.
+reviewed, pushed, on Kounex iOS and in test build 2026100401.
 
 **Update 2026-10-03 — global Pro pricing overhaul (both stores
 re-priced):** a Turkish monthly sub came through at ~€0.80; the audit
