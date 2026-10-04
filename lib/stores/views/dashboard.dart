@@ -523,6 +523,21 @@ abstract class _DashboardStore with Store {
     return displayedUuid == null || displayedUuid == sceneUuid;
   }
 
+  /// Which shown items an item event of [sceneName] is about. A group is
+  /// a scene of its own: obs-websocket names a grouped item's change by
+  /// its group (`EventHandler_SceneItems.cpp`: the item's `obs_scene_t`),
+  /// so those events are for that group's children ([SceneItem
+  /// .parentGroupName]); the displayed scene's own events are for its top
+  /// level only - item ids are unique per scene, not across a scene and
+  /// its groups. Null: the event is about a scene not shown.
+  ({String? group})? _itemEventScope(String sceneName, String? sceneUuid) {
+    if (_isDisplayedScene(sceneName, sceneUuid)) return (group: null);
+    final shownGroup = this.currentSceneItems.any(
+      (item) => (item.isGroup ?? false) && item.sourceName == sceneName,
+    );
+    return shownGroup ? (group: sceneName) : null;
+  }
+
   /// Refresh only scene items for the displayed scene (not full collection).
   void _requestDisplayedSceneItems() {
     final sceneName = _displayedSceneName;
@@ -1801,13 +1816,13 @@ abstract class _DashboardStore with Store {
         _refreshMediaInProgram();
 
         /// sceneItemId is only unique within a scene — ignore other scenes
-        /// (incl. same-named scenes of other canvases)
-        if (!_isDisplayedScene(
+        /// (incl. same-named scenes of other canvases); a shown group's
+        /// event is for its children
+        final enableScope = _itemEventScope(
           sceneItemEnableStateChangedEvent.sceneName,
           sceneItemEnableStateChangedEvent.sceneUuid,
-        )) {
-          break;
-        }
+        );
+        if (enableScope == null) break;
 
         _sceneItemOrdering.noteEvent((
           sceneItemEnableStateChangedEvent.sceneName,
@@ -1817,7 +1832,8 @@ abstract class _DashboardStore with Store {
         this.currentSceneItems = ObservableList.of(
           this.currentSceneItems.map((sceneItem) {
             if (sceneItem.sceneItemId ==
-                sceneItemEnableStateChangedEvent.sceneItemId) {
+                    sceneItemEnableStateChangedEvent.sceneItemId &&
+                sceneItem.parentGroupName == enableScope.group) {
               return sceneItem.copyWith(
                 sceneItemEnabled:
                     sceneItemEnableStateChangedEvent.sceneItemEnabled,
@@ -1834,17 +1850,17 @@ abstract class _DashboardStore with Store {
         /// Same per-scene id scoping as the enable state. Lock state isn't
         /// ordering-journaled: nothing optimistic writes it and every
         /// GetSceneItemList re-read carries the confirmed value anyway
-        if (!_isDisplayedScene(
+        final lockScope = _itemEventScope(
           sceneItemLockStateChangedEvent.sceneName,
           sceneItemLockStateChangedEvent.sceneUuid,
-        )) {
-          break;
-        }
+        );
+        if (lockScope == null) break;
 
         this.currentSceneItems = ObservableList.of(
           this.currentSceneItems.map((sceneItem) {
             if (sceneItem.sceneItemId ==
-                sceneItemLockStateChangedEvent.sceneItemId) {
+                    sceneItemLockStateChangedEvent.sceneItemId &&
+                sceneItem.parentGroupName == lockScope.group) {
               return sceneItem.copyWith(
                 sceneItemLocked: sceneItemLockStateChangedEvent.sceneItemLocked,
               );
@@ -2078,7 +2094,7 @@ abstract class _DashboardStore with Store {
           }
           // an event beat this read - keep the event value already in state
           for (final current in this.currentSceneItems) {
-            if (current.sceneItemId == id) {
+            if (current.sceneItemId == id && current.parentGroupName == null) {
               return item.copyWith(sceneItemEnabled: current.sceneItemEnabled);
             }
           }

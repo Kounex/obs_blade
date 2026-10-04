@@ -107,3 +107,11 @@ Not OBS, but the same kind of trap - verified 2026-10-02, details in
 - Helix `streams` pages 20 by default (`first=100`), and its
   `started_at` is when the stream started - use it, not "when the app
   noticed".
+- A grouped scene item's `SceneItemEnableStateChanged` /
+  `SceneItemLockStateChanged` carry the **group's** name / uuid as
+  `sceneName` / `sceneUuid` (a group is a scene; the event names the
+  item's own `obs_scene_t`, `EventHandler_SceneItems.cpp`), and
+  `SetSceneItemEnabled` / `SetSceneItemLocked` take the group as
+  `sceneName` (`OBS_WEBSOCKET_SCENE_FILTER_SCENE_OR_GROUP`). Item ids are
+  unique per scene only - a group child can share its id with a
+  top-level item of the scene that holds the group.

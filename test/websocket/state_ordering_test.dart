@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/types/classes/api/scene_item.dart';
 import 'package:obs_blade/types/classes/api/scene.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
@@ -302,6 +303,97 @@ void main() {
         );
       },
     );
+
+    /// User report: toggling visibility / lock of an item inside a group
+    /// did nothing. obs-websocket names a grouped item's change by its
+    /// group (the item's own obs_scene_t, EventHandler_SceneItems.cpp), and
+    /// the dashboard confirms a toggle only through that event
+    test('a group\'s item events reach its children - and only them '
+        '(item ids are unique per scene, not across its groups)', () async {
+      setupItemListPeer();
+      peer.responseData['GetSceneItemList'] = {
+        'sceneItems': [
+          {
+            'sceneItemId': 7,
+            'sceneItemIndex': 1,
+            'sceneItemEnabled': true,
+            'sceneItemLocked': false,
+            'sourceName': 't1',
+            'isGroup': false,
+          },
+          {
+            'sceneItemId': 9,
+            'sceneItemIndex': 0,
+            'sceneItemEnabled': true,
+            'sceneItemLocked': false,
+            'sourceName': 'Overlays',
+            'isGroup': true,
+          },
+        ],
+      };
+      peer.responseData['GetGroupSceneItemList'] = {
+        'sceneItems': [
+          {
+            'sceneItemId': 7,
+            'sceneItemIndex': 0,
+            'sceneItemEnabled': true,
+            'sceneItemLocked': false,
+            'sourceName': 'Alert box',
+            'isGroup': false,
+          },
+        ],
+      };
+      await connect();
+      dashboardStore.handleStream();
+      peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+      SceneItem child() => dashboardStore.currentSceneItems.singleWhere(
+        (item) => item.parentGroupName == 'Overlays',
+      );
+      SceneItem top() => dashboardStore.currentSceneItems.singleWhere(
+        (item) => item.sourceName == 't1',
+      );
+      await waitFor(
+        () => dashboardStore.currentSceneItems.length == 3,
+        'scene items + the group child applied',
+      );
+
+      peer.event('SceneItemEnableStateChanged', {
+        'sceneName': 'Overlays',
+        'sceneUuid': 'group-overlays',
+        'sceneItemId': 7,
+        'sceneItemEnabled': false,
+      });
+      peer.event('SceneItemLockStateChanged', {
+        'sceneName': 'Overlays',
+        'sceneUuid': 'group-overlays',
+        'sceneItemId': 7,
+        'sceneItemLocked': true,
+      });
+      await waitFor(
+        () => child().sceneItemEnabled == false && child().sceneItemLocked!,
+        'group child toggled',
+      );
+      expect(top().sceneItemEnabled, isTrue);
+      expect(top().sceneItemLocked, isFalse);
+
+      /// The scene's own item 7 doesn't touch the group's item 7
+      peer.event('SceneItemEnableStateChanged', {
+        'sceneName': 'Camera',
+        'sceneItemId': 7,
+        'sceneItemEnabled': false,
+      });
+      await waitFor(
+        () => top().sceneItemEnabled == false,
+        'top-level item toggled',
+      );
+      peer.event('SceneItemEnableStateChanged', {
+        'sceneName': 'Overlays',
+        'sceneItemId': 7,
+        'sceneItemEnabled': true,
+      });
+      await waitFor(() => child().sceneItemEnabled == true, 'child back on');
+      expect(top().sceneItemEnabled, isFalse);
+    });
 
     test('a same-named scene of another canvas never patches the displayed '
         'items (UUID decides)', () async {
