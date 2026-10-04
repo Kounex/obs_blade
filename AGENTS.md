@@ -87,7 +87,8 @@ assumptions. Put the reminder at the end of the final report.
 | Dashboard state | `lib/stores/views/dashboard.dart` |
 | Protocol DTOs | `lib/types/classes/stream/` |
 | Persisted models | `lib/models/` + `TypeIDs` |
-| Stream chat (WebView + native Twitch) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
+| Chat (WebView + native Twitch/YouTube/Kick + Combined; dedicated tab, dashboard pane removed) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
+| Media hub (soundboard) | `lib/views/dashboard/widgets/dashboard_content/scene_content/media_hub/` (behind `ExposeMediaHub`; spec `docs/superpowers/specs/2026-09-27-media-hub-design.md`) |
 | Activity feed (own-channel events, seen / thanked, status banner, gaps) | `lib/stores/views/activity.dart`, `lib/utils/activity/` (own-YouTube poller, status builder), `lib/views/chat/widgets/activity/`; Kick webhook relay `tool/kick_events_relay/` |
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
 | Shared design system ("On Air") | `lib/shared/design/` |
@@ -105,296 +106,62 @@ way that regresses tablet. Details: [`docs/redesign/design-system.md`](docs/rede
 `lib/types/` (see architecture doc). `DashboardStore` is a large intentional
 monolith; don't split it unless asked.
 
-**Canvases (OBS 32.1+ / obs-websocket 5.7):** `CanvasViewStore` (per
-dashboard view, next to `DashboardStore`) is a **view-only** switch to a
-non-main canvas (e.g. Aitum Vertical): canvas picker above the scene
-buttons (only with >1 canvas, `ExposeCanvasSwitcher` default on), then
-scene buttons / preview / scene items of that canvas. All its reads go
-through `NetworkHelper.makeScopedRequest` (ack carries `responseData`;
-`DashboardStore._handleResponse` skips scoped responses) and are keyed by
-UUID. Core OBS has no live scene for non-main canvases - picking a scene
-only selects what the app shows. **Aitum Vertical** (vendor
-`aitum-vertical-canvas`, `lib/types/classes/api/aitum_vertical.dart`):
-detected per connection (`version` vendor call → `aitumSupport`), drives
-only the canvas named `Aitum Vertical` (requests target it by
-width/height) - live scene switch (by name) + its stream / record /
-backtrack / virtual camera (+ record pause, chapter) in
-`CanvasOutputControls`, state from `VendorEvent`s. **Twitch Dual
-Format** sends a canvas through the *main* stream (profile
-`Stream1/EnableMultitrackVideo` + `MultitrackExtraCanvas`, read into
-`dualFormatCanvasUuid`). The app bar's `ExtraCanvasOnAirPill` shows
-either. Canvases can be any size - labels say "vertical" only for
-portrait (`ObsCanvas.outputLabel`). Without it
-everything stays view-only and gated taps explain why
-(`aitumBlockedReason`). Canvas groups expand (children addressed by the
-group's name), hidden scenes / items are stored per canvas
-(`HiddenScene` / `HiddenSceneItem.canvasName`, null = main). Streaming
-mode always shows main.
+**Canvases (OBS 32.1+ / obs-websocket 5.7):** `CanvasViewStore` switches a
+dashboard view (view-only) to a non-main canvas (e.g. Aitum Vertical);
+the Aitum Vertical plugin adds live scene/output control of its canvas,
+Twitch Dual Format sends an extra canvas through the main stream.
+Details: [`docs/canvases.md`](docs/canvases.md).
 
-**Chat:** Twitch has a native engine (device-code login + EventSub chat +
-Helix send input — reads AND writes) next to the WebView embeds; a manual
-WebView↔Native switch lives in the chat bar (`SelectedChatEngine`, default
-WebView; availability seam: `nativeChatAvailableFor` in
-`lib/models/enums/chat_engine.dart`). The native side renders in
-`NativeChatWindow` (optional `input` slot docks the generic, Twitch-free
-`NativeChatInput`; silent `user:write:chat` scope upgrade — pre-upgrade
-sessions get a read-only lock strip). **Multi-chat** lets users add other
-channels (search / moderated / followed), switch via the chat-bar dropdown
-(connect-on-switch, per-channel history), and run delete/timeout/ban in
-modded channels (local reconcile + EventSub echo dedup). Room-level mod
-actions (`ChannelModSheet` — clear, chat modes, shield, announce) ship via
-the chat-bar shield button and native options sheet when moderating. Role badges +
-per-category toggles ship via `TwitchBadgeStore` + the native chat options
-sheet (per-platform seam); third-party (7TV/BTTV) emotes render inline via
-`ThirdPartyEmoteStore` (toggle in the native chat options sheet); an emote
-picker (first-party Get User Emotes via `TwitchEmoteStore` + the
-third-party catalogs) docks in the native input (`user:read:emotes` silent
-upgrade); message lifecycle rides the same session
-(`message_delete`/`clear_user_messages`/`clear` → content-visible
-tombstones (dimmed content + ` —Deleted` marker) + `/clear` banner,
-best-effort subs; a `channel.moderate` v2 sub (gated on the
-`kTwitchModerationScopes` 8-scope bundle, pre-upgrade tokens skip it)
-supplies the deleting mod for the tap reveal) and scrolled-up chat shows a
-pause chip. On join, recent history backfills (dimmed, once per channel per
-session) from the community `recent-messages.robotty.de` service
-Chatterino uses (`TwitchRecentMessagesService` parses the IRC lines into
-`ChatMessageEvent`s; toggle `TwitchChatLoadHistory` → options "Chat
-history"; `test/flutter_test_config.dart` mocks its default client
-suite-wide). Mod tooling (wave 3): Warn… compose in the mod action sheet,
-unban-request Approve/Deny in the ban inbox, and a live AutoMod queue sheet
-(`automod.message.hold/.update` v2 → `TwitchChatStore.autoModQueue`) behind
-the channel mod sheet — one `kTwitchManageModToolingScopes` scope-upgrade
-bundle, pre-upgrade tokens get the re-login CTA on the gated rows. Chat is
-also a **dedicated tab** (`Tabs.Chat` — usable without an OBS session; the
-dashboard pane is removed) and the **streaming-mode dashboard** embeds chat
-as its live co-display surface (floating header overlay via the
-`StreamChat.hideUsernameBar` seam). Next:
-availability/entitlement gate decision (gates wave 4) — see chat audit +
-handoff.
+**Chat (Twitch native):** a full native engine (device-code login,
+EventSub reads, Helix writes, multi-chat, room + message mod tooling,
+badges / third-party emotes / emote picker, history backfill) ships next
+to the WebView embeds — engine switch in the chat bar
+(`SelectedChatEngine`). Chat is a **dedicated tab** (no OBS session
+needed; the dashboard pane is removed) and the streaming-mode dashboard's
+co-display. Details: [`docs/chat-engines.md`](docs/chat-engines.md).
 
-**YouTube chat:** a native engine ships next to the WebView embed
-(`nativeChatAvailableFor` covers `ChatType.YouTube`; plan/audit:
-[`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md)).
-Reads poll `liveChatMessages.list` with a **user-supplied API key**
-(Settings → YouTube setup sheet — quota is per-GCP-project, so no app-owned
-default key until the `streamList` spike says otherwise); writes/mod
-(delete/timeout/ban) ride Google OAuth **device flow** (BYO OAuth client
-id/secret in the setup sheet's advanced section). `YouTubeChatStore`
-mirrors `TwitchChatStore` (per-video buffers, tombstone/ban reconcile, echo
-dedup). No badge artwork/pins/AutoMod/emotes — the API doesn't expose
-them. Entries are a **channel** (`@handle` / `UC…` / channel URL —
-`parseYouTubeTarget` in `lib/utils/youtube_target.dart`) or a pinned
-video; channel entries resolve their current stream via
-`YouTubeLiveResolver` (quota-free `/live` page scrape → 1-unit
-`videos.list`) and **auto-roll over** to the next stream
-(`kYouTubeLiveRecheckSchedule`); the WebView follows via
-`YouTubeWebLiveTracker`. The entry name is optional — left empty, it's
-the channel's display name (`YouTubeEntryNamer`, never an `@handle`). Signed in, the account's **own channel**
-leads the native list marked "You" (`YouTubeChatStore.ownChannel`,
-reserved label `kYouTubeOwnChannelLabel`, id from `YouTubeAuth.channelId`;
-native-only, not in `YouTubeUsernames`).
-Design: `docs/chatterino-comparison.md` § YouTube. Spike tool: `tool/youtube_spike/` measures the gRPC `streamList`
-quota question before any default-on rollout.
+**YouTube chat:** native engine next to the WebView embed — reads poll
+`liveChatMessages.list` with a user-supplied API key, writes/mod ride
+Google OAuth device flow; channel entries auto-resolve (and roll over to)
+the channel's current live stream. Details:
+[`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md).
 
-**Kick chat:** a native engine (read + write/mod) ships next to the WebView
-embed (`nativeChatAvailableFor` covers `ChatType.Kick`). Reads are **anonymous**
-(no auth, no API key): `KickChannelService` resolves slugs +
-backfills history via `kick.com/api/v2`, `KickPusherService` rides Kick's
-public Pusher socket (`chatrooms.{id}.v2`, scraped-but-stable app key,
-injectable connector). `KickChatStore` mirrors `YouTubeChatStore`
-(per-channel buffers, tombstone/ban reconcile, `/clear` notice, Pro-gated
-`connectChat`); rows render `badges_v2` artwork + `[emote:id:name]` inline
-images. Writes/mod ride the **official API** (`api.kick.com/public/v1`) behind
-an optional sign-in: **manual-paste PKCE OAuth** (Kick has no device flow; the
-app-owned client is compiled in from gitignored
-`docs/private/kick_oauth.json` via `--dart-define-from-file`, and a build
-without it falls back to BYO client id/secret in the setup sheet, scope
-bundle `user:read chat:write
-moderation:ban moderation:chat_message:manage`, tokens in the `KickAuth` box,
-refresh rotates BOTH tokens — single-flight in `KickAuthService`).
-`KickApiService` sends/replies/deletes/bans/timeouts/unbans with typed
-statusCode errors + 401→refresh-once→retry-once; no optimistic append (the
-Pusher echo renders own messages); the mod long-press shows for any signed-in
-user and 403s surface honestly (no "am I a mod" lookup exists). Sub/gift-sub/
-host notification rows (`KickChatroomEventKind`) and a read-only chat-mode
-awareness banner (slow/followers/subs/emote-only, `KickChatModeStrip` — Kick
-exposes no write API for these) round out parity with Twitch's notice
-rows; third-party (7TV) emotes render inline via the same
-`ThirdPartyEmoteStore` Twitch uses, and a single Badges master toggle
-(per-category values unverified) sits in the options sheet. Pins
-show on the shared banner (history + live create/delete; no Kick unpin
-API). The banner overlays the timeline (glass, same as the nav bars); its
-✕ tucks it to a glass pin button at the top-right, and tapping the
-pin brings the banner back. The scroll pills (Paused / New messages)
-use that same glass. An emote picker (`KickEmoteService.fetchChannelEmotes`
-— channel + Kick-wide Global + Emojis in one anonymous call, plus a
-Third-party/7TV section) docks in the Kick input, mirroring Twitch's
-picker mechanics. The channel list
-shares `SettingsKeys.KickUsernames`/`SelectedKickUsername` with the WebView
-path (slug == identity). Signed in, the account's **own channel** leads
-the native list marked "You" (`KickChatStore.ownChannelSlug`, verified
-against the channel's `user_id` and stored as `KickAuth.channelSlug`;
-native-only — its selection persists as `SelectedKickNativeOwnChannel`,
-not in the shared WebView keys).
+**Kick chat:** native engine (read + write/mod) next to the WebView embed —
+anonymous reads (public web API + Kick's Pusher socket), writes/mod via
+the official API behind an optional manual-paste PKCE sign-in.
+Details: [`docs/kick-chat-audit.md`](docs/kick-chat-audit.md).
 
-**Combined chat (waves 1-3 shipped):** `ChatType.Combined`
-(HiveField 4, native-only — `isNativeOnly`, no engine switch) merges the
-signed-in "You" channels ("My chats") into one Pro-gated timeline.
-`CombinedChatStore` binds to the persisted chat type app-wide (created
-after Hive init in `main.dart`): selecting Combined points each platform
-store at its own channel, leaving restores the previous selections
-("shared" coupling — no extra connections). `timeline` = stable k-way
-merge by platform timestamp (`mergeCombinedStreams`, per-platform order
-never changes). `NativeCombinedChatView` reuses each platform's row
-widget behind a platform icon; pins stack per platform
-(`CombinedPinStack`); sources sheet = status + sign-in/retry + toggles.
-Spec/plan: `docs/superpowers/specs|plans/2026-09-24-combined-chat*`.
-Wave 2: saved combos of any channels (`CombinedCombo`, settings JSON;
-saving registers each source in its platform's own list — the stores
-only show what they list), builder sheet with confirm-only same-name
-suggestions (`CombinedMatchFinder`: Kick slug, YouTube `@handle` page,
-Twitch exact login — quota-free), combo dropdown in the chat bar, a
-source strip whose chips jump into one platform
-(`CombinedChatStore.focus` → "↩ Combined" strip on that window, no
-restore; YouTube `pausePolling` meanwhile). Wave 3 (writing):
-`CombinedChatInput` sends to `CombinedChatStore.sendTarget` — a pending
-reply's platform, else the target chip's pick (`CombinedChatSendTarget`),
-else the first writable source; the emote picker / autocomplete / accent
-follow the target. Long-press opens the row platform's own sheet (mod
-sheet where allowed, else Copy + Reply); the platform store is already on
-the row's channel (shared coupling), so its sheets act on the right
-channel as-is. `setReplyTarget` keeps one reply across stores.
-Channel mod sheets: Twitch (full Helix), Kick (`KickChannelModPanel`:
-modes read-only, session bans + unban, unban by name), YouTube
-(`YouTubeChannelModPanel`: polls, session bans, owner-only moderators);
-Kick/YouTube shields show whenever signed in (no mod lookup) and 403s
-toast `chatNotModeratorText`. Combined: `CombinedChannelModSheet` —
-always one tab per source; a tab that can't be moderated
-(`combinedModBlock`) explains why + offers the fix. Kick/YouTube have no
-ban-list APIs — the `recentBans` lists are what the session saw.
-Status language: "LIVE" / the live green = streamer on air only;
-connection health is quiet when fine and only surfaces as a problem
-marker (`CombinedIssueMarker`) or label.
-Channel pickers everywhere: own first then A–Z, menu capped at
-`kChatChannelMenuMaxHeight`, `NativeChatLiveTag` (LIVE / OFFLINE /
-nothing when unknown) from each store's `liveStateForChannel`; the
-combo switcher shows on-air state for every combo
-(`CombinedChatStore.liveSourcesOf`). Live data cadence: Twitch Helix
-batch 10 s + EventSub `stream.online/offline`; Kick 15 s for the
-selected channel (60 s list) + Pusher `channel.{id}` on/off-air events;
-YouTube viewers 30 s (quota) — constants `kTwitchLivePollInterval`,
-`kKickSelectedLiveInterval` / `kKickListLiveInterval`,
-`kViewerRefreshInterval`.
+**Combined chat (waves 1-3 shipped):** `ChatType.Combined` (native-only)
+merges the signed-in channels — or saved combos of any channels — into
+one Pro-gated timeline (stable k-way merge, per-platform rows / mod
+sheets, writing to a picked target). Details:
+[`docs/chat-engines.md`](docs/chat-engines.md).
 
-**Add chat sheets (all 3 engines):** the native channel menus and the
-combo builder's "Other…" open a searchable picker per platform on shared
-chrome (`stream_chat/dialogs/add_chat_sheet_chrome.dart`): Twitch (Helix
-search + moderated / followed), YouTube (`search.list`, own 100/day
-bucket, + subscriptions when signed in; keyless keeps the dialog), Kick
-(the website's anonymous search + the official live listing when signed
-in - Kick has no follows API). WebView mode keeps the add dialogs. Facts:
-the audits' § Channel discovery.
+**Add chat sheets (all 3 engines):** one searchable channel picker per
+platform on shared chrome, opened from the native channel menus and the
+combo builder's "Other…". Details:
+[`docs/chat-engines.md`](docs/chat-engines.md).
 
-**General native chat (all 3 engines):** every store answers
-`isViewingOwnChannel` (the "You" entry — groundwork for the merged
-timeline, see `chatterino-comparison.md`); self-mention/keyword row
-highlighting (`ChatHighlightSelfMention` + `ChatHighlightKeywords`, shared
-matcher in `chat_highlight_helper.dart`), a client-side mute-word filter,
-chat search/filter over each engine's buffered history
-(`ChatSearchSheet`), Chatterino-style extras (`docs/chatterino-comparison.md`:
-`@user`/emote autocomplete strip, timestamps / zebra rows / readable name
-colors, FFZ + zero-width emotes, highlighted/ignored users, `/regex/`
-entries, censor mode via `ChatFilterSettings`; backfilled history is
-dimmed with a platform-colored "New messages" divider on all engines),
-and a "Copy message"
-long-press action available even
-to fully read-only viewers (`MessageActionSheet`, generalized from
-Twitch's non-mod sheet) all ship uniformly. Message rows carry
-screen-reader semantics — each row collapses into one
-`Semantics(container: true, excludeSemantics: true, label: ...)` node
-(raw-field label, not the rendered span tree) with `onTap`/`onLongPress`
-as the two exposed actions.
+**General native chat (all 3 engines):** shared mechanics ship uniformly —
+own-channel detection, mention/keyword highlighting, mute words, chat
+search, Chatterino-style extras (autocomplete, timestamps/zebra, readable
+name colors, FFZ + zero-width emotes, highlighted/ignored users, censor
+mode), "Copy message" for read-only viewers, and screen-reader row
+semantics. Details: [`docs/chat-engines.md`](docs/chat-engines.md).
 
-**Chat TTS:** `ChatTtsStore` (startup singleton, Pro) reads the chat the
-Chat tab shows (one native platform or every Combined source) via each
-store's `liveMessages` stream (no backfill / switch restores) →
-`chatTtsUtterance` (audience, skip rules, chat-wide ignore/mute) →
-`ChatTtsQueue` (never drops on its own; "N waiting" + jump to latest;
-stale skip opt-in; `speak` → false = audio taken (call) → the message
-waits and retries; a voice preview `hold`s reading; switching chat type /
-engine clears it, another channel's messages are skipped). It attaches
-only to platform stores that already exist (GetIt `onCreated` in
-`main.dart` for later ones) - never creates one. Foreground only (no background modes, by decision);
-Wake Lock is app-wide now (default off). Speaker in the
-`NativeChatWindow` header: tap toggles, long press = settings (also an
-options-sheet page), one-off hint on first enable (a speech bubble
-anchored to the speaker via `LayerLink` in a root-overlay `OverlayPortal`;
-tap = open settings, 5 s auto-close). Speech runs on the
-app's own `com.kounex.obsBlade/tts` channel (`PlatformTtsSpeaker` →
-`ChatTts` in `AppDelegate.swift` / `MainActivity.kt`; iOS picks the
-best installed voice + stops on audio interruptions, Android ducks via
-transient audio focus + restarts a dead engine once, both answer `speak` false while a call /
-interruption holds the audio; `voices` lists the
-installed voices for the sheet; the Dart queue has a per-message
-watchdog so a missing "finished" never stalls reading). Language: a
-default (`ChatTtsLanguage`, null = phone) + opt-in per-message detection
-(`ChatTtsDetectLanguage`; iOS `NLLanguageRecognizer`, Android 10+
-`TextClassifier`, on the message body only, ≥3 words or ≥12 letters and
-≥60% confidence, else the default) - both done natively, the Dart side
-only sends `setLanguage` + `speak {text, detectionText}`. Spam: 3+
-identical words collapse to "KEKW 5 times"; "Combine repeated messages"
-(default on) reads identical short (≤3 words) messages already waiting
-in the queue once - first author + notable (highlighted/mod/streamer)
-names, max 3, rest counted (`chatTtsCombinedLine`), never holds a
-message back; "Skip emote-only messages" (opt-in). Filler words come
-from the built-in `ChatTtsPhrases` table (all 39 base languages iOS
-ships voices for + old Android aliases, by the default TTS language,
-English fallback) - no translation service on purpose. Voices: a
-per-language pick (`ChatTtsVoices` JSON, tag → voice id, missing =
-automatic) sent with `setLanguage`; both bridges honour it (exact tag;
-another region's pick only for a tag without voices of its own) and
-mark it `preferred`, plus `default` on the voice the default language
-reads with (the sheet's voice row + filler-word language follow it -
-Android reads in the engine's default language, not the phone's); `preview` reads a
-per-language sample (`ChatTtsPhrases.sample`). Android adds
-`openTtsSettings` / `installVoiceData` intents; iOS can only explain
-the path (no public deep link).
-No plugin:
-`flutter_tts` is CocoaPods-only and iOS is SPM-only since `81a41a27`, so
-check a new iOS plugin for SPM support before adding it. Feasibility +
-decisions:
-`docs/private/feature-requests-2026-10.md`.
+**Chat TTS:** `ChatTtsStore` (startup singleton, Pro) reads the visible
+chat aloud over the app's own native TTS channel — a never-dropping queue
+with spam collapsing, per-language voices, opt-in per-message language
+detection, speaker toggle in the native chat header. Details:
+[`docs/chat-tts.md`](docs/chat-tts.md).
 
 **Monetization (Pro):** native chat engines are gated behind the **Pro
-entitlement** (`ProStore.isPro` — settings flag `BoughtPro` + debug-only
-override via long-press on the paywall hero, also reachable in a release
-build compiled with `--dart-define=PRO_RELEASE_TEST_UNLOCK=true` —
-`kProReleaseTestUnlock` in `pro_ids.dart` — for dogfooding Pro-gated paths
-before the store products are purchasable). Product ids
-(`lib/utils/pro_ids.dart`): `pro_yearly` / `pro_monthly` (subs) +
-`pro_lifetime` (non-consumable) — **created + priced store-side**
-(2026-09, via `tool/provisioning/`; ASC submitted for review, Play
-ACTIVE), and the RevenueCat keys are pasted
-(`lib/utils/revenuecat_config.dart`) so the app runs the **RevenueCat**
-path (`purchases_flutter`, entitlement `pro`) instead of the legacy
-direct-IAP fallback. Checklist + sandbox dogfood:
+entitlement** (`ProStore.isPro`). Products `pro_yearly` / `pro_monthly`
+(subs) + `pro_lifetime` (non-consumable) are created + priced store-side
+and **approved on both stores**; the app runs the **RevenueCat** path
+(`purchases_flutter`, entitlement `pro`) with the legacy direct-IAP
+fallback. WebView chat stays free forever. Gate mechanics + wiring:
 [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md).
-Gates: the chat-bar
-engine switch always applies (lock badge on the Native segment), and
-enforcement sits behind it — the native chat pane renders the locked
-upsell widget (`Observer` over `ProStore.isPro`, incl. legacy persisted
-`SelectedChatEngine=native`), the username-bar native cluster hides, and
-the stores refuse to connect without the entitlement (`connectChat`
-gates on `isPro` via an injectable `isProResolver` seam — persisted
-engine selections and cold-start session restores can't bring native
-chat up behind the locked pane). WebView chat stays free forever
-(strategy:
-`docs/private/monetization-strategy.md`). Restore = RC restore / cold-start
-guarded `restorePurchases()` (legacy path) + explicit button. On the RC
-path, CustomerInfo entitlement state is the truth (lapsed subscriptions
-revoke — the direct-IAP blind spot is fixed); `BoughtPro` is the offline
-mirror. foss branch: strip this additively (same pattern as
-tips/blacksmith).
 
 ## Docs index
 
