@@ -170,24 +170,32 @@ fallback. WebView chat stays free forever. Gate mechanics + wiring:
 | [`docs/session-handoff.md`](docs/session-handoff.md) | **Fresh agent** — resume state |
 | [`docs/obs-websocket-architecture.md`](docs/obs-websocket-architecture.md) | How OBS WebSocket is modeled/used |
 | [`docs/obs-protocol-gotchas.md`](docs/obs-protocol-gotchas.md) | **Before any OBS-facing feature** — obs-websocket / OBS / plugin behavior the docs don't tell (canvas-scoped lookups, missing events, Aitum, Dual Format) |
+| [`docs/canvases.md`](docs/canvases.md) | Canvases (view-only switch, Aitum Vertical control, Twitch Dual Format) — shipped state |
 | [`docs/dashboard-interaction-checklist.md`](docs/dashboard-interaction-checklist.md) | **Before reporting a feature done** — journeys × dashboard surfaces × state changes × form factors |
-| [`docs/websocket-connect-audit.md`](docs/websocket-connect-audit.md) | Connect/handshake gaps + remediation |
-| [`docs/dashboard-store-websocket-audit.md`](docs/dashboard-store-websocket-audit.md) | DashboardStore events/responses/batches |
+| [`docs/chat-journey-checklist.md`](docs/chat-journey-checklist.md) | **Before reporting a chat feature done** — chat, sign-ins, activity journeys |
+| [`docs/chat-engines.md`](docs/chat-engines.md) | Native chat engines (Twitch + shared all-engine mechanics, combined chat, add-chat sheets) — shipped state |
+| [`docs/chat-tts.md`](docs/chat-tts.md) | Chat TTS — shipped state (queue, voices, language detection) |
 | [`docs/chat-webview-audit.md`](docs/chat-webview-audit.md) | Twitch/YouTube/Owncast chat strategy |
-| [`docs/chat-native-roadmap.md`](docs/chat-native-roadmap.md) | Native chat: unexploited Twitch API surface + build order |
-| [`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md) | Native YouTube chat: API feasibility, quota reality, build plan |
+| [`docs/chat-native-roadmap.md`](docs/chat-native-roadmap.md) | Native chat: unexploited Twitch API surface + build order (waves 1–3 shipped; wave-4 item selection open) |
+| [`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md) | Native YouTube chat: API feasibility, quota reality, shipped state |
+| [`docs/kick-chat-audit.md`](docs/kick-chat-audit.md) | Native Kick chat: API surface, OAuth/write path, shipped state |
 | [`docs/chatterino-comparison.md`](docs/chatterino-comparison.md) | Chatterino feature comparison, adapt list + YouTube channel→live resolution |
-| [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md) | Pro subscription: RevenueCat dashboard/store wiring checklist |
+| [`docs/activity-feed-idea.md`](docs/activity-feed-idea.md) | Activity feed (own-channel events) — concept + design |
+| [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md) | Pro subscription: RevenueCat wiring, gate mechanics, sandbox dogfood |
 | [`docs/upgrade-plan.md`](docs/upgrade-plan.md) | Flutter / package upgrade status |
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
-| [`docs/hive-ce-source-audit.md`](docs/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit |
 | [`docs/release-playbook.md`](docs/release-playbook.md) | Store releases — versioning, release notes, TestFlight/Play internal → review → publish; entry points are the `release-beta` / `release-promote` / `release-direct` / `release-publish` skills in `.claude/skills/` |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | History of agent changes (not the handoff doc — that's current-state only) |
 | [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
 | [`docs/superpowers/plan-defect-checklist.md`](docs/superpowers/plan-defect-checklist.md) | Running an SDD wave — pre-dispatch plan-verification pass, codegen checklist, named defect probes |
 | [`docs/superpowers/visual-companion-gotchas.md`](docs/superpowers/visual-companion-gotchas.md) | Brainstorm companion server — framing ban, session keys, real-browser verification |
-| [`docs/redesign/`](docs/redesign/) | "On Air" redesign (now on `master`): design system, audit digest, session notes |
+| [`docs/superpowers/specs/2026-09-24-combined-chat-design.md`](docs/superpowers/specs/2026-09-24-combined-chat-design.md) | Combined chat design (living spec; wave plans in `docs/archive/plans/`) |
+| [`docs/redesign/`](docs/redesign/) | "On Air" redesign (shipped as 4.0) — living: `design-system.md` + `2026-iteration/` (`state-and-plan.md`, `token-delta.md`); process docs archived |
 | [`docs/redesign-astra-audit.md`](docs/redesign-astra-audit.md) | Astra first-principles redesign (branch `redesign-astra`): audit + ratified progressive-adoption verdict, verified master defects, harvest list |
+| [`docs/archive/`](docs/archive/) | Historical audits, shipped SDD plans/specs, redesign process docs, pre-4.0 changelog |
+| [`docs/archive/websocket-connect-audit.md`](docs/archive/websocket-connect-audit.md) | Connect/handshake gaps + remediation (historical) |
+| [`docs/archive/dashboard-store-websocket-audit.md`](docs/archive/dashboard-store-websocket-audit.md) | DashboardStore events/responses/batches (historical) |
+| [`docs/archive/hive-ce-source-audit.md`](docs/archive/hive-ce-source-audit.md) | Classic Hive vs Hive CE on-disk audit (historical) |
 | [`docs/private/monetization-strategy.md`](docs/private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored — not public.** |
 | [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — hosting, build order, open decisions. **Gitignored — not public.** |
 | [`docs/private/feature-requests-2026-10.md`](docs/private/feature-requests-2026-10.md) | User requests 2026-10 (chat TTS, in-app web pages, TikTok chat, OBS canvases): feasibility, store-rating impact, decisions + plan. **Gitignored — not public.** |
