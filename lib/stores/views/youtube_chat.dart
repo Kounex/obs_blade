@@ -2144,6 +2144,18 @@ abstract class _YouTubeChatStore with Store {
         );
       });
 
+  /// A fresh access token for a one-off read (the Add chat sheet's
+  /// `videos.list` without an API key); null when signed out or it fails.
+  Future<String?> accessTokenForRead() async {
+    if (!this.isSignedIn) return null;
+    try {
+      return await this._validAccessToken();
+    } catch (e) {
+      GeneralHelper.logFailure('YouTube access token refresh failed', e);
+      return null;
+    }
+  }
+
   Future<String> _validAccessToken() async {
     final auth = this._authBox.get(YouTubeAuth.kBoxKey);
     if (auth == null) throw const YouTubeAuthException('Not signed in');

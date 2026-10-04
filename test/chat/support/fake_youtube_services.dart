@@ -366,6 +366,26 @@ class FakeYouTubeLiveResolver extends YouTubeLiveResolver {
 
 /// The YouTube Add chat sheet's reads, scripted: [results] per query,
 /// [subscriptions], optional throws. No cache (each query reaches it).
+/// `/live` answers per channel path: a video id, null (not live) or an
+/// exception (no clear answer); paths not in [answers] get [fallback]
+class KeyedLiveResolver extends YouTubeLiveResolver {
+  final Map<String, Object?> answers;
+  final Object? fallback;
+  final List<String> calls = [];
+
+  KeyedLiveResolver(this.answers, {this.fallback});
+
+  @override
+  Future<String?> resolveLiveVideoId(YouTubeChannelTarget channel) async {
+    this.calls.add(channel.path);
+    final answer = this.answers.containsKey(channel.path)
+        ? this.answers[channel.path]
+        : this.fallback;
+    if (answer is Exception) throw answer;
+    return answer as String?;
+  }
+}
+
 class FakeChannelSearchService extends YouTubeChannelSearchService {
   final Map<String, List<YouTubeChannelSuggestion>> results = {};
   final List<String> searchCalls = [];

@@ -116,6 +116,20 @@ scalable read path but its quota cost is undocumented — the spike tool
   `@` accepted) so an already listed channel / the own channel is found
   either way (`youTubeEntryLabelFor`).
 - Search answers are cached 10 min (LIVE chips must not go stale).
+- LIVE + viewers on search hits and subscriptions (2026-10-04,
+  `YouTubeLiveStatusService`): `liveBroadcastContent` is the search
+  index's view (can lag, and subscriptions have none), so each listed
+  channel's `/live` page is read (quota-free, 6 at a time) and the
+  candidates go into one `videos.list?part=liveStreamingDetails` per 24
+  (1 unit). Live = `actualStartTime` set and no `actualEndTime` (`/live`
+  also points at a scheduled stream); `concurrentViewers` is a string and
+  missing when the owner hides it (→ LIVE without a number). A failed
+  read leaves the channel unknown (the search's own LIVE stays), nothing
+  cached; answers are remembered 1 min. Subscriptions sort live first by
+  viewers, the rest keep YouTube's A-Z - once, after the whole list is
+  checked (rows are keyed; a reorder per chunk moved rows under a
+  finger). Without an API key `videos.list` reads with the sign-in
+  token; a `/live` read gives up after 8 s.
 - Not verified with a live key on the maintainer machine (none there):
   shapes are from Google's reference; check on device.
 

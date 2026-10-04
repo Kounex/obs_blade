@@ -15,6 +15,7 @@ import '../../../../../../utils/modal_handler.dart';
 import '../../../../../../utils/youtube/youtube_channel_search_service.dart';
 import '../../../../../../utils/youtube/youtube_entry_name.dart';
 import '../../../../../../utils/youtube/youtube_live_chat_service.dart';
+import '../../../../../../utils/youtube/youtube_live_status_service.dart';
 import '../../../../../../utils/youtube_target.dart';
 import 'add_chat_sheet_chrome.dart';
 
@@ -43,6 +44,7 @@ Future<YouTubeAddChatPick?> showYouTubeAddChatSheet(
   BuildContext context, {
   YouTubeChannelSearchService? searchService,
   YouTubeEntryNamer? namer,
+  YouTubeLiveStatusService? liveStatusService,
   bool pickOnly = false,
 }) => ModalHandler.showBaseBottomSheet<YouTubeAddChatPick>(
   context: context,
@@ -52,6 +54,7 @@ Future<YouTubeAddChatPick?> showYouTubeAddChatSheet(
   builder: (context) => YouTubeAddChatSheet(
     searchService: searchService,
     namer: namer,
+    liveStatusService: liveStatusService,
     pickOnly: pickOnly,
   ),
 );
@@ -75,6 +78,9 @@ class YouTubeAddChatSheet extends StatefulWidget {
   /// Names a pasted link / handle (test seam).
   final YouTubeEntryNamer? namer;
 
+  /// LIVE + viewers lookup (test seam; the shared one remembers answers)
+  final YouTubeLiveStatusService? liveStatusService;
+
   /// Combined chat builder: the pick is the result, nothing is saved and
   /// nothing is greyed out.
   final bool pickOnly;
@@ -83,8 +89,12 @@ class YouTubeAddChatSheet extends StatefulWidget {
     super.key,
     this.searchService,
     this.namer,
+    this.liveStatusService,
     this.pickOnly = false,
   });
+
+  YouTubeLiveStatusService get liveStatus =>
+      this.liveStatusService ?? YouTubeLiveStatusService.shared;
 
   @override
   State<YouTubeAddChatSheet> createState() => _YouTubeAddChatSheetState();
@@ -112,6 +122,45 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
 
   /// Key of the row whose pick is resolving (naming a pasted link).
   String? _busyKey;
+
+  /// LIVE + viewers per channel id, filled in as checks answer
+  final Map<String, YouTubeLiveStatus> _live = {};
+
+  /// Subscriptions live first, set once their check is done (null
+  /// until then: A-Z, chips fill in place)
+  List<YouTubeChannelSuggestion>? _subscriptionsSorted;
+
+  /// Ask for LIVE + viewers of [channels] (quota-free page reads + one
+  /// 1-unit videos.list per chunk); chips fill in as answers come in.
+  Future<void> _checkLive(List<YouTubeChannelSuggestion> channels) async {
+    if (channels.isEmpty) return;
+    await this.widget.liveStatus.check(
+      [for (final channel in channels) channel.channelId],
+      apiKey: YouTubeLiveChatService.resolveApiKey(),
+      accessToken: this._store.accessTokenForRead,
+      onUpdate: (update) {
+        if (this.mounted) this.setState(() => this._live.addAll(update));
+      },
+      cancelled: () => !this.mounted,
+    );
+  }
+
+  /// [subscriptions] with live ones first (most viewers on top), the
+  /// rest A-Z as YouTube listed them
+  List<YouTubeChannelSuggestion> _liveFirst(
+    List<YouTubeChannelSuggestion> subscriptions,
+  ) {
+    bool live(YouTubeChannelSuggestion channel) =>
+        this._live[channel.channelId]?.live ?? false;
+    return [
+      ...subscriptions.where(live).toList()..sort(
+        (a, b) => (this._live[b.channelId]?.viewers ?? -1).compareTo(
+          this._live[a.channelId]?.viewers ?? -1,
+        ),
+      ),
+      ...subscriptions.where((channel) => !live(channel)),
+    ];
+  }
 
   YouTubeChatStore get _store => GetIt.instance<YouTubeChatStore>();
 
@@ -143,8 +192,18 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
       if (this.mounted) {
         this.setState(() {
           this._subscriptions = subscriptions;
+          this._subscriptionsSorted = null;
           this._loadingSubscriptions = false;
         });
+
+        /// One reorder when the whole list is checked - not per chunk,
+        /// which would move rows under a finger
+        await this._checkLive(subscriptions);
+        if (this.mounted && identical(this._subscriptions, subscriptions)) {
+          this.setState(
+            () => this._subscriptionsSorted = this._liveFirst(subscriptions),
+          );
+        }
       }
     } catch (e) {
       if (this.mounted) {
@@ -186,6 +245,7 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
         this._results = cached;
         this._searching = false;
       });
+      unawaited(this._checkLive(cached));
       return;
     }
     this._debounce = Timer(_kDebounce, () => this._search(trimmed));
@@ -207,6 +267,7 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
           this._results = results;
           this._searching = false;
         });
+        unawaited(this._checkLive(results));
       }
     } catch (e) {
       GeneralHelper.logFailure('YouTube channel search failed', e);
@@ -348,7 +409,8 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
             child: Text('None', style: Theme.of(context).textTheme.bodySmall),
           )
         else
-          for (final channel in this._subscriptions)
+          for (final channel
+              in this._subscriptionsSorted ?? this._subscriptions)
             this._suggestionRow(channel, added, chipScope: 'sub'),
       ],
     );
@@ -427,11 +489,16 @@ class _YouTubeAddChatSheetState extends State<YouTubeAddChatSheet> {
     Set<String> added, {
     required String chipScope,
   }) => AddChatChannelRow(
+    /// Keyed: a press stays with its channel when rows move
+    key: ValueKey('add-chat-row-$chipScope-${channel.channelId}'),
     chipScope: chipScope,
     id: channel.channelId,
     displayName: channel.title,
     subtitle: _subtitle(channel),
-    live: channel.isLive,
+
+    /// The check's answer wins; until then a search hit's own flag
+    live: this._live[channel.channelId]?.live ?? channel.isLive,
+    viewerCount: this._live[channel.channelId]?.viewers,
     added: this._suggestionAdded(added, channel),
     onAdd: () => this._pick(
       _targetOf(channel),

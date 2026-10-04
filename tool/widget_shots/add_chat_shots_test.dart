@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
@@ -15,6 +19,7 @@ import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_status_service.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_add_chat_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_add_chat_sheet.dart';
 
@@ -134,6 +139,34 @@ void main() {
   const ucB = 'UCbbbbbbbbbbbbbbbbbbbbbb';
   const ucC = 'UCcccccccccccccccccccccc';
 
+  /// Ludwig and Markiplier live with viewers, NASA live with the count
+  /// hidden, the rest offline - no real `/live` reads in the shots
+  YouTubeLiveStatusService liveStatus() => YouTubeLiveStatusService(
+    resolver: KeyedLiveResolver({'channel/$ucA': 'vA', 'channel/$ucB': 'vB'}),
+    client: MockClient(
+      (request) async => http.Response(
+        json.encode({
+          'items': [
+            {
+              'id': 'vA',
+              'liveStreamingDetails': {
+                'actualStartTime': '2026-10-04T10:00:00Z',
+                'concurrentViewers': '23456',
+              },
+            },
+            {
+              'id': 'vB',
+              'liveStreamingDetails': {
+                'actualStartTime': '2026-10-04T10:00:00Z',
+              },
+            },
+          ],
+        }),
+        200,
+      ),
+    ),
+  );
+
   void scriptYouTubeSearch() {
     search.results['markiplier'] = const [
       YouTubeChannelSuggestion(
@@ -174,7 +207,12 @@ void main() {
       await harness.shot(
         tester,
         'add_chat_youtube_signed_out',
-        sheet(YouTubeAddChatSheet(searchService: search)),
+        sheet(
+          YouTubeAddChatSheet(
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
       );
       await typeAndShoot(tester, 'markiplier', 'add_chat_youtube_search');
     });
@@ -185,7 +223,12 @@ void main() {
       await harness.shot(
         tester,
         'add_chat_youtube_empty_narrow',
-        sheet(YouTubeAddChatSheet(searchService: search)),
+        sheet(
+          YouTubeAddChatSheet(
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
         size: const Size(320, 640),
       );
       await typeAndShoot(
@@ -198,6 +241,12 @@ void main() {
     testWidgets('signed in: subscriptions (tablet)', (tester) async {
       await signInYouTube(tester);
       search.subscriptions = const [
+        YouTubeChannelSuggestion(
+          channelId: 'UCdddddddddddddddddddddd',
+          title: 'Alpha Gaming',
+          handle: '@alphagaming',
+          subscriberCount: 91000,
+        ),
         YouTubeChannelSuggestion(
           channelId: ucA,
           title: 'Ludwig',
@@ -215,12 +264,22 @@ void main() {
       await harness.shot(
         tester,
         'add_chat_youtube_subscriptions',
-        sheet(YouTubeAddChatSheet(searchService: search)),
+        sheet(
+          YouTubeAddChatSheet(
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
       );
       await harness.shot(
         tester,
         'add_chat_youtube_subscriptions_tablet',
-        sheet(YouTubeAddChatSheet(searchService: search)),
+        sheet(
+          YouTubeAddChatSheet(
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
         size: kShotTablet,
       );
     });
@@ -230,7 +289,12 @@ void main() {
       await harness.shot(
         tester,
         'add_chat_youtube_start_quota',
-        sheet(YouTubeAddChatSheet(searchService: search)),
+        sheet(
+          YouTubeAddChatSheet(
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
       );
       await typeAndShoot(tester, 'markiplier', 'add_chat_youtube_quota');
     });
@@ -239,7 +303,12 @@ void main() {
       await harness.shot(
         tester,
         'add_chat_youtube_start_link',
-        sheet(YouTubeAddChatSheet(searchService: search)),
+        sheet(
+          YouTubeAddChatSheet(
+            searchService: search,
+            liveStatusService: liveStatus(),
+          ),
+        ),
       );
       await typeAndShoot(
         tester,

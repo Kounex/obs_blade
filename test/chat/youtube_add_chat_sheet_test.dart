@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/shared/design/count_up_text.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -13,6 +17,8 @@ import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_entry_name.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_status_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_add_chat_sheet.dart';
 
@@ -38,6 +44,36 @@ void main() {
   late YouTubeChatStore store;
   late FakeChannelSearchService search;
   late FakeNamer namer;
+
+  /// `/live` per channel path (unlisted: no clear answer → unknown, the
+  /// search's own LIVE stays - "search shows LIVE" relies on it) and
+  /// `videos.list` details per video id; [liveGate] holds the `/live`
+  /// answers back until completed
+  late Map<String, Object?> liveVideos;
+  late Map<String, Map<String, Object?>> liveDetails;
+  late List<Uri> videosCalls;
+  Completer<void>? liveGate;
+
+  YouTubeLiveStatusService liveStatus() => YouTubeLiveStatusService(
+    resolver: _GatedLiveResolver(
+      () => liveGate?.future,
+      liveVideos,
+      fallback: const YouTubeLiveResolveException('no answer'),
+    ),
+    client: MockClient((request) async {
+      videosCalls.add(request.url);
+      return http.Response(
+        json.encode({
+          'items': [
+            for (final id in request.url.queryParameters['id']!.split(','))
+              if (liveDetails[id] != null)
+                {'id': id, 'liveStreamingDetails': liveDetails[id]},
+          ],
+        }),
+        200,
+      );
+    }),
+  );
 
   Box settings() => Hive.box(HiveKeys.Settings.name);
 
@@ -94,6 +130,7 @@ void main() {
                   context,
                   searchService: search,
                   namer: namer,
+                  liveStatusService: liveStatus(),
                   pickOnly: pickOnly,
                 );
                 result?.call(pick);
@@ -124,6 +161,10 @@ void main() {
     await settings().put(SettingsKeys.YouTubeApiKey.name, 'key-1');
     search = FakeChannelSearchService();
     namer = FakeNamer();
+    liveVideos = {};
+    liveDetails = {};
+    videosCalls = [];
+    liveGate = null;
 
     /// Not Pro: selecting a channel stays a selection (no poll loop in
     /// the fake-async zone).
@@ -362,4 +403,123 @@ void main() {
     expect(store.selectedChannelLabel, kYouTubeOwnChannelLabel);
     await closeHiveInZone(tester);
   });
+
+  group('LIVE + viewers', () {
+    const live = {'actualStartTime': '2026-10-04T10:00:00Z'};
+    Finder viewers(String label) => find.byWidgetPredicate(
+      (widget) => widget is CountUpText && widget.value == label,
+    );
+
+    testWidgets('subscriptions: live ones first, most viewers on top, the '
+        'rest A-Z; a hidden count is LIVE without a number', (tester) async {
+      await signIn(tester);
+      search.subscriptions = const [
+        YouTubeChannelSuggestion(channelId: 'UCalpha', title: 'Alpha'),
+        YouTubeChannelSuggestion(channelId: 'UCbeta', title: 'Beta'),
+        YouTubeChannelSuggestion(channelId: 'UCcharlie', title: 'Charlie'),
+        YouTubeChannelSuggestion(channelId: 'UCdelta', title: 'Delta'),
+        YouTubeChannelSuggestion(channelId: 'UCgamma', title: 'Gamma'),
+        YouTubeChannelSuggestion(channelId: 'UCsched', title: 'Scheduled'),
+      ];
+      liveVideos.addAll({
+        'channel/UCalpha': null,
+        'channel/UCbeta': 'vBeta',
+        'channel/UCdelta': 'vDelta',
+        'channel/UCgamma': 'vGamma',
+        'channel/UCsched': 'vSched',
+      });
+      liveDetails.addAll({
+        'vBeta': {...live, 'concurrentViewers': '50'},
+        'vDelta': live,
+        'vGamma': {...live, 'concurrentViewers': '1234'},
+        'vSched': {'scheduledStartTime': '2026-10-05T10:00:00Z'},
+      });
+      await open(tester);
+
+      double top(String title) => tester.getTopLeft(find.text(title)).dy;
+      final order = ['Gamma', 'Beta', 'Delta', 'Alpha', 'Charlie', 'Scheduled'];
+      for (var i = 1; i < order.length; i++) {
+        expect(
+          top(order[i - 1]),
+          lessThan(top(order[i])),
+          reason: '${order[i - 1]} above ${order[i]}',
+        );
+      }
+      expect(viewers('1.2k'), findsOneWidget);
+      expect(viewers('50'), findsOneWidget);
+      expect(
+        find.byKey(const Key('add-chat-live-sub-UCdelta')),
+        findsOneWidget,
+      );
+      for (final id in ['UCalpha', 'UCcharlie', 'UCsched']) {
+        expect(find.byKey(Key('add-chat-live-sub-$id')), findsNothing);
+      }
+      expect(videosCalls, hasLength(1), reason: 'one videos.list per chunk');
+      await closeHiveInZone(tester);
+    });
+
+    testWidgets('search: the /live check beats the search index both ways', (
+      tester,
+    ) async {
+      search.results['mark'] = const [
+        YouTubeChannelSuggestion(channelId: kUcA, title: 'Mark', isLive: true),
+        YouTubeChannelSuggestion(channelId: kUcB, title: 'Mark Live'),
+      ];
+      liveVideos.addAll({'channel/$kUcA': null, 'channel/$kUcB': 'vB'});
+      liveDetails['vB'] = {...live, 'concurrentViewers': '900'};
+      await open(tester);
+      await type(tester, 'mark');
+
+      expect(find.byKey(const Key('add-chat-live-search-$kUcA')), findsNothing);
+      expect(
+        find.byKey(const Key('add-chat-live-search-$kUcB')),
+        findsOneWidget,
+      );
+      expect(viewers('900'), findsOneWidget);
+      await closeHiveInZone(tester);
+    });
+
+    testWidgets('a press stays with its channel when the list reorders '
+        'under it (rows move once, after the check)', (tester) async {
+      await signIn(tester);
+      search.subscriptions = const [
+        YouTubeChannelSuggestion(channelId: 'UCalpha', title: 'Alpha'),
+        YouTubeChannelSuggestion(channelId: 'UCzed', title: 'Zed'),
+      ];
+      liveVideos['channel/UCzed'] = 'vZed';
+      liveDetails['vZed'] = {...live, 'concurrentViewers': '500'};
+      liveGate = Completer<void>();
+      await open(tester);
+
+      final alphaTop = tester.getTopLeft(find.text('Alpha')).dy;
+      expect(alphaTop, lessThan(tester.getTopLeft(find.text('Zed')).dy));
+      final press = await tester.startGesture(
+        tester.getCenter(find.text('Alpha')),
+      );
+      liveGate!.complete();
+      await tester.pumpAndSettle();
+      expect(
+        tester.getTopLeft(find.text('Zed')).dy,
+        lessThan(tester.getTopLeft(find.text('Alpha')).dy),
+      );
+
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(entries(), {'Alpha': 'UCalpha'});
+      await closeHiveInZone(tester);
+    });
+  });
+}
+
+/// [KeyedLiveResolver] whose answers wait for a gate (null: answer now)
+class _GatedLiveResolver extends KeyedLiveResolver {
+  final Future<void>? Function() gate;
+
+  _GatedLiveResolver(this.gate, super.answers, {super.fallback});
+
+  @override
+  Future<String?> resolveLiveVideoId(YouTubeChannelTarget channel) async {
+    await this.gate();
+    return super.resolveLiveVideoId(channel);
+  }
 }
