@@ -3,7 +3,7 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-25**, top block
-updated **2026-09-30** (4.0.1 in review) (end of
+updated **2026-10-04** (4.0.1 live, 4.1.0 build 2026100401 in testing) (end of
 the combined-chat session: combined chat waves 1–3, channel mod sheets,
 picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
@@ -25,8 +25,7 @@ Build 2026100303: activity feed, TTS, YouTube read-only setup flow,
 canvases, plus paywall cards / FAQ / store listings / release notes for
 them (details: `changelog-agent.md` 2026-10-03 "4.1.0 beta"). The Play
 "what's new" is locked for this build. Nothing submitted; 4.0.1 is still
-`WAITING_FOR_REVIEW` on iOS - publish 4.0.1 first (`release-publish`),
-then `release-promote` 4.1.0 once the user is happy with it on device
+published 2026-10-04 - `release-promote` 4.1.0 once the user is happy with it on device
 (promote also pushes the changed iOS + Play listing text). At the 4.1
 store release the maintainer's site gets its pending feature copy
 (website project's AGENTS.md § Pending) - the privacy policy for the
@@ -46,16 +45,15 @@ notes unchanged, TestFlight "What to Test" = the device check list). Next:
 the user's on-device verdict, then `release-promote` 4.1.0 (after 4.0.1 is
 published).
 
-**Update 2026-10-04 (later) — releases:** **4.0.1 live on the App
-Store** (`release publish ios --version 4.0.1`, new option; tag `4.0.1`
-on `35a0040f` pushed); Play: the user presses Publish in the Play
-Console - confirm with `release status`, then the 4.0.1 changelog
-entry. **4.1.0 build 2026100401** (`7f652104`) on TestFlight (`VALID`,
-internal testers) + Play internal: everything through the activity
-filters + Pro story; TestFlight "What to Test" = `fastlane/testflight_notes.txt`.
+**Update 2026-10-04 (later) — releases:** **4.0.1 is live on both
+stores** (App Store `READY_FOR_SALE`, Play production 2026093001 at
+100%; tag `4.0.1`). Watch crash reports / reviews. **4.1.0 build
+2026100401** (`7f652104`) is on TestFlight (internal testers) + Play
+internal; TestFlight "What to Test" = `fastlane/testflight_notes.txt`.
 Next: the user's verdict on that build, then `release-promote` 4.1.0
-(also pushes the regrouped store descriptions + promo text; the website's
-`pending-4.1/` goes live at the store release).
+(also pushes the regrouped store descriptions + promo text), and at the
+store release the website's `pending-4.1/` goes live
+(`obs-blade-site/AGENTS.md` § Pending).
 
 **Update 2026-10-04 — activity feed status banner + own YouTube
 collection** (`2531ef9e..2666bb89`, changelog 2026-10-04; spec
@@ -106,19 +104,9 @@ page for the Pro subscription. Installed on Kounex iOS; confirm on the
 next TestFlight build that a TestFlight subscription shows and cancels
 there. Details: `changelog-agent.md` 2026-09-28 "Manage subscription".
 
-**4.0.1 in review (2026-09-30, late):** hotfix for the first 4.0 report
-(saved `ws://` domain-mode connections read offline) plus a connection
-review (QR password decoding, saved cards following edits/deletes, edit
-dialog password trim, autodiscover domain toggle), FAQ/log list sizing and
-iOS body text without Material letter spacing. Build 4.0.1 (2026093001):
-App Store `WAITING_FOR_REVIEW` (manual release), Play production 4.0.1 at
-100% held by managed publishing. **Next: when both stores approved, run
-the `release-publish` skill** (`publish ios`, the user presses Publish in
-the Play Console, tag `4.0.1` on `35a0040f`, changelog, reset this file).
-4.0.0 is live on both stores; `pro_monthly` / `pro_yearly` flipped to
-APPROVED. New: `docs/release-playbook.md` + `.claude/skills/release-*`,
-releases are tagged with the bare version from `4.0.0` on. Details:
-`changelog-agent.md` 2026-09-30 entries.
+**Releases:** 4.0.1 live on both stores since 2026-10-04 (tagged);
+releases are tagged with the bare version, process in
+`docs/release-playbook.md` + `.claude/skills/release-*`.
 
 **Update 2026-09-27 (late) - store screenshots redesign** (awaiting the
 user's verdict on the composed sets): capture tooling in

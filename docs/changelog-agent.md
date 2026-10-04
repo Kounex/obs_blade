@@ -2,6 +2,16 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - 4.0.1 live on both stores
+
+4.0.1 build 2026093001 (the `ws://` domain-mode hotfix + connection
+review, see 2026-09-30) released: App Store via `release publish ios
+--version 4.0.1` (new option - `publish` used pubspec's version, which
+was already 4.1.0), Play by the user in the Play Console (managed
+publishing), production at 100%. Tag `4.0.1` on `35a0040f`. Nothing odd
+on either store. Watch: crash reports and reviews for 4.0.1; 4.1.0
+build 2026100401 is on TestFlight + Play internal for testing.
+
 ## 2026-10-04 - activity filters: hidden rows stay new, honest empty state
 
 Filter chip check after the status banner work. Leaving the feed marked
