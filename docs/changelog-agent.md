@@ -2,6 +2,27 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - one Pro story: paywall, locked panes, store, website
+
+User request: the shared Pro locked pane, the paywall and the marketing
+side tell the same "what Pro does" story. Decisions: 5 grouped paywall
+cards, hero line names supporters + TTS, locked panes list the same
+group titles (max 4, minus their own), website Pro list grouped (text
+only, stays in `obs-blade-site/pending-4.1/`).
+
+- Groups (`ProFeature`, `kProBenefits` order = importance): Every Chat,
+  One Place (native + combined + emotes, badges, highlights, search) ·
+  Never Miss a Supporter (activity feed) · Hear Your Chat (TTS) ·
+  Moderate From Your Pocket · Your Own Themes (renamed from "Make It
+  Yours", which the intro and website use for the free customisation).
+  `proBenefitTaste(except:)` feeds `ProLockedPane`.
+- Store descriptions (iOS + Play) group the Pro list under the same
+  names; promo text and FAQ no longer claim "tips" (no tip source is
+  built - StreamElements / Streamlabs are still waiting on API access).
+- Tablet benefit grid: an odd last card lines up with the column above.
+- Tests: `test/pro/pro_story_test.dart`; shots `pro_locked_*`,
+  `pro_benefits_*`.
+
 ## 2026-10-04 - activity feed: status banner, own YouTube, gaps
 
 From the 2026-10-03 activity review (six findings, all built; spec

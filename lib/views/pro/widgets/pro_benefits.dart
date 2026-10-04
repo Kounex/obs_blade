@@ -77,7 +77,7 @@ const List<ProBenefit> kProBenefits = [
   ProBenefit(
     feature: ProFeature.themes,
     icon: CupertinoIcons.paintbrush_fill,
-    title: 'Make It Yours',
+    title: 'Your Own Themes',
     body:
         'Design your own color themes and switch anytime. Pro keeps growing - stream health alerts are on the bench, no dates promised.',
     color: ProPalette.themes,

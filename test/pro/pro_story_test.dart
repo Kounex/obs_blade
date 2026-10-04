@@ -11,7 +11,7 @@ void main() {
       'Never Miss a Supporter',
       'Hear Your Chat',
       'Moderate From Your Pocket',
-      'Make It Yours',
+      'Your Own Themes',
     ]);
   });
 

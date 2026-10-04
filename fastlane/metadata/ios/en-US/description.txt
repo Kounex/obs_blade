@@ -2,7 +2,7 @@ DISCLAIMER: This app is not in any way affiliated with OBS (Open Broadcaster Sof
 
 OBS Blade is your stream companion. Connect to OBS over your network and run your whole show from your phone or tablet - no need to jump back to your PC mid-stream.
 
-OBS Blade 4.0 is a full redesign: faster, cleaner and built for phone and tablet alike.
+Built for phone and tablet alike - and new in 4.1: vertical canvases for OBS 32.1, plus an activity feed and chat read out loud with Pro.
 
 EVERYTHING YOU NEED - FREE, FOREVER
 
@@ -26,7 +26,7 @@ Chat is where your stream lives, so Pro makes it native - and makes sure no supp
 - Never miss a supporter: an activity feed for your own channels - follows, subs, raids, cheers, Super Chats and KICKs in one list, with a to-thank queue for your shout-outs
 - Hear your chat: read out loud while you play, in each message's own language if you like
 - Moderate from your pocket: delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch
-- Make it yours: custom themes for the whole app
+- Your own themes: design custom color themes for the whole app
 
 Pro comes monthly, yearly or as a one-time lifetime unlock. Cancel anytime in your App Store account settings.
 

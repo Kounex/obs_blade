@@ -385,7 +385,7 @@ class _EmptyFeed extends StatelessWidget {
     if (filtered && this.store.allEvents.isNotEmpty) {
       title = this.store.toThankOnly ? 'All thanked' : 'Nothing here';
       body = this.store.toThankOnly
-          ? 'Every sub, gift and tip has been thanked.'
+          ? 'Every sub, gift, cheer and Super Chat has been thanked.'
           : 'Nothing of this kind yet.';
     } else if (!_anyOwnChannel()) {
       title = 'No channel connected';

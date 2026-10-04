@@ -1,1 +1,1 @@
-New in 4.1: an activity feed for your follows, subs and Super Chats, chat read out loud, and vertical canvas support for OBS 32.1 and Aitum Vertical.
+New in 4.1: vertical canvases for OBS 32.1 and Aitum Vertical - and with Pro, an activity feed for your follows, subs and Super Chats, and chat read out loud.
