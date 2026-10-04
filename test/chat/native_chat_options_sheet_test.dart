@@ -442,4 +442,22 @@ void main() {
     expect(find.text('Native chat options'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
   });
+
+  testWidgets('Search chat from the button: its back chevron returns to '
+      'the options sheet', (tester) async {
+    await tester.pumpWidget(
+      wrap(const NativeChatOptionsButton(chatType: ChatType.Twitch)),
+    );
+    await tester.tap(find.byType(NativeChatOptionsButton));
+    await tester.pumpAndSettle();
+
+    await tapRow(tester, 'Search chat');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chat-search-field')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('chat-search-back')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('chat-search-field')), findsNothing);
+    expect(find.text('Native chat options'), findsOneWidget);
+  });
 }

@@ -101,9 +101,9 @@ void main() {
     seedCatalogs();
     await tester.pumpWidget(wrap(buildSheet()));
 
-    expect(find.text('CHANNEL'), findsOneWidget);
-    expect(find.text('GLOBAL'), findsOneWidget);
-    expect(find.text('THIRD-PARTY (7TV)'), findsOneWidget);
+    expect(find.text('Channel'), findsOneWidget);
+    expect(find.text('Global'), findsOneWidget);
+    expect(find.text('Third-party (7TV)'), findsOneWidget);
     expect(
       cellUrls(tester),
       unorderedEquals([
@@ -124,9 +124,9 @@ void main() {
     await tester.pump();
 
     expect(cellUrls(tester), [channelUrl]);
-    expect(find.text('CHANNEL'), findsOneWidget);
-    expect(find.text('GLOBAL'), findsNothing);
-    expect(find.text('THIRD-PARTY (7TV)'), findsNothing);
+    expect(find.text('Channel'), findsOneWidget);
+    expect(find.text('Global'), findsNothing);
+    expect(find.text('Third-party (7TV)'), findsNothing);
   });
 
   testWidgets(
@@ -175,8 +175,8 @@ void main() {
 
     await tester.pumpWidget(wrap(buildSheet()));
 
-    expect(find.text('THIRD-PARTY (7TV)'), findsNothing);
-    expect(find.text('CHANNEL'), findsOneWidget);
+    expect(find.text('Third-party (7TV)'), findsNothing);
+    expect(find.text('Channel'), findsOneWidget);
   });
 
   testWidgets('catalog landing pops the grid in (catalogVersion)', (

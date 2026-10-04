@@ -311,7 +311,7 @@ class _KickEmotePickerSheetState extends State<KickEmotePickerSheet> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    section.$1.toUpperCase(),
+                                    section.$1,
                                     style: nativeChatSheetSectionStyle(context),
                                   ),
                                   const SizedBox(height: AppSpacing.xs),

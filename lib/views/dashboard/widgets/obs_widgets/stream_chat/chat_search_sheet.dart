@@ -28,14 +28,19 @@ import 'youtube_chat_message_row.dart';
 
 /// Opens the chat search sheet — the entry behind [NativeChatOptionsSheet]'s
 /// "Search chat" row.
-void showChatSearchSheet(BuildContext context, {required ChatType chatType}) =>
-    ModalHandler.showBaseBottomSheet(
-      context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.86,
-      builder: (context) => ChatSearchSheet(chatType: chatType),
-    );
+/// [onBack] (opened from the options sheet): a back chevron that closes
+/// this sheet and calls it.
+void showChatSearchSheet(
+  BuildContext context, {
+  required ChatType chatType,
+  VoidCallback? onBack,
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.86,
+  builder: (context) => ChatSearchSheet(chatType: chatType, onBack: onBack),
+);
 
 /// Search over the currently buffered chat history (no persistence across
 /// app restarts — the buffer is whatever the store still holds). Common
@@ -48,7 +53,10 @@ void showChatSearchSheet(BuildContext context, {required ChatType chatType}) =>
 class ChatSearchSheet extends StatefulWidget {
   final ChatType chatType;
 
-  const ChatSearchSheet({super.key, required this.chatType});
+  /// Back to where it was opened from (the options sheet)
+  final VoidCallback? onBack;
+
+  const ChatSearchSheet({super.key, required this.chatType, this.onBack});
 
   @override
   State<ChatSearchSheet> createState() => _ChatSearchSheetState();
@@ -83,7 +91,35 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           nativeChatSheetDragHandle(context),
-          Text('Search chat', style: nativeChatSheetTitleStyle(context)),
+          Row(
+            children: [
+              if (this.widget.onBack case final onBack?)
+                Pressable(
+                  key: const Key('chat-search-back'),
+                  haptic: true,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    onBack();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      right: AppSpacing.sm,
+                      top: AppSpacing.md,
+                      bottom: AppSpacing.md,
+                    ),
+                    child: Icon(
+                      CupertinoIcons.chevron_back,
+                      size: 20.0,
+                      color:
+                          (Theme.of(context).extension<AppTextColors>() ??
+                                  AppTextColors.standard)
+                              .highlightText,
+                    ),
+                  ),
+                ),
+              Text('Search chat', style: nativeChatSheetTitleStyle(context)),
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: NativeChatTextField(

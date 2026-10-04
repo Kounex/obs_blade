@@ -368,8 +368,6 @@ class ChatTtsSettingsRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ChatTtsStore? store = _ttsStoreOrNull();
-    final textColors =
-        Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
@@ -421,13 +419,7 @@ class ChatTtsSettingsRows extends StatelessWidget {
             top: AppSpacing.lg,
             bottom: AppSpacing.xs,
           ),
-          child: Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: textColors.textTertiary,
-              letterSpacing: 0.6,
-            ),
-          ),
+          child: Text(label, style: nativeChatSheetSectionStyle(context)),
         );
 
         return Column(

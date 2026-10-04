@@ -89,9 +89,9 @@ void main() {
     seedCatalogs();
     await tester.pumpWidget(wrap(buildSheet()));
 
-    expect(find.text('CHANNEL'), findsOneWidget);
-    expect(find.text('GLOBAL'), findsOneWidget);
-    expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsOneWidget);
+    expect(find.text('Channel'), findsOneWidget);
+    expect(find.text('Global'), findsOneWidget);
+    expect(find.text('Third-party (7TV/BTTV/FFZ)'), findsOneWidget);
     expect(
       cellUrls(tester),
       unorderedEquals([
@@ -112,9 +112,9 @@ void main() {
     await tester.pump();
 
     expect(cellUrls(tester), [kappaUrl]);
-    expect(find.text('CHANNEL'), findsOneWidget);
-    expect(find.text('GLOBAL'), findsNothing);
-    expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsNothing);
+    expect(find.text('Channel'), findsOneWidget);
+    expect(find.text('Global'), findsNothing);
+    expect(find.text('Third-party (7TV/BTTV/FFZ)'), findsNothing);
   });
 
   testWidgets(
@@ -180,9 +180,9 @@ void main() {
         find.text('Log in again to load your Twitch emotes'),
         findsOneWidget,
       );
-      expect(find.text('CHANNEL'), findsNothing);
-      expect(find.text('GLOBAL'), findsNothing);
-      expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsOneWidget);
+      expect(find.text('Channel'), findsNothing);
+      expect(find.text('Global'), findsNothing);
+      expect(find.text('Third-party (7TV/BTTV/FFZ)'), findsOneWidget);
 
       await tester.tap(find.text('Re-login'));
       await tester.pump();
@@ -205,8 +205,8 @@ void main() {
 
     await tester.pumpWidget(wrap(buildSheet()));
 
-    expect(find.text('THIRD-PARTY (7TV/BTTV/FFZ)'), findsNothing);
-    expect(find.text('CHANNEL'), findsOneWidget);
+    expect(find.text('Third-party (7TV/BTTV/FFZ)'), findsNothing);
+    expect(find.text('Channel'), findsOneWidget);
   });
 
   testWidgets('catalog landing pops the grid in (catalogVersion)', (

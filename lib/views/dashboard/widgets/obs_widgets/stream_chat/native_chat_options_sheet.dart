@@ -28,6 +28,24 @@ import 'youtube_setup_sheet.dart';
 
 export 'native_chat_appearance.dart' show NativeChatAppearance;
 
+/// Opens [NativeChatOptionsSheet] over [context] (the chat view) - the
+/// bar's button, and Search chat's back chevron.
+void showNativeChatOptionsSheet(
+  BuildContext context, {
+  required ChatType chatType,
+  bool modFoldedIntoOptions = false,
+}) => ModalHandler.showBaseBottomSheet(
+  context: context,
+  barrierDismissible: true,
+  enableDrag: true,
+  maxHeightFraction: 0.72,
+  builder: (_) => NativeChatOptionsSheet(
+    chatType: chatType,
+    modFoldedIntoOptions: modFoldedIntoOptions,
+    hostContext: context,
+  ),
+);
+
 /// Entry point in the native-mode chat bar: opens [NativeChatOptionsSheet].
 /// Styled like the bar's other control containers, 44pt touch target.
 ///
@@ -53,16 +71,10 @@ class NativeChatOptionsButton extends StatelessWidget {
       message: folded ? 'Chat options & moderation' : 'Native chat options',
       child: Pressable(
         haptic: true,
-        onTap: () => ModalHandler.showBaseBottomSheet(
-          context: context,
-          barrierDismissible: true,
-          enableDrag: true,
-          maxHeightFraction: 0.72,
-          builder: (_) => NativeChatOptionsSheet(
-            chatType: this.chatType,
-            modFoldedIntoOptions: folded,
-            hostContext: context,
-          ),
+        onTap: () => showNativeChatOptionsSheet(
+          context,
+          chatType: this.chatType,
+          modFoldedIntoOptions: folded,
         ),
         child: Container(
           constraints: BoxConstraints(
@@ -203,8 +215,6 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   ChatType get _platform =>
       this._isCombined ? (this._tab ?? ChatType.Twitch) : this.widget.chatType;
 
-  bool get _isTwitch => this._platform == ChatType.Twitch;
-
   bool get _isKick => this._platform == ChatType.Kick;
 
   void _open(_OptionsPage page) => this.setState(() => this._page = page);
@@ -302,7 +312,19 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           onTap: () {
             final host = this.widget.hostContext ?? context;
             Navigator.of(context).pop();
-            showChatSearchSheet(host, chatType: this.widget.chatType);
+            showChatSearchSheet(
+              host,
+              chatType: this.widget.chatType,
+
+              /// Back to these options, on the chat view again
+              onBack: this.widget.hostContext == null
+                  ? null
+                  : () => showNativeChatOptionsSheet(
+                      host,
+                      chatType: this.widget.chatType,
+                      modFoldedIntoOptions: this.widget.modFoldedIntoOptions,
+                    ),
+            );
           },
         ),
         const SizedBox(height: AppSpacing.sm),

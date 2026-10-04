@@ -2,6 +2,52 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - YouTube Add chat: LIVE + viewers, live subscriptions first
+
+User request: show whether a channel is live and how many watch, in
+the YouTube Add chat search. Decisions: search hits + subscriptions;
+subscriptions live first, most viewers on top, the rest A-Z.
+
+- `YouTubeLiveStatusService` (`lib/utils/youtube/`): per channel the
+  quota-free `/live` page, then one `videos.list?part=liveStreamingDetails`
+  per 24 channels (1 unit) - live only when started and not ended (a
+  scheduled stream isn't), `concurrentViewers` when not hidden. Answers
+  fill in chunk by chunk, are remembered 1 min, stop when the sheet
+  closes; failures leave a row as it was (logged via `logFailure`).
+- The sheet's rows show `LIVE · 23.5k` (the chip Twitch / Kick rows
+  use); a fresh /live answer overrides the search index's LIVE both ways.
+- Review fixes: subscriptions reorder once, when the whole list is
+  checked (chips fill in place before) and rows are keyed by channel -
+  a press during a reorder used to land on whichever channel moved into
+  its slot; without an API key `videos.list` reads with the sign-in
+  token (`YouTubeChatStore.accessTokenForRead`), with neither nothing is
+  read; a `/live` read gives up after 8 s.
+- Tests: `youtube_live_status_service_test` (live / scheduled / ended /
+  hidden / offline, failures uncached, TTL, chunks + cancel, token
+  fallback), `youtube_add_chat_sheet_test` group "LIVE + viewers"
+  (ordering, search override, a press across the reorder); shots
+  `add_chat_youtube_*` use a fake service.
+
+## 2026-10-04 - Native chat sheets: Search chat back, headings above rows
+
+User report: Search chat (opened from the options sheet) had no way
+back; section headings ("All chats", TTS's Who / What / How) were
+smaller than the rows under them, in every native chat sheet.
+
+- `showChatSearchSheet(onBack:)`: from the options sheet a back chevron
+  (like the options pages') closes the search and reopens the options
+  sheet on the chat view (`showNativeChatOptionsSheet`, now shared with
+  the bar button).
+- `nativeChatSheetSectionStyle` is title3 (17/w600, sentence case)
+  instead of the 11 pt caption - every user of it (options sheet, mod /
+  bans / combined mod sheets, Add chat sheets, emote pickers) plus TTS's
+  own section labels, which now use it.
+- Removed leftovers the analyzer flagged from earlier 4.1 commits
+  (unused imports / getter / variable).
+- Tests: `native_chat_options_sheet_test` back chevron; picker tests read
+  the sentence-case group names; shots `tts_settings`,
+  `search_combined_hidden_*` (chevron), `options_*`.
+
 ## 2026-10-05 - Native chat options: All chats + per platform, combined search
 
 User request: the platform sheets offered more than the combined chat's.

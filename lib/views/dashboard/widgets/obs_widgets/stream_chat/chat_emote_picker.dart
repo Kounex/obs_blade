@@ -371,7 +371,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    section.$1.toUpperCase(),
+                                    section.$1,
                                     style: nativeChatSheetSectionStyle(context),
                                   ),
                                   const SizedBox(height: AppSpacing.xs),

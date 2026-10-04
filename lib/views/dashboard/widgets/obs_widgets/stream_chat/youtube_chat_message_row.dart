@@ -8,7 +8,6 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/chat_highlight_helper.dart';
 import 'package:obs_blade/utils/icons/jam_icons.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
-import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_link.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';

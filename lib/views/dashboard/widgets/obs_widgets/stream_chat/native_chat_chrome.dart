@@ -221,11 +221,13 @@ TextStyle? nativeChatSheetTitleStyle(BuildContext context) => Theme.of(context)
     .titleLarge
     ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.3);
 
-/// Section labels inside a sheet (Emotes, Badges groups, etc.) — the
-/// app-wide caption contract (`labelSmall` 11/w600/0.8 on the tertiary text
-/// level); apply `.toUpperCase()` at the use site.
+/// Section headings inside a native chat sheet ("All chats", TTS's Who /
+/// What, emote groups, mod sections ...): title3 (`headlineSmall`
+/// 17/w600), a step above the 15 pt rows they head and below the sheet
+/// title - not the app's 11 pt caption, which read smaller than the
+/// rows. Sentence case, as written.
 TextStyle? nativeChatSheetSectionStyle(BuildContext context) =>
-    Theme.of(context).textTheme.labelSmall;
+    Theme.of(context).textTheme.headlineSmall;
 
 /// Bottom overlay chip: "Paused" while scrolled up, "New messages" once
 /// something arrives. Glass, same surface as the nav bars — it floats

@@ -14,6 +14,8 @@ import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_search_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tts_controls.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
@@ -141,6 +143,23 @@ void main() {
     );
   });
 
+  testWidgets('text to speech: headings over their rows', (tester) async {
+    await harness.shot(
+      tester,
+      'tts_settings',
+      Builder(
+        builder: (context) => NativeChatSheetScaffold(
+          header: Text(
+            'Text to speech',
+            style: nativeChatSheetTitleStyle(context),
+          ),
+          body: const ChatTtsSettingsRows(),
+        ),
+      ),
+      size: const Size(390, 1400),
+    );
+  });
+
   testWidgets('combined search with a hidden match', (tester) async {
     final kick = GetIt.instance<KickChatStore>();
     final youTube = GetIt.instance<YouTubeChatStore>();
@@ -180,7 +199,7 @@ void main() {
     await harness.shot(
       tester,
       'search_combined_hidden_base',
-      const ChatSearchSheet(chatType: ChatType.Combined),
+      ChatSearchSheet(chatType: ChatType.Combined, onBack: () {}),
     );
     await tester.enterText(find.byKey(const Key('chat-search-field')), 'gg');
     for (var i = 0; i < 5; i++) {

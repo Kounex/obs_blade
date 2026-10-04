@@ -218,7 +218,7 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                         children: [
                           for (final (label, hint, emojis) in sections) ...[
                             Text(
-                              label.toUpperCase(),
+                              label,
                               style: nativeChatSheetSectionStyle(context),
                             ),
                             if (hint != null)
@@ -226,7 +226,7 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                                 padding: const EdgeInsets.only(top: 2.0),
                                 child: Text(
                                   hint,
-                                  style: Theme.of(context).textTheme.labelSmall,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
                             const SizedBox(height: AppSpacing.xs),
