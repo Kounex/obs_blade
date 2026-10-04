@@ -81,7 +81,8 @@ corrections or adoption of widgets that already exist.
   `BorderRadius`; **16** ad-hoc `Curves.*`; **41** ad-hoc
   `Duration(milliseconds…)`. The durations count is an **upper bound** — it
   includes legitimate non-motion uses (timers, timeouts, poll intervals); the
-  actionable motion subset is largely enumerated in `2026-iteration/motion-audit.md`.
+  actionable motion subset is largely enumerated in `motion-audit.md` (same
+  folder).
   A Liquid-Glass-flavored pass over chat chrome can't start cleanly until these
   call sites resolve against theme slots / `AppStatusColors`.
 - **Build side-effects in `ScrollRefreshIcon`**

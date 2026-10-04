@@ -103,4 +103,4 @@ app (`ConnectionAttemptResult`), not a generic failure.
 
 Handshake semantics intentionally mirror
 [`lib/utils/authentication_helper.dart`](../lib/utils/authentication_helper.dart)
-and [`docs/websocket-connect-audit.md`](websocket-connect-audit.md).
+and [`docs/archive/websocket-connect-audit.md`](archive/websocket-connect-audit.md).

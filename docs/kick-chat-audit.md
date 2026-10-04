@@ -117,48 +117,14 @@ moderate" list** (checked against `/swagger/doc.yaml`). What exists:
 | Polls / predictions | 🔶 read-only events | no public create/vote API; predictions payload undocumented |
 | Multi-chat (other channels) | ✅ | subscribe per chatroom; entries ride `KickUsernames` |
 
-## Build waves
+## Not planned (vapor)
 
-- **W1 (landed, 5974b63c):** `ChatType.Kick` + WebView popout path, username
-  management (slug extractor + dialog), all switch seams.
-- **W2 (landed, bc29c40f):** native read — Pusher client, backfill,
-  buffers, tombstones / ban reconcile / clear banner, badges_v2 + emote
-  inline rendering, Pro gate via the shared seams. No auth.
-- **W3 (landed):** native write/mod — BYO OAuth (manual-paste PKCE;
-  **no device flow exists** and the app has no deep-link infra, so the
-  setup sheet opens the authorize URL via url_launcher and the user
-  pastes the redirect URL back; state mismatch rejects). Single scope
-  bundle `user:read chat:write moderation:ban
-  moderation:chat_message:manage`; refresh rotates BOTH tokens
-  (single-flight in `KickAuthService`). `KickApiService` (typed
-  `KickApiException` with statusCode; 401 → refresh once → retry once)
-  covers send (`POST /chat`, `reply_to_message_id` for replies), delete,
-  ban/timeout (minutes 1..10080), unban (DELETE **with JSON body**).
-  `broadcaster_user_id` comes from `KickChannelInfo.userId`. No
-  optimistic append — the Pusher echo renders own messages (sent-id
-  bookkeeping + id-dedup backstop). Mod long-press shows for **any
-  signed-in user** (no "am I a mod" lookup exists) — 403s surface
-  honestly via snackbar (`modActionError`). Unban ships as a store
-  wrapper only (no UI row — tombstoned-by-ban context doesn't carry the
-  data to offer it meaningfully).
-- **W4 (landed):** first-party emote picker (`KickEmoteStore` +
-  `KickEmotePickerSheet`, `GET /emotes/{slug}` → Channel/Global/Emojis
-  sections) and 7TV third-party emote rendering (`fetchSevenTvKickChannel`,
-  keyed by Kick's numeric USER id, not chatroom id) both dock into the
-  native chat pane and input.
-- **Not planned (vapor):** warn/announce/AutoMod/unban-requests (no API),
-  room-mode writes (no API), polls/predictions UI (read-only events), BTTV
-  bridge (no Kick namespace — 7TV is Kick's only third-party emote
-  provider).
+Warn/announce/AutoMod/unban-requests (no API), room-mode writes (no API),
+polls/predictions UI (read-only events), BTTV bridge (no Kick namespace —
+7TV is Kick's only third-party emote provider).
 
 ## Open decisions / risks
 
-- ~~W3 redirect handling~~ — **decided:** manual code paste (zero
-  infra). Redirect URI `https://localhost/kick-callback` — the browser
-  lands on a connection-refused page and the user copies the address-bar
-  URL back. An app-owned Kick client removes the "create a developer
-  app" step; the paste stays until a custom scheme exists. Custom scheme
-  / loopback stay available as a later UX upgrade.
 - Pusher key longevity (uncontractual) — single constant + fallback comment.
 - `api/v2/*` is Cloudflare-fronted. A browser User-Agent from dart:io is
   blocked by the security policy (home networks included); reads send

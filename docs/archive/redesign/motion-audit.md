@@ -54,7 +54,7 @@ confirmed at its cited file:line.
 ## Missed opportunities (additive)
 
 Deferred to the companion doc — see
-`docs/redesign/2026-iteration/animation-opportunities.md`. Top four: (1)
+`docs/archive/redesign/animation-opportunities.md`. Top four: (1)
 `Pressable` adoption on the five remaining bare-`GestureDetector` taps;
 (2) entrance/exit for the chat pause chip; (3) staggered copy after the
 Pro-unlock glyph draw; (4) a feedback confirmation after hotkey trigger.
