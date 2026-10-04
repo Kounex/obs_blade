@@ -1,27 +1,23 @@
-4.1.0 test build 6. What to test:
+4.1.0 test build 7. New since build 6:
 
-ACTIVITY FEED (Pro)
-- Status button top right of the feed: tap it - every platform says whether it's listening; a dot means news since you last opened it
-- Live on YouTube from OBS without YouTube set up (or with only an API key): the banner comes out by itself and offers Set up / Sign in
-- Signed in to YouTube with your channel, Twitch chat on screen (or the WebView chat): go live on YouTube - within ~30 s the stream shows as live, a Super Chat lands in the feed within ~30 s more
-- A scheduled (not yet started) YouTube stream does NOT show as live
-- Live on Twitch, lock the phone for 3 min, unlock: a dot on the status button and a "Not listening on Twitch ..." row in the list
-- A Power-up (e.g. Gigantify) from another account on your Twitch channel: "used Gigantify an Emote for ... bits" (Money chip)
-- "Mark N thanked" on a stream / day header thanks only the rows shown
-- Pick "Money", leave the feed, get a new follow, open the "N new" chip in streaming mode: the follow still counts as new until you look under All
-- Points + To thank: "Nothing to thank here" with what's waiting under All (never "All thanked" while some are left)
-- iPad: sign in to Twitch in the chat pane while the feed next to it is empty - "No channel connected" changes right away
+YOUTUBE CHAT EMOJIS
+- Emojis draw inline in YouTube chat (standard set bundled; the app also learns a channel's own member emojis from the chat page)
+- Emoji picker in the YouTube chat input: the channel's member emojis first, then the standard set (sign in to write)
+- Your own sent message shows your channel's name, not "Unknown"
 
-PRO
-- Paywall: new line under "OBS Blade Pro", five cards (Every Chat, One Place - Never Miss a Supporter - Hear Your Chat - Moderate From Your Pocket - Your Own Themes)
-- Without Pro: native chat and Chat -> Activity show the same locked pane, each listing the four other groups
-- Settings -> FAQ -> "What does OBS Blade Pro unlock?" tells the same story
+CHAT (all platforms)
+- Long-press a message -> user card now on YouTube + Kick too, with highlight / ignore
+- One options sheet per chat: "All chats" (appearance, highlights, mute words, TTS) then the platform's own section; combined chat gets platform tabs + search over the merged timeline
+- Search chat: has a back chevron, and can show messages your filters hide
+- Sheet pages (options pages, mod presets, timeout / warn) slide into each other; back returns to where you came from; the selected message stays marked until the last sheet closes
+- Busy chat at the 500-message cap: a sub / announcement already on screen must NOT fade in again when new messages arrive; a genuinely new notice still animates once
+- Scrolled up in a busy chat: the rows you are reading stay put while new ones arrive below; back at the bottom the buffer trims again
+- Combined chat: every platform's channel emotes render (e.g. a Twitch channel's 7TV / BTTV set), not just globals
+- App to the background mid-chat and back: chat recovers on its own, in-flight requests finish
 
-CHAT
-- Add chat (native YouTube with an API key, Kick): a search sheet with suggestions instead of the old dialog; picking a channel switches to it
-- Native chat bar: the channel dropdown fills its row (phone, small phone, iPad); long names and LIVE chips fit in the open menu
-- Combined chat builder -> "Other..." opens each platform's own picker
-- Chat header: Sign out is there in every state (live, connecting, failed, offline)
+DASHBOARD
+- Scene item inside a group: visibility and lock toggles act on the item itself
 
 ALSO
+- Keep an eye on build 6's list (activity feed states, paywall cards, chat bar layout, sign-out in every chat state)
 - Updating over the store version (4.0.1) keeps saved connections and settings
