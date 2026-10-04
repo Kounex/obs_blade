@@ -11,6 +11,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/eventsub_envelope.dart';
 import 'package:obs_blade/utils/general_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 enum TwitchEventSubState { disconnected, connecting, connected, reconnecting }
 
@@ -75,6 +76,7 @@ class TwitchEventSubService {
       scope: 'moderator:read:followers',
       moderator: true,
     ),
+
     /// Cheers AND Power-ups (`channel.cheer` misses Power-ups) - same
     /// scope, so old tokens with `bits:read` get them without a sign-in
     'channel.bits.use': (version: '1', scope: 'bits:read', moderator: false),
@@ -219,7 +221,7 @@ class TwitchEventSubService {
     http.Client? client,
     WebSocketChannel Function(Uri)? channelFactory,
     Future<void> Function(Duration)? sleep,
-  }) : _client = client ?? http.Client(),
+  }) : _client = client ?? RenewingHttpClient(),
        _channelFactory = channelFactory ?? WebSocketChannel.connect,
        _sleep = sleep ?? Future.delayed;
 

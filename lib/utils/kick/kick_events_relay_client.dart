@@ -7,6 +7,7 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../general_helper.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// OBS Blade's Kick events relay (`tool/kick_events_relay/`). Kick sends
 /// follows, KICKs, subs, redemptions and stream status only as webhooks,
@@ -88,7 +89,7 @@ class KickEventsRelayClient {
     KickRelaySocketFactory? socketFactory,
     Future<void> Function(Duration)? sleep,
     String baseUrl = kKickEventsRelayUrl,
-  }) : _client = client ?? http.Client(),
+  }) : _client = client ?? RenewingHttpClient(),
        _socketFactory =
            socketFactory ??
            ((uri, headers) => IOWebSocketChannel.connect(

@@ -6,6 +6,7 @@ import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart'
     show KickUserIdentity;
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Supplies a valid access token for authed calls — [forceRefresh] asks
 /// the owner (the chat store) to refresh the persisted token first (the
@@ -34,7 +35,7 @@ class KickApiService {
   KickApiService({
     http.Client? client,
     required KickTokenProvider tokenProvider,
-  }) : _client = client ?? http.Client(),
+  }) : _client = client ?? RenewingHttpClient(),
        _tokenProvider = tokenProvider;
 
   Map<String, String> _headers(String token) => <String, String>{

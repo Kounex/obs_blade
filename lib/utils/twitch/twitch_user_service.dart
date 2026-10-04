@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Self subscription to the selected channel — tier label + tenure months.
 class TwitchSelfSubscription {
@@ -20,7 +21,8 @@ class TwitchSelfSubscription {
 class TwitchUserService {
   final http.Client _client;
 
-  TwitchUserService({http.Client? client}) : _client = client ?? http.Client();
+  TwitchUserService({http.Client? client})
+    : _client = client ?? RenewingHttpClient();
 
   /// `GET /helix/users?id=` — avatar, login, display name, created_at.
   Future<TwitchUser?> fetchUser({

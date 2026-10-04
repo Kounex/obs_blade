@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../general_helper.dart';
 import '../youtube_target.dart';
 import 'youtube_live_resolver.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Whether a channel is live right now and how many watch (null: the
 /// channel hides the count).
@@ -47,7 +48,7 @@ class YouTubeLiveStatusService {
     http.Client? client,
     DateTime Function()? now,
   }) : _resolver = resolver ?? YouTubeLiveResolver(),
-       _client = client ?? http.Client(),
+       _client = client ?? RenewingHttpClient(),
        _now = now ?? DateTime.now;
 
   final Map<String, (DateTime, YouTubeLiveStatus)> _cache = {};

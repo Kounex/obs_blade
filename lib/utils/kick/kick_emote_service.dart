@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/kick/kick_emote.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart'
     show KickApiException, kKickUserAgent;
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 const String _kEmotesBase = 'https://kick.com';
 
@@ -17,7 +18,8 @@ const String _kEmotesBase = 'https://kick.com';
 class KickEmoteService {
   final http.Client _client;
 
-  KickEmoteService({http.Client? client}) : _client = client ?? http.Client();
+  KickEmoteService({http.Client? client})
+    : _client = client ?? RenewingHttpClient();
 
   Map<String, String> get _headers => const {
     'User-Agent': kKickUserAgent,

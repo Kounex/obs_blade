@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/third_party_emote.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Failure of a third-party emote endpoint (non-200 other than 404 —
 /// a 404 means "channel has no presence there" and degrades to empty).
@@ -41,7 +42,7 @@ class ThirdPartyEmoteService {
   final http.Client _client;
 
   ThirdPartyEmoteService({http.Client? client})
-    : _client = client ?? http.Client();
+    : _client = client ?? RenewingHttpClient();
 
   /// 7TV global emote set.
   Future<Map<String, ThirdPartyEmote>> fetchSevenTvGlobal() async {

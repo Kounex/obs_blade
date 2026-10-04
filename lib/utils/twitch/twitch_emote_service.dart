@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_user_emote.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Helix `chat/emotes/user` endpoint — the emotes the authenticated user
 /// can use in a channel's chat (globals + that channel's own). Requires the
@@ -16,7 +17,8 @@ class TwitchEmoteService {
 
   final http.Client _client;
 
-  TwitchEmoteService({http.Client? client}) : _client = client ?? http.Client();
+  TwitchEmoteService({http.Client? client})
+    : _client = client ?? RenewingHttpClient();
 
   /// All emotes usable by [userId] in [broadcasterId]'s chat, accumulated
   /// across pages.

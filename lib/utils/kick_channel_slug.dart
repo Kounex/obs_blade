@@ -13,9 +13,7 @@ String? extractKickChannelSlug(String? input) {
 
   // Bare slug (no dot, so it can't be a host).
   if (!trimmed.contains('.') && !trimmed.contains('/')) {
-    return RegExp(slugPattern).hasMatch(trimmed)
-        ? trimmed.toLowerCase()
-        : null;
+    return RegExp(slugPattern).hasMatch(trimmed) ? trimmed.toLowerCase() : null;
   }
 
   final uri = Uri.tryParse(

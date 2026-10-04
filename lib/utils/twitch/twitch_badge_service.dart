@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_chat_badges.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Helix `chat/badges` endpoints — the global catalog and the per-channel
 /// catalog (subscriber tenure / bits tier variants). Any user access token
@@ -12,7 +13,8 @@ import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
 class TwitchBadgeService {
   final http.Client _client;
 
-  TwitchBadgeService({http.Client? client}) : _client = client ?? http.Client();
+  TwitchBadgeService({http.Client? client})
+    : _client = client ?? RenewingHttpClient();
 
   Future<List<TwitchBadgeSet>> fetchGlobalBadges(String accessToken) => this
       ._fetch(Uri.parse('$kTwitchHelixBase/chat/badges/global'), accessToken);

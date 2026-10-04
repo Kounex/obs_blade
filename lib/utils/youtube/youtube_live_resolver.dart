@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/utils/youtube_target.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Resolving a channel's current live stream failed for a reason other
 /// than "not live" (network, 4xx/5xx, unparseable page) — the caller
@@ -33,7 +34,7 @@ class YouTubeLiveResolver {
   final http.Client _client;
 
   YouTubeLiveResolver({http.Client? client})
-    : _client = client ?? http.Client();
+    : _client = client ?? RenewingHttpClient();
 
   /// YouTube picks the page variant per request (mobile / desktop; e.g. an
   /// `Accept-Language` header moves the canonical tag from ~30 KB to

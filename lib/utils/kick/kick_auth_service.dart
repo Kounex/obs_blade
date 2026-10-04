@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// App-owned Kick OAuth client id. Public — it is in the authorize URL.
 /// The matching secret is not in this repo; token exchange goes to
@@ -136,7 +137,7 @@ class KickAuthService {
   Future<KickToken>? _refreshInFlight;
 
   KickAuthService({http.Client? client, Random? random})
-    : _client = client ?? http.Client(),
+    : _client = client ?? RenewingHttpClient(),
       _random = random ?? Random.secure();
 
   /// Reads a non-empty String setting; `null` when the settings box isn't

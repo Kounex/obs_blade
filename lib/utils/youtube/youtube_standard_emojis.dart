@@ -10,326 +10,391 @@ const List<YouTubeStandardEmoji> kYouTubeStandardEmojis = [
   YouTubeStandardEmoji(
     id: 'UvgfY_vqE92T29sPvqiAkAU',
     codes: [':body-blue-raised-arms:'],
-    url: 'https://yt3.ggpht.com/2Jds3I9UKOfgjid97b_nlDU4X2t5MgjTof8yseCp7M-6ZhOhRkPGSPfYwmE9HjCibsfA1Uzo',
+    url:
+        'https://yt3.ggpht.com/2Jds3I9UKOfgjid97b_nlDU4X2t5MgjTof8yseCp7M-6ZhOhRkPGSPfYwmE9HjCibsfA1Uzo',
   ),
   YouTubeStandardEmoji(
     id: '4PgfY73cJprKCq-_gIAO',
     codes: [':body-green-covering-eyes:'],
-    url: 'https://yt3.ggpht.com/UR8ydcU3gz360bzDsprB6d1klFSQyVzgn-Fkgu13dIKPj3iS8OtG1bhBUXPdj9pMwtM00ro',
+    url:
+        'https://yt3.ggpht.com/UR8ydcU3gz360bzDsprB6d1klFSQyVzgn-Fkgu13dIKPj3iS8OtG1bhBUXPdj9pMwtM00ro',
   ),
   YouTubeStandardEmoji(
     id: 'X_zdXMHgJaPa8gTGt4f4Ag',
     codes: [':buffering:'],
-    url: 'https://yt3.ggpht.com/5gfMEfdqO9CiLwhN9Mq7VI6--T2QFp8AXNNy5Fo7btfY6fRKkThWq35SCZ6SPMVCjg-sUA',
+    url:
+        'https://yt3.ggpht.com/5gfMEfdqO9CiLwhN9Mq7VI6--T2QFp8AXNNy5Fo7btfY6fRKkThWq35SCZ6SPMVCjg-sUA',
   ),
   YouTubeStandardEmoji(
     id: 'E8MfY5u7JPSXkNAP95GAmAE',
     codes: [':cat-orange-whistling:'],
-    url: 'https://yt3.ggpht.com/0ocqEmuhrKCK87_J21lBkvjW70wRGC32-Buwk6TP4352CgcNjL6ug8zcsel6JiPbE58xhq5g',
+    url:
+        'https://yt3.ggpht.com/0ocqEmuhrKCK87_J21lBkvjW70wRGC32-Buwk6TP4352CgcNjL6ug8zcsel6JiPbE58xhq5g',
   ),
   YouTubeStandardEmoji(
     id: 'vQF1XpyaG_XG8gTs77bACQ',
     codes: [':chillwcat:'],
-    url: 'https://yt3.ggpht.com/y03dFcPc1B7CO20zgQYzhcRPka5Bhs6iSg57MaxJdhaLidFvvXBLf_i4_SHG7zJ_2VpBMNs',
+    url:
+        'https://yt3.ggpht.com/y03dFcPc1B7CO20zgQYzhcRPka5Bhs6iSg57MaxJdhaLidFvvXBLf_i4_SHG7zJ_2VpBMNs',
   ),
   YouTubeStandardEmoji(
     id: 'ygF1XpGUMMjk8gSDrI2wCw',
     codes: [':chillwdog:'],
-    url: 'https://yt3.ggpht.com/Ir9mDxzUi0mbqyYdJ3N9Lq7bN5Xdt0Q7fEYFngN3GYAcJT_tccH1as1PKmInnpt2cbWOam4',
+    url:
+        'https://yt3.ggpht.com/Ir9mDxzUi0mbqyYdJ3N9Lq7bN5Xdt0Q7fEYFngN3GYAcJT_tccH1as1PKmInnpt2cbWOam4',
   ),
   YouTubeStandardEmoji(
     id: '8gF1Xp_zK8jk8gSDrI2wCw',
     codes: [':elbowcough:'],
-    url: 'https://yt3.ggpht.com/DTR9bZd1HOqpRJyz9TKiLb0cqe5Hb84Yi_79A6LWlN1tY-5kXqLDXRmtYVKE9rcqzEghmw',
+    url:
+        'https://yt3.ggpht.com/DTR9bZd1HOqpRJyz9TKiLb0cqe5Hb84Yi_79A6LWlN1tY-5kXqLDXRmtYVKE9rcqzEghmw',
   ),
   YouTubeStandardEmoji(
     id: 'jPgfY5j2IIud29sP3ZeA4Ag',
     codes: [':eyes-pink-heart-shape:'],
-    url: 'https://yt3.ggpht.com/5vzlCQfQQdzsG7nlQzD8eNjtyLlnATwFwGvrMpC8dgLcosNhWLXu8NN9qIS3HZjJYd872dM',
+    url:
+        'https://yt3.ggpht.com/5vzlCQfQQdzsG7nlQzD8eNjtyLlnATwFwGvrMpC8dgLcosNhWLXu8NN9qIS3HZjJYd872dM',
   ),
   YouTubeStandardEmoji(
     id: '7cIfY5niDOmSkNAP08CA6A4',
     codes: [':eyes-purple-crying:'],
-    url: 'https://yt3.ggpht.com/FrYgdeZPpvXs-6Mp305ZiimWJ0wV5bcVZctaUy80mnIdwe-P8HRGYAm0OyBtVx8EB9_Dxkc',
+    url:
+        'https://yt3.ggpht.com/FrYgdeZPpvXs-6Mp305ZiimWJ0wV5bcVZctaUy80mnIdwe-P8HRGYAm0OyBtVx8EB9_Dxkc',
   ),
   YouTubeStandardEmoji(
     id: 'RPkfY8TPGsCakNAP-JWAoAQ',
     codes: [':face-blue-covering-eyes:'],
-    url: 'https://yt3.ggpht.com/kj3IgbbR6u-mifDkBNWVcdOXC-ut-tiFbDpBMGVeW79c2c54n5vI-HNYCOC6XZ9Bzgupc10',
+    url:
+        'https://yt3.ggpht.com/kj3IgbbR6u-mifDkBNWVcdOXC-ut-tiFbDpBMGVeW79c2c54n5vI-HNYCOC6XZ9Bzgupc10',
   ),
   YouTubeStandardEmoji(
     id: 'rW5IY_26FryOq7IPlL2A6Ao',
     codes: [':face-blue-droopy-eyes:'],
-    url: 'https://yt3.ggpht.com/hGPqMUCiXGt6zuX4dHy0HRZtQ-vZmOY8FM7NOHrJTta3UEJksBKjOcoE6ZUAW9sz7gIF_nk',
+    url:
+        'https://yt3.ggpht.com/hGPqMUCiXGt6zuX4dHy0HRZtQ-vZmOY8FM7NOHrJTta3UEJksBKjOcoE6ZUAW9sz7gIF_nk',
   ),
   YouTubeStandardEmoji(
     id: 'hm5IY4W-H9SO5QS6n4CwCA',
     codes: [':face-blue-heart-eyes:'],
-    url: 'https://yt3.ggpht.com/M9tzKd64_r3hvgpTSgca7K3eBlGuyiqdzzhYPp7ullFAHMgeFoNLA0uQ1dGxj3fXgfcHW4w',
+    url:
+        'https://yt3.ggpht.com/M9tzKd64_r3hvgpTSgca7K3eBlGuyiqdzzhYPp7ullFAHMgeFoNLA0uQ1dGxj3fXgfcHW4w',
   ),
   YouTubeStandardEmoji(
     id: 'LfkfY_zhH4GFr8oP4aKA6AI',
     codes: [':face-blue-question-mark:'],
-    url: 'https://yt3.ggpht.com/Wx4PMqTwG3f4gtR7J9Go1s8uozzByGWLSXHzrh3166ixaYRinkH_F05lslfsRUsKRvHXrDk',
+    url:
+        'https://yt3.ggpht.com/Wx4PMqTwG3f4gtR7J9Go1s8uozzByGWLSXHzrh3166ixaYRinkH_F05lslfsRUsKRvHXrDk',
   ),
   YouTubeStandardEmoji(
     id: 'KsIfY6LzFoLM6AKanYDQAg',
     codes: [':face-blue-smiling:'],
-    url: 'https://yt3.ggpht.com/cktIaPxFwnrPwn-alHvnvedHLUJwbHi8HCK3AgbHpphrMAW99qw0bDfxuZagSY5ieE9BBrA',
+    url:
+        'https://yt3.ggpht.com/cktIaPxFwnrPwn-alHvnvedHLUJwbHi8HCK3AgbHpphrMAW99qw0bDfxuZagSY5ieE9BBrA',
   ),
   YouTubeStandardEmoji(
     id: 'dG5IY-mhEof9jgSykoCgBw',
     codes: [':face-blue-star-eyes:'],
-    url: 'https://yt3.ggpht.com/m_ANavMhp6cQ1HzX0HCTgp_er_yO2UA28JPbi-0HElQgnQ4_q5RUhgwueTpH-st8L3MyTA',
+    url:
+        'https://yt3.ggpht.com/m_ANavMhp6cQ1HzX0HCTgp_er_yO2UA28JPbi-0HElQgnQ4_q5RUhgwueTpH-st8L3MyTA',
   ),
   YouTubeStandardEmoji(
     id: 'mW5IY47PMcSnkMkPo6OAyAk',
     codes: [':face-blue-three-eyes:'],
-    url: 'https://yt3.ggpht.com/nSQHitVplLe5uZC404dyAwv1f58S3PN-U_799fvFzq-6b3bv-MwENO-Zs1qQI4oEXCbOJg',
+    url:
+        'https://yt3.ggpht.com/nSQHitVplLe5uZC404dyAwv1f58S3PN-U_799fvFzq-6b3bv-MwENO-Zs1qQI4oEXCbOJg',
   ),
   YouTubeStandardEmoji(
     id: 'LsMfY8P6G-yckNAPjoWA8AI',
     codes: [':face-blue-wide-eyes:'],
-    url: 'https://yt3.ggpht.com/2Ht4KImoWDlCddiDQVuzSJwpEb59nZJ576ckfaMh57oqz2pUkkgVTXV8osqUOgFHZdUISJM',
+    url:
+        'https://yt3.ggpht.com/2Ht4KImoWDlCddiDQVuzSJwpEb59nZJ576ckfaMh57oqz2pUkkgVTXV8osqUOgFHZdUISJM',
   ),
   YouTubeStandardEmoji(
     id: 'face-fuchsia-flower-shape',
     codes: [':face-fuchsia-flower-shape:'],
-    url: 'https://yt3.ggpht.com/o9kq4LQ0fE_x8yxj29ZeLFZiUFpHpL_k2OivHbjZbttzgQytU49Y8-VRhkOP18jgH1dQNSVz',
+    url:
+        'https://yt3.ggpht.com/o9kq4LQ0fE_x8yxj29ZeLFZiUFpHpL_k2OivHbjZbttzgQytU49Y8-VRhkOP18jgH1dQNSVz',
   ),
   YouTubeStandardEmoji(
     id: '6_cfY8HJH8bV5QS5yYDYDg',
     codes: [':face-fuchsia-poop-shape:'],
-    url: 'https://yt3.ggpht.com/_xlyzvSimqMzhdhODyqUBLXIGA6F_d5en2bq-AIfc6fc3M7tw2jucuXRIo5igcW3g9VVe3A',
+    url:
+        'https://yt3.ggpht.com/_xlyzvSimqMzhdhODyqUBLXIGA6F_d5en2bq-AIfc6fc3M7tw2jucuXRIo5igcW3g9VVe3A',
   ),
   YouTubeStandardEmoji(
     id: 'hcMfY5_zAbbxvwKLooCoCA',
     codes: [':face-fuchsia-tongue-out:'],
-    url: 'https://yt3.ggpht.com/EURfJZi_heNulV3mfHzXBk8PIs9XmZ9lOOYi5za6wFMCGrps4i2BJX9j-H2gK6LIhW6h7sY',
+    url:
+        'https://yt3.ggpht.com/EURfJZi_heNulV3mfHzXBk8PIs9XmZ9lOOYi5za6wFMCGrps4i2BJX9j-H2gK6LIhW6h7sY',
   ),
   YouTubeStandardEmoji(
     id: 'A8MfY-_pEIKNr8oP78-AGA',
     codes: [':face-fuchsia-wide-eyes:'],
-    url: 'https://yt3.ggpht.com/zdcOC1SMmyXJOAddl9DYeEFN9YYcn5mHemJCdRFQMtDuS0V-IyE-5YjNUL1tduX1zs17tQ',
+    url:
+        'https://yt3.ggpht.com/zdcOC1SMmyXJOAddl9DYeEFN9YYcn5mHemJCdRFQMtDuS0V-IyE-5YjNUL1tduX1zs17tQ',
   ),
   YouTubeStandardEmoji(
     id: 'xsIfY4OqCd2T29sP54iAsAw',
     codes: [':face-green-smiling:'],
-    url: 'https://yt3.ggpht.com/G061SAfXg2bmG1ZXbJsJzQJpN8qEf_W3f5cb5nwzBYIV58IpPf6H90lElDl85iti3HgoL3o',
+    url:
+        'https://yt3.ggpht.com/G061SAfXg2bmG1ZXbJsJzQJpN8qEf_W3f5cb5nwzBYIV58IpPf6H90lElDl85iti3HgoL3o',
   ),
   YouTubeStandardEmoji(
     id: 'ygF1XpGUMMjk8gSDrI2wCx',
     codes: [':face-orange-biting-nails:'],
-    url: 'https://yt3.ggpht.com/HmsXEgqUogkQOnL5LP_FdPit9Z909RJxby-uYcPxBLNhaPyqPTcGwvGaGPk2hzB_cC0hs_pV',
+    url:
+        'https://yt3.ggpht.com/HmsXEgqUogkQOnL5LP_FdPit9Z909RJxby-uYcPxBLNhaPyqPTcGwvGaGPk2hzB_cC0hs_pV',
   ),
   YouTubeStandardEmoji(
     id: '2sIfY8vIG8z96ALulYDQDQ',
     codes: [':face-orange-frowning:'],
-    url: 'https://yt3.ggpht.com/Ar8jaEIxzfiyYmB7ejDOHba2kUMdR37MHn_R39mtxqO5CD4aYGvjDFL22DW_Cka6LKzhGDk',
+    url:
+        'https://yt3.ggpht.com/Ar8jaEIxzfiyYmB7ejDOHba2kUMdR37MHn_R39mtxqO5CD4aYGvjDFL22DW_Cka6LKzhGDk',
   ),
   YouTubeStandardEmoji(
     id: 'Z8MfY8mzLbnovwK5roC4Bg',
     codes: [':face-orange-raised-eyebrow:'],
-    url: 'https://yt3.ggpht.com/JbCfmOgYI-mO17LPw8e_ycqbBGESL8AVP6i7ZsBOVLd3PEpgrfEuJ9rEGpP_unDcqgWSCg',
+    url:
+        'https://yt3.ggpht.com/JbCfmOgYI-mO17LPw8e_ycqbBGESL8AVP6i7ZsBOVLd3PEpgrfEuJ9rEGpP_unDcqgWSCg',
   ),
   YouTubeStandardEmoji(
     id: 'NvgfY9aeC_OFvOMPkrOAsAM',
     codes: [':face-pink-tears:'],
-    url: 'https://yt3.ggpht.com/RL5QHCNcO_Mc98SxFEblXZt9FNoh3bIgsjm0Kj8kmeQJWMeTu7JX_NpICJ6KKwKT0oVHhAA',
+    url:
+        'https://yt3.ggpht.com/RL5QHCNcO_Mc98SxFEblXZt9FNoh3bIgsjm0Kj8kmeQJWMeTu7JX_NpICJ6KKwKT0oVHhAA',
   ),
   YouTubeStandardEmoji(
     id: 'b8IfY7zOK9iVkNAP_I2A-AY',
     codes: [':face-purple-crying:'],
-    url: 'https://yt3.ggpht.com/g6_km98AfdHbN43gvEuNdZ2I07MmzVpArLwEvNBwwPqpZYzszqhRzU_DXALl11TchX5_xFE',
+    url:
+        'https://yt3.ggpht.com/g6_km98AfdHbN43gvEuNdZ2I07MmzVpArLwEvNBwwPqpZYzszqhRzU_DXALl11TchX5_xFE',
   ),
   YouTubeStandardEmoji(
     id: 'Mm5IY53bH7SEq7IP-MWAkAM',
     codes: [':face-purple-smiling-fangs:'],
-    url: 'https://yt3.ggpht.com/k1vqi6xoHakGUfa0XuZYWHOv035807ARP-ZLwFmA-_NxENJMxsisb-kUgkSr96fj5baBOZE',
+    url:
+        'https://yt3.ggpht.com/k1vqi6xoHakGUfa0XuZYWHOv035807ARP-ZLwFmA-_NxENJMxsisb-kUgkSr96fj5baBOZE',
   ),
   YouTubeStandardEmoji(
     id: 'Ym5IY7-0LoqA29sPq9CAkAY',
     codes: [':face-purple-smiling-tears:'],
-    url: 'https://yt3.ggpht.com/MJV1k3J5s0hcUfuo78Y6MKi-apDY5NVDjO9Q7hL8fU4i0cIBgU-cU4rq4sHessJuvuGpDOjJ',
+    url:
+        'https://yt3.ggpht.com/MJV1k3J5s0hcUfuo78Y6MKi-apDY5NVDjO9Q7hL8fU4i0cIBgU-cU4rq4sHessJuvuGpDOjJ',
   ),
   YouTubeStandardEmoji(
     id: 'UW5IY-ibBqa8jgTymoCIBQ',
     codes: [':face-purple-sweating:'],
-    url: 'https://yt3.ggpht.com/tRnrCQtEKlTM9YLPo0vaxq9mDvlT0mhDld2KI7e_nDRbhta3ULKSoPVHZ1-bNlzQRANmH90',
+    url:
+        'https://yt3.ggpht.com/tRnrCQtEKlTM9YLPo0vaxq9mDvlT0mhDld2KI7e_nDRbhta3ULKSoPVHZ1-bNlzQRANmH90',
   ),
   YouTubeStandardEmoji(
     id: 'DfgfY9LaNdmMq7IPuI2AaA',
     codes: [':face-purple-wide-eyes:'],
-    url: 'https://yt3.ggpht.com/5RDrtjmzRQKuVYE_FKPUHiGh7TNtX5eSNe6XzcSytMsHirXYKunxpyAsVacTFMg0jmUGhQ',
+    url:
+        'https://yt3.ggpht.com/5RDrtjmzRQKuVYE_FKPUHiGh7TNtX5eSNe6XzcSytMsHirXYKunxpyAsVacTFMg0jmUGhQ',
   ),
   YouTubeStandardEmoji(
     id: 'W8IfY_bwAfiPq7IPvNCA2AU',
     codes: [':face-red-droopy-eyes:'],
-    url: 'https://yt3.ggpht.com/oih9s26MOYPWC_uL6tgaeOlXSGBv8MMoDrWzBt-80nEiVSL9nClgnuzUAKqkU9_TWygF6CI',
+    url:
+        'https://yt3.ggpht.com/oih9s26MOYPWC_uL6tgaeOlXSGBv8MMoDrWzBt-80nEiVSL9nClgnuzUAKqkU9_TWygF6CI',
   ),
   YouTubeStandardEmoji(
     id: 'm8MfY4jbFsWJhL0PyouA2Ak',
     codes: [':face-red-heart-shape:'],
-    url: 'https://yt3.ggpht.com/I0Mem9dU_IZ4a9cQPzR0pUJ8bH-882Eg0sDQjBmPcHA6Oq0uXOZcsjPvPbtormx91Ha2eRA',
+    url:
+        'https://yt3.ggpht.com/I0Mem9dU_IZ4a9cQPzR0pUJ8bH-882Eg0sDQjBmPcHA6Oq0uXOZcsjPvPbtormx91Ha2eRA',
   ),
   YouTubeStandardEmoji(
     id: 'oPgfY_DoKfSXkNAPq8-AgAo',
     codes: [':face-turquoise-covering-eyes:'],
-    url: 'https://yt3.ggpht.com/H2HNPRO8f4SjMmPNh5fl10okSETW7dLTZtuE4jh9D6pSmaUiLfoZJ2oiY-qWU3Owfm1IsXg',
+    url:
+        'https://yt3.ggpht.com/H2HNPRO8f4SjMmPNh5fl10okSETW7dLTZtuE4jh9D6pSmaUiLfoZJ2oiY-qWU3Owfm1IsXg',
   ),
   YouTubeStandardEmoji(
     id: 'zPgfY66lCJGRhL0Pz6iA4Aw',
     codes: [':face-turquoise-drinking-coffee:'],
-    url: 'https://yt3.ggpht.com/myqoI1MgFUXQr5fuWTC9mz0BCfgf3F8GSDp06o1G7w6pTz48lwARjdG8vj0vMxADvbwA1dA',
+    url:
+        'https://yt3.ggpht.com/myqoI1MgFUXQr5fuWTC9mz0BCfgf3F8GSDp06o1G7w6pTz48lwARjdG8vj0vMxADvbwA1dA',
   ),
   YouTubeStandardEmoji(
     id: 'face-turquoise-speaker-shape',
     codes: [':face-turquoise-speaker-shape:'],
-    url: 'https://yt3.ggpht.com/WTFFqm70DuMxSC6ezQ5Zs45GaWD85Xwrd9Sullxt54vErPUKb_o0NJQ4kna5m7rvjbRMgr3A',
+    url:
+        'https://yt3.ggpht.com/WTFFqm70DuMxSC6ezQ5Zs45GaWD85Xwrd9Sullxt54vErPUKb_o0NJQ4kna5m7rvjbRMgr3A',
   ),
   YouTubeStandardEmoji(
     id: 'finger-red-number-one',
     codes: [':finger-red-number-one:'],
-    url: 'https://yt3.ggpht.com/Hbk0wxBzPTBCDvD_y4qdcHL5_uu7SeOnaT2B7gl9GLB4u8Ecm9OaXCGSMMUBFeNGl5Q3fHJ2',
+    url:
+        'https://yt3.ggpht.com/Hbk0wxBzPTBCDvD_y4qdcHL5_uu7SeOnaT2B7gl9GLB4u8Ecm9OaXCGSMMUBFeNGl5Q3fHJ2',
   ),
   YouTubeStandardEmoji(
     id: 'fish-orange-wide-eyes',
     codes: [':fish-orange-wide-eyes:'],
-    url: 'https://yt3.ggpht.com/iQLKgKs7qL3091VHgVgpaezc62uPewy50G_DoI0dMtVGmQEX5pflZrUxWfYGmRfzfUOOgJs',
+    url:
+        'https://yt3.ggpht.com/iQLKgKs7qL3091VHgVgpaezc62uPewy50G_DoI0dMtVGmQEX5pflZrUxWfYGmRfzfUOOgJs',
   ),
   YouTubeStandardEmoji(
     id: 'HvgfY93GEYmqvwLUuYDwAQ',
     codes: [':glasses-purple-yellow-diamond:'],
-    url: 'https://yt3.ggpht.com/EnDBiuksboKsLkxp_CqMWlTcZtlL77QBkbjz_rLedMSDzrHmy_6k44YWFy2rk4I0LG6K2KI',
+    url:
+        'https://yt3.ggpht.com/EnDBiuksboKsLkxp_CqMWlTcZtlL77QBkbjz_rLedMSDzrHmy_6k44YWFy2rk4I0LG6K2KI',
   ),
   YouTubeStandardEmoji(
     id: '-fgfY9DIGYjbhgHLzoDIDw',
     codes: [':goat-turquoise-white-horns:'],
-    url: 'https://yt3.ggpht.com/jMnX4lu5GnjBRgiPtX5FwFmEyKTlWFrr5voz-Auko35oP0t3-zhPxR3PQMYa-7KhDeDtrv4',
+    url:
+        'https://yt3.ggpht.com/jMnX4lu5GnjBRgiPtX5FwFmEyKTlWFrr5voz-Auko35oP0t3-zhPxR3PQMYa-7KhDeDtrv4',
   ),
   YouTubeStandardEmoji(
     id: 'YvgfY-LIBpjChgHKyYCQBg',
     codes: [':hand-orange-covering-eyes:'],
-    url: 'https://yt3.ggpht.com/y8ppa6GcJoRUdw7GwmjDmTAnSkeIkUptZMVQuFmFaTlF_CVIL7YP7hH7hd0TJbd8p9w67IM',
+    url:
+        'https://yt3.ggpht.com/y8ppa6GcJoRUdw7GwmjDmTAnSkeIkUptZMVQuFmFaTlF_CVIL7YP7hH7hd0TJbd8p9w67IM',
   ),
   YouTubeStandardEmoji(
     id: 'G8AfY6yWGuKuhL0PlbiA2AE',
     codes: [':hand-pink-waving:'],
-    url: 'https://yt3.ggpht.com/KOxdr_z3A5h1Gb7kqnxqOCnbZrBmxI2B_tRQ453BhTWUhYAlpg5ZP8IKEBkcvRoY8grY91Q',
+    url:
+        'https://yt3.ggpht.com/KOxdr_z3A5h1Gb7kqnxqOCnbZrBmxI2B_tRQ453BhTWUhYAlpg5ZP8IKEBkcvRoY8grY91Q',
   ),
   YouTubeStandardEmoji(
     id: 'EvkfY6uNC5OykQOewoCQAQ',
     codes: [':hand-purple-blue-peace:'],
-    url: 'https://yt3.ggpht.com/-sC8wj6pThd7FNdslEoJlG4nB9SIbrJG3CRGh7-bNV0RVfcrJuwiWHoUZ6UmcVs7sQjxTg4',
+    url:
+        'https://yt3.ggpht.com/-sC8wj6pThd7FNdslEoJlG4nB9SIbrJG3CRGh7-bNV0RVfcrJuwiWHoUZ6UmcVs7sQjxTg4',
   ),
   YouTubeStandardEmoji(
     id: 'hands-yellow-heart-red',
     codes: [':hands-yellow-heart-red:'],
-    url: 'https://yt3.ggpht.com/qWSu2zrgOKLKgt_E-XUP9e30aydT5aF3TnNjvfBL55cTu1clP8Eoh5exN3NDPEVPYmasmoA',
+    url:
+        'https://yt3.ggpht.com/qWSu2zrgOKLKgt_E-XUP9e30aydT5aF3TnNjvfBL55cTu1clP8Eoh5exN3NDPEVPYmasmoA',
   ),
   YouTubeStandardEmoji(
     id: 'fAF1XtDQMIrK8gTUoo3wAg',
     codes: [':hydrate:'],
-    url: 'https://yt3.ggpht.com/tpgZgmhX8snKniye36mnrDVfTnlc44EK92EPeZ0m9M2EPizn1vKEGJzNYdp7KQy6iNZlYDc1',
+    url:
+        'https://yt3.ggpht.com/tpgZgmhX8snKniye36mnrDVfTnlc44EK92EPeZ0m9M2EPizn1vKEGJzNYdp7KQy6iNZlYDc1',
   ),
   YouTubeStandardEmoji(
     id: 'EAJ1XrS7PMGQ8gTz_prwAg',
     codes: [':learning:'],
-    url: 'https://yt3.ggpht.com/ZuBuz8GAQ6IEcQc7CoJL8IEBTYbXEvzhBeqy1AiytmhuAT0VHjpXEjd-A5GfR4zDin1L53Q',
+    url:
+        'https://yt3.ggpht.com/ZuBuz8GAQ6IEcQc7CoJL8IEBTYbXEvzhBeqy1AiytmhuAT0VHjpXEjd-A5GfR4zDin1L53Q',
   ),
   YouTubeStandardEmoji(
     id: 'medal-yellow-first-red',
     codes: [':medal-yellow-first-red:'],
-    url: 'https://yt3.ggpht.com/EEHiiIalCBKuWDPtNOjjvmEZ-KRkf5dlgmhe5rbLn8aZQl-pNz_paq5UjxNhCrI019TWOQ',
+    url:
+        'https://yt3.ggpht.com/EEHiiIalCBKuWDPtNOjjvmEZ-KRkf5dlgmhe5rbLn8aZQl-pNz_paq5UjxNhCrI019TWOQ',
   ),
   YouTubeStandardEmoji(
     id: 'penguin-blue-waving-tear',
     codes: [':penguin-blue-waving-tear:'],
-    url: 'https://yt3.ggpht.com/p2u7dcfZau4_bMOMtN7Ma8mjHX_43jOjDwITf4U9adT44I-y-PT7ddwPKkfbW6Wx02BTpNoC',
+    url:
+        'https://yt3.ggpht.com/p2u7dcfZau4_bMOMtN7Ma8mjHX_43jOjDwITf4U9adT44I-y-PT7ddwPKkfbW6Wx02BTpNoC',
   ),
   YouTubeStandardEmoji(
     id: 'person-blue-wheelchair-race',
     codes: [':person-blue-wheelchair-race:'],
-    url: 'https://yt3.ggpht.com/ZepxPGk5TwzrKAP9LUkzmKmEkbaF5OttNyybwok6mJENw3p0lxDXkD1X2_rAwGcUM0L-D04',
+    url:
+        'https://yt3.ggpht.com/ZepxPGk5TwzrKAP9LUkzmKmEkbaF5OttNyybwok6mJENw3p0lxDXkD1X2_rAwGcUM0L-D04',
   ),
   YouTubeStandardEmoji(
     id: 'ssIfY7OFG5OykQOpn4CQCw',
     codes: [':person-turqouise-waving:'],
-    url: 'https://yt3.ggpht.com/uNSzQ2M106OC1L3VGzrOsGNjopboOv-m1bnZKFGuh0DxcceSpYHhYbuyggcgnYyaF3o-AQ',
+    url:
+        'https://yt3.ggpht.com/uNSzQ2M106OC1L3VGzrOsGNjopboOv-m1bnZKFGuh0DxcceSpYHhYbuyggcgnYyaF3o-AQ',
   ),
   YouTubeStandardEmoji(
     id: 'person-turquoise-wizard-wand',
     codes: [':person-turquoise-wizard-wand:'],
-    url: 'https://yt3.ggpht.com/OiZeNvmELg2PQKbT5UCS0xbmsGbqRBSbaRVSsKnRS9gvJPw7AzPp-3ysVffHFbSMqlWKeQ',
+    url:
+        'https://yt3.ggpht.com/OiZeNvmELg2PQKbT5UCS0xbmsGbqRBSbaRVSsKnRS9gvJPw7AzPp-3ysVffHFbSMqlWKeQ',
   ),
   YouTubeStandardEmoji(
     id: 'person-turquoise-writing-headphones',
     codes: [':person-turquoise-writing-headphones:'],
-    url: 'https://yt3.ggpht.com/DC4KrwzNkVxLZa2_KbKyjZTUyB9oIvH5JuEWAshsMv9Ctz4lEUVK0yX5PaMsTK3gGS-r9w',
+    url:
+        'https://yt3.ggpht.com/DC4KrwzNkVxLZa2_KbKyjZTUyB9oIvH5JuEWAshsMv9Ctz4lEUVK0yX5PaMsTK3gGS-r9w',
   ),
   YouTubeStandardEmoji(
     id: 'popcorn-yellow-striped-smile',
     codes: [':popcorn-yellow-striped-smile:'],
-    url: 'https://yt3.ggpht.com/TW_GktV5uVYviPDtkCRCKRDrGlUc3sJ5OHO81uqdMaaHrIQ5-sXXwJfDI3FKPyv4xtGpOlg',
+    url:
+        'https://yt3.ggpht.com/TW_GktV5uVYviPDtkCRCKRDrGlUc3sJ5OHO81uqdMaaHrIQ5-sXXwJfDI3FKPyv4xtGpOlg',
   ),
   YouTubeStandardEmoji(
     id: 'lP90XvOhCZGl8wSO1JmgAw',
     codes: [':sanitizer:'],
-    url: 'https://yt3.ggpht.com/EJ_8vc4Gl-WxCWBurHwwWROAHrPzxgePodoNfkRY1U_I8L1O2zlqf7-wfUtTeyzq2qHNnocZ',
+    url:
+        'https://yt3.ggpht.com/EJ_8vc4Gl-WxCWBurHwwWROAHrPzxgePodoNfkRY1U_I8L1O2zlqf7-wfUtTeyzq2qHNnocZ',
   ),
   YouTubeStandardEmoji(
     id: 'egJ1XufTKYfegwOo57ewAg',
     codes: [':shelterin:'],
-    url: 'https://yt3.ggpht.com/gjC5x98J4BoVSEPfFJaoLtc4tSBGSEdIlfL2FV4iJG9uGNykDP9oJC_QxAuBTJy6dakPxVeC',
+    url:
+        'https://yt3.ggpht.com/gjC5x98J4BoVSEPfFJaoLtc4tSBGSEdIlfL2FV4iJG9uGNykDP9oJC_QxAuBTJy6dakPxVeC',
   ),
   YouTubeStandardEmoji(
     id: '1v50XorRJ8GQ8gTz_prwAg',
     codes: [':stayhome:'],
-    url: 'https://yt3.ggpht.com/_1FGHypiub51kuTiNBX1a0H3NyFih3TnHX7bHU06j_ajTzT0OQfMLl9RI1SiQoxtgA2Grg',
+    url:
+        'https://yt3.ggpht.com/_1FGHypiub51kuTiNBX1a0H3NyFih3TnHX7bHU06j_ajTzT0OQfMLl9RI1SiQoxtgA2Grg',
   ),
   YouTubeStandardEmoji(
     id: 'hcIfY57lBJXp6AKBx4CoCA',
     codes: [':text-green-game-over:'],
-    url: 'https://yt3.ggpht.com/cr36FHhSiMAJUSpO9XzjbOgxhtrdJNTVJUlMJeOOfLOFzKleAKT2SEkZwbqihBqfTXYCIg',
+    url:
+        'https://yt3.ggpht.com/cr36FHhSiMAJUSpO9XzjbOgxhtrdJNTVJUlMJeOOfLOFzKleAKT2SEkZwbqihBqfTXYCIg',
   ),
   YouTubeStandardEmoji(
     id: 'text-yellow-goal',
     codes: [':text-yellow-goal:'],
-    url: 'https://yt3.ggpht.com/tnHp8rHjXecGbGrWNcs7xss_aVReaYE6H-QWRCXYg_aaYszHXnbP_pVADnibUiimspLvgX0L',
+    url:
+        'https://yt3.ggpht.com/tnHp8rHjXecGbGrWNcs7xss_aVReaYE6H-QWRCXYg_aaYszHXnbP_pVADnibUiimspLvgX0L',
   ),
   YouTubeStandardEmoji(
     id: 'Rf90XtDbG8GQ8gTz_prwAg',
     codes: [':thanksdoc:'],
-    url: 'https://yt3.ggpht.com/bUnO_VwXW2hDf-Da8D64KKv6nBJDYUBuo13RrOg141g2da8pi9-KClJYlUDuqIwyPBfvOO8',
+    url:
+        'https://yt3.ggpht.com/bUnO_VwXW2hDf-Da8D64KKv6nBJDYUBuo13RrOg141g2da8pi9-KClJYlUDuqIwyPBfvOO8',
   ),
   YouTubeStandardEmoji(
     id: 'ePgfY-K2Kp6Mr8oP1oqAwAc',
     codes: [':trophy-yellow-smiling:'],
-    url: 'https://yt3.ggpht.com/7tf3A_D48gBg9g2N0Rm6HWs2aqzshHU4CuVubTXVxh1BP7YDBRC6pLBoC-ibvr-zCl_Lgg',
+    url:
+        'https://yt3.ggpht.com/7tf3A_D48gBg9g2N0Rm6HWs2aqzshHU4CuVubTXVxh1BP7YDBRC6pLBoC-ibvr-zCl_Lgg',
   ),
   YouTubeStandardEmoji(
     id: 'dv90XtfhAurw8gTgzar4DA',
     codes: [':virtualhug:'],
-    url: 'https://yt3.ggpht.com/U1TjOZlqtS58NGqQhE8VWDptPSrmJNkrbVRp_8jI4f84QqIGflq2Ibu7YmuOg5MmVYnpevc',
+    url:
+        'https://yt3.ggpht.com/U1TjOZlqtS58NGqQhE8VWDptPSrmJNkrbVRp_8jI4f84QqIGflq2Ibu7YmuOg5MmVYnpevc',
   ),
   YouTubeStandardEmoji(
     id: 'JAJ1XpGpJYnW8wTupZu4Cw',
     codes: [':washhands:'],
-    url: 'https://yt3.ggpht.com/qXUeUW0KpKBc9Z3AqUqr_0B7HbW1unAv4qmt7-LJGUK_gsFBIaHISWJNt4n3yvmAnQNZHE-u',
+    url:
+        'https://yt3.ggpht.com/qXUeUW0KpKBc9Z3AqUqr_0B7HbW1unAv4qmt7-LJGUK_gsFBIaHISWJNt4n3yvmAnQNZHE-u',
   ),
   YouTubeStandardEmoji(
     id: 'whistle-red-blow',
     codes: [':whistle-red-blow:'],
-    url: 'https://yt3.ggpht.com/DBu1ZfPJTnX9S1RyKKdBY-X_CEmj7eF6Uzl71j5jVBz5y4k9JcKnoiFtImAbeu4u8M2X8tU',
+    url:
+        'https://yt3.ggpht.com/DBu1ZfPJTnX9S1RyKKdBY-X_CEmj7eF6Uzl71j5jVBz5y4k9JcKnoiFtImAbeu4u8M2X8tU',
   ),
   YouTubeStandardEmoji(
     id: 'hf90Xv-jHeOR8gSxxrToBA',
     codes: [':yougotthis:'],
-    url: 'https://yt3.ggpht.com/s3uOe4lUx3iPIt1h901SlMp_sKCTp3oOVj1JV8izBw_vDVLxFqk5dq-3NX-nK_gnUwVEXld3',
+    url:
+        'https://yt3.ggpht.com/s3uOe4lUx3iPIt1h901SlMp_sKCTp3oOVj1JV8izBw_vDVLxFqk5dq-3NX-nK_gnUwVEXld3',
   ),
   YouTubeStandardEmoji(
     id: 'CIW60IPp_dYCFcuqTgodEu4IlQ',
     codes: [':yt:'],
-    url: 'https://yt3.ggpht.com/IkpeJf1g9Lq0WNjvSa4XFq4LVNZ9IP5FKW8yywXb12djo1OGdJtziejNASITyq4L0itkMNw',
+    url:
+        'https://yt3.ggpht.com/IkpeJf1g9Lq0WNjvSa4XFq4LVNZ9IP5FKW8yywXb12djo1OGdJtziejNASITyq4L0itkMNw',
   ),
 ];

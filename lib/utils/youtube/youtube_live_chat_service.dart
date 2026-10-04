@@ -6,6 +6,7 @@ import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 const String _kApiBase = 'https://www.googleapis.com/youtube/v3';
 
@@ -158,7 +159,7 @@ class YouTubeLiveChatService {
   final http.Client _client;
 
   YouTubeLiveChatService({http.Client? client})
-    : _client = client ?? http.Client();
+    : _client = client ?? RenewingHttpClient();
 
   /// API key resolution: the user's own key ([SettingsKeys.YouTubeApiKey])
   /// wins over the app-owned [kYouTubeApiKey] constant.

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Community-run history service Chatterino uses for scrollback on join
 /// (`recent-messages.robotty.de`, see `docs/chatterino-comparison.md`).
@@ -21,7 +22,7 @@ class TwitchRecentMessagesService {
   static http.Client? debugDefaultClient;
 
   TwitchRecentMessagesService({http.Client? client})
-    : _client = client ?? debugDefaultClient ?? http.Client();
+    : _client = client ?? debugDefaultClient ?? RenewingHttpClient();
 
   /// Up to [limit] most recent chat messages of [channelLogin], oldest
   /// first. Moderated messages (deleted / timed out / banned) are dropped

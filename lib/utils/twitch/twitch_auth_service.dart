@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_device_code.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_token.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Public client id of the "OBS Blade Chat" Twitch developer application
 /// (not a secret — Twitch treats client ids as embeddable).
@@ -103,7 +104,7 @@ class TwitchAuthService {
   TwitchAuthService({
     http.Client? client,
     Future<void> Function(Duration)? sleep,
-  }) : _client = client ?? http.Client(),
+  }) : _client = client ?? RenewingHttpClient(),
        _sleep = sleep ?? Future.delayed;
 
   static Map<String, String> helixHeaders(String accessToken) => {

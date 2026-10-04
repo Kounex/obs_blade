@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_search_result.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Sort key for the add-chat picker: live → mod → everyone else.
 /// Stable within a tier (keeps Helix / original order).
@@ -69,7 +70,7 @@ class TwitchChannelService {
   final http.Client _client;
 
   TwitchChannelService({http.Client? client})
-    : _client = client ?? http.Client();
+    : _client = client ?? RenewingHttpClient();
 
   Future<List<TwitchChannelSearchResult>> searchChannels({
     required String accessToken,

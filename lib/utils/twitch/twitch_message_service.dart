@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/twitch/twitch_send_result.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Helix `chat/messages` endpoint — sends a chat message as the
 /// authenticated user into [broadcasterId]'s channel (their own channel
@@ -14,7 +15,7 @@ class TwitchMessageService {
   final http.Client _client;
 
   TwitchMessageService({http.Client? client})
-    : _client = client ?? http.Client();
+    : _client = client ?? RenewingHttpClient();
 
   Future<TwitchSendResult> sendChatMessage({
     required String accessToken,

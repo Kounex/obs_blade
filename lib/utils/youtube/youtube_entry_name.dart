@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/utils/youtube_target.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Default label for a YouTube chat entry saved without a name — the
 /// label is only the entry's display name (and map key), so it can be
@@ -28,7 +29,8 @@ class YouTubeEntryNamer {
 
   final http.Client _client;
 
-  YouTubeEntryNamer({http.Client? client}) : _client = client ?? http.Client();
+  YouTubeEntryNamer({http.Client? client})
+    : _client = client ?? RenewingHttpClient();
 
   Future<String> nameFor(YouTubeTarget target) async {
     switch (target) {

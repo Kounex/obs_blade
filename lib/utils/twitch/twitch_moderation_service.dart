@@ -6,6 +6,7 @@ import 'package:obs_blade/types/classes/twitch/twitch_banned_user.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_pinned_message.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_warning.dart';
 import 'package:obs_blade/utils/twitch/twitch_auth_service.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 /// Helix mod actions for the multi-chat mod action sheet — delete a
 /// message, timeout or ban a user, clear chat, chat modes, Shield Mode,
@@ -32,7 +33,7 @@ class TwitchModerationService {
   final http.Client _client;
 
   TwitchModerationService({http.Client? client})
-    : _client = client ?? http.Client();
+    : _client = client ?? RenewingHttpClient();
 
   /// Delete one chat message (Helix answers 204 No Content).
   Future<void> deleteChatMessage({

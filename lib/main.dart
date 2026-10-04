@@ -48,6 +48,7 @@ import 'stores/views/youtube_chat.dart';
 import 'types/enums/hive_keys.dart';
 import 'utils/general_helper.dart';
 import 'utils/wake_lock_helper.dart';
+import 'utils/renewing_http_client.dart';
 
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
@@ -83,6 +84,10 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
     if (state == AppLifecycleState.resumed) {
       /// The OS may drop the wake lock while the app is in the background
       applyWakeLockSetting();
+
+      /// iOS takes a suspended app's sockets away - the chat services'
+      /// pooled connections start over before anything polls again
+      RenewingHttpClient.renewAll();
 
       /// A YouTube poll that failed or backed off while suspended restarts
       /// now - app-wide, the Chat tab runs without an OBS dashboard. Only a

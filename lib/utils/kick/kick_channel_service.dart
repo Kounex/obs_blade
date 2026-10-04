@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 const String _kApiBase = 'https://kick.com/api/v2';
 
@@ -32,7 +33,8 @@ class KickApiException implements Exception {
 class KickChannelService {
   final http.Client _client;
 
-  KickChannelService({http.Client? client}) : _client = client ?? http.Client();
+  KickChannelService({http.Client? client})
+    : _client = client ?? RenewingHttpClient();
 
   Map<String, String> get _headers => const {
     'User-Agent': kKickUserAgent,

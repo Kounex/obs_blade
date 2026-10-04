@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
+import 'package:obs_blade/utils/renewing_http_client.dart';
 
 const String _kApiBase = 'https://www.googleapis.com/youtube/v3';
 
@@ -91,7 +92,7 @@ class YouTubeChannelSearchService {
   _cache = {};
 
   YouTubeChannelSearchService({http.Client? client, DateTime Function()? now})
-    : _client = client ?? http.Client(),
+    : _client = client ?? RenewingHttpClient(),
       _now = now ?? DateTime.now;
 
   Uri _uri(String path, Map<String, String> query, {String? apiKey}) =>

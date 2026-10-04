@@ -2,6 +2,36 @@
 
 Running log of upgrade/migration work. Not store release notes.
 
+## 2026-10-04 - Chat after the background; grouped scene item toggles
+
+User reports: (1) after a while in the background, a combined chat with
+YouTube failed and the header's Retry kept failing until the app was
+fully closed; (2) the eye / lock of a scene item inside a group did
+nothing.
+
+- (1) Dogfood Settings → Logs (`app-log.hive` pulled with `devicectl
+  device copy from`): `YouTube chat poll failed - ClientException: Write
+  failed` (and Kick once) right after the resume; repeats are rate-
+  limited out of the log. The poll treats it as transient and retries -
+  on the same long-lived `dart:io` client whose pooled connections iOS
+  took away; a restart (new client) fixed it. `RenewingHttpClient`
+  (`lib/utils/`): a connection-level failure (SocketException /
+  HttpException / ClientException) swaps in a fresh client, so the
+  caller's own retry goes out on new connections (nothing is resent -
+  a POST may have arrived); `renewAll()` on app resume, before
+  `reconnectAfterResume`. Default client of every YouTube / Kick /
+  Twitch service (21). Related: flutter/flutter#116101 (iOS sockets
+  defunct after ~5 min in the background).
+- (2) obs-websocket names a grouped item's change by its group (a group
+  is a scene - source checked, see the gotchas), and the dashboard -
+  which confirms a toggle only through that event - dropped every event
+  not about the displayed scene. Events of a shown group now patch its
+  children; the displayed scene's events only its top level (a child
+  sharing a top-level id used to flip along).
+- Tests: `renewing_http_client_test` (renew on connection failures only,
+  renewAll, the YouTube poll's retry after "Write failed" reads again),
+  `state_ordering_test` group case (fails on the old code).
+
 ## 2026-10-04 - Busy chat: what you read while scrolled up stays put
 
 User report: in a very busy chat, an old message read while scrolled
