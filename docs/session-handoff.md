@@ -173,7 +173,7 @@ source of truth; never leave work local-only when handing over.
 **Just closed: the combined-chat session** (NAS, 2026-09-24 → 25,
 `82fd1c66..HEAD`, all pushed; the workstation is on the same commit and
 "Kounex iOS" runs that release build with `PRO_RELEASE_TEST_UNLOCK` +
-the Kick OAuth defines — recipe in `docs/private/maintainer-workflow.md`
+the Kick OAuth defines — recipe in `docs/private/maintainer-runbooks.md`
 § Dogfood release). What shipped (details: `changelog-agent.md`
 2026-09-24 / 25 entries, rules: `AGENTS.md` § Combined chat):
 

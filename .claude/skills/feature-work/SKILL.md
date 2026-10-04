@@ -116,7 +116,7 @@ contradictions (a status next to a button that says otherwise). A MobX
 - What was built / changed, how each part is verified, what's left out
   and why.
 - **Device check:** maintainers - put it on the dogfood device (recipe
-  in `docs/private/maintainer-workflow.md`) and give the user a short
+  in `docs/private/maintainer-runbooks.md`) and give the user a short
   tap list: the journeys and states the work touches, once from a fresh
   state. Store test builds (`release-beta`) only after their on-device
   OK.

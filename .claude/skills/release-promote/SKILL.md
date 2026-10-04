@@ -6,7 +6,7 @@ description: Use when an OBS Blade build already on TestFlight / the Play intern
 # Promote a tested build to the stores
 
 Read [`docs/release-playbook.md`](../../../docs/release-playbook.md) first.
-Maintainers: `docs/private/maintainer-workflow.md` § "Store releases over SSH".
+Maintainers: `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
 
 ## Preconditions - check, don't assume
 

@@ -7,7 +7,7 @@ description: Use when the user wants a new OBS Blade version built and sent to t
 
 Read [`docs/release-playbook.md`](../../../docs/release-playbook.md) first -
 rules, versioning, notes, where the tool runs. Maintainers also need
-`docs/private/maintainer-workflow.md` § "Store releases over SSH".
+`docs/private/maintainer-runbooks.md` § "Store releases over SSH".
 
 ## Steps
 

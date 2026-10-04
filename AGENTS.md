@@ -199,7 +199,8 @@ fallback. WebView chat stays free forever. Gate mechanics + wiring:
 | [`docs/private/monetization-strategy.md`](docs/private/monetization-strategy.md) | Business model — pricing tiers, power-user/Studio revenue plan. **Gitignored — not public.** |
 | [`docs/private/backend-architecture.md`](docs/private/backend-architecture.md) | Infra plan for paid backend features — hosting, build order, open decisions. **Gitignored — not public.** |
 | [`docs/private/feature-requests-2026-10.md`](docs/private/feature-requests-2026-10.md) | User requests 2026-10 (chat TTS, in-app web pages, TikTok chat, OBS canvases): feasibility, store-rating impact, decisions + plan. **Gitignored — not public.** |
-| [`docs/private/maintainer-workflow.md`](docs/private/maintainer-workflow.md) | Maintainer-only machine setup + dogfood/private-doc sync workflow. **Gitignored — not public; contributors can ignore.** |
+| [`docs/private/maintainer-workflow.md`](docs/private/maintainer-workflow.md) | Maintainer-only machine setup + dogfood/private-doc sync duties (session-start read). **Gitignored — not public; contributors can ignore.** |
+| [`docs/private/maintainer-runbooks.md`](docs/private/maintainer-runbooks.md) | Maintainer-only task recipes — dogfood device builds / store releases over SSH, Android emulator dogfood. **Gitignored — not public; contributors can ignore.** |
 
 ## Tooling
 

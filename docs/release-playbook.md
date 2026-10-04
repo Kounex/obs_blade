@@ -19,7 +19,7 @@ this file is the process around it.
 (fastlane) and the store credentials (env vars, see the tool README). Build
 and upload on that machine. **Maintainers:** the machine, SSH access,
 environment and keychain recipe are in
-`docs/private/maintainer-workflow.md` § "Store releases over SSH".
+`docs/private/maintainer-runbooks.md` § "Store releases over SSH".
 
 `release <cmd>` below means `dart run tool/release/bin/release.dart <cmd>`
 from the repo root.

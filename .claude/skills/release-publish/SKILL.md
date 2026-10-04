@@ -6,7 +6,7 @@ description: Use when an OBS Blade version passed App Review / Play review and s
 # Publish an approved release
 
 Read [`docs/release-playbook.md`](../../../docs/release-playbook.md) first.
-Maintainers: `docs/private/maintainer-workflow.md` § "Store releases over SSH".
+Maintainers: `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
 
 ## Preconditions
 
