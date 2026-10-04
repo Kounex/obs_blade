@@ -1,37 +1,27 @@
-4.1.0 test build 5. What to test:
+4.1.0 test build 6. What to test:
 
-NEW IN BUILD 5 - CHAT BAR
-- Signed in on Twitch, YouTube or Kick: no account name chip in the chat bar any more - the mod shield and the options button sit there, also on a phone
-- YouTube / Kick signed in: the shield opens the channel tools (polls, moderators, bans)
-- Account + sign-out: tap the chat header - YouTube / Kick show "Connected as ..." with Sign out, Twitch opens your own card with Log out
-- Signed out: the "Connect ..." / "Set up YouTube" pill is still there
+ACTIVITY FEED (Pro)
+- Status button top right of the feed: tap it - every platform says whether it's listening; a dot means news since you last opened it
+- Live on YouTube from OBS without YouTube set up (or with only an API key): the banner comes out by itself and offers Set up / Sign in
+- Signed in to YouTube with your channel, Twitch chat on screen (or the WebView chat): go live on YouTube - within ~30 s the stream shows as live, a Super Chat lands in the feed within ~30 s more
+- A scheduled (not yet started) YouTube stream does NOT show as live
+- Live on Twitch, lock the phone for 3 min, unlock: a dot on the status button and a "Not listening on Twitch ..." row in the list
+- A Power-up (e.g. Gigantify) from another account on your Twitch channel: "used Gigantify an Emote for ... bits" (Money chip)
+- "Mark N thanked" on a stream / day header thanks only the rows shown
+- Pick "Money", leave the feed, get a new follow, open the "N new" chip in streaming mode: the follow still counts as new until you look under All
+- Points + To thank: "Nothing to thank here" with what's waiting under All (never "All thanked" while some are left)
+- iPad: sign in to Twitch in the chat pane while the feed next to it is empty - "No channel connected" changes right away
 
-FROM BUILD 4 - chat fixes since build 3:
+PRO
+- Paywall: new line under "OBS Blade Pro", five cards (Every Chat, One Place - Never Miss a Supporter - Hear Your Chat - Moderate From Your Pocket - Your Own Themes)
+- Without Pro: native chat and Chat -> Activity show the same locked pane, each listing the four other groups
+- Settings -> FAQ -> "What does OBS Blade Pro unlock?" tells the same story
 
-YOUTUBE
-- Native chat on a live stream: switch to another channel and quickly back - the chat keeps running, no "quota" message
-- Background the app for a minute in the Chat tab (no OBS connection), come back: the chat picks up again
-- Setup sheet: the sign-in steps match today's Google Cloud Console (Credentials page, consent screen, test user)
-- Sign in with the personal account instead of the Brand Account and tap "Keep": the input, header sheet and Combined sources all say there is no channel and offer "Switch account"
-- Your own channel shows by its title, never a UC... id - also in the "not live" screen of the WebView chat
-- Header sheet: an offline chat is not shown as signed out
-
-COMBINED CHAT
-- Build a combo with your own YouTube channel + a Kick channel: it shows "You", your Super Chats / memberships land in Activity, your channel is not listed twice in the YouTube menu
-- Builder -> Other... -> paste a youtube.com/channel/UC... link: "Looking up the channel..." then the channel title; a made-up @handle says not found
-- Signed out of YouTube, a combo with your own channel offers "Sign in"
-
-STARTUP
-- With Twitch chat selected (Pro, a Kick channel and a YouTube key saved): nothing of Kick / YouTube runs in the background - Settings -> Logs stays quiet about them
-
-KICK
-- Add a misspelled channel, then "Add Kick channel" with the right name: the chat switches to it
-- Adding a channel from the channel menu (Kick and YouTube) switches to it
-
-ACTIVITY
-- YouTube-only, signed in with your channel: the empty feed no longer says "No channel connected"
+CHAT
+- Add chat (native YouTube with an API key, Kick): a search sheet with suggestions instead of the old dialog; picking a channel switches to it
+- Native chat bar: the channel dropdown fills its row (phone, small phone, iPad); long names and LIVE chips fit in the open menu
+- Combined chat builder -> "Other..." opens each platform's own picker
+- Chat header: Sign out is there in every state (live, connecting, failed, offline)
 
 ALSO
-- Narrow phone, signed out of Twitch: the read-only bar under the chat fits
-- Chat failures (Kick socket, Twitch chat connection) show up in Settings -> Logs
-- Updating over the store version keeps saved connections and settings
+- Updating over the store version (4.0.1) keeps saved connections and settings
