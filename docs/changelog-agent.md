@@ -4,6 +4,35 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-05 - Chat: user-card history timestamps on YouTube/Kick + history-capacity spike
+
+User report: the user card's message history shows no timestamps for
+YouTube (Kick had the same gap). Plus a sizing question: messages
+evicted at the 500-row buffer cap are gone entirely - how much history
+could a separate retention list keep?
+
+- Fix (`6e015a6b`): `YouTubeChatMessageRow` / `KickChatMessageRow` got
+  Twitch's `showTimestamp` param (forced `formatChatMessageTime` span
+  regardless of the timeline setting, semantics label included), and both
+  user-card sheets pass it on their history rows. Reviewer-approved.
+- Capacity spike (`test/chat/chat_history_capacity_test.dart`, skipped
+  by default - run with `--run-skipped`): realistic generated messages,
+  RSS-slope memory + churn + query + JSON sizing. Findings: full freezed
+  models cost **~1.0-1.4 KB/message** (Twitch/YouTube/Kick alike -
+  strings dominate) → 100k ≈ 120 MB, 500k ≈ 600 MB; a slim history
+  record (id, author, timestamp, text) costs **~0.5-0.6 KB** → 100k ≈
+  55 MB, 1M ≈ 550 MB. Eviction-path churn is ~5 µs/msg *including*
+  generation (append + per-user index insert alone is sub-µs); a
+  per-user `Map<authorId, List>` makes the card's last-20 query
+  microsecond-cheap (full scan: ~0.5 ms at 100k, ~6 ms worst case at
+  500k). JSON for persistence: ~160 B/entry → 100k ≈ 15 MB, encode
+  ~200-400 ms / decode ~140-390 ms (load lazily / per platform if
+  persisted). The full models declare `toJson: false` - persisting them
+  would need new serializers; slim records are trivially persistable.
+  Sweet spot: slim records, per-platform lists, ~100k/platform
+  (≈55 MB each) - full-fidelity rows stay viable for a small recent
+  window via the live buffer. Not built (user is deciding).
+
 ## 2026-10-05 - Chat: YouTube poll died on a timeout/ban event (uint64 as string)
 
 User report (dogfood, after the background-recovery work): a YouTube

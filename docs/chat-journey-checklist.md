@@ -70,7 +70,7 @@ the account - Twitch is the only engine where offline means signed out
 | Third-party emotes | combined chat: every platform's channel emotes render (7TV / BTTV / FFZ), not just globals; a failed refetch keeps the last catalog; signing out of one platform leaves the others' emotes |
 | Scrolled up in a busy chat | at the cap (500), reading an old message: it stays where it is while rows arrive below (nothing dropped above), the pill counts; back at the bottom the buffer trims to 500; past ~2,000 the list stops taking rows - every platform + combined |
 | Rows at the buffer cap | with the buffer full, every arrival evicts the oldest row: an already-visible notice (sub / announcement) must NOT replay its entrance fade, a tombstone must not re-fade - only the genuinely new row animates (rows need stable keys + `findItemIndexCallback`; keys alone don't relocate children in a builder sliver) |
-| User cards | long history: only the messages below LIVE scroll (name, facts, lists, LIVE pinned; self card: account footer pinned below); phone in landscape: all scrolls together |
+| User cards | long history: only the messages below LIVE scroll (name, facts, lists, LIVE pinned; self card: account footer pinned below); phone in landscape: all scrolls together; history rows show a timestamp on **every** platform (Twitch / YouTube / Kick), even with the timeline timestamps setting off |
 | Setup sheets | full setup vs the sign-in-only part; steps match today's third-party console |
 | Empty-state CTA | the next step for the actual missing piece |
 | Combined sources sheet / builder | per-source state and fixes - every fix button does what it says ("Sign in" opens a sign-in) in "My chats" **and** saved combos |
