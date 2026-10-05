@@ -4,6 +4,24 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-05 - Release: 4.1.0 promoted to review (both stores)
+
+Beta build **2026100501** (release commit `4c0c3e28`) went out in the
+morning (TestFlight `VALID` + Play internal; store notes unchanged from
+2026100402, TestFlight "What to Test" = build-8 list). The user's dogfood
+verdict on the session-history wave was "looks very very good", so the same
+build was promoted in the afternoon: `metadata ios` created App Store
+version 4.1.0 (notes, 14 committed screenshots; the App Preview carried
+over from 4.0.1 - verified `COMPLETE` via the ASC API with a throwaway
+script riding the release tool's `AppStore` client), `metadata android`
+pushed the regrouped Play description + graphics (managed publishing holds
+them), `submit ios` (manual release) and `promote android --rollout 1.0`
+(user picked 100% over a staged 20%). State: App Store 4.1.0
+`WAITING_FOR_REVIEW`, Play production 4.1.0 [2026100501] in review at 100%.
+Next: both approved → `release-publish` (`publish ios` + the Play Console
+**Publish** button, tag `4.1.0`), then the website's `pending-4.1/` copy
+goes live.
+
 ## 2026-10-05 - Chat: session-history cap is user-configurable (default 50k)
 
 The `ChatHistoryStore` cap (messages kept beyond the 500-row live

@@ -3,7 +3,7 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-25**, top block
-updated **2026-10-05** (4.0.1 live, 4.1.0 build 2026100501 in testing) (end of
+updated **2026-10-05** (4.1.0 build 2026100501 IN REVIEW on both stores, 4.0.1 still live) (end of
 the combined-chat session: combined chat waves 1–3, channel mod sheets,
 picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
@@ -61,7 +61,16 @@ internal; store notes unchanged - still the 2026100402 text, TestFlight
 "What to Test" = build-8 list: session history, background catch-up,
 YouTube timeout/ban fix). Also shipped: user-card
 history timestamps on YouTube/Kick (`6e015a6b`).
-Next: the user's verdict on build 2026100501, then `release-promote` 4.1.0.
+**Promoted 2026-10-05:** build 2026100501 is in review on both stores -
+App Store 4.1.0 `WAITING_FOR_REVIEW` (manual release), Play production
+4.1.0 [2026100501] at 100% under managed publishing (the user presses
+**Publish** in the Play Console after approval). `metadata ios` created the
+version (notes = the 2026100402 text, 14 screenshots; App Preview carried
+over, verified COMPLETE via the ASC API) and `metadata android` pushed the
+regrouped Play description + graphics. Next: both approved →
+`release-publish` (`publish ios` + Play Console Publish, tag `4.1.0`),
+then the website's `pending-4.1/` goes live (`obs-blade-site/AGENTS.md`
+§ Pending).
 
 **Update 2026-10-04 (later) — releases:** **4.0.1 is live on both
 stores** (App Store `READY_FOR_SALE`, Play production 2026093001 at
