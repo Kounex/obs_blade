@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
@@ -47,6 +48,7 @@ void main() {
   late FakeTwitchBadgeService badgeService;
   late TwitchBadgeStore badgeStore;
   late TwitchChatStore store;
+  late ChatHistoryStore history;
 
   Box<TwitchAuth> authBox() => Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
 
@@ -59,6 +61,7 @@ void main() {
     eventSubService = FakeTwitchEventSubService();
     badgeService = FakeTwitchBadgeService();
     badgeStore = TwitchBadgeStore(service: badgeService);
+    history = ChatHistoryStore();
     store = TwitchChatStore(
       authService: authService,
       eventSubFactory:
@@ -77,6 +80,7 @@ void main() {
       badgeStoreResolver: () => badgeStore,
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
       isProResolver: () => true,
+      chatHistoryResolver: () => history,
     );
   });
 
@@ -551,8 +555,8 @@ void main() {
     });
 
     test(
-      'messagesForChatter returns newest-first capped rows for one user',
-      () {
+      'messagesForChatter returns all buffered rows for one user, '
+      'newest first', () {
         ChatMessageEvent tagged(String id, String chatterId, {String? color}) =>
             ChatMessageEvent(
               broadcasterUserId: 'b1',
@@ -577,9 +581,14 @@ void main() {
 
         final rows = store.messagesForChatter('target');
 
-        expect(rows, hasLength(20));
-        expect(rows.first.messageId, 'latest');
-        expect(rows.last.messageId, 'a6');
+        /// No display cap any more - the card bounds what it shows (50 +
+        /// the expand button); the store hands over everything retained.
+        expect(rows, hasLength(26));
+        expect(rows.first.message.messageId, 'latest');
+        expect(rows.last.message.messageId, 'a0');
+
+        /// All live-buffer rows: no tombstone snapshot.
+        expect(rows.every((row) => row.tombstoneSnapshot == null), isTrue);
         expect(store.newestChatterColor('target'), '#FF0000');
         expect(store.messagesForChatter('missing'), isEmpty);
       },
@@ -1440,6 +1449,254 @@ void main() {
         expect(store.tombstoneInfo('m1')?.kind, ChatTombstoneKind.timedOut);
       },
     );
+  });
+
+  group('session history (user card)', () {
+    /// chatMessage() lands on broadcaster 'b1' — the logged-out store's
+    /// effective id is '' though, so history tests log in / select first
+    /// or query by the message's own broadcaster id.
+    List<ChatHistoryEntry> historyOf(String userId, [String channel = 'b1']) =>
+        history.historyFor(
+          platform: ChatHistoryPlatform.twitch,
+          channelKey: channel,
+          authorKey: userId,
+        );
+
+    TwitchChannelRef channelRef(String id) => TwitchChannelRef(
+      id: id,
+      login: 'login-$id',
+      displayName: 'Channel $id',
+      addedAt: DateTime.utc(2026, 8, 9),
+    );
+
+    /// Rebuilds the store logged in (own channel id 'user-1') with the
+    /// history seam — like the multi-channel group's login.
+    Future<void> login() async {
+      await Hive.openBox(HiveKeys.Settings.name);
+      authService.tokenScopes = const ['user:read:chat', 'user:write:chat'];
+      store = TwitchChatStore(
+        authService: authService,
+        eventSubFactory:
+            (
+              _,
+              __,
+              ___,
+              ____,
+              _____,
+              ______,
+              _______,
+              ________,
+              _________,
+              __________,
+            ) => eventSubService,
+        badgeStoreResolver: () => badgeStore,
+        ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
+        isProResolver: () => true,
+        chatHistoryResolver: () => history,
+      );
+      await store.startLogin();
+    }
+
+    test('cap eviction retains the full model in history', () {
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u${i % 3}'));
+      }
+
+      expect(store.messages, hasLength(500));
+      expect(history.length, 5);
+      final evicted = historyOf('u0');
+      expect(
+        evicted.map((e) => (e.message as ChatMessageEvent).messageId),
+        ['m0', 'm3'],
+      );
+
+      /// Full fidelity: the very object the buffer dropped.
+      expect(evicted.first.message, isA<ChatMessageEvent>());
+      expect(evicted.first.tombstone.isDeleted, isFalse);
+    });
+
+    test('history and the live buffer never overlap', () {
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      final liveIds = store.messages.map((m) => m.messageId).toSet();
+      expect(
+        historyOf(
+          'u1',
+        ).every((e) => !liveIds.contains((e.message as ChatMessageEvent).messageId)),
+        isTrue,
+      );
+    });
+
+    test('the tombstone snapshot freezes at eviction time', () {
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      store.applyMessageDelete(
+        const ChatMessageDeleteEvent(
+          messageId: 'm0',
+          targetUserId: 'u1',
+          userName: 'Cool_Mod',
+        ),
+      );
+
+      /// m0 still buffered: nothing retained yet.
+      expect(historyOf('u1'), isEmpty);
+
+      store.appendChatMessageForTest(chatMessage('m500', 'u1'));
+
+      /// The buffer forgot the tombstone ([_forgetEvicted]) — the
+      /// snapshot kept it.
+      expect(store.isMessageDeleted('m0'), isFalse);
+      final entry = historyOf('u1').first;
+      expect(entry.tombstone.isDeleted, isTrue);
+      expect(entry.tombstone.marker, ' -Deleted');
+      expect(entry.tombstone.actor, 'Cool_Mod');
+    });
+
+    test('a timeout snapshot keeps marker kind and duration', () {
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      store.applyModerationTimeout('u1', const Duration(minutes: 10));
+      store.appendChatMessageForTest(chatMessage('m500', 'u2'));
+
+      expect(historyOf('u1').first.tombstone.marker, ' -Timed out (10m)');
+    });
+
+    test('evictions while a reader is scrolled up land in history', () {
+      for (var i = 0; i < 500; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      store.holdScrollback();
+      store.appendChatMessageForTest(chatMessage('m500', 'u1'));
+      expect(store.messages, hasLength(501));
+      expect(historyOf('u1'), isEmpty);
+
+      /// Release trims back to 500 — the dropped row is retained.
+      store.releaseScrollback();
+      expect(store.messages, hasLength(500));
+      expect(
+        historyOf(
+          'u1',
+        ).map((e) => (e.message as ChatMessageEvent).messageId),
+        ['m0'],
+      );
+    });
+
+    test('/clear wipes the channel\'s history with the buffer', () async {
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      expect(historyOf('u1'), hasLength(5));
+
+      store.applyChatClear();
+      expect(historyOf('u1'), isEmpty);
+      expect(history.length, 0);
+    });
+
+    test('logout wipes the platform\'s history', () async {
+      await authBox().put(
+        TwitchAuth.kBoxKey,
+        TwitchAuth(
+          accessToken: 'access-1',
+          refreshToken: 'refresh-1',
+          expiresAtMs: DateTime.now().millisecondsSinceEpoch + 3600 * 1000,
+          scopes: const ['user:read:chat'],
+          userId: 'user-1',
+        ),
+      );
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
+      }
+      expect(history.length, 5);
+
+      await store.logout();
+      expect(history.length, 0);
+    });
+
+    test('removing a channel wipes its history, keeps the rest', () async {
+      await login();
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(
+          chatMessage('own$i', 'u1').copyWith(broadcasterUserId: 'user-1'),
+        );
+      }
+
+      /// addChannel switches to the added channel (adding expresses
+      /// intent to view) — the chan-1 appends land in its live buffer.
+      await store.addChannel(channelRef('chan-1'));
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(
+          chatMessage('c$i', 'u2').copyWith(broadcasterUserId: 'chan-1'),
+        );
+      }
+      expect(historyOf('u1', 'user-1'), hasLength(5));
+      expect(historyOf('u2', 'chan-1'), hasLength(5));
+
+      await store.removeChannel('chan-1');
+
+      expect(historyOf('u2', 'chan-1'), isEmpty);
+      expect(historyOf('u1', 'user-1'), hasLength(5));
+    });
+
+    test('a channel switch keeps history (per-channel buffers survive)', () async {
+      await login();
+      for (var i = 0; i < 505; i++) {
+        store.appendChatMessageForTest(
+          chatMessage('m$i', 'u1').copyWith(broadcasterUserId: 'user-1'),
+        );
+      }
+
+      /// Switch away and back (addChannel switches on its own).
+      await store.addChannel(channelRef('chan-1'));
+      expect(historyOf('u1', 'user-1'), hasLength(5));
+
+      /// ...and the card query on switch-back merges history + buffer.
+      await store.selectChannel(null);
+      final rows = store.messagesForChatter('u1');
+      expect(rows, hasLength(505));
+      expect(rows.first.message.messageId, 'm504');
+      expect(rows.last.message.messageId, 'm0');
+      expect(
+        rows.sublist(0, 500).every((row) => row.tombstoneSnapshot == null),
+        isTrue,
+      );
+
+      /// The five cap-evicted rows trail the live ones, snapshot attached.
+      expect(
+        rows.sublist(500).every((row) => row.tombstoneSnapshot != null),
+        isTrue,
+      );
+    });
+
+    test('mid-switch background buffer trims land in history', () async {
+      await login();
+
+      /// On chan-1 (addChannel switches), then switch back to the own
+      /// channel while arrivals for it land mid-switch: they route into
+      /// the own channel's background buffer, which trims at 500 and
+      /// retains what it drops.
+      await store.addChannel(channelRef('chan-1'));
+      eventSubService.onSwitchChannel = (broadcasterId) async {
+        for (var i = 0; i < 505; i++) {
+          store.appendChatMessageForTest(
+            chatMessage('m$i', 'u1').copyWith(broadcasterUserId: 'user-1'),
+          );
+        }
+      };
+      await store.selectChannel(null);
+      eventSubService.onSwitchChannel = null;
+
+      expect(historyOf('u1', 'user-1'), hasLength(5));
+      expect(
+        historyOf(
+          'u1',
+          'user-1',
+        ).map((e) => (e.message as ChatMessageEvent).messageId),
+        ['m0', 'm1', 'm2', 'm3', 'm4'],
+      );
+    });
   });
 
   group('lifecycle wiring', () {

@@ -6,6 +6,7 @@ import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
@@ -166,6 +167,7 @@ abstract class _KickChatStore with Store {
     bool Function()? isProResolver,
     ThirdPartyEmoteStore Function()? emoteStoreResolver,
     KickEmoteStore Function()? kickEmoteStoreResolver,
+    ChatHistoryStore? Function()? chatHistoryResolver,
   }) : _channelService = channelService ?? KickChannelService(),
        _pusherFactory =
            pusherFactory ??
@@ -179,7 +181,12 @@ abstract class _KickChatStore with Store {
        _emoteStoreResolver =
            emoteStoreResolver ?? (() => GetIt.instance<ThirdPartyEmoteStore>()),
        _kickEmoteStoreResolver =
-           kickEmoteStoreResolver ?? (() => GetIt.instance<KickEmoteStore>()) {
+           kickEmoteStoreResolver ?? (() => GetIt.instance<KickEmoteStore>()),
+       _chatHistoryResolver =
+           chatHistoryResolver ??
+           (() => GetIt.instance.isRegistered<ChatHistoryStore>()
+               ? GetIt.instance<ChatHistoryStore>()
+               : null) {
     /// The default API service rides this store's token lifecycle
     /// (refresh + persist); tests inject a fake instead.
     this._apiService =
@@ -189,6 +196,12 @@ abstract class _KickChatStore with Store {
               this._validAccessToken(forceRefresh: forceRefresh),
         );
   }
+
+  /// Session chat history beyond the buffer cap (user-card history) —
+  /// resolved lazily; null when unregistered (isolated store tests).
+  final ChatHistoryStore? Function() _chatHistoryResolver;
+
+  ChatHistoryStore? get _chatHistory => this._chatHistoryResolver();
 
   Box<KickAuth> get _authBox => Hive.box<KickAuth>(HiveKeys.KickAuth.name);
 
@@ -1030,8 +1043,25 @@ abstract class _KickChatStore with Store {
 
   void _trimMessages() {
     while (this.messages.length > this.messageCap.value) {
+      this._recordHistory(this.messages.first);
       this.messages.removeAt(0);
     }
+  }
+
+  /// A message left the buffer because of the cap (and only then):
+  /// retain it in the session history for the user card, keyed by the
+  /// selected channel's slug.
+  void _recordHistory(KickChatMessage message) {
+    final slug = this.selectedChannelSlug;
+    final author = message.sender?.id;
+    if (slug == null || author == null) return;
+    this._chatHistory?.record(
+      platform: ChatHistoryPlatform.kick,
+      channelKey: slug,
+      authorKey: '$author',
+      message: message,
+      tombstone: ChatHistoryTombstone(isDeleted: message.isTombstoned),
+    );
   }
 
   /// A reader scrolled up in the chat: stop dropping the oldest rows
@@ -1043,6 +1073,7 @@ abstract class _KickChatStore with Store {
     if (!this.messageCap.release()) return;
     runInAction(() {
       while (this.messages.length > this.messageCap.value) {
+        this._recordHistory(this.messages.first);
         this.messages.removeAt(0);
       }
     });
@@ -1154,6 +1185,13 @@ abstract class _KickChatStore with Store {
   void _applyChatroomClear() {
     if (this.messages.isEmpty) return;
     this.messages.clear();
+
+    /// The session history goes too — retaining cleared content would
+    /// defeat the moderation action.
+    final slug = this.selectedChannelSlug;
+    if (slug != null) {
+      this._chatHistory?.clearChannel(ChatHistoryPlatform.kick, slug);
+    }
     this._appendNotice(
       idPrefix: 'system-clear',
       content: 'Chat was cleared by a moderator',
@@ -1488,20 +1526,30 @@ abstract class _KickChatStore with Store {
     this._syncBansToBuffer();
   }
 
-  /// Max recent lines shown on the native chat user card.
-  static const int kUserCardMessageCap = 20;
-
-  /// Messages from [userId] in the current channel buffer, newest first
-  /// (capped at [kUserCardMessageCap]).
-  List<KickChatMessage> messagesForChatter(int userId) {
-    final matches = <KickChatMessage>[
+  /// Messages from [userId] in the current channel for the user card,
+  /// newest first: the live buffer's matches (null snapshot on the
+  /// entry) preceded by the session history's older ones. Live and
+  /// history never overlap — history holds only cap-evicted rows.
+  List<UserCardMessage<KickChatMessage>> messagesForChatter(int userId) {
+    final slug = this.selectedChannelSlug;
+    final history = slug == null
+        ? const <ChatHistoryEntry>[]
+        : this._chatHistory?.historyFor(
+              platform: ChatHistoryPlatform.kick,
+              channelKey: slug,
+              authorKey: '$userId',
+            ) ??
+              const <ChatHistoryEntry>[];
+    final merged = <UserCardMessage<KickChatMessage>>[
+      for (final entry in history)
+        UserCardMessage(
+          entry.message as KickChatMessage,
+          tombstoneSnapshot: entry.tombstone,
+        ),
       for (final message in this.messages)
-        if (message.authorId == userId) message,
+        if (message.authorId == userId) UserCardMessage(message),
     ];
-    final start = matches.length > kUserCardMessageCap
-        ? matches.length - kUserCardMessageCap
-        : 0;
-    return matches.sublist(start).reversed.toList();
+    return merged.reversed.toList();
   }
 
   /// Best-effort avatar/name lookup for the user card — Kick's official
@@ -1746,14 +1794,18 @@ abstract class _KickChatStore with Store {
     this.channels
       ..clear()
       ..addAll(parsed);
-    this._channelBuffers.removeWhere(
-      (slug, _) =>
-          slug != own && (retired.contains(slug) || !parsed.contains(slug)),
-    );
-    this.channelLivePreview.removeWhere(
-      (slug, _) =>
-          slug != own && (retired.contains(slug) || !parsed.contains(slug)),
-    );
+
+    /// Retired/vanished slugs lose their buffer AND their session
+    /// history — the channel left the user's list.
+    bool retiredSlug(String slug) =>
+        slug != own && (retired.contains(slug) || !parsed.contains(slug));
+    for (final slug in {...retired, ...this._channelBuffers.keys}) {
+      if (retiredSlug(slug)) {
+        this._chatHistory?.clearChannel(ChatHistoryPlatform.kick, slug);
+      }
+    }
+    this._channelBuffers.removeWhere((slug, _) => retiredSlug(slug));
+    this.channelLivePreview.removeWhere((slug, _) => retiredSlug(slug));
     if (retireSelection) {
       this.selectedChannelSlug = null;
       this._persistSelectedChannel();

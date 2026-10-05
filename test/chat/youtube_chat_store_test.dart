@@ -10,6 +10,7 @@ import 'package:obs_blade/stores/views/youtube_emojis.dart';
 
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -96,6 +97,7 @@ void main() {
   /// between retries.
   void Function()? onSleep;
   late YouTubeChatStore store;
+  late ChatHistoryStore history;
 
   Box<YouTubeAuth> authBox() =>
       Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
@@ -109,6 +111,7 @@ void main() {
       onSleep?.call();
     },
     isProResolver: () => true,
+    chatHistoryResolver: () => history,
   );
 
   /// Configured state: API key + two channels ('A' → video-a-001,
@@ -142,6 +145,7 @@ void main() {
     chatService = FakeYouTubeLiveChatService();
     sleepLog = <Duration>[];
     onSleep = null;
+    history = ChatHistoryStore();
     store = newStore();
   });
 
@@ -1699,11 +1703,11 @@ void main() {
       await until(() => store.messages.length == 3);
 
       final matches = store.messagesForChatter('chan-7');
-      expect(matches.map((m) => m.id).toList(), ['m3', 'm1']);
+      expect(matches.map((m) => m.message.id).toList(), ['m3', 'm1']);
       expect(store.messagesForChatter('missing'), isEmpty);
     });
 
-    test('messagesForChatter caps at 20', () async {
+    test('messagesForChatter returns everything retained (no cap)', () async {
       configure();
       chatService.liveChatIds['video-a-001'] = 'chat-a';
       chatService.pollResponses.add(
@@ -1713,8 +1717,9 @@ void main() {
       await until(() => store.messages.length == 25);
 
       final matches = store.messagesForChatter('chan-7');
-      expect(matches.length, 20);
-      expect(matches.first.id, 'm24');
+      expect(matches.length, 25);
+      expect(matches.first.message.id, 'm24');
+      expect(matches.every((m) => m.tombstoneSnapshot == null), isTrue);
     });
 
     test('fetchChannelInfo returns null when not configured', () async {
@@ -1743,6 +1748,127 @@ void main() {
       );
 
       expect(await store.fetchChannelInfo('chan-7'), isNull);
+    });
+  });
+
+  group('session history (user card)', () {
+    int retained(String author) => history.countFor(
+      platform: ChatHistoryPlatform.youtube,
+      channelKey: 'A',
+      authorKey: author,
+    );
+
+    /// One page of 501 messages: 'old-1' (chan-7) + 500 from chan-1 —
+    /// the cap trim drops 'old-1' into the history, keyed by label 'A'.
+    Future<void> initWithEvicted() async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        page([
+          ytMessage('old-1', author: 'chan-7'),
+          for (var i = 0; i < 500; i++) ytMessage('m$i'),
+        ]),
+      );
+      await store.init();
+      await until(() => store.messages.any((m) => m.id == 'm499'));
+    }
+
+    test('cap eviction retains the dropped message in the history', () async {
+      await initWithEvicted();
+
+      expect(store.messages.length, 500);
+      expect(retained('chan-7'), 1);
+      expect(retained('chan-1'), 0);
+      final entry = history
+          .historyFor(
+            platform: ChatHistoryPlatform.youtube,
+            channelKey: 'A',
+            authorKey: 'chan-7',
+          )
+          .single;
+      expect((entry.message as YouTubeChatMessage).id, 'old-1');
+      expect(entry.tombstone.isDeleted, isFalse);
+    });
+
+    test('releaseScrollback feeds the history too', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.add(
+        page([for (var i = 0; i < 500; i++) ytMessage('m$i')]),
+      );
+      await store.init();
+      await until(() => store.messages.length == 500);
+
+      store.holdScrollback();
+      chatService.pushPollResponse(page([ytMessage('overflow')]));
+      await until(() => store.messages.any((m) => m.id == 'overflow'));
+      expect(store.messages.length, 501);
+      expect(retained('chan-1'), 0);
+
+      store.releaseScrollback();
+
+      expect(store.messages.length, 500);
+      expect(retained('chan-1'), 1);
+    });
+
+    test('messagesForChatter merges history (older) behind live rows', () async {
+      await initWithEvicted();
+      chatService.pushPollResponse(
+        page([
+          ytMessage('live-1', author: 'chan-7'),
+          ytMessage('live-2', author: 'chan-7'),
+        ]),
+      );
+      await until(() => store.messages.any((m) => m.id == 'live-2'));
+
+      final matches = store.messagesForChatter('chan-7');
+      expect(matches.map((m) => m.message.id).toList(), [
+        'live-2',
+        'live-1',
+        'old-1',
+      ]);
+      expect(matches[0].tombstoneSnapshot, isNull);
+      expect(matches[1].tombstoneSnapshot, isNull);
+      expect(matches[2].tombstoneSnapshot, isNotNull);
+    });
+
+    test('logout wipes the history', () async {
+      await seedAuth();
+      await initWithEvicted();
+      expect(retained('chan-7'), 1);
+
+      await store.logout();
+
+      expect(retained('chan-7'), 0);
+    });
+
+    test('a 401 without a refresh token wipes the history', () async {
+      await seedAuth();
+      final auth = authBox().get(YouTubeAuth.kBoxKey)!;
+      auth.refreshToken = '';
+      await auth.save();
+      await initWithEvicted();
+      expect(retained('chan-7'), 1);
+      chatService.deleteThrows = const YouTubeForbiddenException(
+        'Deleting chat message failed (401)',
+        statusCode: 401,
+      );
+
+      expect(await store.deleteMessage('m1'), isFalse);
+      expect(store.authState, YouTubeAuthState.signedOut);
+      expect(retained('chan-7'), 0);
+    });
+
+    test('reloadChannels retiring an entry wipes its history', () async {
+      await initWithEvicted();
+      expect(retained('chan-7'), 1);
+
+      settingsBox().put(SettingsKeys.YouTubeUsernames.name, <String, String>{
+        'B': 'https://www.youtube.com/watch?v=video-b-002',
+      });
+      store.reloadChannels();
+
+      expect(retained('chan-7'), 0);
     });
   });
 

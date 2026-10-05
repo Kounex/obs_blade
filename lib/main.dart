@@ -35,6 +35,7 @@ import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
 import 'stores/views/intro.dart';
 import 'stores/views/canvas_view.dart';
+import 'stores/views/chat_history.dart';
 import 'stores/views/chat_tts.dart';
 import 'stores/views/combined_chat.dart';
 import 'stores/views/activity.dart';
@@ -151,6 +152,13 @@ void _initializeStores() {
     () => TwitchEmoteStore(),
   );
   GetIt.instance.registerLazySingleton<KickEmoteStore>(() => KickEmoteStore());
+
+  /// Session chat history beyond the 500-row buffer caps — one global
+  /// store the three chat engines feed on cap eviction; the user cards
+  /// read it. In-memory only.
+  GetIt.instance.registerLazySingleton<ChatHistoryStore>(
+    () => ChatHistoryStore(),
+  );
   GetIt.instance.registerLazySingleton<TwitchChatStore>(
     /// Fire-and-forget [init] — cold-start token validation must not
     /// block store creation.

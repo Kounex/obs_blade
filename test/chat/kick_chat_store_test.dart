@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/kick_auth.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/kick_emotes.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
@@ -114,6 +115,7 @@ void main() {
   late FakeKickEmoteService kickEmoteService;
   late KickEmoteStore kickEmoteStore;
   late KickChatStore store;
+  late ChatHistoryStore history;
 
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
@@ -137,6 +139,7 @@ void main() {
     isProResolver: () => isPro,
     emoteStoreResolver: () => emoteStore,
     kickEmoteStoreResolver: () => kickEmoteStore,
+    chatHistoryResolver: () => history,
   );
 
   /// A valid, unexpired, fully-scoped stored session (user id 9001
@@ -191,6 +194,7 @@ void main() {
     emoteStore = ThirdPartyEmoteStore(service: emoteService);
     kickEmoteService = FakeKickEmoteService();
     kickEmoteStore = KickEmoteStore(service: kickEmoteService);
+    history = ChatHistoryStore();
     store = newStore();
   });
 
@@ -1625,10 +1629,10 @@ void main() {
       await until(() => store.messages.length == 3);
 
       final matches = store.messagesForChatter(7);
-      expect(matches.map((m) => m.id).toList(), ['m3', 'm1']);
+      expect(matches.map((m) => m.message.id).toList(), ['m3', 'm1']);
     });
 
-    test('messagesForChatter caps at 20', () async {
+    test('messagesForChatter returns everything retained (no cap)', () async {
       await connectSignedIn();
       for (var i = 0; i < 25; i++) {
         pusher().emitEvent(messageEvent('m$i', senderId: 7));
@@ -1636,8 +1640,9 @@ void main() {
       await until(() => store.messages.length == 25);
 
       final matches = store.messagesForChatter(7);
-      expect(matches.length, 20);
-      expect(matches.first.id, 'm24');
+      expect(matches.length, 25);
+      expect(matches.first.message.id, 'm24');
+      expect(matches.every((m) => m.tombstoneSnapshot == null), isTrue);
     });
 
     test('fetchUserProfile returns null when signed out', () async {
@@ -1673,6 +1678,115 @@ void main() {
 
       expect(await store.fetchUserProfile(7), isNull);
     });
+  });
+
+  group('session history (user card)', () {
+    int retained(int senderId) => history.countFor(
+      platform: ChatHistoryPlatform.kick,
+      channelKey: 'aaa',
+      authorKey: '$senderId',
+    );
+
+    /// Buffer at the 500 cap, then one more message — the oldest one
+    /// ('old-1' from sender 7) leaves the buffer into the history.
+    Future<void> connectWithEvicted() async {
+      await connectSignedIn();
+      pusher().emitEvent(messageEvent('old-1', senderId: 7, username: 'u7'));
+      for (var i = 0; i < 500; i++) {
+        pusher().emitEvent(messageEvent('m$i'));
+      }
+      // The last event processed means the cap trim already ran on it.
+      await until(() => store.messages.any((m) => m.id == 'm499'));
+    }
+
+    test('cap eviction retains the dropped message in the history', () async {
+      await connectWithEvicted();
+
+      expect(retained(7), 1);
+      expect(retained(1), 0);
+      final entry = history
+          .historyFor(
+            platform: ChatHistoryPlatform.kick,
+            channelKey: 'aaa',
+            authorKey: '7',
+          )
+          .single;
+      expect((entry.message as KickChatMessage).id, 'old-1');
+      expect(entry.tombstone.isDeleted, isFalse);
+    });
+
+    test('releaseScrollback feeds the history too', () async {
+      await connectSignedIn();
+      store.holdScrollback();
+      pusher().emitEvent(messageEvent('old-1', senderId: 7, username: 'u7'));
+      for (var i = 0; i < 500; i++) {
+        pusher().emitEvent(messageEvent('m$i'));
+      }
+      await until(() => store.messages.any((m) => m.id == 'm499'));
+      expect(store.messages.length, 501);
+      expect(retained(7), 0);
+
+      store.releaseScrollback();
+
+      expect(store.messages.length, 500);
+      expect(retained(7), 1);
+    });
+
+    test('messagesForChatter merges history (older) behind live rows', () async {
+      await connectWithEvicted();
+      pusher().emitEvent(messageEvent('live-1', senderId: 7, username: 'u7'));
+      pusher().emitEvent(messageEvent('live-2', senderId: 7, username: 'u7'));
+      await until(
+        () => store.messages.where((m) => m.sender?.id == 7).length == 2,
+      );
+
+      final matches = store.messagesForChatter(7);
+      expect(matches.map((m) => m.message.id).toList(), [
+        'live-2',
+        'live-1',
+        'old-1',
+      ]);
+      expect(matches[0].tombstoneSnapshot, isNull);
+      expect(matches[1].tombstoneSnapshot, isNull);
+      expect(matches[2].tombstoneSnapshot, isNotNull);
+    });
+
+    test('ChatroomClearEvent wipes the channel history', () async {
+      await connectWithEvicted();
+      expect(retained(7), 1);
+
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\ChatroomClearEvent',
+          channel: 'chatrooms.42.v2',
+        ),
+      );
+      await until(() => store.messages.length == 1);
+
+      expect(retained(7), 0);
+    });
+
+    test('reloadChannels retiring a channel wipes its history', () async {
+      await connectWithEvicted();
+      expect(retained(7), 1);
+
+      settingsBox().put(SettingsKeys.KickUsernames.name, <String>['bbb']);
+      store.reloadChannels();
+
+      expect(retained(7), 0);
+    });
+
+    test(
+      'logout keeps the history (anonymous reads keep their buffers too)',
+      () async {
+        await connectWithEvicted();
+        expect(retained(7), 1);
+
+        await store.logout();
+
+        expect(retained(7), 1);
+      },
+    );
   });
 
   group('own channel ("You" entry)', () {

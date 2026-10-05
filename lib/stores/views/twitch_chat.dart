@@ -8,6 +8,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/third_party_emotes.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_emotes.dart';
@@ -158,6 +159,13 @@ abstract class _TwitchChatStore with Store {
   /// pane.
   final bool Function() _isProResolver;
 
+  /// Session chat history beyond the buffer cap (user-card history) —
+  /// resolved lazily; null when unregistered (isolated store tests, same
+  /// tolerance as the settings-box guard in [_backfillHistory]).
+  final ChatHistoryStore? Function() _chatHistoryResolver;
+
+  ChatHistoryStore? get _chatHistory => this._chatHistoryResolver();
+
   TwitchEventSubService? _eventSub;
   TwitchIrcSidecar? _ircSidecar;
 
@@ -201,6 +209,7 @@ abstract class _TwitchChatStore with Store {
     TwitchModerationService? moderationService,
     TwitchRecentMessagesService? recentMessagesService,
     bool Function()? isProResolver,
+    ChatHistoryStore? Function()? chatHistoryResolver,
   }) : _authService = authService ?? TwitchAuthService(),
        _eventSubFactory =
            eventSubFactory ??
@@ -243,7 +252,12 @@ abstract class _TwitchChatStore with Store {
        _recentMessagesService =
            recentMessagesService ?? TwitchRecentMessagesService(),
        _isProResolver =
-           isProResolver ?? (() => GetIt.instance<ProStore>().isPro);
+           isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
+       _chatHistoryResolver =
+           chatHistoryResolver ??
+           (() => GetIt.instance.isRegistered<ChatHistoryStore>()
+               ? GetIt.instance<ChatHistoryStore>()
+               : null);
 
   Box<TwitchAuth> get _authBox =>
       Hive.box<TwitchAuth>(HiveKeys.TwitchAuth.name);
@@ -1158,6 +1172,7 @@ abstract class _TwitchChatStore with Store {
       unawaited(this.refreshSelectedChannelLive());
     }
     this._channelBuffers.remove(id);
+    this._chatHistory?.clearChannel(ChatHistoryPlatform.twitch, id);
   }
 
   /// Multi-chat: switch the visible channel (null = own). Only the
@@ -2110,7 +2125,17 @@ abstract class _TwitchChatStore with Store {
   /// tombstone records - kept for now while a reader is scrolled up
   void _trimMessages() {
     while (this.messages.length > this.messageCap.value) {
-      final evicted = this.messages.first.messageId;
+      final evictedMessage = this.messages.first;
+      final evicted = evictedMessage.messageId;
+
+      /// Into the session history BEFORE [_forgetEvicted] wipes the
+      /// tombstone records — the snapshot is all the user card gets.
+      this._recordHistory(
+        evictedMessage,
+        isDeleted: this._deletedMessageIds.contains(evicted),
+        info: this._tombstoneInfos[evicted],
+        actor: this._deletedMessageActors[evicted],
+      );
       if (this.messageCap.holding) {
         this._evictedWhileHeld.add(evicted);
 
@@ -2123,6 +2148,28 @@ abstract class _TwitchChatStore with Store {
       }
       this.messages.removeAt(0);
     }
+  }
+
+  /// A message left a buffer because of the cap (and only then): retain
+  /// it in the session history for the user card, with its tombstone
+  /// state frozen as of now.
+  void _recordHistory(
+    ChatMessageEvent message, {
+    required bool isDeleted,
+    ChatTombstoneInfo? info,
+    String? actor,
+  }) {
+    this._chatHistory?.record(
+      platform: ChatHistoryPlatform.twitch,
+      channelKey: message.broadcasterUserId,
+      authorKey: message.chatterUserId,
+      message: message,
+      tombstone: ChatHistoryTombstone(
+        isDeleted: isDeleted,
+        marker: chatTombstoneMarker(info ?? const ChatTombstoneInfo.deleted()),
+        actor: actor,
+      ),
+    );
   }
 
   void _forgetEvicted(String messageId) {
@@ -2165,7 +2212,14 @@ abstract class _TwitchChatStore with Store {
     );
     buffer.arrivalSeq++;
     while (buffer.messages.length > kMaxMessages) {
-      final evicted = buffer.messages.first.messageId;
+      final evictedMessage = buffer.messages.first;
+      final evicted = evictedMessage.messageId;
+      this._recordHistory(
+        evictedMessage,
+        isDeleted: buffer.deletedMessageIds.contains(evicted),
+        info: buffer.tombstoneInfos[evicted],
+        actor: buffer.deletedMessageActors[evicted],
+      );
       buffer.deletedMessageIds.remove(evicted);
       buffer.deletedMessageActors.remove(evicted);
       buffer.tombstoneInfos.remove(evicted);
@@ -2351,20 +2405,29 @@ abstract class _TwitchChatStore with Store {
   /// Hex color last seen for [userId], if any (`#RRGGBB`).
   String? chatterColor(String userId) => this._chatterColors[userId];
 
-  /// Max recent lines shown on the native chat user card.
-  static const int kUserCardMessageCap = 20;
-
-  /// Messages from [userId] in the current channel buffer, newest first
-  /// (capped at [kUserCardMessageCap]).
-  List<ChatMessageEvent> messagesForChatter(String userId) {
-    final matches = <ChatMessageEvent>[
+  /// Messages from [userId] in the current channel for the user card,
+  /// newest first: the live buffer's matches (full fidelity, live
+  /// tombstone state — a null snapshot on the entry) preceded by the
+  /// session history's older ones (feed-time tombstone snapshot). Live
+  /// and history never overlap — history holds only cap-evicted rows.
+  List<UserCardMessage<ChatMessageEvent>> messagesForChatter(String userId) {
+    final history =
+        this._chatHistory?.historyFor(
+          platform: ChatHistoryPlatform.twitch,
+          channelKey: this.effectiveBroadcasterIdSafe,
+          authorKey: userId,
+        ) ??
+        const <ChatHistoryEntry>[];
+    final merged = <UserCardMessage<ChatMessageEvent>>[
+      for (final entry in history)
+        UserCardMessage(
+          entry.message as ChatMessageEvent,
+          tombstoneSnapshot: entry.tombstone,
+        ),
       for (final message in this.messages)
-        if (message.chatterUserId == userId) message,
+        if (message.chatterUserId == userId) UserCardMessage(message),
     ];
-    final start = matches.length > kUserCardMessageCap
-        ? matches.length - kUserCardMessageCap
-        : 0;
-    return matches.sublist(start).reversed.toList();
+    return merged.reversed.toList();
   }
 
   /// Chatter color for the user card header — newest buffered message
@@ -2606,6 +2669,14 @@ abstract class _TwitchChatStore with Store {
         const ChatTombstoneInfo.deleted(),
       );
     }
+
+    /// The session history goes too — retaining cleared content would
+    /// defeat the moderation action. Keyed by the buffer's channel (the
+    /// messages being cleared), same identity the trim path records under.
+    this._chatHistory?.clearChannel(
+      ChatHistoryPlatform.twitch,
+      this.messages.first.broadcasterUserId,
+    );
     this.systemNotices.add(
       ChatSystemNotice(
         afterSeq: this._arrivalSeq,
@@ -2634,6 +2705,7 @@ abstract class _TwitchChatStore with Store {
   /// in the settings box for the next login).
   void _resetMultiChatState() {
     this._channelBuffers.clear();
+    this._chatHistory?.clearPlatform(ChatHistoryPlatform.twitch);
     this._backfilledBroadcasters.clear();
     this.moderatedChannelIds.clear();
     this._moderatedChannelsFetched = false;

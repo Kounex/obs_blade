@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -53,6 +54,7 @@ void main() {
   late FakeYouTubeLiveResolver resolver;
   late List<Duration> sleepLog;
   late YouTubeChatStore store;
+  late ChatHistoryStore history;
 
   Box settingsBox() => Hive.box(HiveKeys.Settings.name);
 
@@ -68,6 +70,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
     },
     isProResolver: () => true,
+    chatHistoryResolver: () => history,
   );
 
   void configure(Map<String, String> entries) {
@@ -84,6 +87,7 @@ void main() {
     chatService = FakeYouTubeLiveChatService();
     resolver = FakeYouTubeLiveResolver();
     sleepLog = <Duration>[];
+    history = ChatHistoryStore();
   });
 
   tearDown(() async {
@@ -192,6 +196,44 @@ void main() {
       /// ended stream never spent a `videos.list` unit.
       expect(chatService.listPageTokens.take(3), [null, 't1', null]);
       expect(chatService.resolveCalls, 2);
+    },
+  );
+
+  test(
+    'the session history survives the rollover (keyed by entry label)',
+    () async {
+      configure({'Mine': '@MyChannel'});
+      resolver = FakeYouTubeLiveResolver(['stream-1', 'stream-2']);
+      chatService.liveChatIds['stream-1'] = 'chat-1';
+      chatService.liveChatIds['stream-2'] = 'chat-2';
+      chatService.pollResponses
+        // 501 rows on the first stream: 'm0' leaves the buffer under the
+        // cap and lands in the session history (label 'Mine').
+        ..add(
+          _page([for (var i = 0; i <= 500; i++) _message('m$i')]),
+        )
+        ..add(
+          const YouTubeChatEndedException('Listing chat failed'),
+        )
+        ..add(_page([_message('n1')]));
+      store = newStore();
+
+      await store.init();
+      await until(() => store.messages.any((m) => m.id == 'n1'));
+
+      expect(store.selectedLiveVideoId, 'stream-2');
+      final retained = history.historyFor(
+        platform: ChatHistoryPlatform.youtube,
+        channelKey: 'Mine',
+        authorKey: 'chan-1',
+      );
+      // 'm0' evicted on the first stream; 'n1' on the full carried-over
+      // buffer evicts 'm1' — both retained under the same label.
+      expect(retained.map((e) => (e.message as YouTubeChatMessage).id), [
+        'm0',
+        'm1',
+      ]);
+      expect(store.messagesForChatter('chan-1').last.message.id, 'm0');
     },
   );
 

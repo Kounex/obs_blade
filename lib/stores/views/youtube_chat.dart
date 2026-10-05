@@ -7,6 +7,7 @@ import 'package:obs_blade/stores/shared/chat_buffer_cap.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
@@ -253,9 +254,26 @@ abstract class _YouTubeChatStore with Store {
     if (!this.messageCap.release()) return;
     runInAction(() {
       while (this.messages.length > this.messageCap.value) {
+        this._recordHistory(this.selectedChannelLabel, this.messages.first);
         this.messages.removeAt(0);
       }
     });
+  }
+
+  /// A message left a buffer because of the cap (and only then): retain
+  /// it in the session history for the user card. Keyed by the channel
+  /// **entry label** — it survives the auto-rollover to the channel's
+  /// next stream, unlike the video id.
+  void _recordHistory(String? label, YouTubeChatMessage message) {
+    final author = message.authorChannelId;
+    if (label == null || author == null || author.isEmpty) return;
+    this._chatHistory?.record(
+      platform: ChatHistoryPlatform.youtube,
+      channelKey: label,
+      authorKey: author,
+      message: message,
+      tombstone: ChatHistoryTombstone(isDeleted: message.isTombstoned),
+    );
   }
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
@@ -313,6 +331,7 @@ abstract class _YouTubeChatStore with Store {
     YouTubeLiveResolver? liveResolver,
     Future<void> Function(Duration)? sleep,
     bool Function()? isProResolver,
+    ChatHistoryStore? Function()? chatHistoryResolver,
     Duration viewerRefreshInterval = kViewerRefreshInterval,
     DateTime Function()? now,
   }) : _viewerRefreshInterval = viewerRefreshInterval,
@@ -322,7 +341,18 @@ abstract class _YouTubeChatStore with Store {
        _liveResolver = liveResolver ?? YouTubeLiveResolver(),
        _sleep = sleep ?? Future.delayed,
        _isProResolver =
-           isProResolver ?? (() => GetIt.instance<ProStore>().isPro);
+           isProResolver ?? (() => GetIt.instance<ProStore>().isPro),
+       _chatHistoryResolver =
+           chatHistoryResolver ??
+           (() => GetIt.instance.isRegistered<ChatHistoryStore>()
+               ? GetIt.instance<ChatHistoryStore>()
+               : null);
+
+  /// Session chat history beyond the buffer cap (user-card history) —
+  /// resolved lazily; null when unregistered (isolated store tests).
+  final ChatHistoryStore? Function() _chatHistoryResolver;
+
+  ChatHistoryStore? get _chatHistory => this._chatHistoryResolver();
 
   Box<YouTubeAuth> get _authBox =>
       Hive.box<YouTubeAuth>(HiveKeys.YouTubeAuth.name);
@@ -599,20 +629,32 @@ abstract class _YouTubeChatStore with Store {
   String? get selfChannelId =>
       this._authBox.get(YouTubeAuth.kBoxKey)?.channelId;
 
-  /// Max recent lines shown on the native chat user card.
-  static const int kUserCardMessageCap = 20;
-
-  /// Messages from [channelId] in the current channel buffer, newest
-  /// first (capped at [kUserCardMessageCap]).
-  List<YouTubeChatMessage> messagesForChatter(String channelId) {
-    final matches = <YouTubeChatMessage>[
+  /// Messages from [channelId] in the current channel for the user card,
+  /// newest first: the live buffer's matches (null snapshot on the
+  /// entry) preceded by the session history's older ones. Live and
+  /// history never overlap — history holds only cap-evicted rows.
+  List<UserCardMessage<YouTubeChatMessage>> messagesForChatter(
+    String channelId,
+  ) {
+    final label = this.selectedChannelLabel;
+    final history = label == null
+        ? const <ChatHistoryEntry>[]
+        : this._chatHistory?.historyFor(
+              platform: ChatHistoryPlatform.youtube,
+              channelKey: label,
+              authorKey: channelId,
+            ) ??
+              const <ChatHistoryEntry>[];
+    final merged = <UserCardMessage<YouTubeChatMessage>>[
+      for (final entry in history)
+        UserCardMessage(
+          entry.message as YouTubeChatMessage,
+          tombstoneSnapshot: entry.tombstone,
+        ),
       for (final message in this.messages)
-        if (message.authorChannelId == channelId) message,
+        if (message.authorChannelId == channelId) UserCardMessage(message),
     ];
-    final start = matches.length > kUserCardMessageCap
-        ? matches.length - kUserCardMessageCap
-        : 0;
-    return matches.sublist(start).reversed.toList();
+    return merged.reversed.toList();
   }
 
   /// Public channel facts (creation date) for the user card —
@@ -939,6 +981,7 @@ abstract class _YouTubeChatStore with Store {
     this._stopPolling();
     this.messages.clear();
     this._channelBuffers.clear();
+    this._chatHistory?.clearPlatform(ChatHistoryPlatform.youtube);
     this._appliedModerationKeys.clear();
     this._appliedModerationOrder.clear();
     this.authState = this.isConfigured
@@ -1477,6 +1520,7 @@ abstract class _YouTubeChatStore with Store {
           }
           this.messages.add(item);
           while (this.messages.length > this.messageCap.value) {
+            this._recordHistory(label, this.messages.first);
             this.messages.removeAt(0);
           }
           this._emitActivity(label, item);
@@ -1727,11 +1771,21 @@ abstract class _YouTubeChatStore with Store {
     this.channels
       ..clear()
       ..addAll(parsed);
-    this._channelBuffers.removeWhere(
-      (label, _) =>
-          label != kYouTubeOwnChannelLabel &&
-          (retired.contains(label) || !videos.containsKey(label)),
-    );
+
+    /// Retired/vanished entries lose their buffer AND their session
+    /// history — the channel left the user's list.
+    bool retiredLabel(String label) =>
+        label != kYouTubeOwnChannelLabel &&
+        (retired.contains(label) || !videos.containsKey(label));
+    for (final label in {
+      ...retired,
+      ...this._channelBuffers.keys,
+    }) {
+      if (retiredLabel(label)) {
+        this._chatHistory?.clearChannel(ChatHistoryPlatform.youtube, label);
+      }
+    }
+    this._channelBuffers.removeWhere((label, _) => retiredLabel(label));
     bool retiredModeration(String key) =>
         retired.any((label) => key.startsWith('$label:'));
     this._appliedModerationKeys.removeWhere(retiredModeration);
@@ -1888,6 +1942,7 @@ abstract class _YouTubeChatStore with Store {
               ? this.messageCap.value
               : kMaxMessages;
           while (destination.length > cap) {
+            this._recordHistory(label, destination.first);
             destination.removeAt(0);
           }
         }
@@ -2253,6 +2308,7 @@ abstract class _YouTubeChatStore with Store {
     runInAction(() {
       this.messages.clear();
       this._channelBuffers.clear();
+      this._chatHistory?.clearPlatform(ChatHistoryPlatform.youtube);
       this._appliedModerationKeys.clear();
       this._appliedModerationOrder.clear();
       this.authState = YouTubeAuthState.signedOut;
@@ -2269,6 +2325,7 @@ abstract class _YouTubeChatStore with Store {
     runInAction(() {
       this.messages.clear();
       this._channelBuffers.clear();
+      this._chatHistory?.clearPlatform(ChatHistoryPlatform.youtube);
       this._appliedModerationKeys.clear();
       this._appliedModerationOrder.clear();
       this.authState = this.isConfigured
