@@ -1,23 +1,18 @@
-4.1.0 test build 7. New since build 6:
+4.1.0 test build 8. New since build 7:
 
-YOUTUBE CHAT EMOJIS
-- Emojis draw inline in YouTube chat (standard set bundled; the app also learns a channel's own member emojis from the chat page)
-- Emoji picker in the YouTube chat input: the channel's member emojis first, then the standard set (sign in to write)
-- Your own sent message shows your channel's name, not "Unknown"
+CHAT HISTORY (all platforms)
+- Chats keep the whole session's messages beyond the 500-row on-screen cap (in memory only - gone on app restart, sign-out, or channel removal)
+- Long-press a message -> user card: message history shows the latest 50 with timestamps (YouTube + Kick too now), "Show older messages" pulls the rest
+- Options sheet -> All chats -> Session history: cap slider 10k-200k in 10k steps (default 50k) with a worst-case memory estimate (green / amber / red); applies live, Reset restores 50k
+- /clear deliberately KEEPS the session history (matches the tombstone UX)
 
-CHAT (all platforms)
-- Long-press a message -> user card now on YouTube + Kick too, with highlight / ignore
-- One options sheet per chat: "All chats" (appearance, highlights, mute words, TTS) then the platform's own section; combined chat gets platform tabs + search over the merged timeline
-- Search chat: has a back chevron, and can show messages your filters hide
-- Sheet pages (options pages, mod presets, timeout / warn) slide into each other; back returns to where you came from; the selected message stays marked until the last sheet closes
-- Busy chat at the 500-message cap: a sub / announcement already on screen must NOT fade in again when new messages arrive; a genuinely new notice still animates once
-- Scrolled up in a busy chat: the rows you are reading stay put while new ones arrive below; back at the bottom the buffer trims again
-- Combined chat: every platform's channel emotes render (e.g. a Twitch channel's 7TV / BTTV set), not just globals
-- App to the background mid-chat and back: chat recovers on its own, in-flight requests finish
+BACKGROUND CATCH-UP (Twitch + Kick)
+- App in the background for a while, then back: Twitch and Kick chats fetch and merge the missed window into the timeline (YouTube already did); a "Some messages while away are missing" divider marks any gap that couldn't be filled
+- Respects the Twitch load-history setting: with join history off, no resume fetch either
 
-DASHBOARD
-- Scene item inside a group: visibility and lock toggles act on the item itself
+FIXES
+- YouTube chat no longer stalls after a timeout/ban event (bad number format from the API)
 
 ALSO
-- Keep an eye on build 6's list (activity feed states, paywall cards, chat bar layout, sign-out in every chat state)
+- Keep an eye on build 7's list (YouTube emojis + picker, user cards on YouTube/Kick, one options sheet, scrolled-up reading, grouped scene items)
 - Updating over the store version (4.0.1) keeps saved connections and settings
