@@ -4,9 +4,12 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
+import 'package:obs_blade/shared/design/app_status_colors.dart';
 import 'package:obs_blade/shared/general/base/adaptive_switch.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_options_sheet.dart';
@@ -480,5 +483,122 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Native chat options'), findsNothing);
     expect(find.byType(BottomSheet), findsNothing);
+  });
+
+  /// Kick: its root has no platform "Chat history" row of its own
+  /// (Twitch's join-history row would collide with the "All chats" one)
+  Future<void> openChatHistoryPage(WidgetTester tester) async {
+    await openOptions(tester, ChatType.Kick);
+    await tapRow(tester, 'Chat history');
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Chat history entry opens the page; back chevron returns', (
+    tester,
+  ) async {
+    await openOptions(tester, ChatType.Kick);
+    expect(
+      find.text('Messages kept for viewer cards, and their memory use'),
+      findsOneWidget,
+    );
+
+    await tapRow(tester, 'Chat history');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('500-message live chat'), findsOneWidget);
+    expect(find.textContaining('signing out or closing the app clears it'),
+        findsOneWidget);
+    expect(find.byKey(const Key('chat-history-cap-slider')), findsOneWidget);
+    expect(find.text('Memory usage'), findsOneWidget);
+    expect(find.text('Reset'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('chat-sheet-back')));
+    await tester.pumpAndSettle();
+    expect(find.text('Native chat options'), findsOneWidget);
+  });
+
+  testWidgets('Chat history slider: 10k steps inside 10k … 200k, default '
+      '50k, writes the box', (tester) async {
+    await openChatHistoryPage(tester);
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.min, 10000.0);
+    expect(slider.max, 200000.0);
+    expect(slider.divisions, 19);
+    expect(slider.value, 50000.0);
+    expect(find.text('50,000 messages'), findsOneWidget);
+
+    await tester.drag(find.byType(Slider), const Offset(-600.0, 0.0));
+    await tester.pumpAndSettle();
+    expect(
+      settingsBox().get(SettingsKeys.ChatHistoryCap.name),
+      kChatHistoryCapMin,
+    );
+    expect(find.text('10,000 messages'), findsOneWidget);
+
+    await tester.drag(find.byType(Slider), const Offset(600.0, 0.0));
+    await tester.pumpAndSettle();
+    expect(
+      settingsBox().get(SettingsKeys.ChatHistoryCap.name),
+      kChatHistoryCapMax,
+    );
+    expect(find.text('200,000 messages'), findsOneWidget);
+
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('Chat history memory estimate follows the slider value and '
+      'turns green → amber → red', (tester) async {
+    Future<void> setCap(int cap) async {
+      await tester.runAsync(() async {
+        await settingsBox().put(SettingsKeys.ChatHistoryCap.name, cap);
+        await settingsBox().flush();
+      });
+      await tester.pumpAndSettle();
+    }
+
+    Color memoryColor() => tester
+        .widget<Text>(find.byKey(const Key('chat-history-memory')))
+        .style!
+        .color!;
+
+    await openChatHistoryPage(tester);
+
+    await setCap(10000);
+    expect(find.text('~13 MB'), findsOneWidget);
+    expect(memoryColor(), AppStatusColors.standard.reachable);
+
+    await setCap(50000);
+    expect(find.text('~64 MB'), findsOneWidget);
+    expect(memoryColor(), AppStatusColors.standard.warning);
+
+    await setCap(200000);
+    expect(find.text('~256 MB'), findsOneWidget);
+    expect(memoryColor(), AppStatusColors.standard.destructive);
+
+    await closeHiveInZone(tester);
+  });
+
+  testWidgets('Chat history page applies to the live ChatHistoryStore', (
+    tester,
+  ) async {
+    final store = ChatHistoryStore();
+    GetIt.instance.registerSingleton<ChatHistoryStore>(store);
+    addTearDown(GetIt.instance.reset);
+    expect(store.cap, kChatHistoryCapDefault);
+
+    await openChatHistoryPage(tester);
+
+    await tester.drag(find.byType(Slider), const Offset(600.0, 0.0));
+    await tester.pumpAndSettle();
+    expect(store.cap, kChatHistoryCapMax);
+
+    await tester.tap(find.text('Reset'));
+    await tester.pumpAndSettle();
+    expect(settingsBox().get(SettingsKeys.ChatHistoryCap.name),
+        kChatHistoryCapDefault);
+    expect(store.cap, kChatHistoryCapDefault);
+
+    await closeHiveInZone(tester);
   });
 }

@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../../../models/enums/chat_type.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/adaptive_switch.dart';
 import '../../../../../../shared/general/hive_builder.dart';
+import '../../../../../../stores/views/chat_history.dart';
 import '../../../../../../stores/views/twitch_chat.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/settings_keys.dart';
@@ -129,6 +131,7 @@ Widget _optionsPage(
     ),
     _OptionsPage.highlights => _HighlightsPage(onBack: onBack),
     _OptionsPage.muteWords => _MuteWordsPage(onBack: onBack),
+    _OptionsPage.sessionHistory => _ChatHistoryPage(onBack: onBack),
     _OptionsPage.textToSpeech => _PageScaffold(
       title: 'Text to speech',
       description: ChatTtsSettingsRows.intro,
@@ -226,6 +229,7 @@ enum _OptionsPage {
   eventMessages,
   highlights,
   muteWords,
+  sessionHistory,
   textToSpeech,
   debugSamples,
   search,
@@ -236,7 +240,8 @@ enum _OptionsPage {
 /// [showNativeChatOptionsSheet] opens it) - "Search chat" too, the
 /// dedicated [ChatSearchSheet]. Appearance
 /// + Highlights (self-mention/keyword row wash) + Mute words (drops
-/// matching rows entirely) + Search chat are common to every engine;
+/// matching rows entirely) + Chat history (session-history cap for the
+/// viewer cards) + Search chat are common to every engine;
 /// Twitch additionally gets Emotes + per-category Badges + Event
 /// messages; Kick additionally gets Emotes + a single-toggle Badges page
 /// (`badge_type` values are unverified free-strings, so there is no
@@ -368,6 +373,12 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
           label: 'Mute words',
           subtitle: 'Hide or censor words, ignore users',
           onTap: () => this._open(_OptionsPage.muteWords),
+        ),
+        this._navRow(
+          context,
+          label: 'Chat history',
+          subtitle: 'Messages kept for viewer cards, and their memory use',
+          onTap: () => this._open(_OptionsPage.sessionHistory),
         ),
         this._navRow(
           context,
@@ -896,12 +907,22 @@ class _AppearanceSlider extends StatelessWidget {
   final double max;
   final ValueChanged<double> onChanged;
 
+  /// Overrides the 1-unit default step count (e.g. the history cap's
+  /// 19 steps of 10k)
+  final int? divisions;
+
+  /// Overrides the rounded-number readout (e.g. "50,000 messages")
+  final String? valueText;
+
   const _AppearanceSlider({
+    super.key,
     required this.label,
     required this.value,
     required this.min,
     required this.max,
     required this.onChanged,
+    this.divisions,
+    this.valueText,
   });
 
   @override
@@ -920,7 +941,7 @@ class _AppearanceSlider extends StatelessWidget {
               ),
             ),
             Text(
-              this.value.round().toString(),
+              this.valueText ?? this.value.round().toString(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: textColors.highlightText,
@@ -941,7 +962,7 @@ class _AppearanceSlider extends StatelessWidget {
             value: this.value.clamp(this.min, this.max),
             min: this.min,
             max: this.max,
-            divisions: (this.max - this.min).round(),
+            divisions: this.divisions ?? (this.max - this.min).round(),
             onChanged: (v) => this.onChanged(v.roundToDouble()),
           ),
         ),
@@ -1215,6 +1236,93 @@ class _MuteWordsPageState extends State<_MuteWordsPage> {
               maxLines: 4,
               onChanged: (value) =>
                   settingsBox.put(SettingsKeys.ChatIgnoredUsers.name, value),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Session chat history cap — how many messages [ChatHistoryStore] keeps
+/// beyond the 500-row live buffers (summed across platforms) so viewer
+/// cards can show earlier messages. One slider (10k … 200k in 10k
+/// steps) + a worst-case memory estimate colored by impact. Writes
+/// persist ([SettingsKeys.ChatHistoryCap]) and apply to the live store
+/// at once (lowering trims immediately).
+class _ChatHistoryPage extends StatelessWidget {
+  final VoidCallback onBack;
+
+  const _ChatHistoryPage({required this.onBack});
+
+  void _apply(Box settingsBox, int cap) {
+    settingsBox.put(SettingsKeys.ChatHistoryCap.name, cap);
+    final getIt = GetIt.instance;
+    if (getIt.isRegistered<ChatHistoryStore>()) {
+      getIt<ChatHistoryStore>().cap = cap;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColors =
+        Theme.of(context).extension<AppStatusColors>() ??
+        AppStatusColors.standard;
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [SettingsKeys.ChatHistoryCap],
+      builder: (context, settingsBox, child) {
+        final stored = settingsBox.get(SettingsKeys.ChatHistoryCap.name);
+        final cap = (stored is int ? stored : kChatHistoryCapDefault).clamp(
+          kChatHistoryCapMin,
+          kChatHistoryCapMax,
+        );
+        final mb = chatHistoryEstimatedMb(cap);
+        final memoryColor = mb <= 50
+            ? statusColors.reachable
+            : mb <= 150
+            ? statusColors.warning
+            : statusColors.destructive;
+        return _PageScaffold(
+          title: 'Chat history',
+          description:
+              'Messages that scroll out of the 500-message live chat stay '
+              'in memory, so a viewer\'s card can show what they wrote '
+              'earlier in the stream. The history lives only for this app '
+              'session - signing out or closing the app clears it. Higher '
+              'limits remember more of a busy chat, but use more memory.',
+          onBack: this.onBack,
+          onReset: () => this._apply(settingsBox, kChatHistoryCapDefault),
+          children: [
+            _AppearanceSlider(
+              key: const Key('chat-history-cap-slider'),
+              label: 'History limit',
+              value: cap.toDouble(),
+              min: kChatHistoryCapMin.toDouble(),
+              max: kChatHistoryCapMax.toDouble(),
+              divisions: 19,
+              valueText:
+                  '${NumberFormat.decimalPattern().format(cap)} messages',
+              onChanged: (v) => this._apply(settingsBox, v.round()),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Memory usage',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                Text(
+                  '~$mb MB',
+                  key: const Key('chat-history-memory'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: memoryColor,
+                  ),
+                ),
+              ],
             ),
           ],
         );
