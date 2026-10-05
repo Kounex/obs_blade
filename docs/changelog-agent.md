@@ -4,6 +4,69 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-05 - Chat: user cards remember the session beyond the 500-row buffer cap
+
+Follow-up to the same-day capacity spike: messages evicted at the
+500-row buffer cap were gone from the user card entirely. The card now
+merges a session-only history with the live buffer, so a chatty
+channel's evicted rows still show on a chatter's card. In-memory only -
+nothing is persisted, an app restart starts empty.
+
+- New `ChatHistoryStore` (`lib/stores/views/chat_history.dart`): one
+  global FIFO cap of **200,000** messages across all three platforms
+  (per the spike, full freezed models ≈ 1.0-1.4 KB → worst case ~250 MB,
+  accepted for a session store; per-platform caps were considered and
+  dropped - one chatty channel shouldn't eat another platform's room
+  less, the card query is what matters). A per-(platform, channel,
+  author) queue index keeps the card lookup microsecond-cheap; global
+  eviction pops the index front (per-author order is the filtered global
+  order, so that's O(1) and correct).
+- Fed **only** at cap-eviction points (Twitch `_trimMessages` incl. the
+  channel-switch buffer trim, YouTube page trim / `releaseScrollback` /
+  send echo trim, Kick `_trimMessages` / `releaseScrollback`) - history
+  and live buffer never overlap. Twitch snapshots the tombstone state
+  (deleted / marker / actor) at feed time, before `_forgetEvicted` wipes
+  the live records; YouTube / Kick freeze the model's own tombstone
+  flag.
+- Erasure mirrors the buffer wipes: `/clear` (Twitch, Kick) and a
+  channel leaving the list wipe that channel's rows; Twitch / YouTube
+  sign-out, dead session and auth reset wipe the platform's. **Kick
+  sign-out deliberately keeps them** - Kick keeps its buffers on
+  sign-out (anonymous reads), so the history follows suit. YouTube keys
+  by the channel **entry label**, so the auto-rollover to the next
+  stream keeps the history (test in
+  `youtube_channel_rollover_test.dart`). Known limit, deliberate: a
+  message deleted after it was already evicted keeps its feed-time
+  snapshot - the delete event can't find it anymore.
+- `messagesForChatter` (all three stores) now returns
+  `List<UserCardMessage<T>>` (message + nullable tombstone snapshot;
+  null = still live), everything retained, newest first as before - the
+  old 20-row cap is gone, the card bounds the display instead. Stores
+  take a `chatHistoryResolver` ctor seam (default: GetIt, guarded -
+  absent in tests that don't register it); `ChatHistoryStore` is a lazy
+  singleton in `main.dart`.
+- Card UX (all three sheets, shared `UserCardHistoryList`): the retained
+  rows render in a lazy `ListView` inside `NativeChatSheetScaffold`
+  (new `bodyIsScrollable` - the scaffold slots it with bounded height
+  instead of wrapping it in another scroll view; pinned name / facts /
+  LIVE / footer unchanged). First **50** rows shown, then a "Show X
+  older messages" button (X = remaining retained; hidden at ≤ 50;
+  screen-reader label "Show X older messages from \<name\>"; one-way,
+  resets when the card reopens).
+- Scaffold edge case: the short-sheet fallback (phone in landscape -
+  everything scrolls together) can't host a lazy list. Small histories
+  (≤ 50) join the shared scroll as before (`bodySharesScrollWhenShort`;
+  the list goes shrink-wrap + non-scrolling when the height constraint
+  is unbounded); a longer one keeps the pinned layout, whose slots
+  scroll on their own.
+- Tests: `chat_history_store_test.dart` (incl. a 201k-fill global
+  eviction + index consistency), per-store history integration groups
+  (eviction / scrollback / wipes / merge order / Kick keeps-on-logout /
+  YouTube rollover), card tests (fully-evicted chatter, merge order,
+  50-row button + semantics + lazy build on scroll, no button at ≤ 50).
+  Two existing card tests updated for lazy rows (offscreen rows aren't
+  built anymore).
+
 ## 2026-10-05 - Chat: user-card history timestamps on YouTube/Kick + history-capacity spike
 
 User report: the user card's message history shows no timestamps for

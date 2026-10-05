@@ -450,6 +450,20 @@ class NativeChatSheetScaffold extends StatelessWidget {
   final Widget? pinned;
   final Widget? footer;
 
+  /// [body] is its own scroll view (a lazy [ListView], e.g. a user
+  /// card's long message history): the scaffold passes it to the layout
+  /// unwrapped instead of putting a [SingleChildScrollView] around it
+  /// (which would force it to size/build unbounded). The pinned slot
+  /// keeps scrolling on its own, so the short-sheet fallback (everything
+  /// in one scroll) is skipped — a lazy body can't join a shared scroll,
+  /// and the slotted layout guarantees it a third of the room anyway.
+  final bool bodyIsScrollable;
+
+  /// Only with [bodyIsScrollable]: the body is small enough to join the
+  /// short-sheet fallback's shared scroll after all (a shrink-wrapping
+  /// list that then stops scrolling itself). False for a long lazy body.
+  final bool bodySharesScrollWhenShort;
+
   /// Gap between the pinned header and the scrolling body.
   final double headerGap;
 
@@ -463,6 +477,8 @@ class NativeChatSheetScaffold extends StatelessWidget {
     required this.body,
     this.pinned,
     this.footer,
+    this.bodyIsScrollable = false,
+    this.bodySharesScrollWhenShort = false,
     this.headerGap = AppSpacing.sm,
   });
 
@@ -498,10 +514,12 @@ class NativeChatSheetScaffold extends StatelessWidget {
     pinned: this.pinned == null
         ? null
         : this._scroll(this.pinned!, padding: _sidePadding),
-    body: this._scroll(
-      this.body,
-      padding: this.footer == null ? null : _sidePadding,
-    ),
+    body: this.bodyIsScrollable
+        ? this.body
+        : this._scroll(
+            this.body,
+            padding: this.footer == null ? null : _sidePadding,
+          ),
     footer: this.footer == null ? null : this._scroll(this.footer!),
   );
 
@@ -527,10 +545,12 @@ class NativeChatSheetScaffold extends StatelessWidget {
         ),
         Flexible(
           child: !hasPinned
-              ? this._scroll(this.body)
+              ? (this.bodyIsScrollable ? this.body : this._scroll(this.body))
               : LayoutBuilder(
                   builder: (context, constraints) =>
-                      constraints.maxHeight < minHeightToPin
+                      constraints.maxHeight < minHeightToPin &&
+                          (!this.bodyIsScrollable ||
+                              this.bodySharesScrollWhenShort)
                       ? this._allScrolling()
                       : this._pinnedLayout(),
                 ),

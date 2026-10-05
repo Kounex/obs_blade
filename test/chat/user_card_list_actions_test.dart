@@ -150,13 +150,13 @@ void main() {
       final sheet = tester.getSize(find.byType(YouTubeUserCardSheet));
       expect(sheet.height, lessThanOrEqualTo(screen * 2 / 3 + 1));
 
-      /// Newest first; the oldest of the 20 is below the fold until
-      /// scrolled to
+      /// Newest first; the oldest of the 20 is lazily unbuilt until
+      /// scrolled to (the history list builds on demand now)
       final oldest = find.textContaining(
         'message number 0 ',
         findRichText: true,
       );
-      expect(tester.getTopLeft(oldest).dy, greaterThan(screen));
+      expect(oldest, findsNothing);
       final liveBefore = tester.getTopLeft(find.text('LIVE'));
       await tester.scrollUntilVisible(
         oldest,

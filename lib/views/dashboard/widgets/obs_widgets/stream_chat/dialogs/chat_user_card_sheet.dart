@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
@@ -18,11 +19,13 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/utils/styling_helper.dart';
 import 'package:obs_blade/utils/twitch/twitch_user_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/chat_tombstone.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_appearance.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_window.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart';
 import 'chat_user_list_actions.dart';
+import 'user_card_history_list.dart';
 
 /// Connection footer params for the merged self user card.
 class ChatUserCardConnection {
@@ -114,11 +117,13 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   /// (not a mod, or the fetch failed).
   List<TwitchWarning>? _warnings;
 
-  List<ChatMessageEvent> get _bufferedMessages =>
+  /// Live buffer + session history (beyond the 500-row cap), newest
+  /// first — history entries carry their feed-time tombstone snapshot.
+  List<UserCardMessage<ChatMessageEvent>> get _bufferedMessages =>
       this._store.messagesForChatter(this.widget.userId);
 
   ChatMessageEvent? get _newestBuffered =>
-      this._bufferedMessages.isEmpty ? null : this._bufferedMessages.first;
+      this._bufferedMessages.isEmpty ? null : this._bufferedMessages.first.message;
 
   bool get _isSelf => this._store.user?.id == this.widget.userId;
 
@@ -248,6 +253,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   Widget build(BuildContext context) {
     final settingsBox = Hive.box(HiveKeys.Settings.name);
     final newest = this._newestBuffered;
+    final messages = this._bufferedMessages;
 
     return NativeChatSheetScaffold(
       headerGap: AppSpacing.lg,
@@ -276,30 +282,29 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
           const SizedBox(height: AppSpacing.sm),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (this._bufferedMessages.isEmpty)
-            Text(
+      bodyIsScrollable: messages.isNotEmpty,
+      bodySharesScrollWhenShort:
+          messages.length <= kUserCardHistoryInitialCount,
+      body: messages.isEmpty
+          ? Text(
               'No messages in this chat yet',
               style: Theme.of(context).textTheme.bodySmall,
             )
-          else ...[
-            for (var i = 0; i < this._bufferedMessages.length; i++) ...[
-              if (i > 0 && NativeChatAppearance.separators(settingsBox))
-                nativeChatHairline(context),
-              TwitchChatMessageRow(
-                key: ValueKey(
-                  'card-msg-${this._bufferedMessages[i].messageId}',
-                ),
-                event: this._bufferedMessages[i],
-                settingsBox: settingsBox,
-                showTimestamp: true,
-              ),
-            ],
-          ],
-        ],
-      ),
+          : UserCardHistoryList(
+              messageCount: messages.length,
+              separators: NativeChatAppearance.separators(settingsBox),
+              userName: this._displayName(),
+              padding: this.widget.connection == null
+                  ? const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      0.0,
+                      AppSpacing.lg,
+                      AppSpacing.lg,
+                    )
+                  : const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              rowBuilder: (context, i) =>
+                  this._messageRow(context, settingsBox, messages[i]),
+            ),
       footer: this.widget.connection == null
           ? null
           : Column(
@@ -311,6 +316,35 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
                 this._connectionFooter(context, this.widget.connection!),
               ],
             ),
+    );
+  }
+
+  /// One history row: history entries render with their feed-time
+  /// tombstone snapshot; rows still in the live buffer read the store's
+  /// live tombstone state.
+  Widget _messageRow(
+    BuildContext context,
+    Box<dynamic> settingsBox,
+    UserCardMessage<ChatMessageEvent> entry,
+  ) {
+    final event = entry.message;
+    final snapshot = entry.tombstoneSnapshot;
+    final liveInfo = snapshot == null
+        ? this._store.tombstoneInfo(event.messageId)
+        : null;
+    return TwitchChatMessageRow(
+      key: ValueKey('card-msg-${event.messageId}'),
+      event: event,
+      settingsBox: settingsBox,
+      showTimestamp: true,
+      isDeleted: snapshot?.isDeleted ?? liveInfo != null,
+      deletedMarker:
+          snapshot?.marker ??
+          (liveInfo == null ? ' -Deleted' : chatTombstoneMarker(liveInfo)),
+      deletedActor:
+          snapshot != null
+              ? snapshot.actor
+              : this._store.deletedMessageActor(event.messageId),
     );
   }
 

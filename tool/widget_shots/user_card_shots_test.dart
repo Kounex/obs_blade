@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/kick_emotes.dart';
@@ -30,6 +31,7 @@ void main() {
   setUp(() async {
     await harness.setUp();
     GetIt.instance
+      ..registerSingleton<ChatHistoryStore>(ChatHistoryStore())
       ..registerSingleton<ThirdPartyEmoteStore>(
         ThirdPartyEmoteStore(service: FakeThirdPartyEmoteService()),
       )
@@ -262,6 +264,131 @@ void main() {
       ),
       scrollFrom: 'message number 24 ',
       scroll: 120.0,
+    );
+  });
+
+  /// 60 retained rows: the card shows the first 50 and a "Show 10 older
+  /// messages" button; tapping reveals the rest (lazily).
+  testWidgets('chatty viewer, >50 retained: the expand button', (
+    tester,
+  ) async {
+    final store = GetIt.instance<YouTubeChatStore>();
+    runInAction(() {
+      for (var i = 0; i < 60; i++) {
+        store.messages.add(
+          ytMessage(
+            'm$i',
+            author: 'UCremy',
+            authorName: 'Remy',
+            text: 'message number $i with a few more words so it wraps',
+          ),
+        );
+      }
+    });
+    await harness.shot(
+      tester,
+      'user_card_youtube_history_button_base',
+      Builder(
+        builder: (context) => Center(
+          child: TextButton(
+            onPressed: () =>
+                showYouTubeUserCardSheet(context, channelId: 'UCremy'),
+            child: const Text('open'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    /// The button is past the fold - scroll the history to it
+    await tester.scrollUntilVisible(
+      find.text('Show 10 older messages'),
+      300.0,
+      scrollable: find.byType(Scrollable).last,
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile(
+        '../../build/widget_shots/user_card_youtube_history_button.png',
+      ),
+    );
+
+    await tester.tap(find.text('Show 10 older messages'));
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await tester.scrollUntilVisible(
+      find.textContaining('message number 0 ', findRichText: true),
+      300.0,
+      scrollable: find.byType(Scrollable).last,
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(MaterialApp),
+      matchesGoldenFile(
+        '../../build/widget_shots/user_card_youtube_history_expanded.png',
+      ),
+    );
+  });
+
+  /// A history row deleted before its eviction keeps the feed-time
+  /// tombstone (greyed, marker, actor) on the card.
+  testWidgets('twitch card: tombstoned history rows behind live ones', (
+    tester,
+  ) async {
+    final twitch = GetIt.instance<TwitchChatStore>();
+    final history = GetIt.instance<ChatHistoryStore>();
+    ChatMessageEvent event(String id, String text) => ChatMessageEvent(
+      broadcasterUserId: 'b1',
+      chatterUserId: 'viewer-1',
+      chatterUserLogin: 'viewerlogin',
+      chatterUserName: 'ViewerOne',
+      messageId: id,
+      color: '#9146FF',
+      message: ChatMessageText(
+        text: text,
+        fragments: [ChatMessageFragment(type: 'text', text: text)],
+      ),
+    );
+
+    /// The store queries the history by its effective channel - no user,
+    /// no selection in this harness: the empty key.
+    history.record(
+      platform: ChatHistoryPlatform.twitch,
+      channelKey: '',
+      authorKey: 'viewer-1',
+      message: event('old-1', 'an evicted row, still readable'),
+      tombstone: const ChatHistoryTombstone(isDeleted: false),
+    );
+    history.record(
+      platform: ChatHistoryPlatform.twitch,
+      channelKey: '',
+      authorKey: 'viewer-1',
+      message: event('old-2', 'deleted before it left the buffer'),
+      tombstone: const ChatHistoryTombstone(
+        isDeleted: true,
+        marker: ' -Deleted',
+        actor: 'ModPerson',
+      ),
+    );
+    twitch.appendChatMessageForTest(event('live-1', 'still in the buffer'));
+
+    await openAndShoot(
+      tester,
+      'user_card_twitch_history_tombstone',
+      (context) => showChatUserCardSheet(
+        context,
+        userId: 'viewer-1',
+        userService: FakeTwitchUserService(),
+      ),
     );
   });
 }

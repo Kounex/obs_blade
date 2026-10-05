@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -18,6 +19,7 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 
 import 'chat_user_card_sheet.dart' show kChatUserCardMaxHeightFraction;
 import 'chat_user_list_actions.dart';
+import 'user_card_history_list.dart';
 
 /// Opens the native Kick chat user card for [userId].
 void showKickUserCardSheet(
@@ -68,11 +70,13 @@ class _KickUserCardSheetState extends State<KickUserCardSheet> {
   bool _loadingProfile = true;
   KickUserIdentity? _profile;
 
-  List<KickChatMessage> get _bufferedMessages =>
+  /// Live buffer + session history (beyond the 500-row cap), newest
+  /// first.
+  List<UserCardMessage<KickChatMessage>> get _bufferedMessages =>
       this._store.messagesForChatter(this.widget.userId);
 
   KickChatMessage? get _newestBuffered =>
-      this._bufferedMessages.isEmpty ? null : this._bufferedMessages.first;
+      this._bufferedMessages.isEmpty ? null : this._bufferedMessages.first.message;
 
   @override
   void initState() {
@@ -124,28 +128,31 @@ class _KickUserCardSheetState extends State<KickUserCardSheet> {
           const SizedBox(height: AppSpacing.sm),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (messages.isEmpty)
-            Text(
+      bodyIsScrollable: messages.isNotEmpty,
+      bodySharesScrollWhenShort:
+          messages.length <= kUserCardHistoryInitialCount,
+      body: messages.isEmpty
+          ? Text(
               'No messages in this chat yet',
               style: Theme.of(context).textTheme.bodySmall,
             )
-          else ...[
-            for (var i = 0; i < messages.length; i++) ...[
-              if (i > 0 && NativeChatAppearance.separators(settingsBox))
-                nativeChatHairline(context),
-              KickChatMessageRow(
-                key: ValueKey('card-msg-${messages[i].id}'),
-                message: messages[i],
-                settingsBox: settingsBox,
-                showTimestamp: true,
-              ),
-            ],
-          ],
-        ],
-      ),
+          : UserCardHistoryList(
+              messageCount: messages.length,
+              separators: NativeChatAppearance.separators(settingsBox),
+              userName: this._displayName(),
+              rowBuilder: (context, i) {
+                final entry = messages[i];
+
+                /// The tombstone flag rides the model (frozen at feed
+                /// time for history rows, live for buffered ones).
+                return KickChatMessageRow(
+                  key: ValueKey('card-msg-${entry.message.id}'),
+                  message: entry.message,
+                  settingsBox: settingsBox,
+                  showTimestamp: true,
+                );
+              },
+            ),
     );
   }
 
