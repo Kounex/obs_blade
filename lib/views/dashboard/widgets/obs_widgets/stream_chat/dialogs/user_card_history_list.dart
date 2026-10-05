@@ -97,11 +97,13 @@ class _UserCardHistoryListState extends State<UserCardHistoryList> {
               : const SizedBox.shrink(),
           itemBuilder: (context, index) {
             if (index < shown) return this.widget.rowBuilder(context, index);
+            final remaining = count - shown;
+            final label =
+                'Show $remaining older message${remaining == 1 ? '' : 's'}';
             return Semantics(
               button: true,
               excludeSemantics: true,
-              label: 'Show ${count - shown} older messages from '
-                  '${this.widget.userName}',
+              label: '$label from ${this.widget.userName}',
               child: Pressable(
                 haptic: true,
                 onTap: () => this.setState(() => this._expanded = true),
@@ -114,7 +116,7 @@ class _UserCardHistoryListState extends State<UserCardHistoryList> {
                     vertical: AppSpacing.xs,
                   ),
                   child: Text(
-                    'Show ${count - shown} older messages',
+                    label,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color:
                           Theme.of(

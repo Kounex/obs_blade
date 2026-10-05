@@ -632,5 +632,29 @@ void main() {
       expect(find.textContaining('Show '), findsNothing);
       expect(find.textContaining('old 49'), findsOneWidget);
     });
+
+    testWidgets('a single remaining row singularizes the button', (
+      tester,
+    ) async {
+      seedEvictedViewer(51);
+      viewerCard();
+
+      await openCard(tester, userId: 'viewer-1');
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Show 1 older message'),
+        300.0,
+        scrollable: find.descendant(
+          of: find.byType(UserCardHistoryList),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(
+        find.bySemanticsLabel('Show 1 older message from ViewerOne'),
+        findsOneWidget,
+      );
+      expect(find.text('Show 1 older messages'), findsNothing);
+    });
   });
 }

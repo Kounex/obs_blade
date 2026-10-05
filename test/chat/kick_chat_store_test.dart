@@ -1751,7 +1751,7 @@ void main() {
       expect(matches[2].tombstoneSnapshot, isNotNull);
     });
 
-    test('ChatroomClearEvent wipes the channel history', () async {
+    test('ChatroomClearEvent keeps the channel history', () async {
       await connectWithEvicted();
       expect(retained(7), 1);
 
@@ -1763,7 +1763,46 @@ void main() {
       );
       await until(() => store.messages.length == 1);
 
-      expect(retained(7), 0);
+      /// Ratified: /clear is content-visible tombstones, not an erase -
+      /// the history mirrors that.
+      expect(retained(7), 1);
+    });
+
+    test('rows evicted after a /clear land in history with their '
+        'tombstone', () async {
+      await connectWithEvicted();
+      pusher().emitEvent(
+        const KickPusherEvent(
+          event: 'App\\Events\\ChatroomClearEvent',
+          channel: 'chatrooms.42.v2',
+        ),
+      );
+      await until(() => store.messages.length == 1);
+
+      /// A post-clear message, deleted while buffered, then evicted:
+      /// the snapshot freezes the tombstone.
+      pusher().emitEvent(messageEvent('d1', senderId: 7, username: 'u7'));
+      await until(() => store.messages.any((m) => m.id == 'd1'));
+      pusher().emitEvent(deletedEvent('d1'));
+      await until(
+        () => store.messages.firstWhere((m) => m.id == 'd1').isTombstoned,
+      );
+      for (var i = 0; i < 500; i++) {
+        pusher().emitEvent(messageEvent('m$i'));
+      }
+      await until(() => store.messages.any((m) => m.id == 'm499'));
+
+      final retained7 = history.historyFor(
+        platform: ChatHistoryPlatform.kick,
+        channelKey: 'aaa',
+        authorKey: '7',
+      );
+      expect(retained7.map((e) => (e.message as KickChatMessage).id), [
+        'old-1',
+        'd1',
+      ]);
+      expect(retained7.first.tombstone.isDeleted, isFalse);
+      expect(retained7.last.tombstone.isDeleted, isTrue);
     });
 
     test('reloadChannels retiring a channel wipes its history', () async {

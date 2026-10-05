@@ -2670,13 +2670,9 @@ abstract class _TwitchChatStore with Store {
       );
     }
 
-    /// The session history goes too — retaining cleared content would
-    /// defeat the moderation action. Keyed by the buffer's channel (the
-    /// messages being cleared), same identity the trim path records under.
-    this._chatHistory?.clearChannel(
-      ChatHistoryPlatform.twitch,
-      this.messages.first.broadcasterUserId,
-    );
+    /// The session history intentionally survives: the buffer's /clear UX
+    /// is content-visible tombstones, and rows evicted after the clear
+    /// carry that tombstone into their snapshot — erasing would diverge.
     this.systemNotices.add(
       ChatSystemNotice(
         afterSeq: this._arrivalSeq,

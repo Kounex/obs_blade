@@ -14,12 +14,14 @@ import 'dart:collection';
 /// lends it its room. Consumed only by the user-card sheets; chat search
 /// and the timeline deliberately don't read it.
 ///
-/// Erase semantics mirror the buffer wipes exactly: the platform stores
-/// call [clearChannel] on /clear and when a channel leaves the user's
-/// list, [clearPlatform] on logout / invalid auth / session reset (Kick
-/// signs out without wiping its buffers - anonymous reads - so it wipes
-/// no history either), never on channel switch / stream rollover /
-/// backgrounding.
+/// Erase semantics: the platform stores call [clearChannel] when a
+/// channel leaves the user's list, [clearPlatform] on logout / invalid
+/// auth / session reset (Kick signs out without wiping its buffers -
+/// anonymous reads - so it wipes no history either), never on channel
+/// switch / stream rollover / backgrounding. `/clear` deliberately does
+/// NOT erase: the buffer's /clear UX is content-visible tombstones, so
+/// the history mirrors it - rows evicted after a /clear carry that
+/// tombstone into their snapshot.
 ///
 /// Messages retained across all platforms combined (~1.0-1.4 KB each per
 /// the capacity spike in `test/chat/chat_history_capacity_test.dart` —
@@ -163,8 +165,8 @@ class ChatHistoryStore {
           )]?.length ??
       0;
 
-  /// `/clear` or a channel leaving the user's list: keeping the content
-  /// would defeat the moderation action / the removal.
+  /// A channel leaving the user's list: retaining its rows would defeat
+  /// the removal. (`/clear` is NOT an erase here - see the class doc.)
   void clearChannel(ChatHistoryPlatform platform, String channelKey) {
     this._byAuthor.removeWhere(
       (key, _) => key.platform == platform && key.channel == channelKey,

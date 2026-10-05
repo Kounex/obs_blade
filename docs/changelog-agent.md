@@ -28,9 +28,13 @@ nothing is persisted, an app restart starts empty.
   (deleted / marker / actor) at feed time, before `_forgetEvicted` wipes
   the live records; YouTube / Kick freeze the model's own tombstone
   flag.
-- Erasure mirrors the buffer wipes: `/clear` (Twitch, Kick) and a
-  channel leaving the list wipe that channel's rows; Twitch / YouTube
-  sign-out, dead session and auth reset wipe the platform's. **Kick
+- Erasure is only: a channel leaving the list wipes that channel's rows;
+  Twitch / YouTube sign-out, dead session and auth reset wipe the
+  platform's; an app restart starts empty. **`/clear` (Twitch, Kick)
+  deliberately keeps the history** (ratified after review): the app's
+  /clear UX is content-visible tombstones - cleared rows stay visible,
+  dimmed, with the marker - so the history mirrors it, and rows evicted
+  after a /clear carry that tombstone into their snapshot. **Kick
   sign-out deliberately keeps them** - Kick keeps its buffers on
   sign-out (anonymous reads), so the history follows suit. YouTube keys
   by the channel **entry label**, so the auto-rollover to the next

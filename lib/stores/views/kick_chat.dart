@@ -1186,12 +1186,9 @@ abstract class _KickChatStore with Store {
     if (this.messages.isEmpty) return;
     this.messages.clear();
 
-    /// The session history goes too — retaining cleared content would
-    /// defeat the moderation action.
-    final slug = this.selectedChannelSlug;
-    if (slug != null) {
-      this._chatHistory?.clearChannel(ChatHistoryPlatform.kick, slug);
-    }
+    /// The session history intentionally survives the /clear (ratified):
+    /// the platforms' /clear UX is content-visible tombstones, and rows
+    /// evicted after the clear carry that tombstone into their snapshot.
     this._appendNotice(
       idPrefix: 'system-clear',
       content: 'Chat was cleared by a moderator',

@@ -1584,15 +1584,29 @@ void main() {
       );
     });
 
-    test('/clear wipes the channel\'s history with the buffer', () async {
+    test('/clear keeps the history; post-clear evictions carry the '
+        'clear\'s tombstone', () {
       for (var i = 0; i < 505; i++) {
         store.appendChatMessageForTest(chatMessage('m$i', 'u1'));
       }
       expect(historyOf('u1'), hasLength(5));
 
       store.applyChatClear();
-      expect(historyOf('u1'), isEmpty);
-      expect(history.length, 0);
+
+      /// The buffer tombstones in place (content-visible) - the history
+      /// mirrors it: nothing erased.
+      expect(historyOf('u1'), hasLength(5));
+
+      /// A row evicted after the /clear lands in history with the
+      /// clear's tombstone frozen into its snapshot (no actor - /clear
+      /// never carries one).
+      store.appendChatMessageForTest(chatMessage('m505', 'u1'));
+      final retained = historyOf('u1');
+      expect(retained, hasLength(6));
+      expect((retained.last.message as ChatMessageEvent).messageId, 'm5');
+      expect(retained.last.tombstone.isDeleted, isTrue);
+      expect(retained.last.tombstone.marker, ' -Deleted');
+      expect(retained.last.tombstone.actor, isNull);
     });
 
     test('logout wipes the platform\'s history', () async {
