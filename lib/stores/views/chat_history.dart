@@ -2,6 +2,11 @@ library;
 
 import 'dart:collection';
 
+import 'package:hive_ce/hive.dart';
+
+import '../../types/enums/hive_keys.dart';
+import '../../types/enums/settings_keys.dart';
+
 /// Session chat history beyond the live buffers' 500-row cap: messages
 /// evicted from the Twitch / YouTube / Kick buffers because of the cap
 /// (and only then - not on /clear, not on logout wipes) land here as
@@ -10,9 +15,13 @@ import 'dart:collection';
 ///
 /// In-memory only, never persisted (chat content never touches Hive);
 /// session-scoped by design. One global FIFO cap summed across all
-/// platforms ([kChatHistoryCap]) — a quiet session next to a busy one
-/// lends it its room. Consumed only by the user-card sheets; chat search
-/// and the timeline deliberately don't read it.
+/// platforms — a quiet session next to a busy one lends it its room.
+/// The cap is user-configurable (the native chat options' Chat history
+/// page) between [kChatHistoryCapMin] and [kChatHistoryCapMax], defaults
+/// to [kChatHistoryCapDefault], and persists as
+/// [SettingsKeys.ChatHistoryCap]; [ChatHistoryStore.cap] applies a change
+/// at runtime. Consumed only by the user-card sheets; chat search and
+/// the timeline deliberately don't read it.
 ///
 /// Erase semantics: the platform stores call [clearChannel] when a
 /// channel leaves the user's list, [clearPlatform] on logout / invalid
@@ -23,10 +32,23 @@ import 'dart:collection';
 /// the history mirrors it - rows evicted after a /clear carry that
 /// tombstone into their snapshot.
 ///
-/// Messages retained across all platforms combined (~1.0-1.4 KB each per
-/// the capacity spike in `test/chat/chat_history_capacity_test.dart` —
-/// ~250 MB worst case, bounded and session-scoped).
-const int kChatHistoryCap = 200000;
+/// Memory: ~1.0-1.4 KB per retained message (the capacity spike in
+/// `test/chat/chat_history_capacity_test.dart`) — see
+/// [chatHistoryEstimatedMb]: ~64 MB worst case at the 50k default,
+/// ~256 MB at the 200k maximum, bounded and session-scoped either way.
+const int kChatHistoryCapMin = 10000;
+const int kChatHistoryCapDefault = 50000;
+const int kChatHistoryCapMax = 200000;
+
+/// Retained bytes per message used for the options page's worst-case
+/// estimate: the spike's 1.0-1.4 KB range, at 1.25 KB (1280 bytes).
+const int kChatHistoryBytesPerMessage = 1280;
+
+/// Estimated worst-case memory for [cap] retained full models, rounded
+/// decimal MB: ~13 MB at 10k, ~64 MB at 50k, ~128 MB at 100k, ~256 MB
+/// at 200k.
+int chatHistoryEstimatedMb(int cap) =>
+    (cap * kChatHistoryBytesPerMessage / 1e6).round();
 
 enum ChatHistoryPlatform { twitch, youtube, kick }
 
@@ -92,13 +114,45 @@ typedef _AuthorKey = ({ChatHistoryPlatform platform, String channel, String auth
 
 /// The global FIFO queue plus a per-(platform, channel, author) index of
 /// append-only chronological queues, so `historyFor` is an index lookup
-/// instead of a 200k-row scan. Global eviction pops the queue front —
+/// instead of a full scan. Global eviction pops the queue front —
 /// always the front of its author queue too (per-author order is global
 /// order filtered), so both sides stay O(1).
 class ChatHistoryStore {
   final Queue<ChatHistoryEntry> _global = Queue<ChatHistoryEntry>();
   final Map<_AuthorKey, Queue<ChatHistoryEntry>> _byAuthor =
       <_AuthorKey, Queue<ChatHistoryEntry>>{};
+
+  int _cap;
+
+  /// [cap] is the test seam: passed verbatim (NOT clamped) so tests can
+  /// exercise eviction with small numbers. Production passes nothing —
+  /// the persisted [SettingsKeys.ChatHistoryCap] wins (clamped), falling
+  /// back to [kChatHistoryCapDefault] when no setting/box exists.
+  ChatHistoryStore({int? cap})
+    : _cap = cap ?? _clampCap(_persistedCap() ?? kChatHistoryCapDefault);
+
+  /// The active global FIFO cap.
+  int get cap => this._cap;
+
+  /// Runtime change (the options sheet's Chat history page): clamps to
+  /// [kChatHistoryCapMin] / [kChatHistoryCapMax]; lowering trims the
+  /// oldest entries right away (author index included), raising just
+  /// un-gates growth.
+  set cap(int value) {
+    this._cap = _clampCap(value);
+    this._trimToCap();
+  }
+
+  static int _clampCap(int value) =>
+      value.clamp(kChatHistoryCapMin, kChatHistoryCapMax);
+
+  static int? _persistedCap() {
+    if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return null;
+    final value = Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.ChatHistoryCap.name);
+    return value is int ? value : null;
+  }
 
   int get length => this._global.length;
 
@@ -123,7 +177,13 @@ class ChatHistoryStore {
     this._global.addLast(entry);
     final key = (platform: platform, channel: channelKey, author: authorKey);
     this._byAuthor.putIfAbsent(key, Queue<ChatHistoryEntry>.new).addLast(entry);
-    if (this._global.length > kChatHistoryCap) {
+    this._trimToCap();
+  }
+
+  /// Drops the oldest entries (global FIFO) until within [cap] — one
+  /// pass after a `record`, a loop after the cap was lowered.
+  void _trimToCap() {
+    while (this._global.length > this._cap) {
       final evicted = this._global.removeFirst();
       final evictedKey = (
         platform: evicted.platform,

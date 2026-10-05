@@ -469,6 +469,12 @@ enum SettingsKeys {
   /// hidden from the timeline (all engines) — see [parseChatUserList]
   ChatIgnoredUsers,
 
+  /// [int]: session chat history cap (messages kept beyond the 500-row
+  /// live buffers, summed across platforms) — see [ChatHistoryStore].
+  /// Between [kChatHistoryCapMin] and [kChatHistoryCapMax], defaults to
+  /// [kChatHistoryCapDefault]
+  ChatHistoryCap,
+
   /// [bool]: Chat text-to-speech reads live messages of the native chat
   /// out loud (off by default)
   ChatTtsEnabled,
@@ -650,6 +656,7 @@ enum SettingsKeys {
     SettingsKeys.ChatMuteReplace: 'chat-mute-replace',
     SettingsKeys.ChatHighlightUsers: 'chat-highlight-users',
     SettingsKeys.ChatIgnoredUsers: 'chat-ignored-users',
+    SettingsKeys.ChatHistoryCap: 'chat-history-cap',
     SettingsKeys.ChatTtsEnabled: 'chat-tts-enabled',
     SettingsKeys.ChatTtsAudience: 'chat-tts-audience',
     SettingsKeys.ChatTtsReadUsernames: 'chat-tts-read-usernames',
