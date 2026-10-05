@@ -5,6 +5,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
@@ -258,4 +259,56 @@ void main() {
       matchesGoldenFile('../../build/widget_shots/options_page_sheet.png'),
     );
   });
+
+  /// Chat history page at the three memory-estimate color states
+  /// (min = green, default 50k = amber, max = red), phone + 320 pt narrow.
+  /// Kick: its root has no platform "Chat history" row of its own
+  for (final (name, cap) in [
+    ('min', kChatHistoryCapMin),
+    ('default', kChatHistoryCapDefault),
+    ('max', kChatHistoryCapMax),
+  ]) {
+    for (final narrow in [false, true]) {
+      testWidgets('chat history page $name${narrow ? ' narrow' : ''}', (
+        tester,
+      ) async {
+        await tester.runAsync(() async {
+          await Hive.box(
+            HiveKeys.Settings.name,
+          ).put(SettingsKeys.ChatHistoryCap.name, cap);
+          await Hive.box(HiveKeys.Settings.name).flush();
+        });
+        await harness.shot(
+          tester,
+          'options_chat_history_host',
+          Builder(
+            builder: (context) => Center(
+              child: TextButton(
+                onPressed: () =>
+                    showNativeChatOptionsSheet(context, chatType: ChatType.Kick),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+          size: narrow ? const Size(320, 640) : kShotPhone,
+        );
+        await tester.tap(find.text('open'));
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        await tester.ensureVisible(find.text('Chat history'));
+        await tester.pump();
+        await tester.tap(find.text('Chat history'));
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile(
+            '../../build/widget_shots/options_chat_history_$name${narrow ? '_narrow' : ''}.png',
+          ),
+        );
+      });
+    }
+  }
 }
