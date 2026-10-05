@@ -51,8 +51,12 @@ full models evicted from the 500-row live buffers - one global in-memory
 200k FIFO across platforms, per-user index, erased on sign-out (not Kick) /
 channel removal / app restart, /clear deliberately KEEPS it (mirrors the
 content-visible tombstone UX). User cards show 50 rows + a one-way "Show X
-older messages" expansion off a lazy list. Reviewer-approved; NOT on a
-device yet - dogfood list in the changelog entry. Also shipped: user-card
+older messages" expansion off a lazy list. The cap is **configurable**
+(`a941c4ba`..`d7f6055f`): options sheet → All chats → **Session history**
+page - explainer, 10k–200k slider in 10k steps (default **50k**), worst-case
+memory estimate (cap × 1280 B, green ≤ 75 MB / amber ≤ 150 MB / red above).
+Reviewer-approved; NOT on a device yet - dogfood list in the changelog
+entry. Also shipped: user-card
 history timestamps on YouTube/Kick (`6e015a6b`, in 4.1.0 build 2026100402's
 successor). Next: dogfood, then it rides the next 4.1.0 beta.
 
