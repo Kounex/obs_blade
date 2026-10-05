@@ -240,7 +240,7 @@ enum _OptionsPage {
 /// [showNativeChatOptionsSheet] opens it) - "Search chat" too, the
 /// dedicated [ChatSearchSheet]. Appearance
 /// + Highlights (self-mention/keyword row wash) + Mute words (drops
-/// matching rows entirely) + Chat history (session-history cap for the
+/// matching rows entirely) + Session history (retention cap for the
 /// viewer cards) + Search chat are common to every engine;
 /// Twitch additionally gets Emotes + per-category Badges + Event
 /// messages; Kick additionally gets Emotes + a single-toggle Badges page
@@ -376,7 +376,7 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
         ),
         this._navRow(
           context,
-          label: 'Chat history',
+          label: 'Session history',
           subtitle: 'Messages kept for viewer cards, and their memory use',
           onTap: () => this._open(_OptionsPage.sessionHistory),
         ),
@@ -1278,13 +1278,13 @@ class _ChatHistoryPage extends StatelessWidget {
           kChatHistoryCapMax,
         );
         final mb = chatHistoryEstimatedMb(cap);
-        final memoryColor = mb <= 50
+        final memoryColor = mb <= 75
             ? statusColors.reachable
             : mb <= 150
             ? statusColors.warning
             : statusColors.destructive;
         return _PageScaffold(
-          title: 'Chat history',
+          title: 'Session history',
           description:
               'Messages that scroll out of the 500-message live chat stay '
               'in memory, so a viewer\'s card can show what they wrote '

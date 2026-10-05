@@ -21,18 +21,20 @@ buffers for the viewer cards) was a hardcoded 200k const
   seam (verbatim, unclamped) keeps tests free of the settings box and
   small-numbered. `chatHistoryEstimatedMb` pins the estimate (13/64/128/
   256 MB at 10k/50k/100k/200k).
-- Options sheet (`native_chat_options_sheet.dart`): new "Chat history"
-  entry in "All chats" → own sheet page (back-chevron pattern):
+- Options sheet (`native_chat_options_sheet.dart`): new "Session
+  history" entry in "All chats" → own sheet page (back-chevron pattern):
   explainer (session-scoped, cleared on sign-out/app close), 10k-200k
   slider in 10k steps ("50,000 messages" readout), and a "Memory usage"
   row with the worst-case estimate colored by `AppStatusColors` -
-  `reachable` ≤ 50 MB, `warning` ≤ 150 MB, `destructive` above. Writes
-  persist and apply to the live store at once; Reset restores 50k.
-  `_AppearanceSlider` gained optional `divisions` / `valueText`.
+  `reachable` ≤ 75 MB (the 50k default reads green), `warning` ≤
+  150 MB, `destructive` above. Writes persist and apply to the live
+  store at once; Reset restores 50k. `_AppearanceSlider` gained
+  optional `divisions` / `valueText`.
 - Tests: store cap defaults/persistence/clamping/live-trim/growth +
   the options page (slider steps, estimate colors at low/mid/max, box
   persistence, live-store apply); widget shots
-  (`options_sheet_shots_test.dart`) at min/default/max, phone + 320 pt.
+  (`options_sheet_shots_test.dart`) at default/100k/max (the three
+  color states), phone + 320 pt.
   The old 201k-fill eviction test now runs at cap 1000 via the seam
   (same mechanics, much faster).
 

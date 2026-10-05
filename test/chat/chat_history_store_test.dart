@@ -285,8 +285,8 @@ void main() {
         const cap = 1000;
         final store = ChatHistoryStore(cap: cap);
 
-        /// Platforms interleaved, one author each on one channel: the
-        /// first 1000 records (all twitch, author u0) must be gone once
+        /// Platforms cycle i % 3, authors i % 50, channels i % 5: the
+        /// first 1000 records (message-0 … message-999) must be gone once
         /// 2000 total are in, regardless of who recorded them.
         for (var i = 0; i < cap + 1000; i++) {
           final platform = switch (i % 3) {

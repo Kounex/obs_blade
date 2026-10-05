@@ -16,9 +16,9 @@ import '../../types/enums/settings_keys.dart';
 /// In-memory only, never persisted (chat content never touches Hive);
 /// session-scoped by design. One global FIFO cap summed across all
 /// platforms — a quiet session next to a busy one lends it its room.
-/// The cap is user-configurable (the native chat options' Chat history
-/// page) between [kChatHistoryCapMin] and [kChatHistoryCapMax], defaults
-/// to [kChatHistoryCapDefault], and persists as
+/// The cap is user-configurable (the native chat options' Session
+/// history page) between [kChatHistoryCapMin] and [kChatHistoryCapMax],
+/// defaults to [kChatHistoryCapDefault], and persists as
 /// [SettingsKeys.ChatHistoryCap]; [ChatHistoryStore.cap] applies a change
 /// at runtime. Consumed only by the user-card sheets; chat search and
 /// the timeline deliberately don't read it.

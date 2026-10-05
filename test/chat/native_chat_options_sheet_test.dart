@@ -485,24 +485,24 @@ void main() {
     expect(find.byType(BottomSheet), findsNothing);
   });
 
-  /// Kick: its root has no platform "Chat history" row of its own
-  /// (Twitch's join-history row would collide with the "All chats" one)
+  /// The "Session history" row sits in "All chats" (Twitch's own "Chat
+  /// history" join-backfill row is a different page)
   Future<void> openChatHistoryPage(WidgetTester tester) async {
-    await openOptions(tester, ChatType.Kick);
-    await tapRow(tester, 'Chat history');
+    await openOptions(tester, ChatType.Twitch);
+    await tapRow(tester, 'Session history');
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Chat history entry opens the page; back chevron returns', (
+  testWidgets('Session history entry opens the page; back chevron returns', (
     tester,
   ) async {
-    await openOptions(tester, ChatType.Kick);
+    await openOptions(tester, ChatType.Twitch);
     expect(
       find.text('Messages kept for viewer cards, and their memory use'),
       findsOneWidget,
     );
 
-    await tapRow(tester, 'Chat history');
+    await tapRow(tester, 'Session history');
     await tester.pumpAndSettle();
 
     expect(find.textContaining('500-message live chat'), findsOneWidget);
@@ -517,7 +517,7 @@ void main() {
     expect(find.text('Native chat options'), findsOneWidget);
   });
 
-  testWidgets('Chat history slider: 10k steps inside 10k … 200k, default '
+  testWidgets('Session history slider: 10k steps inside 10k … 200k, default '
       '50k, writes the box', (tester) async {
     await openChatHistoryPage(tester);
 
@@ -547,7 +547,7 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Chat history memory estimate follows the slider value and '
+  testWidgets('Session history memory estimate follows the slider value and '
       'turns green → amber → red', (tester) async {
     Future<void> setCap(int cap) async {
       await tester.runAsync(() async {
@@ -568,8 +568,13 @@ void main() {
     expect(find.text('~13 MB'), findsOneWidget);
     expect(memoryColor(), AppStatusColors.standard.reachable);
 
+    /// The default sits in the green band (≤ 75 MB)
     await setCap(50000);
     expect(find.text('~64 MB'), findsOneWidget);
+    expect(memoryColor(), AppStatusColors.standard.reachable);
+
+    await setCap(100000);
+    expect(find.text('~128 MB'), findsOneWidget);
     expect(memoryColor(), AppStatusColors.standard.warning);
 
     await setCap(200000);
@@ -579,7 +584,7 @@ void main() {
     await closeHiveInZone(tester);
   });
 
-  testWidgets('Chat history page applies to the live ChatHistoryStore', (
+  testWidgets('Session history page applies to the live ChatHistoryStore', (
     tester,
   ) async {
     final store = ChatHistoryStore();

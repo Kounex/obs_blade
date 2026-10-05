@@ -260,12 +260,12 @@ void main() {
     );
   });
 
-  /// Chat history page at the three memory-estimate color states
-  /// (min = green, default 50k = amber, max = red), phone + 320 pt narrow.
-  /// Kick: its root has no platform "Chat history" row of its own
+  /// Session history page at the three memory-estimate color states
+  /// (default 50k = green (≤ 75 MB band), 100k = amber, max = red),
+  /// phone + 320 pt narrow
   for (final (name, cap) in [
-    ('min', kChatHistoryCapMin),
     ('default', kChatHistoryCapDefault),
+    ('mid', 100000),
     ('max', kChatHistoryCapMax),
   ]) {
     for (final narrow in [false, true]) {
@@ -284,8 +284,10 @@ void main() {
           Builder(
             builder: (context) => Center(
               child: TextButton(
-                onPressed: () =>
-                    showNativeChatOptionsSheet(context, chatType: ChatType.Kick),
+                onPressed: () => showNativeChatOptionsSheet(
+                  context,
+                  chatType: ChatType.Twitch,
+                ),
                 child: const Text('open'),
               ),
             ),
@@ -296,9 +298,9 @@ void main() {
         for (var i = 0; i < 10; i++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
-        await tester.ensureVisible(find.text('Chat history'));
+        await tester.ensureVisible(find.text('Session history'));
         await tester.pump();
-        await tester.tap(find.text('Chat history'));
+        await tester.tap(find.text('Session history'));
         for (var i = 0; i < 10; i++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
