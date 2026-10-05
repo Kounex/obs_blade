@@ -1328,5 +1328,21 @@ void main() {
       await tester.pump();
       expect(find.textContaining('deleted Viewer32'), findsNothing);
     });
+
+    testWidgets('a resume gap boundary renders the missing-messages '
+        'divider', (tester) async {
+      store.chatConnection = TwitchChatConnectionState.live;
+      store.appendChatMessageForTest(textEvent('pre-1', 'Viewer', 'before'));
+      store.appendChatMessageForTest(textEvent('cu-1', 'Viewer', 'after'));
+      store.resumeGapBoundaries.add('cu-1');
+
+      await tester.pumpWidget(
+        wrap(const SizedBox(height: 600.0, child: NativeTwitchChatView())),
+      );
+      await tester.pump();
+
+      expect(find.text('Some messages while away are missing'), findsOneWidget);
+      expect(find.text('New messages'), findsNothing);
+    });
   });
 }

@@ -1732,24 +1732,27 @@ void main() {
       expect(retained(7), 1);
     });
 
-    test('messagesForChatter merges history (older) behind live rows', () async {
-      await connectWithEvicted();
-      pusher().emitEvent(messageEvent('live-1', senderId: 7, username: 'u7'));
-      pusher().emitEvent(messageEvent('live-2', senderId: 7, username: 'u7'));
-      await until(
-        () => store.messages.where((m) => m.sender?.id == 7).length == 2,
-      );
+    test(
+      'messagesForChatter merges history (older) behind live rows',
+      () async {
+        await connectWithEvicted();
+        pusher().emitEvent(messageEvent('live-1', senderId: 7, username: 'u7'));
+        pusher().emitEvent(messageEvent('live-2', senderId: 7, username: 'u7'));
+        await until(
+          () => store.messages.where((m) => m.sender?.id == 7).length == 2,
+        );
 
-      final matches = store.messagesForChatter(7);
-      expect(matches.map((m) => m.message.id).toList(), [
-        'live-2',
-        'live-1',
-        'old-1',
-      ]);
-      expect(matches[0].tombstoneSnapshot, isNull);
-      expect(matches[1].tombstoneSnapshot, isNull);
-      expect(matches[2].tombstoneSnapshot, isNotNull);
-    });
+        final matches = store.messagesForChatter(7);
+        expect(matches.map((m) => m.message.id).toList(), [
+          'live-2',
+          'live-1',
+          'old-1',
+        ]);
+        expect(matches[0].tombstoneSnapshot, isNull);
+        expect(matches[1].tombstoneSnapshot, isNull);
+        expect(matches[2].tombstoneSnapshot, isNotNull);
+      },
+    );
 
     test('ChatroomClearEvent keeps the channel history', () async {
       await connectWithEvicted();
@@ -2018,6 +2021,211 @@ void main() {
 
       expect(store.selectedChannelSlug, 'kicker');
       expect(store.nativeChannels, ['kicker', 'aaa']);
+    });
+  });
+
+  group('resume catch-up', () {
+    final t0 = DateTime.utc(2026, 10, 5, 12);
+
+    KickPusherEvent messageAt(String id, DateTime at) => KickPusherEvent(
+      event: 'App\\Events\\ChatMessageEvent',
+      channel: 'chatrooms.42.v2',
+      data: messageData(id, createdAt: at.toIso8601String()),
+    );
+
+    KickChatMessage historyMessage(String id, DateTime at) =>
+        KickChatMessage.fromJson(
+          messageData(id, createdAt: at.toIso8601String()),
+        );
+
+    test('catch-up rows land sorted mid-buffer, deduped, not historical, '
+        'silent for text-to-speech', () async {
+      await connectSignedIn();
+      expect(channelService.backfillCalls, 1);
+      final heardLive = <String>[];
+      store.liveMessages.listen((m) => heardLive.add(m.id));
+      pusher().emitEvent(messageAt('pre-1', t0));
+      pusher().emitEvent(
+        messageAt('pre-2', t0.add(const Duration(seconds: 10))),
+      );
+
+      channelService.backfills[101] = [
+        historyMessage('pre-2', t0.add(const Duration(seconds: 10))),
+        historyMessage('cu-1', t0.add(const Duration(seconds: 12))),
+        historyMessage('cu-2', t0.add(const Duration(seconds: 15))),
+        historyMessage('live-1', t0.add(const Duration(seconds: 20))),
+      ];
+      store.reconnectAfterResume();
+
+      /// A live row beats the fetch — the catch-up must slot in BEFORE
+      /// it (mid-buffer insert, not append).
+      pusher().emitEvent(
+        messageAt('live-1', t0.add(const Duration(seconds: 20))),
+      );
+      await until(() => store.messages.length == 5);
+
+      expect(store.messages.map((m) => m.id), [
+        'pre-1',
+        'pre-2',
+        'cu-1',
+        'cu-2',
+        'live-1',
+      ]);
+      expect(
+        store.messages
+            .where((m) => m.id.startsWith('cu-'))
+            .every((m) => !m.isHistorical),
+        isTrue,
+      );
+
+      /// Adjacency (2s): the window reached back — no gap marker.
+      expect(store.resumeGapBoundaries, isEmpty);
+
+      /// Text-to-speech listens to live arrivals only — the catch-up
+      /// block must not be read aloud.
+      expect(heardLive, ['pre-1', 'pre-2', 'live-1']);
+      expect(channelService.backfillCalls, 2);
+
+      /// A healthy connection is not restarted.
+      expect(pushers, hasLength(1));
+      expect(pusher().disconnectCalls, 0);
+    });
+
+    test('the gap marker lands on the oldest catch-up row when the ~50-row '
+        'window did not reach back', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageAt('pre-1', t0));
+
+      channelService.backfills[101] = [
+        historyMessage('cu-1', t0.add(const Duration(minutes: 10))),
+        historyMessage('cu-2', t0.add(const Duration(minutes: 11))),
+      ];
+      store.reconnectAfterResume();
+      await until(() => store.messages.length == 3);
+
+      expect(store.messages.map((m) => m.id), ['pre-1', 'cu-1', 'cu-2']);
+      expect(store.resumeGapBoundaries, {'cu-1'});
+    });
+
+    test('no false gap marker when live rows bridge a truncated history '
+        'window', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageAt('pre-1', t0));
+
+      /// The fetch itself is truncated: its only row is minutes past the
+      /// pre-resume tail.
+      channelService.backfills[101] = [
+        historyMessage('cu-1', t0.add(const Duration(minutes: 3))),
+      ];
+      store.reconnectAfterResume();
+
+      /// Live rows land mid-fetch and bridge the window right up to 1s
+      /// before the fetched row. Against the stale tail this raised a
+      /// false "missing" divider; against the actual predecessor
+      /// (live-2) it must not.
+      pusher().emitEvent(
+        messageAt('live-1', t0.add(const Duration(minutes: 1))),
+      );
+      pusher().emitEvent(
+        messageAt(
+          'live-2',
+          t0.add(const Duration(minutes: 3) - const Duration(seconds: 1)),
+        ),
+      );
+      await until(() => store.messages.length == 4);
+
+      expect(store.messages.map((m) => m.id), [
+        'pre-1',
+        'live-1',
+        'live-2',
+        'cu-1',
+      ]);
+      expect(store.resumeGapBoundaries, isEmpty);
+    });
+
+    test(
+      'cap trim after the insert keeps feeding the session history',
+      () async {
+        await connectSignedIn();
+        for (var i = 0; i < 500; i++) {
+          pusher().emitEvent(messageAt('p$i', t0.add(Duration(seconds: i))));
+        }
+        expect(store.messages, hasLength(500));
+
+        channelService.backfills[101] = [
+          for (var i = 0; i < 30; i++)
+            historyMessage('cu-$i', t0.add(Duration(seconds: 500 + i))),
+        ];
+        store.reconnectAfterResume();
+        await until(() => history.length == 30);
+
+        expect(store.messages, hasLength(500));
+        expect(store.messages.first.id, 'p30');
+        expect(store.messages.last.id, 'cu-29');
+        expect(
+          history
+              .historyFor(
+                platform: ChatHistoryPlatform.kick,
+                channelKey: 'aaa',
+                authorKey: '1',
+              )
+              .map((e) => (e.message as KickChatMessage).id),
+          [for (var i = 0; i < 30; i++) 'p$i'],
+        );
+      },
+    );
+
+    test('a backing-off connection restarts immediately', () async {
+      await connectSignedIn();
+      pusher().emitState(KickPusherConnectionState.reconnecting);
+      await until(
+        () => store.chatConnection == KickChatConnectionState.reconnecting,
+      );
+
+      store.reconnectAfterResume();
+      await until(() => pushers.length == 2);
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+
+      expect(pushers.first.disconnectCalls, 1);
+      expect(pusher().connectCalls, isNotEmpty);
+    });
+
+    test('a connection in error restarts', () async {
+      configure();
+      await authBox().put(KickAuth.kBoxKey, validAuth());
+      channelService.resolveThrows = const SocketException('offline');
+      await store.init();
+      await until(() => store.chatConnection == KickChatConnectionState.error);
+
+      channelService.resolveThrows = null;
+      store.reconnectAfterResume();
+      await until(
+        () => store.chatConnection == KickChatConnectionState.connected,
+      );
+      expect(store.chatError, isNull);
+    });
+
+    test('no selected channel: the hook is a no-op', () async {
+      store.reconnectAfterResume();
+      await until(() => channelService.backfillCalls > 0);
+      expect(channelService.backfillCalls, 0);
+      expect(pushers, isEmpty);
+    });
+
+    test('a failed fetch is silent', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageAt('pre-1', t0));
+      channelService.backfillThrows = const SocketException('offline');
+
+      store.reconnectAfterResume();
+      await until(() => channelService.backfillCalls == 2);
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+
+      expect(store.messages.map((m) => m.id), ['pre-1']);
+      expect(store.chatError, isNull);
+      expect(store.resumeGapBoundaries, isEmpty);
     });
   });
 }

@@ -152,6 +152,15 @@ abstract class _TwitchChatStore with Store {
   /// phone screen is served well by far fewer).
   static const int kHistoryLimit = 100;
 
+  /// Rows fetched for the resume catch-up (robotty's max) — the window
+  /// must cover real background stays, not just the join scrollback.
+  static const int kResumeCatchUpLimit = 800;
+
+  /// The resume catch-up's oldest row must postdate the pre-resume tail
+  /// by more than this to count as an uncovered gap (adjacency tolerance
+  /// for quiet chats and robotty's dropped moderated rows).
+  static const Duration kResumeGapEpsilon = Duration(seconds: 2);
+
   /// Pro entitlement read (test seam, same pattern as the store
   /// resolvers above) - native chat "just doesn't work" without Pro:
   /// [connectChat] refuses, so neither a persisted engine selection nor
@@ -426,6 +435,14 @@ abstract class _TwitchChatStore with Store {
   /// window's tracked rebuild signal for the two plain containers above.
   @observable
   int lifecycleVersion = 0;
+
+  /// Ids of the OLDEST rows of each resume catch-up block whose fetch
+  /// couldn't reach back to the last pre-resume row — the timeline draws
+  /// the "some messages while away are missing" divider above them
+  /// ([ChatResumeGapDivider]). Observable so the views and the combined
+  /// timeline's computed follow it; entries die with their row's cap
+  /// eviction and with [_clearLifecycle].
+  final ObservableSet<String> resumeGapBoundaries = ObservableSet<String>();
 
   /// Monotonic arrival counter — a message at index i has arrival seq
   /// [_arrivalSeq] - messages.length + i + 1 (front eviction shifts
@@ -776,6 +793,7 @@ abstract class _TwitchChatStore with Store {
     } catch (e) {
       GeneralHelper.logFailure('Twitch badge catalog clear failed', e);
     }
+
     /// The third-party emote catalogs stay: public data, no account in
     /// them - and the store is shared with Kick, whose channel emotes a
     /// clear here wiped
@@ -2136,6 +2154,7 @@ abstract class _TwitchChatStore with Store {
         info: this._tombstoneInfos[evicted],
         actor: this._deletedMessageActors[evicted],
       );
+      this.resumeGapBoundaries.remove(evicted);
       if (this.messageCap.holding) {
         this._evictedWhileHeld.add(evicted);
 
@@ -2223,6 +2242,7 @@ abstract class _TwitchChatStore with Store {
       buffer.deletedMessageIds.remove(evicted);
       buffer.deletedMessageActors.remove(evicted);
       buffer.tombstoneInfos.remove(evicted);
+      this.resumeGapBoundaries.remove(evicted);
       buffer.messages.removeAt(0);
     }
   }
@@ -2304,7 +2324,175 @@ abstract class _TwitchChatStore with Store {
     });
   }
 
-  /// IRC sidecar reported `first-msg=1` for [messageId].
+  /// App back in the foreground (main.dart's lifecycle observer, next to
+  /// the YouTube engine's hook): iOS suspends the app with its sockets,
+  /// so the EventSub session died with the background stay. A session
+  /// already backing off reconnects NOW instead of waiting out the
+  /// watchdog/backoff; either way the background window the socket missed
+  /// is re-fetched ([_catchUpAfterResume]) — Twitch never replays a lost
+  /// session. A live connection is not disturbed.
+  @action
+  void reconnectAfterResume() {
+    if (this.user == null || this._eventSub == null) return;
+
+    /// A resume mid-initial-connect: the join backfill
+    /// ([_backfillHistory]) belongs to that connect and prepends ahead of
+    /// whatever arrived live — an interleaved catch-up insert could land
+    /// older rows above newer prepended ones, so the connect flow owns
+    /// this window. Checked BEFORE the restart below flips a backing-off
+    /// session to `connecting` (that path's backfill already ran — its
+    /// window is exactly what the catch-up re-fetches).
+    final joinBackfillOwnsTheWindow =
+        this.chatConnection == TwitchChatConnectionState.connecting;
+    if (this.chatConnection == TwitchChatConnectionState.reconnecting ||
+        this.chatConnection == TwitchChatConnectionState.failed) {
+      unawaited(this.connectChat());
+    }
+    if (!joinBackfillOwnsTheWindow) unawaited(this._catchUpAfterResume());
+  }
+
+  /// Re-fetch the effective channel's recent history after a background
+  /// stay and merge only the rows of the missed window: newer than the
+  /// pre-resume tail, deduped by id (live rows that beat the fetch win),
+  /// inserted timestamp-sorted mid-buffer (live rows may already sit past
+  /// them), NOT `isHistorical` (the reader had the chat open — these are
+  /// late, not join-history). Silent for text-to-speech: the live stream
+  /// is not touched (same contract as the connect-time backfill).
+  ///
+  /// When the window's oldest row postdates its actual buffer predecessor
+  /// beyond [kResumeGapEpsilon], the fetch couldn't reach back — the
+  /// boundary id lands in [resumeGapBoundaries] so the timeline draws the
+  /// "some messages while away are missing" divider. The normal cap trim
+  /// runs afterwards, so evicted rows keep feeding the session
+  /// ChatHistoryStore.
+  ///
+  /// The symmetric hole is deliberately unhandled: when the fetch window
+  /// sits inside live coverage (a gap in live DELIVERY, not in the
+  /// history), nothing is fetched and no gap is marked — too narrow to
+  /// chase.
+  ///
+  /// Honors the join-history setting (a user who disabled fetched history
+  /// gets none here either). Best-effort and anonymous: any failure just
+  /// leaves the live-only timeline.
+  Future<void> _catchUpAfterResume() async {
+    if (this._channelSwitchInProgress) return;
+    final broadcasterId = this.effectiveBroadcasterId;
+    final login = this.effectiveBroadcasterLogin;
+
+    /// Settings box may be closed in isolated store tests — no catch-up.
+    if (!Hive.isBoxOpen(HiveKeys.Settings.name)) return;
+    final enabled = Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.TwitchChatLoadHistory.name, defaultValue: true);
+    if (enabled != true) return;
+
+    /// The pre-resume tail: catch-up rows must not be OLDER than it (rows
+    /// older than it were either seen or cap-evicted — never resurrected).
+    /// Timestamp-equal unknown rows pass; the id dedupe below already
+    /// protects the tail row itself.
+    final tailAt = this.messages.isEmpty ? null : this.messages.last.receivedAt;
+
+    List<ChatMessageEvent> history;
+    try {
+      history = await this._recentMessagesService.fetch(
+        login,
+        limit: kResumeCatchUpLimit,
+      );
+    } catch (e) {
+      GeneralHelper.logFailure('Twitch resume catch-up failed', e);
+      return;
+    }
+    if (history.isEmpty) return;
+
+    runInAction(() {
+      /// A channel switch mid-fetch: the answer is the old channel's.
+      if (this._channelSwitchInProgress ||
+          this.effectiveBroadcasterIdSafe != broadcasterId) {
+        return;
+      }
+      final known = {for (final m in this.messages) m.messageId};
+      final fresh = [
+        for (final m in history)
+          if (!known.contains(m.messageId) &&
+              m.broadcasterUserId == broadcasterId &&
+              m.receivedAt != null &&
+              (tailAt == null || !m.receivedAt!.isBefore(tailAt)))
+            m.copyWith(isHistorical: false),
+      ];
+      if (fresh.isEmpty) return;
+
+      /// Timestamp-sorted mid-buffer insert, oldest first — a live row
+      /// that arrived during the fetch keeps its newer slot.
+      var oldestInsertIndex = -1;
+      for (final row in fresh) {
+        final at = row.receivedAt!;
+        final index =
+            this.messages.lastIndexWhere((m) {
+              final mine = m.receivedAt;
+              return mine == null || !mine.isAfter(at);
+            }) +
+            1;
+
+        /// Inserting at [index] grows the buffer, so the position-derived
+        /// seqs of every row BELOW it (base = _arrivalSeq - length + 1
+        /// moves with the length) shift down by one while notices keep
+        /// their absolute afterSeq — decrement the anchors in the shifted
+        /// region so a banner (e.g. a /clear) stays glued to its row.
+        final base = this._arrivalSeq - this.messages.length + 1;
+        this.messages.insert(index, row);
+        this._shiftNoticeAnchorsForInsert(base + index);
+        if (oldestInsertIndex < 0) oldestInsertIndex = index;
+        final color = row.color;
+        if (color != null &&
+            color.isNotEmpty &&
+            !this._chatterColors.containsKey(row.chatterUserId)) {
+          this._chatterColors[row.chatterUserId] = color;
+        }
+      }
+
+      /// The window didn't reach back → the gap divider goes above the
+      /// oldest catch-up row. Judged against the row it ACTUALLY follows,
+      /// not the pre-fetch tail: live rows that arrived mid-fetch may
+      /// bridge the window contiguously even when the history itself is
+      /// truncated.
+      final predecessorAt = oldestInsertIndex > 0
+          ? this.messages[oldestInsertIndex - 1].receivedAt
+          : null;
+      final oldestAt = fresh.first.receivedAt!;
+      if (predecessorAt != null &&
+          oldestAt.difference(predecessorAt) > kResumeGapEpsilon) {
+        this.resumeGapBoundaries.add(fresh.first.messageId);
+      }
+      this._trimMessages();
+      this.lifecycleVersion++;
+    });
+  }
+
+  /// A mid-buffer insert whose row took seq [insertedSeq] shifted the
+  /// seqs of all rows below it down by one — move every banner anchor in
+  /// that region with them (notices are plain containers, replaced in
+  /// place like the reconnect-promote path in [_appendNotification]).
+  void _shiftNoticeAnchorsForInsert(int insertedSeq) {
+    for (var i = 0; i < this.systemNotices.length; i++) {
+      final notice = this.systemNotices[i];
+      if (notice.afterSeq < insertedSeq) {
+        this.systemNotices[i] = ChatSystemNotice(
+          afterSeq: notice.afterSeq - 1,
+          kind: notice.kind,
+        );
+      }
+    }
+    for (var i = 0; i < this.chatNotifications.length; i++) {
+      final notice = this.chatNotifications[i];
+      if (notice.afterSeq < insertedSeq) {
+        this.chatNotifications[i] = ChatNotificationNotice(
+          afterSeq: notice.afterSeq - 1,
+          event: notice.event,
+        );
+      }
+    }
+  }
+
   @action
   void applyIrcFirstMessage(String messageId) {
     final index = this.messages.indexWhere(
@@ -2693,6 +2881,7 @@ abstract class _TwitchChatStore with Store {
     this._chatterColors.clear();
     this.autoModQueue.clear();
     this._arrivalSeq = 0;
+    this.resumeGapBoundaries.clear();
   }
 
   /// Multi-chat wipe on logout/reset: per-channel buffers, the moderated

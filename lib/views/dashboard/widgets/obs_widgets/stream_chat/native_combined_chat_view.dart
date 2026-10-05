@@ -336,7 +336,19 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
             ]);
             final separators = NativeChatAppearance.separators(settingsBox);
             final tinted = NativeChatAppearance.alternateRows(settingsBox)
-                ? this._rowParity.assign([for (final item in visible) item.key])
+                ? this._rowParity.assign([
+                    for (var i = 0; i < visible.length; i++)
+                      /// A resume-gap marker is a divider, not a message
+                      /// row: like the history divider it must not
+                      /// consume a parity slot (the zebra below it would
+                      /// flip), so it borrows the key of the row it
+                      /// introduces — the shared entry flips the chain
+                      /// once for the pair, not twice.
+                      visible[i].payload is ChatResumeGapMarker &&
+                              i + 1 < visible.length
+                          ? visible[i + 1].key
+                          : visible[i].key,
+                  ])
                 : null;
 
             return Stack(
@@ -368,6 +380,18 @@ class _NativeCombinedChatViewState extends State<NativeCombinedChatView> {
                       : const SizedBox.shrink(),
                   itemBuilder: (context, index) {
                     final item = visible[index];
+
+                    /// The resume-gap marker is a full-width divider row —
+                    /// no platform wash/stripe (same treatment the
+                    /// history divider gets).
+                    if (item.payload is ChatResumeGapMarker) {
+                      return KeyedSubtree(
+                        key: ValueKey(item.key),
+                        child: ChatResumeGapDivider(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      );
+                    }
                     Widget row = CombinedSourceRow(
                       platform: item.platform,
                       child: this._rowFor(context, item, settingsBox),

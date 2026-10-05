@@ -96,6 +96,17 @@ class CombinedItem {
   });
 }
 
+/// Synthetic timeline row: a platform store's resume catch-up couldn't
+/// reach back to the last pre-resume row — the window between them is
+/// lost. Inserted right before the catch-up block's oldest row in that
+/// platform's stream (its [CombinedItem.at] is the boundary row's
+/// timestamp), so the merged timeline draws the
+/// [ChatResumeGapDivider] at the boundary. Not a store buffer entry —
+/// the platform stores signal the boundary via their `resumeGapBoundaries`.
+class ChatResumeGapMarker {
+  const ChatResumeGapMarker();
+}
+
 /// Whether a saved combo's YouTube [source] is the signed-in account's
 /// [own] channel (the "You" entry) - matched by target, so a combo saved
 /// under an older channel title still matches.
@@ -572,7 +583,17 @@ abstract class _CombinedChatStore with Store {
     store.lifecycleVersion;
     DateTime? last;
     return [
-      for (final item in store.messagesWithNotices())
+      for (final item in store.messagesWithNotices()) ...[
+        /// A resume gap boundary sorts right before its catch-up block's
+        /// oldest row (same timestamp; stream order keeps it first).
+        if (item is ChatMessageEvent &&
+            store.resumeGapBoundaries.contains(item.messageId))
+          CombinedItem(
+            platform: ChatType.Twitch,
+            payload: const ChatResumeGapMarker(),
+            at: item.receivedAt ?? last,
+            key: 'twitch:resume-gap:${item.messageId}',
+          ),
         CombinedItem(
           platform: ChatType.Twitch,
           payload: item,
@@ -592,6 +613,7 @@ abstract class _CombinedChatStore with Store {
             _ => 'twitch:other:${identityHashCode(item)}',
           },
         ),
+      ],
     ];
   }
 
@@ -606,15 +628,24 @@ abstract class _CombinedChatStore with Store {
   ];
 
   List<CombinedItem> _kickItems() {
+    final store = this._kick();
     DateTime? last;
     return [
-      for (final message in this._kick().messages)
+      for (final message in store.messages) ...[
+        if (store.resumeGapBoundaries.contains(message.id))
+          CombinedItem(
+            platform: ChatType.Kick,
+            payload: const ChatResumeGapMarker(),
+            at: message.createdAt ?? last,
+            key: 'kick:resume-gap:${message.id}',
+          ),
         CombinedItem(
           platform: ChatType.Kick,
           payload: message,
           at: last = message.createdAt ?? last,
           key: 'kick:${message.id}',
         ),
+      ],
     ];
   }
 

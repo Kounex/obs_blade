@@ -36,6 +36,80 @@ buffers for the viewer cards) was a hardcoded 200k const
   The old 201k-fill eviction test now runs at cap 1000 via the seam
   (same mechanics, much faster).
 
+## 2026-10-05 - Chat: resume catch-up for Twitch + Kick (background window no longer lost)
+
+Spec: [`superpowers/specs/2026-10-05-chat-resume-catch-up-design.md`](superpowers/specs/2026-10-05-chat-resume-catch-up-design.md).
+Dogfood report: after a longer iOS background stay, combined chat showed
+only YouTube catching up (its cursor poll is zero-loss) while Twitch
+"flooded" back live with the whole background window missing - EventSub
+does not replay a lost session and the connect-time history backfill runs
+once per session; Kick's backfill only ever filled an empty buffer.
+
+- Both native stores gained `reconnectAfterResume()`, hooked in
+  `main.dart`'s lifecycle observer next to the existing YouTube one
+  (`_AppLifecycleObserver`, `AppLifecycleState.resumed`). Twitch
+  restarts via `connectChat()` when `chatConnection` is `reconnecting` /
+  `failed` (guarded by `_eventSub != null` so a never-connected session
+  isn't started); Kick via `_restartConnection()` on `reconnecting` /
+  `error` (guarded by a channel selection). The EventSub backoff sleep
+  is a non-cancellable `Future.delayed`, so "immediate" is a store-level
+  restart - both services re-subscribe on a fresh welcome anyway, no
+  service-level `reconnectNow()` needed.
+- On resume both stores re-fetch history for the background window and
+  merge it **mid-buffer**: timestamp-sorted insert, deduped by message
+  id, **not** flagged historical (join-history styling stays a connect
+  thing), and TTS-silent (the TTS feed only sees live appends). Twitch
+  uses `recent-messages.robotty.de` with limit **800** and honors the
+  existing `TwitchChatLoadHistory` setting (a user who disabled
+  join-history gets no fetched resume history either); Kick uses the
+  channel service backfill (~50 rows, all Kick keeps).
+- Gap marker: when the fetched window's oldest row postdates the buffer
+  row it ACTUALLY lands after by more than **2 s** (epsilon - judged
+  against the insertion predecessor, not the stale pre-fetch tail, so
+  live rows bridging the window mid-fetch don't raise a false marker),
+  that row's id lands in the new `resumeGapBoundaries` observable set.
+  Native Twitch / Kick timelines prepend a `ChatResumeGapDivider`
+  ("Some messages while away are missing", `native_chat_chrome.dart`,
+  platform-brand color) on those rows; combined chat inserts a synthetic
+  `ChatResumeGapMarker` item (key `<platform>:resume-gap:<id>`) into the
+  merged timeline, rendered full-width without the source wash and
+  borrowing its boundary row's zebra-parity slot so the striping below
+  it doesn't flip.
+- Boundary ids die with their row: `_trimMessages` (Twitch + Kick), the
+  Twitch mid-switch buffer trim, and Kick `releaseScrollback` / `/clear`
+  / `reloadChannels` retirement evict them; nothing is persisted. The
+  Twitch channel-switch buffer SWAP deliberately keeps them - the
+  divider correctly reappears on switch-back. Cap trims during catch-up
+  keep feeding `ChatHistoryStore` (the eviction feed point is
+  unchanged).
+- Mid-buffer inserts don't touch `_arrivalSeq` itself, but growing the
+  buffer shifts the position-derived seqs of every row below the insert
+  (base = `_arrivalSeq - length + 1` moves with the length) while
+  notices keep absolute `afterSeq` - the catch-up decrements the anchors
+  in the shifted region, so a /clear banner stays glued to its row
+  instead of hopping down by the insert count. Twitch catch-up is
+  skipped while `chatConnection == connecting` (a resume mid-initial-
+  connect is covered by the join backfill; an interleaved insert could
+  mis-order against its prepend), and Kick's hook explicitly no-ops
+  `connecting` / `idle` (the in-flight connect flow owns the window; the
+  Pro-gate idle is no-connection-by-design, not a dead socket).
+- Unread pills: deliberately no special-casing for catch-up rows (left
+  as-is after review) - a resume catch-up counts as new arrivals like
+  any insert (timeline-length delta), and combined chat's gap-marker row
+  adds +1 to that delta while the native timelines render their divider
+  inside a message row. Either counting is defensible: the rows ARE new
+  to the reader vs. they were said while the app was away, not while the
+  reader watched.
+- Known limitation: a stale-`live` socket after iOS suspend can't be
+  distinguished from a healthy one (services expose no liveness probe),
+  so it's left to the watchdog / keepalive (self-heals in seconds); the
+  catch-up fetch covers the window regardless - same philosophy as the
+  YouTube hook. The symmetric gap case is deliberately unhandled too:
+  when the fetch window sits inside live coverage (a hole in live
+  DELIVERY, not in the history), nothing is fetched and no gap is
+  marked - too narrow to chase.
+- Widget shots: `tool/widget_shots/chat_resume_gap_shots_test.dart`
+  (Twitch / Kick, phone + 320 px narrow, combined phone + tablet).
 
 ## 2026-10-05 - Chat: user cards remember the session beyond the 500-row buffer cap
 

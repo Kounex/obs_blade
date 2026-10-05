@@ -7,8 +7,10 @@ import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
+import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/twitch_badges.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
+import 'package:obs_blade/types/classes/twitch/chat_system_notice.dart';
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
@@ -34,9 +36,10 @@ String _line(
   String text = 'hi',
   String emotes = '',
   String extra = '',
+  int? sentTs,
 }) =>
     '@badges=;color=;display-name=Viewer;emotes=$emotes;id=$id;'
-    'room-id=$room;user-id=9;tmi-sent-ts=1790196434556$extra '
+    'room-id=$room;user-id=9;tmi-sent-ts=${sentTs ?? 1790196434556}$extra '
     ':viewer!viewer@viewer.tmi.twitch.tv PRIVMSG #kounex :$text';
 
 void main() {
@@ -164,23 +167,11 @@ void main() {
     TwitchChatStore newStore() => TwitchChatStore(
       authService: FakeTwitchAuthService(),
       ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
-      eventSubFactory:
-          (
-            onMessage,
-            _,
-            __,
-            ___,
-            ____,
-            _____,
-            ______,
-            _______,
-            onState,
-            ________,
-          ) {
-            emitMessage = onMessage;
-            emitState = onState;
-            return eventSub;
-          },
+      eventSubFactory: (onMessage, _, _, _, _, _, _, _, onState, _) {
+        emitMessage = onMessage;
+        emitState = onState;
+        return eventSub;
+      },
       badgeStoreResolver: () =>
           TwitchBadgeStore(service: FakeTwitchBadgeService()),
       isProResolver: () => true,
@@ -294,6 +285,350 @@ void main() {
       await settle();
       expect(requestedLogins, ['kounex', 'kounex']);
       expect(store.messages.map((m) => m.messageId), ['h1']);
+    });
+  });
+
+  group('TwitchChatStore resume catch-up', () {
+    late Directory tempDir;
+    late HiveTestHarness harness;
+    late FakeTwitchEventSubService eventSub;
+    late void Function(ChatMessageEvent) emitMessage;
+    late void Function(TwitchEventSubState) emitState;
+    late ChatHistoryStore history;
+    late TwitchChatStore store;
+
+    /// Every recent-messages request's `limit` (100 = join backfill,
+    /// 800 = resume catch-up).
+    late List<int> requestedLimits;
+
+    /// Set to park the catch-up fetch mid-flight (live rows racing it).
+    Completer<http.Response>? catchUpGate;
+
+    /// Scripted catch-up rows when no gate parks the fetch.
+    List<String> catchUpLines = const [];
+    Object? catchUpThrows;
+
+    final t0 = DateTime.fromMillisecondsSinceEpoch(1790196434556, isUtc: true);
+
+    http.Response responseOf(List<String> lines) =>
+        http.Response(json.encode({'messages': lines, 'error': null}), 200);
+
+    TwitchChatStore newStore() => TwitchChatStore(
+      authService: FakeTwitchAuthService(),
+      ircSidecarFactory: (_) => FakeSilentIrcSidecar(),
+      eventSubFactory: (onMessage, _, _, _, _, _, _, _, onState, _) {
+        emitMessage = onMessage;
+        emitState = onState;
+        return eventSub;
+      },
+      badgeStoreResolver: () =>
+          TwitchBadgeStore(service: FakeTwitchBadgeService()),
+      isProResolver: () => true,
+      chatHistoryResolver: () => history,
+      recentMessagesService: TwitchRecentMessagesService(
+        client: MockClient((request) {
+          final limit = int.parse(request.url.queryParameters['limit']!);
+          requestedLimits.add(limit);
+
+          /// 100 = join backfill, 800 = resume catch-up.
+          if (limit == 100) {
+            return Future.value(responseOf(const []));
+          }
+          final gate = catchUpGate;
+          if (gate != null) return gate.future;
+          final throws = catchUpThrows;
+          if (throws != null) return Future.error(throws);
+          return Future.value(responseOf(catchUpLines));
+        }),
+      ),
+    );
+
+    ChatMessageEvent liveAt(String id, DateTime at) => ChatMessageEvent(
+      broadcasterUserId: 'user-1',
+      chatterUserId: '9',
+      chatterUserLogin: 'viewer',
+      chatterUserName: 'Viewer',
+      messageId: id,
+      message: ChatMessageText(text: id),
+      receivedAt: at,
+    );
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('twitch_resume_test');
+      harness = HiveTestHarness(tempDir);
+      await harness.init();
+      await Hive.openBox<TwitchAuth>(HiveKeys.TwitchAuth.name);
+      await Hive.openBox(HiveKeys.Settings.name);
+      eventSub = FakeTwitchEventSubService();
+      history = ChatHistoryStore();
+      requestedLimits = <int>[];
+      catchUpGate = null;
+      catchUpLines = const [];
+      catchUpThrows = null;
+      store = newStore();
+    });
+
+    tearDown(() async {
+      if (catchUpGate != null && !catchUpGate!.isCompleted) {
+        catchUpGate!.complete(responseOf(const []));
+      }
+      await store.dispose();
+      await harness.close();
+      if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+    });
+
+    Future<void> settle() async {
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+
+    /// Logged in, "connected", with the join backfill answered (empty).
+    Future<void> startConnected() async {
+      await store.startLogin();
+      await settle();
+      emitState(TwitchEventSubState.connected);
+      await settle();
+      requestedLimits.clear();
+    }
+
+    test('catch-up rows land sorted mid-buffer, deduped, not historical, '
+        'silent for text-to-speech', () async {
+      final heardLive = <String>[];
+      store.liveMessages.listen((m) => heardLive.add(m.messageId));
+      await startConnected();
+      emitMessage(liveAt('pre-1', t0));
+      emitMessage(liveAt('pre-2', t0.add(const Duration(seconds: 10))));
+
+      catchUpGate = Completer<http.Response>();
+      store.reconnectAfterResume();
+      await settle();
+      expect(requestedLimits, [800]); // 800 = resume catch-up
+
+      /// A live row beats the fetch — the catch-up must slot in BEFORE
+      /// it (mid-buffer insert, not append).
+      emitMessage(liveAt('live-1', t0.add(const Duration(seconds: 20))));
+      catchUpGate!.complete(
+        responseOf([
+          _line('pre-2', sentTs: t0.millisecondsSinceEpoch + 10000),
+          _line('cu-1', sentTs: t0.millisecondsSinceEpoch + 12000),
+          _line('cu-2', sentTs: t0.millisecondsSinceEpoch + 15000),
+          _line('live-1', sentTs: t0.millisecondsSinceEpoch + 20000),
+        ]),
+      );
+      await settle();
+
+      expect(store.messages.map((m) => m.messageId), [
+        'pre-1',
+        'pre-2',
+        'cu-1',
+        'cu-2',
+        'live-1',
+      ]);
+      expect(
+        store.messages
+            .where((m) => m.messageId.startsWith('cu-'))
+            .every((m) => !m.isHistorical),
+        isTrue,
+      );
+
+      /// Adjacency (2s): the window reached back — no gap marker.
+      expect(store.resumeGapBoundaries, isEmpty);
+
+      /// Text-to-speech listens to live arrivals only — the catch-up
+      /// block must not be read aloud.
+      expect(heardLive, ['pre-1', 'pre-2', 'live-1']);
+    });
+
+    test('the gap marker lands on the oldest catch-up row when the window '
+        'did not reach back', () async {
+      await startConnected();
+      emitMessage(liveAt('pre-1', t0));
+
+      catchUpLines = [
+        _line('cu-1', sentTs: t0.millisecondsSinceEpoch + 600000),
+        _line('cu-2', sentTs: t0.millisecondsSinceEpoch + 630000),
+      ];
+      store.reconnectAfterResume();
+      await settle();
+
+      expect(store.messages.map((m) => m.messageId), ['pre-1', 'cu-1', 'cu-2']);
+      expect(store.resumeGapBoundaries, {'cu-1'});
+    });
+
+    test('no false gap marker when live rows bridge a truncated history '
+        'window', () async {
+      await startConnected();
+      emitMessage(liveAt('pre-1', t0));
+
+      catchUpGate = Completer<http.Response>();
+      store.reconnectAfterResume();
+      await settle();
+      expect(requestedLimits, [800]); // 800 = resume catch-up
+
+      /// Live rows arrive mid-fetch and bridge the window right up to the
+      /// fetched row…
+      emitMessage(liveAt('live-1', t0.add(const Duration(minutes: 1))));
+      emitMessage(
+        liveAt(
+          'live-2',
+          t0.add(const Duration(minutes: 3) - const Duration(seconds: 1)),
+        ),
+      );
+
+      /// …but the fetch itself is truncated: its oldest row is minutes
+      /// past the pre-resume tail. Against the stale tail this raised a
+      /// false "missing" divider; against the actual predecessor
+      /// (live-2, 1s away) it must not.
+      catchUpGate!.complete(
+        responseOf([_line('cu-1', sentTs: t0.millisecondsSinceEpoch + 180000)]),
+      );
+      await settle();
+
+      expect(store.messages.map((m) => m.messageId), [
+        'pre-1',
+        'live-1',
+        'live-2',
+        'cu-1',
+      ]);
+      expect(store.resumeGapBoundaries, isEmpty);
+    });
+
+    test(
+      'a /clear banner keeps its anchor row across the catch-up insert',
+      () async {
+        await startConnected();
+        emitMessage(liveAt('pre-1', t0));
+        emitMessage(liveAt('pre-2', t0.add(const Duration(seconds: 10))));
+        store.applyChatClear();
+
+        catchUpLines = [
+          _line('cu-1', sentTs: t0.millisecondsSinceEpoch + 12000),
+          _line('cu-2', sentTs: t0.millisecondsSinceEpoch + 15000),
+        ];
+        store.reconnectAfterResume();
+        await settle();
+
+        /// The insert shifts the position-derived seqs of the rows below it
+        /// — the banner's afterSeq must move with its anchor instead of
+        /// hopping down into the catch-up block.
+        final timeline = store.messagesWithNotices();
+        final bannerIndex = timeline.indexWhere(
+          (item) =>
+              item is ChatSystemNotice &&
+              item.kind == ChatSystemNoticeKind.chatCleared,
+        );
+        expect(bannerIndex, greaterThan(0));
+        expect(
+          (timeline[bannerIndex - 1] as ChatMessageEvent).messageId,
+          'pre-2',
+          reason: 'the banner stays glued to the last pre-clear row',
+        );
+        expect(
+          (timeline[bannerIndex + 1] as ChatMessageEvent).messageId,
+          'cu-1',
+          reason: 'and still sorts above the catch-up block',
+        );
+      },
+    );
+
+    test(
+      'cap trim after the insert keeps feeding the session history',
+      () async {
+        await startConnected();
+        for (var i = 0; i < 500; i++) {
+          emitMessage(liveAt('p$i', t0.add(Duration(seconds: i))));
+        }
+        expect(store.messages, hasLength(500));
+
+        catchUpLines = [
+          for (var i = 0; i < 30; i++)
+            _line(
+              'cu-$i',
+              sentTs: t0.millisecondsSinceEpoch + 500000 + i * 1000,
+            ),
+        ];
+        store.reconnectAfterResume();
+        await settle();
+
+        expect(store.messages, hasLength(500));
+        expect(store.messages.first.messageId, 'p30');
+        expect(store.messages.last.messageId, 'cu-29');
+        expect(history.length, 30);
+        expect(
+          history
+              .historyFor(
+                platform: ChatHistoryPlatform.twitch,
+                channelKey: 'user-1',
+                authorKey: '9',
+              )
+              .map((e) => (e.message as ChatMessageEvent).messageId),
+          [for (var i = 0; i < 30; i++) 'p$i'],
+        );
+      },
+    );
+
+    test('a backing-off session reconnects immediately', () async {
+      await startConnected();
+      emitState(TwitchEventSubState.reconnecting);
+      await settle();
+      expect(store.chatConnection, TwitchChatConnectionState.reconnecting);
+      eventSub.connectCalled = false;
+
+      store.reconnectAfterResume();
+      await settle();
+
+      expect(eventSub.disposeCalled, isTrue);
+      expect(eventSub.connectCalled, isTrue);
+      expect(store.chatConnection, TwitchChatConnectionState.connecting);
+    });
+
+    test('a live session is not disturbed, the catch-up still runs', () async {
+      await startConnected();
+      eventSub.connectCalled = false;
+
+      store.reconnectAfterResume();
+      await settle();
+
+      expect(eventSub.disposeCalled, isFalse);
+      expect(eventSub.connectCalled, isFalse);
+      expect(store.chatConnection, TwitchChatConnectionState.live);
+      expect(requestedLimits, [800]); // 800 = resume catch-up
+    });
+
+    test('no chat session: the hook is a no-op', () async {
+      store.reconnectAfterResume();
+      await settle();
+      expect(requestedLimits, isEmpty);
+      expect(eventSub.connectCalled, isFalse);
+    });
+
+    test('the join-history setting also gates the catch-up', () async {
+      Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.TwitchChatLoadHistory.name, false);
+      await store.startLogin();
+      await settle();
+      emitState(TwitchEventSubState.connected);
+      await settle();
+      requestedLimits.clear();
+
+      store.reconnectAfterResume();
+      await settle();
+      expect(requestedLimits, isEmpty);
+    });
+
+    test('a failed fetch is silent', () async {
+      await startConnected();
+      emitMessage(liveAt('pre-1', t0));
+      catchUpThrows = const SocketException('offline');
+
+      store.reconnectAfterResume();
+      await settle();
+
+      expect(store.messages.map((m) => m.messageId), ['pre-1']);
+      expect(store.chatError, isNull);
+      expect(store.resumeGapBoundaries, isEmpty);
     });
   });
 }

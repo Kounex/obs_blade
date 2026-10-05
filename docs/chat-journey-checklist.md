@@ -130,6 +130,13 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   survive what the app can't see: a kill (close at the last heartbeat)
   and an iOS suspension (timers stop, sockets die) - check what the
   user is told after both.
+- App resume: a socket-based chat (Twitch, Kick) reconnects a dead /
+  backing-off socket immediately and re-fetches the background window
+  merged into the buffer (sorted, deduped, TTS-silent); when the
+  history window didn't reach the pre-suspend tail, a "Some messages
+  while away are missing" divider marks the gap instead of silently
+  pretending completeness. Poll-based chat (YouTube) is zero-loss by
+  cursor.
 - Live smoke for new endpoints: a throwaway `flutter test` file; the
   Kick / Cloudflare user-agent notes are in the handoff § Chat
   conventions.

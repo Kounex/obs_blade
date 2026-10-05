@@ -22,6 +22,7 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_notification.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
@@ -231,6 +232,68 @@ void main() {
       ChatType.YouTube,
       ChatType.Kick,
     ]);
+  });
+
+  testWidgets('a resume gap marker renders the missing-messages divider at '
+      'the boundary', (tester) async {
+    kick.messages.addAll([
+      kickMessage('pre-1', 'before the break', at(1)),
+      kickMessage('cu-1', 'first caught-up row', at(3)),
+    ]);
+    youTube.messages.add(ytMessage('y1', 'youtube meanwhile', at(2)));
+    kick.resumeGapBoundaries.add('cu-1');
+
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pumpAndSettle();
+
+    const label = 'Some messages while away are missing';
+    expect(find.text(label), findsOneWidget);
+
+    /// Sorts at the boundary: the YouTube row interleaves by timestamp
+    /// inside the missed window, the divider sits right before the
+    /// catch-up block.
+    double top(String text) => tester.getTopLeft(find.textContaining(text)).dy;
+    expect(top('before the break'), lessThan(top('youtube meanwhile')));
+    expect(top('youtube meanwhile'), lessThan(top(label)));
+    expect(top(label), lessThan(top('first caught-up row')));
+  });
+
+  testWidgets('a resume gap marker does not consume a zebra parity slot', (
+    tester,
+  ) async {
+    /// Real I/O via runAsync — a Hive put inside the fake-async zone
+    /// never completes and hangs the test at shutdown.
+    await tester.runAsync(
+      () => Hive.box(
+        HiveKeys.Settings.name,
+      ).put(SettingsKeys.ChatAlternateRows.name, true),
+    );
+    kick.messages.addAll([
+      kickMessage('pre-1', 'row above the gap', at(1)),
+      kickMessage('cu-1', 'gap boundary row', at(2)),
+      kickMessage('cu-2', 'row below the gap', at(3)),
+    ]);
+    kick.resumeGapBoundaries.add('cu-1');
+
+    await tester.pumpWidget(wrap(const NativeCombinedChatView()));
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(NativeCombinedChatView));
+    final tint = chatAlternateRowColor(context);
+    bool isTinted(String text) => tester
+        .widgetList<ColoredBox>(
+          find.ancestor(
+            of: find.textContaining(text),
+            matching: find.byType(ColoredBox),
+          ),
+        )
+        .any((box) => box.color == tint);
+
+    /// The marker borrows the boundary row's key instead of taking its
+    /// own slot: the boundary row tints and the row below it does not —
+    /// with a consumed slot the pair would flip.
+    expect(isTinted('gap boundary row'), isTrue);
+    expect(isTinted('row below the gap'), isFalse);
   });
 
   /// Same replay report as the Twitch view: the combined timeline's rows

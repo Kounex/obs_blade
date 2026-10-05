@@ -437,6 +437,18 @@ mixin _$KickChatStore on _KickChatStore, Store {
   }
 
   @override
+  void reconnectAfterResume() {
+    final _$actionInfo = _$_KickChatStoreActionController.startAction(
+      name: '_KickChatStore.reconnectAfterResume',
+    );
+    try {
+      return super.reconnectAfterResume();
+    } finally {
+      _$_KickChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void setReplyTarget(KickChatMessage message) {
     final _$actionInfo = _$_KickChatStoreActionController.startAction(
       name: '_KickChatStore.setReplyTarget',

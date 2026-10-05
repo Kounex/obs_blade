@@ -109,6 +109,19 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
           getIt.checkLazySingletonInstanceExists<YouTubeChatStore>()) {
         getIt<YouTubeChatStore>().reconnectAfterResume();
       }
+
+      /// Twitch / Kick read over sockets iOS took away: a dead or
+      /// backing-off connection restarts now, and each engine re-fetches
+      /// the background window its socket missed (YouTube's poll cursor
+      /// already makes it zero-loss). Same only-when-running guard.
+      if (getIt.isRegistered<TwitchChatStore>() &&
+          getIt.checkLazySingletonInstanceExists<TwitchChatStore>()) {
+        getIt<TwitchChatStore>().reconnectAfterResume();
+      }
+      if (getIt.isRegistered<KickChatStore>() &&
+          getIt.checkLazySingletonInstanceExists<KickChatStore>()) {
+        getIt<KickChatStore>().reconnectAfterResume();
+      }
     }
   }
 

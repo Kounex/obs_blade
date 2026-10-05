@@ -422,14 +422,19 @@ class _NativeKickChatViewState extends State<NativeKickChatView> {
 
                     /// Keyed on the outermost wrapper, so the tint/divider
                     /// variants don't break the sliver's child matching.
+                    final gapBoundary = this._store.resumeGapBoundaries
+                        .contains(message.id);
                     return KeyedSubtree(
                       key: ValueKey(message.id),
-                      child: index == historyDivider
+                      child: index == historyDivider || gapBoundary
                           ? Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                ChatHistoryDivider(color: brand),
+                                if (gapBoundary)
+                                  ChatResumeGapDivider(color: brand),
+                                if (index == historyDivider)
+                                  ChatHistoryDivider(color: brand),
                                 withTint,
                               ],
                             )

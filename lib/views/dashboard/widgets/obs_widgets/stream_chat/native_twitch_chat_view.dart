@@ -597,13 +597,18 @@ class _NativeTwitchChatViewState extends State<NativeTwitchChatView> {
                     final withTint = tinted == null
                         ? row
                         : chatAlternateRow(context, tinted[index], row);
+                    final gapBoundary = this._store.resumeGapBoundaries
+                        .contains(event.messageId);
                     return keyed(
-                      index == historyDivider
+                      index == historyDivider || gapBoundary
                           ? Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                ChatHistoryDivider(color: brand),
+                                if (gapBoundary)
+                                  ChatResumeGapDivider(color: brand),
+                                if (index == historyDivider)
+                                  ChatHistoryDivider(color: brand),
                                 withTint,
                               ],
                             )

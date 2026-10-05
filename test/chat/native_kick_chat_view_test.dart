@@ -158,6 +158,29 @@ void main() {
     expect(renderedRichText(tester), contains('text m2'));
   });
 
+  testWidgets('a resume gap boundary renders the missing-messages divider', (
+    tester,
+  ) async {
+    store.chatConnection = KickChatConnectionState.connected;
+    store.messages.addAll([
+      kickMessage('pre-1'),
+      kickMessage('cu-1'),
+      kickMessage('cu-2'),
+    ]);
+    store.resumeGapBoundaries.add('cu-1');
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(find.text('Some messages while away are missing'), findsOneWidget);
+    expect(find.text('New messages'), findsNothing);
+
+    /// The boundary leaving the buffer drops the divider again.
+    store.messages.removeWhere((m) => m.id == 'cu-1');
+    store.resumeGapBoundaries.remove('cu-1');
+    await tester.pump();
+    expect(find.text('Some messages while away are missing'), findsNothing);
+  });
+
   testWidgets('a mute-word match drops the row from the timeline', (
     tester,
   ) async {

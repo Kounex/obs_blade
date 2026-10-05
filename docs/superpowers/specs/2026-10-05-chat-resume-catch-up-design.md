@@ -1,7 +1,6 @@
 # Chat resume catch-up (Twitch + Kick) — design
 
-2026-10-05 · status: ratified by the user (feature approved 2026-10-05), build
-held until the other session's chat-history work fully settles.
+2026-10-05 · status: **Implemented** (2026-10-05).
 
 ## Problem
 

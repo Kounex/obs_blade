@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:mobx/mobx.dart' show runInAction;
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/twitch_auth.dart';
@@ -796,6 +797,46 @@ void main() {
         expect(store.timeline[1].platform, ChatType.YouTube);
       },
     );
+
+    test('a resume gap boundary surfaces as a marker item before the '
+        'catch-up block', () async {
+      await store.activate();
+      await until(
+        () => kick.chatConnection == KickChatConnectionState.connected,
+      );
+      kick.messages
+        ..clear()
+        ..addAll([
+          kickMessage('pre-1', DateTime.utc(2026, 9, 24, 12, 0, 1)),
+          kickMessage('cu-1', DateTime.utc(2026, 9, 24, 12, 10, 0)),
+          kickMessage('cu-2', DateTime.utc(2026, 9, 24, 12, 10, 30)),
+        ]);
+      youTube.messages
+        ..clear()
+        ..add(ytMessage('y1', DateTime.utc(2026, 9, 24, 12, 10, 15)));
+      runInAction(() => kick.resumeGapBoundaries.add('cu-1'));
+
+      expect(store.timeline.map((i) => i.key), [
+        'kick:pre-1',
+        'kick:resume-gap:cu-1',
+        'kick:cu-1',
+        'youtube:y1',
+        'kick:cu-2',
+      ]);
+      final marker = store.timeline[1];
+      expect(marker.platform, ChatType.Kick);
+      expect(marker.payload, isA<ChatResumeGapMarker>());
+      expect(marker.at, DateTime.utc(2026, 9, 24, 12, 10, 0));
+
+      /// The boundary leaving the buffer (cap eviction) drops the marker.
+      runInAction(() => kick.resumeGapBoundaries.remove('cu-1'));
+      expect(store.timeline.map((i) => i.key), [
+        'kick:pre-1',
+        'kick:cu-1',
+        'youtube:y1',
+        'kick:cu-2',
+      ]);
+    });
 
     test('a scrolled-up reader anchors the merged cut and holds every '
         'platform buffer; release puts the caps back', () async {

@@ -768,6 +768,18 @@ mixin _$TwitchChatStore on _TwitchChatStore, Store {
   }
 
   @override
+  void reconnectAfterResume() {
+    final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
+      name: '_TwitchChatStore.reconnectAfterResume',
+    );
+    try {
+      return super.reconnectAfterResume();
+    } finally {
+      _$_TwitchChatStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void applyIrcFirstMessage(String messageId) {
     final _$actionInfo = _$_TwitchChatStoreActionController.startAction(
       name: '_TwitchChatStore.applyIrcFirstMessage',

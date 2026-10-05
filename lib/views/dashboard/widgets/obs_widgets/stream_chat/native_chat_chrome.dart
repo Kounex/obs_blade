@@ -724,3 +724,48 @@ int chatHistoryDividerIndex(List<bool> isHistorical) {
   if (last < 0 || last == isHistorical.length - 1) return -1;
   return last + 1;
 }
+
+/// "── Some messages while away are missing ──" marker between the last
+/// pre-suspend rows and a resume catch-up block whose history fetch
+/// couldn't reach back (Twitch ≤ 800 rows, Kick ~50) — the honest loss
+/// signal for the iOS background window. Same visual idiom as
+/// [ChatHistoryDivider], own widget/key/semantics.
+class ChatResumeGapDivider extends StatelessWidget {
+  final Color color;
+
+  const ChatResumeGapDivider({super.key, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final line = Expanded(
+      child: Container(height: 1.0, color: this.color.withValues(alpha: 0.7)),
+    );
+    return Semantics(
+      container: true,
+      label: 'Some messages while away are missing',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Row(
+          children: [
+            line,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              child: Text(
+                'Some messages while away are missing',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: readableNameColor(
+                    this.color,
+                    Theme.of(context).cardColor,
+                  ),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+            line,
+          ],
+        ),
+      ),
+    );
+  }
+}

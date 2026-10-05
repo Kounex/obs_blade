@@ -108,6 +108,11 @@ abstract class _KickChatStore with Store {
   /// Rolling cap for the sent-message id bookkeeping (echo marker).
   static const int kMaxSentIds = 50;
 
+  /// The resume catch-up's oldest row must postdate the pre-resume tail
+  /// by more than this to count as an uncovered gap (adjacency tolerance
+  /// for quiet chats; same value as the Twitch engine's).
+  static const Duration kResumeGapEpsilon = Duration(seconds: 2);
+
   final KickChannelService _channelService;
   final KickPusherFactory _pusherFactory;
   final KickAuthService _authService;
@@ -276,6 +281,14 @@ abstract class _KickChatStore with Store {
 
   final ObservableList<KickChatMessage> messages =
       ObservableList<KickChatMessage>();
+
+  /// Ids of the OLDEST rows of each resume catch-up block whose fetch
+  /// couldn't reach back to the last pre-resume row — the timeline draws
+  /// the "some messages while away are missing" divider above them
+  /// ([ChatResumeGapDivider]). Observable so the views and the combined
+  /// timeline's computed follow it; entries die with their row's cap
+  /// eviction and with a `/clear`.
+  final ObservableSet<String> resumeGapBoundaries = ObservableSet<String>();
 
   /// Sign-in lifecycle of the optional Kick account (writes/mod).
   @observable
@@ -829,6 +842,127 @@ abstract class _KickChatStore with Store {
     unawaited(this._runConnection(slug, flow));
   }
 
+  /// App back in the foreground (main.dart's lifecycle observer, next to
+  /// the YouTube engine's hook): iOS suspends the app with its sockets,
+  /// so the Pusher connection died with the background stay. A connection
+  /// backing off (or in error) restarts NOW instead of waiting out the
+  /// pusher's backoff; either way the background window the socket missed
+  /// is re-fetched ([_catchUpAfterResume]) — Kick's socket never replays
+  /// a lost session. A live connection is not disturbed.
+  @action
+  void reconnectAfterResume() {
+    final slug = this.selectedChannelSlug;
+    if (slug == null) return;
+
+    /// Explicit state coverage, not accidental no-ops: `connecting`
+    /// means the app was backgrounded mid-connect — the in-flight
+    /// connect flow owns the channel (its backfill runs when it lands)
+    /// and [channelInfo] may still be null, so there is nothing to
+    /// restart or fetch here. `idle` with a selection is
+    /// no-connection-by-design (the Pro gate keeps the pick without
+    /// starting one), not a dead socket — deliberately no catch-up.
+    if (this.chatConnection == KickChatConnectionState.connecting ||
+        this.chatConnection == KickChatConnectionState.idle) {
+      return;
+    }
+    if (this.chatConnection == KickChatConnectionState.reconnecting ||
+        this.chatConnection == KickChatConnectionState.error) {
+      this._restartConnection();
+    }
+    unawaited(this._catchUpAfterResume(slug));
+  }
+
+  /// Re-fetch the selected channel's recent history after a background
+  /// stay and merge only the rows of the missed window: newer than the
+  /// pre-resume tail, deduped by id (live rows that beat the fetch win),
+  /// inserted timestamp-sorted mid-buffer (live rows may already sit past
+  /// them), NOT `isHistorical` (the reader had the chat open — these are
+  /// late, not join-history). Silent for text-to-speech: the live stream
+  /// is not touched (same contract as the connect-time backfill).
+  ///
+  /// Kick's history reaches only ~50 rows back, so busy chats nearly
+  /// always outrun it: when the window's oldest row postdates its actual
+  /// buffer predecessor beyond [kResumeGapEpsilon], the boundary id lands
+  /// in [resumeGapBoundaries] so the timeline draws the "some messages
+  /// while away are missing" divider. The normal cap trim runs
+  /// afterwards, so evicted rows keep feeding the session
+  /// ChatHistoryStore.
+  ///
+  /// The symmetric hole is deliberately unhandled: when the fetch window
+  /// sits inside live coverage (a gap in live DELIVERY, not in the
+  /// history), nothing is fetched and no gap is marked — too narrow to
+  /// chase.
+  ///
+  /// Best-effort and anonymous: any failure just leaves the live-only
+  /// timeline.
+  Future<void> _catchUpAfterResume(String slug) async {
+    /// Only a different selection discards the answer: a same-slug
+    /// restart ([_restartConnection] bumps the connect flow) keeps the
+    /// channel's buffer, so rows fetched for it stay valid to apply.
+    bool superseded() => slug != this.selectedChannelSlug;
+
+    final info = this.channelInfo;
+    if (info == null) return;
+
+    /// The pre-resume tail: catch-up rows must not be OLDER than it (rows
+    /// older than it were either seen or cap-evicted — never resurrected).
+    /// Timestamp-equal unknown rows pass; the id dedupe below already
+    /// protects the tail row itself.
+    final tailAt = this.messages.isEmpty ? null : this.messages.last.createdAt;
+
+    final List<KickChatMessage> history;
+    try {
+      history = (await this._channelService.backfillMessages(info.id)).messages;
+    } catch (e) {
+      if (superseded()) return;
+      GeneralHelper.logFailure('Kick resume catch-up failed', e);
+      return;
+    }
+    if (superseded() || history.isEmpty) return;
+
+    runInAction(() {
+      final known = {for (final m in this.messages) m.id};
+      final fresh = [
+        for (final m in history)
+          if (!known.contains(m.id) &&
+              m.createdAt != null &&
+              (tailAt == null || !m.createdAt!.isBefore(tailAt)))
+            m,
+      ];
+      if (fresh.isEmpty) return;
+
+      /// Timestamp-sorted mid-buffer insert, oldest first — a live row
+      /// that arrived during the fetch keeps its newer slot.
+      var oldestInsertIndex = -1;
+      for (final row in fresh) {
+        final at = row.createdAt!;
+        final index =
+            this.messages.lastIndexWhere((m) {
+              final mine = m.createdAt;
+              return mine == null || !mine.isAfter(at);
+            }) +
+            1;
+        this.messages.insert(index, row);
+        if (oldestInsertIndex < 0) oldestInsertIndex = index;
+      }
+
+      /// The window didn't reach back → the gap divider goes above the
+      /// oldest catch-up row. Judged against the row it ACTUALLY follows,
+      /// not the pre-fetch tail: live rows that arrived mid-fetch may
+      /// bridge the window contiguously even when the history itself is
+      /// truncated.
+      final predecessorAt = oldestInsertIndex > 0
+          ? this.messages[oldestInsertIndex - 1].createdAt
+          : null;
+      final oldestAt = fresh.first.createdAt!;
+      if (predecessorAt != null &&
+          oldestAt.difference(predecessorAt) > kResumeGapEpsilon) {
+        this.resumeGapBoundaries.add(fresh.first.id);
+      }
+      this._trimMessages();
+    });
+  }
+
   void _disconnectPusher() {
     final pusher = this._pusher;
     this._pusher = null;
@@ -1044,6 +1178,7 @@ abstract class _KickChatStore with Store {
   void _trimMessages() {
     while (this.messages.length > this.messageCap.value) {
       this._recordHistory(this.messages.first);
+      this.resumeGapBoundaries.remove(this.messages.first.id);
       this.messages.removeAt(0);
     }
   }
@@ -1074,6 +1209,7 @@ abstract class _KickChatStore with Store {
     runInAction(() {
       while (this.messages.length > this.messageCap.value) {
         this._recordHistory(this.messages.first);
+        this.resumeGapBoundaries.remove(this.messages.first.id);
         this.messages.removeAt(0);
       }
     });
@@ -1185,6 +1321,7 @@ abstract class _KickChatStore with Store {
   void _applyChatroomClear() {
     if (this.messages.isEmpty) return;
     this.messages.clear();
+    this.resumeGapBoundaries.clear();
 
     /// The session history intentionally survives the /clear (ratified):
     /// the platforms' /clear UX is content-visible tombstones, and rows
@@ -1532,10 +1669,10 @@ abstract class _KickChatStore with Store {
     final history = slug == null
         ? const <ChatHistoryEntry>[]
         : this._chatHistory?.historyFor(
-              platform: ChatHistoryPlatform.kick,
-              channelKey: slug,
-              authorKey: '$userId',
-            ) ??
+                platform: ChatHistoryPlatform.kick,
+                channelKey: slug,
+                authorKey: '$userId',
+              ) ??
               const <ChatHistoryEntry>[];
     final merged = <UserCardMessage<KickChatMessage>>[
       for (final entry in history)
@@ -1778,6 +1915,9 @@ abstract class _KickChatStore with Store {
       // Do not call selectChannel: it would save the retired messages again.
       this._connectFlow++;
       this._disconnectPusher();
+      this.resumeGapBoundaries.removeAll(
+        this.messages.map((message) => message.id),
+      );
       this.messages.clear();
       this.chatConnectedAt = null;
       this.channelInfo = null;
@@ -1793,12 +1933,19 @@ abstract class _KickChatStore with Store {
       ..addAll(parsed);
 
     /// Retired/vanished slugs lose their buffer AND their session
-    /// history — the channel left the user's list.
+    /// history — the channel left the user's list. Their rows' resume
+    /// gap markers go with them (they die with the row everywhere else).
     bool retiredSlug(String slug) =>
         slug != own && (retired.contains(slug) || !parsed.contains(slug));
     for (final slug in {...retired, ...this._channelBuffers.keys}) {
       if (retiredSlug(slug)) {
         this._chatHistory?.clearChannel(ChatHistoryPlatform.kick, slug);
+        final buffer = this._channelBuffers[slug];
+        if (buffer != null) {
+          this.resumeGapBoundaries.removeAll(
+            buffer.messages.map((message) => message.id),
+          );
+        }
       }
     }
     this._channelBuffers.removeWhere((slug, _) => retiredSlug(slug));
