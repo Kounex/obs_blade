@@ -4,6 +4,39 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-05 - Chat: session-history cap is user-configurable (default 50k)
+
+The `ChatHistoryStore` cap (messages kept beyond the 500-row live
+buffers for the viewer cards) was a hardcoded 200k const
+(`kChatHistoryCap`). It's now a setting with a UI:
+
+- `lib/stores/views/chat_history.dart`: the const split into
+  `kChatHistoryCapMin` (10k) / `kChatHistoryCapDefault` (**50k** - down
+  from 200k, ~64 MB worst case at the capacity spike's ~1.25
+  KB/message) / `kChatHistoryCapMax` (200k). The store's `cap` is
+  settable at runtime: lowering trims the oldest entries (author index
+  included) immediately, raising un-gates growth; values clamp into
+  range. The persisted value (new additive `SettingsKeys.ChatHistoryCap`
+  int, `chat-history-cap`) wins at construction; a constructor `cap:`
+  seam (verbatim, unclamped) keeps tests free of the settings box and
+  small-numbered. `chatHistoryEstimatedMb` pins the estimate (13/64/128/
+  256 MB at 10k/50k/100k/200k).
+- Options sheet (`native_chat_options_sheet.dart`): new "Chat history"
+  entry in "All chats" → own sheet page (back-chevron pattern):
+  explainer (session-scoped, cleared on sign-out/app close), 10k-200k
+  slider in 10k steps ("50,000 messages" readout), and a "Memory usage"
+  row with the worst-case estimate colored by `AppStatusColors` -
+  `reachable` ≤ 50 MB, `warning` ≤ 150 MB, `destructive` above. Writes
+  persist and apply to the live store at once; Reset restores 50k.
+  `_AppearanceSlider` gained optional `divisions` / `valueText`.
+- Tests: store cap defaults/persistence/clamping/live-trim/growth +
+  the options page (slider steps, estimate colors at low/mid/max, box
+  persistence, live-store apply); widget shots
+  (`options_sheet_shots_test.dart`) at min/default/max, phone + 320 pt.
+  The old 201k-fill eviction test now runs at cap 1000 via the seam
+  (same mechanics, much faster).
+
+
 ## 2026-10-05 - Chat: user cards remember the session beyond the 500-row buffer cap
 
 Follow-up to the same-day capacity spike: messages evicted at the
