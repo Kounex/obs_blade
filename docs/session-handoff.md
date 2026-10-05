@@ -3,7 +3,7 @@
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
 Read this first after `AGENTS.md`. Last reset: **2026-09-25**, top block
-updated **2026-10-04** (4.0.1 live, 4.1.0 build 2026100402 in testing) (end of
+updated **2026-10-05** (4.0.1 live, 4.1.0 build 2026100501 in testing) (end of
 the combined-chat session: combined chat waves 1–3, channel mod sheets,
 picker live tags, status-language cleanup, faster live data. ~47
 commits, pushed, deployed to Kounex iOS, user-approved on device.
@@ -55,10 +55,13 @@ older messages" expansion off a lazy list. The cap is **configurable**
 (`a941c4ba`..`d7f6055f`): options sheet → All chats → **Session history**
 page - explainer, 10k–200k slider in 10k steps (default **50k**), worst-case
 memory estimate (cap × 1280 B, green ≤ 75 MB / amber ≤ 150 MB / red above).
-Reviewer-approved; NOT on a device yet - dogfood list in the changelog
-entry. Also shipped: user-card
-history timestamps on YouTube/Kick (`6e015a6b`, in 4.1.0 build 2026100402's
-successor). Next: dogfood, then it rides the next 4.1.0 beta.
+Reviewer-approved; dogfooded on Kounex iOS (user: "looks very very good",
+2026-10-05) and out as **build 2026100501** (TestFlight `VALID` + Play
+internal; store notes unchanged - still the 2026100402 text, TestFlight
+"What to Test" = build-8 list: session history, background catch-up,
+YouTube timeout/ban fix). Also shipped: user-card
+history timestamps on YouTube/Kick (`6e015a6b`).
+Next: the user's verdict on build 2026100501, then `release-promote` 4.1.0.
 
 **Update 2026-10-04 (later) — releases:** **4.0.1 is live on both
 stores** (App Store `READY_FOR_SALE`, Play production 2026093001 at
