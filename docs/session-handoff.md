@@ -45,6 +45,17 @@ notes unchanged, TestFlight "What to Test" = the device check list). Next:
 the user's on-device verdict, then `release-promote` 4.1.0 (after 4.0.1 is
 published).
 
+**Update 2026-10-05 — session chat history shipped to master** (`e229facf`,
+`b8c2b489`, `b97f048f`; changelog same date): `ChatHistoryStore` keeps the
+full models evicted from the 500-row live buffers - one global in-memory
+200k FIFO across platforms, per-user index, erased on sign-out (not Kick) /
+channel removal / app restart, /clear deliberately KEEPS it (mirrors the
+content-visible tombstone UX). User cards show 50 rows + a one-way "Show X
+older messages" expansion off a lazy list. Reviewer-approved; NOT on a
+device yet - dogfood list in the changelog entry. Also shipped: user-card
+history timestamps on YouTube/Kick (`6e015a6b`, in 4.1.0 build 2026100402's
+successor). Next: dogfood, then it rides the next 4.1.0 beta.
+
 **Update 2026-10-04 (later) — releases:** **4.0.1 is live on both
 stores** (App Store `READY_FOR_SALE`, Play production 2026093001 at
 100%; tag `4.0.1`). Watch crash reports / reviews. **4.1.0 build
