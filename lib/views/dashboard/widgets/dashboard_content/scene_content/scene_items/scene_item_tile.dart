@@ -84,16 +84,21 @@ class SceneItemTile extends StatelessWidget {
   }) {
     /// Source color assigned in OBS 32+ (Sources dock -> Set Color) tints
     /// the full row, OBS-style. The key resolves like the mutations do
-    /// ([_sceneName]): children are cached under their parent group's
-    /// source name. No color -> exactly the previous rendering. The
-    /// Container sits inside the VisibilitySlideWrapper's Slidable, so
-    /// the tint travels with the row and the slide actions stay behind
+    /// ([_sceneName]) - but with the store's `_displayedSceneName`
+    /// fallback to the active scene: in exposed studio mode the preview
+    /// scene name can still be null for a moment (a `null|<id>` key would
+    /// flash an untinted row). Children are cached under their parent
+    /// group's source name. No color -> exactly the previous rendering.
+    /// The Container sits inside the VisibilitySlideWrapper's Slidable,
+    /// so the tint travels with the row and the slide actions stay behind
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
       rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) => Observer(
         builder: (context) {
-          final sceneName = this._sceneName(dashboardStore, settingsBox);
+          final sceneName =
+              this._sceneName(dashboardStore, settingsBox) ??
+              dashboardStore.activeSceneName;
           final Color? tint =
               sceneName != null && this.sceneItem.sceneItemId != null
               ? dashboardStore.sceneItemColors[sceneItemColorKey(
