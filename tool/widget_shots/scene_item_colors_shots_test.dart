@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/enums/scene_item_type.dart';
+import 'package:obs_blade/models/hidden_scene_item.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/scene_item_color.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/scene_items.dart';
 
@@ -28,6 +32,7 @@ void main() {
   });
 
   tearDown(() async {
+    runInAction(() => dashboardStore.editSceneItemVisibility = false);
     await GetIt.instance.reset();
     await harness.tearDown();
   });
@@ -168,5 +173,39 @@ void main() {
       items(),
       size: kShotTablet,
     );
+  });
+
+  testWidgets('edit visibility mode: slide panes, visible + hidden rows', (
+    tester,
+  ) async {
+    state(
+      [item(2, 'Old overlay'), item(1, 'Camera')],
+      {sceneItemColorKey('Main', 1): const Color(0x54FF4444)},
+    );
+
+    /// 'Old overlay' was hidden by the user earlier - its pane shows the
+    /// hidden (gray) affordance, 'Camera' the visible (white) one. Real
+    /// I/O stays outside the fake-async zone (runAsync)
+    await tester.runAsync(
+      () => Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).add(
+        HiddenSceneItem(
+          'Main',
+          SceneItemType.Source,
+          2,
+          'Old overlay',
+          null,
+          null,
+          null,
+        ),
+      ),
+    );
+
+    /// The wrapper's reaction only opens the pane on the false -> true
+    /// change, so the flag flips after the first build (the harness pumps
+    /// run the delayed open + slide animation to completion)
+    Future(
+      () => runInAction(() => dashboardStore.editSceneItemVisibility = true),
+    );
+    await harness.shot(tester, 'scene_item_colors_edit_visibility', items());
   });
 }
