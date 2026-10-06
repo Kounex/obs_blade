@@ -4,6 +4,46 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-06 - Scene preview plays OBS' scene transitions (branch `feature/preview-transitions`)
+
+User request: the preview cut instantly while OBS faded / swiped. The
+preview is a `GetSourceScreenshot` loop of the program *scene*, so OBS
+can't hand us mid-transition frames (transitions aren't screenshottable) -
+the app plays the transition itself. Experiment branch, not on master.
+
+- **Facts first** (probe on the MacBook's OBS 32.2.2 / obs-websocket 5.7.4
+  + source reads, added to `obs-protocol-gotchas.md` § Scene transitions):
+  `CurrentProgramSceneChanged` only fires once the transition ENDED;
+  `GetCurrentProgramScene` at `SceneTransitionStarted` already names the
+  incoming scene; settings come without defaults; override duration
+  defaults to 300 ms.
+- **Tracker** (`lib/utils/preview_transition/`): frames are tagged with
+  their scene; a pure `PreviewTransitionTracker` shows / holds (≤ 400 ms) /
+  starts a transition. Contexts come from app switches
+  (`setActiveSceneName`) and `SceneTransitionStarted`, which also triggers
+  the early program read - **side effect: switches made elsewhere now move
+  the scene tiles + items at the transition's start** (before: at its
+  end, so the tile highlight ran a full duration late).
+- **Look** = OBS' own math (`plugins/obs-transitions`): fade, fade to
+  color (switch point, ABGR color), swipe (in/out, 4 directions), slide,
+  luma wipe (OBS' 34 masks bundled in `assets/luma_wipes/`, GPL-2.0+, +
+  `shaders/luma_wipe.frag`), stinger = hold, cut at its transition point
+  (its video is a private source of the transition), plugin kinds
+  (Move, ...) = crossfade. Duration: override > current > measured
+  Started→VideoEnded > current.
+- **UI**: `ScenePreviewImage` (inline + fullscreen) keeps the live frame
+  underneath and paints the transition on top; reduce motion cuts.
+  Settings → Dashboard → **Preview Transitions** (on by default).
+- **Verified**: 25 tracker/spec unit tests, 12 store tests on the fake
+  peer, 5 widget tests, widget shots of every kind mid-way (+ 4:3 canvas,
+  settings row), and `tool/obs_local/preview_transition_live_test.dart`
+  against the real OBS: dashboard follows a switch from elsewhere after
+  ~5-20 ms, the preview transition starts 20-65 ms after the switch with
+  the right kind / duration / direction (override Fade 1200 ms while
+  Swipe is current; a settings change without event picked up).
+- **Left out**: T-bar / manual transitions, fade to black, other canvases,
+  settings of non-current transitions (kind defaults).
+
 ## 2026-10-05 - Release: 4.1.0 promoted to review (both stores)
 
 Beta build **2026100501** (release commit `4c0c3e28`) went out in the

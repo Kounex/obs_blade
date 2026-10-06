@@ -74,6 +74,34 @@ location in a comment where the fake models a non-obvious behavior.
   (portrait, 4:5, landscape up to 4K) - never assume "vertical" from the
   name.
 
+## Scene transitions (verified OBS 32.2.2 / obs-websocket 5.7.4, 2026-10-06)
+
+Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design.md`.
+
+- **`CurrentProgramSceneChanged` fires at the END of an animated
+  transition**, not its start: OBS emits `SCENE_CHANGED` from
+  `TransitionStopped` on `transition_video_stop`
+  (`frontend/widgets/OBSBasic_Transitions.cpp`). A 1000 ms swipe: Started
+  +3 ms, VideoEnded + CurrentProgramSceneChanged +1016 ms, Ended +1032 ms.
+  Only a forced switch emits it right away.
+- **`GetCurrentProgramScene` at `SceneTransitionStarted` already returns
+  the incoming scene** (`obs_frontend_get_current_scene`). The dashboard
+  reads it there to follow switches made elsewhere at their start.
+- `SceneTransition*` events carry only `transitionName` / `transitionUuid`
+  - of the transition really running (per-scene overrides and quick
+  transitions included; obs-websocket hooks every transition's signals).
+- Transitions can't be created / removed over the websocket (no request;
+  obs-websocket#1226), and `GetSourceScreenshot` rejects them (inputs and
+  scenes only, `RequestHandler_Sources.cpp`) - a mid-transition frame
+  can't be fetched. A stinger's video is a private source of the
+  transition, never part of a scene screenshot.
+- `GetCurrentSceneTransition.transitionSettings` leaves defaults out
+  (`ObsDataToJson` without `includeDefault`); only the *current*
+  transition's settings are readable. Settings changes send no event.
+- `GetSceneSceneTransitionOverride` answers `null` duration when the
+  scene's override has none - OBS then uses **300 ms**
+  (`GetOverrideTransitionDuration`).
+
 ## General
 
 - Responses of scoped requests (`NetworkHelper.makeScopedRequest`) never

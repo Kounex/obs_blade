@@ -29,7 +29,7 @@ surfaces below. Example from the canvas work:
 | Edit Scene Visibility | taps hide instead of acting; hidden state keyed correctly (scene names repeat across canvases) |
 | Scene items + groups | toggles reach the right scene (group children live in the group's scene); hidden items; events patch the right row - a group child's events name the group, and its id can repeat a top-level id (visibility **and** lock confirm through the event) |
 | Audio mixer | inputs are global - must not follow a canvas / scene by accident |
-| Scene preview + fullscreen | follows what the scene buttons show; aspect ratio |
+| Scene preview + fullscreen | follows what the scene buttons show; aspect ratio; scene changes play the OBS transition only with a transition context (no animation on reconnect / collection switch / canvas switch / studio preview pick) |
 | Studio mode | transition / preview controls act on the main canvas only |
 | App bar actions | screenshot source, stream / record / replay / virtual cam entries |
 | Status pills (LIVE / REC / extra canvas) | only what's really on air; neutral while reconnecting |

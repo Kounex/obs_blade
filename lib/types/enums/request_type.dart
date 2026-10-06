@@ -65,6 +65,19 @@ enum RequestType {
   /// Response: transitionName / transitionDuration, null when not overridden
   GetSceneSceneTransitionOverride,
 
+  /// Sets / removes (null) the scene transition overridden for a scene.
+  /// Only the live preview-transition check against a real OBS sends it
+  /// (`tool/obs_local/preview_transition_live_test.dart`)
+  ///
+  /// { 'sceneName': String, 'transitionName': String?, 'transitionDuration': int? }
+  SetSceneSceneTransitionOverride,
+
+  /// Sets the settings of the current scene transition (no event follows).
+  /// Only the live preview-transition check sends it
+  ///
+  /// { 'transitionSettings': Object, 'overlay': bool? }
+  SetCurrentSceneTransitionSettings,
+
   /// Gets a Base64-encoded screenshot of a source.
   ///
   /// The imageWidth and imageHeight parameters are treated as "scale to inner", meaning the smallest ratio
