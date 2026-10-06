@@ -170,6 +170,16 @@ enum RequestType {
   /// { 'sceneName': String } - Name of the group to get the items of
   GetGroupSceneItemList,
 
+  /// Gets the private settings of a scene item (per placement, group
+  /// children included) - carries the source color the user assigned in
+  /// OBS 32+ ('color-preset' / 'color'). Intentionally undocumented in
+  /// obs-websocket but stable, shipped in 5.6.0. No event fires when the
+  /// color changes - fetch alongside the scene-item list reads
+  ///
+  /// { 'sceneName': String, 'sceneItemId': int } - for group children the
+  /// parent group's source name (same rule as the mutations)
+  GetSceneItemPrivateSettings,
+
   /// Gets the default settings for an input kind.
   ///
   /// { 'inputKind': String } - Input kind to get the default settings for
