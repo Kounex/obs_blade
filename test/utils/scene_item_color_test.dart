@@ -83,4 +83,29 @@ void main() {
       );
     });
   });
+
+  group('sceneItemColorKey', () {
+    test('round-trips scene name + id', () {
+      final key = sceneItemColorKey('Camera', 1);
+      final parts = sceneItemColorKeyParts(key);
+      expect(parts?.sceneName, 'Camera');
+      expect(parts?.sceneItemId, 1);
+    });
+
+    test('names containing the | separator stay unambiguous', () {
+      final key = sceneItemColorKey('Camera|1', 3);
+      final parts = sceneItemColorKeyParts(key);
+      expect(parts?.sceneName, 'Camera|1');
+      expect(parts?.sceneItemId, 3);
+      expect(sceneItemColorKeyParts(key)?.sceneName, isNot('Camera'));
+    });
+
+    test('malformed keys parse to null', () {
+      expect(sceneItemColorKeyParts('Camera|1'), isNull);
+      expect(sceneItemColorKeyParts('x:Camera|1'), isNull);
+      expect(sceneItemColorKeyParts('6:Camer|1'), isNull);
+      expect(sceneItemColorKeyParts('6:Camera|x'), isNull);
+      expect(sceneItemColorKeyParts(''), isNull);
+    });
+  });
 }

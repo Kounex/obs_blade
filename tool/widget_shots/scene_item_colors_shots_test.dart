@@ -5,6 +5,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/classes/api/scene_item.dart';
+import 'package:obs_blade/utils/scene_item_color.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/scene_items.dart';
 
 import 'support/shots_harness.dart';
@@ -88,10 +89,10 @@ void main() {
         item(1, 'Gameplay'),
       ],
       {
-        'Main|1': const Color(0x54FF4444), // red
-        'Main|2': const Color(0x544444FF), // blue
+        sceneItemColorKey('Main', 1): const Color(0x54FF4444), // red
+        sceneItemColorKey('Main', 2): const Color(0x544444FF), // blue
         // BRB card untinted on purpose
-        'Main|4': const Color(0x54FFFFFF), // white
+        sceneItemColorKey('Main', 4): const Color(0x54FFFFFF), // white
       },
     );
     await harness.shot(tester, 'scene_item_colors_presets', items());
@@ -101,8 +102,12 @@ void main() {
     state(
       [item(2, 'Facecam border'), item(1, 'Camera')],
       {
-        'Main|1': const Color(0x55FF0000), // custom #55FF0000
-        'Main|2': const Color(0xFF7A3DF0), // custom, fully opaque
+        sceneItemColorKey('Main', 1): const Color(
+          0x55FF0000,
+        ), // custom #55FF0000
+        sceneItemColorKey('Main', 2): const Color(
+          0xFF7A3DF0,
+        ), // custom, fully opaque
       },
     );
     await harness.shot(tester, 'scene_item_colors_custom', items());
@@ -118,8 +123,12 @@ void main() {
         item(2, 'Alert box', group: 'Overlay Group'),
       ],
       {
-        'Main|1': const Color(0x5444FF44), // green group row
-        'Overlay Group|2': const Color(0x54FF4444), // red child
+        sceneItemColorKey('Main', 1): const Color(
+          0x5444FF44,
+        ), // green group row
+        sceneItemColorKey('Overlay Group', 2): const Color(
+          0x54FF4444,
+        ), // red child
       },
     );
     await harness.shot(tester, 'scene_item_colors_group', items());
@@ -131,8 +140,8 @@ void main() {
     state(
       [item(2, 'Old overlay', enabled: false, locked: true), item(1, 'Camera')],
       {
-        'Main|1': const Color(0x54FF4444),
-        'Main|2': const Color(0x54FF44FF), // magenta
+        sceneItemColorKey('Main', 1): const Color(0x54FF4444),
+        sceneItemColorKey('Main', 2): const Color(0x54FF44FF), // magenta
       },
     );
     await harness.shot(tester, 'scene_item_colors_locked_hidden', items());
@@ -146,9 +155,9 @@ void main() {
         item(2, 'Alert box', group: 'Overlay Group'),
       ],
       {
-        'Main|1': const Color(0x5444FF44),
-        'Overlay Group|2': const Color(0x54FF4444),
-        'Main|3': const Color(0x54FFFF44), // yellow
+        sceneItemColorKey('Main', 1): const Color(0x5444FF44),
+        sceneItemColorKey('Overlay Group', 2): const Color(0x54FF4444),
+        sceneItemColorKey('Main', 3): const Color(0x54FFFF44), // yellow
       },
     );
     await harness.shot(

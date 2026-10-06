@@ -174,7 +174,7 @@ abstract class _DashboardStore with Store {
   String? sceneItemsSceneName;
 
   /// Source colors assigned in OBS 32+ (Sources dock -> Set Color), keyed
-  /// `<sceneName>|<sceneItemId>` - group children by their parent group's
+  /// by [sceneItemColorKey] - group children by their parent group's
   /// source name, like every group-child lookup. Read-only; OBS fires no
   /// event when a color changes, so they are re-fetched alongside the
   /// scene-item list reads (GetSceneItemPrivateSettings, obs-websocket
@@ -1578,8 +1578,10 @@ abstract class _DashboardStore with Store {
   void _reconcileSceneItemColors(String sceneName, Iterable<SceneItem> items) {
     final ids = {for (final sceneItem in items) sceneItem.sceneItemId};
     this.sceneItemColors.removeWhere((key, _) {
-      if (!key.startsWith('$sceneName|')) return false;
-      return !ids.contains(int.tryParse(key.substring(sceneName.length + 1)));
+      final parts = sceneItemColorKeyParts(key);
+      return parts != null &&
+          parts.sceneName == sceneName &&
+          !ids.contains(parts.sceneItemId);
     });
   }
 
@@ -3495,9 +3497,12 @@ abstract class _DashboardStore with Store {
             privateSettingsResponse.sceneItemSettings,
           );
           if (color != null) {
-            this.sceneItemColors['$sceneName|$sceneItemId'] = color;
+            this.sceneItemColors[sceneItemColorKey(sceneName, sceneItemId)] =
+                color;
           } else {
-            this.sceneItemColors.remove('$sceneName|$sceneItemId');
+            this.sceneItemColors.remove(
+              sceneItemColorKey(sceneName, sceneItemId),
+            );
           }
         }
 

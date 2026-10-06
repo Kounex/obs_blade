@@ -14,6 +14,7 @@ import '../../../../../../types/classes/api/scene_item.dart';
 import '../../../../../../types/enums/hive_keys.dart';
 import '../../../../../../types/enums/request_type.dart';
 import '../../../../../../types/enums/settings_keys.dart';
+import '../../../../../../utils/scene_item_color.dart';
 import '../animated_toggle_icon.dart';
 import 'media_controls.dart';
 import 'text_source_sheet.dart';
@@ -92,8 +93,14 @@ class SceneItemTile extends StatelessWidget {
       rebuildKeys: const [SettingsKeys.ExposeStudioControls],
       builder: (context, settingsBox, child) => Observer(
         builder: (context) {
-          final Color? tint = dashboardStore
-              .sceneItemColors['${this._sceneName(dashboardStore, settingsBox)}|${this.sceneItem.sceneItemId}'];
+          final sceneName = this._sceneName(dashboardStore, settingsBox);
+          final Color? tint =
+              sceneName != null && this.sceneItem.sceneItemId != null
+              ? dashboardStore.sceneItemColors[sceneItemColorKey(
+                  sceneName,
+                  this.sceneItem.sceneItemId!,
+                )]
+              : null;
           return Container(
             color: tint,
             child: Pressable(

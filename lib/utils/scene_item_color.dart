@@ -43,3 +43,26 @@ Color? sceneItemColor(Map<String, dynamic> settings) {
   final int? rgb = _presetColors[preset];
   return rgb != null ? Color(_presetAlpha << 24 | rgb) : null;
 }
+
+/// Cache key of a scene item's color (DashboardStore.sceneItemColors):
+/// the item's own scene (the displayed scene for top-level items, the
+/// parent group's source name for children) + its id. Length-prefixed so
+/// names containing the `|` separator (OBS allows it) stay unambiguous -
+/// [sceneItemColorKeyParts] parses it back
+String sceneItemColorKey(String sceneName, int sceneItemId) =>
+    '${sceneName.length}:$sceneName|$sceneItemId';
+
+/// Inverse of [sceneItemColorKey] (null on a malformed key)
+({String sceneName, int sceneItemId})? sceneItemColorKeyParts(String key) {
+  final sep = key.indexOf(':');
+  if (sep < 1) return null;
+  final length = int.tryParse(key.substring(0, sep));
+  if (length == null || key.length < sep + 1 + length + 1) return null;
+  if (key[sep + 1 + length] != '|') return null;
+  final sceneItemId = int.tryParse(key.substring(sep + 1 + length + 1));
+  if (sceneItemId == null) return null;
+  return (
+    sceneName: key.substring(sep + 1, sep + 1 + length),
+    sceneItemId: sceneItemId,
+  );
+}

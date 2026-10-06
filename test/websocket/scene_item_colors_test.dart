@@ -8,6 +8,7 @@ import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/utils/network_helper.dart';
+import 'package:obs_blade/utils/scene_item_color.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_obs_peer.dart';
@@ -175,15 +176,15 @@ void main() {
     expect(requestedKeys, {'Camera|1', 'Camera|2', 'grp|3'});
 
     expect(
-      dashboardStore.sceneItemColors['Camera|1'],
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 1)],
       const Color(0x54FF4444), // red preset at 33% alpha
     );
     expect(
-      dashboardStore.sceneItemColors['Camera|2'],
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 2)],
       const Color(0x54FFFFFF), // white preset at 33% alpha
     );
     expect(
-      dashboardStore.sceneItemColors['grp|3'],
+      dashboardStore.sceneItemColors[sceneItemColorKey('grp', 3)],
       const Color(0x55FF0000), // custom HexArgb
     );
   });
@@ -217,13 +218,21 @@ void main() {
     privateSettings['Camera|1'] = {'color-preset': 0};
     peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
     await waitFor(
-      () => !dashboardStore.sceneItemColors.containsKey('Camera|1'),
+      () => !dashboardStore.sceneItemColors.containsKey(
+        sceneItemColorKey('Camera', 1),
+      ),
       'cleared color dropped',
     );
 
     /// The other colors survived the re-read
-    expect(dashboardStore.sceneItemColors['Camera|2'], const Color(0x54FFFFFF));
-    expect(dashboardStore.sceneItemColors['grp|3'], const Color(0x55FF0000));
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 2)],
+      const Color(0x54FFFFFF),
+    );
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('grp', 3)],
+      const Color(0x55FF0000),
+    );
   });
 
   test('item removed in OBS drops its color entry on the next read', () async {
@@ -245,9 +254,64 @@ void main() {
       'item list without cam applied',
     );
     await waitFor(
-      () => !dashboardStore.sceneItemColors.containsKey('Camera|1'),
+      () => !dashboardStore.sceneItemColors.containsKey(
+        sceneItemColorKey('Camera', 1),
+      ),
       'color of the removed item dropped',
     );
-    expect(dashboardStore.sceneItemColors['Camera|2'], const Color(0x54FFFFFF));
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 2)],
+      const Color(0x54FFFFFF),
+    );
+  });
+
+  test('a group whose name contains the key separator keeps its child\'s '
+      'color through reconcile', () async {
+    setupPeer();
+
+    /// The group is named 'Camera|1' - with a naive '<scene>|<id>' key
+    /// its child's key would parse as scene 'Camera', id garbage, and
+    /// the reconcile below would drop it
+    privateSettings = {
+      'Camera|1': {'color-preset': 2}, // top-level 'cam', id 1
+      'Camera|2': {'color-preset': 9}, // group row, id 2
+      'Camera|1|3': {'color-preset': 4}, // child id 3 of group 'Camera|1'
+    };
+    peer.responseData['GetSceneItemList'] = {
+      'sceneItems': [item(1, 'cam'), item(2, 'Camera|1', isGroup: true)],
+    };
+    await applyInitialState();
+    await waitFor(
+      () => dashboardStore.sceneItemColors.length == 3,
+      'colors applied',
+    );
+
+    /// OBS side: 'cam' removed - the reconcile of scene 'Camera' drops
+    /// its color but must leave the 'Camera|1' group's entries alone
+    peer.responseData['GetSceneItemList'] = {
+      'sceneItems': [item(2, 'Camera|1', isGroup: true)],
+    };
+    peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+    await waitFor(
+      () => dashboardStore.currentSceneItems.length == 2,
+      'item list without cam applied',
+    );
+    await waitFor(
+      () => !dashboardStore.sceneItemColors.containsKey(
+        sceneItemColorKey('Camera', 1),
+      ),
+      'color of the removed item dropped',
+    );
+
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 2)],
+      const Color(0x54FFFFFF),
+      reason: 'group row color survives',
+    );
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera|1', 3)],
+      const Color(0x5444FF44),
+      reason: 'child color survives the reconcile of the parent scene',
+    );
   });
 }
