@@ -2,6 +2,29 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
+**Update 2026-10-06 — OBS source colors in Scene Items (awaiting the
+user's on-device verdict):** dashboard Scene Items rows now tint with the
+OBS 32 "Set Color" color (scene-item private settings `color-preset` /
+`color` via `GetSceneItemPrivateSettings`, 5.6+, gated on
+`availableRequests`; 8 presets at 33% alpha + custom `#AARRGGBB`; no
+event → cached per scene/item, refetched with list reads, cleared on
+reconnect/collection switch). Read-only; canvas item list + setting
+colors deliberately out. Commits `afbc53f6..4a338df8` on
+**`feature/preview-transitions`** (shared branch — the preview-transitions
+agent's work `..979b7a8c` is underneath; the colors range is
+`979b7a8c..4a338df8`, cherry-pickable onto master), pushed. Reviewed
+(fresh-context pass, 1 should-fix + 5 nits, all fixed + tested), full
+`test/websocket/` green, analyze 0 errors, widget shots for all states.
+On Kounex iOS as a dogfood release install of `4a338df8` (build includes
+BOTH streams). Facts: `obs-protocol-gotchas.md` § Source colors;
+changelog 2026-10-06. Next: user's tap list (tinted preset/custom rows,
+tinted group + children, edit-mode slide on tinted rows, color change in
+OBS → scene switch → updates, old OBS untinted), then `/code-review
+high` in a fresh session. Watch: workstation had a **stale local
+`feature/preview-transitions` branch** (reset to origin tip this
+session; a `| tail` pipeline masked the failed pull — check
+`git log -1` after workstation checkouts).
+
 Read this first after `AGENTS.md`. Last reset: **2026-09-25**, top block
 updated **2026-10-05** (4.1.0 build 2026100501 IN REVIEW on both stores, 4.0.1 still live) (end of
 the combined-chat session: combined chat waves 1–3, channel mod sheets,
