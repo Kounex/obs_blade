@@ -1116,7 +1116,11 @@ abstract class _DashboardStore with Store {
       _applyPreviewOutcome(
         _previewTransitions.targetResolved(sceneName, DateTime.now()),
       );
-      _resolvePreviewTransition(name, sceneName);
+
+      /// Nothing to play it on - spare OBS the reads
+      if (this.shouldRequestPreviewImage && _animatePreviewTransitions) {
+        _resolvePreviewTransition(name, sceneName);
+      }
     });
   }
 

@@ -17,7 +17,9 @@ import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
 import '../../../../../utils/modal_handler.dart';
+import '../../../../../utils/preview_transition/preview_transition_tracker.dart';
 import 'preview_warning_dialog.dart';
+import 'scene_preview_image.dart';
 
 /// Hero tag shared between the inline scene preview and its fullscreen
 /// route - only one [ScenePreview] is mounted at a time (regular vs.
@@ -31,6 +33,14 @@ Uint8List? _previewBytes() {
   return canvasStore != null && canvasStore.isViewingOtherCanvas
       ? canvasStore.previewImageBytes
       : GetIt.instance<DashboardStore>().scenePreviewImageBytes;
+}
+
+/// The program's scene transitions - other canvases have no program to
+/// transition ([CanvasViewStore])
+StartPreviewTransition? _previewTransition() {
+  final canvasStore = canvasViewStoreOrNull();
+  if (canvasStore != null && canvasStore.isViewingOtherCanvas) return null;
+  return GetIt.instance<DashboardStore>().previewTransition;
 }
 
 String _headerText() {
@@ -147,17 +157,9 @@ class _ScenePreviewState extends State<ScenePreview> {
                             final Uint8List? bytes = _previewBytes();
                             if (bytes == null) return const SizedBox.shrink();
 
-                            return Image.memory(
-                              bytes,
-
-                              /// Might reduce the memory used and therefore
-                              /// the performance of the frequently changing
-                              /// image - a multiplicator is used since
-                              /// using the original size would decrease the
-                              /// quality significantly
-                              // cacheHeight: (maxImageHeight * 1.5).toInt(),
-                              fit: BoxFit.contain,
-                              gaplessPlayback: true,
+                            return ScenePreviewImage(
+                              bytes: bytes,
+                              transition: _previewTransition(),
                             );
                           },
                         ),
@@ -323,10 +325,9 @@ class _ScenePreviewFullscreen extends StatelessWidget {
               builder: (context) {
                 final Uint8List? bytes = _previewBytes();
                 if (bytes == null) return const SizedBox.shrink();
-                return Image.memory(
-                  bytes,
-                  fit: BoxFit.contain,
-                  gaplessPlayback: true,
+                return ScenePreviewImage(
+                  bytes: bytes,
+                  transition: _previewTransition(),
                 );
               },
             ),
