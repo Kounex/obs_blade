@@ -174,7 +174,7 @@ abstract class _DashboardStore with Store {
   String? sceneItemsSceneName;
 
   /// Source colors assigned in OBS 32+ (Sources dock -> Set Color), keyed
-  /// '<sceneName>|<sceneItemId>' - group children by their parent group's
+  /// `<sceneName>|<sceneItemId>` - group children by their parent group's
   /// source name, like every group-child lookup. Read-only; OBS fires no
   /// event when a color changes, so they are re-fetched alongside the
   /// scene-item list reads (GetSceneItemPrivateSettings, obs-websocket
