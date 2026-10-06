@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
@@ -14,6 +15,7 @@ import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/filter_default_settings.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/filter_list.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/scene_item_private_settings.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/screenshot.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
 import 'package:obs_blade/types/classes/stream/events/current_profile_changed.dart';
@@ -92,6 +94,7 @@ import '../../utils/network_helper.dart';
 import '../../utils/overlay_handler.dart';
 import '../../utils/preview_transition/preview_transition_spec.dart';
 import '../../utils/preview_transition/preview_transition_tracker.dart';
+import '../../utils/scene_item_color.dart';
 import '../shared/network.dart';
 
 part 'dashboard.g.dart';
@@ -169,6 +172,15 @@ abstract class _DashboardStore with Store {
   /// stays the same
   @observable
   String? sceneItemsSceneName;
+
+  /// Source colors assigned in OBS 32+ (Sources dock -> Set Color), keyed
+  /// '<sceneName>|<sceneItemId>' - group children by their parent group's
+  /// source name, like every group-child lookup. Read-only; OBS fires no
+  /// event when a color changes, so they are re-fetched alongside the
+  /// scene-item list reads (GetSceneItemPrivateSettings, obs-websocket
+  /// 5.6+). Stays empty against older OBS - rows then render untinted
+  @observable
+  ObservableMap<String, Color> sceneItemColors = ObservableMap();
 
   @computed
   ObservableList<SceneItem> get mediaSceneItems => ObservableList.of(
@@ -1535,6 +1547,42 @@ abstract class _DashboardStore with Store {
         .toList(),
   );
 
+  /// Fetches the private settings (the OBS 32+ source color) of [items] in
+  /// one batch - [sceneName] is the item's own scene: the displayed scene
+  /// for top-level items, the parent group's source name for its children
+  /// (same rule the mutations follow). Older OBS does not offer the
+  /// request: no fetches then, rows stay untinted
+  void _fetchSceneItemColors(String sceneName, Iterable<SceneItem> items) {
+    if (!this.supportsRequest(RequestType.GetSceneItemPrivateSettings)) {
+      return;
+    }
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    NetworkHelper.sendBatchRequest(
+      session.socket,
+      RequestBatchType.SceneItemPrivateSettings,
+      [
+        for (final sceneItem in items)
+          if (sceneItem.sceneItemId != null)
+            RequestBatchObject(RequestType.GetSceneItemPrivateSettings, {
+              'sceneName': sceneName,
+              'sceneItemId': sceneItem.sceneItemId,
+            }),
+      ],
+    );
+  }
+
+  /// Drops cached source colors of [sceneName] whose item is gone (removed
+  /// in OBS) - such items are part of no fetch, so nothing else would
+  /// clear their entry
+  void _reconcileSceneItemColors(String sceneName, Iterable<SceneItem> items) {
+    final ids = {for (final sceneItem in items) sceneItem.sceneItemId};
+    this.sceneItemColors.removeWhere((key, _) {
+      if (!key.startsWith('$sceneName|')) return false;
+      return !ids.contains(int.tryParse(key.substring(sceneName.length + 1)));
+    });
+  }
+
   @action
   void init() {
     this.handleStream();
@@ -2430,6 +2478,14 @@ abstract class _DashboardStore with Store {
 
         this.fetchSceneItemsFilters();
 
+        /// The fresh list is all top-level items (children get spliced in
+        /// by the group reads below) - refresh their source colors and drop
+        /// colors of items this scene no longer has
+        if (sceneName != null) {
+          _reconcileSceneItemColors(sceneName, this.currentSceneItems);
+          _fetchSceneItemColors(sceneName, this.currentSceneItems);
+        }
+
         for (final sceneItem in this.currentSceneItems) {
           final groupSourceName = sceneItem.sourceName;
           if ((sceneItem.isGroup ?? false) && groupSourceName != null) {
@@ -2518,6 +2574,13 @@ abstract class _DashboardStore with Store {
             ),
           ),
         ]);
+
+        /// Group children look up their private settings by the group's
+        /// source name (same rule as mutations)
+        if (parentSceneItemName != null) {
+          _reconcileSceneItemColors(parentSceneItemName, childrenSceneItems);
+          _fetchSceneItemColors(parentSceneItemName, childrenSceneItems);
+        }
 
         break;
       case RequestType.GetInputList:
@@ -3397,6 +3460,46 @@ abstract class _DashboardStore with Store {
             ),
           ),
         );
+
+        break;
+      case RequestBatchType.SceneItemPrivateSettings:
+        SceneItemPrivateSettingsBatchResponse privateSettingsBatchResponse =
+            SceneItemPrivateSettingsBatchResponse(batchResponse.jsonRAW);
+        final colorRequestObjects = NetworkHelper.getRequestBatchBodyForUUID(
+          privateSettingsBatchResponse.uuid,
+        );
+        if (colorRequestObjects == null) {
+          GeneralHelper.advLog(
+            'SceneItemPrivateSettings batch: missing request bodies for uuid',
+            level: LogLevel.Warning,
+            includeInLogs: true,
+          );
+          break;
+        }
+
+        for (final privateSettingsResponse
+            in privateSettingsBatchResponse.privateSettings) {
+          /// A failed read (logged via [_obsRequestSucceeded], surfaces in
+          /// Settings -> Logs) must not clear a color we already hold -
+          /// skip it and keep the others
+          if (!_obsRequestSucceeded(privateSettingsResponse)) continue;
+
+          final requestObject = colorRequestObjects
+              .where((object) => object.uuid == privateSettingsResponse.uuid)
+              .firstOrNull;
+          final sceneName = requestObject?.body?['sceneName'];
+          final sceneItemId = requestObject?.body?['sceneItemId'];
+          if (sceneName is! String || sceneItemId is! int) continue;
+
+          final color = sceneItemColor(
+            privateSettingsResponse.sceneItemSettings,
+          );
+          if (color != null) {
+            this.sceneItemColors['$sceneName|$sceneItemId'] = color;
+          } else {
+            this.sceneItemColors.remove('$sceneName|$sceneItemId');
+          }
+        }
 
         break;
     }

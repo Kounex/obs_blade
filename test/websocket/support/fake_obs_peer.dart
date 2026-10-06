@@ -88,6 +88,12 @@ class FakeObsPeer {
   /// non-null) - e.g. a different item list per requested scene
   Map<String, dynamic>? Function(Map<String, dynamic> request)? responseDataFor;
 
+  /// Per-batch-entry responseData (wins over [responseData] when it returns
+  /// non-null) - batch sub-requests need per-item answers, e.g. private
+  /// settings per requested sceneItemId
+  Map<String, dynamic>? Function(Map<String, dynamic> batchEntry)?
+  batchResponseDataFor;
+
   /// When false, Identify is never answered (handshake stall scenarios)
   bool identify = true;
 
@@ -225,6 +231,7 @@ class FakeObsPeer {
                       }
                     : {'result': true, 'code': 100},
                 'responseData':
+                    batchResponseDataFor?.call(entry) ??
                     responseData[entry['requestType'] as String] ??
                     <String, dynamic>{},
               },
