@@ -64,8 +64,14 @@ class _ScenePreviewImageState extends State<ScenePreviewImage>
         _controller.isAnimating &&
         !identical(widget.bytes, oldWidget.bytes)) {
       /// The new scene keeps moving under the transition
-      _decode(widget.bytes, _active!).then((frame) {
-        if (frame == null || _active == null) return frame?.dispose();
+      final StartPreviewTransition active = _active!;
+      _decode(widget.bytes, active).then((frame) {
+        /// Late: disposed, stopped or another transition by now
+        if (frame == null) return;
+        if (!mounted || !identical(_active, active) || _to == null) {
+          frame.dispose();
+          return;
+        }
         setState(() {
           _to?.dispose();
           _to = frame;
@@ -101,6 +107,8 @@ class _ScenePreviewImageState extends State<ScenePreviewImage>
     }
 
     setState(() {
+      _from?.dispose();
+      _to?.dispose();
       _from = from;
       _to = to;
       _lumaProgram = luma ? results[2] as ui.FragmentProgram? : null;
@@ -157,6 +165,7 @@ class _ScenePreviewImageState extends State<ScenePreviewImage>
 
   @override
   void dispose() {
+    _active = null;
     _controller.dispose();
     _from?.dispose();
     _to?.dispose();

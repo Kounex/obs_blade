@@ -139,15 +139,20 @@ class PreviewTransitionTracker {
     return _releaseIfReady(now);
   }
 
-  /// The resolved look of the pending transition [name]. Returns what to do
-  /// with a held frame that was waiting for it
+  /// The resolved look of the pending transition [name] into [target]
+  /// (null: the look doesn't depend on the target, e.g. a cut). A look
+  /// resolved for another target (the switch went elsewhere meanwhile -
+  /// overrides differ per scene) is ignored. Returns what to do with a held
+  /// frame that was waiting for it
   PreviewFrameOutcome? specResolved(
     String name,
+    String? target,
     PreviewTransitionSpec spec,
     DateTime now,
   ) {
     final _TransitionContext? context = _liveContext(now);
     if (context == null || context.name != name) return null;
+    if (target != null && context.target != target) return null;
     context.spec = spec;
     return _releaseIfReady(now);
   }
@@ -203,6 +208,13 @@ class PreviewTransitionTracker {
   /// (as a transition when it got resolved meanwhile, as a cut otherwise)
   PreviewFrameOutcome? holdExpired(DateTime now) =>
       _releaseIfReady(now) ?? _releaseIfExpired(now);
+
+  /// Forget the measured durations - another scene collection (or OBS)
+  /// can have same-named transitions that run differently
+  void clearMeasurements() {
+    _startedAt.clear();
+    _measured.clear();
+  }
 
   /// Forget everything about the shown frame and pending transitions -
   /// reconnect, scene collection switch, preview restarted

@@ -373,4 +373,143 @@ void main() {
     expect(spec.kind, PreviewTransitionKind.cutAtEnd);
     expect(spec.duration.inMilliseconds, inInclusiveRange(1, 800));
   });
+
+  group('studio mode (T-bar drags start transitions too)', () {
+    test(
+      'the dashboard waits for the program event, the preview animates',
+      () async {
+        currentTransitionIs('Fade', 'fade_transition', duration: 300);
+        runInAction(() => dashboardStore.studioMode = true);
+        await startPreviewOn('A');
+
+        obsTransitionsTo('B');
+        peer.event('SceneTransitionStarted', {'transitionName': 'Fade'});
+        await waitFor(
+          () => dashboardStore.previewTransition != null,
+          'transition started',
+        );
+        expect(dashboardStore.previewTransition!.toBytes, _bytesOf('B'));
+
+        /// A cancelled T-bar drag sends no program event - tiles must not
+        /// have moved
+        expect(dashboardStore.activeSceneName, 'A');
+
+        peer.event('CurrentProgramSceneChanged', {'sceneName': 'B'});
+        await waitFor(
+          () => dashboardStore.activeSceneName == 'B',
+          'program event applied',
+        );
+      },
+    );
+
+    test(
+      'a cancelled T-bar drag brings the preview back to the program',
+      () async {
+        currentTransitionIs('Fade', 'fade_transition', duration: 300);
+        runInAction(() => dashboardStore.studioMode = true);
+        await startPreviewOn('A');
+
+        obsTransitionsTo('B');
+        peer.event('SceneTransitionStarted', {'transitionName': 'Fade'});
+        await waitFor(
+          () =>
+              listEquals(dashboardStore.scenePreviewImageBytes, _bytesOf('B')),
+          'preview shows the incoming scene',
+        );
+
+        /// OBSBasic::TBarReleased: programScene back, no program event
+        peer.event('SceneTransitionEnded', {'transitionName': 'Fade'});
+        await waitFor(
+          () =>
+              listEquals(dashboardStore.scenePreviewImageBytes, _bytesOf('A')),
+          'preview back on the program',
+        );
+        expect(dashboardStore.activeSceneName, 'A');
+      },
+    );
+  });
+
+  test('a cut needs no override / settings reads', () async {
+    currentTransitionIs('Cut', 'cut_transition');
+    await startPreviewOn('A');
+
+    obsTransitionsTo('B');
+    peer.event('SceneTransitionStarted', {'transitionName': 'Cut'});
+    await waitFor(
+      () => listEquals(dashboardStore.scenePreviewImageBytes, _bytesOf('B')),
+      'preview shows B',
+    );
+    expect(
+      peer.requests.where(
+        (request) =>
+            request['requestType'] == 'GetSceneSceneTransitionOverride',
+      ),
+      isEmpty,
+    );
+  });
+
+  test('an app tap resolves without waiting for the program read', () async {
+    currentTransitionIs('Fade', 'fade_transition', duration: 300);
+    await startPreviewOn('A');
+    peer.heldRequestTypes.add('GetCurrentProgramScene');
+
+    obsTransitionsTo('B');
+    dashboardStore.setActiveSceneName('B');
+    peer.event('SceneTransitionStarted', {'transitionName': 'Fade'});
+
+    /// The program read is still out - the transition plays anyway
+    await waitFor(
+      () => dashboardStore.previewTransition != null,
+      'transition started',
+    );
+    expect(
+      peer.requests
+          .where(
+            (request) =>
+                request['requestType'] == 'GetSceneSceneTransitionOverride',
+          )
+          .single['requestData']['sceneName'],
+      'B',
+    );
+    peer.releaseAll('GetCurrentProgramScene');
+  });
+
+  test('a stinger with unknown settings cuts mid-video, not at once', () async {
+    /// Current is Fade - the stinger only runs as B's override
+    currentTransitionIs('Fade', 'fade_transition', duration: 300);
+    runInAction(
+      () => dashboardStore.availableTransitions = [
+        _transition('Fade', 'fade_transition', duration: 300),
+        _transition('Stinger', 'obs_stinger_transition'),
+      ],
+    );
+    await startPreviewOn('A');
+    obsTransitionsTo(
+      'B',
+      override: {'transitionName': 'Stinger', 'transitionDuration': null},
+    );
+
+    /// First run measures the video (Started -> VideoEnded)
+    peer.event('SceneTransitionStarted', {'transitionName': 'Stinger'});
+    await waitFor(
+      () => listEquals(dashboardStore.scenePreviewImageBytes, _bytesOf('B')),
+      'first run shows B',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 1600));
+    peer.event('SceneTransitionVideoEnded', {'transitionName': 'Stinger'});
+    await flushPeer();
+
+    obsTransitionsTo(
+      'A',
+      override: {'transitionName': 'Stinger', 'transitionDuration': null},
+    );
+    peer.event('SceneTransitionStarted', {'transitionName': 'Stinger'});
+    await waitFor(
+      () => dashboardStore.previewTransition != null,
+      'second run holds until mid-video',
+    );
+    final spec = dashboardStore.previewTransition!.spec;
+    expect(spec.kind, PreviewTransitionKind.cutAtEnd);
+    expect(spec.duration.inMilliseconds, inInclusiveRange(500, 900));
+  });
 }

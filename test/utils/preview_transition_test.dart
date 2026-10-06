@@ -179,7 +179,7 @@ void main() {
         tracker.frameArrived('A', _frame(1), at(0));
         tracker.appSwitchRequested('B', at(10));
         tracker.transitionStarted('Fade', at(13));
-        expect(tracker.specResolved('Fade', _fade, at(20)), isNull);
+        expect(tracker.specResolved('Fade', null, _fade, at(20)), isNull);
 
         final outcome = tracker.frameArrived('B', _frame(2), at(60));
         expect(outcome, isA<StartPreviewTransition>());
@@ -215,7 +215,7 @@ void main() {
         isA<HoldPreviewFrame>(),
       );
 
-      final outcome = tracker.specResolved('Swipe', _fade, at(80));
+      final outcome = tracker.specResolved('Swipe', null, _fade, at(80));
       expect(outcome, isA<StartPreviewTransition>());
       expect((outcome as StartPreviewTransition).toBytes, _frame(3));
       expect(outcome.fromBytes, _frame(1));
@@ -248,7 +248,7 @@ void main() {
       tracker.frameArrived('A', _frame(1), at(0));
       tracker.appSwitchRequested('B', at(10));
       tracker.transitionStarted('Cut', at(12));
-      tracker.specResolved('Cut', PreviewTransitionSpec.none, at(14));
+      tracker.specResolved('Cut', null, PreviewTransitionSpec.none, at(14));
       final outcome = tracker.frameArrived('B', _frame(2), at(40));
       expect(outcome, isA<ShowPreviewFrame>());
       expect(tracker.shownScene, 'B');
@@ -260,6 +260,7 @@ void main() {
       tracker.transitionStarted('Stinger', at(0));
       tracker.specResolved(
         'Stinger',
+        null,
         const PreviewTransitionSpec(
           kind: PreviewTransitionKind.cutAtEnd,
           duration: Duration(milliseconds: 800),
@@ -280,6 +281,7 @@ void main() {
       tracker.transitionStarted('Stinger', at(0));
       tracker.specResolved(
         'Stinger',
+        null,
         const PreviewTransitionSpec(
           kind: PreviewTransitionKind.cutAtEnd,
           duration: Duration(milliseconds: 50),
@@ -297,7 +299,7 @@ void main() {
       tracker.frameArrived('A', _frame(1), at(0));
       tracker.appSwitchRequested('B', at(5000));
       tracker.transitionStarted('Fade', at(5003));
-      tracker.specResolved('Fade', _fade, at(5005));
+      tracker.specResolved('Fade', null, _fade, at(5005));
       expect(
         tracker.frameArrived('B', _frame(2), at(5040)),
         isA<ShowPreviewFrame>(),
@@ -319,7 +321,7 @@ void main() {
       tracker.frameArrived('A', _frame(1), at(0));
       tracker.appSwitchRequested('B', at(10));
       tracker.transitionStarted('Fade', at(12));
-      tracker.specResolved('Fade', _fade, at(14));
+      tracker.specResolved('Fade', null, _fade, at(14));
       expect(
         tracker.frameArrived('B', _frame(2), at(40), animate: false),
         isA<ShowPreviewFrame>(),
@@ -337,11 +339,33 @@ void main() {
       expect(tracker.shownScene, 'A');
     });
 
+    test('a spec resolved for another target is ignored', () {
+      tracker.frameArrived('A', _frame(1), at(0));
+      tracker.appSwitchRequested('C', at(0));
+      tracker.transitionStarted('Fade', at(2));
+      tracker.specResolved('Fade', 'B', _fade, at(4));
+      expect(
+        tracker.frameArrived('C', _frame(2), at(30)),
+        isA<HoldPreviewFrame>(),
+      );
+      expect(
+        tracker.specResolved('Fade', 'C', _fade, at(40)),
+        isA<StartPreviewTransition>(),
+      );
+    });
+
+    test('clearMeasurements forgets learned durations', () {
+      tracker.transitionStarted('Quick', at(0));
+      tracker.videoEnded('Quick', at(400));
+      tracker.clearMeasurements();
+      expect(tracker.measuredDuration('Quick'), isNull);
+    });
+
     test('spec for another transition name is ignored', () {
       tracker.frameArrived('A', _frame(1), at(0));
       tracker.appSwitchRequested('B', at(0));
       tracker.transitionStarted('Fade', at(2));
-      tracker.specResolved('Swipe', _fade, at(4));
+      tracker.specResolved('Swipe', null, _fade, at(4));
       expect(
         tracker.frameArrived('B', _frame(2), at(30)),
         isA<HoldPreviewFrame>(),

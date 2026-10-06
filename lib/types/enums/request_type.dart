@@ -78,6 +78,12 @@ enum RequestType {
   /// { 'transitionSettings': Object, 'overlay': bool? }
   SetCurrentSceneTransitionSettings,
 
+  /// Moves (and releases) the studio-mode T-bar like a drag in OBS.
+  /// Only the live preview-transition check sends it
+  ///
+  /// { 'position': double 0..1, 'release': bool? }
+  SetTBarPosition,
+
   /// Gets a Base64-encoded screenshot of a source.
   ///
   /// The imageWidth and imageHeight parameters are treated as "scale to inner", meaning the smallest ratio

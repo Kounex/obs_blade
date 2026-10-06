@@ -286,6 +286,9 @@ abstract class _DashboardStore with Store {
 
   StartPreviewTransition? get previewTransition => _previewTransition.value;
 
+  /// Scene of the frame the preview shows (tests / live checks)
+  String? get debugPreviewSceneShown => _previewTransitions.shownScene;
+
   /// Users can take screenshots of their current OBS scene manually. If they
   /// do, the screenshot will be saved on their system where OBS is running and
   /// we will get the taken screenshot as a response
@@ -364,6 +367,13 @@ abstract class _DashboardStore with Store {
 
   /// Fires when a held preview frame has to go out at the latest
   Timer? _previewHoldTimer;
+
+  /// Studio mode: the scene a running transition goes to - the preview
+  /// shows it while the dashboard waits for OBS' program event (see
+  /// [_onSceneTransitionStarted]). Cleared when the transition ends, on
+  /// the program event, or by [_previewSceneOverrideTimer]
+  String? _previewSceneOverride;
+  Timer? _previewSceneOverrideTimer;
 
   /// Settings of each transition last seen as the current one - OBS only
   /// reads the current transition's settings (`GetCurrentSceneTransition`),
@@ -936,6 +946,8 @@ abstract class _DashboardStore with Store {
     _previewInFlight = false;
     _previewInFlightScene = null;
     _resetPreviewTransitions();
+    _transitionSettings.clear();
+    _previewTransitions.clearMeasurements();
     _obsStreamSubscription?.cancel();
     _obsStreamSubscription = GetIt.instance<NetworkStore>()
         .watchOBSStream()
@@ -1022,7 +1034,7 @@ abstract class _DashboardStore with Store {
             ) &&
             this.studioMode
         ? this.studioModePreviewSceneName
-        : this.activeSceneName;
+        : _previewSceneOverride ?? this.activeSceneName;
     _previewInFlightScene = sceneName;
     NetworkHelper.sendRequest(socket, RequestType.GetSourceScreenshot, {
       'sourceName': sceneName,
@@ -1083,21 +1095,71 @@ abstract class _DashboardStore with Store {
   /// preview restarted / suspended) - no transition may bridge it
   void _resetPreviewTransitions() {
     _previewTransitions.reset();
+    _clearPreviewSceneOverride();
     _previewHoldTimer?.cancel();
     _previewHoldTimer = null;
     runInAction(() => _previewTransition.value = null);
   }
 
+  void _clearPreviewSceneOverride() {
+    _previewSceneOverrideTimer?.cancel();
+    _previewSceneOverrideTimer = null;
+    _previewSceneOverride = null;
+  }
+
+  /// OBS transition kind of the transition called [name]
+  String? _transitionKind(String name) => this.availableTransitions
+      ?.where((transition) => transition.transitionName == name)
+      .firstOrNull
+      ?.transitionKind;
+
   /// `SceneTransitionStarted`: names the transition, not the scenes. The
   /// program scene read right now already names the incoming one (the
   /// event `CurrentProgramSceneChanged` only comes once the transition
   /// ended) - it moves the dashboard over at the start, like an app tap
-  /// does, and lets the preview play the transition into it
+  /// does, and lets the preview play the transition into it.
+  ///
+  /// Studio mode is the exception: a T-bar drag starts a transition too,
+  /// and a cancelled drag puts the program back WITHOUT any event
+  /// (`OBSBasic::TBarReleased` only resets `programScene`). There the
+  /// dashboard keeps following the program event; only the preview shows
+  /// the incoming scene meanwhile ([_previewSceneOverride])
   void _onSceneTransitionStarted(SceneTransitionEvent event) {
     final String? name = event.transitionName;
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (name == null || session == null) return;
-    _previewTransitions.transitionStarted(name, DateTime.now());
+    final DateTime now = DateTime.now();
+    _previewTransitions.transitionStarted(name, now);
+
+    /// Nothing to play it on - spare OBS the reads
+    final bool resolve =
+        this.shouldRequestPreviewImage && _animatePreviewTransitions;
+    Future<ObsRequestAck>? currentRead;
+    String? resolvingFor;
+    if (resolve) {
+      if (_transitionKind(name) == 'cut_transition') {
+        _applyPreviewOutcome(
+          _previewTransitions.specResolved(
+            name,
+            null,
+            PreviewTransitionSpec.none,
+            now,
+          ),
+        );
+      } else {
+        currentRead = NetworkHelper.makeScopedRequest(
+          session.socket,
+          RequestType.GetCurrentSceneTransition,
+        );
+
+        /// An app switch knows its target - resolve alongside the program
+        /// read instead of after it (one round trip less on slow WLANs)
+        resolvingFor = _previewTransitions.pendingTarget(now);
+        if (resolvingFor != null) {
+          _resolvePreviewTransition(name, resolvingFor, currentRead);
+        }
+      }
+    }
 
     final tag = _sceneOrdering.capture();
     NetworkHelper.makeScopedRequest(
@@ -1106,29 +1168,42 @@ abstract class _DashboardStore with Store {
     ).then((ack) {
       final Object? sceneName = ack.responseData?['sceneName'];
       if (!ack.success || sceneName is! String) return;
-      runInAction(() {
-        if (_sceneOrdering.shouldApplyRead(_SceneField.program, tag) &&
-            this.activeSceneName != sceneName) {
-          this.activeSceneName = sceneName;
-          _requestDisplayedSceneItems();
+      if (this.studioMode) {
+        if (sceneName != this.activeSceneName) {
+          _previewSceneOverride = sceneName;
+          _previewSceneOverrideTimer?.cancel();
+          _previewSceneOverrideTimer = Timer(
+            const Duration(seconds: 5),
+            _clearPreviewSceneOverride,
+          );
         }
-      });
+      } else {
+        runInAction(() {
+          if (_sceneOrdering.shouldApplyRead(_SceneField.program, tag) &&
+              this.activeSceneName != sceneName) {
+            this.activeSceneName = sceneName;
+            _requestDisplayedSceneItems();
+          }
+        });
+      }
       _applyPreviewOutcome(
         _previewTransitions.targetResolved(sceneName, DateTime.now()),
       );
-
-      /// Nothing to play it on - spare OBS the reads
-      if (this.shouldRequestPreviewImage && _animatePreviewTransitions) {
-        _resolvePreviewTransition(name, sceneName);
+      if (currentRead != null && sceneName != resolvingFor) {
+        _resolvePreviewTransition(name, sceneName, currentRead);
       }
     });
   }
 
   /// Works out how transition [name] into [target] looks: its kind, its
-  /// settings (fresh when it is the current one) and its duration - a
-  /// per-scene override has its own, a quick transition only the one
-  /// measured last time
-  Future<void> _resolvePreviewTransition(String name, String target) async {
+  /// settings (fresh when it is the current one, [currentRead]) and its
+  /// duration - a per-scene override has its own, a quick transition only
+  /// the one measured last time
+  Future<void> _resolvePreviewTransition(
+    String name,
+    String target,
+    Future<ObsRequestAck> currentRead,
+  ) async {
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (session == null) return;
     final acks = await Future.wait([
@@ -1137,10 +1212,7 @@ abstract class _DashboardStore with Store {
         RequestType.GetSceneSceneTransitionOverride,
         {'sceneName': target},
       ),
-      NetworkHelper.makeScopedRequest(
-        session.socket,
-        RequestType.GetCurrentSceneTransition,
-      ),
+      currentRead,
     ]);
     final Map<String, dynamic>? override = acks[0].success
         ? acks[0].responseData
@@ -1158,10 +1230,7 @@ abstract class _DashboardStore with Store {
     }
 
     final String? kind =
-        this.availableTransitions
-            ?.where((transition) => transition.transitionName == name)
-            .firstOrNull
-            ?.transitionKind ??
+        _transitionKind(name) ??
         (currentName == name ? current!['transitionKind'] as String? : null);
 
     Duration? duration;
@@ -1183,14 +1252,32 @@ abstract class _DashboardStore with Store {
               : null);
     }
 
-    final PreviewTransitionSpec spec = resolvePreviewTransitionSpec(
+    final Map<String, dynamic>? settings = _transitionSettings[name];
+    PreviewTransitionSpec spec = resolvePreviewTransitionSpec(
       kind: kind,
-      settings: _transitionSettings[name],
+      settings: settings,
       duration: duration,
       fps: _obsFps,
     );
+
+    /// A stinger that never was the current one (e.g. a per-scene
+    /// override): its transition point can't be read. Guess the middle of
+    /// its video (measured Started -> VideoEnded) rather than cutting at
+    /// the start
+    final Duration? measured = _previewTransitions.measuredDuration(name);
+    if (kind == 'obs_stinger_transition' &&
+        settings == null &&
+        measured != null) {
+      final Duration half = measured ~/ 2;
+      spec = PreviewTransitionSpec(
+        kind: PreviewTransitionKind.cutAtEnd,
+        duration: half,
+        stingerPoint: half,
+      );
+    }
+
     _applyPreviewOutcome(
-      _previewTransitions.specResolved(name, spec, DateTime.now()),
+      _previewTransitions.specResolved(name, target, spec, DateTime.now()),
     );
   }
 
@@ -1432,6 +1519,7 @@ abstract class _DashboardStore with Store {
     _checkConnectionTimer?.cancel();
     _previewRetry?.cancel();
     _previewHoldTimer?.cancel();
+    _previewSceneOverrideTimer?.cancel();
     _mediaInProgramSettle?.cancel();
   }
 
@@ -1798,6 +1886,10 @@ abstract class _DashboardStore with Store {
         OverlayHandler.closeAnyOverlay();
         _resetPreviewTransitions();
 
+        /// Same-named transitions of another collection run differently
+        _transitionSettings.clear();
+        _previewTransitions.clearMeasurements();
+
         this.currentSceneCollectionName =
             currentSceneCollectionChangedEvent.sceneCollectionName;
 
@@ -1894,6 +1986,7 @@ abstract class _DashboardStore with Store {
             CurrentProgramSceneChangedEvent(event.jsonRAW);
 
         _sceneOrdering.noteEvent(_SceneField.program);
+        _clearPreviewSceneOverride();
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
         _requestDisplayedSceneItems();
         _refreshMediaInProgram();
@@ -1910,6 +2003,7 @@ abstract class _DashboardStore with Store {
         }
         break;
       case EventType.SceneTransitionEnded:
+        _clearPreviewSceneOverride();
 
         /// Sources of the old scene only go inactive once the transition
         /// finished - re-read after it, not just on the program switch

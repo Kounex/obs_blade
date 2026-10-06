@@ -176,6 +176,42 @@ void main() {
         'transitionSettings': cur['transitionSettings'] ?? {},
         'overlay': false,
       });
+
+      /// Studio mode: a T-bar drag that's cancelled puts the program back
+      /// without any program event (OBSBasic::TBarReleased)
+      await req(RequestType.SetStudioModeEnabled, {'studioModeEnabled': true});
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      await req(RequestType.SetCurrentPreviewScene, {'sceneName': other});
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      final List<String> previewScenes = [];
+      final d4 = reaction<Object?>((_) => store.scenePreviewImageBytes, (_) {
+        final String? last = previewScenes.isEmpty ? null : previewScenes.last;
+        final String? now = store.debugPreviewSceneShown;
+        if (now != null && now != last) {
+          previewScenes.add(now);
+          events.add('${sw.elapsedMilliseconds - t0} ms  preview shows $now');
+        }
+      });
+      await run('studio: T-bar to 50 % and cancelled', () async {
+        await req(RequestType.SetTBarPosition, {
+          'position': 0.5,
+          'release': false,
+        });
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+        events.add('${sw.elapsedMilliseconds - t0} ms  (releasing at 0)');
+        await req(RequestType.SetTBarPosition, {
+          'position': 0.0,
+          'release': true,
+        });
+        await Future<void>.delayed(const Duration(seconds: 6));
+      });
+      final program = await req(RequestType.GetCurrentProgramScene);
+      print(
+        '  OBS program now: ${program['sceneName']}, '
+        'app activeSceneName: ${store.activeSceneName}',
+      );
+      d4();
+      await req(RequestType.SetStudioModeEnabled, {'studioModeEnabled': false});
     } finally {
       d1();
       d2();
