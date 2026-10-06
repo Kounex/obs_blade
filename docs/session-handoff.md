@@ -15,7 +15,11 @@ agent's work `..979b7a8c` is underneath; the colors range is
 `979b7a8c..4a338df8`, cherry-pickable onto master), pushed. Reviewed
 (fresh-context pass, 1 should-fix + 5 nits, all fixed + tested), full
 `test/websocket/` green, analyze 0 errors, widget shots for all states.
-On Kounex iOS as a dogfood release install of `4a338df8` (build includes
+**Recolor follow-up (`f5cb3de1..e3690322`, on device):** visibility eyes
+now follow the lock's color language (white `onSurface` active / gray
+`disabledColor` off) - scene item rows, edit-visibility slide panes,
+canvas items, Filters sheet, media-hub arrange sheet. On Kounex iOS as a
+dogfood release install of `e3690322` (build includes
 BOTH streams). Facts: `obs-protocol-gotchas.md` § Source colors;
 changelog 2026-10-06. Next: user's tap list (tinted preset/custom rows,
 tinted group + children, edit-mode slide on tinted rows, color change in
