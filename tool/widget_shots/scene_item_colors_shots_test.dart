@@ -62,7 +62,9 @@ void main() {
         dashboardStore.activeSceneName = 'Main';
         dashboardStore.sceneItemsSceneName = 'Main';
         dashboardStore.currentSceneItems = ObservableList.of(items);
-        dashboardStore.sceneItemColors = ObservableMap.of(colors);
+        dashboardStore.sceneItemColors
+          ..clear()
+          ..addAll(colors);
       });
 
   Widget items() => const SizedBox(height: 420, child: SceneItems());
@@ -91,7 +93,7 @@ void main() {
       {
         sceneItemColorKey('Main', 1): const Color(0x54FF4444), // red
         sceneItemColorKey('Main', 2): const Color(0x544444FF), // blue
-        // BRB card untinted on purpose
+        // Camera (id 3) untinted on purpose
         sceneItemColorKey('Main', 4): const Color(0x54FFFFFF), // white
       },
     );

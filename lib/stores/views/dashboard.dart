@@ -178,9 +178,11 @@ abstract class _DashboardStore with Store {
   /// source name, like every group-child lookup. Read-only; OBS fires no
   /// event when a color changes, so they are re-fetched alongside the
   /// scene-item list reads (GetSceneItemPrivateSettings, obs-websocket
-  /// 5.6+). Stays empty against older OBS - rows then render untinted
-  @observable
-  ObservableMap<String, Color> sceneItemColors = ObservableMap();
+  /// 5.6+). Stays empty against older OBS - rows then render untinted.
+  /// No `@observable`: the map self-notifies per key, and codegen is not
+  /// run for this field
+  final ObservableMap<String, Color> sceneItemColors =
+      ObservableMap<String, Color>();
 
   @computed
   ObservableList<SceneItem> get mediaSceneItems => ObservableList.of(
