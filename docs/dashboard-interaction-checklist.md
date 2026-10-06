@@ -21,6 +21,20 @@ surfaces below. Example from the canvas work:
 - landscape or 4:5 "vertical" canvas
 - the plugin missing or broken (fresh-install bug)
 
+Example from the source-color work (scene item rows tinted like OBS 32's
+Sources dock):
+
+- OBS < 32 / obs-websocket < 5.6 (no `GetSceneItemPrivateSettings`) -
+  rows stay untinted, nothing else changes
+- the 8 presets (white / dark grey included) and custom colors
+  (translucent and opaque) on phone + tablet
+- tinted group rows and tinted, indented children (they look their color
+  up under the group's source name)
+- a color assigned / cleared in OBS while connected - no event, so it
+  shows only with the next item list read
+- tinted rows in the visibility edit mode: slide actions and the
+  lock / hidden states must still read
+
 ## Surfaces that depend on "the current scene / canvas / output"
 
 | Surface | Check |

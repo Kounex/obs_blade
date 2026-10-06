@@ -108,6 +108,30 @@ Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design
   scene's override has none - OBS then uses **300 ms**
   (`GetOverrideTransitionDuration`).
 
+## Source colors (OBS 32+, verified against obs-studio / obs-websocket master, 2026-10-06)
+
+- The color from Sources dock -> right-click -> **Set Color** lives on the
+  **scene item's private settings** (per placement, group children
+  included): `color-preset` (int: 0 = none, 1 = custom, 2-9 = the 8
+  built-in presets) and `color` (string, custom color in Qt `HexArgb`
+  format `#AARRGGBB`, e.g. `#55FF0000`; may be empty / absent).
+- Read them via `GetSceneItemPrivateSettings`: request `sceneName` +
+  `sceneItemId`, response `sceneItemSettings` (arbitrary object). The
+  request is intentionally undocumented but stable, shipped in
+  obs-websocket **5.6.0** (`src/requesthandler/RequestHandler_SceneItems.cpp`).
+  For **group children** `sceneName` must be the parent group's **source
+  name** - the same rule the mutations follow. Gate on `availableRequests`:
+  older OBS doesn't offer it.
+- **No event fires when a color changes** - fetch alongside the scene-item
+  list reads and cache.
+- Presets render at **33% alpha**: 2 red (255,68,68), 3 yellow
+  (255,255,68), 4 green (68,255,68), 5 cyan (68,255,255), 6 blue
+  (68,68,255), 7 magenta (255,68,255), 8 dark grey (68,68,68), 9 white
+  (255,255,255). Preset 1 + a valid `#AARRGGBB` maps directly onto a
+  color (Qt HexArgb); preset 1 with an empty / missing `color` renders
+  **untinted** (OBS builds an empty stylesheet), as do unknown / missing
+  keys.
+
 ## General
 
 - Responses of scoped requests (`NetworkHelper.makeScopedRequest`) never

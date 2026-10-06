@@ -4,6 +4,41 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-06 - Scene item rows show OBS' source colors (branch `feature/preview-transitions`)
+
+User-facing: OBS 32 lets streamers color-code sources (Sources dock ->
+right-click -> Set Color) to scan a busy Sources list; the dashboard's
+Scene Items list now tints its rows the same way (read-only - setting
+colors stays OBS-side).
+
+- **Facts first** (obs-studio + obs-websocket master, added to
+  `obs-protocol-gotchas.md` § Source colors): the color lives on the scene
+  item's **private settings** (`color-preset` 0/1/2-9 + custom `color` in
+  Qt `HexArgb`), read via `GetSceneItemPrivateSettings` (5.6+,
+  undocumented-but-stable, gated on `availableRequests`); group children
+  are looked up by the parent group's source name; **no event** fires on a
+  color change, so the fetch rides the scene-item list reads (one batch
+  per applied list) and a change in OBS appears with the next read.
+- **Color math** (`lib/utils/scene_item_color.dart`): presets render at
+  33% alpha in OBS' exact palette; custom `#AARRGGBB` maps directly;
+  preset 1 with an empty / missing color renders untinted like OBS.
+- **Store** (`DashboardStore.sceneItemColors`, keyed
+  `<sceneName>|<sceneItemId>`): batch answers set / drop entries; items
+  removed from a scene get reconciled out; a failed read keeps the cached
+  color; old OBS gets no color requests at all.
+- **UI**: the tile wraps its row in the tint inside the Slidable, so it
+  travels with the row and slide actions stay behind; no color = the
+  exact previous rendering.
+- **Verified**: 5 helper unit tests (full preset / custom / garbage
+  matrix), 4 fake-peer websocket tests (batch sceneNames incl. group
+  children, unsupported OBS, color cleared, item removed), widget shots
+  of every state (untinted baseline, presets, custom translucent /
+  opaque, tinted group + indented child, locked + hidden tinted row,
+  tablet) - looked at, tints full-width with readable icons / text.
+- **Left out**: setting colors from the app, canvas scene items (the
+  extra-canvas item list), light-theme contrast tuning beyond what the
+  33% alpha gives.
+
 ## 2026-10-06 - Scene preview plays OBS' scene transitions (branch `feature/preview-transitions`)
 
 User request: the preview cut instantly while OBS faded / swiped. The
