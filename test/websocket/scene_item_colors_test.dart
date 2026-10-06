@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/types/enums/request_type.dart';
+import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/utils/network_helper.dart';
 import 'package:obs_blade/utils/scene_item_color.dart';
@@ -266,6 +267,42 @@ void main() {
       await flushPeer();
     },
   );
+
+  test('a failed read in the colors batch keeps the cached color, the others '
+      'still update', () async {
+    setupPeer();
+    await applyInitialState();
+    await waitFor(
+      () => dashboardStore.sceneItemColors.length == 3,
+      'colors applied',
+    );
+
+    /// OBS side: 'cam' got recolored to the green preset - and the group
+    /// row's private-settings read fails in the same batch
+    privateSettings['Camera|1'] = {'color-preset': 4};
+    peer.batchRejectionFor = (entry) =>
+        entry['requestType'] == 'GetSceneItemPrivateSettings' &&
+            (entry['requestData'] as Map<String, dynamic>)['sceneItemId'] == 2
+        ? RequestStatus.InvalidResourceType.identifier
+        : null;
+    peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+    await waitFor(
+      () =>
+          dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 1)] ==
+          const Color(0x5444FF44),
+      'recolored item updated from the same batch',
+    );
+
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('Camera', 2)],
+      const Color(0x54FFFFFF),
+      reason: 'the failed read must not clear the cached color',
+    );
+    expect(
+      dashboardStore.sceneItemColors[sceneItemColorKey('grp', 3)],
+      const Color(0x55FF0000),
+    );
+  });
 
   test('color removed in OBS drops its entry on the next read', () async {
     setupPeer();

@@ -94,6 +94,11 @@ class FakeObsPeer {
   Map<String, dynamic>? Function(Map<String, dynamic> batchEntry)?
   batchResponseDataFor;
 
+  /// Per-batch-entry rejection code (wins over [rejections] when it returns
+  /// non-null) - one sub-request of a batch failing while the others
+  /// answer. A rejected entry carries no responseData, like the real peer
+  int? Function(Map<String, dynamic> batchEntry)? batchRejectionFor;
+
   /// When false, Identify is never answered (handshake stall scenarios)
   bool identify = true;
 
@@ -219,22 +224,27 @@ class FakeObsPeer {
           'requestId': data['requestId'],
           'results': [
             for (final entry in batchRequests)
-              {
-                'requestType': entry['requestType'],
-                'requestId': entry['requestId'],
-                'requestStatus':
-                    rejections[entry['requestType'] as String] != null
-                    ? {
-                        'result': false,
-                        'code': rejections[entry['requestType'] as String],
-                        'comment': rejectionComment,
-                      }
-                    : {'result': true, 'code': 100},
-                'responseData':
-                    batchResponseDataFor?.call(entry) ??
-                    responseData[entry['requestType'] as String] ??
-                    <String, dynamic>{},
-              },
+              () {
+                final rejectionCode =
+                    batchRejectionFor?.call(entry) ??
+                    rejections[entry['requestType'] as String];
+                return {
+                  'requestType': entry['requestType'],
+                  'requestId': entry['requestId'],
+                  'requestStatus': rejectionCode != null
+                      ? {
+                          'result': false,
+                          'code': rejectionCode,
+                          'comment': rejectionComment,
+                        }
+                      : {'result': true, 'code': 100},
+                  if (rejectionCode == null)
+                    'responseData':
+                        batchResponseDataFor?.call(entry) ??
+                        responseData[entry['requestType'] as String] ??
+                        <String, dynamic>{},
+                };
+              }(),
           ],
         },
       }),
