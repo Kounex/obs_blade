@@ -142,7 +142,7 @@ class _FilterListState extends State<FilterList> {
                                     color: filter.filterEnabled
                                         ? Theme.of(
                                             context,
-                                          ).colorScheme.secondary
+                                          ).colorScheme.onSurface
                                         : Theme.of(context).disabledColor,
                                   ),
                                 ),

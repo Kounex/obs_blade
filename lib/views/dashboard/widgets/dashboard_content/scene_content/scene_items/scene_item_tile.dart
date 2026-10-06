@@ -193,7 +193,7 @@ class SceneItemTile extends StatelessWidget {
                                     ? Icons.visibility
                                     : Icons.visibility_off,
                                 color: this.sceneItem.sceneItemEnabled!
-                                    ? theme.colorScheme.secondary
+                                    ? theme.colorScheme.onSurface
                                     : theme.disabledColor,
                               ),
                             ),

@@ -157,7 +157,7 @@ class _CanvasSceneItemTile extends StatelessWidget {
                   child: AnimatedToggleIcon(
                     icon: enabled ? Icons.visibility : Icons.visibility_off,
                     color: enabled
-                        ? theme.colorScheme.secondary
+                        ? theme.colorScheme.onSurface
                         : theme.disabledColor,
                   ),
                 ),
