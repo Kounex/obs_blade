@@ -124,8 +124,8 @@ class MediaHubArrangeSheet extends StatelessWidget {
                                         ? Icons.visibility_off
                                         : Icons.visibility,
                                     color: hidden
-                                        ? textColors.textTertiary
-                                        : theme.colorScheme.secondary,
+                                        ? theme.disabledColor
+                                        : theme.colorScheme.onSurface,
                                   ),
                                 ),
                               ),
