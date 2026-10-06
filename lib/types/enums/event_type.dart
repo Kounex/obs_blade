@@ -31,6 +31,10 @@ enum EventType {
   /// A scene transition has completed fully (program switched).
   SceneTransitionEnded,
 
+  /// A scene transition's video has completed fully (the visible part -
+  /// stingers end their video before the audio fade ends).
+  SceneTransitionVideoEnded,
+
   /// The current scene transition has changed.
   CurrentSceneTransitionChanged,
 

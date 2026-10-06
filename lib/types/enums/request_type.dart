@@ -17,6 +17,13 @@ enum RequestType {
   /// No specified parameters
   GetSceneList,
 
+  /// Gets the current program scene. Read at `SceneTransitionStarted`: it
+  /// already names the incoming scene, while `CurrentProgramSceneChanged`
+  /// only fires once the transition ended
+  ///
+  /// No specified parameters
+  GetCurrentProgramScene,
+
   /// Gets an array of canvases in OBS (obs-websocket 5.7+ / OBS 32.1+).
   ///
   /// No specified parameters
@@ -51,6 +58,12 @@ enum RequestType {
   ///
   /// No specified parameters
   GetCurrentSceneTransition,
+
+  /// Gets the scene transition overridden for a scene.
+  ///
+  /// { 'sceneName': String } - Name of the scene
+  /// Response: transitionName / transitionDuration, null when not overridden
+  GetSceneSceneTransitionOverride,
 
   /// Gets a Base64-encoded screenshot of a source.
   ///
