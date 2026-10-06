@@ -41,8 +41,19 @@ the app plays the transition itself. Experiment branch, not on master.
   ~5-20 ms, the preview transition starts 20-65 ms after the switch with
   the right kind / duration / direction (override Fade 1200 ms while
   Swipe is current; a settings change without event picked up).
-- **Left out**: T-bar / manual transitions, fade to black, other canvases,
-  settings of non-current transitions (kind defaults).
+- **Review round** (fresh-context reviewer, 9 findings, 6 real): studio
+  mode no longer moves tiles early (a cancelled T-bar drag sends no program
+  event - verified live, tiles stay, preview returns 26 ms after release);
+  Cut resolves at once, app taps resolve alongside the program read (live:
+  transition 14-17 ms after the tap); a spec only applies to its target;
+  stingers without readable settings cut mid-video (measured); caches
+  cleared on reconnect / collection change; widget decode races closed.
+  Not real: stale replay after a canvas view (the suspend resets the
+  transition), cache-evicted "from" frame (it's the frame on screen).
+- **Left out**: manual T-bar timing (plays over the configured duration),
+  fade to black, other canvases, settings of non-current transitions (kind
+  defaults), quick transitions reusing the current transition's name (run
+  at its duration).
 
 ## 2026-10-05 - Release: 4.1.0 promoted to review (both stores)
 

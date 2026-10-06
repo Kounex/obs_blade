@@ -98,6 +98,12 @@ Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design
 - `GetCurrentSceneTransition.transitionSettings` leaves defaults out
   (`ObsDataToJson` without `includeDefault`); only the *current*
   transition's settings are readable. Settings changes send no event.
+- **Studio mode T-bar**: a drag starts the transition (`SceneTransitionStarted`,
+  and the program read already names the target), but a drag released
+  near 0 cancels it - `OBSBasic::TBarReleased` only resets
+  `programScene`, **no `CurrentProgramSceneChanged`**
+  (`SceneTransitionEnded` does fire - live check). Never move program
+  state early in studio mode.
 - `GetSceneSceneTransitionOverride` answers `null` duration when the
   scene's override has none - OBS then uses **300 ms**
   (`GetOverrideTransitionDuration`).

@@ -84,7 +84,9 @@ mid-transition frame - we have to play the transition ourselves.
 
 ## Left out
 
-- T-bar / manual transitions (no duration; would need cursor polling).
+- T-bar / manual transitions: animated over the configured duration (the
+  drag speed isn't known; would need cursor polling). In studio mode the
+  tiles wait for OBS' program event - a cancelled drag sends none.
 - Fade to black (program scene doesn't change - nothing to animate).
 - Quick-transition durations (studio-mode buttons) unknown until measured once.
 - Other canvases' previews (`CanvasViewStore` loop) - no program concept.

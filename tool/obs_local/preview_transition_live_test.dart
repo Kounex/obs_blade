@@ -211,8 +211,8 @@ void main() {
         'app activeSceneName: ${store.activeSceneName}',
       );
       d4();
-      await req(RequestType.SetStudioModeEnabled, {'studioModeEnabled': false});
     } finally {
+      await req(RequestType.SetStudioModeEnabled, {'studioModeEnabled': false});
       d1();
       d2();
       d3();
