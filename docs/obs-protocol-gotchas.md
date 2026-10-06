@@ -123,7 +123,9 @@ Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design
   name** - the same rule the mutations follow. Gate on `availableRequests`:
   older OBS doesn't offer it.
 - **No event fires when a color changes** - fetch alongside the scene-item
-  list reads and cache.
+  list reads and cache. The cache is session- / collection-scoped: clear
+  it on a new session and on a scene-collection switch (same-named scenes
+  of the new collection carry their own colors).
 - Presets render at **33% alpha**: 2 red (255,68,68), 3 yellow
   (255,255,68), 4 green (68,255,68), 5 cyan (68,255,255), 6 blue
   (68,68,255), 7 magenta (255,68,255), 8 dark grey (68,68,68), 9 white

@@ -962,6 +962,11 @@ abstract class _DashboardStore with Store {
     _resetPreviewTransitions();
     _transitionSettings.clear();
     _previewTransitions.clearMeasurements();
+
+    /// A new session may be another OBS (older, another collection) - the
+    /// cached source colors describe the previous one until the re-reads
+    this.sceneItemColors.clear();
+
     _obsStreamSubscription?.cancel();
     _obsStreamSubscription = GetIt.instance<NetworkStore>()
         .watchOBSStream()
@@ -1941,6 +1946,10 @@ abstract class _DashboardStore with Store {
         /// Same-named transitions of another collection run differently
         _transitionSettings.clear();
         _previewTransitions.clearMeasurements();
+
+        /// Same-named scenes of another collection carry their own source
+        /// colors - the old collection's must not show until the re-read
+        this.sceneItemColors.clear();
 
         this.currentSceneCollectionName =
             currentSceneCollectionChangedEvent.sceneCollectionName;

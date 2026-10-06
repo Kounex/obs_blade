@@ -21,6 +21,10 @@ import 'support/fake_obs_peer.dart';
 /// entry on the next read. Older OBS (request not in availableRequests)
 /// gets no color requests at all.
 void main() {
+  /// The collection-change path closes any status overlay
+  /// (OverlayHandler reaches WidgetsBinding through a GlobalKey)
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late Directory tempDir;
   late HiveTestHarness harness;
   late FakeObsPeer peer;
@@ -203,6 +207,63 @@ void main() {
       expect(batchEntriesOf('GetSceneItemPrivateSettings'), isEmpty);
       expect(requestsOf('GetSceneItemPrivateSettings'), isEmpty);
       expect(dashboardStore.sceneItemColors, isEmpty);
+    },
+  );
+
+  test('a new session clears the previous session\'s colors', () async {
+    setupPeer();
+    await applyInitialState();
+    await waitFor(
+      () => dashboardStore.sceneItemColors.length == 3,
+      'colors applied',
+    );
+
+    /// In-view reconnect (e.g. to an older OBS without the request): the
+    /// old session's colors must not render until the re-reads
+    await connect();
+    dashboardStore.handleStream();
+    expect(dashboardStore.sceneItemColors, isEmpty);
+
+    /// ...and the feature still works on the new session
+    await flushPeer();
+    peer.event('CurrentProgramSceneChanged', {'sceneName': 'Camera'});
+    await waitFor(
+      () => dashboardStore.sceneItemColors.length == 3,
+      'colors re-read on the new session',
+    );
+  });
+
+  test(
+    'a scene collection switch clears the old collection\'s colors',
+    () async {
+      setupPeer();
+      await applyInitialState();
+      await waitFor(
+        () => dashboardStore.sceneItemColors.length == 3,
+        'colors applied',
+      );
+
+      /// Same-named scenes of the new collection carry their own colors.
+      /// Hold the re-read chain so the clear is observable before the new
+      /// collection's colors land; the rest of the refresh burst is not
+      /// part of this test (its empty fake answers wouldn't parse)
+      peer.droppedRequestTypes.addAll([
+        'GetSceneCollectionList',
+        'GetInputList',
+        'GetSpecialInputs',
+        'GetSceneTransitionList',
+      ]);
+      peer.heldRequestTypes.add('GetSceneList');
+      peer.event('CurrentSceneCollectionChanged', {
+        'sceneCollectionName': 'Other',
+      });
+      await waitFor(
+        () => dashboardStore.sceneItemColors.isEmpty,
+        'old collection colors cleared',
+      );
+
+      peer.releaseAll('GetSceneList');
+      await flushPeer();
     },
   );
 
