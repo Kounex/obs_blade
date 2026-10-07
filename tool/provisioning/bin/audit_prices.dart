@@ -276,9 +276,13 @@ void main() async {
   }
 
   /// Live per-territory subscription prices: territory → customerPrice.
-  /// A pending SCHEDULED price change (future startDate — approved
-  /// subscriptions only take those) wins over the current price: it's the
-  /// price new buyers will actually pay once it takes effect.
+  /// The live price is the record with the latest startDate <= today
+  /// (startDate null = base price, sorts first) - Apple keeps the
+  /// grandfathered old price AND the scheduled record after activation,
+  /// so a past-dated scheduled record IS the live price (verified against
+  /// the storefront 2026-10-07). A pending FUTURE-dated change wins over
+  /// the current price: it's the price new buyers will actually pay once
+  /// it takes effect.
   Future<PriceMap> appleSubPrices(String subId) async {
     final ids = <String>[];
     String? cursor;
@@ -302,20 +306,26 @@ void main() async {
       });
       Map<String, Object?>? chosen;
       var chosenDate = '';
+      Map<String, Object?>? future;
+      var futureDate = '';
       for (final p in prices.dataList) {
         final startDate =
             (p['attributes'] as Map<String, Object?>?)?['startDate']
                 as String? ??
             '';
-        final isFuture = startDate.compareTo(today) > 0;
-        final chosenIsFuture = chosenDate.compareTo(today) > 0;
-        if ((isFuture &&
-                (!chosenIsFuture || startDate.compareTo(chosenDate) > 0)) ||
-            (chosen == null)) {
+        if (startDate.compareTo(today) > 0) {
+          if (future == null || startDate.compareTo(futureDate) > 0) {
+            future = p;
+            futureDate = startDate;
+          }
+        } else if (chosen == null || startDate.compareTo(chosenDate) > 0) {
           chosen = p;
           chosenDate = startDate;
         }
       }
+      // A future-dated scheduled change still wins when one exists;
+      // otherwise the latest already-effective record is the live price.
+      chosen = future ?? chosen;
       if (chosen == null) continue;
       final pointId =
           (((chosen['relationships'] as Map?)?['subscriptionPricePoint']

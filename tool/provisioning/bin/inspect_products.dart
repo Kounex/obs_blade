@@ -57,9 +57,9 @@ Future<void> main() async {
   /// Prints "priced/total territories" and parity mismatches. Parity = the
   /// current price matches the reviewed PricingTargets value for the
   /// territory's currency (per-territory override first), allowing the
-  /// provisioner's snap-to-nearest-point tolerance. A matching SCHEDULED
-  /// price change (approved subscriptions only take those) counts too and
-  /// is reported separately.
+  /// provisioner's snap-to-nearest-point tolerance. A matching FUTURE-dated
+  /// scheduled price change (approved subscriptions only take those)
+  /// counts too and is reported separately.
   Future<void> priceCoverage(
     String subId,
     String nominalUsd,
@@ -103,16 +103,28 @@ Future<void> main() async {
       }
 
       final records = prices.dataList;
-      final current = records
-          .where(
-            (p) =>
-                (p['attributes'] as Map<String, Object?>?)?['startDate'] ==
-                null,
-          )
-          .firstOrNull;
+      // The live price is the record with the LATEST startDate <= today
+      // (startDate null = the base price, sorts first). Apple keeps both
+      // the grandfathered old price (preserved: true) and a scheduled
+      // record after its start date has passed - treating only
+      // startDate == null as "current" misreads an activated change as
+      // still pending (seen 2026-10-05..07: storefront already showed the
+      // new prices while the API still listed them as scheduled).
+      final today = DateTime.now().toUtc().toIso8601String().substring(0, 10);
+      String startOf(Map<String, Object?> p) =>
+          ((p['attributes'] as Map<String, Object?>?)?['startDate']
+              as String?) ??
+          '';
+      final effective =
+          records.where((p) => startOf(p).compareTo(today) <= 0).toList()
+            ..sort((a, b) => startOf(a).compareTo(startOf(b)));
+      final current = effective.isEmpty ? null : effective.last;
       final currentMatches = current != null && matches(current);
-      if (!currentMatches && records.any(matches)) {
-        scheduledOnly++; // a scheduled change covers it
+      if (!currentMatches &&
+          records.any(
+            (p) => startOf(p).compareTo(today) > 0 && matches(p),
+          )) {
+        scheduledOnly++; // a future-dated scheduled change covers it
       } else if (!currentMatches) {
         final price = current == null
             ? null
