@@ -150,6 +150,10 @@ flutter:
   assets:
     - assets/icons/app/
     - assets/images/
+    - assets/luma_wipes/
+
+  shaders:
+    - shaders/luma_wipe.frag
 
   fonts:
     - family: JamIcons

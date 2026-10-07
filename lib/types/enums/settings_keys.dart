@@ -297,6 +297,10 @@ enum SettingsKeys {
   /// but if someone wants to minimise their view, they can even remove that
   ExposeScenePreview,
 
+  /// [bool]: If the scene preview plays OBS' scene transition (fade, swipe,
+  /// luma wipe, ...) on a scene switch instead of cutting (on by default)
+  AnimatePreviewTransitions,
+
   /// [bool]: If the scene collection dropdown to see the current scene collection and
   /// change it should be shown in the dashboard
   ExposeSceneCollection,
@@ -614,6 +618,7 @@ enum SettingsKeys {
     SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
     SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
     SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
+    SettingsKeys.AnimatePreviewTransitions: 'animate-preview-transitions',
     SettingsKeys.ExposeSceneCollection: 'expose-scene-collection',
     SettingsKeys.ExposeProfile: 'expose-profile',
     SettingsKeys.ExposeCanvasSwitcher: 'expose-canvas-switcher',

@@ -1,0 +1,211 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:mobx/mobx.dart';
+import 'package:obs_blade/models/enums/scene_item_type.dart';
+import 'package:obs_blade/models/hidden_scene_item.dart';
+import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/stores/views/dashboard.dart';
+import 'package:obs_blade/types/classes/api/scene_item.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/utils/scene_item_color.dart';
+import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/scene_items/scene_items.dart';
+
+import 'support/shots_harness.dart';
+
+/// Source colors (OBS 32+, Sources dock -> Set Color) tinting the Scene
+/// Items rows: the built-in presets at 33% alpha, custom HexArgb colors,
+/// tinted group rows + their indented children, and the combination with
+/// locked / hidden rows - plus the untinted baseline old OBS keeps
+void main() {
+  final harness = ShotsHarness();
+  late DashboardStore dashboardStore;
+
+  setUpAll(ShotsHarness.loadFonts);
+
+  setUp(() async {
+    await harness.setUp();
+    dashboardStore = DashboardStore();
+    GetIt.instance.registerSingleton<DashboardStore>(dashboardStore);
+    GetIt.instance.registerSingleton<NetworkStore>(NetworkStore());
+  });
+
+  tearDown(() async {
+    runInAction(() => dashboardStore.editSceneItemVisibility = false);
+    await GetIt.instance.reset();
+    await harness.tearDown();
+  });
+
+  SceneItem item(
+    int id,
+    String name, {
+    String? group,
+    bool isGroup = false,
+    bool displayGroup = false,
+    bool enabled = true,
+    bool locked = false,
+  }) => SceneItem(
+    inputKind: 'image_source',
+    isGroup: isGroup,
+    sceneItemBlendMode: null,
+    sceneItemEnabled: enabled,
+    sceneItemId: id,
+    sceneItemIndex: id,
+    sceneItemLocked: locked,
+    sceneItemTransform: null,
+    sourceName: name,
+    sourceType: 'OBS_SOURCE_TYPE_INPUT',
+    parentGroupName: group,
+    displayGroup: displayGroup,
+  );
+
+  /// What OBS would have told the store: the 'Main' scene's items plus the
+  /// source colors it carries in their private settings
+  void state(List<SceneItem> items, Map<String, Color> colors) =>
+      runInAction(() {
+        dashboardStore.activeSceneName = 'Main';
+        dashboardStore.sceneItemsSceneName = 'Main';
+        dashboardStore.currentSceneItems = ObservableList.of(items);
+        dashboardStore.sceneItemColors
+          ..clear()
+          ..addAll(colors);
+      });
+
+  Widget items() => const SizedBox(height: 420, child: SceneItems());
+
+  testWidgets('no colors (old OBS / none assigned): untinted baseline', (
+    tester,
+  ) async {
+    state([
+      item(3, 'Camera'),
+      item(1, 'Overlay Group', isGroup: true, displayGroup: true),
+      item(2, 'Alert box', group: 'Overlay Group'),
+    ], {});
+    await harness.shot(tester, 'scene_item_colors_none', items());
+  });
+
+  testWidgets('built-in presets at 33% alpha, gaps stay untinted', (
+    tester,
+  ) async {
+    state(
+      [
+        item(4, 'BRB card'),
+        item(3, 'Camera'),
+        item(2, 'Chat overlay'),
+        item(1, 'Gameplay'),
+      ],
+      {
+        sceneItemColorKey('Main', 1): const Color(0x54FF4444), // red
+        sceneItemColorKey('Main', 2): const Color(0x544444FF), // blue
+        // Camera (id 3) untinted on purpose
+        sceneItemColorKey('Main', 4): const Color(0x54FFFFFF), // white
+      },
+    );
+    await harness.shot(tester, 'scene_item_colors_presets', items());
+  });
+
+  testWidgets('custom colors: translucent and opaque HexArgb', (tester) async {
+    state(
+      [item(2, 'Facecam border'), item(1, 'Camera')],
+      {
+        sceneItemColorKey('Main', 1): const Color(
+          0x55FF0000,
+        ), // custom #55FF0000
+        sceneItemColorKey('Main', 2): const Color(
+          0xFF7A3DF0,
+        ), // custom, fully opaque
+      },
+    );
+    await harness.shot(tester, 'scene_item_colors_custom', items());
+  });
+
+  testWidgets('tinted group row and its tinted, indented child', (
+    tester,
+  ) async {
+    state(
+      [
+        item(3, 'Camera'),
+        item(1, 'Overlay Group', isGroup: true, displayGroup: true),
+        item(2, 'Alert box', group: 'Overlay Group'),
+      ],
+      {
+        sceneItemColorKey('Main', 1): const Color(
+          0x5444FF44,
+        ), // green group row
+        sceneItemColorKey('Overlay Group', 2): const Color(
+          0x54FF4444,
+        ), // red child
+      },
+    );
+    await harness.shot(tester, 'scene_item_colors_group', items());
+  });
+
+  testWidgets('tinted row that is locked and hidden (invisible)', (
+    tester,
+  ) async {
+    state(
+      [item(2, 'Old overlay', enabled: false, locked: true), item(1, 'Camera')],
+      {
+        sceneItemColorKey('Main', 1): const Color(0x54FF4444),
+        sceneItemColorKey('Main', 2): const Color(0x54FF44FF), // magenta
+      },
+    );
+    await harness.shot(tester, 'scene_item_colors_locked_hidden', items());
+  });
+
+  testWidgets('tablet: tinted group + child', (tester) async {
+    state(
+      [
+        item(3, 'Camera'),
+        item(1, 'Overlay Group', isGroup: true, displayGroup: true),
+        item(2, 'Alert box', group: 'Overlay Group'),
+      ],
+      {
+        sceneItemColorKey('Main', 1): const Color(0x5444FF44),
+        sceneItemColorKey('Overlay Group', 2): const Color(0x54FF4444),
+        sceneItemColorKey('Main', 3): const Color(0x54FFFF44), // yellow
+      },
+    );
+    await harness.shot(
+      tester,
+      'scene_item_colors_group_tablet',
+      items(),
+      size: kShotTablet,
+    );
+  });
+
+  testWidgets('edit visibility mode: slide panes, visible + hidden rows', (
+    tester,
+  ) async {
+    state(
+      [item(2, 'Old overlay'), item(1, 'Camera')],
+      {sceneItemColorKey('Main', 1): const Color(0x54FF4444)},
+    );
+
+    /// 'Old overlay' was hidden by the user earlier - its pane shows the
+    /// hidden (gray) affordance, 'Camera' the visible (white) one. Real
+    /// I/O stays outside the fake-async zone (runAsync)
+    await tester.runAsync(
+      () => Hive.box<HiddenSceneItem>(HiveKeys.HiddenSceneItem.name).add(
+        HiddenSceneItem(
+          'Main',
+          SceneItemType.Source,
+          2,
+          'Old overlay',
+          null,
+          null,
+          null,
+        ),
+      ),
+    );
+
+    /// The wrapper's reaction only opens the pane on the false -> true
+    /// change, so the flag flips after the first build (the harness pumps
+    /// run the delayed open + slide animation to completion)
+    Future(
+      () => runInAction(() => dashboardStore.editSceneItemVisibility = true),
+    );
+    await harness.shot(tester, 'scene_item_colors_edit_visibility', items());
+  });
+}

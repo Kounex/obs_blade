@@ -38,7 +38,15 @@ enum RequestBatchType {
   /// at all
   ///
   /// RequestType.GetSourceFilterDefaultSettings
-  FilterDefaultSettings;
+  FilterDefaultSettings,
+
+  /// [RequestType.GetSceneItemPrivateSettings] per scene item - the source
+  /// colors assigned in OBS 32+ (Sources dock -> Set Color). OBS fires no
+  /// event when a color changes, so these ride alongside the scene-item
+  /// list reads
+  ///
+  /// RequestType.GetSceneItemPrivateSettings
+  SceneItemPrivateSettings;
 
   List<RequestType> get requestTypes => {
     RequestBatchType.Input: [
@@ -59,6 +67,9 @@ enum RequestBatchType {
     RequestBatchType.FilterDefaultSettings: [
       RequestType.GetSourceFilterDefaultSettings,
     ],
+    RequestBatchType.SceneItemPrivateSettings: [
+      RequestType.GetSceneItemPrivateSettings,
+    ],
   }[this]!;
 
   /// Indicates whether we need to persist this request to get the
@@ -72,5 +83,6 @@ enum RequestBatchType {
     RequestBatchType.Screenshot: false,
     RequestBatchType.FilterList: true,
     RequestBatchType.FilterDefaultSettings: true,
+    RequestBatchType.SceneItemPrivateSettings: true,
   }[this]!;
 }

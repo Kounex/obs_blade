@@ -152,6 +152,26 @@ class SettingsView extends StatelessWidget {
                         ),
                       ),
                       BlockEntry(
+                        leading:
+                            CupertinoIcons.arrow_right_arrow_left_square_fill,
+                        leadingSize: 26.0,
+                        title: 'Preview Transitions',
+                        help:
+                            'The scene preview plays the transition OBS uses (fade, swipe, slide, luma wipe, ...) when the scene changes instead of cutting. Stingers cut at their transition point since their video only exists on your OBS machine.',
+                        trailing: BaseAdaptiveSwitch(
+                          value: settingsBox.get(
+                            SettingsKeys.AnimatePreviewTransitions.name,
+                            defaultValue: true,
+                          ),
+                          onChanged: (animate) {
+                            settingsBox.put(
+                              SettingsKeys.AnimatePreviewTransitions.name,
+                              animate,
+                            );
+                          },
+                        ),
+                      ),
+                      BlockEntry(
                         leading: CupertinoIcons.table_fill,
                         leadingSize: 28.0,
                         title: 'Force Tablet Mode',

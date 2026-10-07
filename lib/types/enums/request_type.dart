@@ -17,6 +17,13 @@ enum RequestType {
   /// No specified parameters
   GetSceneList,
 
+  /// Gets the current program scene. Read at `SceneTransitionStarted`: it
+  /// already names the incoming scene, while `CurrentProgramSceneChanged`
+  /// only fires once the transition ended
+  ///
+  /// No specified parameters
+  GetCurrentProgramScene,
+
   /// Gets an array of canvases in OBS (obs-websocket 5.7+ / OBS 32.1+).
   ///
   /// No specified parameters
@@ -51,6 +58,31 @@ enum RequestType {
   ///
   /// No specified parameters
   GetCurrentSceneTransition,
+
+  /// Gets the scene transition overridden for a scene.
+  ///
+  /// { 'sceneName': String } - Name of the scene
+  /// Response: transitionName / transitionDuration, null when not overridden
+  GetSceneSceneTransitionOverride,
+
+  /// Sets / removes (null) the scene transition overridden for a scene.
+  /// Only the live preview-transition check against a real OBS sends it
+  /// (`tool/obs_local/preview_transition_live_test.dart`)
+  ///
+  /// { 'sceneName': String, 'transitionName': String?, 'transitionDuration': int? }
+  SetSceneSceneTransitionOverride,
+
+  /// Sets the settings of the current scene transition (no event follows).
+  /// Only the live preview-transition check sends it
+  ///
+  /// { 'transitionSettings': Object, 'overlay': bool? }
+  SetCurrentSceneTransitionSettings,
+
+  /// Moves (and releases) the studio-mode T-bar like a drag in OBS.
+  /// Only the live preview-transition check sends it
+  ///
+  /// { 'position': double 0..1, 'release': bool? }
+  SetTBarPosition,
 
   /// Gets a Base64-encoded screenshot of a source.
   ///
@@ -137,6 +169,16 @@ enum RequestType {
   ///
   /// { 'sceneName': String } - Name of the group to get the items of
   GetGroupSceneItemList,
+
+  /// Gets the private settings of a scene item (per placement, group
+  /// children included) - carries the source color the user assigned in
+  /// OBS 32+ ('color-preset' / 'color'). Intentionally undocumented in
+  /// obs-websocket but stable, shipped in 5.6.0. No event fires when the
+  /// color changes - fetch alongside the scene-item list reads
+  ///
+  /// { 'sceneName': String, 'sceneItemId': int } - for group children the
+  /// parent group's source name (same rule as the mutations)
+  GetSceneItemPrivateSettings,
 
   /// Gets the default settings for an input kind.
   ///

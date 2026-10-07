@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
@@ -14,6 +15,7 @@ import 'package:obs_blade/types/classes/stream/batch_responses/base.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/filter_default_settings.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/filter_list.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/inputs.dart';
+import 'package:obs_blade/types/classes/stream/batch_responses/scene_item_private_settings.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/screenshot.dart';
 import 'package:obs_blade/types/classes/stream/batch_responses/stats.dart';
 import 'package:obs_blade/types/classes/stream/events/current_profile_changed.dart';
@@ -76,6 +78,7 @@ import '../../types/classes/stream/responses/get_input_volume.dart';
 import '../../types/classes/stream/responses/get_scene_item_list.dart';
 import '../../types/classes/stream/responses/get_scene_list.dart';
 import '../../types/classes/stream/responses/get_scene_transition_list.dart';
+import '../../types/classes/stream/events/scene_transition_event.dart';
 import '../../types/classes/stream/responses/get_source_screenshot.dart';
 import '../../types/classes/stream/responses/get_stats.dart';
 import '../../types/classes/stream/responses/get_studio_mode_enabled.dart';
@@ -89,6 +92,9 @@ import '../../utils/event_read_ordering.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
 import '../../utils/overlay_handler.dart';
+import '../../utils/preview_transition/preview_transition_spec.dart';
+import '../../utils/preview_transition/preview_transition_tracker.dart';
+import '../../utils/scene_item_color.dart';
 import '../shared/network.dart';
 
 part 'dashboard.g.dart';
@@ -166,6 +172,17 @@ abstract class _DashboardStore with Store {
   /// stays the same
   @observable
   String? sceneItemsSceneName;
+
+  /// Source colors assigned in OBS 32+ (Sources dock -> Set Color), keyed
+  /// by [sceneItemColorKey] - group children by their parent group's
+  /// source name, like every group-child lookup. Read-only; OBS fires no
+  /// event when a color changes, so they are re-fetched alongside the
+  /// scene-item list reads (GetSceneItemPrivateSettings, obs-websocket
+  /// 5.6+). Stays empty against older OBS - rows then render untinted.
+  /// No `@observable`: the map self-notifies per key, and codegen is not
+  /// run for this field
+  final ObservableMap<String, Color> sceneItemColors =
+      ObservableMap<String, Color>();
 
   @computed
   ObservableList<SceneItem> get mediaSceneItems => ObservableList.of(
@@ -273,6 +290,19 @@ abstract class _DashboardStore with Store {
   @observable
   Uint8List? scenePreviewImageBytes;
 
+  /// The scene transition the preview plays right now (OBS' own transition
+  /// can't be screenshotted - [PreviewTransitionTracker] decides when to
+  /// play which look, the preview widget paints it). A new instance per
+  /// transition; null when none was started or the state was reset
+  final Observable<StartPreviewTransition?> _previewTransition = Observable(
+    null,
+  );
+
+  StartPreviewTransition? get previewTransition => _previewTransition.value;
+
+  /// Scene of the frame the preview shows (tests / live checks)
+  String? get debugPreviewSceneShown => _previewTransitions.shownScene;
+
   /// Users can take screenshots of their current OBS scene manually. If they
   /// do, the screenshot will be saved on their system where OBS is running and
   /// we will get the taken screenshot as a response
@@ -336,6 +366,33 @@ abstract class _DashboardStore with Store {
 
   /// OBS base (canvas) width from GetVideoSettings - caps the preview width
   int? _canvasWidth;
+
+  /// OBS output frame rate from GetVideoSettings - times stingers whose
+  /// transition point is set in frames
+  double? _obsFps;
+
+  /// See [previewTransition]
+  final PreviewTransitionTracker _previewTransitions =
+      PreviewTransitionTracker();
+
+  /// Scene of the screenshot in flight - tags its frame (one in flight, see
+  /// [_previewInFlight])
+  String? _previewInFlightScene;
+
+  /// Fires when a held preview frame has to go out at the latest
+  Timer? _previewHoldTimer;
+
+  /// Studio mode: the scene a running transition goes to - the preview
+  /// shows it while the dashboard waits for OBS' program event (see
+  /// [_onSceneTransitionStarted]). Cleared when the transition ends, on
+  /// the program event, or by [_previewSceneOverrideTimer]
+  String? _previewSceneOverride;
+  Timer? _previewSceneOverrideTimer;
+
+  /// Settings of each transition last seen as the current one - OBS only
+  /// reads the current transition's settings (`GetCurrentSceneTransition`),
+  /// so an override's look comes from here or its kind's defaults
+  final Map<String, Map<String, dynamic>> _transitionSettings = {};
   String screenshotFileFormat = 'png';
   String? recordDirectory;
 
@@ -901,6 +958,15 @@ abstract class _DashboardStore with Store {
     /// old one - don't let it block the preview loop
     _previewRetry?.cancel();
     _previewInFlight = false;
+    _previewInFlightScene = null;
+    _resetPreviewTransitions();
+    _transitionSettings.clear();
+    _previewTransitions.clearMeasurements();
+
+    /// A new session may be another OBS (older, another collection) - the
+    /// cached source colors describe the previous one until the re-reads
+    this.sceneItemColors.clear();
+
     _obsStreamSubscription?.cancel();
     _obsStreamSubscription = GetIt.instance<NetworkStore>()
         .watchOBSStream()
@@ -952,6 +1018,7 @@ abstract class _DashboardStore with Store {
   void setPreviewSuspended(bool suspended) {
     if (_previewSuspended == suspended) return;
     _previewSuspended = suspended;
+    _resetPreviewTransitions();
     if (!suspended && this.shouldRequestPreviewImage) _requestPreviewImage();
   }
 
@@ -978,20 +1045,260 @@ abstract class _DashboardStore with Store {
     }
   }
 
-  void _sendPreviewImageRequest(IOWebSocketChannel socket) =>
-      NetworkHelper.sendRequest(socket, RequestType.GetSourceScreenshot, {
-        'sourceName':
-            Hive.box(HiveKeys.Settings.name).get(
-                  SettingsKeys.ExposeStudioControls.name,
-                  defaultValue: false,
-                ) &&
-                this.studioMode
-            ? this.studioModePreviewSceneName
-            : this.activeSceneName,
-        'imageFormat': this.previewFileFormat,
-        'imageWidth': _previewImageWidth,
-        'imageCompressionQuality': -1,
+  void _sendPreviewImageRequest(IOWebSocketChannel socket) {
+    final String? sceneName =
+        Hive.box(HiveKeys.Settings.name).get(
+              SettingsKeys.ExposeStudioControls.name,
+              defaultValue: false,
+            ) &&
+            this.studioMode
+        ? this.studioModePreviewSceneName
+        : _previewSceneOverride ?? this.activeSceneName;
+    _previewInFlightScene = sceneName;
+    NetworkHelper.sendRequest(socket, RequestType.GetSourceScreenshot, {
+      'sourceName': sceneName,
+      'imageFormat': this.previewFileFormat,
+      'imageWidth': _previewImageWidth,
+      'imageCompressionQuality': -1,
+    });
+  }
+
+  bool get _animatePreviewTransitions => Hive.box(
+    HiveKeys.Settings.name,
+  ).get(SettingsKeys.AnimatePreviewTransitions.name, defaultValue: true);
+
+  /// A preview frame of [sceneName] arrived - shown, held for a starting
+  /// transition, or the start of one ([PreviewTransitionTracker])
+  void _applyPreviewFrame(String? sceneName, Uint8List bytes) {
+    if (sceneName == null) {
+      this.scenePreviewImageBytes = bytes;
+      return;
+    }
+    _applyPreviewOutcome(
+      _previewTransitions.frameArrived(
+        sceneName,
+        bytes,
+        DateTime.now(),
+        animate: _animatePreviewTransitions,
+      ),
+    );
+  }
+
+  void _applyPreviewOutcome(PreviewFrameOutcome? outcome) {
+    runInAction(() {
+      switch (outcome) {
+        case ShowPreviewFrame(:final bytes):
+          this.scenePreviewImageBytes = bytes;
+        case StartPreviewTransition():
+          _previewTransition.value = outcome;
+          this.scenePreviewImageBytes = outcome.toBytes;
+        case HoldPreviewFrame():
+        case null:
+          break;
+      }
+    });
+
+    final DateTime? deadline = _previewTransitions.holdDeadline;
+    if (deadline == null) {
+      _previewHoldTimer?.cancel();
+      _previewHoldTimer = null;
+    } else if (_previewHoldTimer == null || !_previewHoldTimer!.isActive) {
+      _previewHoldTimer = Timer(deadline.difference(DateTime.now()), () {
+        _previewHoldTimer = null;
+        _applyPreviewOutcome(_previewTransitions.holdExpired(DateTime.now()));
       });
+    }
+  }
+
+  /// The preview's base changed wholesale (new socket, collection switch,
+  /// preview restarted / suspended) - no transition may bridge it
+  void _resetPreviewTransitions() {
+    _previewTransitions.reset();
+    _clearPreviewSceneOverride();
+    _previewHoldTimer?.cancel();
+    _previewHoldTimer = null;
+    runInAction(() => _previewTransition.value = null);
+  }
+
+  void _clearPreviewSceneOverride() {
+    _previewSceneOverrideTimer?.cancel();
+    _previewSceneOverrideTimer = null;
+    _previewSceneOverride = null;
+  }
+
+  /// OBS transition kind of the transition called [name]
+  String? _transitionKind(String name) => this.availableTransitions
+      ?.where((transition) => transition.transitionName == name)
+      .firstOrNull
+      ?.transitionKind;
+
+  /// `SceneTransitionStarted`: names the transition, not the scenes. The
+  /// program scene read right now already names the incoming one (the
+  /// event `CurrentProgramSceneChanged` only comes once the transition
+  /// ended) - it moves the dashboard over at the start, like an app tap
+  /// does, and lets the preview play the transition into it.
+  ///
+  /// Studio mode is the exception: a T-bar drag starts a transition too,
+  /// and a cancelled drag puts the program back WITHOUT any event
+  /// (`OBSBasic::TBarReleased` only resets `programScene`). There the
+  /// dashboard keeps following the program event; only the preview shows
+  /// the incoming scene meanwhile ([_previewSceneOverride])
+  void _onSceneTransitionStarted(SceneTransitionEvent event) {
+    final String? name = event.transitionName;
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (name == null || session == null) return;
+    final DateTime now = DateTime.now();
+    _previewTransitions.transitionStarted(name, now);
+
+    /// Nothing to play it on - spare OBS the reads
+    final bool resolve =
+        this.shouldRequestPreviewImage && _animatePreviewTransitions;
+    Future<ObsRequestAck>? currentRead;
+    String? resolvingFor;
+    if (resolve) {
+      if (_transitionKind(name) == 'cut_transition') {
+        _applyPreviewOutcome(
+          _previewTransitions.specResolved(
+            name,
+            null,
+            PreviewTransitionSpec.none,
+            now,
+          ),
+        );
+      } else {
+        currentRead = NetworkHelper.makeScopedRequest(
+          session.socket,
+          RequestType.GetCurrentSceneTransition,
+        );
+
+        /// An app switch knows its target - resolve alongside the program
+        /// read instead of after it (one round trip less on slow WLANs)
+        resolvingFor = _previewTransitions.pendingTarget(now);
+        if (resolvingFor != null) {
+          _resolvePreviewTransition(name, resolvingFor, currentRead);
+        }
+      }
+    }
+
+    final tag = _sceneOrdering.capture();
+    NetworkHelper.makeScopedRequest(
+      session.socket,
+      RequestType.GetCurrentProgramScene,
+    ).then((ack) {
+      final Object? sceneName = ack.responseData?['sceneName'];
+      if (!ack.success || sceneName is! String) return;
+      if (this.studioMode) {
+        if (sceneName != this.activeSceneName) {
+          _previewSceneOverride = sceneName;
+          _previewSceneOverrideTimer?.cancel();
+          _previewSceneOverrideTimer = Timer(
+            const Duration(seconds: 5),
+            _clearPreviewSceneOverride,
+          );
+        }
+      } else {
+        runInAction(() {
+          if (_sceneOrdering.shouldApplyRead(_SceneField.program, tag) &&
+              this.activeSceneName != sceneName) {
+            this.activeSceneName = sceneName;
+            _requestDisplayedSceneItems();
+          }
+        });
+      }
+      _applyPreviewOutcome(
+        _previewTransitions.targetResolved(sceneName, DateTime.now()),
+      );
+      if (currentRead != null && sceneName != resolvingFor) {
+        _resolvePreviewTransition(name, sceneName, currentRead);
+      }
+    });
+  }
+
+  /// Works out how transition [name] into [target] looks: its kind, its
+  /// settings (fresh when it is the current one, [currentRead]) and its
+  /// duration - a per-scene override has its own, a quick transition only
+  /// the one measured last time
+  Future<void> _resolvePreviewTransition(
+    String name,
+    String target,
+    Future<ObsRequestAck> currentRead,
+  ) async {
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    final acks = await Future.wait([
+      NetworkHelper.makeScopedRequest(
+        session.socket,
+        RequestType.GetSceneSceneTransitionOverride,
+        {'sceneName': target},
+      ),
+      currentRead,
+    ]);
+    final Map<String, dynamic>? override = acks[0].success
+        ? acks[0].responseData
+        : null;
+    final Map<String, dynamic>? current = acks[1].success
+        ? acks[1].responseData
+        : null;
+
+    final Object? currentName = current?['transitionName'];
+    final Object? currentSettings = current?['transitionSettings'];
+    if (currentName is String && currentSettings is Map) {
+      _transitionSettings[currentName] = Map<String, dynamic>.from(
+        currentSettings,
+      );
+    }
+
+    final String? kind =
+        _transitionKind(name) ??
+        (currentName == name ? current!['transitionKind'] as String? : null);
+
+    Duration? duration;
+    if (override?['transitionName'] == name) {
+      final Object? overrideDuration = override!['transitionDuration'];
+      duration = overrideDuration is num
+          ? Duration(milliseconds: overrideDuration.toInt())
+          : kDefaultTransitionDuration;
+    } else if (currentName == name && current!['transitionDuration'] is num) {
+      duration = Duration(
+        milliseconds: (current['transitionDuration'] as num).toInt(),
+      );
+    } else {
+      final int? currentDuration = this.currentTransition?.transitionDuration;
+      duration =
+          _previewTransitions.measuredDuration(name) ??
+          (currentDuration != null
+              ? Duration(milliseconds: currentDuration)
+              : null);
+    }
+
+    final Map<String, dynamic>? settings = _transitionSettings[name];
+    PreviewTransitionSpec spec = resolvePreviewTransitionSpec(
+      kind: kind,
+      settings: settings,
+      duration: duration,
+      fps: _obsFps,
+    );
+
+    /// A stinger that never was the current one (e.g. a per-scene
+    /// override): its transition point can't be read. Guess the middle of
+    /// its video (measured Started -> VideoEnded) rather than cutting at
+    /// the start
+    final Duration? measured = _previewTransitions.measuredDuration(name);
+    if (kind == 'obs_stinger_transition' &&
+        settings == null &&
+        measured != null) {
+      final Duration half = measured ~/ 2;
+      spec = PreviewTransitionSpec(
+        kind: PreviewTransitionKind.cutAtEnd,
+        duration: half,
+        stingerPoint: half,
+      );
+    }
+
+    _applyPreviewOutcome(
+      _previewTransitions.specResolved(name, target, spec, DateTime.now()),
+    );
+  }
 
   /// Preview screenshot width: the device's physical screen width (short
   /// side), capped at the OBS canvas width - OBS otherwise sends every frame
@@ -1230,6 +1537,8 @@ abstract class _DashboardStore with Store {
     _getStatsTimer?.cancel();
     _checkConnectionTimer?.cancel();
     _previewRetry?.cancel();
+    _previewHoldTimer?.cancel();
+    _previewSceneOverrideTimer?.cancel();
     _mediaInProgramSettle?.cancel();
   }
 
@@ -1244,6 +1553,44 @@ abstract class _DashboardStore with Store {
         )
         .toList(),
   );
+
+  /// Fetches the private settings (the OBS 32+ source color) of [items] in
+  /// one batch - [sceneName] is the item's own scene: the displayed scene
+  /// for top-level items, the parent group's source name for its children
+  /// (same rule the mutations follow). Older OBS does not offer the
+  /// request: no fetches then, rows stay untinted
+  void _fetchSceneItemColors(String sceneName, Iterable<SceneItem> items) {
+    if (!this.supportsRequest(RequestType.GetSceneItemPrivateSettings)) {
+      return;
+    }
+    final session = GetIt.instance<NetworkStore>().activeSession;
+    if (session == null) return;
+    NetworkHelper.sendBatchRequest(
+      session.socket,
+      RequestBatchType.SceneItemPrivateSettings,
+      [
+        for (final sceneItem in items)
+          if (sceneItem.sceneItemId != null)
+            RequestBatchObject(RequestType.GetSceneItemPrivateSettings, {
+              'sceneName': sceneName,
+              'sceneItemId': sceneItem.sceneItemId,
+            }),
+      ],
+    );
+  }
+
+  /// Drops cached source colors of [sceneName] whose item is gone (removed
+  /// in OBS) - such items are part of no fetch, so nothing else would
+  /// clear their entry
+  void _reconcileSceneItemColors(String sceneName, Iterable<SceneItem> items) {
+    final ids = {for (final sceneItem in items) sceneItem.sceneItemId};
+    this.sceneItemColors.removeWhere((key, _) {
+      final parts = sceneItemColorKeyParts(key);
+      return parts != null &&
+          parts.sceneName == sceneName &&
+          !ids.contains(parts.sceneItemId);
+    });
+  }
 
   @action
   void init() {
@@ -1501,6 +1848,7 @@ abstract class _DashboardStore with Store {
     this.shouldRequestPreviewImage = shouldRequestPreviewImage;
     if (shouldRequestPreviewImage) {
       this.scenePreviewImageBytes = null;
+      _resetPreviewTransitions();
       _requestPreviewImage();
     }
   }
@@ -1531,9 +1879,14 @@ abstract class _DashboardStore with Store {
   void setEditSceneVisibility(bool editSceneVisibility) =>
       this.editSceneVisibility = editSceneVisibility;
 
+  /// The app switches the program scene (scene tile, studio transition) -
+  /// set optimistically, OBS confirms with its events. Also tells the
+  /// preview a transition into [activeSceneName] is coming
   @action
-  void setActiveSceneName(String activeSceneName) =>
-      this.activeSceneName = activeSceneName;
+  void setActiveSceneName(String activeSceneName) {
+    this.activeSceneName = activeSceneName;
+    _previewTransitions.appSwitchRequested(activeSceneName, DateTime.now());
+  }
 
   @action
   void setStudioModePreviewSceneName(String studioModePreviewSceneName) =>
@@ -1588,6 +1941,15 @@ abstract class _DashboardStore with Store {
         );
 
         OverlayHandler.closeAnyOverlay();
+        _resetPreviewTransitions();
+
+        /// Same-named transitions of another collection run differently
+        _transitionSettings.clear();
+        _previewTransitions.clearMeasurements();
+
+        /// Same-named scenes of another collection carry their own source
+        /// colors - the old collection's must not show until the re-read
+        this.sceneItemColors.clear();
 
         this.currentSceneCollectionName =
             currentSceneCollectionChangedEvent.sceneCollectionName;
@@ -1685,11 +2047,24 @@ abstract class _DashboardStore with Store {
             CurrentProgramSceneChangedEvent(event.jsonRAW);
 
         _sceneOrdering.noteEvent(_SceneField.program);
+        _clearPreviewSceneOverride();
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
         _requestDisplayedSceneItems();
         _refreshMediaInProgram();
         break;
+      case EventType.SceneTransitionStarted:
+        _onSceneTransitionStarted(SceneTransitionEvent(event.jsonRAW));
+        break;
+      case EventType.SceneTransitionVideoEnded:
+        final String? endedName = SceneTransitionEvent(
+          event.jsonRAW,
+        ).transitionName;
+        if (endedName != null) {
+          _previewTransitions.videoEnded(endedName, DateTime.now());
+        }
+        break;
       case EventType.SceneTransitionEnded:
+        _clearPreviewSceneOverride();
 
         /// Sources of the old scene only go inactive once the transition
         /// finished - re-read after it, not just on the program switch
@@ -2005,7 +2380,11 @@ abstract class _DashboardStore with Store {
         this.recordDirectory = getRecordDirectoryResponse.recordDirectory;
         break;
       case RequestType.GetVideoSettings:
-        _canvasWidth = GetVideoSettingsResponse(response.jsonRAW).baseWidth;
+        final GetVideoSettingsResponse videoSettings = GetVideoSettingsResponse(
+          response.jsonRAW,
+        );
+        _canvasWidth = videoSettings.baseWidth;
+        _obsFps = videoSettings.fps;
         break;
       case RequestType.GetSceneList:
         GetSceneListResponse getSceneListResponse = GetSceneListResponse(
@@ -2112,6 +2491,14 @@ abstract class _DashboardStore with Store {
 
         this.fetchSceneItemsFilters();
 
+        /// The fresh list is all top-level items (children get spliced in
+        /// by the group reads below) - refresh their source colors and drop
+        /// colors of items this scene no longer has
+        if (sceneName != null) {
+          _reconcileSceneItemColors(sceneName, this.currentSceneItems);
+          _fetchSceneItemColors(sceneName, this.currentSceneItems);
+        }
+
         for (final sceneItem in this.currentSceneItems) {
           final groupSourceName = sceneItem.sourceName;
           if ((sceneItem.isGroup ?? false) && groupSourceName != null) {
@@ -2201,6 +2588,13 @@ abstract class _DashboardStore with Store {
           ),
         ]);
 
+        /// Group children look up their private settings by the group's
+        /// source name (same rule as mutations)
+        if (parentSceneItemName != null) {
+          _reconcileSceneItemColors(parentSceneItemName, childrenSceneItems);
+          _fetchSceneItemColors(parentSceneItemName, childrenSceneItems);
+        }
+
         break;
       case RequestType.GetInputList:
         GetInputListResponse getInputListResponse = GetInputListResponse(
@@ -2261,6 +2655,15 @@ abstract class _DashboardStore with Store {
       case RequestType.GetCurrentSceneTransition:
         GetCurrentSceneTransitionResponse getCurrentSceneTransitionResponse =
             GetCurrentSceneTransitionResponse(response.jsonRAW);
+
+        final Object? currentSettings =
+            getCurrentSceneTransitionResponse.transitionSettings;
+        if (currentSettings is Map) {
+          _transitionSettings[getCurrentSceneTransitionResponse
+              .transitionName] = Map<String, dynamic>.from(
+            currentSettings,
+          );
+        }
 
         this.currentTransition = Transition(
           transitionName: getCurrentSceneTransitionResponse.transitionName,
@@ -2530,8 +2933,9 @@ abstract class _DashboardStore with Store {
         GetSourceScreenshotResponse getSourceScreenshotResponse =
             GetSourceScreenshotResponse(response.jsonRAW);
 
-        this.scenePreviewImageBytes = base64Decode(
-          getSourceScreenshotResponse.imageData.split(',')[1],
+        _applyPreviewFrame(
+          _previewInFlightScene,
+          base64Decode(getSourceScreenshotResponse.imageData.split(',')[1]),
         );
 
         _previewAnswered(succeeded: true);
@@ -3069,6 +3473,49 @@ abstract class _DashboardStore with Store {
             ),
           ),
         );
+
+        break;
+      case RequestBatchType.SceneItemPrivateSettings:
+        SceneItemPrivateSettingsBatchResponse privateSettingsBatchResponse =
+            SceneItemPrivateSettingsBatchResponse(batchResponse.jsonRAW);
+        final colorRequestObjects = NetworkHelper.getRequestBatchBodyForUUID(
+          privateSettingsBatchResponse.uuid,
+        );
+        if (colorRequestObjects == null) {
+          GeneralHelper.advLog(
+            'SceneItemPrivateSettings batch: missing request bodies for uuid',
+            level: LogLevel.Warning,
+            includeInLogs: true,
+          );
+          break;
+        }
+
+        for (final privateSettingsResponse
+            in privateSettingsBatchResponse.privateSettings) {
+          /// A failed read (logged via [_obsRequestSucceeded], surfaces in
+          /// Settings -> Logs) must not clear a color we already hold -
+          /// skip it and keep the others
+          if (!_obsRequestSucceeded(privateSettingsResponse)) continue;
+
+          final requestObject = colorRequestObjects
+              .where((object) => object.uuid == privateSettingsResponse.uuid)
+              .firstOrNull;
+          final sceneName = requestObject?.body?['sceneName'];
+          final sceneItemId = requestObject?.body?['sceneItemId'];
+          if (sceneName is! String || sceneItemId is! int) continue;
+
+          final color = sceneItemColor(
+            privateSettingsResponse.sceneItemSettings,
+          );
+          if (color != null) {
+            this.sceneItemColors[sceneItemColorKey(sceneName, sceneItemId)] =
+                color;
+          } else {
+            this.sceneItemColors.remove(
+              sceneItemColorKey(sceneName, sceneItemId),
+            );
+          }
+        }
 
         break;
     }

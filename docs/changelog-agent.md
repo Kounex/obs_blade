@@ -4,6 +4,129 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-07 - Release: 4.1.0 live on both stores
+
+4.1.0 build 2026100501 (release commit `4c0c3e28`, approved on both
+stores after the 2026-10-05 promote) published: App Store via
+`release publish ios` (`READY_FOR_SALE`, manual release to everyone),
+Play by the user in the Console (managed publishing, production at 100%).
+Tag `4.1.0` pushed.
+
+The Play publish surfaced a **stale-language trap**: the store listing had
+two languages - en-GB (the listing's *default*, with the pre-4.0
+screenshots + text) and en-US (everything the tooling ever pushed). Every
+`metadata android` run only updated en-US, so the queued 4.1.0 changes
+previewed the old screenshots and the user held the publish. Fixes:
+
+- Synced en-GB = en-US (text + all images, SHA-verified server-side
+  against the repo) via a throwaway `fastlane/metadata/android/en-GB`
+  copy + the metadata lane, then removed en-GB: the Console's default
+  switch needed **en-US translations on all in-app products** first -
+  tip_1/2/3 + blacksmith only had en-GB; added en-US copies via
+  `oneTimeProducts:batchUpdate` (the legacy `inappproducts` PATCH 400s on
+  full/partial bodies, and tip_1 was already migrated to the new model,
+  which the legacy API refuses outright). After publish the listing reads
+  `languages: en-US` via the edits API.
+- New preflight guard (`f77e9167`): `release preflight` fails when the
+  Play listing has languages beyond `fastlane/metadata/android`, so this
+  drift can't come back.
+- Full both-store listing audit before publish (throwaway ASC + Play
+  reads): App Store 4.1.0 fully matches the repo (text, URLs, 14
+  screenshot md5s, App Preview present); Play matches byte-for-byte
+  (text, video URL, 21 screenshots + feature graphic + icon sha1s).
+
+Watch: crash reports / reviews for 4.1.0; the site's `pending-4.1/` copy
+goes live next (`obs-blade-site/AGENTS.md` § Pending). New iOS 27 App
+Store creative assets (product-page **Header** 3840×1646, **Search
+results** 3840×2560, or one **Universal** 5244×2950) are unclaimed - the
+store-shots composer's `feature` layout is the starting point.
+
+## 2026-10-06 - Scene item rows show OBS' source colors (branch `feature/preview-transitions`)
+
+User-facing: OBS 32 lets streamers color-code sources (Sources dock ->
+right-click -> Set Color) to scan a busy Sources list; the dashboard's
+Scene Items list now tints its rows the same way (read-only - setting
+colors stays OBS-side).
+
+- **Facts first** (obs-studio + obs-websocket master, added to
+  `obs-protocol-gotchas.md` § Source colors): the color lives on the scene
+  item's **private settings** (`color-preset` 0/1/2-9 + custom `color` in
+  Qt `HexArgb`), read via `GetSceneItemPrivateSettings` (5.6+,
+  undocumented-but-stable, gated on `availableRequests`); group children
+  are looked up by the parent group's source name; **no event** fires on a
+  color change, so the fetch rides the scene-item list reads (one batch
+  per applied list) and a change in OBS appears with the next read.
+- **Color math** (`lib/utils/scene_item_color.dart`): presets render at
+  33% alpha in OBS' exact palette; custom `#AARRGGBB` maps directly;
+  preset 1 with an empty / missing color renders untinted like OBS.
+- **Store** (`DashboardStore.sceneItemColors`, keyed
+  `<sceneName>|<sceneItemId>`): batch answers set / drop entries; items
+  removed from a scene get reconciled out; a failed read keeps the cached
+  color; old OBS gets no color requests at all.
+- **UI**: the tile wraps its row in the tint inside the Slidable, so it
+  travels with the row and slide actions stay behind; no color = the
+  exact previous rendering.
+- **Verified**: 5 helper unit tests (full preset / custom / garbage
+  matrix), 4 fake-peer websocket tests (batch sceneNames incl. group
+  children, unsupported OBS, color cleared, item removed), widget shots
+  of every state (untinted baseline, presets, custom translucent /
+  opaque, tinted group + indented child, locked + hidden tinted row,
+  tablet) - looked at, tints full-width with readable icons / text.
+- **Left out**: setting colors from the app, canvas scene items (the
+  extra-canvas item list), light-theme contrast tuning beyond what the
+  33% alpha gives.
+
+## 2026-10-06 - Scene preview plays OBS' scene transitions (branch `feature/preview-transitions`)
+
+User request: the preview cut instantly while OBS faded / swiped. The
+preview is a `GetSourceScreenshot` loop of the program *scene*, so OBS
+can't hand us mid-transition frames (transitions aren't screenshottable) -
+the app plays the transition itself. Experiment branch, not on master.
+
+- **Facts first** (probe on the MacBook's OBS 32.2.2 / obs-websocket 5.7.4
+  + source reads, added to `obs-protocol-gotchas.md` § Scene transitions):
+  `CurrentProgramSceneChanged` only fires once the transition ENDED;
+  `GetCurrentProgramScene` at `SceneTransitionStarted` already names the
+  incoming scene; settings come without defaults; override duration
+  defaults to 300 ms.
+- **Tracker** (`lib/utils/preview_transition/`): frames are tagged with
+  their scene; a pure `PreviewTransitionTracker` shows / holds (≤ 400 ms) /
+  starts a transition. Contexts come from app switches
+  (`setActiveSceneName`) and `SceneTransitionStarted`, which also triggers
+  the early program read - **side effect: switches made elsewhere now move
+  the scene tiles + items at the transition's start** (before: at its
+  end, so the tile highlight ran a full duration late).
+- **Look** = OBS' own math (`plugins/obs-transitions`): fade, fade to
+  color (switch point, ABGR color), swipe (in/out, 4 directions), slide,
+  luma wipe (OBS' 34 masks bundled in `assets/luma_wipes/`, GPL-2.0+, +
+  `shaders/luma_wipe.frag`), stinger = hold, cut at its transition point
+  (its video is a private source of the transition), plugin kinds
+  (Move, ...) = crossfade. Duration: override > current > measured
+  Started→VideoEnded > current.
+- **UI**: `ScenePreviewImage` (inline + fullscreen) keeps the live frame
+  underneath and paints the transition on top; reduce motion cuts.
+  Settings → Dashboard → **Preview Transitions** (on by default).
+- **Verified**: 25 tracker/spec unit tests, 12 store tests on the fake
+  peer, 5 widget tests, widget shots of every kind mid-way (+ 4:3 canvas,
+  settings row), and `tool/obs_local/preview_transition_live_test.dart`
+  against the real OBS: dashboard follows a switch from elsewhere after
+  ~5-20 ms, the preview transition starts 20-65 ms after the switch with
+  the right kind / duration / direction (override Fade 1200 ms while
+  Swipe is current; a settings change without event picked up).
+- **Review round** (fresh-context reviewer, 9 findings, 6 real): studio
+  mode no longer moves tiles early (a cancelled T-bar drag sends no program
+  event - verified live, tiles stay, preview returns 26 ms after release);
+  Cut resolves at once, app taps resolve alongside the program read (live:
+  transition 14-17 ms after the tap); a spec only applies to its target;
+  stingers without readable settings cut mid-video (measured); caches
+  cleared on reconnect / collection change; widget decode races closed.
+  Not real: stale replay after a canvas view (the suspend resets the
+  transition), cache-evicted "from" frame (it's the frame on screen).
+- **Left out**: manual T-bar timing (plays over the configured duration),
+  fade to black, other canvases, settings of non-current transitions (kind
+  defaults), quick transitions reusing the current transition's name (run
+  at its duration).
+
 ## 2026-10-05 - Release: 4.1.0 promoted to review (both stores)
 
 Beta build **2026100501** (release commit `4c0c3e28`) went out in the
