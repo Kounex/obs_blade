@@ -91,6 +91,12 @@ identical).
   (`fastlane/screenshots`). App Previews are not part of it - check the new
   version still has one (ASC copies media into a new version) and use
   `release preview ios` if not.
+- Creative assets (iOS 27+ product page header + search results) live in
+  the Asset Library, independent of versions: `release assets ios` uploads
+  `fastlane/assets/ios/universal.png` and submits it standalone for
+  review, `release attach ios` places the approved asset on the live
+  version (publishes immediately, no new version). Approved assets can be
+  swapped at any time without another review.
 
 ## Rollout
 

@@ -22,18 +22,25 @@ master** (`bd0a5581`, gates green: 1930 tests) - work from master again;
 the remote branch is kept for now.
 
 Also shipped 2026-10-07 (details: changelog same date): website 4.1 copy
-live on obs-blade.kounex.com; **universal App Store creative asset**
-(iOS 27 Header + Search results) designed in the store-shots composer
-(`apple-universal` set, crops verified) - **awaiting the user's eyeball,
-then upload to ASC's Asset Library**; composer's review gallery hosted at
+live on obs-blade.kounex.com; **universal App Store creative asset** (iOS 27 Header + Search results)
+approved by the user, versioned at `fastlane/assets/ios/universal.png`
+(5244×2950, from the store-shots composer's `apple-universal` set) and
+**submitted to App Review** via the new `release assets ios` command
+(Asset Library API; asset `aa400005-…`, WAITING_FOR_REVIEW) - once
+approved: `release attach ios` places it on the live version's header +
+search results (placement create on a READY_FOR_SALE version is the
+Console "Publish" equivalent - unprobed until this first approval);
+compositor's review gallery hosted at
 **https://obs-blade-gallery.kounex.com** (Cloudflare Access/Authentik, NAS
 :8460, re-renders live).
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
-1. **Creative asset**: user reviews `01_universal.png` (gallery above) →
-   upload to App Store Connect Asset Library (or wire the ASC API upload
-   into `tool/release`).
+1. **Creative asset**: when review approves it → `release attach ios`
+   (dry run, then --yes) on the workstation, verify in ASC's Header and
+   Search Results preview tool. If the API refuses placements on a live
+   version: Console → live version → Header and Search Results → Browse
+   Assets → Publish.
 2. Upload key A6:24:44 still "in review" → after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard
    Play internal-track draft `3.3.0 (2026090701)`.

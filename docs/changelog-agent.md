@@ -46,11 +46,22 @@ Same session, after the publish:
   Search results slots): one **universal** 5244×2950 composition via a new
   `universal` layout in the store-shots composer (`apple-universal` set) -
   mark + headline left, iPad + iPhone right, all focal content inside the
-  centre safe zone; simulated header/search crops checked.
-  `~/agent/store-shots/projects/obs-blade/out/apple-universal/01_universal.png`
-  (+ `_preview_*_crop.png`). Next: user's eyeball, then upload to App
-  Store Connect's Asset Library (UI, or wire the ASC API into
-  `tool/release`).
+  centre safe zone; simulated header/search crops checked. User approved
+  it; canonical copy now versioned at `fastlane/assets/ios/universal.png`.
+- **Creative asset shipped via new tooling** (`0785d265`): `tool/release`
+  learned the App Store Connect **Asset Library API** (OpenAPI spec:
+  `appAssetLibraries`, `appAssetLibraryImages`, `appAssetLibraryPlacements`,
+  standalone review via `reviewSubmissions` + `reviewSubmissionItems` with
+  an `appAssetLibraryImage` item). `release assets ios` validates the PNG
+  against Apple's live spec ref data (`appAssetLibraryRefData` - the spec
+  serving both PRODUCT_PAGE_HEADER_ASSET + APP_STORE_SEARCH_RESULTS_ASSET),
+  uploads (reserve → chunks → commit → poll), and submits for review on
+  its own; `release attach ios` places the approved asset on the live
+  version's header + search placements (the Console "Publish" equivalent -
+  unprobed until the first approval). First run: asset `aa400005-…` from
+  `fastlane/assets/ios/universal.png`, standalone submission
+  `5e6df008-…` → WAITING_FOR_REVIEW. Play has no equivalent slots (its
+  feature graphic already exists), so this is Apple-only.
 - **Review gallery hosted:** https://obs-blade-gallery.kounex.com -
   nginx `obs-blade-gallery` container (:8460,
   `/volume1/docker/obs-blade-gallery/`) serves the composer's `out/`
