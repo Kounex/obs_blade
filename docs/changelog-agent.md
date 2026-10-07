@@ -35,11 +35,28 @@ previewed the old screenshots and the user held the publish. Fixes:
   screenshot md5s, App Preview present); Play matches byte-for-byte
   (text, video URL, 21 screenshots + feature graphic + icon sha1s).
 
-Watch: crash reports / reviews for 4.1.0; the site's `pending-4.1/` copy
-goes live next (`obs-blade-site/AGENTS.md` § Pending). New iOS 27 App
-Store creative assets (product-page **Header** 3840×1646, **Search
-results** 3840×2560, or one **Universal** 5244×2950) are unclaimed - the
-store-shots composer's `feature` layout is the starting point.
+Watch: crash reports / reviews for 4.1.0.
+
+Same session, after the publish:
+
+- **Website 4.1 copy live** - `pending-4.1/` → `site/index.html` +
+  `deploy.sh`, verified "OBS Blade 4.1" on https://obs-blade.kounex.com,
+  `pending-4.1/` deleted (its AGENTS.md section removed too).
+- **iOS 27 creative asset designed** (user asked about the new Header /
+  Search results slots): one **universal** 5244×2950 composition via a new
+  `universal` layout in the store-shots composer (`apple-universal` set) -
+  mark + headline left, iPad + iPhone right, all focal content inside the
+  centre safe zone; simulated header/search crops checked.
+  `~/agent/store-shots/projects/obs-blade/out/apple-universal/01_universal.png`
+  (+ `_preview_*_crop.png`). Next: user's eyeball, then upload to App
+  Store Connect's Asset Library (UI, or wire the ASC API into
+  `tool/release`).
+- **Review gallery hosted:** https://obs-blade-gallery.kounex.com -
+  nginx `obs-blade-gallery` container (:8460,
+  `/volume1/docker/obs-blade-gallery/`) serves the composer's `out/`
+  read-only (re-renders live), Cloudflare tunnel ingress + CNAME +
+  Access app behind the same Authentik "Password Protected" policy as
+  fleet.kounex.com; on the fleet board via it-env catalog.
 
 ## 2026-10-06 - Scene item rows show OBS' source colors (branch `feature/preview-transitions`)
 

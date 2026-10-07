@@ -5,43 +5,38 @@
 Read this first after `AGENTS.md`. Last reset: **2026-10-07** (the 4.1.0
 publish session).
 
-**Update 2026-10-07 — 4.1.0 LIVE on both stores.** Build 2026100501
-(release commit `4c0c3e28`, tag `4.1.0` pushed): App Store
-`READY_FOR_SALE` (manual release to everyone), Play production at 100%
-(user pressed **Publish**). The publish surfaced a stale-language trap:
-the Play listing's **default language was en-GB** with pre-4.0 content -
-every `metadata android` push only ever updated en-US, so the queued 4.1.0
-changes showed the old screenshots. Fixed (details: `changelog-agent.md`
-2026-10-07): en-GB synced → removed (needed en-US translations on the 4
-tip IAPs first, written via `oneTimeProducts:batchUpdate`), and
-`release preflight` now fails when the store has listing languages beyond
-`fastlane/metadata/android` (`f77e9167` on master). Both stores' listings
-audited byte-for-byte against the repo before publish - clean.
+**Update 2026-10-07 — 4.1.0 LIVE on both stores; feature branch merged
+back into master.** Build 2026100501 (release commit `4c0c3e28`, tag
+`4.1.0` pushed): App Store `READY_FOR_SALE` (manual release to everyone),
+Play production at 100% (user pressed **Publish**). The publish surfaced a
+stale-language trap: the Play listing's **default language was en-GB**
+with pre-4.0 content - every `metadata android` push only ever updated
+en-US, so the queued 4.1.0 changes showed the old screenshots. Fixed
+(details: `changelog-agent.md` 2026-10-07): en-GB synced → removed (needed
+en-US translations on the 4 tip IAPs first, written via
+`oneTimeProducts:batchUpdate`), and `release preflight` now fails when the
+store has listing languages beyond `fastlane/metadata/android`
+(`f77e9167`). Both stores' listings audited byte-for-byte against the repo
+before publish - clean. **`feature/preview-transitions` merged into
+master** (`bd0a5581`, gates green: 1930 tests) - work from master again;
+the remote branch is kept for now.
+
+Also shipped 2026-10-07 (details: changelog same date): website 4.1 copy
+live on obs-blade.kounex.com; **universal App Store creative asset**
+(iOS 27 Header + Search results) designed in the store-shots composer
+(`apple-universal` set, crops verified) - **awaiting the user's eyeball,
+then upload to ASC's Asset Library**; composer's review gallery hosted at
+**https://obs-blade-gallery.kounex.com** (Cloudflare Access/Authentik, NAS
+:8460, re-renders live).
+
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
-1. **Website `pending-4.1/` goes live** (`obs-blade-site/AGENTS.md`
-   § Pending) - not done yet.
-2. **iOS 27 App Store creative assets** (new, user asked 2026-10-07):
-   product-page **Header** 3840×1646 + **Search results** 3840×2560, or
-   one **Universal** 5244×2950 serving both; submitted via App Store
-   Connect Asset Library, no app version needed. Apple's guidance:
-   [asset-best-practices](https://developer.apple.com/app-store/asset-best-practices/).
-   Starting point: `~/agent/store-shots` composer, the `feature` layout
-   (Play feature graphic) + rings backdrop; keep the focal art centered
-   (big crops, esp. header).
-3. Upload key A6:24:44 still "in review" → after it resolves, delete
+1. **Creative asset**: user reviews `01_universal.png` (gallery above) →
+   upload to App Store Connect Asset Library (or wire the ASC API upload
+   into `tool/release`).
+2. Upload key A6:24:44 still "in review" → after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard
    Play internal-track draft `3.3.0 (2026090701)`.
-
-**Active feature work — branch `feature/preview-transitions`** (dogfood
-on Kounex iOS at `e3690322`, awaiting the user's on-device verdicts): OBS
-source colors in Scene Items (OBS 32 "Set Color", read-only) + the
-visibility-eye recolor to the lock's color language (`afbc53f6..e3690322`;
-the colors range `979b7a8c..4a338df8` is cherry-pickable onto master).
-Facts: `obs-protocol-gotchas.md` § Source colors; changelog 2026-10-06.
-Next: user's tap list → `/code-review high` in a fresh session → merge to
-master. Watch: the workstation had a stale local branch once - check
-`git log -1` after workstation checkouts.
 
 **Store/Pro state:** 4.1.0 live; products approved on both stores
 ($4.99/mo, $49.99/yr, $99.99 lifetime; global price overhaul 2026-10-03);
@@ -86,7 +81,7 @@ follow-ups (post-4.0 ok).
 | | |
 |---|---|
 | Remote | `Kounex/obs_blade` (**public**) |
-| Branch | **`master`** (all releases land here; `feature/preview-transitions` holds the in-flight dogfood work) |
+| Branch | **`master`** (everything lands here; `feature/preview-transitions` merged 2026-10-07) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 | Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
 | Live version | **4.1.0** (build 2026100501, tag `4.1.0`) on both stores since 2026-10-07 |
