@@ -4,6 +4,43 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-07 - Release: 4.1.0 live on both stores
+
+4.1.0 build 2026100501 (release commit `4c0c3e28`, approved on both
+stores after the 2026-10-05 promote) published: App Store via
+`release publish ios` (`READY_FOR_SALE`, manual release to everyone),
+Play by the user in the Console (managed publishing, production at 100%).
+Tag `4.1.0` pushed.
+
+The Play publish surfaced a **stale-language trap**: the store listing had
+two languages - en-GB (the listing's *default*, with the pre-4.0
+screenshots + text) and en-US (everything the tooling ever pushed). Every
+`metadata android` run only updated en-US, so the queued 4.1.0 changes
+previewed the old screenshots and the user held the publish. Fixes:
+
+- Synced en-GB = en-US (text + all images, SHA-verified server-side
+  against the repo) via a throwaway `fastlane/metadata/android/en-GB`
+  copy + the metadata lane, then removed en-GB: the Console's default
+  switch needed **en-US translations on all in-app products** first -
+  tip_1/2/3 + blacksmith only had en-GB; added en-US copies via
+  `oneTimeProducts:batchUpdate` (the legacy `inappproducts` PATCH 400s on
+  full/partial bodies, and tip_1 was already migrated to the new model,
+  which the legacy API refuses outright). After publish the listing reads
+  `languages: en-US` via the edits API.
+- New preflight guard (`f77e9167`): `release preflight` fails when the
+  Play listing has languages beyond `fastlane/metadata/android`, so this
+  drift can't come back.
+- Full both-store listing audit before publish (throwaway ASC + Play
+  reads): App Store 4.1.0 fully matches the repo (text, URLs, 14
+  screenshot md5s, App Preview present); Play matches byte-for-byte
+  (text, video URL, 21 screenshots + feature graphic + icon sha1s).
+
+Watch: crash reports / reviews for 4.1.0; the site's `pending-4.1/` copy
+goes live next (`obs-blade-site/AGENTS.md` § Pending). New iOS 27 App
+Store creative assets (product-page **Header** 3840×1646, **Search
+results** 3840×2560, or one **Universal** 5244×2950) are unclaimed - the
+store-shots composer's `feature` layout is the starting point.
+
 ## 2026-10-06 - Scene item rows show OBS' source colors (branch `feature/preview-transitions`)
 
 User-facing: OBS 32 lets streamers color-code sources (Sources dock ->
