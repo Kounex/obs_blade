@@ -4,6 +4,24 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-07 - Pricing: 2026-10-05 batch confirmed live; tool misread fixed
+
+The scheduled App Store price changes DID take effect on 2026-10-05 as
+planned - `inspect_products.dart`'s "(N via scheduled price changes not
+yet in effect)" (29 monthly / 33 yearly, constant for two days) was a
+tool artifact, not Apple being stuck. Ground truth via the public
+storefront pages (`apps.apple.com/<region>/app/obs-blade/id1523915884`,
+In-App Purchases JSON): CA $6.99/$70.99, JP ¥860/¥8,700, TR ₺294.99/₺2,949.99
+- all the NEW prices. Apple's ASC API keeps both records after activation:
+the grandfathered old price (`startDate` null, `preserved: true`) and the
+scheduled record with its now-past start date. Both
+`inspect_products.dart` and `audit_prices.dart` treated only
+`startDate == null` as current; fixed to pick the latest record with
+`startDate <= today` as live and only future-dated records as scheduled
+(`23e82509`). Re-run: 175/175 parity OK on both subs, no pending lines.
+The ASC web UI groups those territories under their effective date
+(Subscription Prices → View All: "Oct 5, 2026 — 33 Countries or Regions").
+
 ## 2026-10-07 - Release: 4.1.0 live on both stores
 
 4.1.0 build 2026100501 (release commit `4c0c3e28`, approved on both
