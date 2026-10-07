@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=localhost/kick-auth:latest
+Image=localhost/kick-auth:1.0.0
 ContainerName=kick-auth
 Network=host
 EnvironmentFile=/etc/kick-auth.env

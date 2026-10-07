@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=localhost/kick-events:latest
+Image=localhost/kick-events:1.0.0
 ContainerName=kick-events
 Network=host
 # Same Kick app as kick-auth: client credentials for the app token.
