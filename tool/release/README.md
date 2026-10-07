@@ -19,12 +19,14 @@ dart run tool/release/bin/release.dart status
 | `beta ios\|android` | TestFlight (internal testers) / Play internal track |
 | `metadata ios\|android` | Listing text + screenshots from `fastlane/metadata` and `fastlane/screenshots` |
 | `preview ios <file.mp4> [--poster 5]` | en-US iPhone App Preview (6.9" slot) of the current version, via the App Store Connect API (fastlane can't); old previews are removed only once the new one is processed |
+| `assets ios [file.png]` | Uploads the universal creative asset (product page header + search results, iOS 27+; default `fastlane/assets/ios/universal.png`) to the Asset Library and submits it for review on its own - no app version needed; validates the dimensions against Apple's spec first |
+| `attach ios` | Places the approved universal asset on the live version's header + search results (publishes right away, no new version) |
 | `submit ios` | Attaches the uploaded build (manual release) and submits it with any first-time subscriptions in one review submission (App Store Connect API); once approved it waits for `publish ios` |
 | `publish ios [--version x.y.z]` | Releases the approved version to the App Store (only when it is Pending Developer Release); `--version` when the repo already moved on to the next version |
 | `promote android [--rollout 1.0]` | Play internal → production, at the given share of users |
 | `halt android` | Halts the Play production rollout |
 
-**Every command that writes to a store** (`beta`, `metadata`, `preview`, `submit`, `publish`,
+**Every command that writes to a store** (`beta`, `metadata`, `preview`, `assets`, `attach`, `submit`, `publish`,
 `promote`, `halt`) prints what it would do and stops. Add `--yes` to do it.
 
 fastlane needs the Ruby whose bundler matches `Gemfile.lock` (not macOS's

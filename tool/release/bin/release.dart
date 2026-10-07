@@ -2,8 +2,9 @@
 //
 //   dart run tool/release/bin/release.dart <command> [platform] [--yes]
 //
-// Commands that write to a store (beta, metadata, preview, submit, publish,
-// promote, halt) print what they would do and stop unless --yes is given.
+// Commands that write to a store (beta, metadata, preview, assets, attach,
+// submit, publish, promote, halt) print what they would do and stop unless
+// --yes is given.
 
 // ignore_for_file: avoid_print - CLI output is the product.
 
@@ -23,6 +24,11 @@ Usage: release <command> [ios|android] [--yes]
   beta ios|android            TestFlight internal / Play internal track
   metadata ios|android        listing text + screenshots
   preview ios <file.mp4> [--poster 5]   iPhone App Preview (en-US)
+  assets ios [file.png]       universal creative asset (header + search
+                              results) -> Asset Library + submit for review
+                              (default: fastlane/assets/ios/universal.png)
+  attach ios                  place the approved universal asset on the live
+                              version's header + search results
   submit ios                  attach the build (+ subscriptions), submit for review
   publish ios [--version 4.0.1]   release the approved version (manual
                               release; default: pubspec's version)
@@ -87,6 +93,11 @@ Future<void> main(List<String> argv) async {
             }(),
     ).$2,
     'submit' => (needPlatform({'ios'}), await release.submit()).$2,
+    'assets' => (
+      needPlatform({'ios'}),
+      await release.assets(rest.length > 2 ? rest[2] : null),
+    ).$2,
+    'attach' => (needPlatform({'ios'}), await release.attach()).$2,
     'publish' => (
       needPlatform({'ios'}),
       await release.publish(args['version'] as String?),

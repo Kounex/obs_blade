@@ -77,6 +77,7 @@ class AppStore {
   }
 
   /// The open (not yet submitted) iOS review submission, or a new one.
+  /// Standalone creative assets ride the same submission mechanism.
   Future<String> draftReviewSubmission() async {
     final open = (await _client.get('v1/reviewSubmissions', {
       // no platform filter: a fresh draft reports platform null
@@ -101,13 +102,12 @@ class AppStore {
   /// (App Store Connect adds first subscriptions itself with the version).
   Future<Set<String>> reviewItemIds(String submissionId) async {
     // relationship ids only come back for included types
-    final items = (await _client.get(
-      'v1/reviewSubmissions/$submissionId/items',
-      {
-        'include':
-            'appStoreVersion,subscriptionVersion,subscriptionGroupVersion',
-      },
-    )).dataList;
+    final items =
+        (await _client.get('v1/reviewSubmissions/$submissionId/items', {
+          'include':
+              'appStoreVersion,subscriptionVersion,subscriptionGroupVersion,'
+              'appAssetLibraryImage,appAssetLibraryVideo',
+        })).dataList;
     return {
       for (final item in items)
         for (final rel in ((item['relationships'] as Map?) ?? const {}).values)
@@ -320,30 +320,7 @@ class AppStore {
     final id = '${reserved['id']}';
     final ops = ((reserved['attributes'] as Map)['uploadOperations'] as List)
         .cast<Map>();
-
-    final uploader = http.Client();
-    try {
-      for (final op in ops) {
-        final offset = op['offset'] as int;
-        final length = op['length'] as int;
-        final request = _UploadRequest(
-          '${op['method']}',
-          Uri.parse('${op['url']}'),
-          bytes.sublist(offset, offset + length),
-          {
-            for (final h
-                in ((op['requestHeaders'] as List?) ?? const []).cast<Map>())
-              '${h['name']}': '${h['value']}',
-          },
-        );
-        final status = await request.send(uploader);
-        if (status < 200 || status >= 300) {
-          throw StateError('preview chunk at $offset: HTTP $status');
-        }
-      }
-    } finally {
-      uploader.close();
-    }
+    await _uploadChunks(ops, bytes);
 
     await _client.patch('v1/appPreviews/$id', {
       'data': {
@@ -371,6 +348,176 @@ class AppStore {
       await Future<void>.delayed(const Duration(seconds: 15));
     }
     return (id: id, state: state, errors: errors);
+  }
+
+  // ------------------------------------------------------ asset library
+
+  /// The app's Asset Library id.
+  Future<String> assetLibraryId() async =>
+      '${(await _client.get('v1/apps/$appId/assetLibrary')).dataObject!['id']}';
+
+  /// Creative-asset images in the Asset Library, newest first.
+  Future<List<Map<String, Object?>>> assetImages() async => (await _client.get(
+    'v1/appAssetLibraries/${await assetLibraryId()}/images',
+    {
+      'filter[category]': 'CREATIVE_ASSETS',
+      'sort': '-createdDate',
+      'limit': '50',
+    },
+  )).dataList;
+
+  /// Asset specs + placement policies: which spec fits which placement.
+  Future<Map<String, Object?>> assetRefData() async {
+    final list = (await _client.get('v1/appAssetLibraryRefData')).dataList;
+    return list.isEmpty
+        ? const {}
+        : ((list.first['attributes'] as Map?)?.cast<String, Object?>() ??
+              const {});
+  }
+
+  /// The live iOS version (READY_FOR_SALE), null when there is none.
+  Future<Map<String, Object?>?> liveVersion() async {
+    for (final v in await versions()) {
+      if ((v['attributes'] as Map)['appStoreState'] == 'READY_FOR_SALE') {
+        return v;
+      }
+    }
+    return null;
+  }
+
+  Future<List<Map<String, Object?>>> localizations(String versionId) async =>
+      (await _client.get(
+        'v1/appStoreVersions/$versionId/appStoreVersionLocalizations',
+      )).dataList;
+
+  /// Reserves, uploads and commits [file] as a creative-asset image in the
+  /// Asset Library, then waits for Apple's processing. Returns the final
+  /// asset state (`COMPLETE`, `FAILED`, or the last one seen when [timeout]
+  /// ran out).
+  Future<({String id, String state, List<Object?> errors})> uploadAssetImage(
+    File file, {
+    required String referenceName,
+    Duration timeout = const Duration(minutes: 20),
+  }) async {
+    final bytes = file.readAsBytesSync();
+    final reserved = (await _client.post('v1/appAssetLibraryImages', {
+      'data': {
+        'type': 'appAssetLibraryImages',
+        'attributes': {
+          'category': 'CREATIVE_ASSETS',
+          'fileName': file.uri.pathSegments.last,
+          'fileSize': bytes.length,
+          'referenceName': referenceName,
+        },
+        'relationships': {
+          'assetLibrary': {
+            'data': {'type': 'appAssetLibraries', 'id': await assetLibraryId()},
+          },
+        },
+      },
+    })).dataObject!;
+    final id = '${reserved['id']}';
+    final ops = ((reserved['attributes'] as Map)['uploadOperations'] as List)
+        .cast<Map>();
+    await _uploadChunks(ops, bytes);
+
+    await _client.patch('v1/appAssetLibraryImages/$id', {
+      'data': {
+        'type': 'appAssetLibraryImages',
+        'id': id,
+        'attributes': {'uploaded': true},
+      },
+    });
+
+    final deadline = DateTime.now().add(timeout);
+    var state = 'UPLOAD_COMPLETE';
+    var errors = const <Object?>[];
+    while (DateTime.now().isBefore(deadline)) {
+      final a =
+          (await _client.get(
+                'v1/appAssetLibraryImages/$id',
+              )).dataObject!['attributes']
+              as Map;
+      state = '${a['state']}';
+      errors = (a['stateDetails'] as List?) ?? const [];
+      if (state == 'COMPLETE' ||
+          state == 'PREPARE_FOR_SUBMISSION' ||
+          state == 'FAILED') {
+        break;
+      }
+      await Future<void>.delayed(const Duration(seconds: 15));
+    }
+    return (id: id, state: state, errors: errors);
+  }
+
+  Future<void> addAssetImageToReview(String submissionId, String imageId) =>
+      _client.post('v1/reviewSubmissionItems', {
+        'data': {
+          'type': 'reviewSubmissionItems',
+          'relationships': {
+            'reviewSubmission': {
+              'data': {'type': 'reviewSubmissions', 'id': submissionId},
+            },
+            'appAssetLibraryImage': {
+              'data': {'type': 'appAssetLibraryImages', 'id': imageId},
+            },
+          },
+        },
+      });
+
+  /// The placements of an asset (product page header, search results, ...).
+  Future<List<Map<String, Object?>>> assetPlacements(String imageId) async =>
+      (await _client.get(
+        'v1/appAssetLibraryImages/$imageId/placements',
+      )).dataList;
+
+  /// Places an asset on a version localization (e.g. as its product page
+  /// header). On a live version this is the Console's "Publish" click.
+  Future<String> createAssetPlacement({
+    required String placementType,
+    required String imageId,
+    required String localizationId,
+  }) async =>
+      '${(await _client.post('v1/appAssetLibraryPlacements', {
+        'data': {
+          'type': 'appAssetLibraryPlacements',
+          'attributes': {'placementType': placementType},
+          'relationships': {
+            'image': {
+              'data': {'type': 'appAssetLibraryImages', 'id': imageId},
+            },
+            'appStoreVersionLocalization': {
+              'data': {'type': 'appStoreVersionLocalizations', 'id': localizationId},
+            },
+          },
+        },
+      })).dataObject!['id']}';
+}
+
+/// Uploads the reserved chunks with Apple's per-operation headers.
+Future<void> _uploadChunks(List<Map> ops, List<int> bytes) async {
+  final uploader = http.Client();
+  try {
+    for (final op in ops) {
+      final offset = op['offset'] as int;
+      final length = op['length'] as int;
+      final request = _UploadRequest(
+        '${op['method']}',
+        Uri.parse('${op['url']}'),
+        bytes.sublist(offset, offset + length),
+        {
+          for (final h
+              in ((op['requestHeaders'] as List?) ?? const []).cast<Map>())
+            '${h['name']}': '${h['value']}',
+        },
+      );
+      final status = await request.send(uploader);
+      if (status < 200 || status >= 300) {
+        throw StateError('asset chunk at $offset: HTTP $status');
+      }
+    }
+  } finally {
+    uploader.close();
   }
 }
 
