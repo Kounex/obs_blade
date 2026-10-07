@@ -249,6 +249,15 @@ class Release {
             'Android: versionCode ${v.build} is newer than Play ($latest)',
             'release bump',
           );
+          final repoLangs = Directory(
+            project.path('fastlane/metadata/android'),
+          ).listSync().whereType<Directory>().map((d) => d.path.split('/').last).toSet();
+          final extra = (await play.languages()).difference(repoLangs);
+          check(
+            extra.isEmpty,
+            'Android: Play listing languages match fastlane/metadata/android',
+            'store has extra: ${extra.join(', ')} - delete store-side, stale listings outlive the repo copy',
+          );
         } finally {
           play.close();
         }

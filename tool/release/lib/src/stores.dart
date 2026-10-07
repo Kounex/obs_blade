@@ -434,5 +434,19 @@ class PlayStore {
     }
   }
 
+  /// The store listing's languages. The edit is deleted, never committed.
+  Future<Set<String>> languages() async {
+    final edit = (await _client.post('$_app/edits', {})).json['id'];
+    try {
+      final res = await _client.get('$_app/edits/$edit/listings');
+      return ((res.json['listings'] as List?) ?? const [])
+          .whereType<Map<String, Object?>>()
+          .map((l) => '${l['language']}')
+          .toSet();
+    } finally {
+      await _client.delete('$_app/edits/$edit');
+    }
+  }
+
   void close() => _auth.close();
 }
