@@ -1,6 +1,6 @@
 # OBS Blade
 
-![alt text](https://assets.kounex.com/images/obs-blade/store_banner_3.png 'OBS Blade Store Banner')
+![OBS Blade - Your OBS, in your pocket.](fastlane/metadata/android/en-US/images/featureGraphic.png 'OBS Blade Store Banner')
 
 DISCLAIMER: This app is not in any way affiliated with [OBS](https://github.com/obsproject/obs-studio) (Open Broadcaster Software).
 
@@ -27,12 +27,13 @@ The device running OBS Blade needs to be in the same network as the device runni
 
 <div align="center">
   <div style="display: flex; align-items: flex-start;">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_1.png" width="134">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_2.png" width="134">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_3.png" width="134">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_4.png" width="134">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_5.png" width="134">
-    <img src="https://assets.kounex.com/images/obs-blade/iphone_6.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_1_hero.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_2_control-room.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_3_mixer.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_4_chat.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_5_stats.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_6_anywhere.png" width="134">
+    <img src="fastlane/screenshots/en-US/iphone69_7_custom.png" width="134">
   </div>
 </div>
 
@@ -93,4 +94,4 @@ How to select the device you want the app to build on and how to run this projec
 I love developing free, high quality applications accessible for everyone, no need for In-App purchases or Ads. No one wants that. It takes a lot of time creating and maintaining my work - if you like using them and want me to continue working on them please consider supporting me!
 
 <a href="https://www.buymeacoffee.com/Kounex" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
-<a href="https://paypal.me/Kounex" target="_blank"><img src="https://assets.kounex.com/images/general/paypal-me-logo.png" alt="PayPal.Me" height="41"  width="174"></a>
+<a href="https://paypal.me/Kounex" target="_blank"><img src="docs/readme/paypal-me-logo.png" alt="PayPal.Me" height="41"  width="174"></a>
