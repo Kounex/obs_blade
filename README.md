@@ -1,97 +1,139 @@
-# OBS Blade
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="OBS Blade - Your OBS, in your pocket." width="100%">
+</p>
 
-![OBS Blade - Your OBS, in your pocket.](fastlane/metadata/android/en-US/images/featureGraphic.png 'OBS Blade Store Banner')
+<h3 align="center">The open source remote for OBS Studio, on iPhone, iPad and Android.</h3>
 
-DISCLAIMER: This app is not in any way affiliated with [OBS](https://github.com/obsproject/obs-studio) (Open Broadcaster Software).
+<p align="center">
+  <a href="https://apps.apple.com/app/obs-blade/id1523915884"><img src="docs/readme/badge-app-store.svg" alt="Download on the App Store" height="48"></a>&nbsp;
+  <a href="https://play.google.com/store/apps/details?id=com.kounex.obsBlade"><img src="docs/readme/badge-google-play.png" alt="Get it on Google Play" height="48"></a>&nbsp;
+  <a href="https://f-droid.org/packages/com.kounex.obsBlade/"><img src="docs/readme/badge-f-droid.png" alt="Get it on F-Droid" height="48"></a>
+</p>
 
-Control and manage your stream and recording while using OBS by making use of the WebSocket Plugin for OBS. This project is build with the Flutter framework and could therefore be compiled and deployed for various platforms. This release is optimized for iOS and Android (Phone as well as Tablet).
+<p align="center">
+  <a href="https://apps.apple.com/app/obs-blade/id1523915884"><img src="https://img.shields.io/itunes/v/1523915884?label=version&color=FF4654" alt="Version"></a>
+  <img src="https://img.shields.io/badge/OBS_WebSocket-v5-0A84FF" alt="OBS WebSocket v5">
+  <img src="https://img.shields.io/badge/built_with-Flutter-02569B?logo=flutter" alt="Built with Flutter">
+  <a href="LICENSE.md"><img src="https://img.shields.io/github/license/Kounex/obs_blade?color=555" alt="License"></a>
+  <a href="https://github.com/Kounex/obs_blade/stargazers"><img src="https://img.shields.io/github/stars/Kounex/obs_blade?style=flat&color=FF4654" alt="Stars"></a>
+</p>
 
-Feel free to either create issues if something does not work or you want to add a feature request or pull this repo and make changes and build it on your own!
+<p align="center">
+  <a href="https://obs-blade.kounex.com"><b>Website</b></a> ·
+  <a href="https://www.youtube.com/watch?v=SQWKSXsSIcI"><b>Watch the trailer</b></a> ·
+  <a href="#preparation"><b>Setup</b></a> ·
+  <a href="#build-it-yourself"><b>Build</b></a> ·
+  <a href="https://github.com/Kounex/obs_blade/issues"><b>Issues</b></a>
+</p>
+
+<p align="center"><img src="fastlane/screenshots/en-US/iphone69_1_hero.png" width="14.2%" alt="Your OBS, in your pocket"><img src="fastlane/screenshots/en-US/iphone69_2_control-room.png" width="14.2%" alt="Your control room"><img src="fastlane/screenshots/en-US/iphone69_3_mixer.png" width="14.2%" alt="Every fader, every source"><img src="fastlane/screenshots/en-US/iphone69_4_chat.png" width="14.2%" alt="All your chats, one feed"><img src="fastlane/screenshots/en-US/iphone69_5_stats.png" width="14.2%" alt="Know how it went"><img src="fastlane/screenshots/en-US/iphone69_6_anywhere.png" width="14.2%" alt="Built for the big screen too"><img src="fastlane/screenshots/en-US/iphone69_7_custom.png" width="14.2%" alt="Make it yours"></p>
+
+<details>
+<summary><b>On iPad</b></summary>
+<br>
+<p align="center"><img src="fastlane/screenshots/en-US/ipad13_1_hero.png" width="24.9%" alt="Your OBS, in your pocket"><img src="fastlane/screenshots/en-US/ipad13_2_control-room.png" width="24.9%" alt="Your control room"><img src="fastlane/screenshots/en-US/ipad13_3_mixer.png" width="24.9%" alt="Every fader, every source"><img src="fastlane/screenshots/en-US/ipad13_4_chat.png" width="24.9%" alt="All your chats, one feed"><br><img src="fastlane/screenshots/en-US/ipad13_5_stats.png" width="24.9%" alt="Know how it went"><img src="fastlane/screenshots/en-US/ipad13_6_anywhere.png" width="24.9%" alt="Your pocket cockpit"><img src="fastlane/screenshots/en-US/ipad13_7_custom.png" width="24.9%" alt="Make it yours"></p>
+</details>
+
+> [!NOTE]
+> OBS Blade is an unofficial app. It is not affiliated with [OBS Studio](https://github.com/obsproject/obs-studio) or the OBS Project.
+
+## Run your whole show from your phone
+
+OBS Blade connects to OBS Studio over your network, so you can switch scenes, mix audio, watch your stream health and keep up with chat without leaving your game or your camera. It's built for phones and tablets alike: a focused cockpit on the phone, side-by-side layouts on the big screen.
+
+<table>
+<tr>
+<th width="50%">Free, forever</th>
+<th width="50%">OBS Blade Pro</th>
+</tr>
+<tr>
+<td valign="top">
+
+- **Go live:** start and stop your stream, recording, replay buffer and virtual camera
+- **Scenes:** switch scenes, with Studio Mode and transitions, and show or hide any source
+- **Audio:** mix with live volume meters, or mute in one tap
+- **Preview:** watch a live preview of the current scene
+- **Canvases** (OBS 32.1+): browse vertical and extra canvases, and run Aitum Vertical's own stream, recording and replay buffer
+- **Control:** switch profiles and scene collections, trigger hotkeys
+- **Stream health:** FPS, CPU, bitrate and dropped frames, live
+- **Statistics:** look back on every past stream and recording
+- **Chat:** Twitch, YouTube, Kick and Owncast in their own tab, or next to your controls while you're live
+- **Your layout:** arrange the dashboard your way
+
+</td>
+<td valign="top">
+
+- **Every chat, one place:** native Twitch, Kick and YouTube chat, on their own or merged into one live timeline where replies land on the right platform
+- **Chat that keeps up:** 7TV, BTTV and FFZ emotes, an emote picker, autocomplete, role badges, highlights, mute words and search
+- **Never miss a supporter:** an activity feed for your own channels, with follows, subs, raids, cheers, Super Chats and KICKs in one list and a to-thank queue for shout-outs
+- **Hear your chat:** messages read out loud while you play, in each message's own language if you like
+- **Moderate from your pocket:** delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch
+- **Your own themes:** design custom color themes for the whole app
+
+Monthly, yearly or a one-time lifetime unlock.
+
+</td>
+</tr>
+</table>
+
+## Get the app
+
+| Where | What you get |
+|---|---|
+| [App Store](https://apps.apple.com/app/obs-blade/id1523915884) | The current release for iPhone and iPad ![App Store version](https://img.shields.io/itunes/v/1523915884?label=&color=FF4654) |
+| [Google Play](https://play.google.com/store/apps/details?id=com.kounex.obsBlade) | The current release for Android phones and tablets |
+| [F-Droid](https://f-droid.org/packages/com.kounex.obsBlade/) · [GitHub Releases](https://github.com/Kounex/obs_blade/releases/latest) | An older open source build (3.2.0) from the [`foss`](https://github.com/Kounex/obs_blade/tree/foss) branch, without the features added since |
 
 ## Preparation
 
-In order to be able to connect to OBS with OBS Blade, you need to have the OBS WebSocket plugin installed. Depending on the OBS Studio version you have installed, you either have to install it manually or can use it out of the box.
+OBS Blade talks to OBS Studio through the **OBS WebSocket** server.
 
-If your OBS Studio version is:
-- 28.0 or higher: you are done 🎉🎉🎉 - since OBS Studio 28.0 the WebSocket plugin is part of OBS Studio out of the box and you can use the app immediately!
+1. **OBS Studio 28 or newer** ships with OBS WebSocket built in. Older versions need the [obs-websocket](https://github.com/obsproject/obs-websocket/releases) plugin, **version 5.x or newer** (upgrading OBS Studio is the better route).
+2. In OBS, open **Tools → WebSocket Server Settings**, tick **Enable WebSocket server**, and note the port (default `4455`) and the password if authentication is on.
+3. Put your phone or tablet on the **same network** as the computer running OBS.
+4. Open OBS Blade. Autodiscovery finds running OBS instances on its own. You can also type in the computer's [local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address) or a domain name.
 
-- Lower than 28.0: you need to install the WebSocket manually (if possible, I recommend upgrading OBS Studio itself). Follow these steps to proceed manually:
-  - Visit https://github.com/obsproject/obs-websocket/
-  - Go to the [Release](https://github.com/obsproject/obs-websocket/releases) section of this GitHub page and download version **5.X and above** for your operating system (found under 'Assets').
-  - Once this plugin is installed, make sure you restarted OBS Studio at least once
-  - Now you should be able to use this app!
+> [!TIP]
+> Can't connect? Check that the port isn't blocked by the computer's firewall, and that both devices really are on the same network (guest Wi-Fi often isolates devices).
 
-The device running OBS Blade needs to be in the same network as the device running OBS itself and the autodiscover feature should find open OBS sessions on its own! You can also enter the local (internal) IP address of the device running OBS ([How to find my local IP address](https://www.whatismybrowser.com/detect/what-is-my-local-ip-address)) or even enter a domain name!
+## Build it yourself
 
-## Features
+OBS Blade is a [Flutter](https://flutter.dev) app. Install Flutter by following the [official guide](https://docs.flutter.dev/get-started/install) and make sure your target platform shows up as ready:
 
-<div align="center">
-  <div style="display: flex; align-items: flex-start;">
-    <img src="fastlane/screenshots/en-US/iphone69_1_hero.png" width="134">
-    <img src="fastlane/screenshots/en-US/iphone69_2_control-room.png" width="134">
-    <img src="fastlane/screenshots/en-US/iphone69_3_mixer.png" width="134">
-    <img src="fastlane/screenshots/en-US/iphone69_4_chat.png" width="134">
-    <img src="fastlane/screenshots/en-US/iphone69_5_stats.png" width="134">
-    <img src="fastlane/screenshots/en-US/iphone69_6_anywhere.png" width="134">
-    <img src="fastlane/screenshots/en-US/iphone69_7_custom.png" width="134">
-  </div>
-</div>
-
-OBS Blade is designed to be your stream companion and help you to manage your live stream. While using OBS (Open Broadcaster Software) you can connect to the running instance and gain control over important parts of the software. This should help you to manage what your audience can see / hear without the need to switch to OBS on your machine and make such changes. You can keep doing what you do and easily use this app to control OBS!
-
-Currently OBS Blade supports:
-
-- Start / stop your stream / recording
-- Changing the active scene
-- Toggle visibility of scene items (like desktop capture etc.)
-- Change the volume of your current audio sources (or mute them)
-- View any Twitch and YouTube chats and write messages
-- See live statistics of your stream and recording performance (FPS, CPU usage, kbit/s etc.)
-
-OBS Blade also saves statistics of your previous streams and recordings so you can track the overall performance and some nice to know facts!
-
-This app is still in its early stages and will get updated with new features over time - for now the main features which I want to add are:
-
-- More engagement with OBS (renaming, sorting, scripted switching etc.)
-- Export / merge statistics
-- Soundboard
-- Incoming feature requests
-- (Maybe) Streamlabs client connection
-
-I hope you have a good time using this app. If you encounter any bugs, have feature requests or anything similar, feel free to get in touch with me!
-
-contact@kounex.com
-
-## App Store
-
-This App is available in the iOS App Store, Google Play Store, F-Droid and here on GitHub:
-
-- [iOS App Store](https://apps.apple.com/de/app/obs-blade/id1523915884?l=en)
-- [Google Play Store](https://play.google.com/store/apps/details?id=com.kounex.obsBlade)
-- [F-Droid](https://f-droid.org/packages/com.kounex.obsBlade/)
-- [GitHub](https://github.com/Kounex/obs_blade/releases/latest)
-
-## How to build
-
-This app is build with the Flutter framework. To build it yourself, you need to setup Flutter in your environment: https://docs.flutter.dev/get-started/install. Make sure the platform you want to build for is listed and marked as ready (checkmark) when you run:
-
-```
+```bash
 flutter doctor -v
 ```
 
-If your platform is not listed or is not ready (exclamation mark or 'x'), check back with the install guide listed above and make sure you followed everthing correctly and / or check the output of `flutter doctor -v` what needs to be done.
+Then fetch the dependencies and run it:
 
-Once this has been done, open the project with your preferred IDE (VSCode and Android Studio will get all dependencies automatically, if you are using another IDE or this does not happen automatically, run `flutter pub get` in the root directory of the project to get the dependencies of this project). After that you should not have any errors left and you can run the app with:
-
-```
+```bash
+flutter pub get
 flutter run
 ```
 
-How to select the device you want the app to build on and how to run this project with your IDE instead of the CLI, refer to the install guide at the beginning.
+Generated code (MobX stores, Hive adapters, freezed models) is checked in. If you change any of those sources, regenerate it:
 
-## Support me!
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
 
-I love developing free, high quality applications accessible for everyone, no need for In-App purchases or Ads. No one wants that. It takes a lot of time creating and maintaining my work - if you like using them and want me to continue working on them please consider supporting me!
+**Branches:** `master` is the current app. `foss` builds the F-Droid version, and `legacy` keeps the old app for OBS WebSocket 4.x.
 
-<a href="https://www.buymeacoffee.com/Kounex" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
-<a href="https://paypal.me/Kounex" target="_blank"><img src="docs/readme/paypal-me-logo.png" alt="PayPal.Me" height="41"  width="174"></a>
+**Contributing:** issues and pull requests are welcome. [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) explain the architecture, starting with [`docs/obs-websocket-architecture.md`](docs/obs-websocket-architecture.md).
+
+## Feedback
+
+Found a bug or have an idea? [Open an issue](https://github.com/Kounex/obs_blade/issues) or write to **contact@kounex.com**.
+
+## Support
+
+The core of OBS Blade stays free, with no ads. If it helps your streams, getting **Pro** or leaving a tip in the app is the best way to keep it going. You can also support it here:
+
+<p>
+  <a href="https://www.buymeacoffee.com/Kounex"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>&nbsp;
+  <a href="https://paypal.me/Kounex"><img src="docs/readme/paypal-me-logo.png" alt="PayPal.Me" height="41" width="174"></a>
+</p>
+
+## License
+
+OBS Blade is licensed under the [GNU GPL v3](LICENSE.md).
