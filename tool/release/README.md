@@ -19,8 +19,8 @@ dart run tool/release/bin/release.dart status
 | `beta ios\|android` | TestFlight (internal testers) / Play internal track |
 | `metadata ios\|android` | Listing text + screenshots from `fastlane/metadata` and `fastlane/screenshots` |
 | `preview ios <file.mp4> [--poster 5]` | en-US iPhone App Preview (6.9" slot) of the current version, via the App Store Connect API (fastlane can't); old previews are removed only once the new one is processed |
-| `assets ios [file.png]` | Uploads the universal creative asset (product page header + search results, iOS 27+; default `fastlane/assets/ios/universal.png`) to the Asset Library and submits it for review on its own - no app version needed; validates the dimensions against Apple's spec first |
-| `attach ios` | Places the approved universal asset on the live version's header + search results (publishes right away, no new version) |
+| `assets ios [file.png ...]` | Uploads creative assets (iOS 27+; default `fastlane/assets/ios/header.png` 3840×1646 + `search.png` 3840×2560) to the Asset Library and submits them for review together, on their own - no app version needed. Each file's size must fit one of Apple's live specs (21:9 header, 3:2 search results, or the 16:9 universal 5244×2950 that serves both); that decides its slot. A changed file needs a new file name (same name = already uploaded) |
+| `attach ios` | Places the newest approved asset of each slot (header, search results) on every localization of the live version, removing the one placed there before (publishes right away, no new version) |
 | `submit ios` | Attaches the uploaded build (manual release) and submits it with any first-time subscriptions in one review submission (App Store Connect API); once approved it waits for `publish ios` |
 | `publish ios [--version x.y.z]` | Releases the approved version to the App Store (only when it is Pending Developer Release); `--version` when the repo already moved on to the next version |
 | `promote android [--rollout 1.0]` | Play internal → production, at the given share of users |

@@ -500,11 +500,18 @@ class Release {
 
   // -------------------------------------------------------------- assets
 
-  /// Placements the universal creative asset serves (iOS 27+ product page
-  /// header + search results; "use header asset in search results").
-  static const List<String> universalPlacements = [
+  /// Creative-asset placements on the product page (iOS 27+): the header,
+  /// and the search results card. One image serves one or both, depending
+  /// on its spec (dedicated 21:9 header, 3:2 search, or 16:9 universal).
+  static const List<String> creativePlacements = [
     'PRODUCT_PAGE_HEADER_ASSET',
     'APP_STORE_SEARCH_RESULTS_ASSET',
+  ];
+
+  /// The committed creative assets `assets ios` uploads by default.
+  static const List<String> defaultCreativeAssets = [
+    'fastlane/assets/ios/header.png',
+    'fastlane/assets/ios/search.png',
   ];
 
   /// Width × height of a PNG (from its IHDR), null when [file] isn't one.
@@ -525,17 +532,17 @@ class Release {
     }
   }
 
-  /// Specs from the ref data that may serve every one of [placements].
+  /// Image specs from the ref data that may serve [placement].
   static List<Map<String, Object?>> _specsFor(
     Map<String, Object?> refData,
-    List<String> placements,
+    String placement,
   ) => ((refData['imageSpecs'] as List?) ?? const [])
       .whereType<Map<String, Object?>>()
-      .where((s) {
-        final compatible =
-            ((s['compatiblePlacementTypes'] as List?) ?? const []);
-        return placements.every(compatible.contains);
-      })
+      .where(
+        (s) => ((s['compatiblePlacementTypes'] as List?) ?? const []).contains(
+          placement,
+        ),
+      )
       .toList();
 
   static bool _fitsSpec(Map<String, Object?> spec, (int, int) size) {
@@ -547,93 +554,126 @@ class Release {
         size.$2 <= bound('maxHeight');
   }
 
-  /// Uploads the universal creative asset to the Asset Library and submits
-  /// it for review on its own (no app version needed). Once Apple approves
-  /// it, `attach` places it on the live version.
-  Future<int> assets([String? file]) async {
-    final image = File(
-      file ?? project.path('fastlane/assets/ios/universal.png'),
-    );
-    if (!image.existsSync()) {
-      stderr.writeln('No such file: ${image.path}');
-      return 1;
-    }
-    final size = _pngSize(image);
-    if (size == null) {
-      stderr.writeln('${image.path} is not a PNG.');
-      return 1;
+  /// The creative placements [spec] serves.
+  static List<String> _placementsOf(Map<String, Object?> spec) =>
+      creativePlacements
+          .where(
+            ((spec['compatiblePlacementTypes'] as List?) ?? const []).contains,
+          )
+          .toList();
+
+  /// Uploads creative assets (default: the header and the search results
+  /// image) to the Asset Library and submits them for review together, on
+  /// their own (no app version needed). Each file must fit one of Apple's
+  /// creative specs; which placement it serves follows from its size. Once
+  /// Apple approves them, `attach` places them on the live version.
+  Future<int> assets(List<String> files) async {
+    final images = [
+      for (final f in files.isEmpty ? defaultCreativeAssets : files)
+        File(files.isEmpty ? project.path(f) : f),
+    ];
+    final sizes = <File, (int, int)>{};
+    for (final image in images) {
+      if (!image.existsSync()) {
+        stderr.writeln('No such file: ${image.path}');
+        return 1;
+      }
+      final size = _pngSize(image);
+      if (size == null) {
+        stderr.writeln('${image.path} is not a PNG.');
+        return 1;
+      }
+      sizes[image] = size;
     }
     final asc = AppStore.connect();
-    final spec = _specsFor(
-      await asc.assetRefData(),
-      universalPlacements,
-    ).where((s) => _fitsSpec(s, size)).firstOrNull;
-    if (spec == null) {
-      stderr.writeln(
-        '${size.$1}x${size.$2} fits no spec that serves header + search results.',
-      );
-      return 1;
-    }
-    final mb = (image.lengthSync() / 1e6).toStringAsFixed(1);
-    final name = image.uri.pathSegments.last;
-    stdout.writeln(
-      'Upload $name (${size.$1}x${size.$2}, $mb MB, spec ${spec['specId']}) to the '
-      'Asset Library and submit it for review (standalone, no app version). '
-      'Once approved: release attach ios',
-    );
+    final refData = await asc.assetRefData();
+    final specs = {
+      for (final p in creativePlacements) ..._specsFor(refData, p),
+    }.toList();
+    final existing = await asc.assetImages();
 
-    final existing = (await asc.assetImages())
-        .where((i) => (i['attributes'] as Map)['fileName'] == name)
-        .toList();
-    final inFlight = existing.where((i) {
-      final state = (i['attributes'] as Map)['state'];
-      return state != 'FAILED' && state != 'REJECTED' && state != 'ARCHIVED';
-    }).firstOrNull;
-    if (inFlight != null) {
-      final state = (inFlight['attributes'] as Map)['state'];
+    stdout.writeln(
+      'Upload to the Asset Library and submit for review (standalone, no app '
+      'version). Once approved: release attach ios',
+    );
+    final toUpload = <File>[];
+    final inFlightIds = <String>[];
+    for (final image in images) {
+      final size = sizes[image]!;
+      final name = image.uri.pathSegments.last;
+      final spec = specs.where((s) => _fitsSpec(s, size)).firstOrNull;
+      if (spec == null) {
+        stderr.writeln(
+          '$name: ${size.$1}x${size.$2} fits no header / search results spec.',
+        );
+        return 1;
+      }
+      final mb = (image.lengthSync() / 1e6).toStringAsFixed(1);
+      stdout.write(
+        '  $name (${size.$1}x${size.$2}, $mb MB, spec ${spec['shortName']}) '
+        '-> ${_placementsOf(spec).join(' + ')}',
+      );
+      // Same file name, still on its way or already through review: the
+      // file was uploaded before (a changed file needs a new name).
+      final inFlight = existing.where((i) {
+        final a = i['attributes'] as Map;
+        return a['fileName'] == name &&
+            !{'FAILED', 'REJECTED', 'ARCHIVED'}.contains(a['state']);
+      }).firstOrNull;
+      final state = (inFlight?['attributes'] as Map?)?['state'];
       if (state == 'WAITING_FOR_REVIEW' || state == 'IN_REVIEW') {
-        stdout.writeln('  already $state - nothing to do.');
-        return 0;
+        stdout.writeln('  - already $state');
+      } else if (state == 'APPROVED' || state == 'ACCEPTED') {
+        stdout.writeln('  - already approved, run: release attach ios');
+      } else if (inFlight != null) {
+        stdout.writeln('  - uploaded before ($state), submitting that one');
+        inFlightIds.add('${inFlight['id']}');
+      } else {
+        stdout.writeln();
+        toUpload.add(image);
       }
-      if (state == 'APPROVED' || state == 'ACCEPTED') {
-        stdout.writeln('  already approved - run: release attach ios');
-        return 0;
-      }
+    }
+    if (toUpload.isEmpty && inFlightIds.isEmpty) {
+      stdout.writeln('  nothing to do.');
+      return 0;
     }
     if (!yes) {
       stdout.writeln('\nDRY RUN - re-run with --yes to do it.');
       return 0;
     }
 
-    final imageId = inFlight == null
-        ? await () async {
-            stdout.writeln('  uploading ...');
-            final result = await asc.uploadAssetImage(
-              image,
-              referenceName: 'Universal header/search $name',
-            );
-            stdout.writeln('  asset ${result.id}: ${result.state}');
-            if (result.state == 'FAILED') {
-              if (result.errors.isNotEmpty)
-                stderr.writeln('  ${result.errors}');
-              throw StateError('Apple rejected the asset upload.');
-            }
-            return result.id;
-          }()
-        : '${inFlight['id']}';
+    final imageIds = [...inFlightIds];
+    for (final image in toUpload) {
+      final name = image.uri.pathSegments.last;
+      stdout.writeln('  uploading $name ...');
+      final result = await asc.uploadAssetImage(
+        image,
+        referenceName: 'Creative asset $name',
+      );
+      stdout.writeln('  asset ${result.id}: ${result.state}');
+      if (result.state == 'FAILED') {
+        if (result.errors.isNotEmpty) stderr.writeln('  ${result.errors}');
+        throw StateError('Apple rejected the upload of $name.');
+      }
+      imageIds.add(result.id);
+    }
 
     final submission = await asc.draftReviewSubmission();
-    if (!(await asc.reviewItemIds(submission)).contains(imageId)) {
-      await asc.addAssetImageToReview(submission, imageId);
+    final inReview = await asc.reviewItemIds(submission);
+    for (final id in imageIds) {
+      if (!inReview.contains(id))
+        await asc.addAssetImageToReview(submission, id);
     }
     await asc.sendReviewSubmission(submission);
     stdout.writeln('  submitted for review (submission $submission)');
     return 0;
   }
 
-  /// Places the approved universal creative asset on the live version's
-  /// product page header + search results. On a version that is already on
-  /// the App Store this publishes right away, no new version needed.
+  /// Places the newest approved creative asset for each placement (product
+  /// page header, search results) on every localization of the live
+  /// version, replacing what was placed there before. On a version that is
+  /// already on the App Store this publishes right away, no new version
+  /// needed.
   Future<int> attach() async {
     final asc = AppStore.connect();
     final live = await asc.liveVersion();
@@ -644,46 +684,69 @@ class Release {
       return 1;
     }
     final versionName = (live['attributes'] as Map)['versionString'];
-    final universalSpecs = _specsFor(
-      await asc.assetRefData(),
-      universalPlacements,
-    ).map((s) => '${s['specId']}').toSet();
-    final asset = (await asc.assetImages()).where((i) {
-      final a = i['attributes'] as Map;
-      return (a['state'] == 'APPROVED' || a['state'] == 'ACCEPTED') &&
-          universalSpecs.contains('${a['specId']}');
-    }).firstOrNull;
-    if (asset == null) {
+    final refData = await asc.assetRefData();
+    final images = await asc.assetImages(); // newest first
+    final approved = images.where((i) {
+      final state = (i['attributes'] as Map)['state'];
+      return state == 'APPROVED' || state == 'ACCEPTED';
+    }).toList();
+    // placement type -> newest approved image serving it
+    final chosen = <String, Map<String, Object?>>{};
+    for (final type in creativePlacements) {
+      final specIds = _specsFor(refData, type).map((s) => '${s['specId']}');
+      final image = approved
+          .where(
+            (i) => specIds.contains('${(i['attributes'] as Map)['specId']}'),
+          )
+          .firstOrNull;
+      if (image != null) chosen[type] = image;
+    }
+    if (chosen.isEmpty) {
       stderr.writeln(
-        'No approved universal creative asset yet - upload + submit with: release assets ios',
+        'No approved creative asset yet - upload + submit with: release assets ios',
       );
       return 1;
     }
-    final a = asset['attributes'] as Map;
-    final imageId = '${asset['id']}';
-    final locs = await asc.localizations('${live['id']}');
-    final placed = await asc.assetPlacements(imageId);
-    bool has(String type, String locId) => placed.any((p) {
-      final pa = p['attributes'] as Map;
-      final rel =
-          ((p['relationships'] as Map?)?['appStoreVersionLocalization']
-                  as Map?)?['data']
-              as Map?;
-      return pa['placementType'] == type && rel?['id'] == locId;
-    });
 
-    stdout.writeln(
-      'Attach "${a['referenceName'] ?? a['fileName']}" (approved ${a['createdDate']}) '
-      'to the live version $versionName:',
-    );
-    final todo = <(String, String)>[];
-    for (final loc in locs) {
-      for (final type in universalPlacements) {
-        final done = has(type, '${loc['id']}');
-        stdout.writeln(
-          '  ${(loc['attributes'] as Map)['locale']}  $type${done ? '  (already placed)' : ''}',
+    // What is placed now: (type, localization) -> (placement id, image id)
+    final current = <(String, String), (String, String)>{};
+    for (final image in images) {
+      for (final p in await asc.assetPlacements('${image['id']}')) {
+        final rel =
+            ((p['relationships'] as Map?)?['appStoreVersionLocalization']
+                    as Map?)?['data']
+                as Map?;
+        if (rel == null) continue;
+        current[(
+          '${(p['attributes'] as Map)['placementType']}',
+          '${rel['id']}',
+        )] = (
+          '${p['id']}',
+          '${image['id']}',
         );
-        if (!done) todo.add((type, '${loc['id']}'));
+      }
+    }
+
+    stdout.writeln('Attach to the live version $versionName:');
+    final todo = <(String, String, String, String?)>[];
+    final locs = await asc.localizations('${live['id']}');
+    for (final MapEntry(key: type, value: image) in chosen.entries) {
+      final a = image['attributes'] as Map;
+      final imageId = '${image['id']}';
+      for (final loc in locs) {
+        final locId = '${loc['id']}';
+        final now = current[(type, locId)];
+        final done = now?.$2 == imageId;
+        stdout.writeln(
+          '  ${(loc['attributes'] as Map)['locale']}  $type  '
+          '"${a['referenceName'] ?? a['fileName']}"'
+          '${done
+              ? '  (already placed)'
+              : now != null
+              ? '  (replaces ${now.$2})'
+              : ''}',
+        );
+        if (!done) todo.add((type, imageId, locId, now?.$1));
       }
     }
     if (todo.isEmpty) {
@@ -694,7 +757,13 @@ class Release {
       stdout.writeln('\nDRY RUN - re-run with --yes to do it.');
       return 0;
     }
-    for (final (type, locId) in todo) {
+    // Each placement holds one asset (refData groupLimits maxCount 1) and
+    // placements can't be edited, so the old one goes first.
+    for (final (type, imageId, locId, old) in todo) {
+      if (old != null) {
+        await asc.deleteAssetPlacement(old);
+        stdout.writeln('  removed $type ($old)');
+      }
       final id = await asc.createAssetPlacement(
         placementType: type,
         imageId: imageId,

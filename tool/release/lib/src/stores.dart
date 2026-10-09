@@ -471,6 +471,10 @@ class AppStore {
         'v1/appAssetLibraryImages/$imageId/placements',
       )).dataList;
 
+  /// Removes a placement (the asset stays in the Asset Library).
+  Future<void> deleteAssetPlacement(String placementId) =>
+      _client.delete('v1/appAssetLibraryPlacements/$placementId');
+
   /// Places an asset on a version localization (e.g. as its product page
   /// header). On a live version this is the Console's "Publish" click.
   Future<String> createAssetPlacement({

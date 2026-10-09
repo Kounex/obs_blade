@@ -24,11 +24,12 @@ Usage: release <command> [ios|android] [--yes]
   beta ios|android            TestFlight internal / Play internal track
   metadata ios|android        listing text + screenshots
   preview ios <file.mp4> [--poster 5]   iPhone App Preview (en-US)
-  assets ios [file.png]       universal creative asset (header + search
-                              results) -> Asset Library + submit for review
-                              (default: fastlane/assets/ios/universal.png)
-  attach ios                  place the approved universal asset on the live
-                              version's header + search results
+  assets ios [file.png ...]   creative assets (product page header, search
+                              results; the size picks the slot) -> Asset
+                              Library + submit for review (default:
+                              fastlane/assets/ios/header.png + search.png)
+  attach ios                  place the newest approved asset of each slot on
+                              the live version (replaces the previous one)
   submit ios                  attach the build (+ subscriptions), submit for review
   publish ios [--version 4.0.1]   release the approved version (manual
                               release; default: pubspec's version)
@@ -95,7 +96,7 @@ Future<void> main(List<String> argv) async {
     'submit' => (needPlatform({'ios'}), await release.submit()).$2,
     'assets' => (
       needPlatform({'ios'}),
-      await release.assets(rest.length > 2 ? rest[2] : null),
+      await release.assets(rest.skip(2).toList()),
     ).$2,
     'attach' => (needPlatform({'ios'}), await release.attach()).$2,
     'publish' => (
