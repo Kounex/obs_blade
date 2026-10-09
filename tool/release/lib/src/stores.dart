@@ -465,11 +465,14 @@ class AppStore {
         },
       });
 
-  /// The placements of an asset (product page header, search results, ...).
+  /// The placements of an asset (product page header, search results, ...),
+  /// with their version localization (the relationship is only returned
+  /// when included).
   Future<List<Map<String, Object?>>> assetPlacements(String imageId) async =>
-      (await _client.get(
-        'v1/appAssetLibraryImages/$imageId/placements',
-      )).dataList;
+      (await _client.get('v1/appAssetLibraryImages/$imageId/placements', {
+        'include': 'appStoreVersionLocalization',
+        'limit': '200',
+      })).dataList;
 
   /// Removes a placement (the asset stays in the Asset Library).
   Future<void> deleteAssetPlacement(String placementId) =>
