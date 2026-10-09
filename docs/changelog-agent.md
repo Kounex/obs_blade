@@ -4,6 +4,43 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-10 - App Store header + search results: one image per slot
+
+The approved universal creative asset (5244×2950, live since 2026-10-09)
+looked wrong on the user's iPhone. The header cut off most of the
+headline, and the search card showed everything with lots of empty space.
+Measured from the user's screenshots (template-matching the universal
+image into them, score 0.98):
+
+- **Header on iPhone 6.9″**: the 21:9 header is shown at full height, but
+  only the centre **72.7%** of its width is visible (header px x 524-3316),
+  as 1320×778 screen px under the status bar and the back/share buttons
+  (header px x 651-930 / 2911-3190, y 394-673). Below that comes a hard
+  edge, then the app icon row.
+- **Search card on iPhone**: the whole 3:2 image, about 400pt wide.
+- Apple publishes no safe area in pixels. Its PSD templates
+  (devimages-cdn `creative_assets-*-template-static.psd`) have an "Art
+  Safe Area" layer: header 1646×661 @ (1097,493), search 2168×1030 @
+  (836,765), universal 1402×962 @ (1921,660).
+- Live spec (`appAssetLibraryRefData`): header-only `i3840x1646a0` (PNG),
+  search-only `i3x2w1920~3840a0` (1920×1280 to 3840×2560, JPG/PNG),
+  universal `i5244x2950a0`. One asset per slot (`maxCount` 1).
+
+Done:
+- Composer: new `header` + `search` layouts and `apple-header` /
+  `apple-search` sets (store-shots). The header puts the headline left of
+  centre below the back button, and the devices right of centre, clear of
+  the share button. The search card fills the frame with bigger copy and
+  devices.
+- `release assets ios [files...]`: default `header.png` + `search.png`.
+  Apple's spec matched to each file's size picks its slot, and both go in
+  one review submission. `release attach ios`: places the newest approved
+  asset per slot, deleting the previous placement first.
+  `assetPlacements` now passes `include=appStoreVersionLocalization`.
+  Without it Apple returns no relationships, and attach could not see
+  what was already placed.
+- Submitted both for review (see handoff).
+
 ## 2026-10-07 - Pricing: 2026-10-05 batch confirmed live; tool misread fixed
 
 The scheduled App Store price changes DID take effect on 2026-10-05 as

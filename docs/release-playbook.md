@@ -92,11 +92,15 @@ identical).
   version still has one (ASC copies media into a new version) and use
   `release preview ios` if not.
 - Creative assets (iOS 27+ product page header + search results) live in
-  the Asset Library, independent of versions: `release assets ios` uploads
-  `fastlane/assets/ios/universal.png` and submits it standalone for
-  review, `release attach ios` places the approved asset on the live
-  version (publishes immediately, no new version). Approved assets can be
-  swapped at any time without another review.
+  the Asset Library, independent of versions. `release assets ios`
+  uploads `fastlane/assets/ios/header.png` (3840×1646) + `search.png`
+  (3840×2560) and submits them standalone for review. Each file's size
+  picks its slot, and a universal 5244×2950 works too. `release attach
+  ios` places the newest approved asset per slot on the live version and
+  replaces the previous one; it publishes immediately, with no new
+  version. A changed image needs a new file name, because the tool treats
+  the same name as already uploaded. Images come from the store-shots
+  composer (`apple-header` / `apple-search` sets).
 
 ## Rollout
 

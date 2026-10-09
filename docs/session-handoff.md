@@ -36,11 +36,15 @@ compositor's review gallery hosted at
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
-1. **Creative asset**: when review approves it → `release attach ios`
-   (dry run, then --yes) on the workstation, verify in ASC's Header and
-   Search Results preview tool. If the API refuses placements on a live
-   version: Console → live version → Header and Search Results → Browse
-   Assets → Publish.
+1. **Creative assets (2026-10-10)**: the universal image was approved and
+   placed (live since 2026-10-09), but cropped badly per slot on iPhone
+   (header cut the headline, search card mostly empty). Replaced by two
+   dedicated images, `fastlane/assets/ios/header.png` (3840×1646) +
+   `search.png` (3840×2560), submitted together via `release assets ios`.
+   **When approved** → `release attach ios` (dry run, then --yes) on the
+   workstation: it deletes the universal's placement per slot and places
+   the new one (delete + create is unprobed on a live version). Check on
+   a phone afterwards. How to make new ones: store-shots `AGENTS.md` → "Creative assets".
 2. Upload key A6:24:44 still "in review" → after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard
    Play internal-track draft `3.3.0 (2026090701)`.
