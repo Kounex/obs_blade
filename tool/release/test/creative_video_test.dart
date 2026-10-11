@@ -118,6 +118,12 @@ void main() {
     expect(miss(withAudio, video(3840, 1646, audio: true)), isNull);
   });
 
+  test('spec names carry their own minimum length', () {
+    expect(Release.specNameMinSeconds('v3840x1646f30f60t10~30u0'), 10);
+    expect(Release.specNameMinSeconds('v3x2w1920~3840f30f60t15~30u0'), 15);
+    expect(Release.specNameMinSeconds('i3840x1646'), isNull);
+  });
+
   test('poster time codes count frames at the video frame rate', () {
     expect(Release.timeCode(0, fps: 60), '00:00:00:00');
     expect(Release.timeCode(2.5, fps: 60), '00:00:02:30');

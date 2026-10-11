@@ -556,6 +556,14 @@ class Release {
     return int.parse(m.group(1) ?? '0') * 60 + double.parse(m.group(2) ?? '0');
   }
 
+  /// Shortest length a video spec's *name* allows (`...t15~30u0` -> 15).
+  /// Apple's names and `duration` fields disagree (names 10 / 15 s,
+  /// fields 5 s, 2026-10-11), so `assets` warns below the name's minimum.
+  static double? specNameMinSeconds(Object? shortName) {
+    final m = RegExp(r't(\d+)~(\d+)').firstMatch('${shortName ?? ''}');
+    return m == null ? null : double.parse(m.group(1)!);
+  }
+
   /// Why [video] misses a video [spec] from the ref data, null when it fits.
   static String? videoSpecMiss(
     Map<String, Object?> spec,
@@ -759,6 +767,14 @@ class Release {
           ? ''
           : ', ${facts.fps.round()} fps, ${facts.duration.toStringAsFixed(1)} s, '
                 'poster ${timeCode(poster, fps: facts.fps.round())}';
+      final nameMin = specNameMinSeconds(spec['shortName']);
+      if (facts != null && nameMin != null && facts.duration < nameMin - 0.05) {
+        stderr.writeln(
+          '  warning: $name is ${facts.duration.toStringAsFixed(1)} s - the spec '
+          'name ${spec['shortName']} reads ${nameMin.round()} s or more while its '
+          'duration field allows it; ${nameMin.round()} s fits both.',
+        );
+      }
       stdout.write(
         '  $name (${size.$1}x${size.$2}$what, $mb MB, spec ${spec['shortName']}) '
         '-> ${_placementsOf(spec).join(' + ')}',
