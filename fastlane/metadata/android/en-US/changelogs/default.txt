@@ -1,10 +1,9 @@
-4.1: two new Pro features and OBS 32.1 canvas support:
+4.2: your scene preview now moves like OBS does:
 
-- Activity feed: follows, subs, raids, cheers, Super Chats and KICKs in one list, with a to-thank queue
-- Text-to-speech: your chat read out loud, a voice per language
-- Canvases: view a vertical canvas and control Aitum Vertical's stream and recording
-- YouTube chat shows emojis, with an emoji picker when you write
-- Wake Lock (screen stays on) now covers the whole app
-- Changes made in OBS show up right away
+- Scene transitions play in the preview: fades, swipes, slides, luma wipes and stingers, as set in OBS (turn off in Settings → Dashboard)
+- Scene items show the colors you set in OBS 32 (right-click → Set Color)
+- Scene items follow a switch made in OBS as soon as the transition starts
+- Edit Visibility has clearer Visible / Hidden buttons
+- Visibility, lock and mute icons show on and off at a glance
 
 Keep it coming on GitHub!

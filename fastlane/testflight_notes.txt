@@ -1,18 +1,22 @@
-4.1.0 test build 8. New since build 7:
+4.2.0 test build 1 (2026101101).
 
-CHAT HISTORY (all platforms)
-- Chats keep the whole session's messages beyond the 500-row on-screen cap (in memory only - gone on app restart, sign-out, or channel removal)
-- Long-press a message -> user card: message history shows the latest 50 with timestamps (YouTube + Kick too now), "Show older messages" pulls the rest
-- Options sheet -> All chats -> Session history: cap slider 10k-200k in 10k steps (default 50k) with a worst-case memory estimate (green / amber / red); applies live, Reset restores 50k
-- /clear deliberately KEEPS the session history (matches the tombstone UX)
+SCENE PREVIEW TRANSITIONS
+- Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
+- Per-scene transition override and a changed duration are picked up
+- Studio mode: the T-bar / Transition button; a cancelled T-bar drag must not move the scene tiles
+- Settings -> Dashboard -> Preview Transitions off = instant cut again; Reduce Motion also cuts
+- A switch made in OBS moves the scene tiles + Scene Items at the start of the transition (was: at its end)
 
-BACKGROUND CATCH-UP (Twitch + Kick)
-- App in the background for a while, then back: Twitch and Kick chats fetch and merge the missed window into the timeline (YouTube already did); a "Some messages while away are missing" divider marks any gap that couldn't be filled
-- Respects the Twitch load-history setting: with join history off, no resume fetch either
+SOURCE COLORS (OBS 32+)
+- In OBS: Sources dock -> right-click -> Set Color (presets + custom) -> Scene Items rows are tinted the same
+- Group rows and their children; locked / hidden rows still readable
+- A color changed in OBS while connected shows with the next item list read (scene switch) - OBS sends no event
+- Tap between scenes quickly: no row may flash another scene's color, and eye / lock taps during a switch act on that row's own source
+- Older OBS: rows untinted, nothing else changes
 
-FIXES
-- YouTube chat no longer stalls after a timeout/ban event (bad number format from the API)
+EDIT VISIBILITY + ICONS
+- Edit Visibility (Scene Items + Audio): the pane is a Visible / Hidden pill, no splash on tap; check a 320pt-wide phone and tablet
+- Eye / lock: white when on, grey when off; audio mute uses the new speaker icon
 
 ALSO
-- Keep an eye on build 7's list (YouTube emojis + picker, user cards on YouTube/Kick, one options sheet, scrolled-up reading, grouped scene items)
-- Updating over the store version (4.0.1) keeps saved connections and settings
+- Updating over the store version (4.1.0) keeps saved connections, settings and hidden items
