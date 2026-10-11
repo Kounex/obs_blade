@@ -4,6 +4,30 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-11 - Visibility toggles in the row glyph family, edit pane as a pill
+
+User: the Edit Visibility buttons that slide in from the left of each
+scene item looked awful. Cause: the pane stacked an 18 pt icon over a
+label inside a 48 pt row - the content didn't fit, so "Hidden" spilled
+past the box's border - and `CustomSlidableAction` aligns (not
+stretches) its child, so the box shrank to a 43 pt blob. The eye was a
+Material glyph next to iOS lock / filter glyphs everywhere it appears.
+
+- **Pane** (`visibility_slide_wrapper.dart`, scene items + audio +
+  canvas items): one 28 pt pill, icon + label side by side, status-pill
+  grammar - visible lit (onSurface 14% fill / 45% border), hidden the
+  neutral hairline pill; max 104 pt, pinned left (tablet panes are
+  wide), content scales down on 320 pt phones.
+- **Glyphs** (user picked "match the lock"): eye_fill / eye_slash in
+  scene item rows, canvas items, Filters sheet, media hub arrange sheet,
+  scene-button badge, settings element order, password show / hide;
+  audio mute speaker_2_fill / speaker_slash (same as the TTS toggle).
+- **Verified**: `tool/widget_shots/visibility_toggle_shots_test.dart`
+  (pane on phone / 320 pt / tablet, row eyes beside the lock, audio rows
+  + audio pane) looked at; neighbors re-rendered (source colors, canvas
+  badge). The Filters sheet polls OBS on a timer, so it has no headless
+  shot - its eye is the same glyph swap as the row.
+
 ## 2026-10-11 - Header asset v2: the first iPhone crop model was wrong
 
 The header + search assets from 2026-10-10 were approved and live. On
