@@ -35,14 +35,13 @@ compositor's review gallery hosted at
 :8460, re-renders live).
 
 **On the dogfood device (2026-10-11, awaiting the user's verdict):**
-dogfood release install of `746dbebd` on Kounex iOS - Edit Visibility
-pane as a status pill without ink splash, Material eye kept, iOS mute
-speaker (changelog same date). **Open:** the user saw an OBS source color
-missing on the phone; not reproduced - the real app on the simulator and
-the live store test tint the same MacBook OBS item (yellow preset).
-Awaiting the user's exact steps / OBS.
-After the OK: `/code-review high`, then the next release (4.2.0 vs 4.1.1
-still open - preview transitions + source colors are features).
+dogfood release install of `232ad3ea` on Kounex iOS - Edit Visibility
+pane as a status pill (no ink splash, Material eye kept), iOS mute
+speaker, and scene item rows keep their list's scene during a switch
+(no early tint from the next scene; eye / lock hit the row's own source).
+Reviewed (fresh context, no findings). After the OK: `/code-review high`,
+then the next release (4.2.0 vs 4.1.1 still open - preview transitions +
+source colors are features).
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
