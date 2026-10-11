@@ -36,15 +36,15 @@ compositor's review gallery hosted at
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
-1. **Creative assets**: dedicated header + search images approved and
-   **live** (placed on 4.1.0 en-US, checked 2026-10-11). The search card
-   looks as designed. The header came out roomy because a 21:9 header is
-   laid out differently from the universal (changelog 2026-10-11).
-   **v2 of both is rendered** in store-shots (`out/apple-header`,
-   `out/apple-search`, mockups in `out/_creative/`) and waits on the
-   user's go. To ship it: copy to `fastlane/assets/ios/`, commit,
-   `release assets ios --yes`, and after approval `release attach ios
-   --yes`. How to make new ones: store-shots `AGENTS.md` → "Creative
+1. **Creative assets**: v1 header + search are live (4.1.0 en-US).
+   **v2 header + v3 search are in review** (2026-10-11, assets
+   `a3c00005-…` / `8a400005-…`, submission `1ec1788c-…`; committed in
+   `fastlane/assets/ios/`). Header resized to the real iPhone layout,
+   search card zoomed in at the user's request. **When approved:**
+   `release attach ios` (dry run, then --yes) swaps both onto the live
+   version (delete old placement + create new: first real run). Then
+   ask for phone screenshots of the product page + a search result.
+   Recipe for new ones (any app): store-shots `AGENTS.md` → "Creative
    assets".
 2. Upload key A6:24:44 still "in review" → after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard

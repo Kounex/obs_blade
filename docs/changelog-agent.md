@@ -23,6 +23,15 @@ are corrected. `release assets ios` now treats a file as already uploaded
 only when its name *and* byte size match, so a re-render can keep its
 name.
 
+Same day: the search card was zoomed in further (v3: headline 272 px, sub
+128 px, copy from x 400, tablet bleeding off the right edge) after the
+user found v2 still roomy. Header v2 + search v3 submitted (`1ec1788c-…`).
+The first try failed with 409 DUPLICATE, because Apple wants unique
+asset reference names; the tool now timestamps them. The store-shots
+layouts now also work for iPhone-only apps (no `shot2`) and take
+`copyScale` for longer headlines. The any-app recipe is in store-shots
+AGENTS.md.
+
 ## 2026-10-10 - App Store header + search results: one image per slot
 
 The approved universal creative asset (5244×2950, live since 2026-10-09)
