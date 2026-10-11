@@ -4,6 +4,36 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-11 - Scene switch tinted old rows with the next scene's color
+
+Dogfood: tapping another scene colored a row of the old list before the
+new list showed up. Cause (class: rows keyed by the *active* scene
+instead of the scene their list belongs to): a tap moves
+`activeSceneName` (studio: the preview name) at once, the old rows stay
+until the next `GetSceneItemList` answer, and item ids repeat across
+scenes - the row's color key `<new scene>|<old id>` hit the next scene's
+item. Same key fed the row's eye / lock: a tap in that window sent
+`SetSceneItemEnabled` / `Locked` for the next scene's item with that id
+(another source, possibly live).
+
+- Fix: `SceneItemTile._sceneName` resolves `parentGroupName` >
+  `DashboardStore.sceneItemsSceneName` (set together with the list) >
+  the old active / preview fallback. Steady state is unchanged; only the
+  switch window differs.
+- Tests: `test/dashboard/scene_item_tile_switch_test.dart` - untinted
+  old row while a switch is in flight + tinted after the list lands,
+  exposed studio preview pick, and the eye's `SetSceneItemEnabled`
+  targeting the row's own scene (fake peer); all three fail on the old
+  code.
+- Also reported in the same session, not a bug: a color missing on the
+  phone didn't reproduce (live store test + the real app on the
+  simulator tint the MacBook OBS item); the gotchas doc has the live
+  answers and probes.
+- Left out: the Edit Visibility pane's hidden-item lookup also keys on
+  the active scene (`visibility_slide_wrapper.dart`) - same window, but
+  it needs id **and** name to match, and switching its key would move
+  saved hidden entries for exposed-studio-mode users.
+
 ## 2026-10-11 - Edit Visibility pane as a pill, iOS mute speaker
 
 User: the Edit Visibility buttons that slide in from the left of each

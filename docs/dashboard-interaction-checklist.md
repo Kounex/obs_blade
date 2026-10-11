@@ -34,6 +34,11 @@ Sources dock):
   shows only with the next item list read
 - tinted rows in the visibility edit mode: slide actions and the
   lock / hidden states must still read
+- a scene switch in flight (tap a scene tile, or pick a studio preview
+  scene): the old rows stay until the new list lands and must keep their
+  own scene - no tint from the next scene's item with the same id, and
+  their eye / lock still act on the row's own source
+  (`sceneItemsSceneName`, not the active scene)
 
 Row toggles: `onSurface` when on, `disabledColor` when off. The eye
 stays the Material `visibility` / `visibility_off` glyph (user preference,
