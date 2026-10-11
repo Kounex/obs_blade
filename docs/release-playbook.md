@@ -98,8 +98,8 @@ identical).
   picks its slot, and a universal 5244×2950 works too. `release attach
   ios` places the newest approved asset per slot on the live version and
   replaces the previous one; it publishes immediately, with no new
-  version. A changed image needs a new file name, because the tool treats
-  the same name as already uploaded. Images come from the store-shots
+  version. A file counts as already uploaded when both its name and its
+  byte size match one in the Asset Library. Images come from the store-shots
   composer (`apple-header` / `apple-search` sets).
 
 ## Rollout

@@ -4,6 +4,25 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-11 - Header asset v2: the first iPhone crop model was wrong
+
+The header + search assets from 2026-10-10 were approved and live. On
+the user's iPhone 17 Pro Max (440pt) the search card matched the mockup.
+The header felt roomy: everything was ~23% smaller than designed and
+the text sat further in. `measure.py` on the live screenshot shows iOS
+handles a **21:9 header differently from the 16:9 universal**. It fits
+the image to the header box minus the 60pt status bar + buttons row,
+fills that row with a blurred mirror of the image's top edge, and shows
+**94% of the width** (x 109-3716; ~86% on a 402pt iPhone, computed). We
+had designed for the universal's "cover" crop (73% visible). Fixed:
+`engine/creative/check.py` now models this, and its mockup reproduces
+the live screenshot. The `header` layout is v2 (headline 245 px, larger
+devices). The search card got slightly bigger copy and devices too. The
+store-shots AGENTS.md table + lesson and the `store-screenshots` skill
+are corrected. `release assets ios` now treats a file as already uploaded
+only when its name *and* byte size match, so a re-render can keep its
+name.
+
 ## 2026-10-10 - App Store header + search results: one image per slot
 
 The approved universal creative asset (5244×2950, live since 2026-10-09)
@@ -12,8 +31,9 @@ headline, and the search card showed everything with lots of empty space.
 Measured from the user's screenshots (template-matching the universal
 image into them, score 0.98):
 
-- **Header on iPhone 6.9″**: the 21:9 header is shown at full height, but
-  only the centre **72.7%** of its width is visible (header px x 524-3316),
+- **Header on iPhone 6.9″** (*wrong for a 21:9 header, see 2026-10-11 -
+  this is how the 16:9 universal behaved*): the header is shown at full
+  height, but only the centre **72.7%** of its width is visible (header px x 524-3316),
   as 1320×778 screen px under the status bar and the back/share buttons
   (header px x 651-930 / 2911-3190, y 394-673). Below that comes a hard
   edge, then the app icon row.

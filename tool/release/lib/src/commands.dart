@@ -613,11 +613,13 @@ class Release {
         '  $name (${size.$1}x${size.$2}, $mb MB, spec ${spec['shortName']}) '
         '-> ${_placementsOf(spec).join(' + ')}',
       );
-      // Same file name, still on its way or already through review: the
-      // file was uploaded before (a changed file needs a new name).
+      // Same file name and byte size, still on its way or already through
+      // review: this file was uploaded before. A re-render under the same
+      // name differs in size and is uploaded again.
       final inFlight = existing.where((i) {
         final a = i['attributes'] as Map;
         return a['fileName'] == name &&
+            a['fileSize'] == image.lengthSync() &&
             !{'FAILED', 'REJECTED', 'ARCHIVED'}.contains(a['state']);
       }).firstOrNull;
       final state = (inFlight?['attributes'] as Map?)?['state'];
