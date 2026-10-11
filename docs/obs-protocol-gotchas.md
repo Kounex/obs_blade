@@ -133,6 +133,12 @@ Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design
   color (Qt HexArgb); preset 1 with an empty / missing `color` renders
   **untinted** (OBS builds an empty stylesheet), as do unknown / missing
   keys.
+- Live check (2026-10-11, OBS 32.2.2 / obs-websocket 5.7.4): a preset
+  item answers `{"color":"","color-preset":3}` - the empty `color` sits
+  next to a preset too; a group answers `{"collapsed":false}`, an
+  uncolored item `{}`. Read-only probes: `tool/obs_local/
+  source_colors_probe.dart` (raw answers) and
+  `source_colors_live_test.dart` (real DashboardStore vs OBS).
 
 ## General
 
