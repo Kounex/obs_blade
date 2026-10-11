@@ -34,6 +34,12 @@ compositor's review gallery hosted at
 **https://obs-blade-gallery.kounex.com** (Cloudflare Access/Authentik, NAS
 :8460, re-renders live).
 
+**On the dogfood device (2026-10-11, awaiting the user's verdict):**
+dogfood release install of `5dda0185` on Kounex iOS - Edit Visibility
+pane as a status pill + iOS eye / speaker glyphs (changelog same date).
+After the OK: `/code-review high`, then the next release (4.2.0 vs 4.1.1
+still open - preview transitions + source colors are features).
+
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
 1. **Creative assets**: v1 header + search are live (4.1.0 en-US).
