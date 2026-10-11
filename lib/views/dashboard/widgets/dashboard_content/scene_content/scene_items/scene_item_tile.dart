@@ -27,8 +27,17 @@ class SceneItemTile extends StatelessWidget {
   /// Groups in WebSocket 5.X and higher is weird, therefore we need to use
   /// the parents scene item name as the 'sceneName' property if we are
   /// changing a child of a group...
+  ///
+  /// Top-level rows belong to the scene their list was read for
+  /// ([DashboardStore.sceneItemsSceneName]), not the active scene: a switch
+  /// moves [DashboardStore.activeSceneName] (or the studio preview) at
+  /// once, while the old rows stay until the new list arrives - and item
+  /// ids repeat across scenes, so the active scene would hand an old row
+  /// the new scene's color, and its toggles would hit the new scene's
+  /// item with the same id. The fallback only covers rows without a read
   String? _sceneName(DashboardStore dashboardStore, Box settingsBox) =>
       this.sceneItem.parentGroupName ??
+      dashboardStore.sceneItemsSceneName ??
       (settingsBox.get(
                 SettingsKeys.ExposeStudioControls.name,
                 defaultValue: false,
@@ -84,10 +93,10 @@ class SceneItemTile extends StatelessWidget {
   }) {
     /// Source color assigned in OBS 32+ (Sources dock -> Set Color) tints
     /// the full row, OBS-style. The key resolves like the mutations do
-    /// ([_sceneName]) - but with the store's `_displayedSceneName`
-    /// fallback to the active scene: in exposed studio mode the preview
-    /// scene name can still be null for a moment (a `null|<id>` key would
-    /// flash an untinted row). Children are cached under their parent
+    /// ([_sceneName]: the scene the row's list was read for, so a switch
+    /// in flight never tints an old row with the next scene's color) - with
+    /// a last fallback to the active scene for rows without a read (a
+    /// `null|<id>` key would never match). Children are cached under their parent
     /// group's source name. No color -> exactly the previous rendering.
     /// The Container sits inside the VisibilitySlideWrapper's Slidable,
     /// so the tint travels with the row and the slide actions stay behind
