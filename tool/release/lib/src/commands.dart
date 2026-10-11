@@ -650,7 +650,9 @@ class Release {
       stdout.writeln('  uploading $name ...');
       final result = await asc.uploadAssetImage(
         image,
-        referenceName: 'Creative asset $name',
+        // Apple wants reference names unique across the Asset Library
+        referenceName:
+            'Creative asset $name ${DateTime.now().toUtc().toIso8601String().substring(0, 16)}Z',
       );
       stdout.writeln('  asset ${result.id}: ${result.state}');
       if (result.state == 'FAILED') {
