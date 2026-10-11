@@ -71,3 +71,9 @@ fastlane/metadata/ios/review_information/
 # fastlane run output (regenerated on every run)
 fastlane/README.md
 fastlane/report.xml
+
+# Rendered store videos (App Previews, header / search creative videos) -
+# re-rendered ad hoc by store-shots from its cut specs, never committed
+fastlane/assets/**/*.mp4
+fastlane/assets/**/*.mov
+fastlane/assets/**/*.m4v

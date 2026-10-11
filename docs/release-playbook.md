@@ -102,11 +102,13 @@ identical).
   byte size match one in the Asset Library. Images come from the store-shots
   composer (`apple-header` / `apple-search` sets).
 - Both slots also take a **video** (header exactly 3840×1646, search 3:2,
-  30/60 fps, 5-30 s, audio optional): `release assets ios
-  fastlane/assets/ios/header.mp4 fastlane/assets/ios/search.mp4 --poster 0`,
-  then `attach` as above. The suggested video is a "live image" of the
-  still (store-shots `apple-creative` cuts `appstore-header` /
-  `appstore-search`), not a feature video.
+  30/60 fps, 5-30 s by the duration field - make them **15 s**, Apple's
+  spec names read 10 / 15 s minimum; audio optional): `release assets ios
+  <header.mp4> <search.mp4> --poster 0`, then `attach` as above. The
+  suggested video is a "live image" of the still (store-shots
+  `apple-creative` cuts `appstore-header` / `appstore-search`), not a
+  feature video. **Videos are never committed** (`.gitignore`): render them
+  ad hoc in store-shots and pass the files straight to the tool.
 
 ## Rollout
 
