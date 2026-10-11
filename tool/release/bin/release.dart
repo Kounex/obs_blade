@@ -24,10 +24,12 @@ Usage: release <command> [ios|android] [--yes]
   beta ios|android            TestFlight internal / Play internal track
   metadata ios|android        listing text + screenshots
   preview ios <file.mp4> [--poster 5]   iPhone App Preview (en-US)
-  assets ios [file.png ...]   creative assets (product page header, search
-                              results; the size picks the slot) -> Asset
+  assets ios [file ...] [--poster 0]   creative assets (product page
+                              header, search results; PNG or mp4/m4v/mov
+                              video, the size picks the slot) -> Asset
                               Library + submit for review (default:
-                              fastlane/assets/ios/header.png + search.png)
+                              fastlane/assets/ios/header.png + search.png);
+                              --poster = a video's still frame in seconds
   attach ios                  place the newest approved asset of each slot on
                               the live version (replaces the previous one)
   submit ios                  attach the build (+ subscriptions), submit for review
@@ -43,7 +45,7 @@ Future<void> main(List<String> argv) async {
   final parser = ArgParser()
     ..addFlag('yes', negatable: false)
     ..addOption('rollout', defaultsTo: '1')
-    ..addOption('poster', defaultsTo: '5')
+    ..addOption('poster') // preview: 5 s, assets: 0 s
     ..addOption('version')
     ..addFlag('help', abbr: 'h', negatable: false);
   final args = parser.parse(argv);
@@ -86,7 +88,7 @@ Future<void> main(List<String> argv) async {
       rest.length > 2
           ? await release.preview(
               rest[2],
-              double.parse(args['poster'] as String),
+              double.parse((args['poster'] as String?) ?? '5'),
             )
           : () {
               stderr.writeln('preview needs the video file\n\n$usage');
@@ -96,7 +98,10 @@ Future<void> main(List<String> argv) async {
     'submit' => (needPlatform({'ios'}), await release.submit()).$2,
     'assets' => (
       needPlatform({'ios'}),
-      await release.assets(rest.skip(2).toList()),
+      await release.assets(
+        rest.skip(2).toList(),
+        poster: double.parse((args['poster'] as String?) ?? '0'),
+      ),
     ).$2,
     'attach' => (needPlatform({'ios'}), await release.attach()).$2,
     'publish' => (

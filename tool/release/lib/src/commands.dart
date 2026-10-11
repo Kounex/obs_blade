@@ -5,6 +5,9 @@ import 'dart:typed_data';
 import 'project.dart';
 import 'stores.dart';
 
+/// What `assets` needs to know about a creative-asset video (ffprobe).
+typedef VideoFacts = ({int w, int h, double fps, double duration, bool audio});
+
 /// Forbidden in store builds: the Pro test unlock must never ship.
 const String _forbiddenDefine = 'PRO_RELEASE_TEST_UNLOCK';
 
@@ -429,12 +432,13 @@ class Release {
   /// it down for the smaller iPhones).
   static const String iphonePreviewType = 'IPHONE_67';
 
-  /// `HH:MM:SS:FF` at 30 fps, the format of `previewFrameTimeCode`.
-  static String timeCode(double seconds) {
-    final frames = (seconds * 30).round();
+  /// `HH:MM:SS:FF` (frames at [fps], default 30), the format of
+  /// `previewFrameTimeCode`.
+  static String timeCode(double seconds, {int fps = 30}) {
+    final frames = (seconds * fps).round();
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(frames ~/ 108000)}:${two(frames ~/ 1800 % 60)}:'
-        '${two(frames ~/ 30 % 60)}:${two(frames % 30)}';
+    return '${two(frames ~/ (3600 * fps))}:${two(frames ~/ (60 * fps) % 60)}:'
+        '${two(frames ~/ fps % 60)}:${two(frames % fps)}';
   }
 
   /// Uploads [file] as the en-US iPhone App Preview of the current version,
@@ -508,6 +512,86 @@ class Release {
     'APP_STORE_SEARCH_RESULTS_ASSET',
   ];
 
+  static const Set<String> videoExtensions = {'.mp4', '.m4v', '.mov'};
+
+  static bool isVideo(String path) =>
+      videoExtensions.any(path.toLowerCase().endsWith);
+
+  /// What ffprobe reports about [file], null when it can't read it.
+  static Future<VideoFacts?> probeVideo(File file) async {
+    final r = await Process.run('ffprobe', [
+      '-v',
+      'error',
+      '-show_entries',
+      'stream=codec_type,width,height,r_frame_rate:format=duration',
+      '-of',
+      'json',
+      file.path,
+    ]);
+    if (r.exitCode != 0) return null;
+    final j = jsonDecode('${r.stdout}') as Map<String, Object?>;
+    final streams = ((j['streams'] as List?) ?? const []).cast<Map>();
+    final v = streams.where((s) => s['codec_type'] == 'video').firstOrNull;
+    if (v == null) return null;
+    final rate = '${v['r_frame_rate']}'.split('/');
+    final fps = rate.length == 2
+        ? double.parse(rate[0]) / double.parse(rate[1])
+        : double.parse(rate[0]);
+    return (
+      w: v['width'] as int,
+      h: v['height'] as int,
+      fps: fps,
+      duration: double.parse('${(j['format'] as Map)['duration']}'),
+      audio: streams.any((s) => s['codec_type'] == 'audio'),
+    );
+  }
+
+  /// Seconds of an ISO 8601 duration as the ref data writes them (`PT5S`,
+  /// `PT30S`, `PT1M`), null when it isn't one.
+  static double? isoSeconds(Object? value) {
+    final m = RegExp(
+      r'^PT(?:(\d+)M)?(?:([\d.]+)S)?$',
+    ).firstMatch('${value ?? ''}');
+    if (m == null || (m.group(1) == null && m.group(2) == null)) return null;
+    return int.parse(m.group(1) ?? '0') * 60 + double.parse(m.group(2) ?? '0');
+  }
+
+  /// Why [video] misses a video [spec] from the ref data, null when it fits.
+  static String? videoSpecMiss(
+    Map<String, Object?> spec,
+    VideoFacts video, {
+    required int bytes,
+    required String fileName,
+  }) {
+    if (!fitsSpec(spec, (video.w, video.h)))
+      return 'size ${video.w}x${video.h}';
+    final rates = ((spec['frameRates'] as List?) ?? const []).cast<Map>();
+    if (rates.isNotEmpty &&
+        !rates.any(
+          (r) =>
+              video.fps >= (r['minFps'] as num) - 0.01 &&
+              video.fps <= (r['maxFps'] as num) + 0.01,
+        )) {
+      return '${video.fps.toStringAsFixed(2)} fps';
+    }
+    final d = (spec['duration'] as Map?) ?? const {};
+    final lo = isoSeconds(d['min']), hi = isoSeconds(d['max']);
+    // container durations run a frame or so past the cut
+    if ((lo != null && video.duration < lo - 0.05) ||
+        (hi != null && video.duration > hi + 0.1)) {
+      return '${video.duration.toStringAsFixed(2)} s (${d['min']}-${d['max']})';
+    }
+    final max = spec['maxFileSize'] as num?;
+    if (max != null && bytes > max) return '${bytes ~/ 1000000} MB';
+    final exts = ((spec['fileExtensions'] as List?) ?? const []).cast<String>();
+    if (exts.isNotEmpty &&
+        !exts.any((e) => fileName.toLowerCase().endsWith(e))) {
+      return 'file type (${exts.join(' ')})';
+    }
+    if (spec['audioRequired'] == true && !video.audio) return 'no audio track';
+    return null;
+  }
+
   /// The committed creative assets `assets ios` uploads by default.
   static const List<String> defaultCreativeAssets = [
     'fastlane/assets/ios/header.png',
@@ -532,11 +616,13 @@ class Release {
     }
   }
 
-  /// Image specs from the ref data that may serve [placement].
+  /// Image (or, with [video], video) specs from the ref data that may serve
+  /// [placement].
   static List<Map<String, Object?>> _specsFor(
     Map<String, Object?> refData,
-    String placement,
-  ) => ((refData['imageSpecs'] as List?) ?? const [])
+    String placement, {
+    bool video = false,
+  }) => ((refData[video ? 'videoSpecs' : 'imageSpecs'] as List?) ?? const [])
       .whereType<Map<String, Object?>>()
       .where(
         (s) => ((s['compatiblePlacementTypes'] as List?) ?? const []).contains(
@@ -545,9 +631,20 @@ class Release {
       )
       .toList();
 
-  static bool _fitsSpec(Map<String, Object?> spec, (int, int) size) {
+  /// Whether [size] fits [spec]'s dimension bounds and its aspect ratio:
+  /// the bounds alone are a box (search is 1920-3840 x 1280-2560), so a
+  /// 3840x1646 header would pass them - `aspectRatio` (`"3:2"`) decides.
+  static bool fitsSpec(Map<String, Object?> spec, (int, int) size) {
     final d = (spec['dimensions'] as Map?) ?? const {};
     num bound(String key) => (d[key] as num?) ?? -1;
+    final ratio = RegExp(
+      r'^(\d+):(\d+)$',
+    ).firstMatch('${spec['aspectRatio'] ?? ''}');
+    if (ratio != null) {
+      final want = int.parse(ratio.group(1)!) / int.parse(ratio.group(2)!);
+      // Apple's own sizes round (5244x2950 is "16:9", 3840x1646 "21:9")
+      if ((size.$1 / size.$2 - want).abs() / want > 0.01) return false;
+    }
     return size.$1 >= bound('minWidth') &&
         size.$1 <= bound('maxWidth') &&
         size.$2 >= bound('minHeight') &&
@@ -564,78 +661,133 @@ class Release {
 
   /// Uploads creative assets (default: the header and the search results
   /// image) to the Asset Library and submits them for review together, on
-  /// their own (no app version needed). Each file must fit one of Apple's
-  /// creative specs; which placement it serves follows from its size. Once
-  /// Apple approves them, `attach` places them on the live version.
-  Future<int> assets(List<String> files) async {
-    final images = [
+  /// their own (no app version needed). PNGs and videos (mp4 / m4v / mov)
+  /// both work: each file must fit one of Apple's creative specs, and which
+  /// placement it serves follows from its size. A video's [poster] (seconds)
+  /// is the frame shown before it plays. Once Apple approves them, `attach`
+  /// places them on the live version.
+  Future<int> assets(List<String> files, {double poster = 0}) async {
+    final paths = [
       for (final f in files.isEmpty ? defaultCreativeAssets : files)
-        File(files.isEmpty ? project.path(f) : f),
+        files.isEmpty ? project.path(f) : f,
     ];
-    final sizes = <File, (int, int)>{};
-    for (final image in images) {
-      if (!image.existsSync()) {
-        stderr.writeln('No such file: ${image.path}');
+    final sizes = <String, (int, int)>{};
+    final videos = <String, VideoFacts>{};
+    for (final path in paths) {
+      final file = File(path);
+      if (!file.existsSync()) {
+        stderr.writeln('No such file: $path');
         return 1;
       }
-      final size = _pngSize(image);
-      if (size == null) {
-        stderr.writeln('${image.path} is not a PNG.');
-        return 1;
+      if (isVideo(path)) {
+        final facts = await probeVideo(file);
+        if (facts == null) {
+          stderr.writeln('$path: ffprobe can\'t read it as a video.');
+          return 1;
+        }
+        if (poster < 0 || poster >= facts.duration) {
+          stderr.writeln(
+            '$path: poster ${poster}s is outside the video (0..${facts.duration.toStringAsFixed(2)} s).',
+          );
+          return 1;
+        }
+        videos[path] = facts;
+        sizes[path] = (facts.w, facts.h);
+      } else {
+        final size = _pngSize(file);
+        if (size == null) {
+          stderr.writeln('$path is not a PNG or a video (mp4 / m4v / mov).');
+          return 1;
+        }
+        sizes[path] = size;
       }
-      sizes[image] = size;
     }
     final asc = AppStore.connect();
     final refData = await asc.assetRefData();
-    final specs = {
-      for (final p in creativePlacements) ..._specsFor(refData, p),
+    List<Map<String, Object?>> specs({required bool video}) => {
+      for (final p in creativePlacements)
+        ..._specsFor(refData, p, video: video),
     }.toList();
-    final existing = await asc.assetImages();
+    final imageSpecs = specs(video: false), videoSpecs = specs(video: true);
+    final existingImages = videos.length == paths.length
+        ? const <Map<String, Object?>>[]
+        : await asc.assetImages();
+    final existingVideos = videos.isEmpty
+        ? const <Map<String, Object?>>[]
+        : await asc.assetVideos();
 
     stdout.writeln(
       'Upload to the Asset Library and submit for review (standalone, no app '
       'version). Once approved: release attach ios',
     );
-    final toUpload = <File>[];
-    final inFlightIds = <String>[];
-    for (final image in images) {
-      final size = sizes[image]!;
-      final name = image.uri.pathSegments.last;
-      final spec = specs.where((s) => _fitsSpec(s, size)).firstOrNull;
-      if (spec == null) {
-        stderr.writeln(
-          '$name: ${size.$1}x${size.$2} fits no header / search results spec.',
-        );
-        return 1;
+    final toUpload = <String>[];
+    final inFlight = <(String, bool)>[]; // (asset id, video)
+    for (final path in paths) {
+      final file = File(path);
+      final size = sizes[path]!;
+      final name = file.uri.pathSegments.last;
+      final facts = videos[path];
+      final bytes = file.lengthSync();
+      Map<String, Object?>? spec;
+      if (facts != null) {
+        final misses = <String>[];
+        for (final s in videoSpecs) {
+          final miss = videoSpecMiss(s, facts, bytes: bytes, fileName: name);
+          if (miss == null) {
+            spec = s;
+            break;
+          }
+          misses.add('${s['shortName']}: $miss');
+        }
+        if (spec == null) {
+          stderr.writeln(
+            '$name: fits no header / search results video spec\n  ${misses.join('\n  ')}',
+          );
+          return 1;
+        }
+      } else {
+        spec = imageSpecs.where((s) => fitsSpec(s, size)).firstOrNull;
+        if (spec == null) {
+          stderr.writeln(
+            '$name: ${size.$1}x${size.$2} fits no header / search results spec.',
+          );
+          return 1;
+        }
       }
-      final mb = (image.lengthSync() / 1e6).toStringAsFixed(1);
+      final mb = (bytes / 1e6).toStringAsFixed(1);
+      final what = facts == null
+          ? ''
+          : ', ${facts.fps.round()} fps, ${facts.duration.toStringAsFixed(1)} s, '
+                'poster ${timeCode(poster, fps: facts.fps.round())}';
       stdout.write(
-        '  $name (${size.$1}x${size.$2}, $mb MB, spec ${spec['shortName']}) '
+        '  $name (${size.$1}x${size.$2}$what, $mb MB, spec ${spec['shortName']}) '
         '-> ${_placementsOf(spec).join(' + ')}',
       );
       // Same file name and byte size, still on its way or already through
       // review: this file was uploaded before. A re-render under the same
       // name differs in size and is uploaded again.
-      final inFlight = existing.where((i) {
+      final before = (facts != null ? existingVideos : existingImages).where((
+        i,
+      ) {
         final a = i['attributes'] as Map;
         return a['fileName'] == name &&
-            a['fileSize'] == image.lengthSync() &&
+            a['fileSize'] == bytes &&
             !{'FAILED', 'REJECTED', 'ARCHIVED'}.contains(a['state']);
       }).firstOrNull;
-      final state = (inFlight?['attributes'] as Map?)?['state'];
+      final state = (before?['attributes'] as Map?)?['state'];
       if (state == 'WAITING_FOR_REVIEW' || state == 'IN_REVIEW') {
         stdout.writeln('  - already $state');
       } else if (state == 'APPROVED' || state == 'ACCEPTED') {
         stdout.writeln('  - already approved, run: release attach ios');
-      } else if (inFlight != null) {
+      } else if (before != null) {
         stdout.writeln('  - uploaded before ($state), submitting that one');
-        inFlightIds.add('${inFlight['id']}');
+        inFlight.add(('${before['id']}', facts != null));
       } else {
         stdout.writeln();
-        toUpload.add(image);
+        toUpload.add(path);
       }
     }
-    if (toUpload.isEmpty && inFlightIds.isEmpty) {
+    if (toUpload.isEmpty && inFlight.isEmpty) {
       stdout.writeln('  nothing to do.');
       return 0;
     }
@@ -644,29 +796,36 @@ class Release {
       return 0;
     }
 
-    final imageIds = [...inFlightIds];
-    for (final image in toUpload) {
-      final name = image.uri.pathSegments.last;
+    final assetIds = [...inFlight];
+    for (final path in toUpload) {
+      final file = File(path);
+      final name = file.uri.pathSegments.last;
+      final facts = videos[path];
       stdout.writeln('  uploading $name ...');
-      final result = await asc.uploadAssetImage(
-        image,
-        // Apple wants reference names unique across the Asset Library
-        referenceName:
-            'Creative asset $name ${DateTime.now().toUtc().toIso8601String().substring(0, 16)}Z',
-      );
+      // Apple wants reference names unique across the Asset Library
+      final reference =
+          'Creative asset $name ${DateTime.now().toUtc().toIso8601String().substring(0, 16)}Z';
+      final result = facts != null
+          ? await asc.uploadAssetVideo(
+              file,
+              referenceName: reference,
+              posterTimeCode: timeCode(poster, fps: facts.fps.round()),
+            )
+          : await asc.uploadAssetImage(file, referenceName: reference);
       stdout.writeln('  asset ${result.id}: ${result.state}');
       if (result.state == 'FAILED') {
         if (result.errors.isNotEmpty) stderr.writeln('  ${result.errors}');
         throw StateError('Apple rejected the upload of $name.');
       }
-      imageIds.add(result.id);
+      assetIds.add((result.id, facts != null));
     }
 
     final submission = await asc.draftReviewSubmission();
     final inReview = await asc.reviewItemIds(submission);
-    for (final id in imageIds) {
-      if (!inReview.contains(id))
-        await asc.addAssetImageToReview(submission, id);
+    for (final (id, video) in assetIds) {
+      if (!inReview.contains(id)) {
+        await asc.addAssetToReview(submission, id, video: video);
+      }
     }
     await asc.sendReviewSubmission(submission);
     stdout.writeln('  submitted for review (submission $submission)');
@@ -689,21 +848,36 @@ class Release {
     }
     final versionName = (live['attributes'] as Map)['versionString'];
     final refData = await asc.assetRefData();
-    final images = await asc.assetImages(); // newest first
-    final approved = images.where((i) {
-      final state = (i['attributes'] as Map)['state'];
+    // images and videos, newest first; `video` marks the kind
+    final assets =
+        [
+          for (final i in await asc.assetImages()) (asset: i, video: false),
+          for (final v in await asc.assetVideos()) (asset: v, video: true),
+        ]..sort(
+          (a, b) => '${(b.asset['attributes'] as Map)['createdDate']}'
+              .compareTo('${(a.asset['attributes'] as Map)['createdDate']}'),
+        );
+    final approved = assets.where((x) {
+      final state = (x.asset['attributes'] as Map)['state'];
       return state == 'APPROVED' || state == 'ACCEPTED';
     }).toList();
-    // placement type -> newest approved image serving it
-    final chosen = <String, Map<String, Object?>>{};
+    // placement type -> newest approved image or video serving it
+    final chosen = <String, ({Map<String, Object?> asset, bool video})>{};
     for (final type in creativePlacements) {
-      final specIds = _specsFor(refData, type).map((s) => '${s['specId']}');
-      final image = approved
+      final specIds = {
+        for (final s in [
+          ..._specsFor(refData, type),
+          ..._specsFor(refData, type, video: true),
+        ])
+          '${s['specId']}',
+      };
+      final pick = approved
           .where(
-            (i) => specIds.contains('${(i['attributes'] as Map)['specId']}'),
+            (x) =>
+                specIds.contains('${(x.asset['attributes'] as Map)['specId']}'),
           )
           .firstOrNull;
-      if (image != null) chosen[type] = image;
+      if (pick != null) chosen[type] = pick;
     }
     if (chosen.isEmpty) {
       stderr.writeln(
@@ -712,10 +886,13 @@ class Release {
       return 1;
     }
 
-    // What is placed now: (type, localization) -> (placement id, image id)
+    // What is placed now: (type, localization) -> (placement id, asset id)
     final current = <(String, String), (String, String)>{};
-    for (final image in images) {
-      for (final p in await asc.assetPlacements('${image['id']}')) {
+    for (final (:asset, :video) in assets) {
+      for (final p in await asc.assetPlacements(
+        '${asset['id']}',
+        video: video,
+      )) {
         final rel =
             ((p['relationships'] as Map?)?['appStoreVersionLocalization']
                     as Map?)?['data']
@@ -726,31 +903,31 @@ class Release {
           '${rel['id']}',
         )] = (
           '${p['id']}',
-          '${image['id']}',
+          '${asset['id']}',
         );
       }
     }
 
     stdout.writeln('Attach to the live version $versionName:');
-    final todo = <(String, String, String, String?)>[];
+    final todo = <(String, String, bool, String, String?)>[];
     final locs = await asc.localizations('${live['id']}');
-    for (final MapEntry(key: type, value: image) in chosen.entries) {
-      final a = image['attributes'] as Map;
-      final imageId = '${image['id']}';
+    for (final MapEntry(key: type, value: (:asset, :video)) in chosen.entries) {
+      final a = asset['attributes'] as Map;
+      final imageId = '${asset['id']}';
       for (final loc in locs) {
         final locId = '${loc['id']}';
         final now = current[(type, locId)];
         final done = now?.$2 == imageId;
         stdout.writeln(
           '  ${(loc['attributes'] as Map)['locale']}  $type  '
-          '"${a['referenceName'] ?? a['fileName']}"'
+          '${video ? 'video' : 'image'} "${a['referenceName'] ?? a['fileName']}"'
           '${done
               ? '  (already placed)'
               : now != null
               ? '  (replaces ${now.$2})'
               : ''}',
         );
-        if (!done) todo.add((type, imageId, locId, now?.$1));
+        if (!done) todo.add((type, imageId, video, locId, now?.$1));
       }
     }
     if (todo.isEmpty) {
@@ -763,14 +940,15 @@ class Release {
     }
     // Each placement holds one asset (refData groupLimits maxCount 1) and
     // placements can't be edited, so the old one goes first.
-    for (final (type, imageId, locId, old) in todo) {
+    for (final (type, assetId, video, locId, old) in todo) {
       if (old != null) {
         await asc.deleteAssetPlacement(old);
         stdout.writeln('  removed $type ($old)');
       }
       final id = await asc.createAssetPlacement(
         placementType: type,
-        imageId: imageId,
+        assetId: assetId,
+        video: video,
         localizationId: locId,
       );
       stdout.writeln('  placed $type ($id)');

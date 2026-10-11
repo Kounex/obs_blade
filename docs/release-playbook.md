@@ -101,6 +101,12 @@ identical).
   version. A file counts as already uploaded when both its name and its
   byte size match one in the Asset Library. Images come from the store-shots
   composer (`apple-header` / `apple-search` sets).
+- Both slots also take a **video** (header exactly 3840×1646, search 3:2,
+  30/60 fps, 5-30 s, audio optional): `release assets ios
+  fastlane/assets/ios/header.mp4 fastlane/assets/ios/search.mp4 --poster 0`,
+  then `attach` as above. The suggested video is a "live image" of the
+  still (store-shots `apple-creative` cuts `appstore-header` /
+  `appstore-search`), not a feature video.
 
 ## Rollout
 

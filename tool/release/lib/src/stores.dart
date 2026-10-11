@@ -357,14 +357,20 @@ class AppStore {
       '${(await _client.get('v1/apps/$appId/assetLibrary')).dataObject!['id']}';
 
   /// Creative-asset images in the Asset Library, newest first.
-  Future<List<Map<String, Object?>>> assetImages() async => (await _client.get(
-    'v1/appAssetLibraries/${await assetLibraryId()}/images',
-    {
-      'filter[category]': 'CREATIVE_ASSETS',
-      'sort': '-createdDate',
-      'limit': '50',
-    },
-  )).dataList;
+  Future<List<Map<String, Object?>>> assetImages() => _creativeAssets('images');
+
+  /// Creative-asset videos in the Asset Library, newest first.
+  Future<List<Map<String, Object?>>> assetVideos() => _creativeAssets('videos');
+
+  Future<List<Map<String, Object?>>> _creativeAssets(String kind) async =>
+      (await _client.get(
+        'v1/appAssetLibraries/${await assetLibraryId()}/$kind',
+        {
+          'filter[category]': 'CREATIVE_ASSETS',
+          'sort': '-createdDate',
+          'limit': '50',
+        },
+      )).dataList;
 
   /// Asset specs + placement policies: which spec fits which placement.
   Future<Map<String, Object?>> assetRefData() async {
@@ -398,16 +404,37 @@ class AppStore {
     File file, {
     required String referenceName,
     Duration timeout = const Duration(minutes: 20),
-  }) async {
+  }) => _uploadAsset('appAssetLibraryImages', file, {
+    'referenceName': referenceName,
+  }, timeout);
+
+  /// The same for a creative-asset video; [posterTimeCode]
+  /// (`HH:MM:SS:FF`) picks the frame shown before it plays.
+  Future<({String id, String state, List<Object?> errors})> uploadAssetVideo(
+    File file, {
+    required String referenceName,
+    required String posterTimeCode,
+    Duration timeout = const Duration(minutes: 30),
+  }) => _uploadAsset('appAssetLibraryVideos', file, {
+    'referenceName': referenceName,
+    'previewFrameTimeCode': posterTimeCode,
+  }, timeout);
+
+  Future<({String id, String state, List<Object?> errors})> _uploadAsset(
+    String type,
+    File file,
+    Map<String, Object?> attributes,
+    Duration timeout,
+  ) async {
     final bytes = file.readAsBytesSync();
-    final reserved = (await _client.post('v1/appAssetLibraryImages', {
+    final reserved = (await _client.post('v1/$type', {
       'data': {
-        'type': 'appAssetLibraryImages',
+        'type': type,
         'attributes': {
           'category': 'CREATIVE_ASSETS',
           'fileName': file.uri.pathSegments.last,
           'fileSize': bytes.length,
-          'referenceName': referenceName,
+          ...attributes,
         },
         'relationships': {
           'assetLibrary': {
@@ -421,9 +448,9 @@ class AppStore {
         .cast<Map>();
     await _uploadChunks(ops, bytes);
 
-    await _client.patch('v1/appAssetLibraryImages/$id', {
+    await _client.patch('v1/$type/$id', {
       'data': {
-        'type': 'appAssetLibraryImages',
+        'type': type,
         'id': id,
         'attributes': {'uploaded': true},
       },
@@ -434,10 +461,7 @@ class AppStore {
     var errors = const <Object?>[];
     while (DateTime.now().isBefore(deadline)) {
       final a =
-          (await _client.get(
-                'v1/appAssetLibraryImages/$id',
-              )).dataObject!['attributes']
-              as Map;
+          (await _client.get('v1/$type/$id')).dataObject!['attributes'] as Map;
       state = '${a['state']}';
       errors = (a['stateDetails'] as List?) ?? const [];
       if (state == 'COMPLETE' ||
@@ -450,29 +474,39 @@ class AppStore {
     return (id: id, state: state, errors: errors);
   }
 
-  Future<void> addAssetImageToReview(String submissionId, String imageId) =>
-      _client.post('v1/reviewSubmissionItems', {
-        'data': {
-          'type': 'reviewSubmissionItems',
-          'relationships': {
-            'reviewSubmission': {
-              'data': {'type': 'reviewSubmissions', 'id': submissionId},
-            },
-            'appAssetLibraryImage': {
-              'data': {'type': 'appAssetLibraryImages', 'id': imageId},
-            },
+  /// Adds a creative asset (image, or a video when [video]) to a review
+  /// submission.
+  Future<void> addAssetToReview(
+    String submissionId,
+    String assetId, {
+    bool video = false,
+  }) => _client.post('v1/reviewSubmissionItems', {
+    'data': {
+      'type': 'reviewSubmissionItems',
+      'relationships': {
+        'reviewSubmission': {
+          'data': {'type': 'reviewSubmissions', 'id': submissionId},
+        },
+        video ? 'appAssetLibraryVideo' : 'appAssetLibraryImage': {
+          'data': {
+            'type': video ? 'appAssetLibraryVideos' : 'appAssetLibraryImages',
+            'id': assetId,
           },
         },
-      });
+      },
+    },
+  });
 
   /// The placements of an asset (product page header, search results, ...),
   /// with their version localization (the relationship is only returned
   /// when included).
-  Future<List<Map<String, Object?>>> assetPlacements(String imageId) async =>
-      (await _client.get('v1/appAssetLibraryImages/$imageId/placements', {
-        'include': 'appStoreVersionLocalization',
-        'limit': '200',
-      })).dataList;
+  Future<List<Map<String, Object?>>> assetPlacements(
+    String assetId, {
+    bool video = false,
+  }) async => (await _client.get(
+    'v1/${video ? 'appAssetLibraryVideos' : 'appAssetLibraryImages'}/$assetId/placements',
+    {'include': 'appStoreVersionLocalization', 'limit': '200'},
+  )).dataList;
 
   /// Removes a placement (the asset stays in the Asset Library).
   Future<void> deleteAssetPlacement(String placementId) =>
@@ -482,7 +516,8 @@ class AppStore {
   /// header). On a live version this is the Console's "Publish" click.
   Future<String> createAssetPlacement({
     required String placementType,
-    required String imageId,
+    required String assetId,
+    bool video = false,
     required String localizationId,
   }) async =>
       '${(await _client.post('v1/appAssetLibraryPlacements', {
@@ -490,8 +525,8 @@ class AppStore {
           'type': 'appAssetLibraryPlacements',
           'attributes': {'placementType': placementType},
           'relationships': {
-            'image': {
-              'data': {'type': 'appAssetLibraryImages', 'id': imageId},
+            video ? 'video' : 'image': {
+              'data': {'type': video ? 'appAssetLibraryVideos' : 'appAssetLibraryImages', 'id': assetId},
             },
             'appStoreVersionLocalization': {
               'data': {'type': 'appStoreVersionLocalizations', 'id': localizationId},
