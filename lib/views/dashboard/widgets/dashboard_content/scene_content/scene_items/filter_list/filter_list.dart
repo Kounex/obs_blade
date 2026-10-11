@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -137,8 +138,8 @@ class _FilterListState extends State<FilterList> {
                                 child: Center(
                                   child: AnimatedToggleIcon(
                                     icon: filter.filterEnabled
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
+                                        ? CupertinoIcons.eye_fill
+                                        : CupertinoIcons.eye_slash,
                                     color: filter.filterEnabled
                                         ? Theme.of(
                                             context,

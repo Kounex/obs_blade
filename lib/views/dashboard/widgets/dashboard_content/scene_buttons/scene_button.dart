@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -233,7 +234,7 @@ class SceneVisibilityBadge extends StatelessWidget {
       child: AnimatedSwitcher(
         duration: AppMotion.fast,
         child: Icon(
-          this.visible ? Icons.visibility : Icons.visibility_off,
+          this.visible ? CupertinoIcons.eye_fill : CupertinoIcons.eye_slash,
           key: ValueKey(this.visible),
           size: 16.0,
 

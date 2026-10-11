@@ -205,7 +205,9 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                       child: Padding(
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         child: Icon(
-                          _obscurePW ? Icons.visibility_off : Icons.visibility,
+                          _obscurePW
+                              ? CupertinoIcons.eye_slash
+                              : CupertinoIcons.eye_fill,
                           size: 20.0,
                         ),
                       ),
@@ -213,7 +215,9 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                   )
                 : IconButton(
                     icon: Icon(
-                      _obscurePW ? Icons.visibility_off : Icons.visibility,
+                      _obscurePW
+                          ? CupertinoIcons.eye_slash
+                          : CupertinoIcons.eye_fill,
                     ),
                     onPressed: () => setState(() => _obscurePW = !_obscurePW),
                   ),

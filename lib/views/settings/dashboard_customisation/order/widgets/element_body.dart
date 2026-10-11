@@ -66,7 +66,9 @@ class ElementBody extends StatelessWidget {
                   ),
                 ),
                 icon: Icon(
-                  this.config.visible ? Icons.visibility : Icons.visibility_off,
+                  this.config.visible
+                      ? CupertinoIcons.eye_fill
+                      : CupertinoIcons.eye_slash,
                   color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
               )

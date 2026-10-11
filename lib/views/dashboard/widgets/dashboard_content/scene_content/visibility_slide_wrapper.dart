@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -14,6 +15,7 @@ import '../../../../../shared/general/hive_builder.dart';
 import '../../../../../stores/views/dashboard.dart';
 import '../../../../../types/classes/api/scene_item.dart';
 import '../../../../../types/enums/hive_keys.dart';
+import 'animated_toggle_icon.dart';
 
 class VisibilitySlideWrapper extends StatefulWidget {
   final SceneItem? sceneItem;
@@ -162,6 +164,10 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                   CustomSlidableAction(
                     backgroundColor: Colors.transparent,
                     autoClose: false,
+
+                    /// Wide (tablet) panes keep the pill at the leading
+                    /// edge instead of floating it far from its row
+                    alignment: Alignment.centerLeft,
                     onPressed: (_) {
                       if (hiddenSceneItem != null) {
                         hiddenSceneItem!.delete();
@@ -183,42 +189,66 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                         hiddenSceneItemsBox.add(hiddenSceneItem!);
                       }
                     },
+
+                    /// Status-pill grammar (LIVE / REC): one 28pt pill,
+                    /// icon + label side by side - visible is lit like an
+                    /// active pill, hidden is the neutral hairline one. The
+                    /// action only aligns its child, so the pill gets a fixed
+                    /// width (capped for wide tablet panes) and scales its
+                    /// content down on narrow phones instead of clipping
                     child: Padding(
                       padding: const EdgeInsets.only(
-                        left: AppSpacing.md,
-                        top: AppSpacing.sm,
-                        bottom: AppSpacing.sm,
+                        left: AppSpacing.lg,
                         right: AppSpacing.sm,
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: actionColor.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: actionColor.withValues(alpha: 0.45),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 104.0),
+                        child: AnimatedContainer(
+                          duration: AppMotion.fast,
+                          curve: AppMotion.standard,
+                          width: double.infinity,
+                          height: 28.0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
                           ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Flexible(
-                              child: Icon(
-                                hiddenSceneItem != null
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                size: 18.0,
-                                color: actionColor,
-                              ),
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadius.pill,
+                            color: hiddenSceneItem != null
+                                ? Colors.transparent
+                                : actionColor.withValues(alpha: 0.14),
+                            border: Border.all(
+                              color: hiddenSceneItem != null
+                                  ? Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.4)
+                                  : actionColor.withValues(alpha: 0.45),
                             ),
-                            const SizedBox(height: 2.0),
-                            Flexible(
-                              child: Text(
-                                hiddenSceneItem != null ? 'Hidden' : 'Visible',
-                                style: Theme.of(context).textTheme.labelMedium!
-                                    .copyWith(color: actionColor),
-                              ),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedToggleIcon(
+                                  icon: hiddenSceneItem != null
+                                      ? CupertinoIcons.eye_slash
+                                      : CupertinoIcons.eye_fill,
+                                  color: actionColor,
+                                  size: 16.0,
+                                ),
+                                const SizedBox(width: 6.0),
+                                Text(
+                                  hiddenSceneItem != null
+                                      ? 'Hidden'
+                                      : 'Visible',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium!
+                                      .copyWith(color: actionColor),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),

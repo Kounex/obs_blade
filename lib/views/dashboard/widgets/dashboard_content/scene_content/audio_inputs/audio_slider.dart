@@ -311,8 +311,8 @@ class _AudioSliderState extends State<AudioSlider> {
                     child: Center(
                       child: AnimatedToggleIcon(
                         icon: this.widget.input.inputMuted
-                            ? Icons.volume_off
-                            : Icons.volume_up,
+                            ? CupertinoIcons.speaker_slash
+                            : CupertinoIcons.speaker_2_fill,
 
                         /// Control on-state = highlight; the muted off-state
                         /// drops to faint text (mock .mute.muted) - red is

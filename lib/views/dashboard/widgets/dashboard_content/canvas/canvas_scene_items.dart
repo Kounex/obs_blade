@@ -155,7 +155,9 @@ class _CanvasSceneItemTile extends StatelessWidget {
                 height: kBaseIconButtonMinHitArea,
                 child: Center(
                   child: AnimatedToggleIcon(
-                    icon: enabled ? Icons.visibility : Icons.visibility_off,
+                    icon: enabled
+                        ? CupertinoIcons.eye_fill
+                        : CupertinoIcons.eye_slash,
                     color: enabled
                         ? theme.colorScheme.onSurface
                         : theme.disabledColor,
