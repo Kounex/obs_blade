@@ -34,14 +34,14 @@ compositor's review gallery hosted at
 **https://obs-blade-gallery.kounex.com** (Cloudflare Access/Authentik, NAS
 :8460, re-renders live).
 
-**On the dogfood device (2026-10-11, awaiting the user's verdict):**
-dogfood release install of `232ad3ea` on Kounex iOS - Edit Visibility
-pane as a status pill (no ink splash, Material eye kept), iOS mute
-speaker, and scene item rows keep their list's scene during a switch
-(no early tint from the next scene; eye / lock hit the row's own source).
-Reviewed (fresh context, no findings). After the OK: `/code-review high`,
-then the next release (4.2.0 vs 4.1.1 still open - preview transitions +
-source colors are features).
+**4.2.0 build 2026101101 in testing (2026-10-11):** release commit
+`007ffabb`, TestFlight build `VALID` + Play internal `completed`; nothing
+submitted. Contents: scene preview plays OBS transitions, OBS 32 source
+colors in Scene Items (+ scene-switch row-scene fix), Edit Visibility pill,
+on/off icon colors, iOS mute speaker. Tester checklist =
+`fastlane/testflight_notes.txt`. Next: user tests the beta (incl. upgrade
+over 4.1.0) -> `release-promote` this exact build. `/code-review high`
+was recommended but not run before the beta.
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
