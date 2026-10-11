@@ -189,9 +189,7 @@ class _ConnectFormState extends State<ConnectForm> {
                   labelText: 'Password',
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePW
-                          ? CupertinoIcons.eye_slash
-                          : CupertinoIcons.eye_fill,
+                      _obscurePW ? Icons.visibility_off : Icons.visibility,
                     ),
                     onPressed: () => innerState(() => _obscurePW = !_obscurePW),
                   ),

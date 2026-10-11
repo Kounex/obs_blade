@@ -121,8 +121,8 @@ class MediaHubArrangeSheet extends StatelessWidget {
                                   height: 44.0,
                                   child: Icon(
                                     hidden
-                                        ? CupertinoIcons.eye_slash
-                                        : CupertinoIcons.eye_fill,
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
                                     color: hidden
                                         ? theme.disabledColor
                                         : theme.colorScheme.onSurface,

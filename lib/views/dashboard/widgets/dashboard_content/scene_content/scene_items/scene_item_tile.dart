@@ -190,8 +190,8 @@ class SceneItemTile extends StatelessWidget {
                             child: Center(
                               child: AnimatedToggleIcon(
                                 icon: this.sceneItem.sceneItemEnabled!
-                                    ? CupertinoIcons.eye_fill
-                                    : CupertinoIcons.eye_slash,
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                                 color: this.sceneItem.sceneItemEnabled!
                                     ? theme.colorScheme.onSurface
                                     : theme.disabledColor,

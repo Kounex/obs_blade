@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -161,92 +160,107 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                 motion: const BehindMotion(),
                 extentRatio: 0.3,
                 children: [
-                  CustomSlidableAction(
-                    backgroundColor: Colors.transparent,
-                    autoClose: false,
+                  /// The whole pane is the hit area. Pressable instead of
+                  /// CustomSlidableAction: that one's OutlinedButton painted
+                  /// a Material ink splash across the pane - taps here get
+                  /// the press scale / dim the row toggles use
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      child: Pressable(
+                        haptic: true,
+                        onTap: () {
+                          if (hiddenSceneItem != null) {
+                            hiddenSceneItem!.delete();
+                          } else {
+                            hiddenSceneItem = HiddenSceneItem(
+                              sceneName!,
+                              this.widget.sceneItem != null
+                                  ? SceneItemType.Source
+                                  : SceneItemType.Audio,
+                              this.widget.sceneItem?.sceneItemId,
+                              this.widget.sceneItem?.sourceName ??
+                                  this.widget.input!.inputName!,
+                              this.widget.sceneItem?.sourceType,
+                              networkStore.activeSession?.connection.name,
+                              networkStore.activeSession?.connection.host,
+                              this.widget.canvasName,
+                            );
 
-                    /// Wide (tablet) panes keep the pill at the leading
-                    /// edge instead of floating it far from its row
-                    alignment: Alignment.centerLeft,
-                    onPressed: (_) {
-                      if (hiddenSceneItem != null) {
-                        hiddenSceneItem!.delete();
-                      } else {
-                        hiddenSceneItem = HiddenSceneItem(
-                          sceneName!,
-                          this.widget.sceneItem != null
-                              ? SceneItemType.Source
-                              : SceneItemType.Audio,
-                          this.widget.sceneItem?.sceneItemId,
-                          this.widget.sceneItem?.sourceName ??
-                              this.widget.input!.inputName!,
-                          this.widget.sceneItem?.sourceType,
-                          networkStore.activeSession?.connection.name,
-                          networkStore.activeSession?.connection.host,
-                          this.widget.canvasName,
-                        );
+                            hiddenSceneItemsBox.add(hiddenSceneItem!);
+                          }
+                        },
 
-                        hiddenSceneItemsBox.add(hiddenSceneItem!);
-                      }
-                    },
+                        /// Wide (tablet) panes keep the pill at the leading
+                        /// edge instead of floating it far from its row
+                        child: SizedBox.expand(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
 
-                    /// Status-pill grammar (LIVE / REC): one 28pt pill,
-                    /// icon + label side by side - visible is lit like an
-                    /// active pill, hidden is the neutral hairline one. The
-                    /// action only aligns its child, so the pill gets a fixed
-                    /// width (capped for wide tablet panes) and scales its
-                    /// content down on narrow phones instead of clipping
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: AppSpacing.lg,
-                        right: AppSpacing.sm,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 104.0),
-                        child: AnimatedContainer(
-                          duration: AppMotion.fast,
-                          curve: AppMotion.standard,
-                          width: double.infinity,
-                          height: 28.0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: AppRadius.pill,
-                            color: hiddenSceneItem != null
-                                ? Colors.transparent
-                                : actionColor.withValues(alpha: 0.14),
-                            border: Border.all(
-                              color: hiddenSceneItem != null
-                                  ? Theme.of(
-                                      context,
-                                    ).dividerColor.withValues(alpha: 0.4)
-                                  : actionColor.withValues(alpha: 0.45),
-                            ),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                AnimatedToggleIcon(
-                                  icon: hiddenSceneItem != null
-                                      ? CupertinoIcons.eye_slash
-                                      : CupertinoIcons.eye_fill,
-                                  color: actionColor,
-                                  size: 16.0,
+                            /// Status-pill grammar (LIVE / REC): one 28pt
+                            /// pill, icon + label side by side - visible is
+                            /// lit like an active pill, hidden is the
+                            /// neutral hairline one. The pane only aligns
+                            /// it, so the pill gets a fixed width (capped
+                            /// for wide tablet panes) and scales its
+                            /// content down on narrow phones instead of
+                            /// clipping
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: AppSpacing.lg,
+                                right: AppSpacing.sm,
+                              ),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 104.0,
                                 ),
-                                const SizedBox(width: 6.0),
-                                Text(
-                                  hiddenSceneItem != null
-                                      ? 'Hidden'
-                                      : 'Visible',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium!
-                                      .copyWith(color: actionColor),
+                                child: AnimatedContainer(
+                                  duration: AppMotion.fast,
+                                  curve: AppMotion.standard,
+                                  width: double.infinity,
+                                  height: 28.0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppSpacing.sm,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: AppRadius.pill,
+                                    color: hiddenSceneItem != null
+                                        ? Colors.transparent
+                                        : actionColor.withValues(alpha: 0.14),
+                                    border: Border.all(
+                                      color: hiddenSceneItem != null
+                                          ? Theme.of(context).dividerColor
+                                                .withValues(alpha: 0.4)
+                                          : actionColor.withValues(alpha: 0.45),
+                                    ),
+                                  ),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        AnimatedToggleIcon(
+                                          icon: hiddenSceneItem != null
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: actionColor,
+                                          size: 16.0,
+                                        ),
+                                        const SizedBox(width: 6.0),
+                                        Text(
+                                          hiddenSceneItem != null
+                                              ? 'Hidden'
+                                              : 'Visible',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium!
+                                              .copyWith(color: actionColor),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),

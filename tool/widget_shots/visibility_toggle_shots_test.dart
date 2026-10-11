@@ -16,12 +16,12 @@ import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_conten
 
 import 'support/shots_harness.dart';
 
-/// Visibility / mute toggles in the iOS glyph family next to the lock and
-/// filter icons: the Edit Visibility slide pane as a status pill (visible
-/// lit, hidden neutral) on phone, a narrow 320 pt phone and tablet, the
-/// row eyes beside the lock and the audio mute speaker + its edit pane.
-/// The Filters sheet polls OBS on a timer (needs a session), so its eye -
-/// the same glyph swap as the row - has no shot here
+/// Visibility / mute toggles: the Edit Visibility slide pane as a status
+/// pill (visible lit, hidden neutral) on phone, a narrow 320 pt phone and
+/// tablet, the row eyes beside the lock and the audio mute speaker (iOS
+/// glyph, like the lock) + its edit pane.
+/// The Filters sheet polls OBS on a timer (needs a session), so it has no
+/// shot here
 void main() {
   final harness = ShotsHarness();
   late DashboardStore dashboardStore;
