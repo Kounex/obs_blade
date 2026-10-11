@@ -4,7 +4,7 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
-## 2026-10-11 - Visibility toggles in the row glyph family, edit pane as a pill
+## 2026-10-11 - Edit Visibility pane as a pill, iOS mute speaker
 
 User: the Edit Visibility buttons that slide in from the left of each
 scene item looked awful. Cause: the pane stacked an 18 pt icon over a
@@ -18,15 +18,20 @@ Material glyph next to iOS lock / filter glyphs everywhere it appears.
   grammar - visible lit (onSurface 14% fill / 45% border), hidden the
   neutral hairline pill; max 104 pt, pinned left (tablet panes are
   wide), content scales down on 320 pt phones.
-- **Glyphs** (user picked "match the lock"): eye_fill / eye_slash in
-  scene item rows, canvas items, Filters sheet, media hub arrange sheet,
-  scene-button badge, settings element order, password show / hide;
-  audio mute speaker_2_fill / speaker_slash (same as the TTS toggle).
+- **Glyphs**: audio mute speaker_2_fill / speaker_slash (same as the TTS
+  toggle). An iOS eye (eye_fill / eye_slash) everywhere was tried and
+  **reverted after dogfood** - the user prefers the Material eye; it stays
+  app-wide, the pill included.
+- **Splash** (dogfood): `CustomSlidableAction` wraps its child in an
+  `OutlinedButton`, which painted a Material ink splash across the pane on
+  tap. The pane is now an `Expanded` > `Pressable` (haptic, press scale /
+  dim like the row toggles) over the full pane, so the hit area is
+  unchanged.
 - **Verified**: `tool/widget_shots/visibility_toggle_shots_test.dart`
   (pane on phone / 320 pt / tablet, row eyes beside the lock, audio rows
   + audio pane) looked at; neighbors re-rendered (source colors, canvas
   badge). The Filters sheet polls OBS on a timer, so it has no headless
-  shot - its eye is the same glyph swap as the row.
+  shot.
 
 ## 2026-10-11 - Header asset v2: the first iPhone crop model was wrong
 

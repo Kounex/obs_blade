@@ -35,13 +35,14 @@ Sources dock):
 - tinted rows in the visibility edit mode: slide actions and the
   lock / hidden states must still read
 
-Row toggle glyphs (eye, lock, mute, filters) are one family: iOS
-`CupertinoIcons`, filled + `onSurface` when on, outline + `disabledColor`
-when off (eye_fill / eye_slash, lock_fill / lock_open, speaker_2_fill /
-speaker_slash). A Material glyph in a row reads as a heavy blob next to
-them. The Edit Visibility slide pane is a 28 pt status pill (LIVE / REC
-grammar) - check it on a 320 pt phone (content scales, no clipping), on
-tablet (pinned left, not floating mid-pane) and on the tall audio rows.
+Row toggles: `onSurface` when on, `disabledColor` when off. The eye
+stays the Material `visibility` / `visibility_off` glyph (user preference,
+2026-10-11 - an iOS eye was tried and reverted); lock and audio mute are
+iOS glyphs (lock_fill / lock_open, speaker_2_fill / speaker_slash). The
+Edit Visibility slide pane is a 28 pt status pill (LIVE / REC grammar)
+with Pressable feedback, no Material ink splash - check it on a 320 pt
+phone (content scales, no clipping), on tablet (pinned left, not floating
+mid-pane) and on the tall audio rows.
 
 ## Surfaces that depend on "the current scene / canvas / output"
 
