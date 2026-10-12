@@ -475,11 +475,37 @@ class AppStore {
   }
 
   /// Adds a creative asset (image, or a video when [video]) to a review
-  /// submission.
+  /// submission. A video still in Apple's post-processing (transcode,
+  /// poster frame - it runs on after the upload reports COMPLETE) is
+  /// refused with 409 ASSET_IN_POST_PROCESSING: retried every 30 s up to
+  /// [timeout], [onWait] called once per retry.
   Future<void> addAssetToReview(
     String submissionId,
     String assetId, {
     bool video = false,
+    Duration timeout = const Duration(minutes: 45),
+    void Function()? onWait,
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    while (true) {
+      try {
+        await _addAssetToReview(submissionId, assetId, video: video);
+        return;
+      } on ApiException catch (e) {
+        final processing =
+            e.statusCode == 409 &&
+            e.detail.contains('ASSET_IN_POST_PROCESSING');
+        if (!processing || DateTime.now().isAfter(deadline)) rethrow;
+        onWait?.call();
+        await Future<void>.delayed(const Duration(seconds: 30));
+      }
+    }
+  }
+
+  Future<void> _addAssetToReview(
+    String submissionId,
+    String assetId, {
+    required bool video,
   }) => _client.post('v1/reviewSubmissionItems', {
     'data': {
       'type': 'reviewSubmissionItems',

@@ -840,7 +840,20 @@ class Release {
     final inReview = await asc.reviewItemIds(submission);
     for (final (id, video) in assetIds) {
       if (!inReview.contains(id)) {
-        await asc.addAssetToReview(submission, id, video: video);
+        var waited = false;
+        await asc.addAssetToReview(
+          submission,
+          id,
+          video: video,
+          onWait: () {
+            if (!waited)
+              stdout.writeln(
+                '  $id: Apple still processes the video, waiting ...',
+              );
+            waited = true;
+          },
+        );
+        stdout.writeln('  $id: added to the review');
       }
     }
     await asc.sendReviewSubmission(submission);
