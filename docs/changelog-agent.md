@@ -4,6 +4,34 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-12 - App Store header + search results as videos (submitted)
+
+Both creative-asset slots take videos (Apple's live `videoSpecs`: header
+exactly 3840x1646, search 3:2, 30/60 fps, 5-30 s by the duration field -
+the spec names say 10 / 15 s, so 15 s; audio optional, <= 500 MB). Built
+as a capability across both repos:
+
+- **store-shots**: `apple-creative` video profile + `creative` layout - a
+  "live image" of the still slide (same layout code as the PNG), real
+  recordings on the device screens (`rect` for a part of a still screen,
+  `wrap` for seamless loops), device float, backdrop drift, accent sweep,
+  seamless loop. The recommended approach is documented there and in the
+  `store-screenshots` skill: a live image, not a feature video.
+- **Release tool**: `release assets ios` takes mp4 / m4v / mov (ffprobe
+  facts vs `videoSpecs`, `--poster`, `appAssetLibraryVideos`, video review
+  items; waits out Apple's post-processing - first try hit 409
+  ASSET_IN_POST_PROCESSING), `attach` picks the newest approved image or
+  video per slot. Spec matching now checks `aspectRatio` too (a 21:9
+  header fit the search box bounds).
+- **obs-blade cuts**: the approved header v2 / search v3 stills, the
+  iPhone playing the streaming-mode recording (0.91x to fill 15 s), the
+  iPad's scene preview playing the OBS Game scene loop (gameplay +
+  facecam + overlay, 16/15x = two laps in 15 s). Rendered videos are
+  gitignored (`fastlane/assets/**/*.mp4`), handed straight to the tool.
+- Submitted 2026-10-12: `eec00005-…` header + `2cc00005-…` search,
+  submission `58711c06-…` (WAITING_FOR_REVIEW). Next: `release attach ios`
+  after approval, then check playback on a device.
+
 ## 2026-10-11 - Scene switch tinted old rows with the next scene's color
 
 Dogfood: tapping another scene colored a row of the old list before the

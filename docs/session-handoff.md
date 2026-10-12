@@ -45,16 +45,18 @@ was recommended but not run before the beta.
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
-1. **Creative assets**: v1 header + search are live (4.1.0 en-US).
-   **v2 header + v3 search are in review** (2026-10-11, assets
-   `a3c00005-…` / `8a400005-…`, submission `1ec1788c-…`; committed in
-   `fastlane/assets/ios/`). Header resized to the real iPhone layout,
-   search card zoomed in at the user's request. **When approved:**
-   `release attach ios` (dry run, then --yes) swaps both onto the live
-   version (delete old placement + create new: first real run). Then
-   ask for phone screenshots of the product page + a search result.
-   Recipe for new ones (any app): store-shots `AGENTS.md` → "Creative
-   assets".
+1. **Creative assets**: v1 header + search images are live (4.1.0 en-US).
+   In review: **v2 header + v3 search images** (2026-10-11, submission
+   `1ec1788c-…`) and, since 2026-10-12, the same compositions as
+   **15 s "live image" videos** (assets `eec00005-…` header /
+   `2cc00005-…` search, submission `58711c06-…`; rendered by store-shots
+   cuts `appstore-header` / `appstore-search`, never committed - render
+   ad hoc on the NAS). **When approved:** `release attach ios` (dry run,
+   then --yes) places the newest approved asset per slot - the videos
+   win over the images once they're through. Then ask for phone
+   screenshots / a screen recording of the product page + a search
+   result: how iOS plays them (loop, autoplay, muted, poster) is
+   unverified.
 2. Upload key A6:24:44 still "in review" → after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard
    Play internal-track draft `3.3.0 (2026090701)`.
