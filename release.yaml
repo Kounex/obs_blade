@@ -1,0 +1,53 @@
+# Store releases through store-release (github.com/Kounex/store-release):
+#   release status | preflight | bump | build ios|android | beta ios|android [--yes] | ...
+# Every store write is a dry run until --yes. Credentials are env var names
+# only (walkthrough: tool/provisioning/CREDENTIALS.md); values never go here.
+app:
+  name: OBS Blade
+  bundleId: com.kounex.obsBlade
+
+version:
+  source: pubspec
+  file: pubspec.yaml
+  build: date                         # YYYYMMDDNN
+
+credentials:
+  appStore:
+    keyId: OBS_BLADE_ASC_KEY_ID
+    issuerId: OBS_BLADE_ASC_ISSUER_ID
+    keyPath: OBS_BLADE_ASC_KEY_PATH
+  play:
+    serviceAccount: OBS_BLADE_GOOGLE_APPLICATION_CREDENTIALS
+
+appStore:
+  appId: "1523915884"
+  devices: [iphone, ipad]
+  build:
+    - [flutter, build, ipa, --release, --export-options-plist=fastlane/ExportOptions.plist,
+       --dart-define-from-file=docs/private/kick_oauth.json]
+  artifact: build/ios/ipa/*.ipa
+  betaNotes: fastlane/testflight_notes.txt
+  releaseNotes: fastlane/metadata/ios/en-US/release_notes.txt
+  metadata: fastlane/metadata/ios
+  screenshots: fastlane/screenshots
+  assets: fastlane/assets/ios
+
+play:
+  devices: [phone, tablet]
+  build:
+    - [flutter, build, appbundle, --release, --dart-define-from-file=docs/private/kick_oauth.json]
+  artifact: build/app/outputs/bundle/release/app-release.aab
+  betaNotes: fastlane/metadata/android/en-US/changelogs/default.txt
+  metadata: fastlane/metadata/android
+
+media:
+  storeShots: { host: nas, project: agent/store-shots/projects/obs-blade }
+  map:
+    video/appstore-header/appstore-header.mp4: fastlane/assets/ios/header.mp4
+    video/appstore-search/appstore-search.mp4: fastlane/assets/ios/search.mp4
+
+binaryIgnore: [docs/**, "**/*.md", fastlane/**, tool/**, test/**, release.yaml, .gitignore]
+
+preflight:
+  checks:
+    - [dart, run, tool/release_checks.dart]

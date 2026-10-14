@@ -10,19 +10,26 @@ Shared baseline for every store release. The project skills
 | `release-direct` | Both of the above in one go, no pause for device testing |
 | `release-publish` | Both stores approved - make it live, tag, write it up |
 
-The tool itself is documented in [`tool/release/README.md`](../tool/release/README.md);
-this file is the process around it.
+The tool is store-release (`github.com/Kounex/store-release`, private), configured
+by [`release.yaml`](../release.yaml); its README documents every command. This file
+is the process around it. App-specific checks (Kick OAuth client, no secrets or
+test unlocks in the defines) run from `tool/release_checks.dart` during preflight.
+`tool/release/` is the previous, app-specific tool: it stays until the first
+TestFlight and Play internal beta have gone through store-release, then it is
+deleted.
 
 ## Where it runs
 
-`tool/release` needs macOS with Xcode, Flutter, the repo's Ruby/bundler
-(fastlane) and the store credentials (env vars, see the tool README). Build
+store-release needs macOS with Xcode, Flutter, fastlane (it runs fastlane's
+actions itself, no Fastfile lanes) and the store credentials (env var names in
+`release.yaml`; values from the environment, see `tool/provisioning/CREDENTIALS.md`). Build
 and upload on that machine. **Maintainers:** the machine, SSH access,
 environment and keychain recipe are in
 `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
 
-`release <cmd>` below means `dart run tool/release/bin/release.dart <cmd>`
-from the repo root.
+`release <cmd>` below means `dart run ~/development/tools/store-release/bin/release.dart <cmd>`
+(or the compiled `release` binary) from anywhere in the repo. Store media:
+`release media pull` fetches the header/search videos from store-shots.
 
 ## Rules for every release
 
