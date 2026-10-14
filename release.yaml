@@ -26,6 +26,7 @@ appStore:
     - [flutter, build, ipa, --release, --export-options-plist=fastlane/ExportOptions.plist,
        --dart-define-from-file=docs/private/kick_oauth.json]
   artifact: build/ios/ipa/*.ipa
+  inputs: [docs/private/kick_oauth.json]   # gitignored, compiled in with --dart-define-from-file
   betaNotes: fastlane/testflight_notes.txt
   releaseNotes: fastlane/metadata/ios/en-US/release_notes.txt
   metadata: fastlane/metadata/ios
@@ -37,6 +38,7 @@ play:
   build:
     - [flutter, build, appbundle, --release, --dart-define-from-file=docs/private/kick_oauth.json]
   artifact: build/app/outputs/bundle/release/app-release.aab
+  inputs: [docs/private/kick_oauth.json]
   betaNotes: fastlane/metadata/android/en-US/changelogs/default.txt
   metadata: fastlane/metadata/android
 
