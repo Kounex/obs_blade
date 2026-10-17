@@ -107,7 +107,15 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
         const BaseDivider(),
         Observer(
           builder: (context) => homeStore.autodiscoverConnections == null
-              ? const _SearchPrompt()
+              ? _SearchPrompt(
+                  /// Validate first: a rebuilt form shows no error for an
+                  /// invalid port, and the store skips the search silently
+                  onSearch: () {
+                    if (_formKey.currentState?.validate() ?? true) {
+                      homeStore.updateAutodiscoverConnections();
+                    }
+                  },
+                )
               : FutureBuilder<List<Connection>>(
                   future: homeStore.autodiscoverConnections,
                   builder: (context, snapshot) {
@@ -153,7 +161,9 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
 /// (Settings -> Search on Start off) - the search only runs on a tap
 /// here or a pull to refresh
 class _SearchPrompt extends StatelessWidget {
-  const _SearchPrompt();
+  final VoidCallback onSearch;
+
+  const _SearchPrompt({required this.onSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +172,7 @@ class _SearchPrompt extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Looks for OBS on every device in your Wi-Fi network at the port above. Search on Start is off in Settings.',
+            'Looks for OBS on every device in your Wi-Fi network at the port above.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
           ),
@@ -172,8 +182,7 @@ class _SearchPrompt extends StatelessWidget {
           /// stays with the connect card's Connect CTA
           BaseButton(
             secondary: true,
-            onPressed: () =>
-                GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
+            onPressed: onSearch,
             icon: const Icon(CupertinoIcons.search),
             text: 'Search',
           ),

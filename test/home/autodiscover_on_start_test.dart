@@ -108,6 +108,21 @@ void main() {
       expect(GetIt.instance<HomeStore>().autodiscoverConnections, isNotNull);
       expect(find.text('Search'), findsNothing);
     });
+
+    testWidgets('Search with an invalid port shows the port error instead '
+        'of doing nothing', (tester) async {
+      GetIt.instance<HomeStore>().setAutodiscoverPort('');
+      await tester.pumpWidget(wrap());
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Search'), findsOneWidget);
+
+      await tester.tap(find.text('Search'));
+      await tester.pump();
+
+      expect(GetIt.instance<HomeStore>().autodiscoverConnections, isNull);
+      expect(find.text('Search'), findsOneWidget);
+      expect(find.text('Invalid port'), findsOneWidget);
+    });
   });
 
   group('Settings row', () {
