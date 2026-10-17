@@ -1045,13 +1045,17 @@ abstract class _DashboardStore with Store {
     }
   }
 
+  /// Exposed studio controls show OBS' studio preview in the scene preview
+  /// - program transitions never play there, and neither does a preview
+  /// pick (OBS cuts its preview too)
+  bool get _previewShowsStudioPreview =>
+      Hive.box(
+        HiveKeys.Settings.name,
+      ).get(SettingsKeys.ExposeStudioControls.name, defaultValue: false) &&
+      this.studioMode;
+
   void _sendPreviewImageRequest(IOWebSocketChannel socket) {
-    final String? sceneName =
-        Hive.box(HiveKeys.Settings.name).get(
-              SettingsKeys.ExposeStudioControls.name,
-              defaultValue: false,
-            ) &&
-            this.studioMode
+    final String? sceneName = _previewShowsStudioPreview
         ? this.studioModePreviewSceneName
         : _previewSceneOverride ?? this.activeSceneName;
     _previewInFlightScene = sceneName;
@@ -1079,7 +1083,7 @@ abstract class _DashboardStore with Store {
         sceneName,
         bytes,
         DateTime.now(),
-        animate: _animatePreviewTransitions,
+        animate: _animatePreviewTransitions && !_previewShowsStudioPreview,
       ),
     );
   }
@@ -1150,9 +1154,13 @@ abstract class _DashboardStore with Store {
     final DateTime now = DateTime.now();
     _previewTransitions.transitionStarted(name, now);
 
-    /// Nothing to play it on - spare OBS the reads
+    /// Nothing to play it on (no preview, turned off, another canvas shown,
+    /// or the preview shows the studio preview) - spare OBS the reads
     final bool resolve =
-        this.shouldRequestPreviewImage && _animatePreviewTransitions;
+        this.shouldRequestPreviewImage &&
+        _animatePreviewTransitions &&
+        !_previewSuspended &&
+        !_previewShowsStudioPreview;
     Future<ObsRequestAck>? currentRead;
     String? resolvingFor;
     if (resolve) {
@@ -1885,6 +1893,12 @@ abstract class _DashboardStore with Store {
   @action
   void setActiveSceneName(String activeSceneName) {
     this.activeSceneName = activeSceneName;
+
+    /// An app switch beats every program read already in flight (e.g. the
+    /// early read of the previous tap's transition) - those would put the
+    /// dashboard back on the earlier scene. A rejected switch re-reads
+    /// after this point, so it still lands
+    _sceneOrdering.noteEvent(_SceneField.program);
     _previewTransitions.appSwitchRequested(activeSceneName, DateTime.now());
   }
 
@@ -2048,6 +2062,7 @@ abstract class _DashboardStore with Store {
 
         _sceneOrdering.noteEvent(_SceneField.program);
         _clearPreviewSceneOverride();
+
         this.activeSceneName = currentProgramSceneChangedEvent.sceneName;
         _requestDisplayedSceneItems();
         _refreshMediaInProgram();

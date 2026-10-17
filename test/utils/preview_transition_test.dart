@@ -244,6 +244,25 @@ void main() {
       );
     });
 
+    test('a quick second tap still animates after a late frame of the '
+        'first tap\'s scene', () {
+      tracker.frameArrived('A', _frame(1), at(0));
+      tracker.appSwitchRequested('B', at(10));
+      tracker.appSwitchRequested('C', at(40));
+      tracker.transitionStarted('Fade', at(50));
+      tracker.specResolved('Fade', 'C', _fade, at(60));
+
+      /// The screenshot asked for while B was displayed comes back late
+      expect(
+        tracker.frameArrived('B', _frame(2), at(80)),
+        isA<ShowPreviewFrame>(),
+      );
+      expect(
+        tracker.frameArrived('C', _frame(3), at(120)),
+        isA<StartPreviewTransition>(),
+      );
+    });
+
     test('a cut transition shows the new frame directly', () {
       tracker.frameArrived('A', _frame(1), at(0));
       tracker.appSwitchRequested('B', at(10));

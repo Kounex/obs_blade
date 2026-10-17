@@ -318,6 +318,33 @@ void main() {
     expect(dashboardStore.activeSceneName, 'C');
   });
 
+  test('a second app tap before the first tap\'s early read came back '
+      'keeps the second scene', () async {
+    currentTransitionIs('Fade', 'fade_transition', duration: 300);
+    await startPreviewOn('A');
+    peer.heldRequestTypes.add('GetCurrentProgramScene');
+
+    /// Tap B - OBS starts the transition into B, its early read is held
+    dashboardStore.setActiveSceneName('B');
+    obsTransitionsTo('B');
+    peer.event('SceneTransitionStarted', {'transitionName': 'Fade'});
+    await waitFor(
+      () => peer.requests.any(
+        (request) => request['requestType'] == 'GetCurrentProgramScene',
+      ),
+      'early program read sent',
+    );
+
+    /// Tap C while that read is still out
+    dashboardStore.setActiveSceneName('C');
+    expect(dashboardStore.activeSceneName, 'C');
+
+    /// The read for B's transition must not move the dashboard back to B
+    peer.releaseAll('GetCurrentProgramScene');
+    await flushPeer();
+    expect(dashboardStore.activeSceneName, 'C');
+  });
+
   test('a quick transition uses the duration measured last time', () async {
     currentTransitionIs('Fade', 'fade_transition', duration: 300);
     await startPreviewOn('A');
@@ -372,6 +399,41 @@ void main() {
     final spec = dashboardStore.previewTransition!.spec;
     expect(spec.kind, PreviewTransitionKind.cutAtEnd);
     expect(spec.duration.inMilliseconds, inInclusiveRange(1, 800));
+  });
+
+  test('exposed studio controls: the preview shows the studio preview, '
+      'so neither a transition nor a later preview pick animates', () async {
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.ExposeStudioControls.name, true);
+    currentTransitionIs('Fade', 'fade_transition', duration: 300);
+    runInAction(() {
+      dashboardStore.studioMode = true;
+      dashboardStore.activeSceneName = 'Program';
+      dashboardStore.studioModePreviewSceneName = 'P';
+    });
+    dashboardStore.setShouldRequestPreviewImage(true);
+    Future<void> previewShows(String scene) => waitFor(
+      () =>
+          dashboardStore.scenePreviewImageBytes != null &&
+          listEquals(dashboardStore.scenePreviewImageBytes, _bytesOf(scene)),
+      'preview shows $scene',
+    );
+    await previewShows('P');
+
+    /// Transition button: P goes to program, OBS swaps the old program in
+    /// as preview
+    dashboardStore.setActiveSceneName('P');
+    obsTransitionsTo('P');
+    peer.event('SceneTransitionStarted', {'transitionName': 'Fade'});
+    peer.event('CurrentPreviewSceneChanged', {'sceneName': 'Program'});
+    await previewShows('Program');
+
+    /// Picking P as preview again right after
+    dashboardStore.setStudioModePreviewSceneName('P');
+    await previewShows('P');
+
+    expect(dashboardStore.previewTransition, isNull);
   });
 
   group('studio mode (T-bar drags start transitions too)', () {
