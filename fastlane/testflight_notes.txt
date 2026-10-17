@@ -4,6 +4,8 @@ SCENE PREVIEW TRANSITIONS
 - Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
 - Per-scene transition override and a changed duration are picked up
 - Studio mode: the T-bar / Transition button; a cancelled T-bar drag must not move the scene tiles
+- Tap two scenes quickly one after the other: the dashboard stays on the second (no jump back)
+- Studio mode with Expose Studio Controls on: Transition, then pick the old scene as preview right away - the preview cuts, no animation
 - Settings -> Dashboard -> Preview Transitions off = instant cut again; Reduce Motion also cuts
 - A switch made in OBS moves the scene tiles + Scene Items at the start of the transition (was: at its end)
 
@@ -17,6 +19,7 @@ SOURCE COLORS (OBS 32+)
 EDIT VISIBILITY + ICONS
 - Edit Visibility (Scene Items + Audio): the pane is a Visible / Hidden pill, no splash on tap; check a 320pt-wide phone and tablet
 - Eye / lock: white when on, grey when off; audio mute uses the new speaker icon
+- VoiceOver / TalkBack on the Edit Visibility pill: reads the source name, visible / hidden and what a tap does
 
 SEARCH ON START (new)
 - Settings -> General -> Search on Start, on by default: the home screen still finds OBS on its own

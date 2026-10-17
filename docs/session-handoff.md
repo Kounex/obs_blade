@@ -18,8 +18,9 @@ internal, release commit `007ffabb`) is **superseded**: 2026-10-17 added
 checklist `fastlane/testflight_notes.txt` ("test build 2") are updated.
 Order (dogfood rule): put master on the dogfood iPhone, user taps
 through the checklist's new sections -> `release-beta` -> beta test incl.
-upgrade over 4.1.0 -> `release-promote`. Run `/code-review high` on
-`4.1.0..HEAD` before the promote (recommended twice, not run yet).
+upgrade over 4.1.0 -> `release-promote`. `/code-review high` on
+`4.1.0..HEAD` ran 2026-10-17: 3 real findings fixed (`cdb345df`,
+`d00ae5ea`), the rest noted as not changed - changelog same date.
 
 Not verified live (MacBook was offline): Android QR orientation (#95 -
 no defect found in zxing's source, not reproduced), the replay buffer
