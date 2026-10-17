@@ -165,8 +165,17 @@ class _VisibilitySlideWrapperState extends State<VisibilitySlideWrapper> {
                   /// a Material ink splash across the pane - taps here get
                   /// the press scale / dim the row toggles use
                   Expanded(
+                    /// One node with the row's name, state and what a tap
+                    /// does - the pill text alone read "Visible, button"
                     child: Semantics(
                       button: true,
+                      toggled: hiddenSceneItem == null,
+                      label:
+                          '${this.widget.sceneItem?.sourceName ?? this.widget.input?.inputName ?? ''}, ${hiddenSceneItem != null ? 'hidden' : 'visible'} in OBS Blade',
+                      hint: hiddenSceneItem != null
+                          ? 'Shows it in the dashboard again'
+                          : 'Hides it from the dashboard',
+                      excludeSemantics: true,
                       child: Pressable(
                         haptic: true,
                         onTap: () {
