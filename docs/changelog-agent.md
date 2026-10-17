@@ -4,6 +4,44 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-17 - 4.2 additions: Search on Start (#93), iOS QR landscape (#95)
+
+Added to 4.2.0 after build 2026101101 (that build is superseded - the
+test round starts again with the next build).
+
+- **#93 Search on Start** (`4cb078c9`): the home screen's autodiscovery
+  connects to the port on all 254 addresses of the Wi-Fi /24 on every
+  home open - networks with intrusion detection flag it as a port scan.
+  Settings -> General -> Search on Start (`SettingsKeys.AutodiscoverOnStart`,
+  default **on**, so nothing changes for existing users). Off: the
+  Autodiscover card shows a Search button instead of a spinner, pull to
+  refresh still searches, and reopening home drops an earlier result
+  (it may be stale). The saved-connection reachability check (one probe
+  per saved host) is not a scan and still runs. `HomeStore.autodiscoverOnStart`
+  is the single entry for the automatic triggers (home open, after the
+  "OBS terminated" dialog). Tests: `test/home/autodiscover_on_start_test.dart`;
+  shots: `tool/widget_shots/autodiscover_prompt_shots_test.dart`.
+- **#95 QR preview in landscape** (`c40cef0c`): reported Sept 2025 on
+  3.x (old `qr_code_scanner`). Since 4.0 the app uses
+  `qr_code_scanner_plus` 2.2.0, whose iOS preview maps
+  `UIInterfaceOrientation` -> `AVCaptureVideoOrientation` with left /
+  right swapped (only `UIDeviceOrientation` needs that swap) - an iOS
+  scanner opened in landscape showed the feed upside down. 2.3.0 fixes it
+  (upstream #29 / PR #31); its other changes: UIScene lifecycle
+  registration (our Runner uses UIScene) and a virtual rear camera that
+  can switch to ultra-wide for close codes. Android is unchanged in
+  2.3.0: zxing's `CameraPreview` reads the display rotation when the
+  camera opens and re-opens on rotation - no defect found in the source,
+  **not reproduced on a device** (none available this session); ask the
+  reporter after 4.2.
+- **#96 Replay Buffer status after reopening**: already fixed in 4.1.0
+  (`e65f3aaf` - the DTO read the v4 key `isReplayBufferActive`; 3.2.0
+  had the same bug). Nothing to build; close with the 4.2 replies.
+- **User email (trigger `instant-replay.lua` from the app)**: already
+  supported by the Hotkeys sheet (`instant_replay.trigger`) - facts in
+  `obs-protocol-gotchas.md` § General. Not verified against a live OBS
+  with the script loaded (MacBook offline).
+
 ## 2026-10-12 - App Store header + search results as videos (submitted)
 
 Both creative-asset slots take videos (Apple's live `videoSpecs`: header

@@ -1,4 +1,4 @@
-4.2.0 test build 1 (2026101101).
+4.2.0 test build 2.
 
 SCENE PREVIEW TRANSITIONS
 - Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
@@ -17,6 +17,15 @@ SOURCE COLORS (OBS 32+)
 EDIT VISIBILITY + ICONS
 - Edit Visibility (Scene Items + Audio): the pane is a Visible / Hidden pill, no splash on tap; check a 320pt-wide phone and tablet
 - Eye / lock: white when on, grey when off; audio mute uses the new speaker icon
+
+SEARCH ON START (new)
+- Settings -> General -> Search on Start, on by default: the home screen still finds OBS on its own
+- Off: close and reopen the app - Autodiscover shows a Search button instead of searching; Search and pull-to-refresh both find OBS
+- Off, then connect and disconnect: back on the home screen the Search button shows again (no search on its own)
+
+QR SCANNER
+- Hold the phone in landscape, then open Quick Connect -> Scan: the camera picture is upright (was upside down on iPhone / iPad); rotate while it is open - still upright; scanning works in both orientations
+- Android: same check, landscape before opening
 
 ALSO
 - Updating over the store version (4.1.0) keeps saved connections, settings and hidden items

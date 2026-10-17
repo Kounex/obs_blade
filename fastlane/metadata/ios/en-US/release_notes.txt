@@ -5,5 +5,7 @@
 - Scene items follow a switch made in OBS as soon as the transition starts
 - Edit Visibility has clearer Visible / Hidden buttons
 - Visibility, lock and mute icons show on and off at a glance
+- Turn off the automatic network search when the app opens: Settings → General → Search on Start
+- The QR scanner camera no longer shows upside down in landscape on iPhone and iPad
 
 Keep it coming on GitHub!

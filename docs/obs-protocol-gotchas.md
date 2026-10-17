@@ -151,6 +151,16 @@ Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design
   `isReplayBufferActive`; `imageCompressionQuality`, not
   `compressionQuality`) - check every DTO key against the generated
   `docs/generated/protocol.md`.
+- Hotkeys (verified against obs-websocket master + obs-studio's
+  `instant-replay.lua`, 2026-10-17): `GetHotkeyList` returns the names of
+  **all** registered hotkeys, including frontend hotkeys of scripts
+  (`obs_hotkey_register_frontend`, e.g. `instant_replay.trigger`).
+  `TriggerHotkeyByName` without `contextName` fires the first hotkey of
+  that name as a press + release on the routed callback - script
+  callbacks that act on press only (`if not pressed then return`) run
+  once. So script actions work through the existing Hotkeys sheet; the
+  row title is only the part after the first dot (`trigger`), the full
+  name is the subtitle.
 
 ## Platform event APIs (activity feed)
 

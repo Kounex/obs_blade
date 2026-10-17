@@ -1,9 +1,9 @@
 4.2: your scene preview now moves like OBS does:
 
 - Scene transitions play in the preview: fades, swipes, slides, luma wipes and stingers, as set in OBS (turn off in Settings → Dashboard)
-- Scene items show the colors you set in OBS 32 (right-click → Set Color)
+- Scene items show the colors you set in OBS 32
 - Scene items follow a switch made in OBS as soon as the transition starts
-- Edit Visibility has clearer Visible / Hidden buttons
-- Visibility, lock and mute icons show on and off at a glance
+- Clearer Edit Visibility buttons and on / off icons
+- Settings → General → Search on Start turns off the network search when the app opens
 
 Keep it coming on GitHub!
