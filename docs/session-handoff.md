@@ -16,9 +16,14 @@ internal, release commit `007ffabb`) is **superseded**: 2026-10-17 added
 (`c40cef0c`, qr_code_scanner_plus 2.3.0) - details: `changelog-agent.md`
 2026-10-17. Release notes (both stores, Play ≤ 500 chars) and the tester
 checklist `fastlane/testflight_notes.txt` ("test build 2") are updated.
-Order (dogfood rule): put master on the dogfood iPhone, user taps
-through the checklist's new sections -> `release-beta` -> beta test incl.
-upgrade over 4.1.0 -> `release-promote`. `/code-review high` on
+**Build 2026101701** (release commit `b5978aa4`, pushed) goes straight to
+TestFlight + Play internal - the user skipped the dogfood device step
+for this one (2026-10-17), 4.2 goes live after the beta test. Waiting
+on the MacBook (offline): pull there, `release preflight` (first run of
+store-release - read the `beta` dry-run plans once), then build +
+upload detached per `release-beta` step 6, then `release status`. After
+that: beta test incl. upgrade over 4.1.0 -> `release-promote`.
+`/code-review high` on
 `4.1.0..HEAD` ran 2026-10-17: 3 real findings fixed (`cdb345df`,
 `d00ae5ea`), the rest noted as not changed - changelog same date.
 
