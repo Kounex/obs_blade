@@ -2,46 +2,40 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-10-07** (the 4.1.0
-publish session).
+Read this first after `AGENTS.md`. Last reset: **2026-10-17** (4.2
+additions session).
 
-**Update 2026-10-07 — 4.1.0 LIVE on both stores; feature branch merged
-back into master.** Build 2026100501 (release commit `4c0c3e28`, tag
-`4.1.0` pushed): App Store `READY_FOR_SALE` (manual release to everyone),
-Play production at 100% (user pressed **Publish**). The publish surfaced a
-stale-language trap: the Play listing's **default language was en-GB**
-with pre-4.0 content - every `metadata android` push only ever updated
-en-US, so the queued 4.1.0 changes showed the old screenshots. Fixed
-(details: `changelog-agent.md` 2026-10-07): en-GB synced → removed (needed
-en-US translations on the 4 tip IAPs first, written via
-`oneTimeProducts:batchUpdate`), and `release preflight` now fails when the
-store has listing languages beyond `fastlane/metadata/android`
-(`f77e9167`). Both stores' listings audited byte-for-byte against the repo
-before publish - clean. **`feature/preview-transitions` merged into
-master** (`bd0a5581`, gates green: 1930 tests) - work from master again;
-the remote branch is kept for now.
+**Live:** 4.1.0 (build 2026100501, tag `4.1.0`) on both stores. Branch
+`master`. Releases now run through **store-release** (`release.yaml`,
+user commit `5438fc60`); the old `tool/release` stays until a beta went
+through store-release on both stores - the next 4.2.0 beta is that beta.
 
-Also shipped 2026-10-07 (details: changelog same date): website 4.1 copy
-live on obs-blade.kounex.com; **universal App Store creative asset** (iOS 27 Header + Search results)
-approved by the user, versioned at `fastlane/assets/ios/universal.png`
-(5244×2950, from the store-shots composer's `apple-universal` set) and
-**submitted to App Review** via the new `release assets ios` command
-(Asset Library API; asset `aa400005-…`, WAITING_FOR_REVIEW) - once
-approved: `release attach ios` places it on the live version's header +
-search results (placement create on a READY_FOR_SALE version is the
-Console "Publish" equivalent - unprobed until this first approval);
-compositor's review gallery hosted at
-**https://obs-blade-gallery.kounex.com** (Cloudflare Access/Authentik, NAS
-:8460, re-renders live).
+**4.2.0 - next: new beta build.** Build 2026101101 (TestFlight + Play
+internal, release commit `007ffabb`) is **superseded**: 2026-10-17 added
+#93 Search on Start (`4cb078c9`) and the iOS QR landscape fix #95
+(`c40cef0c`, qr_code_scanner_plus 2.3.0) - details: `changelog-agent.md`
+2026-10-17. Release notes (both stores, Play ≤ 500 chars) and the tester
+checklist `fastlane/testflight_notes.txt` ("test build 2") are updated.
+Order (dogfood rule): put master on the dogfood iPhone, user taps
+through the checklist's new sections -> `release-beta` -> beta test incl.
+upgrade over 4.1.0 -> `release-promote`. Run `/code-review high` on
+`4.1.0..HEAD` before the promote (recommended twice, not run yet).
 
-**4.2.0 build 2026101101 in testing (2026-10-11):** release commit
-`007ffabb`, TestFlight build `VALID` + Play internal `completed`; nothing
-submitted. Contents: scene preview plays OBS transitions, OBS 32 source
-colors in Scene Items (+ scene-switch row-scene fix), Edit Visibility pill,
-on/off icon colors, iOS mute speaker. Tester checklist =
-`fastlane/testflight_notes.txt`. Next: user tests the beta (incl. upgrade
-over 4.1.0) -> `release-promote` this exact build. `/code-review high`
-was recommended but not run before the beta.
+Not verified live (MacBook was offline): Android QR orientation (#95 -
+no defect found in zxing's source, not reproduced), the replay buffer
+read on connect against a real OBS (#96, fixed in 4.1.0 by `e65f3aaf`),
+and `instant_replay.trigger` fired from the Hotkeys sheet with
+obs-studio's `instant-replay.lua` loaded (user email, see below).
+
+**On 4.2 publish (user said: post then):** reply on GitHub + close -
+#100 (fade transitions now play in the preview - 4.2), #96 (fixed in
+4.1.0: the app read an old v4 field), #93 (Settings -> General -> Search
+on Start). #95: reply with the iOS fix, ask the reporter which platform
+they use and to retest on 4.2 - close only if they confirm or don't
+answer. Email from an Android volleyball streamer (instant-replay.lua
+hotkey): answer drafted in the 2026-10-17 session - the existing Hotkeys
+sheet triggers it (Settings -> Dashboard -> Customisation -> Hotkeys,
+then search `instant_replay.trigger`); the user sends it.
 
 **Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
 
