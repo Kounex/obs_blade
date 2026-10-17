@@ -4,6 +4,36 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-17 - /code-review high on 4.1.0..HEAD (4.2)
+
+10 findings, verified one by one; fixed with a test that fails on the
+old code each:
+
+- **Quick double tap snapped back** (`cdb345df`): tap B, then C while
+  B's early `GetCurrentProgramScene` (transition start) is out - the read
+  applied B (B -> A -> B flicker, C's frame cut). `setActiveSceneName`
+  now `noteEvent(program)`s. New in 4.2.
+- **Studio preview animated** (`cdb345df`): with exposed studio
+  controls the preview shows OBS' studio preview, where OBS plays no
+  transition; a Transition tap's context (target never reached that
+  preview) animated a preview pick of the same scene within 3 s. Frames
+  there always cut now, and the transition reads skip it (also while a
+  non-main canvas is shown). A tracker-level fix (drop the context on a
+  frame of another scene) was tried and **reverted**: it broke the quick
+  double tap's animation - guarded by a tracker test now.
+- **Edit Visibility pill semantics** (`d00ae5ea`): one node with
+  "<name>, visible / hidden in OBS Blade", toggled state and a hint.
+- **Not changed:** OBS-side switches read the item list twice (start +
+  `CurrentProgramSceneChanged`) - the end read is also the only refresh
+  of OBS source colors (no event), 8 tests rely on it; a fix was tried
+  and reverted. Colors re-read with every list (incl. after a toggle) -
+  one batch per scene/group, cost only. Visibility pane keys hidden
+  items on `activeSceneName` - pre-existing, deliberately left (moves
+  saved entries for exposed-studio users; 2026-10-11 entry). Three
+  simplification notes (duplicate displayed-scene rule, nested
+  HiveBuilders, stamping the scene on `SceneItem`) - refactors, not for
+  a release in test.
+
 ## 2026-10-17 - 4.2 additions: Search on Start (#93), iOS QR landscape (#95)
 
 Added to 4.2.0 after build 2026101101 (that build is superseded - the
