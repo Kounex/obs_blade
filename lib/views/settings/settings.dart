@@ -80,6 +80,24 @@ class SettingsView extends StatelessWidget {
                         ),
                       ),
                       BlockEntry(
+                        leading: CupertinoIcons.wifi,
+                        title: 'Search on Start',
+                        help:
+                            'When active, the home screen looks for OBS in your local network each time it opens. To find it, OBS Blade tries the autodiscovery port on every address of your Wi-Fi network - some company or school networks flag that as a network scan. When off, search with the Search button in Autodiscover or by pulling down on the home screen.',
+                        trailing: BaseAdaptiveSwitch(
+                          value: settingsBox.get(
+                            SettingsKeys.AutodiscoverOnStart.name,
+                            defaultValue: true,
+                          ),
+                          onChanged: (autodiscoverOnStart) {
+                            settingsBox.put(
+                              SettingsKeys.AutodiscoverOnStart.name,
+                              autodiscoverOnStart,
+                            );
+                          },
+                        ),
+                      ),
+                      BlockEntry(
                         leading: CupertinoIcons.exclamationmark_bubble_fill,
                         title: 'Failure Alerts',
                         help:

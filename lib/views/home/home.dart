@@ -65,7 +65,7 @@ class _HomeViewState extends State<HomeView> {
 
     Future.delayed(
       const Duration(milliseconds: 0),
-      () => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
+      () => GetIt.instance<HomeStore>().autodiscoverOnStart(),
     );
 
     /// I have to import the MobX part above with 'as MobX' since the Widget Listener
@@ -92,9 +92,7 @@ class _HomeViewState extends State<HomeView> {
               body:
                   'Your connection to OBS has been lost and the app was not able to reconnect.',
             ),
-          ).then(
-            (_) => GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
-          );
+          ).then((_) => GetIt.instance<HomeStore>().autodiscoverOnStart());
         }
       });
     });

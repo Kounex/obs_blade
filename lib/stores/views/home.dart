@@ -1,6 +1,9 @@
+import 'package:hive_ce/hive.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../models/connection.dart';
+import '../../types/enums/hive_keys.dart';
+import '../../types/enums/settings_keys.dart';
 import '../../utils/network_helper.dart';
 import '../../utils/validation_helper.dart';
 
@@ -60,6 +63,21 @@ abstract class _HomeStore with Store {
       this.autodiscoverConnections = NetworkHelper.getAvailableOBSIPs(
         int.tryParse(this.autodiscoverPort) ?? 4455,
       )..ignore();
+    }
+  }
+
+  /// The automatic search when the home screen opens - only if
+  /// [SettingsKeys.AutodiscoverOnStart] is on. Off clears the previous
+  /// result (it may be stale by now), so the autodiscovery card offers its
+  /// Search button instead
+  @action
+  void autodiscoverOnStart() {
+    if (Hive.box(
+      HiveKeys.Settings.name,
+    ).get(SettingsKeys.AutodiscoverOnStart.name, defaultValue: true)) {
+      this.updateAutodiscoverConnections();
+    } else {
+      this.autodiscoverConnections = null;
     }
   }
 

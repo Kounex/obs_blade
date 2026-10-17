@@ -169,6 +169,18 @@ mixin _$HomeStore on _HomeStore, Store {
   }
 
   @override
+  void autodiscoverOnStart() {
+    final _$actionInfo = _$_HomeStoreActionController.startAction(
+      name: '_HomeStore.autodiscoverOnStart',
+    );
+    try {
+      return super.autodiscoverOnStart();
+    } finally {
+      _$_HomeStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void setRefreshable(bool refreshable) {
     final _$actionInfo = _$_HomeStoreActionController.startAction(
       name: '_HomeStore.setRefreshable',

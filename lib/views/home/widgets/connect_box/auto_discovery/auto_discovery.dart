@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -7,6 +8,7 @@ import 'package:obs_blade/stores/shared/network.dart';
 import '../../../../../models/connection.dart';
 import '../../../../../shared/animator/fader.dart';
 import '../../../../../shared/design/design.dart';
+import '../../../../../shared/general/base/button.dart';
 import '../../../../../shared/general/base/divider.dart';
 import '../../../../../shared/general/keyboard_number_header.dart';
 import '../../../../../shared/general/question_mark_tooltip.dart';
@@ -104,43 +106,79 @@ class _AutoDiscoveryState extends State<AutoDiscovery> {
         ),
         const BaseDivider(),
         Observer(
-          builder: (context) => FutureBuilder<List<Connection>>(
-            future: homeStore.autodiscoverConnections,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  /// One-shot stagger per discovered session (replays on each
-                  /// pull-to-refresh result set - same lifecycle as the Fader
-                  /// it replaces)
-                  return Column(
-                    children: [
-                      for (final (index, availableObsConnection)
-                          in snapshot.data!.indexed) ...[
-                        StaggeredEntrance(
-                          index: index,
-                          scaleFrom: 0.985,
-                          child: SessionTile(
-                            connection: availableObsConnection,
-                          ),
-                        ),
-                        if (index < snapshot.data!.length - 1)
-                          const BaseDivider(),
-                      ],
-                    ],
-                  );
-                }
-                return ResultEntry(result: _processResult(snapshot));
-              }
-              return Fader(
-                child: SizedBox(
-                  height: 150.0,
-                  child: BaseProgressIndicator(text: 'Searching...'),
+          builder: (context) => homeStore.autodiscoverConnections == null
+              ? const _SearchPrompt()
+              : FutureBuilder<List<Connection>>(
+                  future: homeStore.autodiscoverConnections,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                        /// One-shot stagger per discovered session (replays on each
+                        /// pull-to-refresh result set - same lifecycle as the Fader
+                        /// it replaces)
+                        return Column(
+                          children: [
+                            for (final (index, availableObsConnection)
+                                in snapshot.data!.indexed) ...[
+                              StaggeredEntrance(
+                                index: index,
+                                scaleFrom: 0.985,
+                                child: SessionTile(
+                                  connection: availableObsConnection,
+                                ),
+                              ),
+                              if (index < snapshot.data!.length - 1)
+                                const BaseDivider(),
+                            ],
+                          ],
+                        );
+                      }
+                      return ResultEntry(result: _processResult(snapshot));
+                    }
+                    return Fader(
+                      child: SizedBox(
+                        height: 150.0,
+                        child: BaseProgressIndicator(text: 'Searching...'),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
+    );
+  }
+}
+
+/// Shown instead of a search when the home screen doesn't search on its own
+/// (Settings -> Search on Start off) - the search only runs on a tap
+/// here or a pull to refresh
+class _SearchPrompt extends StatelessWidget {
+  const _SearchPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        children: [
+          Text(
+            'Looks for OBS on every device in your Wi-Fi network at the port above. Search on Start is off in Settings.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          /// Ghost button, like Quick Connect's Scan - the filled accent
+          /// stays with the connect card's Connect CTA
+          BaseButton(
+            secondary: true,
+            onPressed: () =>
+                GetIt.instance<HomeStore>().updateAutodiscoverConnections(),
+            icon: const Icon(CupertinoIcons.search),
+            text: 'Search',
+          ),
+        ],
+      ),
     );
   }
 }

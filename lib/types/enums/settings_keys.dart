@@ -342,6 +342,13 @@ enum SettingsKeys {
   /// lost indefinetily instead of an amount of retries before aborting
   UnlimitedReconnects,
 
+  /// [bool]: If the home screen searches the local network for OBS
+  /// (autodiscovery) each time it opens (on by default). Off = only when
+  /// the user taps Search or pulls to refresh - the search tries the port
+  /// on every address of the Wi-Fi subnet, which some networks flag as a
+  /// port scan (GitHub #93)
+  AutodiscoverOnStart,
+
   /// [bool]: If true, a toast is shown in the dashboard when an OBS command
   /// (scene switch, mute, ...) definitively fails (rejected / timed out /
   /// connection lost) after the state has been re-synced from OBS. If false,
@@ -629,6 +636,7 @@ enum SettingsKeys {
     SettingsKeys.MediaHubViewMode: 'media-hub-view-mode',
     SettingsKeys.MediaHubLayouts: 'media-hub-layouts',
     SettingsKeys.UnlimitedReconnects: 'unlimited-reconnects',
+    SettingsKeys.AutodiscoverOnStart: 'autodiscover-on-start',
     SettingsKeys.CommandFailureToasts: 'command-failure-toasts',
     SettingsKeys.DashboardElementsOrder: 'dashboard-elements-order',
     SettingsKeys.StreamingModeStatsOverlay: 'streaming-mode-stats-overlay',
