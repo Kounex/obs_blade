@@ -1569,15 +1569,11 @@ abstract class _YouTubeChatStore with Store {
     }
 
     while (!superseded()) {
-      if (policy.shouldStream) {
-        final outcome = await stream();
-        if (outcome != null) return outcome;
-        if (superseded()) return _PassOutcome.stopped;
-      }
-
-      /// A resumed poll (switch back, un-pause, app resume) waits out the
-      /// rest of the last page's interval - polling sooner answers
-      /// `rateLimitExceeded`.
+      /// Any read after a poll (back to the stream, a resumed poll - switch
+      /// back, un-pause, app resume) waits out the rest of that page's
+      /// interval: sooner, the poll answers `rateLimitExceeded` and the
+      /// stream `PERMISSION_DENIED` (measured 2026-10-19). A stream call
+      /// sets no wait.
       final resumeAt = buffer.nextPollAt;
       if (resumeAt != null) {
         final wait = resumeAt.difference(this._now());
@@ -1585,6 +1581,12 @@ abstract class _YouTubeChatStore with Store {
           await this._sleep(wait);
           if (superseded()) return _PassOutcome.stopped;
         }
+      }
+
+      if (policy.shouldStream) {
+        final outcome = await stream();
+        if (outcome != null) return outcome;
+        if (superseded()) return _PassOutcome.stopped;
       }
 
       while (!superseded()) {
@@ -1614,9 +1616,9 @@ abstract class _YouTubeChatStore with Store {
           if (superseded()) return _PassOutcome.stopped;
           GeneralHelper.logFailure('YouTube chat poll failed', e);
 
-          /// A page token from the stream the poll doesn't take (Google
-          /// doesn't say they're interchangeable): start the poll over -
-          /// rows already shown are deduped by id
+          /// A page token the poll doesn't take (stream and poll tokens
+          /// work both ways - measured 2026-10-19 - so this is a guard):
+          /// start the poll over - rows already shown are deduped by id
           if (e is YouTubeApiException &&
               e.statusCode == 400 &&
               buffer.nextPageToken != null &&
@@ -1659,7 +1661,7 @@ abstract class _YouTubeChatStore with Store {
           if (superseded()) return _PassOutcome.stopped;
         }
 
-        /// Time to try the stream again
+        /// Time to try the stream again (after this page's interval)
         if (policy.shouldStream) break;
 
         /// Google: "the amount of time the client should wait before

@@ -587,9 +587,12 @@ void main() {
         await until(() => good.listened);
         good.open();
 
-        expect(sleepLog.take(2), [
+        /// Backoffs, then the probe page's interval before the stream:
+        /// sooner, a call with the poll's token answers PERMISSION_DENIED
+        expect(sleepLog, [
           const Duration(seconds: 1),
           const Duration(seconds: 2),
+          const Duration(seconds: 1),
         ]);
         expect(chatService.listCalls, 1);
         expect(chatService.streamPageTokens.last, 't1');

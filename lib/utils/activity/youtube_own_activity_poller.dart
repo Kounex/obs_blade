@@ -110,6 +110,11 @@ class YouTubeOwnActivityPoller {
   /// The poll started over once after refusing a (stream) page token
   bool _droppedToken = false;
 
+  /// The last poll's page token is good from then on (Google's interval):
+  /// sooner, the poll answers `rateLimitExceeded` and a stream call
+  /// `PERMISSION_DENIED` (measured 2026-10-19)
+  DateTime? _readAgainAt;
+
   /// 403 / 404 answers in a row on the same chat ([_lost])
   int _lostCount = 0;
   String? _lostVideoId;
@@ -209,6 +214,14 @@ class YouTubeOwnActivityPoller {
       final delay = await this.step();
       if (!this._running || generation != this._generation) return;
       if (delay > Duration.zero) await this._sleep(delay);
+
+      /// Woken early (foreground, OBS streaming) right after a poll: its
+      /// page token is good only from [_readAgainAt] on
+      final readAgainAt = this._readAgainAt;
+      final early = readAgainAt?.difference(this._clock());
+      if (early != null && early > Duration.zero && early < delay) {
+        await this._sleep(early);
+      }
     }
   }
 
@@ -228,6 +241,7 @@ class YouTubeOwnActivityPoller {
     this._liveChatId = null;
     this._pageToken = null;
     this._droppedToken = false;
+    this._readAgainAt = null;
     this._liveSince = null;
     this._backoff = Duration.zero;
     if (clearEnded) this._endedVideoId = null;
@@ -434,9 +448,9 @@ class YouTubeOwnActivityPoller {
       GeneralHelper.logFailure('Activity: YouTube chat poll failed', e);
       final status = e is YouTubeApiException ? e.statusCode : null;
 
-      /// A page token from the stream the poll doesn't take (Google
-      /// doesn't say they're interchangeable): start over once - the feed
-      /// dedupes by message id
+      /// A page token the poll doesn't take (stream and poll tokens work
+      /// both ways - measured 2026-10-19 - so this is a guard): start over
+      /// once - the feed dedupes by message id
       if (status == 400 && this._pageToken != null && !this._droppedToken) {
         this._droppedToken = true;
         this._pageToken = null;
@@ -458,11 +472,14 @@ class YouTubeOwnActivityPoller {
     if (page.offlineAt != null) return this._ended();
 
     /// The poll was standing in (a probe / ended-or-disabled check, or
-    /// its window is over): back to the stream right away
-    if (this._policy.shouldStream) return Duration.zero;
+    /// its window is over): back to the stream after Google's interval -
+    /// sooner, a call with this page's token answers `PERMISSION_DENIED`
+    /// (measured 2026-10-19)
+    final minimum = Duration(milliseconds: page.pollingIntervalMillis);
+    this._readAgainAt = this._clock().add(minimum);
+    if (this._policy.shouldStream) return minimum;
 
     /// A full page: more is waiting, fetch it right after the minimum
-    final minimum = Duration(milliseconds: page.pollingIntervalMillis);
     if (page.messages.length >= 500) return minimum;
     return Duration(
       milliseconds: math.max(

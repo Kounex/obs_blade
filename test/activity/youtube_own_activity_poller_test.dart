@@ -417,6 +417,23 @@ void main() {
       expect(poller.state, YouTubeOwnActivityState.waiting);
     });
 
+    test('ended or disabled, and the poll says the chat runs: back to the '
+        'stream only after Google\'s interval (sooner, a call with the '
+        'poll\'s token answers PERMISSION_DENIED)', () async {
+      await attach();
+      final call = FakeChatStream();
+      chat.streams.add(call);
+      chat.pages.add(_page([_text('t1')], token: 'p2', interval: 4000));
+
+      final step = poller.step();
+      await settle();
+      call.open();
+      await call.fail(const YouTubeChatEndedException('stream: disabled'));
+
+      expect(await step, const Duration(milliseconds: 4000));
+      expect(chat.tokens, [null]);
+    });
+
     test('a chatEnded row on the stream ends the chat; the ended video '
         'isn\'t re-attached', () async {
       await attach();
