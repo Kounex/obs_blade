@@ -30,10 +30,14 @@ runaway calls. Spec:
   each empty page stretches the wait ×1.5 up to 10 s, and a page with
   rows snaps back (`youTubePollDelay`).
 - No timing settings (decided with the user).
+- **Activity feed streams too**: the own-channel poller reads over
+  `streamList` with its 30 s poll as the fallback. The rules live in one
+  shared `YouTubeStreamPolicy` (chat + poller, unit-tested). Sibling fix:
+  the poller no longer takes a 403 / 404 (chat turned off) as "ended for
+  good".
 - **Pending:** the spike measurement of call lifetime / quota delta
-  (`tool/youtube_spike/`, now with the app's keepalive) - the MacBook
-  holds the obs-blade key. The own-channel activity poller still polls
-  (30 s) while the chat shows another channel - a follow-up.
+  (`tool/youtube_spike/`, pinging like the app) - the MacBook holds the
+  obs-blade key.
 
 ## 2026-10-17 - /code-review high on 4.1.0..HEAD (4.2)
 

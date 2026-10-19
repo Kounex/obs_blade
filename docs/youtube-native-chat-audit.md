@@ -275,7 +275,8 @@ Moved from `AGENTS.md` (2026-10 docs restructure).
 
 A native engine ships next to the WebView embed
 (`nativeChatAvailableFor` covers `ChatType.YouTube`).
-Reads stream `liveChatMessages.streamList` (gRPC; falls back to polling
+Reads (the chat and the own-channel activity poller, one
+`YouTubeStreamPolicy`) stream `liveChatMessages.streamList` (gRPC; falls back to polling
 `liveChatMessages.list`, paced slower in a quiet chat - see the
 [quota spec](superpowers/specs/2026-10-19-youtube-chat-quota-design.md))
 with a **user-supplied API key**

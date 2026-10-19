@@ -30,7 +30,13 @@ own bucket.
 3. **No timing settings** (the user's call). The defaults adapt on their
    own; streaming leaves no cadence to tune.
 
-## Read loop rules (`_attachAndPoll`)
+## Read loop rules (`YouTubeStreamPolicy`)
+
+One policy (`lib/utils/youtube/youtube_stream_policy.dart`), used by the
+chat's read loop (`_attachAndPoll`) and the own-channel activity poller
+(`YouTubeOwnActivityPoller`, fallback poll every 30 s). The poller closes
+its call on standby (the chat reads the own chat), stop, a new chat and
+back from the background.
 
 - Stream first. "Opened" means Google accepted the call: response
   headers without a `grpc-status`. Only opened calls are billed, and the
@@ -43,7 +49,7 @@ own bucket.
 - A long call that drops reconnects at once, with no "reconnecting"
   flash (Google may rotate calls).
 - A call that never opened (dead zone, no network) isn't billed. It
-  reconnects with a 1 s → 60 s backoff and shows "reconnecting". After 3
+  reconnects after 1 s, then 2 s, and shows "reconnecting". After 3
   in a row, one poll checks: in a dead zone the poll can't get through
   either (free retries); its first answer hands back to the stream. If
   the stream still can't open while the poll works (gRPC blocked), the
@@ -81,6 +87,14 @@ own bucket.
   background (not Control Center / Face ID) replaces an open call with a
   new one from its token (5 units).
 
+## Activity poller sibling fix
+
+The poller took any 403 / 404 as "ended" and never re-attached that
+video, so a chat switched off and on mid-stream stopped feeding the
+activity feed. Now only `liveChatEnded` / `offlineAt` / a `chatEndedEvent`
+row end it. A 403 / 404 waits and looks again (`videos.list`, 1 unit, at
+most every 5 min).
+
 ## Journeys
 
 1. IRL streamer, own channel on a phone, 3 h on mobile data with dead
@@ -115,8 +129,5 @@ holds the key.
 
 ## Left out
 
-- The own-channel activity poller (`YouTubeOwnActivityPoller`) still
-  polls every 30 s (~600 units/h) while the chat shows another channel.
-  It could stream too; that's a follow-up once the measurement is in.
 - The viewer-count refresh (30 s, 120 units/h) stays: small, and it
   becomes the main cost only if streams prove long-lived.
