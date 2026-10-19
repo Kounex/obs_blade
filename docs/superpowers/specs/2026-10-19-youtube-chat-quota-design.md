@@ -49,7 +49,9 @@ back from the background.
 - A long call that drops reconnects at once, with no "reconnecting"
   flash (Google may rotate calls).
 - A call that never opened (dead zone, no network) isn't billed. It
-  reconnects after 1 s, then 2 s, and shows "reconnecting". After 3
+  reconnects after 1 s, then 2 s, and shows "reconnecting" (reconnect
+  waits double, capped at 60 s; a restarted loop - resume, switch back -
+  counts short calls afresh). After 3
   in a row, one poll checks: in a dead zone the poll can't get through
   either (free retries); its first answer hands back to the stream. If
   the stream still can't open while the poll works (gRPC blocked), the
@@ -61,7 +63,9 @@ back from the background.
 - These end the chat (no poll): a `chatEndedEvent` row, `offlineAt`.
 - `FAILED_PRECONDITION` means ended **or** disabled (gRPC can't tell
   which): one poll asks. `liveChatEnded` ends the chat. A disabled chat
-  shows the poll's error and Retry / resume recover it. Taking it as
+  shows the poll's error and Retry / resume recover it. If the poll
+  answers normally and the stream says it again, the chat polls for
+  10 min (no stream/poll ping-pong). Taking it as
   "ended" would skip that video for a channel entry until the stream
   ends.
 - A page token the poll refuses (400) after the stream: the poll starts
@@ -92,8 +96,10 @@ back from the background.
 The poller took any 403 / 404 as "ended" and never re-attached that
 video, so a chat switched off and on mid-stream stopped feeding the
 activity feed. Now only `liveChatEnded` / `offlineAt` / a `chatEndedEvent`
-row end it. A 403 / 404 waits and looks again (`videos.list`, 1 unit, at
-most every 5 min).
+row end it. A 403 / 404 waits and looks again (`videos.list`, 1 unit):
+5 min, doubling while the same chat keeps answering 403 (a permission
+problem rather than a switched-off chat), up to 60 min. A page token the
+poll refuses (400) starts the poll over once, as in the chat.
 
 ## Journeys
 

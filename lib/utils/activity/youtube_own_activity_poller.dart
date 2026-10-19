@@ -50,6 +50,7 @@ class YouTubeOwnActivityPoller {
   static const Duration pollInterval = Duration(seconds: 30);
   static const Duration _maxBackoff = Duration(minutes: 5);
   static const Duration _upcomingCheck = Duration(minutes: 5);
+  static const Duration _maxLostWait = Duration(minutes: 60);
 
   /// A suspended timer never fires on iOS - the quota wait re-checks at
   /// least this often (and on [wake])
@@ -105,6 +106,13 @@ class YouTubeOwnActivityPoller {
   String? _liveChatId;
   String? _pageToken;
   Duration _backoff = Duration.zero;
+
+  /// The poll started over once after refusing a (stream) page token
+  bool _droppedToken = false;
+
+  /// 403 / 404 answers in a row on the same chat ([_lost])
+  int _lostCount = 0;
+  String? _lostVideoId;
 
   bool _running = false;
   int _generation = 0;
@@ -219,6 +227,7 @@ class YouTubeOwnActivityPoller {
     this._videoId = null;
     this._liveChatId = null;
     this._pageToken = null;
+    this._droppedToken = false;
     this._liveSince = null;
     this._backoff = Duration.zero;
     if (clearEnded) this._endedVideoId = null;
@@ -420,6 +429,15 @@ class YouTubeOwnActivityPoller {
       GeneralHelper.logFailure('Activity: YouTube chat poll failed', e);
       final status = e is YouTubeApiException ? e.statusCode : null;
 
+      /// A page token from the stream the poll doesn't take (Google
+      /// doesn't say they're interchangeable): start over once - the feed
+      /// dedupes by message id
+      if (status == 400 && this._pageToken != null && !this._droppedToken) {
+        this._droppedToken = true;
+        this._pageToken = null;
+        return Duration.zero;
+      }
+
       /// 403 / 404: the chat is gone for now - turned off, or gone. Not
       /// "ended" (`liveChatEnded` is): a chat switched back on is picked up
       /// again by the next live check
@@ -428,6 +446,7 @@ class YouTubeOwnActivityPoller {
     }
     if (generation != this._generation || !this._enabled) return idleCheck;
     this._backoff = Duration.zero;
+    this._lostCount = 0;
     this._policy.pollAnswered();
     this._pageToken = page.nextPageToken;
     this._emit(page, channelId);
@@ -458,14 +477,24 @@ class YouTubeOwnActivityPoller {
   }
 
   /// The chat answered 403 / 404 without having ended: wait and look
-  /// again - `videos.list` (1 unit) shows no chat while it's off. At most
-  /// every [_upcomingCheck], so a 403 that stays costs little.
+  /// again - `videos.list` (1 unit) shows no chat while it's off. Every
+  /// [_upcomingCheck] at first, doubling while the same chat keeps
+  /// answering 403 (a permission problem, not a switched-off chat) up to
+  /// [_maxLostWait], so it costs little and the feed's live state doesn't
+  /// flap.
   Duration _lost() {
+    final videoId = this._videoId;
+    this._lostCount = videoId != null && videoId == this._lostVideoId
+        ? this._lostCount + 1
+        : 1;
+    this._lostVideoId = videoId;
     this._resetChat(clearEnded: false);
     this._setState(YouTubeOwnActivityState.waiting);
     this.onChanged?.call();
-    final wait = this._waitingDelay();
-    return wait < _upcomingCheck ? _upcomingCheck : wait;
+    var wait = _upcomingCheck * (1 << (this._lostCount - 1).clamp(0, 4));
+    if (wait > _maxLostWait) wait = _maxLostWait;
+    final waiting = this._waitingDelay();
+    return wait < waiting ? waiting : wait;
   }
 
   Duration _ended() {

@@ -14,9 +14,9 @@ const int kYouTubeShortStreamLimit = 3;
 const Duration kYouTubeStreamRetryAfter = Duration(minutes: 10);
 
 /// First wait before reconnecting a call that dropped or closed early;
-/// doubles per try (1 s, 2 s - the [kYouTubeShortStreamLimit]th hands
-/// over to the poll, whose own backoff takes it from there).
+/// doubles per try up to [kYouTubeStreamMaxReconnectDelay].
 const Duration kYouTubeStreamReconnectDelay = Duration(seconds: 1);
+const Duration kYouTubeStreamMaxReconnectDelay = Duration(seconds: 60);
 
 /// What a read loop does after a `streamList` call ended.
 enum YouTubeStreamNext {
@@ -60,7 +60,9 @@ class YouTubeStreamDecision {
 ///   fails it too and its first answer hands back to the stream, while
 ///   the stream still not opening after a poll worked means gRPC can't
 ///   get through: poll for [kYouTubeStreamRetryAfter];
-/// - `FAILED_PRECONDITION` (ended **or** disabled): one poll tells;
+/// - `FAILED_PRECONDITION` (ended **or** disabled): one poll tells; when
+///   the poll answered (the chat runs) and the stream says it again, poll
+///   for [kYouTubeStreamRetryAfter];
 /// - any other refusal ([YouTubeStreamFallbackException]): the poll's
 ///   answers say what's wrong - poll for [kYouTubeStreamRetryAfter].
 ///
@@ -78,6 +80,10 @@ class YouTubeStreamPolicy {
   bool _pollWorkedWithoutStream = false;
   Duration _reconnectDelay = Duration.zero;
 
+  /// The poll is checking a `FAILED_PRECONDITION` / answered it normally
+  bool _checkingEnded = false;
+  bool _endedCheckAnswered = false;
+
   /// Stream now (no poll window running)?
   bool get shouldStream {
     final until = this._pollUntil;
@@ -89,9 +95,21 @@ class YouTubeStreamPolicy {
 
   /// A poll got an answer.
   void pollAnswered() {
+    if (this._checkingEnded) {
+      this._checkingEnded = false;
+      this._endedCheckAnswered = true;
+    }
     if (!this._probing) return;
     this._probing = false;
     this._pollWorkedWithoutStream = true;
+  }
+
+  /// A read loop (re)starts streaming this chat: short calls and the
+  /// reconnect wait count from here - a resume or a switch back isn't
+  /// held to the calls before it.
+  void newRead() {
+    this._shortCalls = 0;
+    this._reconnectDelay = Duration.zero;
   }
 
   /// A new chat (or the chat ended): start over.
@@ -102,6 +120,8 @@ class YouTubeStreamPolicy {
     this._probing = false;
     this._pollWorkedWithoutStream = false;
     this._reconnectDelay = Duration.zero;
+    this._checkingEnded = false;
+    this._endedCheckAnswered = false;
   }
 
   /// A call ended: [openedAt] is when Google accepted it (null: never),
@@ -113,7 +133,13 @@ class YouTubeStreamPolicy {
   }) {
     final now = this._now();
     if (error is YouTubeChatEndedException) {
-      return this._pollFor(Duration.zero);
+      if (this._endedCheckAnswered) {
+        this._endedCheckAnswered = false;
+        return this._pollFor(kYouTubeStreamRetryAfter);
+      }
+      final decision = this._pollFor(Duration.zero);
+      this._checkingEnded = true;
+      return decision;
     }
     if (error != null && error is! YouTubeStreamDroppedException) {
       return this._pollFor(kYouTubeStreamRetryAfter);
@@ -125,6 +151,7 @@ class YouTubeStreamPolicy {
       if (!short) {
         this._shortCalls = 0;
         this._reconnectDelay = Duration.zero;
+        this._endedCheckAnswered = false;
         return const YouTubeStreamDecision.reconnect(Duration.zero);
       }
       if (++this._shortCalls >= kYouTubeShortStreamLimit) {
@@ -157,9 +184,12 @@ class YouTubeStreamPolicy {
   }
 
   Duration _nextDelay() {
-    this._reconnectDelay = this._reconnectDelay == Duration.zero
+    final next = this._reconnectDelay == Duration.zero
         ? kYouTubeStreamReconnectDelay
         : this._reconnectDelay * 2;
+    this._reconnectDelay = next > kYouTubeStreamMaxReconnectDelay
+        ? kYouTubeStreamMaxReconnectDelay
+        : next;
     return this._reconnectDelay;
   }
 }

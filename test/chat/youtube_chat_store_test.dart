@@ -795,6 +795,34 @@ void main() {
       expect(chatService.resolveCalls, 1);
     });
 
+    test('a resume after two short calls isn\'t held to them: the next '
+        'short call reconnects instead of polling', () async {
+      await clockedStore();
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final calls = [for (var i = 0; i < 4; i++) FakeChatStream()];
+      chatService.streams.addAll(calls);
+
+      await store.init();
+      for (final call in calls.take(2)) {
+        await until(() => call.listened);
+        call.open();
+        clock = clock.add(const Duration(seconds: 3));
+        await call.end();
+      }
+      await until(() => calls[2].listened);
+      calls[2].open();
+      store.reconnectAfterResume();
+      await until(() => calls[3].listened);
+      calls[3].open();
+      clock = clock.add(const Duration(seconds: 3));
+      chatService.streams.add(FakeChatStream());
+      await calls[3].end();
+      await until(() => chatService.streamCalls >= 5);
+
+      expect(chatService.listCalls, 0);
+    });
+
     test('a resume without a real stay in the background (Control Center, '
         'Face ID) keeps the open call', () async {
       configure();

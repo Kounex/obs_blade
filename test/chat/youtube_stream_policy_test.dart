@@ -125,6 +125,53 @@ void main() {
     expect(policy.shouldStream, isFalse);
   });
 
+  test('newRead (a restarted loop) isn\'t held to the short calls before '
+      'it', () {
+    lived(const Duration(seconds: 3));
+    lived(const Duration(seconds: 3));
+    policy.newRead();
+    final next = lived(const Duration(seconds: 3));
+    expect(next.next, YouTubeStreamNext.reconnect);
+    expect(next.delay, const Duration(seconds: 1));
+  });
+
+  test('FAILED_PRECONDITION again after the check poll answered (the chat '
+      'runs): polls for 10 min instead of ping-ponging', () {
+    const ended = YouTubeChatEndedException('ended');
+    policy.callEnded(openedAt: now, error: ended);
+    expect(policy.shouldStream, isTrue);
+    policy.pollAnswered();
+
+    expect(
+      policy.callEnded(openedAt: now, error: ended).next,
+      YouTubeStreamNext.poll,
+    );
+    expect(policy.shouldStream, isFalse);
+  });
+
+  test('two dead-zone probes in a row without a poll answer stay probes', () {
+    for (var round = 0; round < 2; round++) {
+      neverOpened();
+      neverOpened();
+      expect(neverOpened().next, YouTubeStreamNext.poll);
+      expect(policy.shouldStream, isTrue, reason: 'round $round');
+    }
+  });
+
+  test('the reconnect wait is capped at 60 s, however calls interleave', () {
+    final delays = <Duration>[];
+    for (var i = 0; i < 12; i++) {
+      final decision = i.isEven
+          ? lived(const Duration(seconds: 3), error: dropped)
+          : neverOpened();
+      if (decision.next == YouTubeStreamNext.reconnect) {
+        delays.add(decision.delay);
+      }
+    }
+    expect(delays, isNotEmpty);
+    expect(delays.every((d) => d <= kYouTubeStreamMaxReconnectDelay), isTrue);
+  });
+
   test('reset (new chat / ended) clears the poll window', () {
     policy.callEnded(
       openedAt: null,

@@ -1471,6 +1471,7 @@ abstract class _YouTubeChatStore with Store {
     /// Reads over `streamList` until the chat ends, the loop is superseded
     /// or [YouTubeStreamPolicy] hands over to the poll (null).
     Future<_PassOutcome?> stream() async {
+      policy.newRead();
       while (!superseded()) {
         final startedAt = this._now();
         final fromStart = buffer.nextPageToken == null;

@@ -490,6 +490,92 @@ void main() {
     });
   });
 
+  test('a stream page token the poll refuses (400): starts over once '
+      'without it', () async {
+    resolver.answers.add('vid1');
+    chat.details = _live;
+    await poller.step();
+    final call = FakeChatStream();
+    chat.streams.add(call);
+
+    final step = poller.step();
+    await Future<void>.delayed(Duration.zero);
+    call.open();
+    call.add(_page([_superChat('s1')], token: 'stream-1'));
+    await Future<void>.delayed(Duration.zero);
+    await call.fail(const YouTubeStreamFallbackException('x'));
+    chat.pages
+      ..add(const YouTubeApiException('bad token', statusCode: 400))
+      ..add(_page([_superChat('s1'), _superChat('s2')], token: 'p2'));
+    expect(await step, Duration.zero);
+    await poller.step();
+
+    expect(chat.tokens, ['stream-1', null]);
+    expect(events.map((e) => e.id).toSet(), {
+      'youtube:UCme:s1',
+      'youtube:UCme:s2',
+    });
+    expect(poller.state, YouTubeOwnActivityState.live);
+  });
+
+  for (final (name, act) in [
+    (
+      'turned off',
+      (YouTubeOwnActivityPoller p) =>
+          p.configure(channelId: 'UCme', apiKey: 'key', enabled: false),
+    ),
+    (
+      'another channel',
+      (YouTubeOwnActivityPoller p) =>
+          p.configure(channelId: 'UCother', apiKey: 'key', enabled: true),
+    ),
+  ]) {
+    test('$name while a stream step waits: the call closes, nothing of the '
+        'old chat comes back', () async {
+      resolver.answers.add('vid1');
+      chat.details = _live;
+      await poller.step();
+      final call = FakeChatStream();
+      chat.streams.add(call);
+
+      final step = poller.step();
+      await Future<void>.delayed(Duration.zero);
+      call.open();
+      act(poller);
+      expect(call.cancelled, isTrue);
+      expect(await step, Duration.zero);
+
+      /// The next step (at once) is about the new state, never the old chat
+      resolver.answers
+        ..clear()
+        ..add(null);
+      await poller.step();
+      expect(poller.state, isNot(YouTubeOwnActivityState.live));
+      expect(chat.tokens, isEmpty);
+      expect(chat.streamTokens, [null]);
+    });
+  }
+
+  test('a 403 that stays (not a switched-off chat): the wait doubles, the '
+      'feed doesn\'t flap every 5 min', () async {
+    resolver.answers.add('vid1');
+    chat.details = _live;
+    final waits = <Duration>[];
+    for (var i = 0; i < 3; i++) {
+      await poller.step();
+      expect(poller.state, YouTubeOwnActivityState.live);
+      chat.pages.add(
+        const YouTubeForbiddenException('forbidden', statusCode: 403),
+      );
+      waits.add(await poller.step());
+    }
+    expect(waits, [
+      const Duration(minutes: 5),
+      const Duration(minutes: 10),
+      const Duration(minutes: 20),
+    ]);
+  });
+
   test('a 403 that isn\'t "ended" (chat turned off): waits and looks '
       'again, not "ended for good"', () async {
     resolver.answers.add('vid1');
