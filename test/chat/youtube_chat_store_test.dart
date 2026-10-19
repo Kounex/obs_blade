@@ -500,7 +500,30 @@ void main() {
       expect(chatService.listCalls, 0);
     });
 
-    test('calls that close within 10s three times → polls; tries the stream '
+    test('a quiet chat: Google closes each call after ~10 s with nothing in '
+        'it - the stream carries on, no poll, no "reconnecting"', () async {
+      await clockedStore();
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final calls = [for (var i = 0; i < 6; i++) FakeChatStream()];
+      final next = FakeChatStream();
+      chatService.streams.addAll([...calls, next]);
+
+      await store.init();
+      for (final call in calls) {
+        await until(() => call.listened);
+        clock = clock.add(const Duration(milliseconds: 10300));
+        await call.end();
+      }
+      await until(() => next.listened);
+
+      expect(chatService.streamCalls, 7);
+      expect(chatService.listCalls, 0);
+      expect(sleepLog, isEmpty);
+      expect(store.chatConnection, YouTubeChatConnectionState.connected);
+    });
+
+    test('calls that close within 5s three times → polls; tries the stream '
         'again 10 min later', () async {
       await clockedStore();
       configure();

@@ -1475,7 +1475,7 @@ abstract class _YouTubeChatStore with Store {
       while (!superseded()) {
         final startedAt = this._now();
         final fromStart = buffer.nextPageToken == null;
-        DateTime? openedAt;
+        var opened = false;
         final done = Completer<Object?>();
         final subscription = this._chatService
             .streamMessages(
@@ -1484,14 +1484,14 @@ abstract class _YouTubeChatStore with Store {
               apiKey: apiKey,
               onOpen: () {
                 if (superseded() || done.isCompleted) return;
-                openedAt = this._now();
+                opened = true;
                 markConnected();
               },
             )
             .listen(
               (page) {
                 if (superseded() || done.isCompleted) return;
-                openedAt ??= this._now();
+                opened = true;
                 final over = applyPage(
                   page,
                   historical: (m) =>
@@ -1531,7 +1531,11 @@ abstract class _YouTubeChatStore with Store {
 
         if (result is _StreamChatEnded) return ended();
 
-        final decision = policy.callEnded(openedAt: openedAt, error: result);
+        final decision = policy.callEnded(
+          startedAt: startedAt,
+          opened: opened,
+          error: result,
+        );
         if (decision.next == YouTubeStreamNext.poll) {
           if (result is YouTubeChatEndedException) {
             /// Ended **or** disabled over gRPC - the poll tells: a disabled

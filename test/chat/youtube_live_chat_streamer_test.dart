@@ -101,13 +101,15 @@ void main() {
 
   tearDown(() => server.shutdown());
 
-  YouTubeLiveChatStreamer streamer({int? port}) => YouTubeLiveChatStreamer(
-    host: '127.0.0.1',
-    port: port ?? server.port!,
-    secure: false,
-    pingInterval: const Duration(milliseconds: 100),
-    pingTimeout: const Duration(milliseconds: 300),
-  );
+  YouTubeLiveChatStreamer streamer({int? port, Duration? openGrace}) =>
+      YouTubeLiveChatStreamer(
+        host: '127.0.0.1',
+        port: port ?? server.port!,
+        secure: false,
+        pingInterval: const Duration(milliseconds: 100),
+        pingTimeout: const Duration(milliseconds: 300),
+        openGrace: openGrace ?? YouTubeLiveChatStreamer.kOpenGrace,
+      );
 
   /// Collects one call: pages, the error, whether it opened
   Future<({List<YouTubeLiveChatPage> pages, Object? error, bool opened})> run(
@@ -160,6 +162,59 @@ void main() {
 
     expect(result.opened, isFalse);
     expect(result.error, isA<YouTubeStreamFallbackException>());
+  });
+
+  test(
+    'Google\'s refusal (headers first, then the error) never opens',
+    () async {
+      service.handler = (call, request) async* {
+        call.sendHeaders();
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        throw const GrpcError.invalidArgument('API key not valid');
+      };
+
+      final result = await run(
+        (onOpen) => streamer().stream('chat-1', null, onOpen: onOpen),
+      );
+
+      expect(result.opened, isFalse);
+      expect(result.error, isA<YouTubeStreamFallbackException>());
+    },
+  );
+
+  test('a quiet chat: no headers until the empty closing answer - the call '
+      'opens after the grace while it runs, and ends cleanly', () async {
+    final release = Completer<void>();
+    service.handler = (call, request) async* {
+      await release.future;
+      yield response('t2');
+    };
+
+    var opened = false;
+    final done = Completer<void>();
+    final pages = <YouTubeLiveChatPage>[];
+    streamer(openGrace: const Duration(milliseconds: 200))
+        .stream('chat-1', 't1', onOpen: () => opened = true)
+        .listen(pages.add, onDone: done.complete);
+
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    expect(opened, isTrue);
+    expect(pages, isEmpty);
+
+    release.complete();
+    await done.future.timeout(const Duration(seconds: 5));
+    expect(pages.single.nextPageToken, 't2');
+  });
+
+  test('a clean end before the grace opens the call too', () async {
+    service.handler = (call, request) async* {};
+
+    final result = await run(
+      (onOpen) => streamer().stream('chat-1', 't1', onOpen: onOpen),
+    );
+
+    expect(result.error, isNull);
+    expect(result.opened, isTrue);
   });
 
   test(

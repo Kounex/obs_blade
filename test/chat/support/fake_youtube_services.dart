@@ -460,6 +460,7 @@ class FakeChannelSearchService extends YouTubeChannelSearchService {
 
 /// One scripted `streamList` call: [open] = Google accepted it (billed),
 /// [add] a page, [end] = the server closed it, [fail] = an error answer.
+/// Like the real streamer, a page and a clean end open the call too.
 class FakeChatStream {
   final StreamController<YouTubeLiveChatPage> _controller =
       StreamController<YouTubeLiveChatPage>();
@@ -479,11 +480,23 @@ class FakeChatStream {
     return this._controller.stream;
   }
 
-  void open() => this._onOpen?.call();
+  bool _opened = false;
 
-  void add(YouTubeLiveChatPage page) => this._controller.add(page);
+  void open() {
+    if (this._opened) return;
+    this._opened = true;
+    this._onOpen?.call();
+  }
 
-  Future<void> end() => this._controller.close();
+  void add(YouTubeLiveChatPage page) {
+    this.open();
+    this._controller.add(page);
+  }
+
+  Future<void> end() {
+    this.open();
+    return this._controller.close();
+  }
 
   Future<void> fail(Object error) {
     this._controller.addError(error);

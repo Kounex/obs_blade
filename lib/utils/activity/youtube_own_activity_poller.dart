@@ -300,7 +300,8 @@ class YouTubeOwnActivityPoller {
   /// or null when the poll takes over ([YouTubeStreamPolicy]).
   Future<Duration?> _stream(String channelId) async {
     final generation = this._generation;
-    DateTime? openedAt;
+    final startedAt = this._clock();
+    var opened = false;
     const ended = #ended;
     const closed = #closed;
     final done = Completer<Object?>();
@@ -309,12 +310,12 @@ class YouTubeOwnActivityPoller {
           this._liveChatId!,
           this._pageToken,
           apiKey: this._apiKey,
-          onOpen: () => openedAt ??= this._clock(),
+          onOpen: () => opened = true,
         )
         .listen(
           (page) {
             if (done.isCompleted) return;
-            openedAt ??= this._clock();
+            opened = true;
             this._pageToken = page.nextPageToken ?? this._pageToken;
             this._emit(page, channelId);
             if (page.offlineAt != null ||
@@ -348,7 +349,11 @@ class YouTubeOwnActivityPoller {
       return Duration.zero;
     }
     if (result == ended) return this._ended();
-    final decision = this._policy.callEnded(openedAt: openedAt, error: result);
+    final decision = this._policy.callEnded(
+      startedAt: startedAt,
+      opened: opened,
+      error: result,
+    );
     if (result != null) {
       GeneralHelper.logFailure('Activity: YouTube chat stream ended', result);
     }

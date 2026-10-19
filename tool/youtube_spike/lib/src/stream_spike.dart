@@ -29,8 +29,10 @@ Future<StreamStats> runStreamSpike({
   String? pageToken;
   var backoff = const Duration(seconds: 1);
   const maxBackoff = Duration(seconds: 60);
-  // A connection that survived this long counts as healthy → reset backoff.
-  const healthyThreshold = Duration(seconds: 30);
+  // A connection that survived this long counts as healthy → reconnect
+  // at once. Google closes every call after ~10.4 s (measured
+  // 2026-10-19), like the app's YouTubeStreamPolicy reconnects at once.
+  const healthyThreshold = Duration(seconds: 5);
 
   log('stream: starting for ${duration.inMinutes} min (chat $liveChatId)');
 
@@ -65,6 +67,7 @@ Future<StreamStats> runStreamSpike({
 
       var ended = false;
       DateTime? lastBatchAt;
+      DateTime? headersAt;
       try {
         final request = LiveChatMessageListRequest(
           liveChatId: liveChatId,
@@ -73,7 +76,12 @@ Future<StreamStats> runStreamSpike({
         );
         if (pageToken != null) request.pageToken = pageToken;
 
-        await for (final response in client.streamList(request)) {
+        final call = client.streamList(request);
+        call.headers.then(
+          (_) => headersAt = DateTime.now(),
+          onError: (Object _) {},
+        );
+        await for (final response in call) {
           stats.messages += response.items.length;
           if (response.hasNextPageToken()) {
             pageToken = response.nextPageToken;
@@ -122,15 +130,20 @@ Future<StreamStats> runStreamSpike({
 
       final lifetime = DateTime.now().difference(connectedAt);
       stats.connectionLifetimes.add(lifetime);
+      final opened = headersAt;
       log('stream: connection #${stats.connections} lived '
-          '${lifetime.inSeconds} s');
+          '${lifetime.inMilliseconds} ms (headers after '
+          '${opened == null ? '-' : opened.difference(connectedAt).inMilliseconds} ms)');
 
       if (stats.endedByStream) break;
-      if (lifetime >= healthyThreshold) backoff = const Duration(seconds: 1);
 
       if (DateTime.now().difference(startedAt) >= duration ||
           stopRequested()) {
         break;
+      }
+      if (lifetime >= healthyThreshold) {
+        backoff = const Duration(seconds: 1);
+        continue;
       }
       log('stream: reconnecting in ${backoff.inSeconds} s');
       await Future<void>.delayed(backoff);

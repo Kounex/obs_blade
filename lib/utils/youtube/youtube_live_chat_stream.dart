@@ -37,8 +37,9 @@ class YouTubeStreamDroppedException extends YouTubeApiException {
 
 /// Opens one streamList call. A fresh connection per call: iOS takes a
 /// suspended app's sockets away, and a pooled HTTP/2 connection is what
-/// broke the REST reads then (see `RenewingHttpClient`). Calls are rare -
-/// one per connection the server keeps open.
+/// broke the REST reads then (see `RenewingHttpClient`). Google closes
+/// every call after ~10.3 s (measured 2026-10-19), so that is one TLS
+/// handshake per ~10 s.
 class YouTubeLiveChatStreamer {
   static const String kHost = 'youtube.googleapis.com';
 
@@ -52,6 +53,13 @@ class YouTubeLiveChatStreamer {
   static const Duration kPingInterval = Duration(seconds: 30);
   static const Duration kPingTimeout = Duration(seconds: 20);
 
+  /// Google refuses a call (key, quota, unknown chat) ~150 ms after it
+  /// starts, but sends the headers of an accepted one only with its first
+  /// answer - in a quiet chat that is the empty one it closes the call
+  /// with, ~10 s on. A call still running this long after its connection
+  /// came up counts as open (measured 2026-10-19).
+  static const Duration kOpenGrace = Duration(seconds: 2);
+
   final String host;
   final int port;
 
@@ -59,6 +67,7 @@ class YouTubeLiveChatStreamer {
   final bool secure;
   final Duration pingInterval;
   final Duration pingTimeout;
+  final Duration openGrace;
 
   const YouTubeLiveChatStreamer({
     this.host = kHost,
@@ -66,11 +75,15 @@ class YouTubeLiveChatStreamer {
     this.secure = true,
     this.pingInterval = kPingInterval,
     this.pingTimeout = kPingTimeout,
+    this.openGrace = kOpenGrace,
   });
 
   /// Pages of [liveChatId] as they arrive, starting after [pageToken]
   /// (null: recent history first). [onOpen] runs once Google accepted the
-  /// call (its response headers) - from then on the call is billed.
+  /// call - billed from then on: its first page, its clean end, or
+  /// [openGrace] after the connection came up without a refusal. Not the
+  /// headers: Google sends them ahead of a refusal too, and holds them
+  /// back in a quiet chat.
   /// Ends when the server closes the call; errors are
   /// [YouTubeChatEndedException], [YouTubeStreamFallbackException] or
   /// [YouTubeStreamDroppedException]. Cancelling the subscription closes
@@ -87,8 +100,18 @@ class YouTubeLiveChatStreamer {
     _WatchedConnector? connector;
     ResponseStream<LiveChatMessageListResponse>? call;
     StreamSubscription<LiveChatMessageListResponse>? subscription;
+    Timer? grace;
+    var opened = false;
+
+    void open() {
+      if (opened || channel == null) return;
+      opened = true;
+      grace?.cancel();
+      onOpen?.call();
+    }
 
     Future<void> close() async {
+      grace?.cancel();
       final open = channel;
       channel = null;
       await subscription?.cancel();
@@ -105,6 +128,9 @@ class YouTubeLiveChatStreamer {
           secure: this.secure,
           pingInterval: this.pingInterval,
           pingTimeout: this.pingTimeout,
+          onConnected: () {
+            if (channel != null) grace ??= Timer(this.openGrace, open);
+          },
         );
         final created = ClientTransportConnectorChannel(
           connector!,
@@ -120,7 +146,7 @@ class YouTubeLiveChatStreamer {
           part: const ['id', 'snippet', 'authorDetails'],
         );
         if (pageToken != null) request.pageToken = pageToken;
-        final opened = V3DataLiveChatMessageServiceClient(created).streamList(
+        final started = V3DataLiveChatMessageServiceClient(created).streamList(
           request,
           options: CallOptions(
             metadata: {
@@ -132,20 +158,10 @@ class YouTubeLiveChatStreamer {
             },
           ),
         );
-        call = opened;
-
-        /// A Trailers-Only error answer completes the headers too - with
-        /// its non-zero `grpc-status`
-        unawaited(
-          opened.headers.then((headers) {
-            final status = headers['grpc-status'];
-            if (channel != null && (status == null || status == '0')) {
-              onOpen?.call();
-            }
-          }, onError: (_) {}),
-        );
-        subscription = opened.listen(
+        call = started;
+        subscription = started.listen(
           (response) {
+            open();
             if (!controller.isClosed) {
               controller.add(youTubeChatPageFromProto(response));
             }
@@ -158,6 +174,7 @@ class YouTubeLiveChatStreamer {
             unawaited(close());
           },
           onDone: () {
+            open();
             if (!controller.isClosed) unawaited(controller.close());
             unawaited(close());
           },
@@ -183,12 +200,16 @@ class _WatchedConnector implements ClientTransportConnector {
   final Duration pingInterval;
   final Duration pingTimeout;
 
+  /// TCP (+ TLS) is up
+  final void Function() onConnected;
+
   _WatchedConnector({
     required this.host,
     required this.port,
     required this.secure,
     required this.pingInterval,
     required this.pingTimeout,
+    required this.onConnected,
   });
 
   Socket? _socket;
@@ -217,6 +238,7 @@ class _WatchedConnector implements ClientTransportConnector {
         socket.destroy();
       },
     )..start();
+    this.onConnected();
     return transport;
   }
 

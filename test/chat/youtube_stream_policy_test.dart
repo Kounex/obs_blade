@@ -16,15 +16,16 @@ void main() {
 
   const dropped = YouTubeStreamDroppedException('dropped');
 
-  /// A call that opened and lived [lifetime], ended with [error]
+  /// A call that opened and lived [lifetime] from its start, ended with
+  /// [error]
   YouTubeStreamDecision lived(Duration lifetime, {Object? error}) {
-    final openedAt = now;
+    final startedAt = now;
     now = now.add(lifetime);
-    return policy.callEnded(openedAt: openedAt, error: error);
+    return policy.callEnded(startedAt: startedAt, opened: true, error: error);
   }
 
   YouTubeStreamDecision neverOpened() =>
-      policy.callEnded(openedAt: null, error: dropped);
+      policy.callEnded(startedAt: now, opened: false, error: dropped);
 
   test('streams until told otherwise', () {
     expect(policy.shouldStream, isTrue);
@@ -37,6 +38,15 @@ void main() {
       expect(decision.delay, Duration.zero);
       expect(decision.dropped, isFalse);
     }
+  });
+
+  test('Google\'s ~10 s calls reconnect at once, however many in a row', () {
+    for (var i = 0; i < 10; i++) {
+      final decision = lived(const Duration(milliseconds: 10300));
+      expect(decision.next, YouTubeStreamNext.reconnect);
+      expect(decision.delay, Duration.zero);
+    }
+    expect(policy.shouldStream, isTrue);
   });
 
   test('short calls back off; the third in a row polls for 10 min', () {
@@ -109,7 +119,8 @@ void main() {
 
   test('FAILED_PRECONDITION (ended or disabled): one poll asks', () {
     final decision = policy.callEnded(
-      openedAt: now,
+      startedAt: now,
+      opened: true,
       error: const YouTubeChatEndedException('ended'),
     );
     expect(decision.next, YouTubeStreamNext.poll);
@@ -118,7 +129,8 @@ void main() {
 
   test('any other refusal: the poll explains it for 10 min', () {
     final decision = policy.callEnded(
-      openedAt: null,
+      startedAt: now,
+      opened: false,
       error: const YouTubeStreamFallbackException('RESOURCE_EXHAUSTED'),
     );
     expect(decision.next, YouTubeStreamNext.poll);
@@ -138,12 +150,12 @@ void main() {
   test('FAILED_PRECONDITION again after the check poll answered (the chat '
       'runs): polls for 10 min instead of ping-ponging', () {
     const ended = YouTubeChatEndedException('ended');
-    policy.callEnded(openedAt: now, error: ended);
+    policy.callEnded(startedAt: now, opened: true, error: ended);
     expect(policy.shouldStream, isTrue);
     policy.pollAnswered();
 
     expect(
-      policy.callEnded(openedAt: now, error: ended).next,
+      policy.callEnded(startedAt: now, opened: true, error: ended).next,
       YouTubeStreamNext.poll,
     );
     expect(policy.shouldStream, isFalse);
@@ -174,7 +186,8 @@ void main() {
 
   test('reset (new chat / ended) clears the poll window', () {
     policy.callEnded(
-      openedAt: null,
+      startedAt: now,
+      opened: false,
       error: const YouTubeStreamFallbackException('x'),
     );
     expect(policy.shouldStream, isFalse);

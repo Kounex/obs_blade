@@ -1,9 +1,10 @@
 import 'youtube_live_chat_service.dart';
 import 'youtube_live_chat_stream.dart';
 
-/// A call that closes sooner than this cost what a poll would have
-/// (5 units either way).
-const Duration kYouTubeStreamMinLifetime = Duration(seconds: 10);
+/// A call that closes sooner than this (from its start) costs more than
+/// polling at Google's 2-5 s interval would have (5 units either way).
+/// Google closes every call ~10.3 s after its start (measured 2026-10-19).
+const Duration kYouTubeStreamMinLifetime = Duration(seconds: 5);
 
 /// Short calls in a row (or calls that never opened) before polling
 /// takes over / checks.
@@ -124,11 +125,14 @@ class YouTubeStreamPolicy {
     this._endedCheckAnswered = false;
   }
 
-  /// A call ended: [openedAt] is when Google accepted it (null: never),
-  /// [error] what it ended with (null: the server closed it / it was
-  /// closed on purpose).
+  /// A call that started at [startedAt] ended: [opened] whether Google
+  /// accepted it (billed), [error] what it ended with (null: the server
+  /// closed it / it was closed on purpose). Its length counts from
+  /// [startedAt]: what bills is calls per hour, and an accepted call's
+  /// headers can come seconds late.
   YouTubeStreamDecision callEnded({
-    required DateTime? openedAt,
+    required DateTime startedAt,
+    required bool opened,
     required Object? error,
   }) {
     final now = this._now();
@@ -144,10 +148,10 @@ class YouTubeStreamPolicy {
     if (error != null && error is! YouTubeStreamDroppedException) {
       return this._pollFor(kYouTubeStreamRetryAfter);
     }
-    if (openedAt != null) {
+    if (opened) {
       this._unopenedCalls = 0;
       this._pollWorkedWithoutStream = false;
-      final short = now.difference(openedAt) < kYouTubeStreamMinLifetime;
+      final short = now.difference(startedAt) < kYouTubeStreamMinLifetime;
       if (!short) {
         this._shortCalls = 0;
         this._reconnectDelay = Duration.zero;
