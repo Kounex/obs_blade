@@ -17,7 +17,15 @@ runaway calls. Spec:
   vendored in `lib/utils/youtube/stream_list/` (deps `grpc`, `protobuf`,
   `fixnum`). It reconnects from the page token, falls back to polling for
   10 min on answers only the poll explains or on three calls in a row
-  under 10 s, uses 30 s keepalive pings, and a new call on app resume.
+  under 10 s, pings its own HTTP/2 connection every 30 s (grpc's
+  keepalive only finishes a dead connection gracefully), and opens a new
+  call after a real stay in the background.
+- Review (fresh-context agent) fixes: `FAILED_PRECONDITION` (ended **or**
+  disabled) asks the poll instead of marking the video ended; calls that
+  never open probe with one poll and only fall back to polling when gRPC
+  can't connect while REST can; no "reconnecting" flash for a long call's
+  drop; resume restarts the call only after the background, not after
+  Control Center; a refused page token makes the poll start over once.
 - **Poll fallback paces a quiet chat**: Google's interval is the floor;
   each empty page stretches the wait ×1.5 up to 10 s, and a page with
   rows snaps back (`youTubePollDelay`).

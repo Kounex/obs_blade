@@ -40,15 +40,27 @@ own bucket.
 - Three opened calls in a row that each closed within 10 s cost what
   polling would, so the chat polls for 10 min and then tries one call
   again (`kYouTubeStreamRetryAfter`).
+- A long call that drops reconnects at once, with no "reconnecting"
+  flash (Google may rotate calls).
 - A call that never opened (dead zone, no network) isn't billed. It
-  reconnects with a 1 s → 60 s backoff, shows "reconnecting", and doesn't
-  count as short.
+  reconnects with a 1 s → 60 s backoff and shows "reconnecting". After 3
+  in a row, one poll checks: in a dead zone the poll can't get through
+  either (free retries); its first answer hands back to the stream. If
+  the stream still can't open while the poll works (gRPC blocked), the
+  chat polls for 10 min.
 - These go to the poll at once, because its answers tell quota, rate
   limit, permission and a missing chat apart: `RESOURCE_EXHAUSTED`,
   `PERMISSION_DENIED`, `NOT_FOUND`, `UNIMPLEMENTED` and anything else
   unexplained.
-- These end the chat (no poll): `FAILED_PRECONDITION` (ended or disabled;
-  gRPC can't tell which), a `chatEndedEvent` row, `offlineAt`.
+- These end the chat (no poll): a `chatEndedEvent` row, `offlineAt`.
+- `FAILED_PRECONDITION` means ended **or** disabled (gRPC can't tell
+  which): one poll asks. `liveChatEnded` ends the chat. A disabled chat
+  shows the poll's error and Retry / resume recover it. Taking it as
+  "ended" would skip that video for a channel entry until the stream
+  ends.
+- A page token the poll refuses (400) after the stream: the poll starts
+  over once without it (rows deduped by id). Google doesn't say whether
+  stream and poll tokens are interchangeable.
 - History: on a call without a token, rows published before the call
   started are dimmed (the poll dims its whole first page).
 - The poll banner: the poll answer repeats `activePollItem` on every
@@ -60,9 +72,14 @@ own bucket.
   restart) closes the open call. Without that, a call waiting in a quiet
   chat would never notice it was superseded.
 - iOS suspension / dead zones: a server stream never writes, so a dead
-  socket doesn't fail on its own. HTTP/2 keepalive pings every 30 s
-  (20 s timeout) fail it, and the call reconnects. App resume replaces an
-  open call with a new one from its token (5 units).
+  socket doesn't fail on its own. grpc's keepalive can't help: on a ping
+  timeout it only *finishes* the connection (graceful GOAWAY, which waits
+  for the open call). The streamer brings its own connection
+  (`ClientTransportConnectorChannel`, TLS with ALPN `h2`). It pings every
+  30 s and terminates the connection after 20 s without an answer, which
+  fails the call so it reconnects. App resume after a real stay in the
+  background (not Control Center / Face ID) replaces an open call with a
+  new one from its token (5 units).
 
 ## Journeys
 
@@ -82,6 +99,10 @@ own bucket.
    on the first row.
 
 ## Open: measure before trusting the numbers
+
+Also confirm: whether streamed answers repeat `activePollItem` (the
+banner rule assumes they may not), whether a stream token works for the
+poll and back, and that a 30 s ping draws no GOAWAY.
 
 The quota table says 5 units per call. How long Google keeps a call open
 is undocumented, and our audit noted "streams can EOF after seconds". The

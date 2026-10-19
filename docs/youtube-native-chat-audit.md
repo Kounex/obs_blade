@@ -70,6 +70,11 @@ long a call stays open is still unmeasured; the spike tool
   "faster than the refresh rate" (quota may answer the same),
   `PERMISSION_DENIED`, `NOT_FOUND`. A Trailers-Only error completes the
   call's response headers too, carrying `grpc-status`.
+  **grpc-dart keepalive doesn't fail a call on a dead socket**: its ping
+  timeout calls `transport.finish()` (graceful GOAWAY, waits for open
+  streams) - the streamer pings its own HTTP/2 connection and
+  `terminate()`s it instead (`YouTubeStreamPingWatchdog`, tested through
+  a freezing proxy).
 
 ### Send
 
