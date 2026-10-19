@@ -1,0 +1,137 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
+import 'package:obs_blade/utils/youtube/youtube_stream_policy.dart';
+
+/// The stream-or-poll rules the YouTube chat and the own-channel activity
+/// poller share.
+void main() {
+  late DateTime now;
+  late YouTubeStreamPolicy policy;
+
+  setUp(() {
+    now = DateTime.utc(2026, 10, 19, 18);
+    policy = YouTubeStreamPolicy(now: () => now);
+  });
+
+  const dropped = YouTubeStreamDroppedException('dropped');
+
+  /// A call that opened and lived [lifetime], ended with [error]
+  YouTubeStreamDecision lived(Duration lifetime, {Object? error}) {
+    final openedAt = now;
+    now = now.add(lifetime);
+    return policy.callEnded(openedAt: openedAt, error: error);
+  }
+
+  YouTubeStreamDecision neverOpened() =>
+      policy.callEnded(openedAt: null, error: dropped);
+
+  test('streams until told otherwise', () {
+    expect(policy.shouldStream, isTrue);
+  });
+
+  test('a long call (closed or dropped) reconnects at once, nothing shown', () {
+    for (final error in [null, dropped]) {
+      final decision = lived(const Duration(minutes: 5), error: error);
+      expect(decision.next, YouTubeStreamNext.reconnect);
+      expect(decision.delay, Duration.zero);
+      expect(decision.dropped, isFalse);
+    }
+  });
+
+  test('short calls back off; the third in a row polls for 10 min', () {
+    final first = lived(const Duration(seconds: 3));
+    final second = lived(const Duration(seconds: 3), error: dropped);
+    expect(
+      [first.delay, second.delay],
+      [const Duration(seconds: 1), const Duration(seconds: 2)],
+    );
+    expect(first.dropped, isFalse);
+    expect(second.dropped, isTrue);
+
+    final third = lived(const Duration(seconds: 3));
+    expect(third.next, YouTubeStreamNext.poll);
+    expect(policy.shouldStream, isFalse);
+    now = now.add(kYouTubeStreamRetryAfter);
+    expect(policy.shouldStream, isTrue);
+  });
+
+  test('a long call between short ones resets the count', () {
+    lived(const Duration(seconds: 3));
+    lived(const Duration(seconds: 3));
+    lived(const Duration(minutes: 2));
+    expect(lived(const Duration(seconds: 3)).next, YouTubeStreamNext.reconnect);
+  });
+
+  test('calls that never open: back off with "reconnecting", then one poll '
+      'checks and the stream comes back after its answer', () {
+    final a = neverOpened();
+    final b = neverOpened();
+    expect(
+      [a.delay, b.delay],
+      [const Duration(seconds: 1), const Duration(seconds: 2)],
+    );
+    expect(a.dropped && b.dropped, isTrue);
+
+    expect(neverOpened().next, YouTubeStreamNext.poll);
+
+    /// The probe: one poll, then streaming again at once
+    expect(policy.shouldStream, isTrue);
+  });
+
+  test('a dead zone: the probe poll gets no answer, the stream opens '
+      'later - no 10 min of polling', () {
+    neverOpened();
+    neverOpened();
+    neverOpened();
+
+    /// The poll failed too (no pollAnswered); the stream then opens
+    lived(const Duration(minutes: 3));
+    neverOpened();
+    neverOpened();
+    expect(neverOpened().next, YouTubeStreamNext.poll);
+    expect(policy.shouldStream, isTrue);
+  });
+
+  test('gRPC blocked: the poll works while calls still never open → '
+      'polls for 10 min', () {
+    neverOpened();
+    neverOpened();
+    neverOpened();
+    policy.pollAnswered();
+
+    neverOpened();
+    neverOpened();
+    expect(neverOpened().next, YouTubeStreamNext.poll);
+    expect(policy.shouldStream, isFalse);
+    expect(policy.pollUntil, now.add(kYouTubeStreamRetryAfter));
+  });
+
+  test('FAILED_PRECONDITION (ended or disabled): one poll asks', () {
+    final decision = policy.callEnded(
+      openedAt: now,
+      error: const YouTubeChatEndedException('ended'),
+    );
+    expect(decision.next, YouTubeStreamNext.poll);
+    expect(policy.shouldStream, isTrue);
+  });
+
+  test('any other refusal: the poll explains it for 10 min', () {
+    final decision = policy.callEnded(
+      openedAt: null,
+      error: const YouTubeStreamFallbackException('RESOURCE_EXHAUSTED'),
+    );
+    expect(decision.next, YouTubeStreamNext.poll);
+    expect(policy.shouldStream, isFalse);
+  });
+
+  test('reset (new chat / ended) clears the poll window', () {
+    policy.callEnded(
+      openedAt: null,
+      error: const YouTubeStreamFallbackException('x'),
+    );
+    expect(policy.shouldStream, isFalse);
+    policy.reset();
+    expect(policy.shouldStream, isTrue);
+  });
+}

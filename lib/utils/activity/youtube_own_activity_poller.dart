@@ -4,9 +4,11 @@ import 'dart:math' as math;
 import '../../stores/views/youtube_chat.dart'
     show kYouTubeQuotaResetGrace, nextYouTubeQuotaReset;
 import '../../types/classes/activity/activity_event.dart';
+import '../../types/classes/youtube/youtube_chat_message.dart';
 import '../general_helper.dart';
 import '../youtube/youtube_live_chat_service.dart';
 import '../youtube/youtube_live_resolver.dart';
+import '../youtube/youtube_stream_policy.dart';
 import '../youtube_target.dart';
 import 'activity_mappers.dart';
 
@@ -36,10 +38,12 @@ enum YouTubeOwnActivityState {
 /// Waiting costs no quota: the channel's `/live` page (~3 KB read with the
 /// mobile user agent) every [idleCheck] in the foreground, every
 /// [fastCheck] while OBS streams. Once live: one `videos.list` (1 unit),
-/// then `liveChatMessages.list` (~5 units) every [pollInterval] - slower
-/// than a chat on screen, a page holds up to 500 messages and the page
-/// token carries on, so nothing is skipped. The first page re-sends recent
-/// history; the feed dedupes by message id.
+/// then the chat over `streamList` (5 units per call, held open) with
+/// `liveChatMessages.list` (5 units) every [pollInterval] as the fallback -
+/// the same rules as the YouTube chat ([YouTubeStreamPolicy]). A page
+/// holds up to 500 messages and the page token carries on, so nothing is
+/// skipped. A fresh read re-sends recent history; the feed dedupes by
+/// message id.
 class YouTubeOwnActivityPoller {
   static const Duration idleCheck = Duration(minutes: 2);
   static const Duration fastCheck = Duration(seconds: 30);
@@ -67,7 +71,15 @@ class YouTubeOwnActivityPoller {
     DateTime Function()? clock,
   }) : _resolver = resolver ?? YouTubeLiveResolver(),
        _chatService = chatService ?? YouTubeLiveChatService(),
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now {
+    this._policy = YouTubeStreamPolicy(now: this._clock);
+  }
+
+  late final YouTubeStreamPolicy _policy;
+
+  /// Closes the open `streamList` call (standby, stop, a new chat, back
+  /// from the background) - the step waiting on it returns
+  void Function()? _cancelStream;
 
   YouTubeOwnActivityState _state = YouTubeOwnActivityState.off;
   YouTubeOwnActivityState get state => this._state;
@@ -128,6 +140,7 @@ class YouTubeOwnActivityPoller {
   set standby(bool value) {
     if (value == this._standby) return;
     this._standby = value;
+    if (value) this._closeStream();
     this.wake();
   }
 
@@ -139,10 +152,23 @@ class YouTubeOwnActivityPoller {
   }
 
   /// App in the foreground: only then does a waiting poller check.
+  ///
+  /// Back from the background, an open stream call starts over from its
+  /// page token: iOS may have taken its socket away without the call
+  /// noticing yet.
   set foreground(bool value) {
     if (value == this._foreground) return;
     this._foreground = value;
-    if (value) this.wake();
+    if (value) {
+      this._closeStream();
+      this.wake();
+    }
+  }
+
+  void _closeStream() {
+    final cancel = this._cancelStream;
+    this._cancelStream = null;
+    cancel?.call();
   }
 
   /// Check / poll now instead of waiting out the current pause.
@@ -188,6 +214,8 @@ class YouTubeOwnActivityPoller {
   }
 
   void _resetChat({required bool clearEnded}) {
+    this._closeStream();
+    this._policy.reset();
     this._videoId = null;
     this._liveChatId = null;
     this._pageToken = null;
@@ -249,7 +277,74 @@ class YouTubeOwnActivityPoller {
       return idleCheck;
     }
     if (this._liveChatId == null) return this._attach(channelId);
+    if (this._policy.shouldStream) {
+      final delay = await this._stream(channelId);
+      if (delay != null) return delay;
+      if (this._liveChatId == null || !this._enabled || this._standby) {
+        return Duration.zero;
+      }
+    }
     return this._poll(channelId);
+  }
+
+  /// One `streamList` call, until it ends: the wait before the next step,
+  /// or null when the poll takes over ([YouTubeStreamPolicy]).
+  Future<Duration?> _stream(String channelId) async {
+    final generation = this._generation;
+    DateTime? openedAt;
+    const ended = #ended;
+    const closed = #closed;
+    final done = Completer<Object?>();
+    final subscription = this._chatService
+        .streamMessages(
+          this._liveChatId!,
+          this._pageToken,
+          apiKey: this._apiKey,
+          onOpen: () => openedAt ??= this._clock(),
+        )
+        .listen(
+          (page) {
+            if (done.isCompleted) return;
+            openedAt ??= this._clock();
+            this._pageToken = page.nextPageToken ?? this._pageToken;
+            this._emit(page, channelId);
+            if (page.offlineAt != null ||
+                page.messages.any(
+                  (m) => m.type == YouTubeChatMessageType.chatEnded,
+                )) {
+              done.complete(ended);
+            }
+          },
+          onError: (Object e) {
+            if (!done.isCompleted) done.complete(e);
+          },
+          onDone: () {
+            if (!done.isCompleted) done.complete(null);
+          },
+          cancelOnError: true,
+        );
+    void cancel() {
+      unawaited(subscription.cancel());
+      if (!done.isCompleted) done.complete(closed);
+    }
+
+    this._cancelStream = cancel;
+    final result = await done.future;
+    unawaited(subscription.cancel());
+    if (identical(this._cancelStream, cancel)) this._cancelStream = null;
+    if (result == closed ||
+        generation != this._generation ||
+        !this._enabled ||
+        this._liveChatId == null) {
+      return Duration.zero;
+    }
+    if (result == ended) return this._ended();
+    final decision = this._policy.callEnded(openedAt: openedAt, error: result);
+    if (result != null) {
+      GeneralHelper.logFailure('Activity: YouTube chat stream ended', result);
+    }
+    if (decision.next == YouTubeStreamNext.poll) return null;
+    return decision.delay;
   }
 
   Future<Duration> _attach(String channelId) async {
@@ -325,21 +420,22 @@ class YouTubeOwnActivityPoller {
       GeneralHelper.logFailure('Activity: YouTube chat poll failed', e);
       final status = e is YouTubeApiException ? e.statusCode : null;
 
-      /// 403 / 404: the chat is gone for us (ended, turned off)
-      if (status == 403 || status == 404) return this._ended();
+      /// 403 / 404: the chat is gone for now - turned off, or gone. Not
+      /// "ended" (`liveChatEnded` is): a chat switched back on is picked up
+      /// again by the next live check
+      if (status == 403 || status == 404) return this._lost();
       return this._backOff();
     }
     if (generation != this._generation || !this._enabled) return idleCheck;
     this._backoff = Duration.zero;
+    this._policy.pollAnswered();
     this._pageToken = page.nextPageToken;
-    final emit = this.onEvent;
-    if (emit != null) {
-      for (final message in page.messages) {
-        final event = youTubeActivityFromMessage(message, channelId);
-        if (event != null) emit(event);
-      }
-    }
+    this._emit(page, channelId);
     if (page.offlineAt != null) return this._ended();
+
+    /// The poll was standing in (a probe / ended-or-disabled check, or
+    /// its window is over): back to the stream right away
+    if (this._policy.shouldStream) return Duration.zero;
 
     /// A full page: more is waiting, fetch it right after the minimum
     final minimum = Duration(milliseconds: page.pollingIntervalMillis);
@@ -350,6 +446,26 @@ class YouTubeOwnActivityPoller {
         minimum.inMilliseconds,
       ),
     );
+  }
+
+  void _emit(YouTubeLiveChatPage page, String channelId) {
+    final emit = this.onEvent;
+    if (emit == null) return;
+    for (final message in page.messages) {
+      final event = youTubeActivityFromMessage(message, channelId);
+      if (event != null) emit(event);
+    }
+  }
+
+  /// The chat answered 403 / 404 without having ended: wait and look
+  /// again - `videos.list` (1 unit) shows no chat while it's off. At most
+  /// every [_upcomingCheck], so a 403 that stays costs little.
+  Duration _lost() {
+    this._resetChat(clearEnded: false);
+    this._setState(YouTubeOwnActivityState.waiting);
+    this.onChanged?.call();
+    final wait = this._waitingDelay();
+    return wait < _upcomingCheck ? _upcomingCheck : wait;
   }
 
   Duration _ended() {

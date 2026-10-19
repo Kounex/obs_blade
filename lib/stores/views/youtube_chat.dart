@@ -24,6 +24,7 @@ import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_entry_name.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
+import 'package:obs_blade/utils/youtube/youtube_stream_policy.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 
@@ -71,25 +72,12 @@ const List<Duration> kYouTubeLiveRecheckSchedule = [
   Duration(seconds: 90),
 ];
 
-/// The chat reads over `liveChatMessages.streamList`: 5 quota units per
-/// call, held open while the chat runs, against 5 units per
-/// `liveChatMessages.list` poll every few seconds (~3,600-6,000 units an
-/// hour - the 10,000 a day were gone after 2-3 hours of streaming). A
-/// call that closes sooner than this cost what a poll would have.
-const Duration kYouTubeStreamMinLifetime = Duration(seconds: 10);
-
-/// Short calls in a row before the chat polls instead
-/// ([kYouTubeStreamRetryAfter])
-const int kYouTubeShortStreamLimit = 3;
-
-/// How long the chat polls after the stream gave way, before it tries the
-/// stream again (one call - 5 units)
-const Duration kYouTubeStreamRetryAfter = Duration(minutes: 10);
-
-/// First wait before reconnecting a stream that dropped or closed early;
-/// doubles per try up to the read backoff ceiling
-const Duration kYouTubeStreamReconnectDelay = Duration(seconds: 1);
-
+/// The chat reads over `liveChatMessages.streamList` (5 quota units per
+/// call, held open while the chat runs) with the poll as the fallback -
+/// see [YouTubeStreamPolicy]. Polling `liveChatMessages.list` every few
+/// seconds is ~3,600-6,000 units an hour: the 10,000 a day were gone
+/// after 2-3 hours of streaming.
+///
 /// The poll's quiet-chat pacing: Google's `pollingIntervalMillis` is the
 /// floor, each empty page in a row stretches the wait by half up to this
 /// ceiling, a page with anything in it snaps back to Google's interval.
@@ -295,19 +283,9 @@ class _ChannelBuffer {
   /// instead of answering `rateLimitExceeded`.
   DateTime? nextPollAt;
 
-  /// The chat polls instead of streaming until then (the stream gave
-  /// way - see [kYouTubeStreamRetryAfter]); null: stream.
-  DateTime? streamRetryAt;
-
-  /// Stream calls in a row that never opened (no network / gRPC blocked)
-  int unopenedStreams = 0;
-
-  /// The poll is reading once to tell a dead network from a blocked
-  /// stream (after [unopenedStreams] calls that never opened)
-  bool streamProbe = false;
-
-  /// That poll got an answer, the stream still hasn't opened since
-  bool pollWorkedWithoutStream = false;
+  /// Stream or poll ([YouTubeStreamPolicy]) - per chat, survives a
+  /// switch away and back
+  YouTubeStreamPolicy? streamPolicy;
 
   _ChannelBuffer({
     List<YouTubeChatMessage>? messages,
@@ -1409,6 +1387,7 @@ abstract class _YouTubeChatStore with Store {
       });
     }
 
+    final policy = buffer.streamPolicy ??= YouTubeStreamPolicy(now: this._now);
     int lastIntervalMillis = 5000;
     int backoffMillis = 0;
     var attached = false;
@@ -1439,7 +1418,7 @@ abstract class _YouTubeChatStore with Store {
       buffer.liveChatId = null;
       buffer.nextPageToken = null;
       buffer.nextPollAt = null;
-      buffer.streamRetryAt = null;
+      policy.reset();
       buffer.viewerCount = null;
       runInAction(() {
         this.selectedChannelViewerCount = null;
@@ -1490,15 +1469,8 @@ abstract class _YouTubeChatStore with Store {
     }
 
     /// Reads over `streamList` until the chat ends, the loop is superseded
-    /// or polling should take over for a while (null, with
-    /// [_ChannelBuffer.streamRetryAt] set): the stream answered with
-    /// something only the poll can explain, or it keeps closing sooner
-    /// than [kYouTubeStreamMinLifetime] - then it costs what polling does.
-    /// A dropped connection reconnects from the last page token; one that
-    /// never opened isn't billed and doesn't count as short.
+    /// or [YouTubeStreamPolicy] hands over to the poll (null).
     Future<_PassOutcome?> stream() async {
-      var shortStreams = 0;
-      var dropDelay = Duration.zero;
       while (!superseded()) {
         final startedAt = this._now();
         final fromStart = buffer.nextPageToken == null;
@@ -1558,91 +1530,41 @@ abstract class _YouTubeChatStore with Store {
 
         if (result is _StreamChatEnded) return ended();
 
-        /// FAILED_PRECONDITION is "ended" **or** "disabled" over gRPC - one
-        /// poll tells them apart (`liveChatEnded` ends the chat, a disabled
-        /// chat errors and Retry / resume recover it), then streams again
-        if (result is YouTubeChatEndedException) {
-          GeneralHelper.advLog(
-            'YouTube chat stream: ended or disabled - asking the poll',
-          );
-          buffer.streamRetryAt = this._now();
-          return null;
-        }
-        if (result != null && result is! YouTubeStreamDroppedException) {
-          GeneralHelper.logFailure(
-            'YouTube chat stream unavailable - polling for now',
-            result,
-          );
-          buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
-          return null;
-        }
-
-        final opened = openedAt;
-        final short =
-            opened == null ||
-            this._now().difference(opened) < kYouTubeStreamMinLifetime;
-        if (opened != null) {
-          buffer.unopenedStreams = 0;
-          buffer.pollWorkedWithoutStream = false;
-          shortStreams = short ? shortStreams + 1 : 0;
-          if (shortStreams >= kYouTubeShortStreamLimit) {
+        final decision = policy.callEnded(openedAt: openedAt, error: result);
+        if (decision.next == YouTubeStreamNext.poll) {
+          if (result is YouTubeChatEndedException) {
+            /// Ended **or** disabled over gRPC - the poll tells: a disabled
+            /// chat errors and Retry / resume recover it
             GeneralHelper.advLog(
-              'YouTube chat stream keeps closing within '
-              '${kYouTubeStreamMinLifetime.inSeconds}s - polling for now',
+              'YouTube chat stream: ended or disabled - asking the poll',
             );
-            buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
-            return null;
-          }
-        } else if (++buffer.unopenedStreams >= kYouTubeShortStreamLimit) {
-          buffer.unopenedStreams = 0;
-
-          /// Calls that never open: no network (a dead zone - the poll
-          /// can't get through either), or gRPC can't get through where
-          /// REST can. One poll tells: back to the stream after its first
-          /// answer, and if the stream still can't open while the poll
-          /// works, poll for a while
-          if (buffer.pollWorkedWithoutStream) {
-            GeneralHelper.advLog(
-              'YouTube chat stream can\'t connect while polling works - '
-              'polling for now',
+          } else if (result != null &&
+              result is! YouTubeStreamDroppedException) {
+            GeneralHelper.logFailure(
+              'YouTube chat stream unavailable - polling for now',
+              result,
             );
-            buffer.pollWorkedWithoutStream = false;
-            buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
           } else {
-            buffer.streamProbe = true;
-            buffer.streamRetryAt = this._now();
+            GeneralHelper.advLog(
+              'YouTube chat stream keeps closing or can\'t connect - '
+              'polling until ${policy.pollUntil}',
+            );
           }
-          if (result is YouTubeStreamDroppedException) {
+          return null;
+        }
+        if (decision.dropped) {
+          if (result != null) {
             GeneralHelper.logFailure('YouTube chat stream dropped', result);
           }
-          return null;
-        }
-
-        /// A long call that dropped reconnects at once - no "reconnecting"
-        /// flash for a rotation Google may do every so often
-        if (result is YouTubeStreamDroppedException && short) {
-          GeneralHelper.logFailure('YouTube chat stream dropped', result);
           retrying('Lost connection to YouTube chat - reconnecting');
         }
-        if (!short) {
-          dropDelay = Duration.zero;
-          continue;
-        }
-        dropDelay = dropDelay == Duration.zero
-            ? kYouTubeStreamReconnectDelay
-            : dropDelay * 2;
-        if (dropDelay > const Duration(milliseconds: kMaxBackoffMillis)) {
-          dropDelay = const Duration(milliseconds: kMaxBackoffMillis);
-        }
-        await this._sleep(dropDelay);
+        if (decision.delay > Duration.zero) await this._sleep(decision.delay);
       }
       return _PassOutcome.stopped;
     }
 
     while (!superseded()) {
-      final streamRetryAt = buffer.streamRetryAt;
-      if (streamRetryAt == null || !this._now().isBefore(streamRetryAt)) {
-        buffer.streamRetryAt = null;
+      if (policy.shouldStream) {
         final outcome = await stream();
         if (outcome != null) return outcome;
         if (superseded()) return _PassOutcome.stopped;
@@ -1713,10 +1635,7 @@ abstract class _YouTubeChatStore with Store {
 
         backoffMillis = 0;
         lastIntervalMillis = page.pollingIntervalMillis;
-        if (buffer.streamProbe) {
-          buffer.streamProbe = false;
-          buffer.pollWorkedWithoutStream = true;
-        }
+        policy.pollAnswered();
         quietPolls = page.messages.isEmpty ? quietPolls + 1 : 0;
         buffer.nextPollAt = this._now().add(
           youTubePollDelay(page.pollingIntervalMillis, quietPolls),
@@ -1736,8 +1655,7 @@ abstract class _YouTubeChatStore with Store {
         }
 
         /// Time to try the stream again
-        final retryAt = buffer.streamRetryAt;
-        if (retryAt != null && !this._now().isBefore(retryAt)) break;
+        if (policy.shouldStream) break;
 
         /// Google: "the amount of time the client should wait before
         /// polling again" - counted from the answer, so the full interval

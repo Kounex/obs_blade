@@ -230,7 +230,7 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
         const YouTubeStreamFallbackException('No stream scripted'),
       );
     }
-    return this.streams.removeFirst()._open(onOpen);
+    return this.streams.removeFirst().openForTest(onOpen);
   }
 
   @override
@@ -471,7 +471,8 @@ class FakeChatStream {
   /// The store subscribed (the call went out)
   bool listened = false;
 
-  Stream<YouTubeLiveChatPage> _open(void Function()? onOpen) {
+  /// The call going out (a fake service's `streamMessages`)
+  Stream<YouTubeLiveChatPage> openForTest(void Function()? onOpen) {
     this._onOpen = onOpen;
     this._controller.onListen = () => this.listened = true;
     this._controller.onCancel = () => this.cancelled = true;
