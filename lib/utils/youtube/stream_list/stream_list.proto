@@ -1,0 +1,443 @@
+syntax = "proto2";
+
+package youtube.api.v3;
+
+import "google/protobuf/duration.proto";
+
+service V3DataLiveChatMessageService {
+  // Allows a user to load live chat through a server-streamed RPC.
+  rpc StreamList(LiveChatMessageListRequest)
+      returns (stream LiveChatMessageListResponse) {}
+}
+
+message LiveChatMessageListRequest {
+  // The ID of the live chat for which comments should be returned.
+  optional string live_chat_id = 1;
+
+  // Specifies the localization language in which the system messages
+  // should be returned.
+  optional string hl = 2;
+
+  // Specifies the size of the profile image that should be
+  // returned for each user.
+  optional uint32 profile_image_size = 3;
+
+  // The <code><strong>maxResults</strong></code> parameter specifies the
+  // maximum number of items that should be returned in the result set.
+  // Not used in the streaming RPC.
+  optional uint32 max_results = 98;
+
+  // The <code><strong>pageToken</strong></code> parameter identifies a specific
+  // page in the result set that should be returned. In an API response, the
+  // <code>nextPageToken</code> property identify other pages that could be
+  // retrieved.
+  optional string page_token = 99;
+
+  // The <code><strong>part</strong></code> parameter specifies the
+  // <code>liveChatComment</code> resource parts that the API response will
+  // include. Supported values are <code>id</code>, <code>snippet</code>, and
+  // <code>authorDetails</code>.
+  repeated string part = 100;
+}
+
+message LiveChatMessageListResponse {
+  // Identifies what kind of resource this is. Value: the fixed string
+  // <code>"youtube#liveChatMessageListResponse"</code>.
+  optional string kind = 200;
+
+  // Etag of this resource.
+  optional string etag = 201;
+
+  // The date and time when the underlying stream went offline. The value is
+  // specified in <a href="//www.w3.org/TR/NOTE-datetime">ISO 8601</a>
+  // format.
+  optional string offline_at = 2;
+
+  // General pagination information.
+  optional PageInfo page_info = 1004;
+
+  optional string next_page_token = 100602;
+
+  repeated LiveChatMessage items = 1007;
+
+  // Set when there is an active poll.
+  optional LiveChatMessage active_poll_item = 1008;
+}
+
+message LiveChatMessage {
+  // Identifies what kind of resource this is. Value: the fixed string
+  // <code>"youtube#liveChatMessage"</code>.
+  optional string kind = 200;
+
+  // Etag of this resource.
+  optional string etag = 201;
+
+  // The ID that YouTube assigns to uniquely identify the message.
+  // Note: For giftEvents, the same ID may be reused to update the combo count.
+  optional string id = 101;
+
+  // The <code>snippet</code> object contains basic details about the message.
+  optional LiveChatMessageSnippet snippet = 2;
+
+  // The <code>authorDetails</code> object contains basic details about the
+  // user that posted this message.
+  optional LiveChatMessageAuthorDetails author_details = 3;
+}
+
+message LiveChatMessageAuthorDetails {
+  // The YouTube channel ID.
+  optional string channel_id = 10101;
+  // The channel's URL.
+  optional string channel_url = 102;
+  // The channel's display name.
+  optional string display_name = 103;
+  // The channels's avatar URL.
+  optional string profile_image_url = 104;
+  // Whether the author's identity has been verified by YouTube.
+  optional bool is_verified = 4;
+  // Whether the author is the owner of the live chat.
+  optional bool is_chat_owner = 5;
+  // Whether the author is a sponsor of the live chat.
+  optional bool is_chat_sponsor = 6;
+  // Whether the author is a moderator of the live chat.
+  optional bool is_chat_moderator = 7;
+}
+
+message LiveChatMessageSnippet {
+  message TypeWrapper {
+    enum Type {
+      INVALID_TYPE = 0;
+      TEXT_MESSAGE_EVENT = 1;
+      TOMBSTONE = 2;
+      FAN_FUNDING_EVENT = 3;
+      CHAT_ENDED_EVENT = 4;
+      SPONSOR_ONLY_MODE_STARTED_EVENT = 5;
+      SPONSOR_ONLY_MODE_ENDED_EVENT = 6;
+      NEW_SPONSOR_EVENT = 7;
+      MEMBER_MILESTONE_CHAT_EVENT = 17;
+      MEMBERSHIP_GIFTING_EVENT = 18;
+      GIFT_MEMBERSHIP_RECEIVED_EVENT = 19;
+      USER_BANNED_EVENT = 10;
+      SUPER_CHAT_EVENT = 15;
+      SUPER_STICKER_EVENT = 16;
+      POLL_EVENT = 20;
+      GIFT_EVENT = 21;
+    }
+  }
+  // The type of message, this will always be present, it determines the
+  // contents of the message as well as which fields will be present.
+  optional TypeWrapper.Type type = 1;
+
+  optional string live_chat_id = 201;
+
+  // The ID of the user that authored this message, this field is not always
+  // filled.
+  // textMessageEvent - the user that wrote the message
+  // fanFundingEvent - the user that funded the broadcast
+  // newSponsorEvent - the user that just became a sponsor
+  // memberMilestoneChatEvent - the member that sent the message
+  // membershipGiftingEvent - the user that made the purchase
+  // giftMembershipReceivedEvent - the user that received the gift membership
+  // userBannedEvent - the moderator that took the action
+  // superChatEvent - the user that made the purchase
+  // superStickerEvent - the user that made the purchase
+  // pollEvent - the user that created the poll
+  // giftEvent - the user that made the purchase
+  optional string author_channel_id = 301;
+
+  // The date and time when the message was orignally published. The value is
+  // specified in <a href="//www.w3.org/TR/NOTE-datetime">ISO 8601</a>
+  // format.
+  optional string published_at = 4;
+
+  // Whether the message has display content that should be displayed to users.
+  optional bool has_display_content = 17;
+
+  // Contains a string that can be displayed to the user.
+  // If this field is not present the message is silent, at the moment only
+  // messages of type TOMBSTONE and CHAT_ENDED_EVENT are silent.
+  optional string display_message = 16;
+
+  oneof displayed_content {
+    // Details about the text message, this is only set if the type is
+    // 'textMessageEvent'.
+    LiveChatTextMessageDetails text_message_details = 19;
+    LiveChatUserBannedMessageDetails user_banned_details = 22;
+    // Details about the Super Chat event, this is only set if the type is
+    // 'superChatEvent'.
+    LiveChatSuperChatDetails super_chat_details = 27;
+    // Details about the Super Sticker event, this is only set if the type is
+    // 'superStickerEvent'.
+    LiveChatSuperStickerDetails super_sticker_details = 28;
+    // Details about the New Member Announcement event, this is only set if
+    // the type is 'newSponsorEvent'. Note that "member" is the new term for
+    // "sponsor".
+    LiveChatNewSponsorDetails new_sponsor_details = 29;
+    // Details about the Member Milestone Chat event, this is only set if
+    // the type is 'memberMilestoneChatEvent'.
+    LiveChatMemberMilestoneChatDetails member_milestone_chat_details = 30;
+    // Details about the Membership Gifting event, this is only set if the type
+    // is 'membershipGiftingEvent'.
+    LiveChatMembershipGiftingDetails membership_gifting_details = 31;
+    // Details about the Gift Membership Received event, this is only set if the
+    // type is 'giftMembershipReceivedEvent'.
+    LiveChatGiftMembershipReceivedDetails gift_membership_received_details = 32;
+    // Details about the poll event, this is only set if the type is
+    // 'pollEvent'.
+    LiveChatPollDetails poll_details = 33;
+    // Details about the gift event, this is only set if the type is
+    // 'giftEvent'.
+    LiveChatGiftDetails gift_details = 34;
+  }
+}
+
+message LiveChatTextMessageDetails {
+  // The user's message.
+  optional string message_text = 1;
+}
+
+message LiveChatUserBannedMessageDetails {
+  message BanTypeWrapper {
+    enum BanType {
+      PERMANENT = 1;
+      TEMPORARY = 2;
+    }
+  }
+  // The details of the user that was banned.
+  optional ChannelProfileDetails banned_user_details = 1;
+
+  // The type of ban.
+  optional BanTypeWrapper.BanType ban_type = 2;
+
+  // The duration of the ban. This property is only present if the
+  // <code>banType</code> is <code>temporary</code>.
+  optional uint64 ban_duration_seconds = 4;
+}
+
+message LiveChatSuperChatDetails {
+  // The amount purchased by the user, in micros (1,750,000 micros = 1.75).
+  optional uint64 amount_micros = 1;
+  // The currency in which the purchase was made.
+  optional string currency = 2;
+  // A rendered string that displays the fund amount and currency to the user.
+  optional string amount_display_string = 3;
+  // The comment added by the user to this Super Chat event.
+  optional string user_comment = 4;
+  // The tier in which the amount belongs. Lower amounts belong to lower
+  // tiers. The lowest tier is <code>1</code>.
+  optional uint32 tier = 5;
+}
+
+message LiveChatSuperStickerDetails {
+  // The amount purchased by the user, in micros (1,750,000 micros = 1.75).
+  optional uint64 amount_micros = 1;
+  // The currency in which the purchase was made.
+  optional string currency = 2;
+  // A rendered string that displays the fund amount and currency to the user.
+  optional string amount_display_string = 3;
+  // The tier in which the amount belongs. Lower amounts belong to lower
+  // tiers. The lowest tier is <code>1</code>.
+  optional uint32 tier = 4;
+  // Information about the Super Sticker.
+  optional SuperStickerMetadata super_sticker_metadata = 5;
+}
+
+message LiveChatFanFundingEventDetails {
+  // The amount of the fund.
+  optional uint64 amount_micros = 1;
+
+  // The currency in which the fund was made.
+  optional string currency = 2;
+
+  // A rendered string that displays the fund amount and currency to the user.
+  optional string amount_display_string = 3;
+
+  // The comment added by the user to this fan funding event.
+  optional string user_comment = 4;
+}
+
+message LiveChatNewSponsorDetails {
+  // The name of the Level that the viewer just had joined. The Level names
+  // are defined by the YouTube channel offering the Membership.
+  //
+  // In some situations this field isn't filled.
+  optional string member_level_name = 1;
+
+  // If the viewer just had upgraded from a lower level. For viewers that
+  // were not members at the time of purchase, this field is false.
+  optional bool is_upgrade = 2;
+}
+
+message LiveChatMemberMilestoneChatDetails {
+  // The name of the Level at which the viever is a member. The Level names
+  // are defined by the YouTube channel offering the Membership.
+  //
+  // In some situations this field isn't filled.
+  optional string member_level_name = 1;
+
+  // The total amount of months (rounded up) the viewer has been a member
+  // that granted them this Member Milestone Chat. This is the same
+  // number of months as is being displayed to YouTube users.
+  optional uint32 member_month = 2;
+
+  // The comment added by the member to this Member Milestone Chat.
+  //
+  // This field is empty for messages without a comment from the member.
+  optional string user_comment = 3;
+}
+
+message LiveChatMembershipGiftingDetails {
+  // The number of gift memberships purchased by the user.
+  optional int32 gift_memberships_count = 1;
+
+  // The name of the level of the gift memberships purchased by the user. The
+  // Level names are defined by the YouTube channel offering the Membership.
+  //
+  // In some situations this field isn't filled.
+  optional string gift_memberships_level_name = 2;
+}
+
+message LiveChatGiftMembershipReceivedDetails {
+  // The name of the Level at which the viewer is a member. This matches the
+  // `snippet.membershipGiftingDetails.giftMembershipsLevelName` of the
+  // associated membership gifting message. The Level names are defined by the
+  // YouTube channel offering the Membership.
+  //
+  // In some situations this field isn't filled.
+  optional string member_level_name = 1;
+
+  // The ID of the user that made the membership gifting purchase. This matches
+  // the `snippet.authorChannelId` of the associated membership gifting message.
+  optional string gifter_channel_id = 2;
+
+  // The ID of the membership gifting message that is related to this gift
+  // membership. This ID will always refer to a message whose type is
+  // 'membershipGiftingEvent'.
+  optional string associated_membership_gifting_message_id = 3;
+}
+
+message LiveChatPollDetails {
+  message PollMetadata {
+    message PollOption {
+      optional string option_text = 1;
+      optional int64 tally = 2;
+    }
+    optional string question_text = 1;
+    // The options will be returned in the order that is displayed in 1P
+    repeated PollOption options = 2;
+  }
+
+  // Current point in the polls lifecycle.
+  message PollStatusWrapper {
+    enum PollStatus {
+      UNKNOWN = 0;
+      ACTIVE = 1;
+      CLOSED = 2;
+    }
+  }
+
+  optional PollMetadata metadata = 1;
+  optional PollStatusWrapper.PollStatus status = 2;
+}
+
+message LiveChatGiftDetails {
+  // The name of the gift.
+  optional string gift_name = 1;
+
+  // The duration of the gift.
+  optional google.protobuf.Duration gift_duration = 2;
+
+  // The value of the gift in jewels.
+  optional int32 jewels_amount = 3;
+
+  // The URL of the gift image.
+  optional string gift_url = 4;
+
+  // The alternative text to be used for accessibility.
+  optional string alt_text = 5;
+
+  // The BCP-47 language code of the gift.
+  optional string language = 6;
+
+  // Whether the gift involves a visual effect.
+  optional bool has_visual_effect = 7;
+
+  // The number of times the gift has been sent in a row.
+  optional int32 combo_count = 8;
+}
+
+message SuperChatEventSnippet {
+  // Channel ID where the event occurred.
+  optional string channel_id = 101;
+
+  // Details about the supporter.
+  optional ChannelProfileDetails supporter_details = 2;
+
+  // The text contents of the comment left by the user.
+  optional string comment_text = 3;
+
+  // The date and time when the event occurred. The value is
+  // specified in <a href="//www.w3.org/TR/NOTE-datetime">ISO 8601</a>
+  // format.
+  optional string created_at = 4;
+
+  // The purchase amount, in micros of the purchase currency.  For example, 1 is
+  // represented as 1000000.
+  optional uint64 amount_micros = 5;
+
+  // The currency in which the purchase was made.  ISO 4217.
+  optional string currency = 6;
+
+  // A rendered string that displays the purchase amount and currency
+  // (e.g., "$1.00").  The string is rendered for the given language.
+  optional string display_string = 7;
+
+  // The tier for the paid message, which is based on the amount of money spent
+  // to purchase the message.
+  optional uint32 message_type = 8;
+
+  // True if this event is a Super Sticker event.
+  optional bool is_super_sticker_event = 11;
+
+  // If this event is a Super Sticker event, this field will contain metadata
+  // about the Super Sticker.
+  optional SuperStickerMetadata super_sticker_metadata = 12;
+}
+
+message SuperStickerMetadata {
+  // Unique identifier of the Super Sticker. This is a shorter form of the
+  // alt_text that includes pack name and a recognizable characteristic of the
+  // sticker.
+  optional string sticker_id = 1;
+
+  // Internationalized alt text that describes the sticker image and any
+  // animation associated with it.
+  optional string alt_text = 2;
+
+  // Specifies the localization language in which the alt text is returned.
+  optional string alt_text_language = 3;
+}
+
+message ChannelProfileDetails {
+  // The YouTube channel ID.
+  optional string channel_id = 101;
+
+  // The channel's URL.
+  optional string channel_url = 2;
+
+  // The channel's display name.
+  optional string display_name = 3;
+
+  // The channels's avatar URL.
+  optional string profile_image_url = 4;
+}
+
+// Paging details for lists of resources, including total number of items
+// available and number of resources returned in a single page.
+message PageInfo {
+  // The total number of results in the result set.
+  optional int32 total_results = 1;
+
+  // The number of results included in the API response.
+  optional int32 results_per_page = 2;
+}

@@ -23,6 +23,7 @@ import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_channel_search_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_entry_name.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 
@@ -69,6 +70,73 @@ const List<Duration> kYouTubeLiveRecheckSchedule = [
   Duration(seconds: 60),
   Duration(seconds: 90),
 ];
+
+/// The chat reads over `liveChatMessages.streamList`: 5 quota units per
+/// call, held open while the chat runs, against 5 units per
+/// `liveChatMessages.list` poll every few seconds (~3,600-6,000 units an
+/// hour - the 10,000 a day were gone after 2-3 hours of streaming). A
+/// call that closes sooner than this cost what a poll would have.
+const Duration kYouTubeStreamMinLifetime = Duration(seconds: 10);
+
+/// Short calls in a row before the chat polls instead
+/// ([kYouTubeStreamRetryAfter])
+const int kYouTubeShortStreamLimit = 3;
+
+/// How long the chat polls after the stream gave way, before it tries the
+/// stream again (one call - 5 units)
+const Duration kYouTubeStreamRetryAfter = Duration(minutes: 10);
+
+/// First wait before reconnecting a stream that dropped or closed early;
+/// doubles per try up to the read backoff ceiling
+const Duration kYouTubeStreamReconnectDelay = Duration(seconds: 1);
+
+/// The poll's quiet-chat pacing: Google's `pollingIntervalMillis` is the
+/// floor, each empty page in a row stretches the wait by half up to this
+/// ceiling, a page with anything in it snaps back to Google's interval.
+/// A page holds up to 500 rows and the page token carries on, so a slower
+/// poll only delays rows, it never drops them.
+const Duration kYouTubeQuietPollCeiling = Duration(seconds: 10);
+
+/// The wait before the next `liveChatMessages.list` after [quietPolls]
+/// empty pages in a row ([kYouTubeQuietPollCeiling]).
+Duration youTubePollDelay(int pollingIntervalMillis, int quietPolls) {
+  final floor = Duration(milliseconds: pollingIntervalMillis);
+  if (quietPolls <= 0 || floor >= kYouTubeQuietPollCeiling) return floor;
+  var stretched = pollingIntervalMillis.toDouble();
+  for (var i = 0; i < quietPolls; i++) {
+    stretched *= 1.5;
+  }
+  final ceiling = kYouTubeQuietPollCeiling.inMilliseconds.toDouble();
+  return Duration(
+    milliseconds: (stretched < ceiling ? stretched : ceiling).round(),
+  );
+}
+
+/// The chat's active poll after a streamed page. The poll answer carries
+/// `activePollItem` on every page while one runs, so its absence there
+/// means none; a streamed answer isn't known to repeat it, so the stream
+/// keeps the last one until that poll's own row says it closed.
+YouTubeChatMessage? _streamedActivePoll(
+  YouTubeChatMessage? current,
+  YouTubeLiveChatPage page,
+) {
+  var poll = page.activePollItem ?? current;
+  for (final message in page.messages) {
+    if (message.type != YouTubeChatMessageType.poll) continue;
+    final status = message.snippet.pollDetails?.metadata?.status;
+    if (status == 'active') {
+      poll = message;
+    } else if (status == 'closed' && message.id == poll?.id) {
+      poll = null;
+    }
+  }
+  return poll;
+}
+
+/// A streamed page said the chat is over (`offlineAt` / `chatEndedEvent`)
+class _StreamChatEnded {
+  const _StreamChatEnded();
+}
 
 /// The next YouTube Data API quota reset after [now]: midnight Pacific
 /// time (07:00 UTC while US daylight saving time is on, 08:00 UTC
@@ -227,6 +295,10 @@ class _ChannelBuffer {
   /// instead of answering `rateLimitExceeded`.
   DateTime? nextPollAt;
 
+  /// The chat polls instead of streaming until then (the stream gave
+  /// way - see [kYouTubeStreamRetryAfter]); null: stream.
+  DateTime? streamRetryAt;
+
   _ChannelBuffer({
     List<YouTubeChatMessage>? messages,
     this.liveChatId,
@@ -275,6 +347,7 @@ abstract class _YouTubeChatStore with Store {
       tombstone: ChatHistoryTombstone(isDeleted: message.isTombstoned),
     );
   }
+
   static const Duration kRefreshWindow = Duration(minutes: 5);
 
   /// Backoff ceiling — rate limiting and transient read failures double
@@ -302,6 +375,19 @@ abstract class _YouTubeChatStore with Store {
   /// Identifies the active poll loop — selectChannel/dispose bump this so
   /// a stale loop's continuations (mid-sleep or mid-request) bail out.
   int _pollFlow = 0;
+
+  /// Ends the read loop's open `streamList` call - a superseded loop
+  /// can't notice by itself while the call waits for the next message.
+  void Function()? _cancelStream;
+
+  /// Supersedes the running read loop (see [_pollFlow]) and closes its
+  /// stream; returns the new flow.
+  int _bumpPollFlow() {
+    final cancel = this._cancelStream;
+    this._cancelStream = null;
+    cancel?.call();
+    return ++this._pollFlow;
+  }
 
   /// Whether [_loadChannelsFromSettings] already ran for this instance —
   /// the settings load is idempotent per store instance.
@@ -1015,7 +1101,7 @@ abstract class _YouTubeChatStore with Store {
   void _restartPolling() {
     final label = this.selectedChannelLabel;
     if (label == null) return;
-    final flow = ++this._pollFlow;
+    final flow = this._bumpPollFlow();
     this.chatConnection = YouTubeChatConnectionState.connecting;
     this.awaitingLiveStream = false;
     this.chatError = null;
@@ -1052,7 +1138,7 @@ abstract class _YouTubeChatStore with Store {
   }
 
   void _stopPolling() {
-    this._pollFlow++;
+    this._bumpPollFlow();
     runInAction(() {
       this.chatConnection = YouTubeChatConnectionState.idle;
       this.awaitingLiveStream = false;
@@ -1123,13 +1209,23 @@ abstract class _YouTubeChatStore with Store {
 
   /// App back in the foreground: a poll that failed or is backing off
   /// while the app was suspended restarts now instead of waiting out its
-  /// timer, and a channel between streams checks at once. A paused poll
+  /// timer, a channel between streams checks at once, and an open stream
+  /// starts a new call from its page token. A paused poll
   /// (combined chat focused elsewhere) stays paused; quota exhaustion
   /// waits for the daily reset (and restarts here once it has passed - the
   /// reset timer doesn't run while iOS suspends the app).
   @action
   void reconnectAfterResume() {
     if (this.pollingPaused) return;
+
+    /// The stream's socket may have died with the suspension without the
+    /// call noticing yet (the chat would sit "connected" but frozen until
+    /// the keepalive gives up) - a new call (5 units) resumes from the
+    /// page token at once
+    if (this._cancelStream != null) {
+      this.connectChat();
+      return;
+    }
     if (this.chatQuotaExhausted) {
       final resetAt = this.quotaResetAt;
       if (resetAt != null && !this._now().isBefore(resetAt)) {
@@ -1306,6 +1402,9 @@ abstract class _YouTubeChatStore with Store {
     int backoffMillis = 0;
     var attached = false;
 
+    /// Empty poll pages in a row - stretches the poll ([youTubePollDelay])
+    var quietPolls = 0;
+
     Future<void> backOff() {
       backoffMillis = backoffMillis == 0
           ? lastIntervalMillis * 2
@@ -1326,6 +1425,7 @@ abstract class _YouTubeChatStore with Store {
       buffer.liveChatId = null;
       buffer.nextPageToken = null;
       buffer.nextPollAt = null;
+      buffer.streamRetryAt = null;
       buffer.viewerCount = null;
       runInAction(() {
         this.selectedChannelViewerCount = null;
@@ -1334,68 +1434,7 @@ abstract class _YouTubeChatStore with Store {
       return attached ? _PassOutcome.attached : _PassOutcome.offline;
     }
 
-    /// A resumed poll (switch back, un-pause, app resume) waits out the
-    /// rest of the last page's interval - polling sooner answers
-    /// `rateLimitExceeded`.
-    final resumeAt = buffer.nextPollAt;
-    if (resumeAt != null) {
-      final wait = resumeAt.difference(this._now());
-      if (wait > Duration.zero) {
-        await this._sleep(wait);
-        if (superseded()) return _PassOutcome.stopped;
-      }
-    }
-
-    while (!superseded()) {
-      YouTubeLiveChatPage page;
-      try {
-        page = await this._chatService.listMessages(
-          buffer.liveChatId!,
-          buffer.nextPageToken,
-          apiKey: apiKey,
-        );
-      } on YouTubeRateLimitedException {
-        if (superseded()) return _PassOutcome.stopped;
-        final wait = backOff();
-        GeneralHelper.advLog(
-          'YouTube chat rate limited - backing off ${backoffMillis}ms',
-        );
-        await wait;
-        continue;
-      } on YouTubeQuotaExceededException catch (e) {
-        if (superseded()) return _PassOutcome.stopped;
-        quotaExhausted(e);
-        return _PassOutcome.stopped;
-      } on YouTubeChatEndedException {
-        if (superseded()) return _PassOutcome.stopped;
-        return ended();
-      } catch (e) {
-        if (superseded()) return _PassOutcome.stopped;
-        GeneralHelper.logFailure('YouTube chat poll failed', e);
-        if (!_isTransientReadFailure(e)) {
-          failed('Lost connection to YouTube chat');
-          return _PassOutcome.stopped;
-        }
-
-        /// Cursor and chat id stay — the retry picks up where the
-        /// dropped request left off.
-        retrying('Lost connection to YouTube chat - reconnecting');
-        await backOff();
-        continue;
-      }
-      if (superseded()) return _PassOutcome.stopped;
-
-      backoffMillis = 0;
-      lastIntervalMillis = page.pollingIntervalMillis;
-      buffer.nextPollAt = this._now().add(
-        Duration(milliseconds: page.pollingIntervalMillis),
-      );
-
-      /// No cursor yet = this is the chat's first page, which YouTube
-      /// fills with recent history — mark it historical (dimmed + the
-      /// "New messages" divider after it).
-      final historyPage = buffer.nextPageToken == null;
-      buffer.nextPageToken = page.nextPageToken;
+    void markConnected() {
       attached = true;
       runInAction(() {
         this.chatConnection = YouTubeChatConnectionState.connected;
@@ -1405,35 +1444,242 @@ abstract class _YouTubeChatStore with Store {
             this.sendChatError == _kSendNotConnectedText) {
           this.sendChatError = null;
         }
-        final poll = page.activePollItem;
+      });
+    }
+
+    /// One page of either read into the chat; true when it says the chat
+    /// ended. [historical] marks the recent history a fresh read starts
+    /// with (dimmed + the "New messages" divider after it).
+    bool applyPage(
+      YouTubeLiveChatPage page, {
+      required bool Function(YouTubeChatMessage message) historical,
+      required bool streamed,
+    }) {
+      /// A streamed answer without a token leaves the cursor where it was
+      buffer.nextPageToken = streamed
+          ? page.nextPageToken ?? buffer.nextPageToken
+          : page.nextPageToken;
+      markConnected();
+      runInAction(() {
+        final poll = streamed
+            ? _streamedActivePoll(buffer.activePoll, page)
+            : page.activePollItem;
         buffer.activePoll = poll;
         if (this.selectedChannelLabel == label) this.activePoll = poll;
-        this._applyPageMessages(
-          label,
-          historyPage
-              ? [for (final m in page.messages) m.copyWith(isHistorical: true)]
-              : page.messages,
-        );
+        this._applyPageMessages(label, [
+          for (final m in page.messages)
+            historical(m) ? m.copyWith(isHistorical: true) : m,
+        ]);
       });
+      return page.offlineAt != null ||
+          page.messages.any((m) => m.type == YouTubeChatMessageType.chatEnded);
+    }
 
-      if (page.offlineAt != null ||
-          page.messages.any(
-            (m) => m.type == YouTubeChatMessageType.chatEnded,
-          )) {
-        return ended();
+    /// Reads over `streamList` until the chat ends, the loop is superseded
+    /// or polling should take over for a while (null, with
+    /// [_ChannelBuffer.streamRetryAt] set): the stream answered with
+    /// something only the poll can explain, or it keeps closing sooner
+    /// than [kYouTubeStreamMinLifetime] - then it costs what polling does.
+    /// A dropped connection reconnects from the last page token; one that
+    /// never opened isn't billed and doesn't count as short.
+    Future<_PassOutcome?> stream() async {
+      var shortStreams = 0;
+      var dropDelay = Duration.zero;
+      while (!superseded()) {
+        final startedAt = this._now();
+        final fromStart = buffer.nextPageToken == null;
+        DateTime? openedAt;
+        final done = Completer<Object?>();
+        final subscription = this._chatService
+            .streamMessages(
+              buffer.liveChatId!,
+              buffer.nextPageToken,
+              apiKey: apiKey,
+              onOpen: () {
+                if (superseded() || done.isCompleted) return;
+                openedAt = this._now();
+                markConnected();
+              },
+            )
+            .listen(
+              (page) {
+                if (superseded() || done.isCompleted) return;
+                openedAt ??= this._now();
+                final over = applyPage(
+                  page,
+                  historical: (m) =>
+                      fromStart && m.publishedAt.isBefore(startedAt),
+                  streamed: true,
+                );
+                if (over) done.complete(const _StreamChatEnded());
+              },
+              onError: (Object e) {
+                if (!done.isCompleted) done.complete(e);
+              },
+              onDone: () {
+                if (!done.isCompleted) done.complete(null);
+              },
+              cancelOnError: true,
+            );
+        void cancel() {
+          unawaited(subscription.cancel());
+          if (!done.isCompleted) done.complete(null);
+        }
+
+        this._cancelStream = cancel;
+        final viewerTimer = this._viewerRefreshInterval > Duration.zero
+            ? Timer.periodic(this._viewerRefreshInterval, (_) {
+                if (!superseded()) {
+                  unawaited(
+                    this._refreshViewerCount(label, buffer, apiKey, superseded),
+                  );
+                }
+              })
+            : null;
+        final result = await done.future;
+        viewerTimer?.cancel();
+        unawaited(subscription.cancel());
+        if (identical(this._cancelStream, cancel)) this._cancelStream = null;
+        if (superseded()) return _PassOutcome.stopped;
+
+        if (result is _StreamChatEnded || result is YouTubeChatEndedException) {
+          return ended();
+        }
+        if (result != null && result is! YouTubeStreamDroppedException) {
+          GeneralHelper.logFailure(
+            'YouTube chat stream unavailable - polling for now',
+            result,
+          );
+          buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
+          return null;
+        }
+
+        final opened = openedAt;
+        final short =
+            opened == null ||
+            this._now().difference(opened) < kYouTubeStreamMinLifetime;
+        if (opened != null) {
+          shortStreams = short ? shortStreams + 1 : 0;
+          if (shortStreams >= kYouTubeShortStreamLimit) {
+            GeneralHelper.advLog(
+              'YouTube chat stream keeps closing within '
+              '${kYouTubeStreamMinLifetime.inSeconds}s - polling for now',
+            );
+            buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
+            return null;
+          }
+        }
+        if (result is YouTubeStreamDroppedException) {
+          GeneralHelper.logFailure('YouTube chat stream dropped', result);
+          retrying('Lost connection to YouTube chat - reconnecting');
+        }
+        if (!short) {
+          dropDelay = Duration.zero;
+          continue;
+        }
+        dropDelay = dropDelay == Duration.zero
+            ? kYouTubeStreamReconnectDelay
+            : dropDelay * 2;
+        if (dropDelay > const Duration(milliseconds: kMaxBackoffMillis)) {
+          dropDelay = const Duration(milliseconds: kMaxBackoffMillis);
+        }
+        await this._sleep(dropDelay);
       }
+      return _PassOutcome.stopped;
+    }
 
-      if (viewerStopwatch.elapsed >= this._viewerRefreshInterval) {
-        viewerStopwatch.reset();
-        await this._refreshViewerCount(label, buffer, apiKey, superseded);
+    while (!superseded()) {
+      final streamRetryAt = buffer.streamRetryAt;
+      if (streamRetryAt == null || !this._now().isBefore(streamRetryAt)) {
+        buffer.streamRetryAt = null;
+        final outcome = await stream();
+        if (outcome != null) return outcome;
         if (superseded()) return _PassOutcome.stopped;
       }
 
-      /// Google: "the amount of time the client should wait before
-      /// polling again" - counted from the answer, so the full interval
-      /// (less only the time spent on the viewer refresh above).
-      final remaining = buffer.nextPollAt!.difference(this._now());
-      await this._sleep(remaining > Duration.zero ? remaining : Duration.zero);
+      /// A resumed poll (switch back, un-pause, app resume) waits out the
+      /// rest of the last page's interval - polling sooner answers
+      /// `rateLimitExceeded`.
+      final resumeAt = buffer.nextPollAt;
+      if (resumeAt != null) {
+        final wait = resumeAt.difference(this._now());
+        if (wait > Duration.zero) {
+          await this._sleep(wait);
+          if (superseded()) return _PassOutcome.stopped;
+        }
+      }
+
+      while (!superseded()) {
+        YouTubeLiveChatPage page;
+        try {
+          page = await this._chatService.listMessages(
+            buffer.liveChatId!,
+            buffer.nextPageToken,
+            apiKey: apiKey,
+          );
+        } on YouTubeRateLimitedException {
+          if (superseded()) return _PassOutcome.stopped;
+          final wait = backOff();
+          GeneralHelper.advLog(
+            'YouTube chat rate limited - backing off ${backoffMillis}ms',
+          );
+          await wait;
+          continue;
+        } on YouTubeQuotaExceededException catch (e) {
+          if (superseded()) return _PassOutcome.stopped;
+          quotaExhausted(e);
+          return _PassOutcome.stopped;
+        } on YouTubeChatEndedException {
+          if (superseded()) return _PassOutcome.stopped;
+          return ended();
+        } catch (e) {
+          if (superseded()) return _PassOutcome.stopped;
+          GeneralHelper.logFailure('YouTube chat poll failed', e);
+          if (!_isTransientReadFailure(e)) {
+            failed('Lost connection to YouTube chat');
+            return _PassOutcome.stopped;
+          }
+
+          /// Cursor and chat id stay — the retry picks up where the
+          /// dropped request left off.
+          retrying('Lost connection to YouTube chat - reconnecting');
+          await backOff();
+          continue;
+        }
+        if (superseded()) return _PassOutcome.stopped;
+
+        backoffMillis = 0;
+        lastIntervalMillis = page.pollingIntervalMillis;
+        quietPolls = page.messages.isEmpty ? quietPolls + 1 : 0;
+        buffer.nextPollAt = this._now().add(
+          youTubePollDelay(page.pollingIntervalMillis, quietPolls),
+        );
+
+        /// No cursor yet = this is the chat's first page, which YouTube
+        /// fills with recent history.
+        final historyPage = buffer.nextPageToken == null;
+        if (applyPage(page, historical: (_) => historyPage, streamed: false)) {
+          return ended();
+        }
+
+        if (viewerStopwatch.elapsed >= this._viewerRefreshInterval) {
+          viewerStopwatch.reset();
+          await this._refreshViewerCount(label, buffer, apiKey, superseded);
+          if (superseded()) return _PassOutcome.stopped;
+        }
+
+        /// Time to try the stream again
+        final retryAt = buffer.streamRetryAt;
+        if (retryAt != null && !this._now().isBefore(retryAt)) break;
+
+        /// Google: "the amount of time the client should wait before
+        /// polling again" - counted from the answer, so the full interval
+        /// (less only the time spent on the viewer refresh above).
+        final remaining = buffer.nextPollAt!.difference(this._now());
+        await this._sleep(
+          remaining > Duration.zero ? remaining : Duration.zero,
+        );
+      }
     }
     return _PassOutcome.stopped;
   }
@@ -1605,7 +1851,7 @@ abstract class _YouTubeChatStore with Store {
 
     // Cancel the running loop BEFORE touching state so its continuations
     // cannot write into the new channel's buffer.
-    this._pollFlow++;
+    this._bumpPollFlow();
 
     final previousLabel = this.selectedChannelLabel;
     if (previousLabel != null) {
@@ -1792,6 +2038,7 @@ abstract class _YouTubeChatStore with Store {
     this._appliedModerationOrder.removeWhere(retiredModeration);
     if (retireSelection) {
       if (!videos.containsKey(selected)) {
+        this._bumpPollFlow();
         this.selectedChannelLabel = null;
         this._persistSelectedChannel();
       } else if (this.canRead) {
@@ -2346,7 +2593,7 @@ abstract class _YouTubeChatStore with Store {
   }
 
   Future<void> dispose() async {
-    this._pollFlow++;
+    this._bumpPollFlow();
     this._loginFlow++;
     this._quotaResetTimer?.cancel();
     this._quotaResetTimer = null;

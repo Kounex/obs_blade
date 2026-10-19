@@ -6,6 +6,7 @@ import 'package:obs_blade/types/classes/youtube/youtube_chat_message.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
 import 'package:obs_blade/utils/renewing_http_client.dart';
 
 const String _kApiBase = 'https://www.googleapis.com/youtube/v3';
@@ -157,9 +158,13 @@ class YouTubeChatEndedException extends YouTubeApiException {
 /// token; writes (insert/delete/ban) require the bearer token.
 class YouTubeLiveChatService {
   final http.Client _client;
+  final YouTubeLiveChatStreamer _streamer;
 
-  YouTubeLiveChatService({http.Client? client})
-    : _client = client ?? RenewingHttpClient();
+  YouTubeLiveChatService({
+    http.Client? client,
+    YouTubeLiveChatStreamer? streamer,
+  }) : _client = client ?? RenewingHttpClient(),
+       _streamer = streamer ?? YouTubeLiveChatStreamer();
 
   /// API key resolution: the user's own key ([SettingsKeys.YouTubeApiKey])
   /// wins over the app-owned [kYouTubeApiKey] constant.
@@ -228,6 +233,24 @@ class YouTubeLiveChatService {
           : null,
     );
   }
+
+  /// `liveChatMessages.streamList` — one server-streamed call: pages as
+  /// they arrive, after [pageToken] (null: recent history first), until
+  /// the server closes it. 5 units per call however long it stays open
+  /// ([YouTubeLiveChatStreamer.stream] has the errors and [onOpen]).
+  Stream<YouTubeLiveChatPage> streamMessages(
+    String liveChatId,
+    String? pageToken, {
+    String? apiKey,
+    String? accessToken,
+    void Function()? onOpen,
+  }) => this._streamer.stream(
+    liveChatId,
+    pageToken,
+    apiKey: apiKey,
+    accessToken: accessToken,
+    onOpen: onOpen,
+  );
 
   /// `liveChatMessages.insert` — sends a text message as the
   /// authenticated user (requires the `youtube` scope).

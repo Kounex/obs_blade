@@ -93,6 +93,11 @@ dependencies:
   freezed_annotation: ^3.1.0
   json_annotation: ^4.12.0
   purchases_flutter: ^10.11.0
+  # YouTube chat reads over liveChatMessages.streamList (gRPC only, see
+  # lib/utils/youtube/youtube_live_chat_stream.dart)
+  grpc: ^5.1.0
+  protobuf: ^6.0.0
+  fixnum: ^1.1.1
 
 dev_dependencies:
   flutter_test:

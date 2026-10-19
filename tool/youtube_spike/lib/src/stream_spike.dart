@@ -37,7 +37,16 @@ Future<StreamStats> runStreamSpike({
   final channel = ClientChannel(
     'youtube.googleapis.com',
     port: 443,
-    options: const ChannelOptions(credentials: ChannelCredentials.secure()),
+    // Same keepalive as the app (YouTubeLiveChatStreamer.keepAlive), so the
+    // measured connection lifetimes are the app's - a GOAWAY
+    // `too_many_pings` here means the app must ping less often.
+    options: const ChannelOptions(
+      credentials: ChannelCredentials.secure(),
+      keepAlive: ClientKeepAliveOptions(
+        pingInterval: Duration(seconds: 30),
+        timeout: Duration(seconds: 20),
+      ),
+    ),
   );
   final client = V3DataLiveChatMessageServiceClient(
     channel,

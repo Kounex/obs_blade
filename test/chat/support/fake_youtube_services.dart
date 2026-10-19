@@ -7,6 +7,7 @@ import 'package:obs_blade/types/classes/youtube/youtube_device_code.dart';
 import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 
@@ -202,6 +203,34 @@ class FakeYouTubeLiveChatService extends YouTubeLiveChatService {
     final next = this.pollResponses.removeFirst();
     if (next is Exception) throw next;
     return next as YouTubeLiveChatPage;
+  }
+
+  /// Scripted `streamList` calls - each call opens the next one. None
+  /// queued: the stream isn't served ([YouTubeStreamFallbackException],
+  /// like a key or network gRPC can't use), so the chat polls - what
+  /// every test that doesn't script a stream relies on.
+  final Queue<FakeChatStream> streams = Queue<FakeChatStream>();
+  int streamCalls = 0;
+
+  /// Page tokens per [streamMessages] call — asserts resume threading.
+  final List<String?> streamPageTokens = <String?>[];
+
+  @override
+  Stream<YouTubeLiveChatPage> streamMessages(
+    String liveChatId,
+    String? pageToken, {
+    String? apiKey,
+    String? accessToken,
+    void Function()? onOpen,
+  }) {
+    this.streamCalls++;
+    this.streamPageTokens.add(pageToken);
+    if (this.streams.isEmpty) {
+      return Stream.error(
+        const YouTubeStreamFallbackException('No stream scripted'),
+      );
+    }
+    return this.streams.removeFirst()._open(onOpen);
   }
 
   @override
@@ -426,5 +455,37 @@ class FakeChannelSearchService extends YouTubeChannelSearchService {
     this.subscriptionCalls++;
     if (this.subscriptionsThrows != null) throw this.subscriptionsThrows!;
     return this.subscriptions;
+  }
+}
+
+/// One scripted `streamList` call: [open] = Google accepted it (billed),
+/// [add] a page, [end] = the server closed it, [fail] = an error answer.
+class FakeChatStream {
+  final StreamController<YouTubeLiveChatPage> _controller =
+      StreamController<YouTubeLiveChatPage>();
+  void Function()? _onOpen;
+
+  /// The read loop closed it (superseded / switched away)
+  bool cancelled = false;
+
+  /// The store subscribed (the call went out)
+  bool listened = false;
+
+  Stream<YouTubeLiveChatPage> _open(void Function()? onOpen) {
+    this._onOpen = onOpen;
+    this._controller.onListen = () => this.listened = true;
+    this._controller.onCancel = () => this.cancelled = true;
+    return this._controller.stream;
+  }
+
+  void open() => this._onOpen?.call();
+
+  void add(YouTubeLiveChatPage page) => this._controller.add(page);
+
+  Future<void> end() => this._controller.close();
+
+  Future<void> fail(Object error) {
+    this._controller.addError(error);
+    return this._controller.close();
   }
 }

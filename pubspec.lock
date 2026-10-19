@@ -45,10 +45,10 @@ packages:
     dependency: transitive
     description:
       name: async
-      sha256: "947bfcf187f74dbc5e146c9eb9c0f10c9f8b30743e341481c1e2ed3ecc18c20c"
+      sha256: e2eb0491ba5ddb6177742d2da23904574082139b07c1e33b8503b9f46f3e1a37
       url: "https://pub.dev"
     source: hosted
-    version: "2.11.0"
+    version: "2.13.1"
   auto_size_text:
     dependency: "direct main"
     description:
@@ -197,10 +197,10 @@ packages:
     dependency: "direct main"
     description:
       name: crypto
-      sha256: ec30d999af904f33454ba22ed9a86162b35e52b44ac4807d1d93c288041d7d27
+      sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.5"
+    version: "3.0.7"
   csslib:
     dependency: transitive
     description:
@@ -314,13 +314,13 @@ packages:
     source: hosted
     version: "0.9.3+2"
   fixnum:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: fixnum
-      sha256: "25517a4deb0c03aa0f32fd12db525856438902d9c16536311e76cdc57b31d7d1"
+      sha256: b6dc7065e46c974bc7c5f143080a6764ec7a4be6da1285ececdc37be96de53be
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.0"
+    version: "1.1.1"
   fl_chart:
     dependency: "direct main"
     description:
@@ -434,6 +434,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  google_cloud:
+    dependency: transitive
+    description:
+      name: google_cloud
+      sha256: b385e20726ef5315d302c5933bfb728103116c5be2d3d17094b01a82da538c1f
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
+  google_identity_services_web:
+    dependency: transitive
+    description:
+      name: google_identity_services_web
+      sha256: "5d187c46dc59e02646e10fe82665fc3884a9b71bc1c90c2b8b749316d33ee454"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.3+1"
+  googleapis_auth:
+    dependency: transitive
+    description:
+      name: googleapis_auth
+      sha256: d31822528becea550f7c7a9ab73a4518e31e48f201ab574be7e141f262923f27
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.4"
   graphs:
     dependency: transitive
     description:
@@ -442,6 +466,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
+  grpc:
+    dependency: "direct main"
+    description:
+      name: grpc
+      sha256: "0cde49bc17f6b1e96c374ad1b5d389816cc8ade2015f24294eaa76193de87090"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.2.0"
   hive_ce:
     dependency: "direct main"
     description:
@@ -482,6 +514,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.0"
+  http2:
+    dependency: transitive
+    description:
+      name: http2
+      sha256: "382d3aefc5bd6dc68c6b892d7664f29b5beb3251611ae946a98d35158a82bbfa"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
   http_multi_server:
     dependency: transitive
     description:
@@ -911,6 +951,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.5"
+  protobuf:
+    dependency: "direct main"
+    description:
+      name: protobuf
+      sha256: "13b6717366aa7ec3792dd62c19c7d33a785708224365f2db23c5ca01f1c1a0f2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.0"
   provider:
     dependency: transitive
     description:

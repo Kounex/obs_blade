@@ -18,6 +18,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
+import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
@@ -379,6 +380,389 @@ void main() {
     });
   });
 
+  group('youTubePollDelay (quiet chat)', () {
+    for (final (interval, quiet, expected) in [
+      (1000, 0, 1000),
+      (1000, 1, 1500),
+      (1000, 2, 2250),
+      (5000, 1, 7500),
+      (5000, 2, 10000),
+      (5000, 9, 10000),
+      (2000, 30, 10000),
+      (12000, 3, 12000),
+    ]) {
+      test('${interval}ms after $quiet empty page(s) → ${expected}ms', () {
+        expect(
+          youTubePollDelay(interval, quiet),
+          Duration(milliseconds: expected),
+        );
+      });
+    }
+  });
+
+  group('stream (streamList)', () {
+    late DateTime clock;
+
+    /// A store on a hand-moved clock (call lifetimes, the poll's retry)
+    Future<void> clockedStore() async {
+      clock = DateTime.utc(2026, 10, 19, 18);
+      await store.dispose();
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        sleep: (duration) async {
+          sleepLog.add(duration);
+          onSleep?.call();
+        },
+        isProResolver: () => true,
+        chatHistoryResolver: () => history,
+        now: () => clock,
+      );
+    }
+
+    YouTubeChatMessage at(String id, DateTime publishedAt) =>
+        ytMessage(id).copyWith.snippet(publishedAt: publishedAt);
+
+    test('reads over the stream, no poll; connected once Google accepts '
+        'the call, before any row', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final call = FakeChatStream();
+      chatService.streams.add(call);
+
+      await store.init();
+      await until(() => call.listened);
+      expect(store.chatConnection, YouTubeChatConnectionState.connecting);
+      call.open();
+      expect(store.chatConnection, YouTubeChatConnectionState.connected);
+
+      call.add(page([ytMessage('m1')], nextPageToken: 't1'));
+      call.add(page([ytMessage('m2')], nextPageToken: 't2'));
+      await until(() => store.messages.length == 2);
+
+      expect(store.messages.map((m) => m.id), ['m1', 'm2']);
+      expect(chatService.listCalls, 0);
+      expect(chatService.streamCalls, 1);
+    });
+
+    test('a fresh call\'s history (sent before connecting) is dimmed, '
+        'rows after it are not', () async {
+      await clockedStore();
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final call = FakeChatStream();
+      chatService.streams.add(call);
+
+      await store.init();
+      await until(() => call.listened);
+      call.open();
+      call.add(
+        page([
+          at('old', clock.subtract(const Duration(minutes: 5))),
+          at('new', clock.add(const Duration(seconds: 2))),
+        ], nextPageToken: 't1'),
+      );
+      await until(() => store.messages.length == 2);
+
+      expect(store.messages.map((m) => m.isHistorical), [true, false]);
+    });
+
+    test('the server closes a long call → reconnects at once from the last '
+        'token, nothing re-dimmed', () async {
+      await clockedStore();
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final first = FakeChatStream();
+      final second = FakeChatStream();
+      chatService.streams.addAll([first, second]);
+
+      await store.init();
+      await until(() => first.listened);
+      first.open();
+      first.add(page([ytMessage('m1')], nextPageToken: 't1'));
+      await until(() => store.messages.length == 1);
+      clock = clock.add(const Duration(minutes: 20));
+      await first.end();
+      await until(() => second.listened);
+      second.open();
+      second.add(
+        page([
+          at('m2', clock.subtract(const Duration(minutes: 1))),
+        ], nextPageToken: 't2'),
+      );
+      await until(() => store.messages.length == 2);
+
+      expect(chatService.streamPageTokens, [null, 't1']);
+      expect(sleepLog, isEmpty);
+      expect(store.messages.last.isHistorical, isFalse);
+      expect(store.chatConnection, YouTubeChatConnectionState.connected);
+      expect(chatService.listCalls, 0);
+    });
+
+    test('calls that close within 10s three times → polls; tries the stream '
+        'again 10 min later', () async {
+      await clockedStore();
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final calls = [FakeChatStream(), FakeChatStream(), FakeChatStream()];
+      chatService.streams.addAll(calls);
+
+      await store.init();
+      for (final call in calls) {
+        await until(() => call.listened);
+        call.open();
+        clock = clock.add(const Duration(seconds: 3));
+        await call.end();
+      }
+      await until(() => chatService.listCalls >= 1);
+
+      expect(chatService.streamCalls, 3);
+      expect(sleepLog.take(2), [
+        const Duration(seconds: 1),
+        const Duration(seconds: 2),
+      ]);
+
+      /// Polling now (parked waiting for an answer); 10 min on, the next
+      /// answer hands back to the stream
+      clock = clock.add(kYouTubeStreamRetryAfter);
+      final back = FakeChatStream();
+      chatService.streams.add(back);
+      chatService.pushPollResponse(page([ytMessage('p1')]));
+      await until(() => back.listened);
+
+      expect(chatService.streamCalls, 4);
+      expect(store.messages.map((m) => m.id), ['p1']);
+    });
+
+    test('a call that never opens (no network) isn\'t billed - it '
+        'reconnects with backoff and doesn\'t fall back', () async {
+      await clockedStore();
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final failing = [FakeChatStream(), FakeChatStream(), FakeChatStream()];
+      final good = FakeChatStream();
+      chatService.streams.addAll([...failing, good]);
+
+      await store.init();
+      for (final call in failing) {
+        await until(() => call.listened);
+        await call.fail(
+          const YouTubeStreamDroppedException('Lost the YouTube chat stream'),
+        );
+        await until(() => sleepLog.length > failing.indexOf(call));
+        expect(store.chatConnection, YouTubeChatConnectionState.connecting);
+        expect(store.chatError, contains('reconnecting'));
+      }
+      await until(() => good.listened);
+      good.open();
+
+      expect(sleepLog, [
+        const Duration(seconds: 1),
+        const Duration(seconds: 2),
+        const Duration(seconds: 4),
+      ]);
+      expect(chatService.listCalls, 0);
+      expect(store.chatConnection, YouTubeChatConnectionState.connected);
+      expect(store.chatError, isNull);
+    });
+
+    test('an answer only the poll can explain → polls at once (quota '
+        'used up stops the chat as before)', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final call = FakeChatStream();
+      chatService.streams.add(call);
+      chatService.pollResponses.add(
+        const YouTubeQuotaExceededException('Listing chat failed'),
+      );
+
+      await store.init();
+      await until(() => call.listened);
+      await call.fail(
+        const YouTubeStreamFallbackException(
+          'YouTube chat stream: RESOURCE_EXHAUSTED',
+        ),
+      );
+      await until(() => store.chatQuotaExhausted);
+
+      expect(chatService.listCalls, 1);
+      expect(store.chatError, contains('quota'));
+    });
+
+    for (final (name, finish) in [
+      (
+        'FAILED_PRECONDITION',
+        (FakeChatStream call) => call.fail(
+          const YouTubeChatEndedException('YouTube chat stream: ended'),
+        ),
+      ),
+      (
+        'a chatEnded row',
+        (FakeChatStream call) async => call.add(
+          page([
+            YouTubeChatMessage(
+              id: 'end',
+              snippet: YouTubeChatMessageSnippet(
+                type: YouTubeChatMessageType.chatEnded,
+                publishedAt: DateTime.utc(2026, 10, 19),
+              ),
+            ),
+          ]),
+        ),
+      ),
+      (
+        'offlineAt',
+        (FakeChatStream call) async =>
+            call.add(page(const [], offlineAt: DateTime.utc(2026, 10, 19, 20))),
+      ),
+    ]) {
+      test('$name on the stream → the chat ended, no poll', () async {
+        configure();
+        chatService.liveChatIds['video-a-001'] = 'chat-a';
+        final call = FakeChatStream();
+        chatService.streams.add(call);
+
+        await store.init();
+        await until(() => call.listened);
+        call.open();
+        await finish(call);
+        await until(
+          () => store.chatConnection == YouTubeChatConnectionState.offline,
+        );
+
+        expect(store.chatConnection, YouTubeChatConnectionState.offline);
+        expect(chatService.listCalls, 0);
+        expect(chatService.streamCalls, 1);
+      });
+    }
+
+    test('switching channels closes the open call; switching back resumes '
+        'from its token', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.liveChatIds['video-b-002'] = 'chat-b';
+      final a = FakeChatStream();
+      final b = FakeChatStream();
+      final aAgain = FakeChatStream();
+      chatService.streams.addAll([a, b, aAgain]);
+
+      await store.init();
+      await until(() => a.listened);
+      a.open();
+      a.add(page([ytMessage('a1')], nextPageToken: 'ta'));
+      await until(() => store.messages.length == 1);
+
+      await store.selectChannel('B');
+      await until(() => b.listened);
+      expect(a.cancelled, isTrue);
+
+      await store.selectChannel('A');
+      await until(() => aAgain.listened);
+      expect(b.cancelled, isTrue);
+      expect(chatService.streamPageTokens, [null, null, 'ta']);
+    });
+
+    test('back from the background: an open call is replaced by a new one '
+        'from its token (the old socket may be dead)', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final before = FakeChatStream();
+      final after = FakeChatStream();
+      chatService.streams.addAll([before, after]);
+
+      await store.init();
+      await until(() => before.listened);
+      before.open();
+      before.add(page([ytMessage('m1')], nextPageToken: 't1'));
+      await until(() => store.messages.length == 1);
+
+      store.reconnectAfterResume();
+      await until(() => after.listened);
+
+      expect(before.cancelled, isTrue);
+      expect(chatService.streamPageTokens, [null, 't1']);
+      expect(chatService.resolveCalls, 1);
+    });
+
+    test('pausing (combined chat elsewhere) closes the call', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final call = FakeChatStream();
+      chatService.streams.add(call);
+
+      await store.init();
+      await until(() => call.listened);
+      call.open();
+      store.pausePolling();
+
+      expect(call.cancelled, isTrue);
+      expect(store.chatConnection, YouTubeChatConnectionState.idle);
+    });
+
+    test('the poll banner stays across streamed pages until that poll\'s '
+        'own row says closed', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final call = FakeChatStream();
+      chatService.streams.add(call);
+      YouTubeChatMessage poll(String status) => YouTubeChatMessage(
+        id: 'poll-1',
+        snippet: YouTubeChatMessageSnippet(
+          type: YouTubeChatMessageType.poll,
+          publishedAt: DateTime.utc(2026, 10, 19),
+          pollDetails: YouTubePollDetails(
+            metadata: YouTubePollMetadata(
+              questionText: 'Next?',
+              status: status,
+            ),
+          ),
+        ),
+      );
+
+      await store.init();
+      await until(() => call.listened);
+      call.open();
+      call.add(page([poll('active')], nextPageToken: 't1'));
+      await until(() => store.activePoll != null);
+      call.add(page([ytMessage('m1')], nextPageToken: 't2'));
+      await until(() => store.messages.any((m) => m.id == 'm1'));
+      expect(store.activePoll?.id, 'poll-1');
+
+      call.add(page([poll('closed')], nextPageToken: 't3'));
+      await until(() => store.activePoll == null);
+      expect(store.activePoll, isNull);
+    });
+  });
+
+  group('polling (stream not served)', () {
+    test('a quiet chat stretches the wait up to 10s; a page with rows '
+        'snaps back to Google\'s interval', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.pollResponses.addAll([
+        page(const [], nextPageToken: 't1', pollingIntervalMillis: 5000),
+        page(const [], nextPageToken: 't2', pollingIntervalMillis: 5000),
+        page(const [], nextPageToken: 't3', pollingIntervalMillis: 5000),
+        page(
+          [ytMessage('m1')],
+          nextPageToken: 't4',
+          pollingIntervalMillis: 5000,
+        ),
+      ]);
+
+      await store.init();
+      await until(() => chatService.listCalls >= 5);
+
+      Matcher about(int millis) => inInclusiveRange(millis - 200, millis);
+      expect(sleepLog.map((d) => d.inMilliseconds).toList(), [
+        about(7500),
+        about(10000),
+        about(10000),
+        about(5000),
+      ]);
+    });
+  });
+
   group('polling', () {
     test('connectChat refuses to poll without the Pro entitlement', () async {
       configure();
@@ -641,7 +1025,7 @@ void main() {
         const YouTubeRateLimitedException('x'),
         const YouTubeRateLimitedException('x'),
         const YouTubeRateLimitedException('x'),
-        page(const []),
+        page([ytMessage('m1')]),
       ]);
 
       await store.init();
@@ -654,7 +1038,7 @@ void main() {
         const Duration(seconds: 60),
       ]);
       // The post-success wait is the page's 1s interval, counted from
-      // the answer.
+      // the answer (a page with rows - an empty one stretches it).
       expect(sleepLog[4].inMilliseconds, inInclusiveRange(0, 1000));
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
     });

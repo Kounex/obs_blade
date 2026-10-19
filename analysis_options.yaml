@@ -19,6 +19,8 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    # protoc output (vendored, see its README)
+    - lib/utils/youtube/stream_list/*.dart
 
 linter:
   # The lint rules applied to this project can be customized in the
