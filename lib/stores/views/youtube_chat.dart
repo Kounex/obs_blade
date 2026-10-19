@@ -299,6 +299,16 @@ class _ChannelBuffer {
   /// way - see [kYouTubeStreamRetryAfter]); null: stream.
   DateTime? streamRetryAt;
 
+  /// Stream calls in a row that never opened (no network / gRPC blocked)
+  int unopenedStreams = 0;
+
+  /// The poll is reading once to tell a dead network from a blocked
+  /// stream (after [unopenedStreams] calls that never opened)
+  bool streamProbe = false;
+
+  /// That poll got an answer, the stream still hasn't opened since
+  bool pollWorkedWithoutStream = false;
+
   _ChannelBuffer({
     List<YouTubeChatMessage>? messages,
     this.liveChatId,
@@ -726,10 +736,10 @@ abstract class _YouTubeChatStore with Store {
     final history = label == null
         ? const <ChatHistoryEntry>[]
         : this._chatHistory?.historyFor(
-              platform: ChatHistoryPlatform.youtube,
-              channelKey: label,
-              authorKey: channelId,
-            ) ??
+                platform: ChatHistoryPlatform.youtube,
+                channelKey: label,
+                authorKey: channelId,
+              ) ??
               const <ChatHistoryEntry>[];
     final merged = <UserCardMessage<YouTubeChatMessage>>[
       for (final entry in history)
@@ -1215,14 +1225,15 @@ abstract class _YouTubeChatStore with Store {
   /// waits for the daily reset (and restarts here once it has passed - the
   /// reset timer doesn't run while iOS suspends the app).
   @action
-  void reconnectAfterResume() {
+  void reconnectAfterResume({bool fromBackground = true}) {
     if (this.pollingPaused) return;
 
-    /// The stream's socket may have died with the suspension without the
-    /// call noticing yet (the chat would sit "connected" but frozen until
-    /// the keepalive gives up) - a new call (5 units) resumes from the
-    /// page token at once
+    /// After a real stay in the background (not Control Center / Face ID)
+    /// the stream's socket may have died without the call noticing yet
+    /// (the chat would sit "connected" but frozen until the ping watchdog
+    /// gives up) - a new call (5 units) resumes from the page token at once
     if (this._cancelStream != null) {
+      if (!fromBackground) return;
       this.connectChat();
       return;
     }
@@ -1405,6 +1416,9 @@ abstract class _YouTubeChatStore with Store {
     /// Empty poll pages in a row - stretches the poll ([youTubePollDelay])
     var quietPolls = 0;
 
+    /// The poll already started over once after refusing a page token
+    var droppedToken = false;
+
     Future<void> backOff() {
       backoffMillis = backoffMillis == 0
           ? lastIntervalMillis * 2
@@ -1542,8 +1556,17 @@ abstract class _YouTubeChatStore with Store {
         if (identical(this._cancelStream, cancel)) this._cancelStream = null;
         if (superseded()) return _PassOutcome.stopped;
 
-        if (result is _StreamChatEnded || result is YouTubeChatEndedException) {
-          return ended();
+        if (result is _StreamChatEnded) return ended();
+
+        /// FAILED_PRECONDITION is "ended" **or** "disabled" over gRPC - one
+        /// poll tells them apart (`liveChatEnded` ends the chat, a disabled
+        /// chat errors and Retry / resume recover it), then streams again
+        if (result is YouTubeChatEndedException) {
+          GeneralHelper.advLog(
+            'YouTube chat stream: ended or disabled - asking the poll',
+          );
+          buffer.streamRetryAt = this._now();
+          return null;
         }
         if (result != null && result is! YouTubeStreamDroppedException) {
           GeneralHelper.logFailure(
@@ -1559,6 +1582,8 @@ abstract class _YouTubeChatStore with Store {
             opened == null ||
             this._now().difference(opened) < kYouTubeStreamMinLifetime;
         if (opened != null) {
+          buffer.unopenedStreams = 0;
+          buffer.pollWorkedWithoutStream = false;
           shortStreams = short ? shortStreams + 1 : 0;
           if (shortStreams >= kYouTubeShortStreamLimit) {
             GeneralHelper.advLog(
@@ -1568,8 +1593,34 @@ abstract class _YouTubeChatStore with Store {
             buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
             return null;
           }
+        } else if (++buffer.unopenedStreams >= kYouTubeShortStreamLimit) {
+          buffer.unopenedStreams = 0;
+
+          /// Calls that never open: no network (a dead zone - the poll
+          /// can't get through either), or gRPC can't get through where
+          /// REST can. One poll tells: back to the stream after its first
+          /// answer, and if the stream still can't open while the poll
+          /// works, poll for a while
+          if (buffer.pollWorkedWithoutStream) {
+            GeneralHelper.advLog(
+              'YouTube chat stream can\'t connect while polling works - '
+              'polling for now',
+            );
+            buffer.pollWorkedWithoutStream = false;
+            buffer.streamRetryAt = this._now().add(kYouTubeStreamRetryAfter);
+          } else {
+            buffer.streamProbe = true;
+            buffer.streamRetryAt = this._now();
+          }
+          if (result is YouTubeStreamDroppedException) {
+            GeneralHelper.logFailure('YouTube chat stream dropped', result);
+          }
+          return null;
         }
-        if (result is YouTubeStreamDroppedException) {
+
+        /// A long call that dropped reconnects at once - no "reconnecting"
+        /// flash for a rotation Google may do every so often
+        if (result is YouTubeStreamDroppedException && short) {
           GeneralHelper.logFailure('YouTube chat stream dropped', result);
           retrying('Lost connection to YouTube chat - reconnecting');
         }
@@ -1635,6 +1686,18 @@ abstract class _YouTubeChatStore with Store {
         } catch (e) {
           if (superseded()) return _PassOutcome.stopped;
           GeneralHelper.logFailure('YouTube chat poll failed', e);
+
+          /// A page token from the stream the poll doesn't take (Google
+          /// doesn't say they're interchangeable): start the poll over -
+          /// rows already shown are deduped by id
+          if (e is YouTubeApiException &&
+              e.statusCode == 400 &&
+              buffer.nextPageToken != null &&
+              !droppedToken) {
+            droppedToken = true;
+            buffer.nextPageToken = null;
+            continue;
+          }
           if (!_isTransientReadFailure(e)) {
             failed('Lost connection to YouTube chat');
             return _PassOutcome.stopped;
@@ -1650,6 +1713,10 @@ abstract class _YouTubeChatStore with Store {
 
         backoffMillis = 0;
         lastIntervalMillis = page.pollingIntervalMillis;
+        if (buffer.streamProbe) {
+          buffer.streamProbe = false;
+          buffer.pollWorkedWithoutStream = true;
+        }
         quietPolls = page.messages.isEmpty ? quietPolls + 1 : 0;
         buffer.nextPollAt = this._now().add(
           youTubePollDelay(page.pollingIntervalMillis, quietPolls),
@@ -2023,10 +2090,7 @@ abstract class _YouTubeChatStore with Store {
     bool retiredLabel(String label) =>
         label != kYouTubeOwnChannelLabel &&
         (retired.contains(label) || !videos.containsKey(label));
-    for (final label in {
-      ...retired,
-      ...this._channelBuffers.keys,
-    }) {
+    for (final label in {...retired, ...this._channelBuffers.keys}) {
       if (retiredLabel(label)) {
         this._chatHistory?.clearChannel(ChatHistoryPlatform.youtube, label);
       }

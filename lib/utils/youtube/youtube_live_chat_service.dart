@@ -164,7 +164,7 @@ class YouTubeLiveChatService {
     http.Client? client,
     YouTubeLiveChatStreamer? streamer,
   }) : _client = client ?? RenewingHttpClient(),
-       _streamer = streamer ?? YouTubeLiveChatStreamer();
+       _streamer = streamer ?? const YouTubeLiveChatStreamer();
 
   /// API key resolution: the user's own key ([SettingsKeys.YouTubeApiKey])
   /// wins over the app-owned [kYouTubeApiKey] constant.

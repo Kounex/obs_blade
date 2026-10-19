@@ -37,8 +37,8 @@ Future<StreamStats> runStreamSpike({
   final channel = ClientChannel(
     'youtube.googleapis.com',
     port: 443,
-    // Same keepalive as the app (YouTubeLiveChatStreamer.keepAlive), so the
-    // measured connection lifetimes are the app's - a GOAWAY
+    // Pings every 30 s like the app (YouTubeLiveChatStreamer.kPingInterval),
+    // so the measured connection lifetimes are the app's - a GOAWAY
     // `too_many_pings` here means the app must ping less often.
     options: const ChannelOptions(
       credentials: ChannelCredentials.secure(),

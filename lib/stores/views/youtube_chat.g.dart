@@ -565,12 +565,12 @@ mixin _$YouTubeChatStore on _YouTubeChatStore, Store {
   }
 
   @override
-  void reconnectAfterResume() {
+  void reconnectAfterResume({bool fromBackground = true}) {
     final _$actionInfo = _$_YouTubeChatStoreActionController.startAction(
       name: '_YouTubeChatStore.reconnectAfterResume',
     );
     try {
-      return super.reconnectAfterResume();
+      return super.reconnectAfterResume(fromBackground: fromBackground);
     } finally {
       _$_YouTubeChatStoreActionController.endAction(_$actionInfo);
     }

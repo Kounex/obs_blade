@@ -97,7 +97,8 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
       /// iOS takes a suspended app's sockets away - after a real stay in
       /// the background (not Control Center / Face ID / a system sheet)
       /// the chat services' pooled connections start over
-      if (_wasInBackground) RenewingHttpClient.renewAll();
+      final fromBackground = _wasInBackground;
+      if (fromBackground) RenewingHttpClient.renewAll();
       _wasInBackground = false;
 
       /// A YouTube poll that failed or backed off while suspended restarts
@@ -107,7 +108,9 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
       final getIt = GetIt.instance;
       if (getIt.isRegistered<YouTubeChatStore>() &&
           getIt.checkLazySingletonInstanceExists<YouTubeChatStore>()) {
-        getIt<YouTubeChatStore>().reconnectAfterResume();
+        getIt<YouTubeChatStore>().reconnectAfterResume(
+          fromBackground: fromBackground,
+        );
       }
 
       /// Twitch / Kick read over sockets iOS took away: a dead or

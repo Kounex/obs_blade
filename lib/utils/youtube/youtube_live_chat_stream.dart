@@ -12,9 +12,11 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fixnum/fixnum.dart';
 import 'package:grpc/grpc.dart';
+import 'package:http2/transport.dart';
 
 import '../../types/classes/youtube/youtube_chat_message.dart';
 import 'stream_list/stream_list.pbgrpc.dart';
@@ -33,23 +35,38 @@ class YouTubeStreamDroppedException extends YouTubeApiException {
   const YouTubeStreamDroppedException(super.message, {super.cause});
 }
 
-/// Opens one streamList call. A fresh [ClientChannel] per call: iOS takes
-/// a suspended app's sockets away, and a pooled HTTP/2 connection is what
+/// Opens one streamList call. A fresh connection per call: iOS takes a
+/// suspended app's sockets away, and a pooled HTTP/2 connection is what
 /// broke the REST reads then (see `RenewingHttpClient`). Calls are rare -
 /// one per connection the server keeps open.
 class YouTubeLiveChatStreamer {
-  static const String host = 'youtube.googleapis.com';
+  static const String kHost = 'youtube.googleapis.com';
 
   /// A server stream never writes, so a connection that died quietly
   /// (dead zone, a socket iOS took away) would leave the chat looking
-  /// connected but frozen - HTTP/2 pings notice within ~50 s and fail the
-  /// call, which reconnects. 30 s is what Google's own streaming client
-  /// libraries ping at (a server that minds answers GOAWAY
-  /// `too_many_pings` - the spike logs it, see the audit).
-  static const ClientKeepAliveOptions keepAlive = ClientKeepAliveOptions(
-    pingInterval: Duration(seconds: 30),
-    timeout: Duration(seconds: 20),
-  );
+  /// connected but frozen. The connection is pinged every [pingInterval];
+  /// no answer within [pingTimeout] ends it, which fails the call so it
+  /// reconnects. 30 s is what Google's own streaming client libraries
+  /// ping at (a server that minds answers GOAWAY `too_many_pings` - the
+  /// spike logs it, see the audit).
+  static const Duration kPingInterval = Duration(seconds: 30);
+  static const Duration kPingTimeout = Duration(seconds: 20);
+
+  final String host;
+  final int port;
+
+  /// TLS (always, except a test's local server)
+  final bool secure;
+  final Duration pingInterval;
+  final Duration pingTimeout;
+
+  const YouTubeLiveChatStreamer({
+    this.host = kHost,
+    this.port = 443,
+    this.secure = true,
+    this.pingInterval = kPingInterval,
+    this.pingTimeout = kPingTimeout,
+  });
 
   /// Pages of [liveChatId] as they arrive, starting after [pageToken]
   /// (null: recent history first). [onOpen] runs once Google accepted the
@@ -66,7 +83,8 @@ class YouTubeLiveChatStreamer {
     void Function()? onOpen,
   }) {
     late StreamController<YouTubeLiveChatPage> controller;
-    ClientChannel? channel;
+    ClientTransportConnectorChannel? channel;
+    _WatchedConnector? connector;
     ResponseStream<LiveChatMessageListResponse>? call;
     StreamSubscription<LiveChatMessageListResponse>? subscription;
 
@@ -75,17 +93,25 @@ class YouTubeLiveChatStreamer {
       channel = null;
       await subscription?.cancel();
       await call?.cancel();
-      await open?.shutdown();
+      connector?.shutdown();
+      await open?.terminate();
     }
 
     controller = StreamController<YouTubeLiveChatPage>(
       onListen: () {
-        final created = ClientChannel(
-          host,
-          port: 443,
-          options: const ChannelOptions(
-            credentials: ChannelCredentials.secure(),
-            keepAlive: keepAlive,
+        connector = _WatchedConnector(
+          host: this.host,
+          port: this.port,
+          secure: this.secure,
+          pingInterval: this.pingInterval,
+          pingTimeout: this.pingTimeout,
+        );
+        final created = ClientTransportConnectorChannel(
+          connector!,
+          options: ChannelOptions(
+            credentials: this.secure
+                ? const ChannelCredentials.secure()
+                : const ChannelCredentials.insecure(),
           ),
         );
         channel = created;
@@ -141,6 +167,113 @@ class YouTubeLiveChatStreamer {
       onCancel: close,
     );
     return controller.stream;
+  }
+}
+
+/// The streamer's HTTP/2 connection: TCP (+ TLS with ALPN `h2`) plus the
+/// ping watchdog. grpc's own keepalive can't do this job: on a ping
+/// timeout it only *finishes* the connection (graceful GOAWAY), which
+/// waits for the open call - forever on a dead socket (grpc 5.2,
+/// `Http2ClientConnection.connectTransport`). [YouTubeStreamPingWatchdog]
+/// terminates it instead, failing the call.
+class _WatchedConnector implements ClientTransportConnector {
+  final String host;
+  final int port;
+  final bool secure;
+  final Duration pingInterval;
+  final Duration pingTimeout;
+
+  _WatchedConnector({
+    required this.host,
+    required this.port,
+    required this.secure,
+    required this.pingInterval,
+    required this.pingTimeout,
+  });
+
+  Socket? _socket;
+  YouTubeStreamPingWatchdog? _watchdog;
+
+  @override
+  Future<ClientTransportConnection> connect() async {
+    const timeout = Duration(seconds: 15);
+    final socket = this.secure
+        ? await SecureSocket.connect(
+            this.host,
+            this.port,
+            supportedProtocols: const ['h2'],
+            timeout: timeout,
+          )
+        : await Socket.connect(this.host, this.port, timeout: timeout);
+    socket.setOption(SocketOption.tcpNoDelay, true);
+    this._socket = socket;
+    final transport = ClientTransportConnection.viaSocket(socket);
+    this._watchdog = YouTubeStreamPingWatchdog(
+      ping: transport.ping,
+      interval: this.pingInterval,
+      timeout: this.pingTimeout,
+      onDead: () {
+        unawaited(transport.terminate());
+        socket.destroy();
+      },
+    )..start();
+    return transport;
+  }
+
+  @override
+  Future get done => this._socket?.done ?? Future<void>.value();
+
+  @override
+  void shutdown() {
+    this._watchdog?.stop();
+    this._socket?.destroy();
+  }
+
+  @override
+  String get authority =>
+      this.port == 443 ? this.host : '${this.host}:${this.port}';
+}
+
+/// Pings a connection every [interval]; no answer within [timeout] (or a
+/// failed ping) calls [onDead] once and stops.
+class YouTubeStreamPingWatchdog {
+  final Future<Object?> Function() ping;
+  final Duration interval;
+  final Duration timeout;
+  final void Function() onDead;
+
+  YouTubeStreamPingWatchdog({
+    required this.ping,
+    required this.interval,
+    required this.timeout,
+    required this.onDead,
+  });
+
+  Timer? _timer;
+  bool _waiting = false;
+
+  void start() {
+    this._timer ??= Timer.periodic(this.interval, (_) => this._check());
+  }
+
+  void stop() {
+    this._timer?.cancel();
+    this._timer = null;
+  }
+
+  Future<void> _check() async {
+    if (this._waiting || this._timer == null) return;
+    this._waiting = true;
+    try {
+      await this.ping().timeout(this.timeout);
+    } catch (_) {
+      if (this._timer != null) {
+        this.stop();
+        this.onDead();
+      }
+    } finally {
+      this._waiting = false;
+    }
   }
 }
 
