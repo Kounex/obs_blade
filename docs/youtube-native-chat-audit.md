@@ -16,12 +16,13 @@ Read + write + moderate is buildable to near-parity with the Twitch engine.
 The binding constraint is **quota economics, not API surface**: quota is
 **per GCP project, not per user**, and REST polling burns the 10,000-unit/day
 default in ~2.8 user-hours. The gRPC `streamList` endpoint is the only
-scalable read path: Google now bills it **5 units per call** (quota table,
-2026-10-15), and a call stays open. Since 2026-10-19 the chat reads over
-it, with the poll as the fallback
-([spec](superpowers/specs/2026-10-19-youtube-chat-quota-design.md)). How
-long a call stays open is still unmeasured; the spike tool
-(`tool/youtube_spike/`) measures it.
+cheaper read path: **5 units per call** (quota table 2026-10-15,
+confirmed in Cloud Monitoring 2026-10-19), and Google closes every call
+~10.3 s after it starts - about 1,650 units an hour per chat, against
+3,750-9,000 for polling at Google's 2-5 s interval. Since 2026-10-19 the
+chat reads over it, with the poll as the fallback
+([spec](superpowers/specs/2026-10-19-youtube-chat-quota-design.md),
+measurements in § Quota reality).
 
 ## API surface (2026-09 snapshot)
 
@@ -56,11 +57,10 @@ long a call stays open is still unmeasured; the spike tool
   Google publishes `stream_list.proto` (proto2). Auth: **API key
   (`x-goog-api-key`) or OAuth Bearer**. Resume via last `nextPageToken`.
   **Not in the REST discovery doc → no `package:googleapis` support**; needs
-  vendored proto + `package:grpc` (pure Dart, works on iOS/Android). Streams
-  can EOF after seconds — reconnect/backoff is on us. **Quota: 5 units
-  per call** (Google's quota table, updated 2026-10-15; `list` is 5 per
-  call too). Connection lifetime is undocumented — the spike measures
-  it. **Shipped 2026-10-19 as the read path**
+  vendored proto + `package:grpc` (pure Dart, works on iOS/Android).
+  Google closes every call ~10.3 s after it starts (measured, § Quota
+  reality) - reconnecting is on us. **Quota: 5 units per call**
+  (`list` is 5 per call too). **Shipped 2026-10-19 as the read path**
   (`lib/utils/youtube/youtube_live_chat_stream.dart`, proto vendored in
   `stream_list/`). Mapping onto the REST model: enums are
   `SCREAMING_CASE` (map by value - builds may drop enum names), a poll's
@@ -68,8 +68,15 @@ long a call stays open is still unmeasured; the spike tool
   sticker's `altTextLanguage` is REST's `language`. Errors (gRPC):
   `FAILED_PRECONDITION` = ended **or** disabled, `RESOURCE_EXHAUSTED` =
   "faster than the refresh rate" (quota may answer the same),
-  `PERMISSION_DENIED`, `NOT_FOUND`. A Trailers-Only error completes the
-  call's response headers too, carrying `grpc-status`.
+  `PERMISSION_DENIED`, `NOT_FOUND`. Google sends a refusal as headers
+  first, then the error ~10 ms later (~150 ms after the call starts) -
+  not Trailers-Only. It holds an accepted call's headers back until the
+  first answer: in a quiet chat that is the empty answer it closes the
+  call with, so headers don't mean "accepted" either way. A call with a
+  **poll's** page token sent within that poll's `pollingIntervalMillis`
+  answers `PERMISSION_DENIED` ("The caller does not have permission"; a
+  poll answers `rateLimitExceeded`) - fine after the interval. Stream and
+  poll page tokens work both ways.
   **grpc-dart keepalive doesn't fail a call on a dead socket**: its ping
   timeout calls `transport.finish()` (graceful GOAWAY, waits for open
   streams) - the streamer pings its own HTTP/2 connection and
@@ -111,10 +118,34 @@ long a call stays open is still unmeasured; the spike tool
   everything else shares the 10k pool.
 - Polling math: 5 units × 720 calls/hr ≈ **3,600 units/user-hour** → ~2.8 h
   of one user on one chat per day at the default quota.
+- **`streamList` measured 2026-10-19** (obs-blade key, Mac,
+  `tool/youtube_spike/` reconnecting at once like the app, 30 min, three
+  live chats at once: Inoxtag ~busy, a 4k-viewer IRL stream, a
+  100-viewer IRL stream):
+  - Google closes every call: median **10.3 s** after it starts (min
+    10.2 s, max 25 s during a Google-side stall); 424 calls, 0 errors,
+    no GOAWAY. Not an idle timeout - busy and quiet chats alike.
+  - Cloud Monitoring (`serviceruntime.googleapis.com/quota/rate/net_usage`,
+    per minute) bills **5 units per call**: 15 calls a minute = 75 units.
+  - So **~1,650-1,730 units/h per chat** streaming. Google's poll interval
+    on the same chats: 2.0 s (100 viewers), 3.1 s, 4.8 s (busy) =
+    9,000 / 5,800 / 3,750 units/h polling; the quiet-chat pacing
+    (10 s cap) brings an empty chat's poll to ~1,800/h.
+  - A chat on screen all day (+120/h viewer count): ~5.5 h on 10,000
+    units, up from ~1.1-2.7 h.
+  - Headers delay (call start → headers): median 0.6 s busy, 1.1 s at
+    4k viewers, **10.3 s** in the quiet chat (held until the closing
+    answer).
+  - The 30 s keepalive ping never fires on a ~10 s call - it only matters
+    for a call that stalls, so `too_many_pings` is moot.
+  - Every call is a fresh TLS connection (`YouTubeLiveChatStreamer`):
+    ~350 handshakes an hour per chat. Reusing one connection across calls
+    would save the handshakes - not done (iOS takes suspended sockets).
 - Quota is charged to **the project whose key/client makes the call** —
   per-user OAuth tokens do **not** give per-user quota. 500k users on one
   OBS Blade project is a non-starter without a mitigation:
-  1. `streamList` proves quota-cheap per connection (undocumented — spike),
+  1. `streamList` (measured: ~1,700 units/h per chat - 2-5× cheaper than
+     polling, not unlimited),
   2. **BYO API key** (power-user path — shipped in this build),
   3. server-side fan-out relay (backend decision — out of scope here),
   4. quota extension form (sized for server analytics, not per-user polling).

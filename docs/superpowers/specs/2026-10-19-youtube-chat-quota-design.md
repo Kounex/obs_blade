@@ -17,8 +17,10 @@ own bucket.
 
 1. **Reads go over `liveChatMessages.streamList`** (gRPC server
    streaming, `youtube.googleapis.com:443`, API key as `x-goog-api-key`).
-   Google's quota table (updated 2026-10-15) bills **5 units per call**,
-   and a call stays open while it carries messages. Each answer maps onto
+   Google bills **5 units per call** (quota table 2026-10-15, confirmed
+   in Cloud Monitoring) and closes every call ~10.3 s after it starts:
+   ~1,700 units an hour per chat, against 3,750-9,000 for polling at
+   Google's 2-5 s interval (measured, see the end). Each answer maps onto
    the poll's `YouTubeLiveChatPage`, so rows, tombstones, bans, Super
    Chats and the activity feed are unchanged
    (`lib/utils/youtube/youtube_live_chat_stream.dart`).
@@ -38,14 +40,21 @@ chat's read loop (`_attachAndPoll`) and the own-channel activity poller
 its call on standby (the chat reads the own chat), stop, a new chat and
 back from the background.
 
-- Stream first. "Opened" means Google accepted the call: response
-  headers without a `grpc-status`. Only opened calls are billed, and the
-  chat shows connected from then on, with no row needed.
-- The server closes a call that lived ≥ 10 s: reconnect at once from the
-  last `nextPageToken`.
-- Three opened calls in a row that each closed within 10 s cost what
-  polling would, so the chat polls for 10 min and then tries one call
-  again (`kYouTubeStreamRetryAfter`).
+- Stream first. "Opened" means Google accepted the call (billed): its
+  first page, its clean end, or 2 s after the connection came up without
+  a refusal (`kOpenGrace`). Not the headers: Google sends them ahead of a
+  refusal too, and in a quiet chat holds them until the call's closing
+  answer ~10 s in. The chat shows connected from then on, with no row
+  needed.
+- Google closes every call ~10.3 s after it starts: reconnect at once
+  from the last `nextPageToken`. A call's length counts from its start.
+- Three opened calls in a row that each closed within 5 s of starting
+  cost more than polling at Google's 2-5 s interval, so the chat polls
+  for 10 min and then tries one call again (`kYouTubeStreamRetryAfter`).
+- A read after a poll waits out that poll page's interval - the stream
+  too. Sooner, a call with the poll's token answers `PERMISSION_DENIED`
+  (the poll: `rateLimitExceeded`), which would mean another 10 min of
+  polling after every hand-back.
 - A long call that drops reconnects at once, with no "reconnecting"
   flash (Google may rotate calls).
 - A call that never opened (dead zone, no network) isn't billed. It
@@ -68,9 +77,9 @@ back from the background.
   10 min (no stream/poll ping-pong). Taking it as
   "ended" would skip that video for a channel entry until the stream
   ends.
-- A page token the poll refuses (400) after the stream: the poll starts
-  over once without it (rows deduped by id). Google doesn't say whether
-  stream and poll tokens are interchangeable.
+- Stream and poll page tokens work both ways (measured). A page token
+  the poll refuses (400) anyway: the poll starts over once without it
+  (rows deduped by id).
 - History: on a call without a token, rows published before the call
   started are dimmed (the poll dims its whole first page).
 - The poll banner: the poll answer repeats `activePollItem` on every
@@ -118,20 +127,26 @@ poll refuses (400) starts the poll over once, as in the chat.
 6. Quiet chat on the poll fallback: waits stretch to 10 s and snap back
    on the first row.
 
-## Open: measure before trusting the numbers
+## Measured 2026-10-19
 
-Also confirm: whether streamed answers repeat `activePollItem` (the
-banner rule assumes they may not), whether a stream token works for the
-poll and back, and that a 30 s ping draws no GOAWAY.
+`tool/youtube_spike/` on the obs-blade key, three live chats at once for
+30 min (details: `docs/youtube-native-chat-audit.md` § Quota reality):
 
-The quota table says 5 units per call. How long Google keeps a call open
-is undocumented, and our audit noted "streams can EOF after seconds". The
-rules above keep a short-lived stream from costing more than polling,
-but the real saving depends on call lifetime. Run `tool/youtube_spike/`
-(stream mode, ≥ 30 min, busy chat, same keepalive as the app) on the
-obs-blade key and record lifetimes, EOF count, any GOAWAY
-`too_many_pings`, and the quota delta in the audit. Pending: the MacBook
-holds the key.
+- Every call closes ~10.3 s after it starts (median; max 25 s in a
+  Google-side stall), in busy and quiet chats alike; 424 calls, 0
+  errors, no GOAWAY.
+- 5 units per call in Cloud Monitoring → ~1,650-1,730 units/h per chat.
+  With the viewer count: ~5.5 h of chat a day on 10,000 units, up from
+  ~1.1-2.7 h. A whole-day IRL stream still needs a quota increase
+  (Google's free extension form) or a second key.
+- Found and fixed: the 10 s short-call threshold sat on Google's 10.3 s
+  close, and in a quiet chat late headers made every call look instant
+  (→ 10 min of polling); the hand-back to the stream went out within
+  the poll's interval (→ `PERMISSION_DENIED` → 10 min of polling, every
+  time).
+
+Still open: whether streamed answers repeat `activePollItem` (the banner
+rule assumes they may not) - needs a chat with a running poll.
 
 ## Left out
 

@@ -125,7 +125,10 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   IRL streamer runs the chat for hours. A server stream never writes:
   check it notices a dead socket (keepalive) and is closed when the loop
   is superseded (2026-10-19: polling at Google's interval ate the quota
-  in ~2 h).
+  in ~2 h). Measure how often the server ends a stream call before
+  assuming it's cheaper than the poll it replaces (YouTube: every
+  ~10 s), and pace reads across transports - a stream call within a
+  poll's interval is refused (`PERMISSION_DENIED`).
 - Throttle answers are not quota: map each error `reason` per method
   from the platform's errors table. A stop that promises to resume
   ("after the daily reset") must resume on its own (timer + app resume).

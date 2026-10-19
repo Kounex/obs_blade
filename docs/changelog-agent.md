@@ -35,9 +35,17 @@ runaway calls. Spec:
   shared `YouTubeStreamPolicy` (chat + poller, unit-tested). Sibling fix:
   the poller no longer takes a 403 / 404 (chat turned off) as "ended for
   good".
-- **Pending:** the spike measurement of call lifetime / quota delta
-  (`tool/youtube_spike/`, pinging like the app) - the MacBook holds the
-  obs-blade key.
+- **Measured** on the obs-blade key (three live chats, 30 min, Cloud
+  Monitoring): 5 units per call, Google closes every call ~10.3 s after
+  it starts → ~1,700 units/h per chat vs 3,750-9,000 polling. Fixes from
+  it: short calls count from the call's start and under 5 s (the 10 s
+  threshold sat on Google's close; a quiet chat's late headers made each
+  call look instant); a call opens on its first page, clean end or 2 s
+  without a refusal (headers come ahead of refusals and late in quiet
+  chats); the chat and the activity poller wait out a poll's interval
+  before streaming again (sooner: `PERMISSION_DENIED`, which kept the
+  stream from ever coming back after a fallback). Numbers in the audit
+  § Quota reality.
 
 ## 2026-10-17 - /code-review high on 4.1.0..HEAD (4.2)
 
