@@ -120,8 +120,9 @@ to the WebView embeds — engine switch in the chat bar
 needed; the dashboard pane is removed) and the streaming-mode dashboard's
 co-display. Details: [`docs/chat-engines.md`](docs/chat-engines.md).
 
-**YouTube chat:** native engine next to the WebView embed — reads poll
-`liveChatMessages.list` with a user-supplied API key, writes/mod ride
+**YouTube chat:** native engine next to the WebView embed — reads stream
+`liveChatMessages.streamList` (gRPC, 5 units per call; falls back to
+polling `liveChatMessages.list`) with a user-supplied API key, writes/mod ride
 Google OAuth device flow; channel entries auto-resolve (and roll over to)
 the channel's current live stream. Details:
 [`docs/youtube-native-chat-audit.md`](docs/youtube-native-chat-audit.md).

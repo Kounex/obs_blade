@@ -119,6 +119,13 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
 - A list a sheet loads with the session token (subscriptions, live
   listing) ends a dead session like a write does - otherwise its Retry
   is a dead end.
+- Quota per hour of a chat on screen: count every call the read loop
+  makes in an hour (YouTube: 5 units per `list` poll **or** per
+  `streamList` call, 1 per `videos.list`) against the 10,000 a day; an
+  IRL streamer runs the chat for hours. A server stream never writes:
+  check it notices a dead socket (keepalive) and is closed when the loop
+  is superseded (2026-10-19: polling at Google's interval ate the quota
+  in ~2 h).
 - Throttle answers are not quota: map each error `reason` per method
   from the platform's errors table. A stop that promises to resume
   ("after the daily reset") must resume on its own (timer + app resume).

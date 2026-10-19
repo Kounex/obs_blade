@@ -4,6 +4,29 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-19 - YouTube chat reads over streamList, quiet-chat polling
+
+A Pro user ran out of their API key's 10,000 daily units after ~2 h of
+IRL streaming. Cause: polling `liveChatMessages.list` (5 units) at
+Google's 3-5 s interval is 3,600-6,000 units an hour, as designed; no
+runaway calls. Spec:
+[`superpowers/specs/2026-10-19-youtube-chat-quota-design.md`](superpowers/specs/2026-10-19-youtube-chat-quota-design.md).
+
+- **Reads stream** over gRPC `streamList` (5 units per call, held open):
+  `lib/utils/youtube/youtube_live_chat_stream.dart`, with Google's proto
+  vendored in `lib/utils/youtube/stream_list/` (deps `grpc`, `protobuf`,
+  `fixnum`). It reconnects from the page token, falls back to polling for
+  10 min on answers only the poll explains or on three calls in a row
+  under 10 s, uses 30 s keepalive pings, and a new call on app resume.
+- **Poll fallback paces a quiet chat**: Google's interval is the floor;
+  each empty page stretches the wait ×1.5 up to 10 s, and a page with
+  rows snaps back (`youTubePollDelay`).
+- No timing settings (decided with the user).
+- **Pending:** the spike measurement of call lifetime / quota delta
+  (`tool/youtube_spike/`, now with the app's keepalive) - the MacBook
+  holds the obs-blade key. The own-channel activity poller still polls
+  (30 s) while the chat shows another channel - a follow-up.
+
 ## 2026-10-17 - /code-review high on 4.1.0..HEAD (4.2)
 
 10 findings, verified one by one; fixed with a test that fails on the

@@ -16,8 +16,12 @@ Read + write + moderate is buildable to near-parity with the Twitch engine.
 The binding constraint is **quota economics, not API surface**: quota is
 **per GCP project, not per user**, and REST polling burns the 10,000-unit/day
 default in ~2.8 user-hours. The gRPC `streamList` endpoint is the only
-scalable read path but its quota cost is undocumented — the spike tool
-(`tool/youtube_spike/`) exists to measure it before any default-on rollout.
+scalable read path: Google now bills it **5 units per call** (quota table,
+2026-10-15), and a call stays open. Since 2026-10-19 the chat reads over
+it, with the poll as the fallback
+([spec](superpowers/specs/2026-10-19-youtube-chat-quota-design.md)). How
+long a call stays open is still unmeasured; the spike tool
+(`tool/youtube_spike/`) measures it.
 
 ## API surface (2026-09 snapshot)
 
@@ -53,8 +57,19 @@ scalable read path but its quota cost is undocumented — the spike tool
   (`x-goog-api-key`) or OAuth Bearer**. Resume via last `nextPageToken`.
   **Not in the REST discovery doc → no `package:googleapis` support**; needs
   vendored proto + `package:grpc` (pure Dart, works on iOS/Android). Streams
-  can EOF after seconds — reconnect/backoff is on us. **Quota cost
-  undocumented — measure before committing** (that's the spike).
+  can EOF after seconds — reconnect/backoff is on us. **Quota: 5 units
+  per call** (Google's quota table, updated 2026-10-15; `list` is 5 per
+  call too). Connection lifetime is undocumented — the spike measures
+  it. **Shipped 2026-10-19 as the read path**
+  (`lib/utils/youtube/youtube_live_chat_stream.dart`, proto vendored in
+  `stream_list/`). Mapping onto the REST model: enums are
+  `SCREAMING_CASE` (map by value - builds may drop enum names), a poll's
+  `status` sits on `pollDetails` (REST: `pollDetails.metadata`), the
+  sticker's `altTextLanguage` is REST's `language`. Errors (gRPC):
+  `FAILED_PRECONDITION` = ended **or** disabled, `RESOURCE_EXHAUSTED` =
+  "faster than the refresh rate" (quota may answer the same),
+  `PERMISSION_DENIED`, `NOT_FOUND`. A Trailers-Only error completes the
+  call's response headers too, carrying `grpc-status`.
 
 ### Send
 
@@ -255,7 +270,10 @@ Moved from `AGENTS.md` (2026-10 docs restructure).
 
 A native engine ships next to the WebView embed
 (`nativeChatAvailableFor` covers `ChatType.YouTube`).
-Reads poll `liveChatMessages.list` with a **user-supplied API key**
+Reads stream `liveChatMessages.streamList` (gRPC; falls back to polling
+`liveChatMessages.list`, paced slower in a quiet chat - see the
+[quota spec](superpowers/specs/2026-10-19-youtube-chat-quota-design.md))
+with a **user-supplied API key**
 (Settings → YouTube setup sheet — quota is per-GCP-project, so no app-owned
 default key until the `streamList` spike says otherwise); writes/mod
 (delete/timeout/ban) ride Google OAuth **device flow** (BYO OAuth client
