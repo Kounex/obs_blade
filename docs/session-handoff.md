@@ -14,11 +14,15 @@ its chat to a new Pusher app on 2026-10-20; 4.1.0's compiled-in key gets
 `web.kick.com/api/v1/realtime/channels/{id}/chat/connection`). The user
 chose to ship it with 4.2, no 4.1.1 hotfix.
 
-**4.2.0 - in beta:** build **2026102001** on TestFlight (internal) and
-Play internal since 2026-10-20 - the first beta through store-release on
-both stores. The second `/code-review high` pass (after `b5978aa4`) is
-done: 2 of 8 findings kept and fixed (`0af4269c`, `18edf736`), the rest
-dropped with reasons in `changelog-agent.md`. Next:
+**4.2.0 - in beta:** build **2026102002** ("test build 4") on TestFlight
+(internal) and Play internal since 2026-10-20 (replaces 2026102001 from
+the same day). Since 2026102001: Kick / Twitch catch up the rows a socket
+missed after a mid-session reconnect, no false gap divider in quiet
+chats, plain copy for a failed YouTube live lookup (changelog
+2026-10-20 "Chat catches up..."). The second `/code-review high` pass is
+done (2 of 8 kept and fixed); the catch-up work had a fresh-context
+review (2 findings, fixed) but **no device check yet** - the user asked
+for the beta right away. Next:
 
 1. Beta test from `fastlane/testflight_notes.txt`, incl. an upgrade over
    4.1.0 -> `release-promote`.
