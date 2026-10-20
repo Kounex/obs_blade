@@ -2455,11 +2455,17 @@ abstract class _TwitchChatStore with Store {
       /// oldest catch-up row. Judged against the row it ACTUALLY follows,
       /// not the pre-fetch tail: live rows that arrived mid-fetch may
       /// bridge the window contiguously even when the history itself is
-      /// truncated.
+      /// truncated. "Reached back" is the history's oldest row, not the
+      /// first missed one - in a quiet chat that one sits a normal pause
+      /// after its predecessor and nothing is missing.
       final predecessorAt = oldestInsertIndex > 0
           ? this.messages[oldestInsertIndex - 1].receivedAt
           : null;
-      final oldestAt = fresh.first.receivedAt!;
+      final oldestAt = history
+          .where((m) => m.broadcasterUserId == broadcasterId)
+          .map((m) => m.receivedAt)
+          .whereType<DateTime>()
+          .reduce((a, b) => a.isBefore(b) ? a : b);
       if (predecessorAt != null &&
           oldestAt.difference(predecessorAt) > kResumeGapEpsilon) {
         this.resumeGapBoundaries.add(fresh.first.messageId);

@@ -588,6 +588,23 @@ void main() {
       expect(requestedLimits, [800]);
     });
 
+    test('a quiet chat back from a drop gets no false gap divider when the '
+        'history reached back', () async {
+      await startConnected();
+      emitMessage(liveAt('pre-1', t0));
+
+      catchUpLines = [
+        _line('pre-1', sentTs: t0.millisecondsSinceEpoch),
+        _line('cu-1', sentTs: t0.millisecondsSinceEpoch + 10000),
+      ];
+      emitState(TwitchEventSubState.reconnecting);
+      emitState(TwitchEventSubState.connected);
+      await settle();
+
+      expect(store.messages.map((m) => m.messageId), ['pre-1', 'cu-1']);
+      expect(store.resumeGapBoundaries, isEmpty);
+    });
+
     test('a backing-off session reconnects immediately', () async {
       await startConnected();
       emitState(TwitchEventSubState.reconnecting);

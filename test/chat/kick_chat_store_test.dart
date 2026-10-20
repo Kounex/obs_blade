@@ -2117,6 +2117,26 @@ void main() {
       expect(channelService.backfillCalls, 2);
     });
 
+    test('a quiet chat back from a drop gets no false gap divider when the '
+        'history reached back', () async {
+      await connectSignedIn();
+      pusher().emitEvent(messageAt('pre-1', t0));
+
+      /// One row every ~10 s: the first missed row sits a normal pause
+      /// after the tail, the history itself covers the tail
+      channelService.backfills[101] = [
+        historyMessage('pre-1', t0),
+        historyMessage('cu-1', t0.add(const Duration(seconds: 10))),
+        historyMessage('cu-2', t0.add(const Duration(seconds: 20))),
+      ];
+      pusher().emitState(KickPusherConnectionState.reconnecting);
+      pusher().emitState(KickPusherConnectionState.connected);
+      await until(() => store.messages.length == 3);
+
+      expect(store.messages.map((m) => m.id), ['pre-1', 'cu-1', 'cu-2']);
+      expect(store.resumeGapBoundaries, isEmpty);
+    });
+
     test('the gap marker lands on the oldest catch-up row when the ~50-row '
         'window did not reach back', () async {
       await connectSignedIn();

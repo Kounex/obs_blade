@@ -70,7 +70,10 @@ class YouTubeWebLiveTracker extends ChangeNotifier {
       resolved = await this._resolver.resolveLiveVideoId(target);
     } on YouTubeLiveResolveException catch (e) {
       failure = e;
-      GeneralHelper.advLog('YouTube WebView live lookup failed - $e');
+
+      /// The screen shows plain copy ([YouTubeLiveResolveException.userMessage])
+      /// - the cause goes to Settings → Logs
+      GeneralHelper.logFailure('YouTube WebView live lookup failed', e);
     }
     if (this._disposed || generation != this._generation) return;
 
