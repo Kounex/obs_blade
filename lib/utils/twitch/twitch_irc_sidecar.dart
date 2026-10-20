@@ -59,6 +59,19 @@ class TwitchIrcSidecar {
   bool _disposed = false;
   int _reconnectAttempts = 0;
 
+  /// Our PING gets Twitch's PONG at once (its own PING comes ~every
+  /// 5 min). Nothing for [quietTimeout]: the connect hung (dart:io's
+  /// `WebSocket.connect` has no timeout) or the socket died quietly -
+  /// reopen (the Kick socket stayed "Reconnecting..." for good that way,
+  /// dogfood 2026-10-20).
+  static const Duration kPingInterval = Duration(seconds: 60);
+  static const Duration kQuietTimeout = Duration(seconds: 90);
+
+  final Duration pingInterval;
+  final Duration quietTimeout;
+  Timer? _pingTimer;
+  Timer? _watchdog;
+
   String? _accessToken;
   String? _login;
 
@@ -72,6 +85,8 @@ class TwitchIrcSidecar {
     required this.onFirstMessage,
     WebSocketChannel Function(Uri)? channelFactory,
     Future<void> Function(Duration)? sleep,
+    this.pingInterval = kPingInterval,
+    this.quietTimeout = kQuietTimeout,
   }) : _channelFactory = channelFactory ?? WebSocketChannel.connect,
        _sleep = sleep ?? Future.delayed;
 
@@ -152,13 +167,32 @@ class TwitchIrcSidecar {
       channel.sink.add('CAP REQ :twitch.tv/tags twitch.tv/commands\r\n');
       channel.sink.add('JOIN #$room\r\n');
       this._reconnectAttempts = 0;
+      this._watch(channel);
+      this._pingTimer = Timer.periodic(this.pingInterval, (_) {
+        try {
+          channel.sink.add('PING :obsblade\r\n');
+        } catch (_) {}
+      });
     } catch (e) {
       GeneralHelper.logFailure('Twitch IRC connect failed', e);
       await this._scheduleReconnect();
     }
   }
 
+  void _watch(WebSocketChannel channel) {
+    this._watchdog?.cancel();
+    this._watchdog = Timer(this.quietTimeout, () {
+      if (!identical(this._channel, channel) || this._disposed) return;
+      GeneralHelper.logFailure(
+        'Twitch IRC socket stalled',
+        'nothing within ${this.quietTimeout.inSeconds} s - reconnecting',
+      );
+      unawaited(this._open());
+    });
+  }
+
   void _onData(dynamic raw) {
+    if (this._channel case final channel?) this._watch(channel);
     final text = raw is String ? raw : raw.toString();
     for (final line in text.split(RegExp(r'\r?\n'))) {
       if (line.isEmpty) continue;
@@ -185,6 +219,10 @@ class TwitchIrcSidecar {
   }
 
   Future<void> _tearDownSocket() async {
+    this._pingTimer?.cancel();
+    this._pingTimer = null;
+    this._watchdog?.cancel();
+    this._watchdog = null;
     await this._socketSub?.cancel();
     this._socketSub = null;
     try {

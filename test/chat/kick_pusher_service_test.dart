@@ -165,4 +165,78 @@ void main() {
     expect(sockets, hasLength(2));
     await service.disconnect();
   });
+
+  group('watchdog', () {
+    const established =
+        '{"event": "pusher:connection_established", '
+        '"data": "{}"}';
+    late List<_FakeChannel> sockets;
+    late List<KickPusherConnectionState> states;
+    late KickPusherService service;
+
+    setUp(() {
+      sockets = [];
+      states = [];
+      service = KickPusherService(
+        onEvent: (_) {},
+        onStateChanged: states.add,
+        channelFactory: (_) {
+          final socket = _FakeChannel();
+          sockets.add(socket);
+          return socket;
+        },
+        sleep: (_) async {},
+        connectTimeout: const Duration(milliseconds: 40),
+        quietTimeout: const Duration(milliseconds: 80),
+      );
+    });
+
+    tearDown(() => service.disconnect());
+
+    /// Dogfood 2026-10-20: the reopen never connected, no error, no done -
+    /// "Reconnecting..." for good
+    test('a connect that never answers is given up and opened again', () async {
+      await service.connect(chatroomId: 42);
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(sockets, hasLength(2));
+      expect(states.last, KickPusherConnectionState.reconnecting);
+
+      sockets.last.incoming.add(established);
+      await pumpEventQueue();
+      expect(states.last, KickPusherConnectionState.connected);
+    });
+
+    test('connected: frames keep the socket, silence reopens it', () async {
+      await service.connect(chatroomId: 42);
+      sockets.single.incoming.add(established);
+      for (var i = 0; i < 3; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        sockets.single.incoming.add('{"event": "pusher:pong", "data": "{}"}');
+      }
+      expect(sockets, hasLength(1));
+
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      expect(sockets, hasLength(2));
+      expect(states.last, KickPusherConnectionState.reconnecting);
+    });
+
+    test('the server\'s ping gets a pong', () async {
+      await service.connect(chatroomId: 42);
+      sockets.single.incoming
+        ..add(established)
+        ..add('{"event": "pusher:ping", "data": "{}"}');
+      await pumpEventQueue();
+      expect(
+        sockets.single.sent.map((f) => f['event']),
+        contains('pusher:pong'),
+      );
+    });
+
+    test('disconnect stops the watchdog', () async {
+      await service.connect(chatroomId: 42);
+      await service.disconnect();
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+      expect(sockets, hasLength(1));
+    });
+  });
 }

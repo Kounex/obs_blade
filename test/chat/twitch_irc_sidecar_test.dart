@@ -12,9 +12,33 @@ import 'package:obs_blade/types/classes/twitch/eventsub/channel_chat_message.dar
 import 'package:obs_blade/types/classes/twitch/twitch_user.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/utils/twitch/twitch_irc_sidecar.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../persistence/support/hive_test_harness.dart';
 import 'support/fake_twitch_services.dart';
+
+class _FakeIrcSocket extends Fake implements WebSocketChannel {
+  final StreamController<dynamic> incoming = StreamController<dynamic>();
+  final List<String> sent = [];
+
+  @override
+  Stream<dynamic> get stream => this.incoming.stream;
+
+  @override
+  WebSocketSink get sink => _FakeIrcSink(this);
+}
+
+class _FakeIrcSink extends Fake implements WebSocketSink {
+  final _FakeIrcSocket socket;
+
+  _FakeIrcSink(this.socket);
+
+  @override
+  void add(dynamic data) => this.socket.sent.add(data as String);
+
+  @override
+  Future<void> close([int? closeCode, String? closeReason]) async {}
+}
 
 void main() {
   group('parseIrcPrivmsgMeta', () {
@@ -128,5 +152,41 @@ void main() {
       store.appendChatMessageForTest(msg('m1', type: 'user_intro'));
       expect(store.messages.single.isFirstMessage, isTrue);
     });
+  });
+
+  /// Same class of miss as the Kick socket (dogfood 2026-10-20): a connect
+  /// that hangs or a socket that dies quietly never errors
+  test('the sidecar pings, and a socket silent past quietTimeout is '
+      'reopened', () async {
+    final sockets = <_FakeIrcSocket>[];
+    final sidecar = TwitchIrcSidecar(
+      onFirstMessage: (_) {},
+      channelFactory: (_) {
+        final socket = _FakeIrcSocket();
+        sockets.add(socket);
+        return socket;
+      },
+      sleep: (_) async {},
+      pingInterval: const Duration(milliseconds: 30),
+      quietTimeout: const Duration(milliseconds: 80),
+    );
+    addTearDown(sidecar.dispose);
+    await sidecar.connect(
+      accessToken: 'token',
+      login: 'kounex',
+      channelLogin: 'kounex',
+    );
+    for (var i = 0; i < 3; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      sockets.single.incoming.add(
+        ':tmi.twitch.tv PONG tmi.twitch.tv :obsblade',
+      );
+    }
+    expect(sockets, hasLength(1));
+    expect(sockets.single.sent, contains('PING :obsblade\r\n'));
+
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    expect(sockets, hasLength(2));
+    expect(sockets.last.sent, contains('JOIN #kounex\r\n'));
   });
 }

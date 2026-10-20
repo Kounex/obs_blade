@@ -119,6 +119,11 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   costs: YouTube calls go through `YouTubeQuotaMeter` (a new endpoint
   gets its cost in its table), and a switch to a costlier read path
   (stream → poll) is a log line.
+- Every socket has a deadline from the moment it opens: dart:io's
+  `WebSocket.connect` has no timeout, and a dead socket rarely errors.
+  Arm a watchdog at open (handshake / welcome), reset it on every frame,
+  ping so a quiet chat still gets frames (2026-10-20: Kick stuck in
+  "Reconnecting..." with an empty log).
 - A failure must not fail the requests beside it: renewing / closing a
   shared HTTP client cancels connections still being set up (2026-10-20:
   one Kick failure logged four "Connection attempt cancelled").

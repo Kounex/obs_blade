@@ -4,7 +4,7 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
-## 2026-10-20 - Dogfood log: renewed clients, YouTube quota in the log
+## 2026-10-20 - Dogfood: renewed clients, socket watchdogs, YouTube quota in the log
 
 From the user's Settings → Logs on Kounex iOS (build 2026101701):
 
@@ -23,6 +23,19 @@ From the user's Settings → Logs on Kounex iOS (build 2026101701):
   went out on a socket iOS had taken away. A GET / HEAD failing at the
   connection now goes out once more on fresh connections (as browsers
   retry on a reused connection); POSTs still aren't repeated.
+- **Kick chat "Reconnecting..." for good** (combined chat, glorious_e;
+  nothing in the log): the Pusher socket closed cleanly (no error, so no
+  line), and the reopen never connected - dart:io's `WebSocket.connect`
+  has no timeout, and `KickPusherService` waited for
+  `pusher:connection_established` without one, a connected socket had no
+  pong check either. Now: 15 s for `connection_established`, then 60 s
+  without a frame (we ping every 30 s) reopens the socket; both log
+  "Kick chat socket stalled", a clean close logs its code, and the
+  server's `pusher:ping` gets its `pusher:pong` (Pusher protocol). Not
+  caused by the client fixes above - the socket doesn't use
+  `RenewingHttpClient`. Sibling: the Twitch IRC sidecar (first-message
+  badges) had no watchdog either - pings every 60 s, reopens after 90 s
+  of silence. Twitch EventSub already had one (75 s).
 - **YouTube quota in the log** (`YouTubeQuotaMeter`): the YouTube
   services' default clients and the stream's accepted calls are counted
   at Google's costs (determine_quota_cost, read 2026-10-20 - `search.list`

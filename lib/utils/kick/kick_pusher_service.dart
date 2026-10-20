@@ -31,6 +31,20 @@ class KickPusherService {
   static const Duration _pingInterval = Duration(seconds: 30);
   static const Duration _maxBackoff = Duration(seconds: 30);
 
+  /// No `pusher:connection_established` this long after opening: the
+  /// connect hung - dart:io's `WebSocket.connect` has no timeout, and the
+  /// chat stayed "Reconnecting..." for good, nothing in the log (dogfood,
+  /// 2026-10-20).
+  static const Duration kConnectTimeout = Duration(seconds: 15);
+
+  /// Nothing from the server this long while connected: the socket died
+  /// quietly. We ping every 30 s and Pusher pongs at once; pusher-js waits
+  /// 30 s for the pong.
+  static const Duration kQuietTimeout = Duration(seconds: 60);
+
+  final Duration connectTimeout;
+  final Duration quietTimeout;
+
   final void Function(KickPusherEvent event) onEvent;
   final void Function(KickPusherConnectionState state) onStateChanged;
   final WebSocketChannel Function(Uri) _channelFactory;
@@ -39,6 +53,11 @@ class KickPusherService {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _socketSub;
   Timer? _pingTimer;
+
+  /// Reconnects a socket that doesn't answer in time ([connectTimeout],
+  /// then [quietTimeout] after each frame)
+  Timer? _watchdog;
+  bool _established = false;
 
   int? _chatroomId;
 
@@ -57,6 +76,8 @@ class KickPusherService {
     required this.onStateChanged,
     WebSocketChannel Function(Uri)? channelFactory,
     Future<void> Function(Duration)? sleep,
+    this.connectTimeout = kConnectTimeout,
+    this.quietTimeout = kQuietTimeout,
   }) : _channelFactory = channelFactory ?? WebSocketChannel.connect,
        _sleep = sleep ?? Future.delayed;
 
@@ -97,22 +118,57 @@ class KickPusherService {
       return;
     }
     this._channel = channel;
+    this._established = false;
+    this._watch(channel, this.connectTimeout);
     this._socketSub = channel.stream.listen(
       (raw) {
-        if (identical(this._channel, channel)) this._onData(raw);
+        if (!identical(this._channel, channel)) return;
+        if (this._established) this._watch(channel, this.quietTimeout);
+        this._onData(raw);
       },
       onError: (Object error) {
         GeneralHelper.logFailure('Kick chat socket error', error);
         this._onSocketClosed(channel);
       },
-      onDone: () => this._onSocketClosed(channel),
+      onDone: () {
+        if (identical(this._channel, channel)) {
+          GeneralHelper.logFailure(
+            'Kick chat socket closed',
+            'code ${_closeCode(channel)} - reconnecting',
+          );
+        }
+        this._onSocketClosed(channel);
+      },
     );
+  }
+
+  static String _closeCode(WebSocketChannel channel) {
+    try {
+      return '${channel.closeCode} ${channel.closeReason ?? ''}'.trim();
+    } catch (_) {
+      return 'unknown';
+    }
+  }
+
+  void _watch(WebSocketChannel channel, Duration window) {
+    this._watchdog?.cancel();
+    this._watchdog = Timer(window, () {
+      if (!identical(this._channel, channel)) return;
+      GeneralHelper.logFailure(
+        'Kick chat socket stalled',
+        '${this._established ? 'no frame' : 'not connected'} within '
+            '${window.inSeconds} s - reconnecting',
+      );
+      this._onSocketClosed(channel);
+    });
   }
 
   /// Closes the current socket (if any) without scheduling a reconnect.
   void _dropSocket() {
     this._pingTimer?.cancel();
     this._pingTimer = null;
+    this._watchdog?.cancel();
+    this._watchdog = null;
     final sub = this._socketSub;
     final channel = this._channel;
     this._socketSub = null;
@@ -136,6 +192,10 @@ class KickPusherService {
     switch (event.event) {
       case 'pusher:connection_established':
         this._reconnectAttempts = 0;
+        this._established = true;
+        if (this._channel case final channel?) {
+          this._watch(channel, this.quietTimeout);
+        }
         this._send(<String, Object?>{
           'event': 'pusher:subscribe',
           'data': <String, Object?>{
@@ -161,6 +221,10 @@ class KickPusherService {
           this._send(<String, Object?>{'event': 'pusher:ping', 'data': {}});
         });
         this.onStateChanged(KickPusherConnectionState.connected);
+      case 'pusher:ping':
+
+        /// Pusher protocol: the server's ping wants a pong
+        this._send(<String, Object?>{'event': 'pusher:pong', 'data': {}});
       case 'pusher:pong':
 
         /// Keepalive answer — nothing to do.
@@ -213,6 +277,8 @@ class KickPusherService {
     this._disposed = true;
     this._pingTimer?.cancel();
     this._pingTimer = null;
+    this._watchdog?.cancel();
+    this._watchdog = null;
     await this._socketSub?.cancel();
     this._socketSub = null;
     try {
