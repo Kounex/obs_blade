@@ -115,7 +115,13 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   Parse both forms.
 - Failures go through `GeneralHelper.logFailure` (Settings → Logs,
   redacted, rate-limited) - never console-only. A dogfood bug must be
-  diagnosable from the user's log export.
+  diagnosable from the user's log export. That includes what a call
+  costs: YouTube calls go through `YouTubeQuotaMeter` (a new endpoint
+  gets its cost in its table), and a switch to a costlier read path
+  (stream → poll) is a log line.
+- A failure must not fail the requests beside it: renewing / closing a
+  shared HTTP client cancels connections still being set up (2026-10-20:
+  one Kick failure logged four "Connection attempt cancelled").
 - A list a sheet loads with the session token (subscriptions, live
   listing) ends a dead session like a write does - otherwise its Retry
   is a dead end.

@@ -8,6 +8,7 @@ import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
 import 'package:obs_blade/utils/renewing_http_client.dart';
+import 'package:obs_blade/utils/youtube/youtube_quota_meter.dart';
 
 const String _kApiBase = 'https://www.googleapis.com/youtube/v3';
 
@@ -163,7 +164,7 @@ class YouTubeLiveChatService {
   YouTubeLiveChatService({
     http.Client? client,
     YouTubeLiveChatStreamer? streamer,
-  }) : _client = client ?? RenewingHttpClient(),
+  }) : _client = client ?? YouTubeMeteredClient(RenewingHttpClient()),
        _streamer = streamer ?? const YouTubeLiveChatStreamer();
 
   /// API key resolution: the user's own key ([SettingsKeys.YouTubeApiKey])

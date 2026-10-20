@@ -9,6 +9,8 @@ import 'package:obs_blade/models/youtube_auth.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/views/chat_history.dart';
 import 'package:obs_blade/stores/views/combined_chat.dart';
+import 'package:obs_blade/models/enums/log_level.dart';
+import 'package:obs_blade/utils/youtube/youtube_quota_meter.dart';
 import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/classes/activity/activity_event.dart';
 import 'package:obs_blade/types/classes/chat/chat_ban_entry.dart';
@@ -1253,6 +1255,7 @@ abstract class _YouTubeChatStore with Store {
   ) async {
     void quotaExhausted(Object e) {
       GeneralHelper.logFailure('YouTube API quota used up', e);
+      YouTubeQuotaMeter.logNow(reason: 'quota used up');
       final resetAt = nextYouTubeQuotaReset(
         this._now(),
       ).add(kYouTubeQuotaResetGrace);
@@ -1468,6 +1471,9 @@ abstract class _YouTubeChatStore with Store {
           page.messages.any((m) => m.type == YouTubeChatMessageType.chatEnded);
     }
 
+    /// The log said this read streams (a poll window clears it)
+    var streamLogged = false;
+
     /// The `streamList` calls of one [stream] read, one after the other
     Future<_PassOutcome?> readCalls() async {
       while (!superseded()) {
@@ -1530,6 +1536,7 @@ abstract class _YouTubeChatStore with Store {
             /// chat errors and Retry / resume recover it
             GeneralHelper.advLog(
               'YouTube chat stream: ended or disabled - asking the poll',
+              includeInLogs: true,
             );
           } else if (result != null &&
               result is! YouTubeStreamDroppedException) {
@@ -1538,10 +1545,22 @@ abstract class _YouTubeChatStore with Store {
               result,
             );
           } else {
-            GeneralHelper.advLog(
-              'YouTube chat stream keeps closing or can\'t connect - '
-              'polling until ${policy.pollUntil}',
-            );
+            if (policy.shouldStream) {
+              /// A dead zone probes every few calls - once per 5 min
+              GeneralHelper.logFailure(
+                'YouTube chat stream can\'t connect',
+                'one poll checks',
+              );
+            } else {
+              /// Polling costs 2-5x the stream - worth a line in the log
+              streamLogged = false;
+              GeneralHelper.advLog(
+                'YouTube chat stream keeps closing or can\'t connect - '
+                'polling until ${policy.pollUntil}',
+                level: LogLevel.Warning,
+                includeInLogs: true,
+              );
+            }
           }
           return null;
         }
@@ -1560,6 +1579,13 @@ abstract class _YouTubeChatStore with Store {
     /// or [YouTubeStreamPolicy] hands over to the poll (null).
     Future<_PassOutcome?> stream() async {
       policy.newRead();
+      if (!streamLogged) {
+        streamLogged = true;
+        GeneralHelper.advLog(
+          'YouTube chat reads over the stream (5 units per ~10 s call)',
+          includeInLogs: true,
+        );
+      }
 
       /// Across calls - each lives ~10 s, shorter than the interval
       final viewerTimer = this._viewerRefreshInterval > Duration.zero
@@ -1610,8 +1636,9 @@ abstract class _YouTubeChatStore with Store {
         } on YouTubeRateLimitedException {
           if (superseded()) return _PassOutcome.stopped;
           final wait = backOff();
-          GeneralHelper.advLog(
-            'YouTube chat rate limited - backing off ${backoffMillis}ms',
+          GeneralHelper.logFailure(
+            'YouTube chat poll rate limited',
+            'backing off ${backoffMillis}ms',
           );
           await wait;
           continue;

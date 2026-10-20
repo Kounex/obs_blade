@@ -8,6 +8,7 @@ import 'package:obs_blade/types/classes/youtube/youtube_token.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/renewing_http_client.dart';
+import 'package:obs_blade/utils/youtube/youtube_quota_meter.dart';
 
 /// App-owned Google OAuth client id for the YouTube device flow. Empty for
 /// now — no app-owned client exists yet, so the BYO client id
@@ -77,7 +78,7 @@ class YouTubeAuthService {
   YouTubeAuthService({
     http.Client? client,
     Future<void> Function(Duration)? sleep,
-  }) : _client = client ?? RenewingHttpClient(),
+  }) : _client = client ?? YouTubeMeteredClient(RenewingHttpClient()),
        _sleep = sleep ?? Future.delayed;
 
   /// Reads a non-empty String setting; `null` when the settings box isn't

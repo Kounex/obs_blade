@@ -4,6 +4,31 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-20 - Dogfood log: renewed clients, YouTube quota in the log
+
+From the user's Settings → Logs on Kounex iOS (build 2026101701):
+
+- **"Connection attempt cancelled" ×4 (Kick previews)**: one refresh
+  failed on a stale socket ("Connection closed before full header was
+  received"), `RenewingHttpClient` renewed and closed the old
+  `HttpClient` - and `close()` cancels connections still being set up
+  even without force (dart:io `_ConnectionTarget.close`), failing the
+  four previews running beside it. The old client now closes once its
+  sends have their answers (app resume's `renewAll` the same). Every
+  chat service shares the class - Twitch / YouTube / Kick requests
+  running beside a failure or a resume failed the same way.
+- **YouTube quota in the log** (`YouTubeQuotaMeter`): the YouTube
+  services' default clients and the stream's accepted calls are counted
+  at Google's costs (determine_quota_cost, read 2026-10-20 - `search.list`
+  has its own bucket now); one line an hour while calls go out
+  ("YouTube API: ≈1,720 units in 60 min since 13:20 - …") and one when
+  the quota ran out. A quota report can be read from the user's log now.
+- The chat's stream / poll switches reach the log (were debug-console
+  only): "reads over the stream" once per read, the poll window with its
+  end, a dead zone's probe (once per 5 min), a rate-limited poll.
+- Not changed: "YouTube sign-in without a channel" (13:33) is the
+  designed warning for an account without a channel.
+
 ## 2026-10-19 - YouTube chat reads over streamList, quiet-chat polling
 
 A Pro user ran out of their API key's 10,000 daily units after ~2 h of

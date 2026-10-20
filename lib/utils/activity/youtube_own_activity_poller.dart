@@ -7,6 +7,7 @@ import '../../types/classes/activity/activity_event.dart';
 import '../general_helper.dart';
 import '../youtube/youtube_live_chat_service.dart';
 import '../youtube/youtube_live_resolver.dart';
+import '../youtube/youtube_quota_meter.dart';
 import '../youtube_target.dart';
 import 'activity_mappers.dart';
 
@@ -396,6 +397,7 @@ class YouTubeOwnActivityPoller {
 
   Duration _quotaUsedUp(Object error) {
     GeneralHelper.logFailure('Activity: YouTube API quota used up', error);
+    YouTubeQuotaMeter.logNow(reason: 'quota used up');
     final resetAt = nextYouTubeQuotaReset(
       this._clock(),
     ).add(kYouTubeQuotaResetGrace);

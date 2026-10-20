@@ -21,6 +21,7 @@ import 'package:http2/transport.dart';
 import '../../types/classes/youtube/youtube_chat_message.dart';
 import 'stream_list/stream_list.pbgrpc.dart';
 import 'youtube_live_chat_service.dart';
+import 'youtube_quota_meter.dart';
 
 /// The stream can't serve this chat right now (permission, key, rate
 /// limit, quota, unknown chat, gRPC not answered as expected) - read it
@@ -116,6 +117,7 @@ class YouTubeLiveChatStreamer {
       if (opened || channel == null) return;
       opened = true;
       grace?.cancel();
+      YouTubeQuotaMeter.record('liveChatMessages.streamList', 5);
       onOpen?.call();
     }
 
