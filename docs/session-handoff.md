@@ -18,7 +18,9 @@ itself had no device check. Native Kick chat (Pro) is down on 4.1.0
 approval. Next:
 
 1. Both approved -> `release-publish` (iOS `publish ios`; Play: the user
-   presses Publish in the Play Console), then tag `4.2.0`.
+   presses Publish in the Play Console), then tag `4.2.0`. The website's
+   What's new already has the 4.2 card (published ahead, 2026-10-20) -
+   skip that step this once.
 2. `tool/release/` can go now (playbook: kept until the first
    store-release beta on both stores).
 
