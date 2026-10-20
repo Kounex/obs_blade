@@ -46,7 +46,10 @@ runaway calls. Spec:
   chats); the chat and the activity poller wait out a poll's interval
   before streaming again (sooner: `PERMISSION_DENIED`, which kept the
   stream from ever coming back after a fallback). Numbers in the audit
-  § Quota reality.
+  § Quota reality. Review of these: the viewer count timer now spans the
+  calls (per call it never reached its 30 s tick), and a call still open
+  after 30 s ends as dropped (a dead socket showed "connected" for up to
+  50 s). iOS dogfood build on Kounex iOS; Android release builds.
 
 ## 2026-10-17 - /code-review high on 4.1.0..HEAD (4.2)
 
