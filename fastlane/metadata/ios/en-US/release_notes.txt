@@ -7,5 +7,6 @@
 - Visibility, lock and mute icons show on and off at a glance
 - Turn off the automatic network search when the app opens: Settings → General → Search on Start
 - The QR scanner camera no longer shows upside down in landscape on iPhone and iPad
+- YouTube chat uses much less of your API key's daily quota
 
 Keep it coming on GitHub!

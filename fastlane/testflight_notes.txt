@@ -1,4 +1,4 @@
-4.2.0 test build 2.
+4.2.0 test build 3.
 
 SCENE PREVIEW TRANSITIONS
 - Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
@@ -29,6 +29,15 @@ SEARCH ON START (new)
 QR SCANNER
 - Hold the phone in landscape, then open Quick Connect -> Scan: the camera picture is upright (was upside down on iPhone / iPad); rotate while it is open - still upright; scanning works in both orientations
 - Android: same check, landscape before opening
+
+YOUTUBE CHAT (reads over streamList now - one call ~10 s, 5 units)
+- Live stream with chat: messages arrive within a second or two, viewer count updates every ~30 s
+- Quiet chat for a few minutes, then a message: it still shows, no "reconnecting"
+- Airplane mode / dead zone for 30 s, then back: "reconnecting", then the chat catches up without duplicates
+- Background the app for a minute, then return: the chat picks up where it left
+- End the stream: the chat shows it ended
+- Google Cloud console -> YouTube Data API v3 -> Quotas: roughly 1,700 units an hour for one chat (was 3,750-9,000)
+- Activity feed (own channel) still updates (30 s poll)
 
 ALSO
 - Updating over the store version (4.1.0) keeps saved connections, settings and hidden items

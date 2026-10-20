@@ -1,9 +1,10 @@
 4.2: your scene preview now moves like OBS does:
 
-- Scene transitions play in the preview: fades, swipes, slides, luma wipes and stingers, as set in OBS (turn off in Settings → Dashboard)
+- Scene transitions play in the preview as set in OBS: fades, swipes, slides, luma wipes, stingers
 - Scene items show the colors you set in OBS 32
 - Scene items follow a switch made in OBS as soon as the transition starts
 - Clearer Edit Visibility buttons and on / off icons
 - Settings → General → Search on Start turns off the network search when the app opens
+- YouTube chat uses much less of your daily API quota
 
 Keep it coming on GitHub!
