@@ -20,8 +20,12 @@ Maintainers: `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
 
 ## Steps
 
-1. **iOS version + notes.** `release metadata ios` (dry run), then `--yes`:
-   creates the App Store version `<name>` with the notes and screenshots.
+1. **iOS version + notes.** The App Store version `<name>` must exist
+   first - store-release doesn't create it ("create version ... in App
+   Store Connect first"): the user adds it in App Store Connect, or one
+   `POST v1/appStoreVersions` (platform IOS, versionString, app) through
+   the tool's API client (done for 4.2.0). Then `release metadata ios`
+   (dry run), then `--yes`: the notes and screenshots.
    Check the version still has its App Preview (playbook § Stores).
    If the Play listing changed since the last release
    (`git diff <last tag> -- fastlane/metadata/android`, the changelogs

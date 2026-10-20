@@ -2,32 +2,31 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-10-20** (review pass 2 +
-4.2.0 beta).
+Read this first after `AGENTS.md`. Last reset: **2026-10-20** (4.2.0
+submitted).
 
 **Live:** 4.1.0 (build 2026100501, tag `4.1.0`) on both stores. Branch
 `master`. Releases run through **store-release** (`release.yaml`).
 
-**Urgent context: native Kick chat (Pro) is down on 4.1.0.** Kick moved
-its chat to a new Pusher app on 2026-10-20; 4.1.0's compiled-in key gets
-`pusher:error` 4001. Fixed on master (`31139f46`: the app asks
-`web.kick.com/api/v1/realtime/channels/{id}/chat/connection`). The user
-chose to ship it with 4.2, no 4.1.1 hotfix.
+**4.2.0 (build 2026102003) - in review on both stores** since
+2026-10-20: App Store `WAITING_FOR_REVIEW` (manual release), Play
+production 100 % under managed publishing. Build 5 = build 4 + the
+combined chat Save / Delete fix (`81c283db`). The user tested build 4
+("nothing else found") and asked for beta + promote in one go; build 5
+itself had no device check. Native Kick chat (Pro) is down on 4.1.0
+(Kick's new Pusher app) - 4.2.0 fixes it, so publish soon after
+approval. Next:
 
-**4.2.0 - in beta:** build **2026102002** ("test build 4") on TestFlight
-(internal) and Play internal since 2026-10-20 (replaces 2026102001 from
-the same day). Since 2026102001: Kick / Twitch catch up the rows a socket
-missed after a mid-session reconnect, no false gap divider in quiet
-chats, plain copy for a failed YouTube live lookup (changelog
-2026-10-20 "Chat catches up..."). The second `/code-review high` pass is
-done (2 of 8 kept and fixed); the catch-up work had a fresh-context
-review (2 findings, fixed) but **no device check yet** - the user asked
-for the beta right away. Next:
-
-1. Beta test from `fastlane/testflight_notes.txt`, incl. an upgrade over
-   4.1.0 -> `release-promote`.
+1. Both approved -> `release-publish` (iOS `publish ios`; Play: the user
+   presses Publish in the Play Console), then tag `4.2.0`.
 2. `tool/release/` can go now (playbook: kept until the first
    store-release beta on both stores).
+
+App Store versions: `release metadata ios` does **not** create a
+version (the tool says "create version x in App Store Connect first").
+4.2.0 was created with one `POST v1/appStoreVersions` through the tool's
+`HttpApiClient` (one-off script, removed); the iPhone App Preview was
+copied over by App Store Connect.
 
 Release env on the MacBook: `release-env.sh` now puts rbenv Ruby 3.4.2
 first (fastlane lives there; Homebrew Ruby is 4.0 without it) and
