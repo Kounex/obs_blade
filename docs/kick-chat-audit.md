@@ -26,10 +26,21 @@ chatterino7 Kick fork.
 Kick's chat fan-out runs on hosted Pusher (unofficial but ubiquitous —
 Chatterino forks, bots, overlays all ride it; tolerated ecosystem):
 
-- Socket: `wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679` (protocol 7).
-  App key is hardcoded in Kick's frontend, stable 2023→2026, **not
-  contractual** — if it dies, re-scrape from browser devtools (single
-  constant in `kick_pusher_service.dart`).
+- Socket: `wss://ws-{cluster}.pusher.com/app/{app_key}` (protocol 7).
+  **Since 2026-10-20 the app is asked per channel**, as kick.com's own
+  page does: `POST web.kick.com/api/v1/realtime/channels/{channelId}/chat/connection`
+  (no auth; body `{client:{id,type:"web"}, capabilities:{accepted_providers:[{provider:"pusher"}]}}`)
+  → `data.connections[]` `{provider:"pusher", credentials:{app_key, cluster}}`
+  (`KickRealtimeConfigService`). That day Kick moved the chat from
+  `32cbd69e4b950bf97679` (stable 2023→2026; now `pusher:error` 4001 "App
+  key ... not in this cluster") to `34bf7a0ff419a2a775b9` / `us2` - the
+  compiled-in fallback. Offered Pusher **and** Centrifugo, Kick picks
+  Centrifugo (`wss://realtime.us-west-2.platform.kick.com/connection/websocket`,
+  token from `/v1/realtime/auth/connection`) - Kick's web client prefers
+  it; Pusher-only clients still get the Pusher app (probed live on the new
+  key: `chatrooms.{id}.v2`, same event names, 187 `ChatMessageEvent` in
+  15 s on the top channel). A 4000-4099 refusal makes the next socket ask
+  again.
 - Subscribe `chatrooms.{chatroom_id}.v2`; ping every 30s
   (`activity_timeout: 120`).
 - Slug → ids: `GET /api/v2/channels/{slug}` (no auth) — returns chatroom id,

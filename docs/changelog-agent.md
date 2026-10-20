@@ -23,6 +23,22 @@ From the user's Settings → Logs on Kounex iOS (build 2026101701):
   went out on a socket iOS had taken away. A GET / HEAD failing at the
   connection now goes out once more on fresh connections (as browsers
   retry on a reused connection); POSTs still aren't repeated.
+- **Kick chat dead since 2026-10-20 ~midday: Kick moved its Pusher app.**
+  The next dogfood log named it - `Kick chat socket closed - code 4001
+  App key 32cbd69e4b950bf97679 not in this cluster`. kick.com now asks
+  `POST web.kick.com/api/v1/realtime/channels/{id}/chat/connection` which
+  realtime app to use (read from its JS bundle); offered Pusher only it
+  names `34bf7a0ff419a2a775b9` / `us2` for every channel probed.
+  `KickRealtimeConfigService` asks the same on connect (fallback: that
+  key), a `pusher:error` 4000-4099 is logged and makes the next socket
+  ask again. Live smoke through the real service: 114 chat messages in
+  10 s on the top channel. Kick's web client itself prefers Centrifugo
+  now - if Pusher stops being offered, that's the next transport (audit
+  § Native read). **4.1.0 in the stores has the old key compiled in: its
+  native Kick chat (Pro) is down until 4.2.**
+- The watchdog below was the first guess at the same symptom - the
+  reopens were being refused (4001, a clean close, so no line), not
+  hanging. Kept: it is still the only deadline on those sockets.
 - **Kick chat "Reconnecting..." for good** (combined chat, glorious_e;
   nothing in the log): the Pusher socket closed cleanly (no error, so no
   line), and the reopen never connected - dart:io's `WebSocket.connect`

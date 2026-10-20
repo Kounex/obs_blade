@@ -24,6 +24,7 @@ import 'package:obs_blade/types/classes/kick/kick_token.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/kick/kick_channel_service.dart';
 import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
+import 'package:obs_blade/utils/kick/kick_realtime_config_service.dart';
 import 'package:obs_blade/utils/kick_channel_slug.dart';
 
 part 'kick_chat.g.dart';
@@ -179,6 +180,7 @@ abstract class _KickChatStore with Store {
            (({required onEvent, required onStateChanged}) => KickPusherService(
              onEvent: onEvent,
              onStateChanged: onStateChanged,
+             appResolver: KickRealtimeConfigService().pusherApp,
            )),
        _authService = authService ?? KickAuthService(),
        _isProResolver =

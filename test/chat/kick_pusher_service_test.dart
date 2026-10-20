@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
 import 'package:obs_blade/utils/kick/kick_pusher_service.dart';
+import 'package:obs_blade/utils/kick/kick_realtime_config_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class _FakeChannel extends Fake implements WebSocketChannel {
@@ -237,6 +238,98 @@ void main() {
       await service.disconnect();
       await Future<void>.delayed(const Duration(milliseconds: 60));
       expect(sockets, hasLength(1));
+    });
+  });
+
+  /// Dogfood 2026-10-20: Kick moved the chat to a new Pusher app key; the
+  /// old one answered 4001 and the chat sat in "Reconnecting..."
+  group('Pusher app', () {
+    const refused =
+        '{"event": "pusher:error", "data": {"code": 4001, '
+        '"message": "App key 32cbd69e4b950bf97679 not in this cluster. Did '
+        'you forget to specify the cluster?"}}';
+    late List<Uri> uris;
+    late List<_FakeChannel> sockets;
+
+    WebSocketChannel factory(Uri uri) {
+      uris.add(uri);
+      final socket = _FakeChannel();
+      sockets.add(socket);
+      return socket;
+    }
+
+    setUp(() {
+      uris = [];
+      sockets = [];
+    });
+
+    test('the socket opens on the app Kick names for the channel', () async {
+      final asked = <int>[];
+      final service = KickPusherService(
+        onEvent: (_) {},
+        onStateChanged: (_) {},
+        channelFactory: factory,
+        sleep: (_) async {},
+        appResolver: (channelId) async {
+          asked.add(channelId);
+          return const KickPusherApp('newkey', 'eu');
+        },
+      );
+      addTearDown(service.disconnect);
+      await service.connect(chatroomId: 42, channelId: 101);
+      expect(asked, [101]);
+      expect(uris.single.host, 'ws-eu.pusher.com');
+      expect(uris.single.path, '/app/newkey');
+    });
+
+    test('a 4001 refusal asks again before the next socket; a plain drop '
+        'doesn\'t', () async {
+      var answer = const KickPusherApp('oldkey', 'us2');
+      var asked = 0;
+      final service = KickPusherService(
+        onEvent: (_) {},
+        onStateChanged: (_) {},
+        channelFactory: factory,
+        sleep: (_) async {},
+        appResolver: (_) async {
+          asked++;
+          return answer;
+        },
+      );
+      addTearDown(service.disconnect);
+      await service.connect(chatroomId: 42, channelId: 101);
+      expect(asked, 1);
+
+      /// A plain drop reconnects on the same app
+      unawaited(sockets.last.incoming.close());
+      await pumpEventQueue();
+      expect(asked, 1);
+      expect(uris.last.path, '/app/oldkey');
+
+      /// Pusher refuses the app, then closes
+      answer = const KickPusherApp('34bf7a0ff419a2a775b9', 'us2');
+      sockets.last.incoming.add(refused);
+      unawaited(sockets.last.incoming.close());
+      await pumpEventQueue();
+      expect(asked, 2);
+      expect(uris.last.path, '/app/34bf7a0ff419a2a775b9');
+    });
+
+    test('no answer from Kick: the fallback app', () async {
+      final service = KickPusherService(
+        onEvent: (_) {},
+        onStateChanged: (_) {},
+        channelFactory: factory,
+        sleep: (_) async {},
+        appResolver: (_) async => throw Exception('offline'),
+      );
+      addTearDown(service.disconnect);
+      await service.connect(chatroomId: 42, channelId: 101);
+      expect(uris.single.path, '/app/${KickPusherApp.fallback.key}');
+      expect(
+        uris.single.host,
+        'ws-${KickPusherApp.fallback.cluster}.pusher.com',
+      );
     });
   });
 }

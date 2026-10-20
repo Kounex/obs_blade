@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:obs_blade/types/classes/kick/kick_pusher_event.dart';
 import 'package:obs_blade/utils/general_helper.dart';
+import 'package:obs_blade/utils/kick/kick_realtime_config_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 enum KickPusherConnectionState {
@@ -22,11 +23,19 @@ enum KickPusherConnectionState {
 /// [_channelFactory] and [_sleep] are injectable for tests — same seam
 /// idiom as `TwitchEventSubService`.
 class KickPusherService {
-  /// Kick's public Pusher app key, scraped from their frontend bundle —
-  /// unofficial but stable since 2023 (verified 2026). If it ever
-  /// rotates, re-scrape it from kick.com's JS bundle; public chatrooms
-  /// need no Pusher auth.
-  static const String kAppKey = '32cbd69e4b950bf97679';
+  /// Which Pusher app the channel's chat is on - asked on connect and
+  /// again after Pusher refused the app (`pusher:error` 4000-4099, e.g.
+  /// 4001 "App key ... not in this cluster": Kick moved the chat to a new
+  /// key on 2026-10-20). Null (tests) or a failed answer:
+  /// [KickPusherApp.fallback]. Public chatrooms need no Pusher auth.
+  final Future<KickPusherApp?> Function(int channelId)? appResolver;
+
+  KickPusherApp _app = KickPusherApp.fallback;
+
+  /// Ask [appResolver] before the next socket
+  bool _resolveApp = true;
+
+  static const Duration _resolveTimeout = Duration(seconds: 10);
 
   static const Duration _pingInterval = Duration(seconds: 30);
   static const Duration _maxBackoff = Duration(seconds: 30);
@@ -78,6 +87,7 @@ class KickPusherService {
     Future<void> Function(Duration)? sleep,
     this.connectTimeout = kConnectTimeout,
     this.quietTimeout = kQuietTimeout,
+    this.appResolver,
   }) : _channelFactory = channelFactory ?? WebSocketChannel.connect,
        _sleep = sleep ?? Future.delayed;
 
@@ -90,6 +100,24 @@ class KickPusherService {
     this._chatroomId = chatroomId;
     this._channelId = channelId;
     this._reconnectAttempts = 0;
+    this._resolveApp = true;
+    await this._open(this._session);
+  }
+
+  /// [_openSocket], asking [appResolver] first when due
+  Future<void> _open(int session) async {
+    final resolver = this.appResolver;
+    final channelId = this._channelId;
+    if (this._resolveApp && resolver != null && channelId != null) {
+      this._resolveApp = false;
+      try {
+        final app = await resolver(channelId).timeout(_resolveTimeout);
+        if (app != null) this._app = app;
+      } catch (e) {
+        GeneralHelper.logFailure('Kick realtime config failed', e);
+      }
+      if (this._disposed || session != this._session) return;
+    }
     this._openSocket();
   }
 
@@ -108,7 +136,7 @@ class KickPusherService {
     try {
       channel = this._channelFactory(
         Uri.parse(
-          'wss://ws-us2.pusher.com/app/$kAppKey'
+          'wss://ws-${this._app.cluster}.pusher.com/app/${this._app.key}'
           '?protocol=7&client=js&version=7.6.0&flash=false',
         ),
       );
@@ -221,6 +249,19 @@ class KickPusherService {
           this._send(<String, Object?>{'event': 'pusher:ping', 'data': {}});
         });
         this.onStateChanged(KickPusherConnectionState.connected);
+      case 'pusher:error':
+
+        /// Pusher protocol: 4000-4099 the app config is wrong (the socket
+        /// closes) - the next socket asks for the app first
+        final data = event.data;
+        final code = data['code'];
+        GeneralHelper.logFailure(
+          'Kick chat socket refused',
+          'code $code ${data['message'] ?? ''}'.trim(),
+        );
+        if (code is num && code >= 4000 && code < 4100) {
+          this._resolveApp = true;
+        }
       case 'pusher:ping':
 
         /// Pusher protocol: the server's ping wants a pong
@@ -265,7 +306,9 @@ class KickPusherService {
         : Duration(seconds: seconds);
     unawaited(
       this._sleep(delay).then((_) {
-        if (!this._disposed && session == this._session) this._openSocket();
+        if (!this._disposed && session == this._session) {
+          return this._open(session);
+        }
       }),
     );
   }
