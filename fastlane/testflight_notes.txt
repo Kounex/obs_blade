@@ -1,4 +1,4 @@
-4.2.0 test build 4.
+4.2.0 test build 5.
 
 SCENE PREVIEW TRANSITIONS
 - Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
@@ -48,6 +48,10 @@ CHAT AFTER A CONNECTION DROP (new in build 4)
 - Kick or Twitch chat open, busy channel: airplane mode for ~90 s (or walk out of Wi-Fi), then back: the chat reconnects on its own (Settings -> Logs may show "socket stalled"), the messages sent meanwhile appear in order, and a "Some messages while away are missing" divider shows if more were sent than the history reaches back
 - Same in combined chat with Kick + Twitch
 - YouTube channel entry with no connection: the chat says "Couldn't check whether the channel is live - retrying shortly." (no error code / web address), and connects once you're back online
+
+COMBINED CHAT SAVE (new in build 5)
+- New combined chat: pick two channels, tap Save once - the sheet closes right away and the chats show "Connecting..."; the combo is in the list once (was: no feedback, extra taps saved it again and ended on a black screen)
+- Edit a combined chat -> Delete combined chat -> Delete: the sheet closes right away, the chat falls back to "My chats"
 
 ALSO
 - Updating over the store version (4.1.0) keeps saved connections, settings and hidden items

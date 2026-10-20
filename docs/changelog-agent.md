@@ -4,7 +4,7 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
-## 2026-10-20 - Combined chat Save / Delete: no silent wait (after build 2026102002)
+## 2026-10-20 - Combined chat Save / Delete: no silent wait (build 2026102003)
 
 Dogfood (build 4): New combined chat → Save looked like nothing
 happened; tapping again saved the combo several times and popped
