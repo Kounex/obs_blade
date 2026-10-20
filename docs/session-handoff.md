@@ -6,9 +6,7 @@ Read this first after `AGENTS.md`. Last reset: **2026-10-20** (review pass 2 +
 4.2.0 beta).
 
 **Live:** 4.1.0 (build 2026100501, tag `4.1.0`) on both stores. Branch
-`master`. Releases run through **store-release** (`release.yaml`); the
-old `tool/release` stays until a beta went through store-release on both
-stores - the next 4.2.0 beta is that beta.
+`master`. Releases run through **store-release** (`release.yaml`).
 
 **Urgent context: native Kick chat (Pro) is down on 4.1.0.** Kick moved
 its chat to a new Pusher app on 2026-10-20; 4.1.0's compiled-in key gets
