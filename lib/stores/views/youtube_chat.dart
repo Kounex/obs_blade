@@ -1323,14 +1323,14 @@ abstract class _YouTubeChatStore with Store {
             if (superseded()) return _PassOutcome.stopped;
             GeneralHelper.logFailure('YouTube live lookup failed', e);
             if (e.statusCode == 404) {
-              failed(e.message);
+              failed(e.userMessage);
               return _PassOutcome.stopped;
             }
 
             /// Network hiccup / consent wall / layout drift — not
             /// "offline" for sure, but retrying on the recheck schedule
             /// is still the right move. The reason stays visible.
-            runInAction(() => this.chatError = e.message);
+            runInAction(() => this.chatError = e.userMessage);
             return _PassOutcome.offline;
           }
           if (superseded()) return _PassOutcome.stopped;

@@ -14,6 +14,14 @@ class YouTubeLiveResolveException implements Exception {
 
   const YouTubeLiveResolveException(this.message, {this.statusCode});
 
+  /// What the chat shows while it retries. [message] is for the log - it
+  /// carries the cause (`ClientException: Connection closed while
+  /// receiving data, uri=…`, dogfood 2026-10-20); only the unknown
+  /// channel (404) is worded for the user already.
+  String get userMessage => this.statusCode == 404
+      ? this.message
+      : 'Couldn\'t check whether the channel is live';
+
   @override
   String toString() => 'YouTubeLiveResolveException: $message';
 }

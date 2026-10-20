@@ -276,10 +276,16 @@ void main() {
     expect(chatService.listCalls, 1);
   });
 
-  test('a lookup failure keeps retrying and surfaces the reason', () async {
+  test('a lookup failure keeps retrying and says so in plain words - the '
+      'cause stays in the log', () async {
     configure({'Mine': '@MyChannel'});
     resolver = FakeYouTubeLiveResolver([
-      const YouTubeLiveResolveException('Could not reach YouTube'),
+      /// Dogfood 2026-10-20: the page download cut off mid-body
+      const YouTubeLiveResolveException(
+        'Reading the YouTube page failed (ClientException: Connection '
+        'closed while receiving data, uri=https://www.youtube.com/'
+        '@MyChannel/live?app=desktop)',
+      ),
     ]);
     store = newStore();
 
@@ -288,7 +294,7 @@ void main() {
 
     expect(store.chatConnection, YouTubeChatConnectionState.offline);
     expect(store.awaitingLiveStream, isTrue);
-    expect(store.chatError, 'Could not reach YouTube');
+    expect(store.chatError, 'Couldn\'t check whether the channel is live');
   });
 
   test('an unknown channel (404) is a terminal error', () async {

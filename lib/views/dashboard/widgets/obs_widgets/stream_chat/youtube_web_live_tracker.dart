@@ -79,7 +79,7 @@ class YouTubeWebLiveTracker extends ChangeNotifier {
       /// only surface the error when there's nothing to show anyway.
       if (this.state != YouTubeWebLiveState.live) {
         this.state = YouTubeWebLiveState.error;
-        this.error = failure.message;
+        this.error = failure.userMessage;
       }
     } else if (resolved != null) {
       this.state = YouTubeWebLiveState.live;

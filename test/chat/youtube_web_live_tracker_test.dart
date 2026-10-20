@@ -51,6 +51,27 @@ void main() {
     tracker.dispose();
   });
 
+  test(
+    'a lookup failure with nothing to show says so in plain words',
+    () async {
+      final tracker = YouTubeWebLiveTracker(
+        resolver: FakeYouTubeLiveResolver([
+          const YouTubeLiveResolveException(
+            'Reading the YouTube page failed (ClientException: Connection '
+            'closed while receiving data, uri=https://www.youtube.com/'
+            '@NASA/live?app=desktop)',
+          ),
+        ]),
+      );
+      tracker.track(const YouTubeChannelTarget('@NASA'));
+      await _settle();
+
+      expect(tracker.state, YouTubeWebLiveState.error);
+      expect(tracker.error, 'Couldn\'t check whether the channel is live');
+      tracker.dispose();
+    },
+  );
+
   test('same target is a no-op, null stops tracking', () async {
     final resolver = FakeYouTubeLiveResolver(['stream-1']);
     final tracker = YouTubeWebLiveTracker(resolver: resolver);
