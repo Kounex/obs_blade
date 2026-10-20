@@ -14,9 +14,9 @@ import 'package:http/io_client.dart';
 /// Logs, 2026-10-04: the same client failing again and again for minutes)
 /// until the app was restarted - a fresh client worked at once. The pooled
 /// connections of the long-lived `dart:io` client were what broke, so a
-/// failure like that renews the client, and the caller's own retry (the
-/// poll loop's backoff, a Retry button) goes out on new connections.
-/// Requests are not repeated here - a POST may already have arrived.
+/// failure like that renews the client; a GET / HEAD is sent once more on
+/// it ([send]), anything else is left to the caller's own retry (the poll
+/// loop's backoff, a Retry button) - a POST may already have arrived.
 class RenewingHttpClient extends http.BaseClient {
   /// Test seam - a client given here is closed with its own `close()`
   final http.Client Function()? _create;
@@ -66,9 +66,43 @@ class RenewingHttpClient extends http.BaseClient {
       error is HttpException ||
       error is http.ClientException;
 
+  /// A GET / HEAD that failed at the connection goes out once more on
+  /// fresh connections, like a browser retries one on a reused
+  /// connection: after a stay in the background a timer that came due
+  /// can fire before the app hears it resumed ([renewAll]), and its
+  /// request rides a socket iOS took away - "Connection closed before
+  /// full header was received" (Settings → Logs, 2026-10-20).
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final inner = this._inner;
+    try {
+      return await this._sendOn(this._inner, request);
+    } catch (error) {
+      final again = _repeatable(request);
+      if (!isConnectionFailure(error) || again == null || this._closed) {
+        rethrow;
+      }
+      return this._sendOn(this._inner, again);
+    }
+  }
+
+  /// A copy of [request] safe to send again (null: not repeatable - a
+  /// POST may already have arrived)
+  static http.Request? _repeatable(http.BaseRequest request) {
+    if (request is! http.Request ||
+        (request.method != 'GET' && request.method != 'HEAD')) {
+      return null;
+    }
+    return http.Request(request.method, request.url)
+      ..headers.addAll(request.headers)
+      ..followRedirects = request.followRedirects
+      ..maxRedirects = request.maxRedirects
+      ..persistentConnection = request.persistentConnection;
+  }
+
+  Future<http.StreamedResponse> _sendOn(
+    _Inner inner,
+    http.BaseRequest request,
+  ) async {
     inner.pending++;
     try {
       return await inner.client.send(request);

@@ -17,6 +17,12 @@ From the user's Settings → Logs on Kounex iOS (build 2026101701):
   sends have their answers (app resume's `renewAll` the same). Every
   chat service shares the class - Twitch / YouTube / Kick requests
   running beside a failure or a resume failed the same way.
+- **"Connection closed before full header was received" after resume**
+  (14:52, the next dogfood log): back from the background, a Kick
+  refresh timer fired before the app heard it resumed (`renewAll`) and
+  went out on a socket iOS had taken away. A GET / HEAD failing at the
+  connection now goes out once more on fresh connections (as browsers
+  retry on a reused connection); POSTs still aren't repeated.
 - **YouTube quota in the log** (`YouTubeQuotaMeter`): the YouTube
   services' default clients and the stream's accepted calls are counted
   at Google's costs (determine_quota_cost, read 2026-10-20 - `search.list`

@@ -49,7 +49,7 @@ class PendingClient extends http.BaseClient {
 
 void main() {
   test('a connection failure renews the client; the next request goes out '
-      'on a fresh one', () async {
+      'on a fresh one - a POST isn\'t repeated', () async {
     var created = 0;
     final client = RenewingHttpClient(
       create: () => ++created == 1
@@ -59,13 +59,62 @@ void main() {
     expect(created, 1);
 
     await expectLater(
-      client.get(Uri.parse('https://example.com')),
+      client.post(Uri.parse('https://example.com'), body: 'hi'),
       throwsA(isA<http.ClientException>()),
     );
     expect(created, 2);
     final response = await client.get(Uri.parse('https://example.com'));
     expect(response.body, 'ok');
     expect(created, 2);
+  });
+
+  /// Settings → Logs, 2026-10-20 (14:52): back from the background, a Kick
+  /// refresh timer fired before the app heard it resumed and went out on a
+  /// socket iOS had taken away
+  test('a GET that fails at the connection goes out once more on fresh '
+      'connections', () async {
+    var created = 0;
+    final seen = <String>[];
+    final client = RenewingHttpClient(
+      create: () => ++created == 1
+          ? MockClient(
+              (_) async => throw http.ClientException(
+                'Connection closed before full header was received',
+              ),
+            )
+          : MockClient((request) async {
+              seen.add('${request.headers['accept']}');
+              return http.Response('live', 200);
+            }),
+    );
+    final response = await client.get(
+      Uri.parse('https://kick.com/api/v2/channels/sodapoppin'),
+      headers: {'accept': 'application/json'},
+    );
+    expect(response.body, 'live');
+    expect(created, 2);
+    expect(seen, ['application/json']);
+  });
+
+  test('the repeat happens once: a GET failing on the fresh client too '
+      'reaches the caller', () async {
+    var created = 0;
+    var sent = 0;
+    final client = RenewingHttpClient(
+      create: () {
+        created++;
+        return MockClient((_) async {
+          sent++;
+          throw const SocketException('Failed host lookup: \'kick.com\'');
+        });
+      },
+    );
+    await expectLater(
+      client.get(Uri.parse('https://kick.com')),
+      throwsA(isA<SocketException>()),
+    );
+    expect(sent, 2);
+    expect(created, 3);
   });
 
   test(
@@ -98,7 +147,7 @@ void main() {
       },
     );
     await expectLater(
-      client.get(Uri.parse('https://example.com')),
+      client.post(Uri.parse('https://example.com')),
       throwsA(isA<SocketException>()),
     );
     expect(created, 2);
@@ -155,7 +204,7 @@ void main() {
       },
     );
     final url = Uri.parse('https://kick.com/api/v2/channels/a');
-    final failing = client.get(url);
+    final failing = client.post(url);
     final beside = [client.get(url), client.get(url)];
     await Future<void>.delayed(Duration.zero);
     final first = clients.single;
@@ -209,8 +258,8 @@ void main() {
 
   /// The reported case end to end: after the background stretch the poll
   /// failed with "Write failed" - and every retry with it, until restart
-  test('YouTube chat poll: the retry after "Write failed" reads again, '
-      'no restart needed', () async {
+  test('YouTube chat poll: "Write failed" on the old connections reads on '
+      'fresh ones, no restart needed', () async {
     var created = 0;
     final service = YouTubeLiveChatService(
       client: RenewingHttpClient(
@@ -229,11 +278,8 @@ void main() {
       ),
     );
 
-    await expectLater(
-      service.listMessages('chat-1', null, apiKey: 'key'),
-      throwsA(isA<http.ClientException>()),
-    );
     final page = await service.listMessages('chat-1', null, apiKey: 'key');
     expect(page.nextPageToken, 'next');
+    expect(created, 2);
   });
 }
