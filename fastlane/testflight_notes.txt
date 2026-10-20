@@ -38,6 +38,7 @@ YOUTUBE CHAT (reads over streamList now - one call ~10 s, 5 units)
 - End the stream: the chat shows it ended
 - Google Cloud console -> YouTube Data API v3 -> Quotas: roughly 1,700 units an hour for one chat (was 3,750-9,000)
 - Activity feed (own channel) still updates (30 s poll)
+- After a chat session, background the app: Settings -> Logs has a "YouTube API: ≈… units in … min (app in background)" line for that session
 
 KICK CHAT (Kick moved its chat to a new Pusher app on 2026-10-20 - 4.1.0 can't connect)
 - Native Kick chat and the combined chat with Kick: connects, new messages arrive
