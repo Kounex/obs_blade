@@ -92,6 +92,14 @@ running (progress, not a silent wait), and never reorder rows the user
 may be scrolling or pressing - fill in place, offer a filter / sort
 instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
 
+Buttons that close their sheet / dialog after async work: either close
+first and let the work finish in the background (the work's own status
+shows it), or show a busy state and ignore taps until it's done - never
+a silent `await` before `pop()`. A popping route ignores taps by itself;
+one still waiting doesn't (2026-10-20: combined chat Save waited for
+the chats to connect - tapped again, it saved the combo twice and
+popped twice, to a black screen).
+
 ## Copy
 
 - Names, never ids (`UC…`, numeric user ids, slugs where a title exists).

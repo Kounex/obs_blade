@@ -472,7 +472,13 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _save() async {
+  /// Closes the sheet right away, like the combined chat picker: the combo
+  /// is stored before [CombinedChatStore.saveCombo] first awaits, and its
+  /// chats connecting (seconds - Twitch waits for EventSub) shows in the
+  /// chat. Awaiting it here left Save tappable with no feedback; each tap
+  /// added another combo and popped once more, down to a black screen
+  /// (dogfood 2026-10-20).
+  void _save() {
     final name = this._name.text.trim();
     final combo = CombinedCombo(
       id:
@@ -484,8 +490,8 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
       kickSlug: this._picks[ChatType.Kick]?.kickSlug,
       primary: this._primary,
     );
-    await GetIt.instance<CombinedChatStore>().saveCombo(combo);
-    if (this.mounted) Navigator.of(this.context).pop();
+    unawaited(GetIt.instance<CombinedChatStore>().saveCombo(combo));
+    Navigator.of(this.context).pop();
   }
 
   void _confirmDelete() {
@@ -500,8 +506,11 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
             'platform\'s own list.',
         okText: 'Delete',
         isYesDestructive: true,
-        onOk: (_) async {
-          await GetIt.instance<CombinedChatStore>().deleteCombo(combo.id);
+
+        /// The dialog is closed by now; the sheet goes right away too (see
+        /// [_save]) - "My chats" connecting can take seconds.
+        onOk: (_) {
+          unawaited(GetIt.instance<CombinedChatStore>().deleteCombo(combo.id));
           if (this.mounted) Navigator.of(this.context).pop();
         },
       ),

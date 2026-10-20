@@ -14,6 +14,7 @@ import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
+import 'package:obs_blade/types/classes/combined/combined_combo.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel.dart';
 import 'package:obs_blade/types/classes/twitch/twitch_channel_ref.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -67,6 +68,32 @@ class FakeNamer extends YouTubeEntryNamer {
 
   @override
   Future<String?> channelPageTitle(String path) async => this.pages[path];
+}
+
+/// Save / delete that take as long as switching the chats does on a
+/// device (Twitch awaits EventSub): pending until [gate] completes.
+class SlowCombinedStore extends CombinedChatStore {
+  final Completer<void> gate = Completer<void>();
+  final List<CombinedCombo> saved = [];
+  final List<String> deleted = [];
+
+  SlowCombinedStore({
+    required super.twitchStore,
+    required super.youTubeStore,
+    required super.kickStore,
+  });
+
+  @override
+  Future<void> saveCombo(CombinedCombo combo) async {
+    this.saved.add(combo);
+    await this.gate.future;
+  }
+
+  @override
+  Future<void> deleteCombo(String comboId) async {
+    this.deleted.add(comboId);
+    await this.gate.future;
+  }
 }
 
 void main() {
@@ -471,5 +498,100 @@ void main() {
       find.byKey(const Key('combined-builder-offline-Kick-mid')),
       findsNothing,
     );
+  });
+
+  /// Dogfood 2026-10-20: Save waited for the chats to connect - no
+  /// feedback, every further tap saved another combo and popped once more
+  /// (black screen).
+  group('save / delete close the sheet without waiting', () {
+    late SlowCombinedStore slow;
+
+    Future<void> openFromHost(
+      WidgetTester tester, {
+      CombinedCombo? combo,
+    }) async {
+      slow = SlowCombinedStore(
+        twitchStore: () => twitch,
+        youTubeStore: () => youTube,
+        kickStore: () => kick,
+      );
+      GetIt.instance
+        ..unregister<CombinedChatStore>()
+        ..registerSingleton<CombinedChatStore>(slow);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            extensions: const [
+              AppStatusColors.standard,
+              AppTextColors.standard,
+            ],
+          ),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                key: const Key('host-open'),
+                onPressed: () => showCombinedChatBuilderSheet(
+                  context,
+                  combo: combo,
+                  matchFinder: finder,
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('host-open')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CombinedChatBuilderSheet), findsOneWidget);
+    }
+
+    tearDown(() => slow.gate.complete());
+
+    testWidgets('Save: one combo, one pop, even when tapped again', (
+      tester,
+    ) async {
+      await openFromHost(tester);
+      await tester.tap(find.byKey(const Key('combined-builder-Kick')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('xqc').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('combined-suggestion-YouTube')));
+      await tester.pumpAndSettle();
+
+      final save = find.byKey(const Key('combined-builder-save'));
+      await tester.tap(save);
+      await tester.pump();
+      await tester.tap(save, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(slow.saved, hasLength(1));
+      expect(slow.saved.single.kickSlug, 'xqc');
+      expect(find.byType(CombinedChatBuilderSheet), findsNothing);
+      expect(find.byKey(const Key('host-open')), findsOneWidget);
+    });
+
+    testWidgets('Delete: the sheet closes once the dialog is confirmed', (
+      tester,
+    ) async {
+      await openFromHost(
+        tester,
+        combo: const CombinedCombo(
+          id: 'c1',
+          kickSlug: 'xqc',
+          youTube: CombinedYouTubeSource(label: 'xQc', value: '@xqcow'),
+        ),
+      );
+      final delete = find.text('Delete combined chat');
+      await tester.ensureVisible(delete);
+      await tester.tap(delete);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      expect(slow.deleted, ['c1']);
+      expect(find.byType(CombinedChatBuilderSheet), findsNothing);
+      expect(find.byKey(const Key('host-open')), findsOneWidget);
+    });
   });
 }

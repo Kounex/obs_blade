@@ -444,7 +444,13 @@ void main() {
       expect(youTube.channels.map((c) => c.label), isNot(contains('xQc')));
 
       await store.activate();
-      await store.saveCombo(combo);
+      final saving = store.saveCombo(combo);
+
+      /// Stored and shown before the first await - the builder sheet closes
+      /// without waiting for the chats to switch
+      expect(store.combos.map((c) => c.id), contains('c1'));
+      expect(store.selectedComboId, 'c1');
+      await saving;
 
       expect(kick.channels, contains('xqc'));
       expect(youTube.channels.map((c) => c.label), contains('xQc'));
