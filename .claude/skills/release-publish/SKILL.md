@@ -33,9 +33,10 @@ Maintainers: `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
    per its hygiene rules: the live version on both stores and what to watch
    (crash reports, reviews, a staged rollout to raise).
 6. **Website** (maintainers, `~/agent/obs-blade-site`, see its
-   AGENTS.md § "What's new"): add the new version's card first in the
-   `#whats-new` row of `site/index.html` (the store notes as bullets,
-   month + year), drop the oldest beyond five, `./deploy.sh`. Check the
+   AGENTS.md § "What's new"): add the new version's tab + panel first
+   in `#whats-new` of `site/index.html` (the store notes as the list,
+   month + year; its AGENTS.md has the markup), drop the oldest beyond
+   five, `./deploy.sh`. Check the
    feature sections / Free vs Pro still match what shipped.
 7. Commit + push.
 
