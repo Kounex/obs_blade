@@ -47,8 +47,7 @@ class YouTubeStreamDecision {
 }
 
 /// The rules for reading one live chat over `streamList` with
-/// `liveChatMessages.list` as the fallback - shared by the YouTube chat
-/// and the own-channel activity poller
+/// `liveChatMessages.list` as the fallback - the YouTube chat's read loop
 /// (`docs/superpowers/specs/2026-10-19-youtube-chat-quota-design.md`):
 ///
 /// - a long call the server closed or that dropped: reconnect at once

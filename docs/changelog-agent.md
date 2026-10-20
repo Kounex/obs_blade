@@ -30,11 +30,12 @@ runaway calls. Spec:
   each empty page stretches the wait ×1.5 up to 10 s, and a page with
   rows snaps back (`youTubePollDelay`).
 - No timing settings (decided with the user).
-- **Activity feed streams too**: the own-channel poller reads over
-  `streamList` with its 30 s poll as the fallback. The rules live in one
-  shared `YouTubeStreamPolicy` (chat + poller, unit-tested). Sibling fix:
-  the poller no longer takes a 403 / 404 (chat turned off) as "ended for
-  good".
+- The stream-or-poll rules live in `YouTubeStreamPolicy`
+  (unit-tested). The activity feed streamed for a day too, then went
+  back to its 30 s poll after the measurement below (~1,700 units/h
+  streaming vs 600 polling - the user's call). Sibling fix kept: the
+  poller no longer takes a 403 / 404 (chat turned off) as "ended for
+  good"; it looks again after 5 min, doubling to 60 min.
 - **Measured** on the obs-blade key (three live chats, 30 min, Cloud
   Monitoring): 5 units per call, Google closes every call ~10.3 s after
   it starts → ~1,700 units/h per chat vs 3,750-9,000 polling. Fixes from

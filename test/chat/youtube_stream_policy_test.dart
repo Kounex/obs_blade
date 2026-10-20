@@ -3,8 +3,7 @@ import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
 import 'package:obs_blade/utils/youtube/youtube_stream_policy.dart';
 
-/// The stream-or-poll rules the YouTube chat and the own-channel activity
-/// poller share.
+/// The YouTube chat's stream-or-poll rules.
 void main() {
   late DateTime now;
   late YouTubeStreamPolicy policy;

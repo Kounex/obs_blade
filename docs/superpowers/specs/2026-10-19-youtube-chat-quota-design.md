@@ -35,10 +35,10 @@ own bucket.
 ## Read loop rules (`YouTubeStreamPolicy`)
 
 One policy (`lib/utils/youtube/youtube_stream_policy.dart`), used by the
-chat's read loop (`_attachAndPoll`) and the own-channel activity poller
-(`YouTubeOwnActivityPoller`, fallback poll every 30 s). The poller closes
-its call on standby (the chat reads the own chat), stop, a new chat and
-back from the background.
+chat's read loop (`_attachAndPoll`). The own-channel activity poller
+polls every 30 s (600 units/h) and doesn't stream: at ~10 s per call,
+streaming would cost ~1,700 units/h (decided with the user after the
+measurement; it streamed for a day before that).
 
 - Stream first. "Opened" means Google accepted the call (billed): its
   first page, its clean end, or 2 s after the connection came up without
@@ -107,8 +107,7 @@ video, so a chat switched off and on mid-stream stopped feeding the
 activity feed. Now only `liveChatEnded` / `offlineAt` / a `chatEndedEvent`
 row end it. A 403 / 404 waits and looks again (`videos.list`, 1 unit):
 5 min, doubling while the same chat keeps answering 403 (a permission
-problem rather than a switched-off chat), up to 60 min. A page token the
-poll refuses (400) starts the poll over once, as in the chat.
+problem rather than a switched-off chat), up to 60 min.
 
 ## Journeys
 
