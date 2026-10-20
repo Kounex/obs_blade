@@ -2091,6 +2091,32 @@ void main() {
       expect(pusher().disconnectCalls, 0);
     });
 
+    test('a socket back from a drop catches up what it missed, with the gap '
+        'marker; the first connect does not', () async {
+      await connectSignedIn();
+      expect(channelService.backfillCalls, 1);
+      pusher().emitEvent(messageAt('pre-1', t0));
+
+      /// Dogfood 2026-10-20: "Kick chat socket stalled - no frame within
+      /// 60 s" - the watchdog reopened, Kick replayed nothing
+      channelService.backfills[101] = [
+        historyMessage('cu-1', t0.add(const Duration(minutes: 3))),
+        historyMessage('cu-2', t0.add(const Duration(minutes: 4))),
+      ];
+      pusher().emitState(KickPusherConnectionState.reconnecting);
+      pusher().emitState(KickPusherConnectionState.connected);
+      await until(() => store.messages.length == 3);
+
+      expect(store.messages.map((m) => m.id), ['pre-1', 'cu-1', 'cu-2']);
+      expect(store.resumeGapBoundaries, {'cu-1'});
+      expect(channelService.backfillCalls, 2);
+
+      /// Already connected: nothing to catch up
+      pusher().emitState(KickPusherConnectionState.connected);
+      await pumpEventQueue();
+      expect(channelService.backfillCalls, 2);
+    });
+
     test('the gap marker lands on the oldest catch-up row when the ~50-row '
         'window did not reach back', () async {
       await connectSignedIn();

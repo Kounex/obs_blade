@@ -849,7 +849,7 @@ abstract class _KickChatStore with Store {
   /// so the Pusher connection died with the background stay. A connection
   /// backing off (or in error) restarts NOW instead of waiting out the
   /// pusher's backoff; either way the background window the socket missed
-  /// is re-fetched ([_catchUpAfterResume]) — Kick's socket never replays
+  /// is re-fetched ([_catchUpMissed]) — Kick's socket never replays
   /// a lost session. A live connection is not disturbed.
   @action
   void reconnectAfterResume() {
@@ -871,12 +871,14 @@ abstract class _KickChatStore with Store {
         this.chatConnection == KickChatConnectionState.error) {
       this._restartConnection();
     }
-    unawaited(this._catchUpAfterResume(slug));
+    unawaited(this._catchUpMissed(slug));
   }
 
   /// Re-fetch the selected channel's recent history after a background
-  /// stay and merge only the rows of the missed window: newer than the
-  /// pre-resume tail, deduped by id (live rows that beat the fetch win),
+  /// stay, or after the socket came back from a drop mid-session (the
+  /// pusher's watchdog / backoff - a quiet socket death lost up to 60 s
+  /// of rows, dogfood 2026-10-20), and merge only the rows of the missed
+  /// window: newer than the pre-resume tail, deduped by id (live rows that beat the fetch win),
   /// inserted timestamp-sorted mid-buffer (live rows may already sit past
   /// them), NOT `isHistorical` (the reader had the chat open — these are
   /// late, not join-history). Silent for text-to-speech: the live stream
@@ -897,7 +899,7 @@ abstract class _KickChatStore with Store {
   ///
   /// Best-effort and anonymous: any failure just leaves the live-only
   /// timeline.
-  Future<void> _catchUpAfterResume(String slug) async {
+  Future<void> _catchUpMissed(String slug) async {
     /// Only a different selection discards the answer: a same-slug
     /// restart ([_restartConnection] bumps the connect flow) keeps the
     /// channel's buffer, so rows fetched for it stay valid to apply.
@@ -917,7 +919,7 @@ abstract class _KickChatStore with Store {
       history = (await this._channelService.backfillMessages(info.id)).messages;
     } catch (e) {
       if (superseded()) return;
-      GeneralHelper.logFailure('Kick resume catch-up failed', e);
+      GeneralHelper.logFailure('Kick chat catch-up failed', e);
       return;
     }
     if (superseded() || history.isEmpty) return;
@@ -1040,6 +1042,12 @@ abstract class _KickChatStore with Store {
       },
       onStateChanged: (state) {
         if (superseded()) return;
+
+        /// Back from a drop: Kick never replays what the dead socket
+        /// missed (the first connect's backfill covers the join)
+        final cameBack =
+            state == KickPusherConnectionState.connected &&
+            this.chatConnection == KickChatConnectionState.reconnecting;
         runInAction(() {
           switch (state) {
             case KickPusherConnectionState.connected:
@@ -1053,6 +1061,7 @@ abstract class _KickChatStore with Store {
               this.chatConnection = KickChatConnectionState.idle;
           }
         });
+        if (cameBack) unawaited(this._catchUpMissed(slug));
       },
     );
     this._pusher = pusher;

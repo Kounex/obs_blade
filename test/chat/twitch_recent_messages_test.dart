@@ -568,6 +568,26 @@ void main() {
       },
     );
 
+    test('a session back from a drop catches up what it missed; a first '
+        'connect does not', () async {
+      await startConnected();
+      emitMessage(liveAt('pre-1', t0));
+
+      /// The keepalive watchdog dropped a quiet dead socket and the
+      /// backoff reconnected - EventSub replays nothing
+      catchUpLines = [_line('cu-1', sentTs: t0.millisecondsSinceEpoch + 60000)];
+      emitState(TwitchEventSubState.reconnecting);
+      emitState(TwitchEventSubState.connected);
+      await settle();
+
+      expect(requestedLimits, [800]); // 800 = catch-up
+      expect(store.messages.map((m) => m.messageId), ['pre-1', 'cu-1']);
+
+      emitState(TwitchEventSubState.connected);
+      await settle();
+      expect(requestedLimits, [800]);
+    });
+
     test('a backing-off session reconnects immediately', () async {
       await startConnected();
       emitState(TwitchEventSubState.reconnecting);

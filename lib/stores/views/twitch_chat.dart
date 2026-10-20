@@ -2329,7 +2329,7 @@ abstract class _TwitchChatStore with Store {
   /// so the EventSub session died with the background stay. A session
   /// already backing off reconnects NOW instead of waiting out the
   /// watchdog/backoff; either way the background window the socket missed
-  /// is re-fetched ([_catchUpAfterResume]) — Twitch never replays a lost
+  /// is re-fetched ([_catchUpMissed]) — Twitch never replays a lost
   /// session. A live connection is not disturbed.
   @action
   void reconnectAfterResume() {
@@ -2348,12 +2348,13 @@ abstract class _TwitchChatStore with Store {
         this.chatConnection == TwitchChatConnectionState.failed) {
       unawaited(this.connectChat());
     }
-    if (!joinBackfillOwnsTheWindow) unawaited(this._catchUpAfterResume());
+    if (!joinBackfillOwnsTheWindow) unawaited(this._catchUpMissed());
   }
 
   /// Re-fetch the effective channel's recent history after a background
-  /// stay and merge only the rows of the missed window: newer than the
-  /// pre-resume tail, deduped by id (live rows that beat the fetch win),
+  /// stay, or after the EventSub session came back from a drop
+  /// ([_onEventSubState]), and merge only the rows of the missed window:
+  /// newer than the pre-resume tail, deduped by id (live rows that beat the fetch win),
   /// inserted timestamp-sorted mid-buffer (live rows may already sit past
   /// them), NOT `isHistorical` (the reader had the chat open — these are
   /// late, not join-history). Silent for text-to-speech: the live stream
@@ -2374,7 +2375,7 @@ abstract class _TwitchChatStore with Store {
   /// Honors the join-history setting (a user who disabled fetched history
   /// gets none here either). Best-effort and anonymous: any failure just
   /// leaves the live-only timeline.
-  Future<void> _catchUpAfterResume() async {
+  Future<void> _catchUpMissed() async {
     if (this._channelSwitchInProgress) return;
     final broadcasterId = this.effectiveBroadcasterId;
     final login = this.effectiveBroadcasterLogin;
@@ -2399,7 +2400,7 @@ abstract class _TwitchChatStore with Store {
         limit: kResumeCatchUpLimit,
       );
     } catch (e) {
-      GeneralHelper.logFailure('Twitch resume catch-up failed', e);
+      GeneralHelper.logFailure('Twitch chat catch-up failed', e);
       return;
     }
     if (history.isEmpty) return;
@@ -2910,6 +2911,12 @@ abstract class _TwitchChatStore with Store {
   }
 
   void _onEventSubState(TwitchEventSubState state) {
+    /// Back from a drop (keepalive watchdog / backoff): EventSub never
+    /// replays what the dead session missed. Twitch's own session
+    /// migration passes here too - nothing missed, the fetch dedupes.
+    final cameBack =
+        state == TwitchEventSubState.connected &&
+        this.chatConnection == TwitchChatConnectionState.reconnecting;
     runInAction(() {
       switch (state) {
         case TwitchEventSubState.connected:
@@ -2936,6 +2943,7 @@ abstract class _TwitchChatStore with Store {
           break;
       }
     });
+    if (cameBack) unawaited(this._catchUpMissed());
   }
 
   void _onEventSubRevoked(String reason) {
