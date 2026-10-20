@@ -124,6 +124,12 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   Arm a watchdog at open (handshake / welcome), reset it on every frame,
   ping so a quiet chat still gets frames (2026-10-20: Kick stuck in
   "Reconnecting..." with an empty log).
+- An unofficial constant (a scraped key, an undocumented host) needs a
+  way to notice it died - log the server's refusal (a protocol error
+  frame, a close code), not only transport errors - and ideally a way to
+  fetch it at runtime the way the platform's own client does (2026-10-20:
+  Kick moved its Pusher app; 4.1.0's compiled-in key got 4001 and the
+  chat retried silently for good).
 - A failure must not fail the requests beside it: renewing / closing a
   shared HTTP client cancels connections still being set up (2026-10-20:
   one Kick failure logged four "Connection attempt cancelled").

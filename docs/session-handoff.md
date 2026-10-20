@@ -2,36 +2,43 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-10-17** (4.2
-additions session).
+Read this first after `AGENTS.md`. Last reset: **2026-10-20** (YouTube
+quota + Kick Pusher session).
 
 **Live:** 4.1.0 (build 2026100501, tag `4.1.0`) on both stores. Branch
-`master`. Releases now run through **store-release** (`release.yaml`,
-user commit `5438fc60`); the old `tool/release` stays until a beta went
-through store-release on both stores - the next 4.2.0 beta is that beta.
+`master`. Releases run through **store-release** (`release.yaml`); the
+old `tool/release` stays until a beta went through store-release on both
+stores - the next 4.2.0 beta is that beta.
 
-**4.2.0 - next: new beta build.** Build 2026101101 (TestFlight + Play
-internal, release commit `007ffabb`) is **superseded**: 2026-10-17 added
-#93 Search on Start (`4cb078c9`) and the iOS QR landscape fix #95
-(`c40cef0c`, qr_code_scanner_plus 2.3.0) - details: `changelog-agent.md`
-2026-10-17. Release notes (both stores, Play ≤ 500 chars) and the tester
-checklist `fastlane/testflight_notes.txt` ("test build 2") are updated.
-**Build 2026101701** (release commit `b5978aa4`, pushed) goes straight to
-TestFlight + Play internal - the user skipped the dogfood device step
-for this one (2026-10-17), 4.2 goes live after the beta test. Waiting
-on the MacBook (offline): pull there, `release preflight` (first run of
-store-release - read the `beta` dry-run plans once), then build +
-upload detached per `release-beta` step 6, then `release status`. After
-that: beta test incl. upgrade over 4.1.0 -> `release-promote`.
-`/code-review high` on
-`4.1.0..HEAD` ran 2026-10-17: 3 real findings fixed (`cdb345df`,
-`d00ae5ea`), the rest noted as not changed - changelog same date.
+**Urgent context: native Kick chat (Pro) is down on 4.1.0.** Kick moved
+its chat to a new Pusher app on 2026-10-20; 4.1.0's compiled-in key gets
+`pusher:error` 4001. Fixed on master (`31139f46`: the app asks
+`web.kick.com/api/v1/realtime/channels/{id}/chat/connection`). The user
+chose to ship it with 4.2, no 4.1.1 hotfix.
 
-Not verified live (MacBook was offline): Android QR orientation (#95 -
-no defect found in zxing's source, not reproduced), the replay buffer
-read on connect against a real OBS (#96, fixed in 4.1.0 by `e65f3aaf`),
-and `instant_replay.trigger` fired from the Hotkeys sheet with
-obs-studio's `instant-replay.lua` loaded (user email, see below).
+**4.2.0 - next, in this order:**
+
+1. **`/code-review high` on `4.1.0..HEAD`** (fresh session) with
+   `docs/chat-journey-checklist.md`. The 2026-10-17 review covered
+   4.1.0..`b5978aa4`; everything after it is unreviewed: YouTube reads over
+   gRPC `streamList` (`2f4e19e2`..`523819c6`), `RenewingHttpClient`
+   (renew waits for running sends, GET/HEAD repeat once), the
+   `YouTubeQuotaMeter` log lines, Kick / Twitch IRC socket watchdogs, the
+   Kick Pusher app lookup. Why + facts: `changelog-agent.md` 2026-10-19 and
+   2026-10-20.
+2. **`release-beta`**: `release bump` (build 2026101701 was committed but
+   never uploaded - stores have 2026101101 on TestFlight / Play internal),
+   commit, `release preflight` on the MacBook (first store-release run -
+   read the `beta` dry-run plans), build + upload detached. Release notes
+   (both stores, Play 497/500 chars) and `fastlane/testflight_notes.txt`
+   ("test build 3", YouTube + Kick sections) are written and committed.
+3. Beta test incl. upgrade over 4.1.0 -> `release-promote`.
+
+Dogfood (Kounex iOS, `31139f46`): YouTube streaming confirmed in the log
+("reads over the stream"), Kick connects again. Still to see on the
+device: the hourly "YouTube API: ≈… units" line (~1,700 per chat-hour).
+Not verified: whether streamed answers repeat `activePollItem` (needs a
+chat with a running poll).
 
 **On 4.2 publish (user said: post then):** reply on GitHub + close -
 #100 (fade transitions now play in the preview - 4.2), #96 (fixed in
@@ -39,39 +46,36 @@ obs-studio's `instant-replay.lua` loaded (user email, see below).
 on Start). #95: reply with the iOS fix, ask the reporter which platform
 they use and to retest on 4.2 - close only if they confirm or don't
 answer. Email from an Android volleyball streamer (instant-replay.lua
-hotkey): answer drafted in the 2026-10-17 session - the existing Hotkeys
-sheet triggers it (Settings -> Dashboard -> Customisation -> Hotkeys,
-then search `instant_replay.trigger`); the user sends it.
+hotkey): answer drafted in the 2026-10-17 session; the user sends it.
+The Pro customer who ran out of YouTube quota: no mail from us (user's
+call); 4.2 cuts their chat to ~1,700 units/h.
 
-**Watch:** crash reports + reviews for 4.1.0. Open follow-ups:
+**Watch:** crash reports + reviews for 4.1.0 (expect Kick chat
+complaints until 4.2). Kick's web client prefers Centrifugo now - if
+Pusher stops being offered, that's the next transport (`kick-chat-audit.md`
+§ Native read). Open follow-ups:
 
 1. **Creative assets**: v1 header + search images are live (4.1.0 en-US).
    In review: **v2 header + v3 search images** (2026-10-11, submission
-   `1ec1788c-…`) and, since 2026-10-12, the same compositions as
-   **15 s "live image" videos** (assets `eec00005-…` header /
-   `2cc00005-…` search, submission `58711c06-…`; rendered by store-shots
-   cuts `appstore-header` / `appstore-search`, never committed - render
-   ad hoc on the NAS). **When approved:** `release attach ios` (dry run,
-   then --yes) places the newest approved asset per slot - the videos
-   win over the images once they're through. Then ask for phone
-   screenshots / a screen recording of the product page + a search
-   result: how iOS plays them (loop, autoplay, muted, poster) is
-   unverified.
+   `1ec1788c-…`) and the same compositions as **15 s "live image" videos**
+   (assets `eec00005-…` header / `2cc00005-…` search, submission
+   `58711c06-…`; store-shots cuts `appstore-header` / `appstore-search`,
+   never committed). **When approved:** `release attach ios` (dry run,
+   then --yes); then ask for phone screenshots / a recording of how iOS
+   plays them.
 2. Upload key A6:24:44 still "in review" → after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard
    Play internal-track draft `3.3.0 (2026090701)`.
 
 **Store/Pro state:** 4.1.0 live; products approved on both stores
-($4.99/mo, $49.99/yr, $99.99 lifetime; global price overhaul 2026-10-03);
-RevenueCat live (`pro`); Play RTDN test received. Open: Apple Small
-Business Program enrollment.
+($4.99/mo, $49.99/yr, $99.99 lifetime); RevenueCat live (`pro`); Play
+RTDN test received. Open: Apple Small Business Program enrollment.
 
-**Backlog threads (unchanged, pick up as agreed):** Chatterino "medium"
-items (`chatterino-comparison.md`); YouTube quota spike
-(`tool/youtube_spike/`); activity feed next: StreamElements/Streamlabs
-once API access is approved; Kick Pusher → Centrifugo migration risk;
-intro v2 tablet/landscape check; media hub VLC mapping unprobed; Astra
-follow-ups (post-4.0 ok).
+**Backlog threads (pick up as agreed):** Chatterino "medium" items
+(`chatterino-comparison.md`); activity feed next: StreamElements /
+Streamlabs once API access is approved; Kick Centrifugo transport (see
+Watch); intro v2 tablet/landscape check; media hub VLC mapping unprobed;
+Astra follow-ups.
 
 ## Handoff hygiene (read before editing this file)
 

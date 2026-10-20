@@ -39,5 +39,9 @@ YOUTUBE CHAT (reads over streamList now - one call ~10 s, 5 units)
 - Google Cloud console -> YouTube Data API v3 -> Quotas: roughly 1,700 units an hour for one chat (was 3,750-9,000)
 - Activity feed (own channel) still updates (30 s poll)
 
+KICK CHAT (Kick moved its chat to a new Pusher app on 2026-10-20 - 4.1.0 can't connect)
+- Native Kick chat and the combined chat with Kick: connects, new messages arrive
+- Background the app for a few minutes, come back: Kick reconnects on its own; Settings -> Logs has no "Kick chat socket refused" line
+
 ALSO
 - Updating over the store version (4.1.0) keeps saved connections, settings and hidden items

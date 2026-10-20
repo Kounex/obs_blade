@@ -8,5 +8,6 @@
 - Turn off the automatic network search when the app opens: Settings → General → Search on Start
 - The QR scanner camera no longer shows upside down in landscape on iPhone and iPad
 - YouTube chat uses much less of your API key's daily quota
+- Kick chat connects again after Kick's server change
 
 Keep it coming on GitHub!
