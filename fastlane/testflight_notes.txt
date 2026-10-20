@@ -1,4 +1,4 @@
-4.2.0 test build 3.
+4.2.0 test build 4.
 
 SCENE PREVIEW TRANSITIONS
 - Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
@@ -43,6 +43,11 @@ YOUTUBE CHAT (reads over streamList now - one call ~10 s, 5 units)
 KICK CHAT (Kick moved its chat to a new Pusher app on 2026-10-20 - 4.1.0 can't connect)
 - Native Kick chat and the combined chat with Kick: connects, new messages arrive
 - Background the app for a few minutes, come back: Kick reconnects on its own; Settings -> Logs has no "Kick chat socket refused" line
+
+CHAT AFTER A CONNECTION DROP (new in build 4)
+- Kick or Twitch chat open, busy channel: airplane mode for ~90 s (or walk out of Wi-Fi), then back: the chat reconnects on its own (Settings -> Logs may show "socket stalled"), the messages sent meanwhile appear in order, and a "Some messages while away are missing" divider shows if more were sent than the history reaches back
+- Same in combined chat with Kick + Twitch
+- YouTube channel entry with no connection: the chat says "Couldn't check whether the channel is live - retrying shortly." (no error code / web address), and connects once you're back online
 
 ALSO
 - Updating over the store version (4.1.0) keeps saved connections, settings and hidden items

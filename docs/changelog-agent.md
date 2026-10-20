@@ -4,7 +4,7 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
-## 2026-10-20 - Chat catches up after a mid-session reconnect (build 2026102101)
+## 2026-10-20 - Chat catches up after a mid-session reconnect (build 2026102002)
 
 From the dogfood log (16:49, build `31139f46`): "Kick chat socket stalled
 - no frame within 60 s", "Twitch IRC socket stalled", and a YouTube live
