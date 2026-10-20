@@ -19,6 +19,7 @@ import 'package:obs_blade/utils/youtube/youtube_live_resolver.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_live_chat_stream.dart';
+import 'package:obs_blade/utils/youtube/youtube_quota_meter.dart';
 import 'package:obs_blade/utils/youtube/youtube_stream_policy.dart';
 import 'package:obs_blade/utils/youtube_target.dart';
 
@@ -940,6 +941,23 @@ void main() {
 
       expect(call.cancelled, isTrue);
       expect(store.chatConnection, YouTubeChatConnectionState.idle);
+    });
+
+    test('a stopped chat writes its quota line now, not with the next '
+        'session\'s first call', () async {
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      final call = FakeChatStream();
+      chatService.streams.add(call);
+      addTearDown(YouTubeQuotaMeter.reset);
+
+      await store.init();
+      await until(() => call.listened);
+      call.open();
+      YouTubeQuotaMeter.record('liveChatMessages.streamList', 5);
+      store.pausePolling();
+
+      expect(YouTubeQuotaMeter.summary(), isNull);
     });
 
     test('the poll banner stays across streamed pages until that poll\'s '

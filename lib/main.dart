@@ -50,6 +50,7 @@ import 'types/enums/hive_keys.dart';
 import 'utils/general_helper.dart';
 import 'utils/wake_lock_helper.dart';
 import 'utils/renewing_http_client.dart';
+import 'utils/youtube/youtube_quota_meter.dart';
 
 class LifecycleWatcher extends StatefulWidget {
   final Widget app;
@@ -86,6 +87,12 @@ class _LifecycleWatcherState extends State<LifecycleWatcher>
     _lastLifecycleState = state;
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
+      /// A session usually ends here (then a kill): the YouTube quota line
+      /// is written on the next call otherwise, merged into the next
+      /// session
+      if (!_wasInBackground) {
+        YouTubeQuotaMeter.logNow(reason: 'app in background');
+      }
       _wasInBackground = true;
     }
     GeneralHelper.advLog(_lastLifecycleState);

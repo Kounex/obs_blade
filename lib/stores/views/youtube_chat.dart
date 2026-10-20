@@ -1129,6 +1129,9 @@ abstract class _YouTubeChatStore with Store {
 
   void _stopPolling() {
     this._bumpPollFlow();
+
+    /// The meter writes on its next call - a stopped chat makes none
+    YouTubeQuotaMeter.logNow(reason: 'chat stopped');
     runInAction(() {
       this.chatConnection = YouTubeChatConnectionState.idle;
       this.awaitingLiveStream = false;
@@ -2620,6 +2623,7 @@ abstract class _YouTubeChatStore with Store {
 
   Future<void> dispose() async {
     this._bumpPollFlow();
+    YouTubeQuotaMeter.logNow(reason: 'chat stopped');
     this._loginFlow++;
     this._quotaResetTimer?.cancel();
     this._quotaResetTimer = null;

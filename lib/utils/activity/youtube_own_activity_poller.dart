@@ -172,6 +172,7 @@ class YouTubeOwnActivityPoller {
   void _stop() {
     this._running = false;
     this._generation++;
+    YouTubeQuotaMeter.logNow(reason: 'activity stopped');
     this.wake();
     this._resetChat(clearEnded: false);
     this._quotaResetAt = null;
