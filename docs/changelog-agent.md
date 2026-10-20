@@ -4,6 +4,35 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-20 - Chat catches up after a mid-session reconnect (build 2026102101)
+
+From the dogfood log (16:49, build `31139f46`): "Kick chat socket stalled
+- no frame within 60 s", "Twitch IRC socket stalled", and a YouTube live
+lookup "Connection closed while receiving data" at the same moment (a
+resume or a network drop). The watchdogs recovered the sockets; two gaps
+behind it:
+
+- **Rows lost across a reconnect** (Kick, Twitch): neither platform
+  replays a dead session, and only the app-resume path re-fetched the
+  missed window. A store now runs the same catch-up when its socket goes
+  reconnecting -> connected (`a32c115e`) - watchdog, backoff, and
+  Twitch's own `session_reconnect` (nothing missed there; the fetch
+  dedupes). The first connect keeps its join backfill only.
+- **The gap divider fired in quiet chats** (review, pre-existing on
+  resume too): it measured the pause to the first *missed* row, so a
+  chat with a row every 10 s got "Some messages while away are missing"
+  after every reconnect. It now checks whether the fetched history
+  reaches back to the row the catch-up follows.
+- **Raw exception as the YouTube status** (`d267b951`):
+  `YouTubeLiveResolveException.userMessage` ("Couldn't check whether the
+  channel is live", the 404 copy unchanged) on screen, the cause in the
+  log - the WebView tracker logs through `logFailure` now (it was
+  console-only, review).
+- Checklist: mid-session reconnects catch up; retry copy for users.
+- Not done: a widget shot of the new YouTube copy (shorter than the raw
+  text it replaces, same wrapping text); a device check before the beta
+  (the user asked for the beta right away).
+
 ## 2026-10-20 - /code-review high on 4.1.0..HEAD (second pass, after `b5978aa4`)
 
 Reviewer returned 8; checked one by one against the code (and the
