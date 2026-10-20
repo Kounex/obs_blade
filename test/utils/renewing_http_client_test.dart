@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -11,6 +12,40 @@ import 'package:obs_blade/utils/youtube/youtube_live_chat_service.dart';
 /// suspended: every request fails the way Settings → Logs showed it
 http.Client brokenPool() =>
     MockClient((_) async => throw http.ClientException('Write failed'));
+
+/// Sends wait until answered or failed by hand; [close] fails the ones
+/// still waiting the way `HttpClient.close()` does with connections it is
+/// still setting up (dart:io `_ConnectionTarget.close`)
+class PendingClient extends http.BaseClient {
+  final List<Completer<http.StreamedResponse>> waiting = [];
+  bool closed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    final answer = Completer<http.StreamedResponse>();
+    this.waiting.add(answer);
+    return answer.future;
+  }
+
+  void answer(int index, String body) => this.waiting[index].complete(
+    http.StreamedResponse(Stream.value(utf8.encode(body)), 200),
+  );
+
+  void fail(int index, String message) =>
+      this.waiting[index].completeError(http.ClientException(message));
+
+  @override
+  void close() {
+    this.closed = true;
+    for (final answer in this.waiting) {
+      if (!answer.isCompleted) {
+        answer.completeError(
+          http.ClientException('Connection attempt cancelled'),
+        );
+      }
+    }
+  }
+}
 
 void main() {
   test('a connection failure renews the client; the next request goes out '
@@ -104,6 +139,48 @@ void main() {
       expect((await a.get(Uri.parse('https://example.com'))).body, 'a');
     },
   );
+
+  /// Settings → Logs, 2026-10-20: one Kick refresh failed with "Connection
+  /// closed before full header was received", and the four previews
+  /// running beside it with "Connection attempt cancelled" - the renew it
+  /// caused closed the client they were still connecting on
+  test('a failure renews without failing the requests running beside it; '
+      'the old client closes once they have their answers', () async {
+    final clients = <PendingClient>[];
+    final client = RenewingHttpClient(
+      create: () {
+        final created = PendingClient();
+        clients.add(created);
+        return created;
+      },
+    );
+    final url = Uri.parse('https://kick.com/api/v2/channels/a');
+    final failing = client.get(url);
+    final beside = [client.get(url), client.get(url)];
+    await Future<void>.delayed(Duration.zero);
+    final first = clients.single;
+
+    first.fail(0, 'Connection closed before full header was received');
+    await expectLater(failing, throwsA(isA<http.ClientException>()));
+    expect(clients, hasLength(2));
+    expect(first.closed, isFalse);
+
+    first.answer(1, 'one');
+    expect((await beside[0]).body, 'one');
+    expect(first.closed, isFalse);
+    first.answer(2, 'two');
+    expect((await beside[1]).body, 'two');
+    expect(first.closed, isTrue);
+
+    /// renewAll (app resume) waits the same way
+    final running = client.get(url);
+    await Future<void>.delayed(Duration.zero);
+    RenewingHttpClient.renewAll();
+    expect(clients[1].closed, isFalse);
+    clients[1].answer(0, 'resumed');
+    expect((await running).body, 'resumed');
+    expect(clients[1].closed, isTrue);
+  });
 
   /// Review finding: IOClient.close() always forces - renewing must not
   /// abort a request still running (a send, a token poll, a refresh)

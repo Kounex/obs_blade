@@ -21,12 +21,7 @@ class RenewingHttpClient extends http.BaseClient {
   /// Test seam - a client given here is closed with its own `close()`
   final http.Client Function()? _create;
 
-  late http.Client _inner;
-
-  /// The default client's `dart:io` client: closed without force on
-  /// [renew] - `IOClient.close()` always forces, which would abort the
-  /// requests still running (a send, a token poll, a refresh)
-  HttpClient? _io;
+  late _Inner _inner;
   bool _closed = false;
 
   static final List<WeakReference<RenewingHttpClient>> _instances = [];
@@ -36,11 +31,10 @@ class RenewingHttpClient extends http.BaseClient {
     _instances.add(WeakReference(this));
   }
 
-  http.Client _newInner() {
-    if (this._create case final create?) return create();
+  _Inner _newInner() {
+    if (this._create case final create?) return _Inner(create());
     final io = HttpClient();
-    this._io = io;
-    return IOClient(io);
+    return _Inner(IOClient(io), io);
   }
 
   /// App resume: every live client starts over on fresh connections
@@ -52,17 +46,17 @@ class RenewingHttpClient extends http.BaseClient {
   }
 
   /// Drop the pooled connections - requests in flight finish on the old
-  /// client (closed without force), new ones get a fresh one
+  /// client, new ones get a fresh one. The old client closes once its
+  /// requests have their answers: `HttpClient.close()` cancels connections
+  /// still being set up even without force (dart:io
+  /// `_ConnectionTarget.close`) - one Kick request's failure renewed the
+  /// client and failed the four previews running beside it with
+  /// "Connection attempt cancelled" (Settings → Logs, 2026-10-20).
   void renew() {
     if (this._closed) return;
     final old = this._inner;
-    final oldIo = this._io;
     this._inner = this._newInner();
-    if (oldIo != null) {
-      oldIo.close();
-    } else {
-      old.close();
-    }
+    old.retire();
   }
 
   /// Connection-level: the socket or the HTTP exchange broke, not an
@@ -74,20 +68,56 @@ class RenewingHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final client = this._inner;
+    final inner = this._inner;
+    inner.pending++;
     try {
-      return await client.send(request);
+      return await inner.client.send(request);
     } catch (error) {
-      if (isConnectionFailure(error) && identical(client, this._inner)) {
+      if (isConnectionFailure(error) && identical(inner, this._inner)) {
         this.renew();
       }
       rethrow;
+    } finally {
+      inner.done();
     }
   }
 
   @override
   void close() {
     this._closed = true;
-    this._inner.close();
+    this._inner.client.close();
+  }
+}
+
+/// One client of a [RenewingHttpClient] and the sends waiting on it
+class _Inner {
+  final http.Client client;
+
+  /// The default client's `dart:io` client: closed without force on
+  /// retire - `IOClient.close()` always forces, which would abort the
+  /// requests still running (a send, a token poll, a refresh)
+  final HttpClient? io;
+
+  int pending = 0;
+  bool _retired = false;
+
+  _Inner(this.client, [this.io]);
+
+  void retire() {
+    this._retired = true;
+    if (this.pending == 0) this._close();
+  }
+
+  void done() {
+    this.pending--;
+    if (this._retired && this.pending == 0) this._close();
+  }
+
+  void _close() {
+    if (this.io case final io?) {
+      io.close();
+    } else {
+      this.client.close();
+    }
   }
 }
