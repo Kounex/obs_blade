@@ -11,6 +11,12 @@ class _FakeChannel extends Fake implements WebSocketChannel {
   final StreamController<dynamic> incoming = StreamController<dynamic>();
   final List<Map<String, Object?>> sent = <Map<String, Object?>>[];
 
+  /// A connect that never finished: web_socket_channel never completes
+  /// such a socket's close either
+  final bool connectPending;
+
+  _FakeChannel({this.connectPending = false});
+
   @override
   Stream<dynamic> get stream => this.incoming.stream;
 
@@ -29,7 +35,8 @@ class _FakeSink extends Fake implements WebSocketSink {
   );
 
   @override
-  Future<void> close([int? closeCode, String? closeReason]) async {}
+  Future<void> close([int? closeCode, String? closeReason]) =>
+      this.channel.connectPending ? Completer<void>().future : Future.value();
 }
 
 void main() {
@@ -331,5 +338,20 @@ void main() {
         'ws-${KickPusherApp.fallback.cluster}.pusher.com',
       );
     });
+  });
+
+  test('disconnect returns while the socket is still connecting', () async {
+    final service = KickPusherService(
+      onEvent: (_) {},
+      onStateChanged: (_) {},
+      channelFactory: (_) => _FakeChannel(connectPending: true),
+      sleep: (_) async {},
+    );
+    await service.connect(chatroomId: 42);
+
+    await expectLater(
+      service.disconnect().timeout(const Duration(seconds: 1)),
+      completes,
+    );
   });
 }

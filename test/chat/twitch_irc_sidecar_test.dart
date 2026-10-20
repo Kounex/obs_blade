@@ -21,6 +21,12 @@ class _FakeIrcSocket extends Fake implements WebSocketChannel {
   final StreamController<dynamic> incoming = StreamController<dynamic>();
   final List<String> sent = [];
 
+  /// A connect that never finished: web_socket_channel never completes
+  /// such a socket's close either
+  final bool connectPending;
+
+  _FakeIrcSocket({this.connectPending = false});
+
   @override
   Stream<dynamic> get stream => this.incoming.stream;
 
@@ -37,7 +43,8 @@ class _FakeIrcSink extends Fake implements WebSocketSink {
   void add(dynamic data) => this.socket.sent.add(data as String);
 
   @override
-  Future<void> close([int? closeCode, String? closeReason]) async {}
+  Future<void> close([int? closeCode, String? closeReason]) =>
+      this.socket.connectPending ? Completer<void>().future : Future.value();
 }
 
 void main() {
@@ -188,5 +195,31 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 120));
     expect(sockets, hasLength(2));
     expect(sockets.last.sent, contains('JOIN #kounex\r\n'));
+  });
+
+  test('a socket whose connect never finished is still reopened by the '
+      'watchdog', () async {
+    final sockets = <_FakeIrcSocket>[];
+    final sidecar = TwitchIrcSidecar(
+      onFirstMessage: (_) {},
+      channelFactory: (_) {
+        final socket = _FakeIrcSocket(connectPending: sockets.isEmpty);
+        sockets.add(socket);
+        return socket;
+      },
+      sleep: (_) async {},
+      pingInterval: const Duration(seconds: 30),
+      quietTimeout: const Duration(milliseconds: 50),
+    );
+    addTearDown(sidecar.dispose);
+    await sidecar.connect(
+      accessToken: 'token',
+      login: 'kounex',
+      channelLogin: 'kounex',
+    );
+
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    expect(sockets.length, greaterThanOrEqualTo(2));
+    expect(sockets[1].sent, contains('JOIN #kounex\r\n'));
   });
 }

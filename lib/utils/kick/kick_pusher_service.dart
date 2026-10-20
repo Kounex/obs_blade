@@ -324,12 +324,21 @@ class KickPusherService {
     this._watchdog = null;
     await this._socketSub?.cancel();
     this._socketSub = null;
-    try {
-      await this._channel?.sink.close();
-    } catch (_) {
-      // already gone
-    }
+    final channel = this._channel;
     this._channel = null;
+
+    /// Not awaited, like [_dropSocket]: the close of a socket whose
+    /// connect never finished never completes, and the store's dispose
+    /// waits on this
+    if (channel != null) {
+      unawaited(() async {
+        try {
+          await channel.sink.close();
+        } catch (_) {
+          // already gone
+        }
+      }());
+    }
     this.onStateChanged(KickPusherConnectionState.disconnected);
   }
 

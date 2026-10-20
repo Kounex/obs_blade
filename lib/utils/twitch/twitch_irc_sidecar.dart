@@ -225,9 +225,18 @@ class TwitchIrcSidecar {
     this._watchdog = null;
     await this._socketSub?.cancel();
     this._socketSub = null;
-    try {
-      await this._channel?.sink.close();
-    } catch (_) {}
+    final channel = this._channel;
     this._channel = null;
+
+    /// Not awaited: a socket whose connect never finished never finishes
+    /// its close either (web_socket_channel 3.0.1 - checked) and the
+    /// watchdog's reopen would wait on it for good
+    if (channel != null) {
+      unawaited(() async {
+        try {
+          await channel.sink.close();
+        } catch (_) {}
+      }());
+    }
   }
 }
