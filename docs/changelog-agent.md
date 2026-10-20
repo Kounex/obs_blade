@@ -4,6 +4,36 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-20 - /code-review high on 4.1.0..HEAD (second pass, after `b5978aa4`)
+
+Reviewer returned 8; checked one by one against the code (and the
+library / Pusher where it mattered), 2 kept, each fixed with a test that
+fails on the old code:
+
+- **A watchdog reopen hung on a socket still connecting**: with
+  `web_socket_channel` 3.0.1 the sink's `close()` of a socket whose
+  connect never finished never completes - even after the connect fails
+  later (checked: pending -> hangs, already failed -> closes, connected
+  but silent -> closes). The Twitch IRC sidecar's teardown awaited it, so
+  the 90 s watchdog's reopen stopped for good (first-message badges dead
+  until the chat reconnects; Android's connect outlasts 90 s on a
+  dropping network). Kick's `disconnect()` the same (a store disposed
+  mid-connect never closed its streams). Both close unawaited now, as
+  Kick's `_dropSocket` already did.
+- **The YouTube quota line lost the end of every session**: the meter
+  writes on the next call, so a 40-min chat wrote nothing and a longer
+  one's last stretch landed in the next day's first line. Now also
+  written when the app goes to the background, the chat stops (pause,
+  sign-out, dispose) and the activity poller stops.
+- **Dropped:** Kick 4001 without a `pusher:error` (Pusher sends the
+  frame before the close - checked live with the old key); IRC reopen
+  racing dispose (a microtask window); a config lookup per Kick connect
+  (the design; weak refs, no leak); unpaced GET repeat (decided, rare,
+  5 units); fast device clock dims streamed rows (needs a clock tens of
+  seconds off); three watchdog copies (refactor).
+- Not checked: the meter's ban / moderator costs against Google's page
+  (log line only).
+
 ## 2026-10-20 - Dogfood: renewed clients, socket watchdogs, YouTube quota in the log
 
 From the user's Settings → Logs on Kounex iOS (build 2026101701):
