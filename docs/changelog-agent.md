@@ -4,6 +4,31 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-20 - Combined chat Save / Delete: no silent wait (after build 2026102002)
+
+Dogfood (build 4): New combined chat → Save looked like nothing
+happened; tapping again saved the combo several times and popped
+several times, to a black screen.
+
+- **Cause:** `_save` awaited `CombinedChatStore.saveCombo`, which
+  switches each platform to the combo's channels (Twitch awaits the
+  EventSub switch - seconds). No busy state, Save still tappable, a new
+  id per tap. Delete (after its dialog) awaited `deleteCombo` the same
+  way. (`81c283db`)
+- **Fix:** both close the sheet at once, like the combined chat picker
+  already did; the combo is stored before `saveCombo`'s first await
+  (store test pins it), the chats show their own connecting state.
+  Widget tests with a store whose save / delete hang: one combo, one
+  pop, even when Save is tapped again - both fail on the old code.
+- **Sweep** (every async handler with an `await` before a `pop`, every
+  async tap handler): the text source editor, Kick setup Connect, the
+  YouTube add sheet / add dialog, the mod / bans / AutoMod sheets
+  already guard with a busy flag; the Twitch / Kick add sheets and the
+  activity "Clear" pop first (a popping route ignores taps - Flutter's
+  `ModalRoute` `IgnorePointer` while reversing). Only the builder was
+  affected.
+- Checklist (Shared components): no silent `await` before `pop()`.
+
 ## 2026-10-20 - Chat catches up after a mid-session reconnect (build 2026102002)
 
 From the dogfood log (16:49, build `31139f46`): "Kick chat socket stalled
