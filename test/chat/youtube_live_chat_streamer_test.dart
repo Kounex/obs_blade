@@ -101,15 +101,19 @@ void main() {
 
   tearDown(() => server.shutdown());
 
-  YouTubeLiveChatStreamer streamer({int? port, Duration? openGrace}) =>
-      YouTubeLiveChatStreamer(
-        host: '127.0.0.1',
-        port: port ?? server.port!,
-        secure: false,
-        pingInterval: const Duration(milliseconds: 100),
-        pingTimeout: const Duration(milliseconds: 300),
-        openGrace: openGrace ?? YouTubeLiveChatStreamer.kOpenGrace,
-      );
+  YouTubeLiveChatStreamer streamer({
+    int? port,
+    Duration? openGrace,
+    Duration? callTimeout,
+  }) => YouTubeLiveChatStreamer(
+    host: '127.0.0.1',
+    port: port ?? server.port!,
+    secure: false,
+    pingInterval: const Duration(milliseconds: 100),
+    pingTimeout: const Duration(milliseconds: 300),
+    openGrace: openGrace ?? YouTubeLiveChatStreamer.kOpenGrace,
+    callTimeout: callTimeout ?? YouTubeLiveChatStreamer.kCallTimeout,
+  );
 
   /// Collects one call: pages, the error, whether it opened
   Future<({List<YouTubeLiveChatPage> pages, Object? error, bool opened})> run(
@@ -204,6 +208,24 @@ void main() {
     release.complete();
     await done.future.timeout(const Duration(seconds: 5));
     expect(pages.single.nextPageToken, 't2');
+  });
+
+  test('a call still open past the timeout (Google ends them ~10 s in) is '
+      'dropped - reconnect, not a frozen "connected"', () async {
+    service.handler = (call, request) async* {
+      yield response('t1', ['a']);
+      await Future<void>.delayed(const Duration(minutes: 5));
+    };
+
+    final result = await run(
+      (onOpen) => streamer(
+        callTimeout: const Duration(milliseconds: 500),
+      ).stream('chat-1', null, onOpen: onOpen),
+    );
+
+    expect(result.opened, isTrue);
+    expect(result.pages, hasLength(1));
+    expect(result.error, isA<YouTubeStreamDroppedException>());
   });
 
   test('a clean end before the grace opens the call too', () async {

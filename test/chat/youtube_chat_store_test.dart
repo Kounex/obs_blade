@@ -523,6 +523,38 @@ void main() {
       expect(store.chatConnection, YouTubeChatConnectionState.connected);
     });
 
+    test('the viewer count refreshes across calls - each ends before the '
+        'refresh interval', () async {
+      clock = DateTime.utc(2026, 10, 19, 18);
+      await store.dispose();
+      store = YouTubeChatStore(
+        authService: authService,
+        chatService: chatService,
+        sleep: (duration) async => sleepLog.add(duration),
+        isProResolver: () => true,
+        chatHistoryResolver: () => history,
+        now: () => clock,
+        viewerRefreshInterval: const Duration(milliseconds: 60),
+      );
+      configure();
+      chatService.liveChatIds['video-a-001'] = 'chat-a';
+      chatService.viewerCounts['video-a-001'] = 10;
+      final calls = [for (var i = 0; i < 12; i++) FakeChatStream()];
+      chatService.streams.addAll([...calls, FakeChatStream()]);
+
+      await store.init();
+      chatService.viewerCounts['video-a-001'] = 99;
+      for (final call in calls) {
+        await until(() => call.listened);
+        clock = clock.add(const Duration(milliseconds: 10300));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await call.end();
+      }
+
+      expect(store.selectedChannelViewerCount, 99);
+      expect(chatService.listCalls, 0);
+    });
+
     test('calls that close within 5s three times → polls; tries the stream '
         'again 10 min later', () async {
       await clockedStore();

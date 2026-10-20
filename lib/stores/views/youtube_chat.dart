@@ -73,8 +73,8 @@ const List<Duration> kYouTubeLiveRecheckSchedule = [
 ];
 
 /// The chat reads over `liveChatMessages.streamList` (5 quota units per
-/// call, held open while the chat runs) with the poll as the fallback -
-/// see [YouTubeStreamPolicy]. Polling `liveChatMessages.list` every few
+/// call; Google ends each ~10 s in and the chat reconnects - ~1,700 units
+/// an hour) with the poll as the fallback - see [YouTubeStreamPolicy]. Polling `liveChatMessages.list` every few
 /// seconds is ~3,600-6,000 units an hour: the 10,000 a day were gone
 /// after 2-3 hours of streaming.
 ///
@@ -1468,10 +1468,8 @@ abstract class _YouTubeChatStore with Store {
           page.messages.any((m) => m.type == YouTubeChatMessageType.chatEnded);
     }
 
-    /// Reads over `streamList` until the chat ends, the loop is superseded
-    /// or [YouTubeStreamPolicy] hands over to the poll (null).
-    Future<_PassOutcome?> stream() async {
-      policy.newRead();
+    /// The `streamList` calls of one [stream] read, one after the other
+    Future<_PassOutcome?> readCalls() async {
       while (!superseded()) {
         final startedAt = this._now();
         final fromStart = buffer.nextPageToken == null;
@@ -1514,17 +1512,7 @@ abstract class _YouTubeChatStore with Store {
         }
 
         this._cancelStream = cancel;
-        final viewerTimer = this._viewerRefreshInterval > Duration.zero
-            ? Timer.periodic(this._viewerRefreshInterval, (_) {
-                if (!superseded()) {
-                  unawaited(
-                    this._refreshViewerCount(label, buffer, apiKey, superseded),
-                  );
-                }
-              })
-            : null;
         final result = await done.future;
-        viewerTimer?.cancel();
         unawaited(subscription.cancel());
         if (identical(this._cancelStream, cancel)) this._cancelStream = null;
         if (superseded()) return _PassOutcome.stopped;
@@ -1566,6 +1554,28 @@ abstract class _YouTubeChatStore with Store {
         if (decision.delay > Duration.zero) await this._sleep(decision.delay);
       }
       return _PassOutcome.stopped;
+    }
+
+    /// Reads over `streamList` until the chat ends, the loop is superseded
+    /// or [YouTubeStreamPolicy] hands over to the poll (null).
+    Future<_PassOutcome?> stream() async {
+      policy.newRead();
+
+      /// Across calls - each lives ~10 s, shorter than the interval
+      final viewerTimer = this._viewerRefreshInterval > Duration.zero
+          ? Timer.periodic(this._viewerRefreshInterval, (_) {
+              if (!superseded()) {
+                unawaited(
+                  this._refreshViewerCount(label, buffer, apiKey, superseded),
+                );
+              }
+            })
+          : null;
+      try {
+        return await readCalls();
+      } finally {
+        viewerTimer?.cancel();
+      }
     }
 
     while (!superseded()) {

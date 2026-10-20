@@ -60,6 +60,13 @@ class YouTubeLiveChatStreamer {
   /// came up counts as open (measured 2026-10-19).
   static const Duration kOpenGrace = Duration(seconds: 2);
 
+  /// Google ends every call ~10.3 s in (25 s in a stall, measured
+  /// 2026-10-19). One still open after this sits on a dead connection the
+  /// ping hasn't caught yet (up to [kPingInterval] + [kPingTimeout]):
+  /// ending it (`DEADLINE_EXCEEDED` - dropped) reconnects without the
+  /// chat looking connected but frozen. No extra quota.
+  static const Duration kCallTimeout = Duration(seconds: 30);
+
   final String host;
   final int port;
 
@@ -68,6 +75,7 @@ class YouTubeLiveChatStreamer {
   final Duration pingInterval;
   final Duration pingTimeout;
   final Duration openGrace;
+  final Duration callTimeout;
 
   const YouTubeLiveChatStreamer({
     this.host = kHost,
@@ -76,6 +84,7 @@ class YouTubeLiveChatStreamer {
     this.pingInterval = kPingInterval,
     this.pingTimeout = kPingTimeout,
     this.openGrace = kOpenGrace,
+    this.callTimeout = kCallTimeout,
   });
 
   /// Pages of [liveChatId] as they arrive, starting after [pageToken]
@@ -149,6 +158,7 @@ class YouTubeLiveChatStreamer {
         final started = V3DataLiveChatMessageServiceClient(created).streamList(
           request,
           options: CallOptions(
+            timeout: this.callTimeout,
             metadata: {
               if (apiKey != null && apiKey.isNotEmpty) 'x-goog-api-key': apiKey,
               if ((apiKey == null || apiKey.isEmpty) &&

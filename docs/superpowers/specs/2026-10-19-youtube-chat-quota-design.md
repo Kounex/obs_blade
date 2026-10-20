@@ -85,8 +85,8 @@ measurement; it streamed for a day before that).
 - The poll banner: the poll answer repeats `activePollItem` on every
   page, the stream isn't known to. So the stream keeps the banner until
   that poll's own row says `closed`.
-- Viewer count: on a timer every 30 s while a call is open (no pages in a
-  quiet chat to hang it on).
+- Viewer count: on a timer every 30 s across the stream's calls (each
+  call ends before 30 s; a quiet chat has no pages to hang it on).
 - Cancel: every `_pollFlow` bump (switch, pause, sign-out, dispose,
   restart) closes the open call. Without that, a call waiting in a quiet
   chat would never notice it was superseded.
@@ -96,7 +96,9 @@ measurement; it streamed for a day before that).
   for the open call). The streamer brings its own connection
   (`ClientTransportConnectorChannel`, TLS with ALPN `h2`). It pings every
   30 s and terminates the connection after 20 s without an answer, which
-  fails the call so it reconnects. App resume after a real stay in the
+  fails the call so it reconnects. Since Google ends every healthy call
+  ~10 s in, a call still open after 30 s (`kCallTimeout`) is ended as
+  dropped too - a dead socket shows within 30 s, not up to 50 s. App resume after a real stay in the
   background (not Control Center / Face ID) replaces an open call with a
   new one from its token (5 units).
 
