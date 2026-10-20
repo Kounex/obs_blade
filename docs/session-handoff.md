@@ -2,8 +2,8 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-10-20** (YouTube
-quota + Kick Pusher session).
+Read this first after `AGENTS.md`. Last reset: **2026-10-20** (review pass 2 +
+4.2.0 beta).
 
 **Live:** 4.1.0 (build 2026100501, tag `4.1.0`) on both stores. Branch
 `master`. Releases run through **store-release** (`release.yaml`); the
@@ -16,23 +16,20 @@ its chat to a new Pusher app on 2026-10-20; 4.1.0's compiled-in key gets
 `web.kick.com/api/v1/realtime/channels/{id}/chat/connection`). The user
 chose to ship it with 4.2, no 4.1.1 hotfix.
 
-**4.2.0 - next, in this order:**
+**4.2.0 - in beta:** build **2026102001** on TestFlight (internal) and
+Play internal since 2026-10-20 - the first beta through store-release on
+both stores. The second `/code-review high` pass (after `b5978aa4`) is
+done: 2 of 8 findings kept and fixed (`0af4269c`, `18edf736`), the rest
+dropped with reasons in `changelog-agent.md`. Next:
 
-1. **`/code-review high` on `4.1.0..HEAD`** (fresh session) with
-   `docs/chat-journey-checklist.md`. The 2026-10-17 review covered
-   4.1.0..`b5978aa4`; everything after it is unreviewed: YouTube reads over
-   gRPC `streamList` (`2f4e19e2`..`523819c6`), `RenewingHttpClient`
-   (renew waits for running sends, GET/HEAD repeat once), the
-   `YouTubeQuotaMeter` log lines, Kick / Twitch IRC socket watchdogs, the
-   Kick Pusher app lookup. Why + facts: `changelog-agent.md` 2026-10-19 and
-   2026-10-20.
-2. **`release-beta`**: `release bump` (build 2026101701 was committed but
-   never uploaded - stores have 2026101101 on TestFlight / Play internal),
-   commit, `release preflight` on the MacBook (first store-release run -
-   read the `beta` dry-run plans), build + upload detached. Release notes
-   (both stores, Play 497/500 chars) and `fastlane/testflight_notes.txt`
-   ("test build 3", YouTube + Kick sections) are written and committed.
-3. Beta test incl. upgrade over 4.1.0 -> `release-promote`.
+1. Beta test from `fastlane/testflight_notes.txt`, incl. an upgrade over
+   4.1.0 -> `release-promote`.
+2. `tool/release/` can go now (playbook: kept until the first
+   store-release beta on both stores).
+
+Release env on the MacBook: `release-env.sh` now puts rbenv Ruby 3.4.2
+first (fastlane lives there; Homebrew Ruby is 4.0 without it) and
+`release()` is store-release - runbook updated.
 
 Dogfood (Kounex iOS, `31139f46`): YouTube streaming confirmed in the log
 ("reads over the stream"), Kick connects again. Still to see on the
