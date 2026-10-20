@@ -164,6 +164,14 @@ instead (2026-10-04: live subscriptions jumped to the top mid-scroll).
   while away are missing" divider marks the gap instead of silently
   pretending completeness. Poll-based chat (YouTube) is zero-loss by
   cursor.
+- A socket that reconnects **mid-session** (watchdog, backoff - not only
+  after a resume) catches up the window it missed the same way: Kick and
+  Twitch replay nothing, a quiet socket death loses up to its watchdog's
+  window of rows (2026-10-20: Kick "stalled - no frame within 60 s",
+  rows gone without a divider).
+- A transient failure shown while the chat retries is worded for the
+  user; the raw exception (`ClientException: … uri=…`) goes to the log
+  only (2026-10-20: the YouTube live lookup showed it as the status).
 - Live smoke for new endpoints: a throwaway `flutter test` file; the
   Kick / Cloudflare user-agent notes are in the handoff § Chat
   conventions.
