@@ -32,7 +32,12 @@ Maintainers: `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
    rollout, anything odd on the stores). Reset `docs/session-handoff.md`
    per its hygiene rules: the live version on both stores and what to watch
    (crash reports, reviews, a staged rollout to raise).
-6. Commit + push.
+6. **Website** (maintainers, `~/agent/obs-blade-site`, see its
+   AGENTS.md § "What's new"): add the new version's card first in the
+   `#whats-new` row of `site/index.html` (the store notes as bullets,
+   month + year), drop the oldest beyond five, `./deploy.sh`. Check the
+   feature sections / Free vs Pro still match what shipped.
+7. Commit + push.
 
 ## Staged rollout follow-up
 
