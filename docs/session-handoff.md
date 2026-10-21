@@ -30,12 +30,9 @@ device: the hourly "YouTube API: ≈… units" line (~1,700 per chat-hour).
 Not verified: whether streamed answers repeat `activePollItem` (needs a
 chat with a running poll).
 
-**Now that 4.2 is out (user said: post then; not done yet):** reply on GitHub + close -
-#100 (fade transitions now play in the preview - 4.2), #96 (fixed in
-4.1.0: the app read an old v4 field), #93 (Settings -> General -> Search
-on Start). #95: reply with the iOS fix, ask the reporter which platform
-they use and to retest on 4.2 - close only if they confirm or don't
-answer. Email from an Android volleyball streamer (instant-replay.lua
+**GitHub (2026-10-21, in the user's voice):** #100, #96, #93 answered +
+closed. #95 answered (iOS fix in 4.2, asked which platform + to retest) -
+close only if they confirm or don't answer. Email from an Android volleyball streamer (instant-replay.lua
 hotkey): answer drafted in the 2026-10-17 session; the user sends it.
 The Pro customer who ran out of YouTube quota: no mail from us (user's
 call); 4.2 cuts their chat to ~1,700 units/h.
