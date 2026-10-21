@@ -4,6 +4,17 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-21 - 4.2.0 released (build 2026102003)
+
+- **iOS:** approved, `release publish ios` -> `READY_FOR_SALE` (no
+  phased release, everyone at once).
+- **Play:** production 100 % under managed publishing; the user presses
+  Publish in the Play Console themselves.
+- Tag `4.2.0` on `cd695955`. The website's What's new already had the
+  4.2 tab (published ahead on 2026-10-20).
+- Ships the Kick chat fix (Kick's new Pusher app) - native Kick chat
+  was down on 4.1.0 until now.
+
 ## 2026-10-20 - Combined chat Save / Delete: no silent wait (build 2026102003)
 
 Dogfood (build 4): New combined chat → Save looked like nothing
