@@ -239,8 +239,7 @@ fallback. WebView chat stays free forever. Gate mechanics + wiring:
 - **Store releases:** store-release (`github.com/Kounex/store-release`) from
   `release.yaml` (status, preflight, build, TestFlight / Play internal,
   submit, promote, publish; every store write is a dry run without `--yes`).
-  `tool/release/` is the previous tool, kept until the first beta on both
-  stores went through store-release. Process: `docs/release-playbook.md`; agents start from
+  Process: `docs/release-playbook.md`; agents start from
   the `release-*` skills in `.claude/skills/` (agents without skill support:
   read those `SKILL.md` files as runbooks).
 - **Widget shots (headless, any machine):** `tool/widget_shots/run.sh` —

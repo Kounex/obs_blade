@@ -14,9 +14,6 @@ The tool is store-release (`github.com/Kounex/store-release`, private), configur
 by [`release.yaml`](../release.yaml); its README documents every command. This file
 is the process around it. App-specific checks (Kick OAuth client, no secrets or
 test unlocks in the defines) run from `tool/release_checks.dart` during preflight.
-`tool/release/` is the previous, app-specific tool: it stays until the first
-TestFlight and Play internal beta have gone through store-release, then it is
-deleted.
 
 ## Where it runs
 

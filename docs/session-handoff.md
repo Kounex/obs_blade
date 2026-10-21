@@ -7,10 +7,7 @@ released).
 
 **Live:** 4.2.0 (build 2026102003, tag `4.2.0`) on both stores since
 2026-10-21 (App Store `READY_FOR_SALE`, Play production 100 %). Branch `master`. Releases run through
-**store-release** (`release.yaml`). Next:
-
-1. `tool/release/` can go now (playbook: kept until the first
-   store-release beta on both stores).
+**store-release** (`release.yaml`).
 
 App Store versions: `release metadata ios` does **not** create a
 version (the tool says "create version x in App Store Connect first").

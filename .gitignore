@@ -61,15 +61,10 @@ docs/private/
 # 4.0 UI audit — local screenshot artifacts (may contain LAN addresses)
 docs/redesign/2026-iteration/
 
-# fastlane (Bundler, installed per machine)
-/vendor/bundle/
-/.bundle/
-
 # App Review contact details + demo account - personal, never in this public repo
 fastlane/metadata/ios/review_information/
 
 # fastlane run output (regenerated on every run)
-fastlane/README.md
 fastlane/report.xml
 
 # Rendered store videos (App Previews, header / search creative videos) -
