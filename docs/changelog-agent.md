@@ -8,8 +8,8 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
 
 - **iOS:** approved, `release publish ios` -> `READY_FOR_SALE` (no
   phased release, everyone at once).
-- **Play:** production 100 % under managed publishing; the user presses
-  Publish in the Play Console themselves.
+- **Play:** production 100 % under managed publishing; the user pressed
+  Publish in the Play Console the same day - live on both stores.
 - Tag `4.2.0` on `cd695955`. The website's What's new already had the
   4.2 tab (published ahead on 2026-10-20).
 - Ships the Kick chat fix (Kick's new Pusher app) - native Kick chat

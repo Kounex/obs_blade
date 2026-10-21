@@ -5,10 +5,8 @@
 Read this first after `AGENTS.md`. Last reset: **2026-10-21** (4.2.0
 released).
 
-**Live:** 4.2.0 (build 2026102003, tag `4.2.0`). App Store
-`READY_FOR_SALE` since 2026-10-21; Play production 100 % - the user
-publishes it in the Play Console themselves (managed publishing; confirm
-it's live if in doubt). Branch `master`. Releases run through
+**Live:** 4.2.0 (build 2026102003, tag `4.2.0`) on both stores since
+2026-10-21 (App Store `READY_FOR_SALE`, Play production 100 %). Branch `master`. Releases run through
 **store-release** (`release.yaml`). Next:
 
 1. `tool/release/` can go now (playbook: kept until the first
@@ -99,7 +97,7 @@ Astra follow-ups.
 | Branch | **`master`** (everything lands here; `feature/preview-transitions` merged 2026-10-07) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 | Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
-| Live version | **4.2.0** (build 2026102003, tag `4.2.0`) - iOS since 2026-10-21, Play published by the user |
+| Live version | **4.2.0** (build 2026102003, tag `4.2.0`) on both stores since 2026-10-21 |
 
 ### Machines
 
