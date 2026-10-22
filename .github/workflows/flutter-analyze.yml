@@ -1,5 +1,8 @@
 name: flutter analyze
 
+# Flutter comes from the .flutter submodule (the pinned SDK, same as the
+# FOSS release). The baseline has infos/warnings - errors fail the run.
+
 on:
   push:
     branches:
@@ -11,12 +14,31 @@ on:
 
 jobs:
   analyze:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v1
-      - run: flutter pub get
-      - name: Run flutter analyze
-        uses: invertase/github-action-dart-analyzer@v1
+      - uses: actions/checkout@v4
+      - name: Flutter SDK (.flutter submodule)
+        run: git submodule update --init .flutter
+      - run: .flutter/bin/flutter config --no-analytics
+      - run: .flutter/bin/flutter pub get
+      - run: .flutter/bin/flutter analyze --no-fatal-infos --no-fatal-warnings
+
+  # The FOSS build (docs/foss-build.md) must keep compiling: a new store
+  # SDK import on master needs a stand-in in tool/foss/overlay/
+  foss:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flutter SDK (.flutter submodule)
+        run: git submodule update --init .flutter
+      - run: .flutter/bin/flutter config --no-analytics
+      - name: FOSS UI tests (regular tree, FOSS define)
+        run: |
+          .flutter/bin/flutter pub get
+          .flutter/bin/flutter test --dart-define=OBS_BLADE_FOSS=true test/foss/
+      - name: Strip the store SDKs
+        run: tool/foss/prepare.sh
+      - name: Analyze the FOSS tree
+        run: |
+          .flutter/bin/flutter pub get
+          .flutter/bin/flutter analyze lib --no-fatal-infos --no-fatal-warnings

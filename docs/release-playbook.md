@@ -59,7 +59,7 @@ environment and keychain recipe are in
 
 One text for both stores:
 `fastlane/metadata/ios/en-US/release_notes.txt` and
-`fastlane/metadata/android/en-US/changelogs/default.txt` (copy, keep them
+`fastlane/metadata/play/en-US/changelogs/default.txt` (copy, keep them
 identical).
 
 - **Source:** `git log <last release tag>..HEAD -- lib android ios assets

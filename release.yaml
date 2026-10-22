@@ -39,8 +39,8 @@ play:
     - [flutter, build, appbundle, --release, --dart-define-from-file=docs/private/kick_oauth.json]
   artifact: build/app/outputs/bundle/release/app-release.aab
   inputs: [docs/private/kick_oauth.json]
-  betaNotes: fastlane/metadata/android/en-US/changelogs/default.txt
-  metadata: fastlane/metadata/android
+  betaNotes: fastlane/metadata/play/en-US/changelogs/default.txt
+  metadata: fastlane/metadata/play
 
 media:
   storeShots: { host: nas, project: agent/store-shots/projects/obs-blade }

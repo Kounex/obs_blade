@@ -19,6 +19,11 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    # Pinned Flutter SDK submodule + CI's pub cache (FOSS build)
+    - .flutter/**
+    - .pub-cache/**
+    # Only valid once tool/foss/prepare.sh copied them into lib/
+    - tool/foss/overlay/**
     # protoc output (vendored, see its README)
     - lib/utils/youtube/stream_list/*.dart
 

@@ -1,0 +1,127 @@
+name: FOSS release
+
+# The FOSS APK (docs/foss-build.md): built from master by
+# tool/foss/prepare.sh, signed with the FOSS key, published as a GitHub
+# release. F-Droid builds the same tag from source and ships THIS APK only
+# if its own build matches byte for byte - so the layout below mirrors the
+# F-Droid recipe exactly: source in /tmp/build, Flutter from the .flutter
+# submodule, pub cache in /tmp/build/.pub-cache, JDK 17. Change one, change
+# the other (docs/foss-build.md § F-Droid recipe).
+#
+# Tag push `foss-<pubspec version>` = release. Manual run = build + verify,
+# APK as a workflow artifact, no release.
+
+on:
+  push:
+    tags: ['foss-*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    env:
+      PUB_CACHE: /tmp/build/.pub-cache
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Version from pubspec (and check the tag)
+        run: |
+          VER=$(sed -nE 's/^version: *([^+]+)\+([0-9]+).*/\1/p' pubspec.yaml)
+          CODE=$(sed -nE 's/^version: *([^+]+)\+([0-9]+).*/\2/p' pubspec.yaml)
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF_NAME}" != "foss-$VER" ]; then
+            echo "Tag ${GITHUB_REF_NAME} doesn't match pubspec version $VER (expected foss-$VER)" >&2
+            exit 1
+          fi
+          echo "APP_VERSION=$VER" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+
+      # Full clone: flutter reads its own version from the SDK's git tags
+      - name: Flutter SDK (.flutter submodule)
+        run: git submodule update --init .flutter
+
+      - name: Move to the reproducible build path
+        run: |
+          mkdir -p /tmp/build
+          cp -a . /tmp/build/
+
+      - name: JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Strip the store SDKs
+        working-directory: /tmp/build
+        run: tool/foss/prepare.sh
+
+      - name: Dependencies
+        working-directory: /tmp/build
+        run: |
+          .flutter/bin/flutter config --no-analytics
+          .flutter/bin/flutter pub get
+
+      - name: Signing key
+        working-directory: /tmp/build
+        env:
+          FOSS_KEYSTORE_BASE64: ${{ secrets.FOSS_KEYSTORE_BASE64 }}
+          FOSS_KEYSTORE_PASSWORD: ${{ secrets.FOSS_KEYSTORE_PASSWORD }}
+          FOSS_KEY_ALIAS: ${{ secrets.FOSS_KEY_ALIAS }}
+          FOSS_KEY_PASSWORD: ${{ secrets.FOSS_KEY_PASSWORD }}
+        run: |
+          if [ -z "$FOSS_KEYSTORE_BASE64" ]; then
+            echo "FOSS_KEYSTORE_BASE64 secret missing" >&2
+            exit 1
+          fi
+          echo "$FOSS_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/foss.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/foss.jks"
+            echo "storePassword=$FOSS_KEYSTORE_PASSWORD"
+            echo "keyAlias=$FOSS_KEY_ALIAS"
+            echo "keyPassword=$FOSS_KEY_PASSWORD"
+          } > android/key.properties
+
+      - name: Build APK
+        working-directory: /tmp/build
+        run: .flutter/bin/flutter build apk --release
+
+      - name: Verify (no store SDK in the lockfile or the APK)
+        working-directory: /tmp/build
+        run: |
+          rm -f android/key.properties
+          tool/foss/prepare.sh verify
+          APK="obs-blade-foss-${APP_VERSION}.apk"
+          mv build/app/outputs/flutter-apk/app-release.apk "$RUNNER_TEMP/$APK"
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          sha256sum "$RUNNER_TEMP/$APK"
+
+      - name: GitHub release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="$RUNNER_TEMP/notes.md"
+          {
+            cat "fastlane/metadata/android/en-US/changelogs/${VERSION_CODE}.txt"
+            echo
+            echo "Open source build (no in-app purchases) - also on F-Droid."
+            echo
+            echo '```'
+            (cd "$RUNNER_TEMP" && sha256sum "$APK")
+            echo '```'
+          } > "$NOTES"
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/$APK" \
+            --title "OBS Blade ${APP_VERSION} (FOSS)" \
+            --notes-file "$NOTES"
+
+      - name: Workflow artifact
+        if: github.event_name != 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK }}
+          path: ${{ runner.temp }}/${{ env.APK }}

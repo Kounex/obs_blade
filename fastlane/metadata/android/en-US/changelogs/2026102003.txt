@@ -1,0 +1,3 @@
+4.2.0 - the first open source release since 3.2, with everything that came since: the "On Air" redesign, tablet layouts, canvases (OBS 32.1+), preview transitions, a chat tab with Twitch, YouTube, Kick and Owncast, and much more.
+
+Coming from 3.2? This build is signed with a new key: uninstall 3.2 first, then install 4.2 (saved connections need to be added again).

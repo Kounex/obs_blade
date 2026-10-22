@@ -28,7 +28,7 @@ Maintainers: `docs/private/maintainer-runbooks.md` § "Store releases over SSH".
    (dry run), then `--yes`: the notes and screenshots.
    Check the version still has its App Preview (playbook § Stores).
    If the Play listing changed since the last release
-   (`git diff <last tag> -- fastlane/metadata/android`, the changelogs
+   (`git diff <last tag> -- fastlane/metadata/play`, the changelogs
    aside), also `release metadata android` - managed publishing holds the
    listing until the user publishes, same as the release.
 2. **Confirm with the user:** notes (they lock on submit) and the Play

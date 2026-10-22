@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/featureGraphic.png" alt="OBS Blade - Your OBS, in your pocket." width="100%">
+  <img src="fastlane/metadata/play/en-US/images/featureGraphic.png" alt="OBS Blade - Your OBS, in your pocket." width="100%">
 </p>
 
 <h3 align="center">The open source remote for OBS Studio, on iPhone, iPad and Android.</h3>

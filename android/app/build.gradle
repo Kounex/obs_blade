@@ -67,6 +67,14 @@ android {
             signingConfig signingConfigs.release
         }
     }
+
+    // FOSS APK (docs/foss-build.md): no Google-encrypted dependency
+    // metadata in the APK - F-Droid rejects it and it breaks reproducible
+    // builds. Play still gets it through the bundle.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = true
+    }
 }
 
 flutter {
