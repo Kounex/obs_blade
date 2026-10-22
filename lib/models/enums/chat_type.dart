@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/icons/custom_flutter_icons.dart';
+import '../../utils/build_flavor.dart';
 import '../type_ids.dart';
 import '../../utils/icons/jam_icons.dart';
 
@@ -33,6 +34,12 @@ enum ChatType {
 /// regardless of the persisted `SelectedChatEngine`, and the engine switch
 /// hides for them.
 bool isNativeOnly(ChatType chatType) => chatType == ChatType.Combined;
+
+/// The chat types the chat type picker offers - the FOSS build ([kFoss])
+/// has no native engine, so no native-only types.
+List<ChatType> get selectableChatTypes => kFoss
+    ? ChatType.values.where((type) => !isNativeOnly(type)).toList()
+    : ChatType.values;
 
 extension ChatTypeFunctions on ChatType {
   String get text => const {

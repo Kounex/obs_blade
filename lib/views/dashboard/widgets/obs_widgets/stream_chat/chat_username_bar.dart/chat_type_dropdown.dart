@@ -42,7 +42,7 @@ class ChatTypeDropdown extends StatelessWidget {
             isExpanded: true,
             isDense: true,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            items: ChatType.values
+            items: selectableChatTypes
                 .map(
                   (chatType) => DropdownMenuItem(
                     value: chatType,

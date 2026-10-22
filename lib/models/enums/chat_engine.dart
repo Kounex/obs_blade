@@ -1,5 +1,6 @@
 import 'package:hive_ce/hive.dart';
 
+import '../../utils/build_flavor.dart';
 import '../type_ids.dart';
 import 'chat_type.dart';
 
@@ -25,8 +26,10 @@ extension ChatEngineFunctions on ChatEngine {
 /// The single seam deciding whether a native chat engine exists for
 /// [chatType]. The engine switch's visibility and every engine read go
 /// through here, so the future entitlement gate (and the auto-switch on
-/// login it brings) has exactly one call site to extend.
+/// login it brings) has exactly one call site to extend. None in the
+/// FOSS build ([kFoss]): the native engines are Pro.
 bool nativeChatAvailableFor(ChatType chatType) =>
-    chatType == ChatType.Twitch ||
-    chatType == ChatType.YouTube ||
-    chatType == ChatType.Kick;
+    !kFoss &&
+    (chatType == ChatType.Twitch ||
+        chatType == ChatType.YouTube ||
+        chatType == ChatType.Kick);

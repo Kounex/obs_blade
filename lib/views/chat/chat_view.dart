@@ -11,6 +11,7 @@ import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/pro_store.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
+import '../../utils/build_flavor.dart';
 import '../../utils/routing_helper.dart';
 import '../dashboard/widgets/obs_widgets/stream_chat/stream_chat.dart';
 import 'widgets/activity/activity_entry_points.dart';
@@ -24,7 +25,7 @@ import 'widgets/activity/activity_feed.dart';
 /// surface.
 ///
 /// Chat | Activity: a segment on phones; on tablets (Pro) both side by
-/// side.
+/// side. The FOSS build ([kFoss]) has no activity feed - just the chat.
 class ChatView extends StatelessWidget {
   const ChatView({super.key});
 
@@ -42,34 +43,41 @@ class ChatView extends StatelessWidget {
             /// glass tab bar
             bottom: tabBarBottomPadding(context),
           ),
-          child: ResponsiveWidgetWrapper(
-            mobileWidget: const Center(
-              child: BaseConstrainedBox(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: ChatTabSegments(),
-              ),
-            ),
-            tabletWidget: Observer(
-              builder: (context) => GetIt.instance<ProStore>().isPro
-                  ? const Center(
-                      child: BaseConstrainedBox(
-                        maxWidth: kWideContentMaxWidth,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                        ),
-                        child: ChatTabSideBySide(),
-                      ),
-                    )
-                  : const Center(
-                      child: BaseConstrainedBox(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                        ),
-                        child: ChatTabSegments(),
-                      ),
+          child: kFoss
+              ? const Center(
+                  child: BaseConstrainedBox(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                    child: StreamChat(),
+                  ),
+                )
+              : ResponsiveWidgetWrapper(
+                  mobileWidget: const Center(
+                    child: BaseConstrainedBox(
+                      padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      child: ChatTabSegments(),
                     ),
-            ),
-          ),
+                  ),
+                  tabletWidget: Observer(
+                    builder: (context) => GetIt.instance<ProStore>().isPro
+                        ? const Center(
+                            child: BaseConstrainedBox(
+                              maxWidth: kWideContentMaxWidth,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                              ),
+                              child: ChatTabSideBySide(),
+                            ),
+                          )
+                        : const Center(
+                            child: BaseConstrainedBox(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                              ),
+                              child: ChatTabSegments(),
+                            ),
+                          ),
+                  ),
+                ),
         ),
       ),
     );

@@ -7,6 +7,7 @@ import '../../../shared/general/base/divider.dart';
 import '../../../shared/general/enumeration_block/enumeration_block.dart';
 import '../../../shared/general/enumeration_block/enumeration_entry.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../utils/build_flavor.dart';
 import '../widgets/decorative_icon_tile.dart';
 import '../widgets/subpage_header.dart';
 import 'widgets/faq_block.dart';
@@ -113,22 +114,30 @@ class FAQView extends StatelessWidget {
                   FAQBlock(
                     heading: 'Which chats can I use?',
                     customBody: EnumerationBlock(
-                      title:
-                          'Chat has its own tab and also sits next to your controls while you\'re live. Two ways to show it:',
-                      entries: [
-                        'WebView (free): the Twitch, YouTube, Kick or Owncast chat page, embedded as-is',
-                        'Native (Pro): Twitch, Kick and YouTube chat built into the app - sign in to write and moderate, and combine them into one timeline',
-                        'Switch between the two with the WebView / Native toggle in the chat bar',
-                        'Native YouTube chat needs your own YouTube API key - the setup sheet in the chat walks you through it',
-                      ],
+                      /// FOSS ([kFoss]): WebView only, no Pro
+                      title: kFoss
+                          ? 'Chat has its own tab and also sits next to your controls while you\'re live:'
+                          : 'Chat has its own tab and also sits next to your controls while you\'re live. Two ways to show it:',
+                      entries: kFoss
+                          ? [
+                              'The Twitch, YouTube, Kick or Owncast chat page, embedded as-is',
+                              'Pick the platform and channel in the chat bar',
+                            ]
+                          : [
+                              'WebView (free): the Twitch, YouTube, Kick or Owncast chat page, embedded as-is',
+                              'Native (Pro): Twitch, Kick and YouTube chat built into the app - sign in to write and moderate, and combine them into one timeline',
+                              'Switch between the two with the WebView / Native toggle in the chat bar',
+                              'Native YouTube chat needs your own YouTube API key - the setup sheet in the chat walks you through it',
+                            ],
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xxl),
-                  FAQBlock(
-                    heading: 'What does OBS Blade Pro unlock?',
-                    text:
-                        'Every chat in one place - native Twitch, Kick and YouTube chat, on its own or combined, with emotes, badges and smarter chat tools. Never miss a supporter - an activity feed for your follows, subs, cheers, Super Chats and KICKs. Hear your chat read out loud, moderate from your pocket and design your own themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
-                  ),
+                  if (!kFoss) SizedBox(height: AppSpacing.xxl),
+                  if (!kFoss)
+                    FAQBlock(
+                      heading: 'What does OBS Blade Pro unlock?',
+                      text:
+                          'Every chat in one place - native Twitch, Kick and YouTube chat, on its own or combined, with emotes, badges and smarter chat tools. Never miss a supporter - an activity feed for your follows, subs, cheers, Super Chats and KICKs. Hear your chat read out loud, moderate from your pocket and design your own themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
+                    ),
                   SizedBox(height: AppSpacing.xxl),
                   FAQBlock(
                     heading: 'When will feature XY be available?',

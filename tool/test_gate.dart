@@ -22,6 +22,9 @@
 //   --verbose   stream the raw JSON reporter lines through
 //   --selftest  run the classifier against a canned transcript (no
 //               flutter invocation) and exit
+//   --dart-define=K=V
+//               passed through to flutter test (e.g. the FOSS UI tests:
+//               --dart-define=OBS_BLADE_FOSS=true test/foss/)
 //
 // The flutter binary is ~/flutter/bin/flutter when present, otherwise
 // `flutter` from PATH.
@@ -139,6 +142,10 @@ String flutterBinary() {
   return 'flutter';
 }
 
+/// `--dart-define=...` options from the command line, passed through to
+/// every `flutter test` invocation
+final List<String> dartDefines = [];
+
 /// One `flutter test -j 1 --reporter json` invocation, parsed live
 Future<GateRun> runFlutterTest(
   List<String> targets, {
@@ -151,6 +158,7 @@ Future<GateRun> runFlutterTest(
     '1',
     '--reporter',
     'json',
+    ...dartDefines,
     ...targets,
   ]);
 
@@ -398,13 +406,15 @@ Future<void> main(List<String> args) async {
       return;
     } else if (arg == '--verbose') {
       verbose = true;
+    } else if (arg.startsWith('--dart-define=')) {
+      dartDefines.add(arg);
     } else if (arg.startsWith('--runs=')) {
       runs = int.tryParse(arg.substring('--runs='.length)) ?? 1;
       if (runs < 1) runs = 1;
     } else if (arg == '-h' || arg == '--help') {
       print(
         'Usage: dart tool/test_gate.dart [--runs=N] [--verbose] '
-        '[--selftest] [test targets...]',
+        '[--selftest] [--dart-define=K=V ...] [test targets...]',
       );
       print(
         '  default target: test/  (exit 0 iff no real failures remain '

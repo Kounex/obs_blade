@@ -8,6 +8,7 @@ import '../../shared/general/hive_builder.dart';
 import '../../shared/general/themed/cupertino_sliver_navigation_bar.dart';
 import '../../types/enums/hive_keys.dart';
 import '../../types/enums/settings_keys.dart';
+import '../../utils/build_flavor.dart';
 import '../../utils/legal_links.dart';
 import '../../utils/wake_lock_helper.dart';
 import '../../utils/modal_handler.dart';
@@ -223,19 +224,21 @@ class SettingsView extends StatelessWidget {
                   child: ActionBlock(
                     title: 'Theme',
                     blockEntries: [
-                      BlockEntry(
-                        leading: CupertinoIcons.lab_flask_solid,
-                        title: 'Custom Theme',
-                        navigateTo: SettingsTabRoutingKeys.CustomTheme,
-                        navigateToResult: Text(
-                          settingsBox.get(
-                                SettingsKeys.CustomTheme.name,
-                                defaultValue: false,
-                              )
-                              ? 'Active'
-                              : 'Inactive',
+                      /// Custom themes are Pro - not in the FOSS build
+                      if (!kFoss)
+                        BlockEntry(
+                          leading: CupertinoIcons.lab_flask_solid,
+                          title: 'Custom Theme',
+                          navigateTo: SettingsTabRoutingKeys.CustomTheme,
+                          navigateToResult: Text(
+                            settingsBox.get(
+                                  SettingsKeys.CustomTheme.name,
+                                  defaultValue: false,
+                                )
+                                ? 'Active'
+                                : 'Inactive',
+                          ),
                         ),
-                      ),
                       BlockEntry(
                         leading: CupertinoIcons.moon_circle_fill,
                         leadingSize: 30.0,
@@ -367,31 +370,37 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     blockEntries: [
-                      BlockEntry(
-                        leading: CupertinoIcons.bolt_fill,
-                        title: 'OBS Blade Pro',
-                        navigateTo: SettingsTabRoutingKeys.Pro,
-                        navigateToResult: Text(
-                          (settingsBox.get(
-                                    SettingsKeys.BoughtPro.name,
-                                    defaultValue: false,
-                                  )
-                                  as bool)
-                              ? 'Active'
-                              : 'Inactive',
+                      if (!kFoss)
+                        BlockEntry(
+                          leading: CupertinoIcons.bolt_fill,
+                          title: 'OBS Blade Pro',
+                          navigateTo: SettingsTabRoutingKeys.Pro,
+                          navigateToResult: Text(
+                            (settingsBox.get(
+                                      SettingsKeys.BoughtPro.name,
+                                      defaultValue: false,
+                                    )
+                                    as bool)
+                                ? 'Active'
+                                : 'Inactive',
+                          ),
                         ),
-                      ),
                       BlockEntry(
                         leading: CupertinoIcons.gift_fill,
                         title: 'Tip Jar',
-                        onTap: () => ModalHandler.showBaseDialog(
-                          context: context,
-                          barrierDismissible: true,
-                          dialogWidget: const SupportDialog(
-                            title: 'Tips',
-                            icon: CupertinoIcons.gift_fill,
-                          ),
-                        ),
+
+                        /// FOSS: no in-app purchases - Buy Me a Coffee
+                        /// instead (opened like the legal pages)
+                        onTap: kFoss
+                            ? () => openLegalPage(context, kBuyMeACoffeeUri)
+                            : () => ModalHandler.showBaseDialog(
+                                context: context,
+                                barrierDismissible: true,
+                                dialogWidget: const SupportDialog(
+                                  title: 'Tips',
+                                  icon: CupertinoIcons.gift_fill,
+                                ),
+                              ),
                       ),
                     ],
                   ),

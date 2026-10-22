@@ -8,6 +8,7 @@ import '../models/enums/log_level.dart';
 import '../purchase_base.dart';
 import '../types/enums/hive_keys.dart';
 import '../types/enums/settings_keys.dart';
+import '../utils/build_flavor.dart';
 import '../utils/general_helper.dart';
 import '../utils/pro_ids.dart';
 import '../utils/pro_plan.dart';
@@ -61,10 +62,12 @@ abstract class _ProStore with Store {
   @observable
   bool debugOverride = false;
 
+  /// Never true in the FOSS build ([kFoss]) - Pro isn't part of it.
   @computed
   bool get isPro =>
-      this.boughtPro ||
-      ((kDebugMode || kProReleaseTestUnlock) && this.debugOverride);
+      !kFoss &&
+      (this.boughtPro ||
+          ((kDebugMode || kProReleaseTestUnlock) && this.debugOverride));
 
   /// Live store products for the paywall — empty while the products don't
   /// exist store-side (graceful placeholder state), loaded lazily via
@@ -112,6 +115,9 @@ abstract class _ProStore with Store {
         runInAction(() => this.debugOverride = event.value as bool? ?? false);
       }
     });
+
+    /// FOSS: no store, nothing to restore or fetch
+    if (kFoss) return;
 
     if (this._service.handlesEntitlement) {
       this._initRevenueCat();
