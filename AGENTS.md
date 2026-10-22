@@ -3,7 +3,7 @@
 Flutter remote for OBS Studio via **OBS WebSocket v5** (**iOS/Android — phone and
 tablet / large-screen first-party**). Great UI on both form factors is a product
 requirement, not an afterthought.
-Repo: `Kounex/obs_blade` (**public**) · branches: `master`, `redesign`, `foss`, `legacy`.
+Repo: `Kounex/obs_blade` (**public**) · branches: `master`, `redesign`, `legacy` (`foss` = retired 3.2.0 FOSS branch).
 
 > **Docs hygiene (public repo):** no credentials, personal absolute paths,
 > device IDs, or LAN/WAN addresses in tracked files. Write docs and tooling so
@@ -164,6 +164,12 @@ and **approved on both stores**; the app runs the **RevenueCat** path
 fallback. WebView chat stays free forever. Gate mechanics + wiring:
 [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md).
 
+**FOSS build (GitHub APK + F-Droid):** master with `kFoss` on - store
+SDKs stripped by `tool/foss/prepare.sh`, Pro left out (not locked).
+Released by tagging `foss-<version>`. A new store-SDK import needs a
+stand-in in `tool/foss/overlay/`; a new Pro surface must hide when
+`isPro` is false. Details: [`docs/foss-build.md`](docs/foss-build.md).
+
 ## Docs index
 
 | Doc | Use when |
@@ -185,6 +191,7 @@ fallback. WebView chat stays free forever. Gate mechanics + wiring:
 | [`docs/revenuecat-setup.md`](docs/revenuecat-setup.md) | Pro subscription: RevenueCat wiring, gate mechanics, sandbox dogfood |
 | [`docs/upgrade-plan.md`](docs/upgrade-plan.md) | Flutter / package upgrade status |
 | [`docs/persistence-risk.md`](docs/persistence-risk.md) | Hive CE, typeIds, shipping data safety |
+| [`docs/foss-build.md`](docs/foss-build.md) | FOSS build (GitHub APK + F-Droid): what's stripped, releasing via `foss-*` tags, signing, F-Droid recipe |
 | [`docs/release-playbook.md`](docs/release-playbook.md) | Store releases — versioning, release notes, TestFlight/Play internal → review → publish; entry points are the `release-beta` / `release-promote` / `release-direct` / `release-publish` skills in `.claude/skills/` |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | History of agent changes (not the handoff doc — that's current-state only) |
 | [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |

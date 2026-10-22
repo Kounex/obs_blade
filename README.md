@@ -82,7 +82,7 @@ Monthly, yearly or a one-time lifetime unlock.
 |---|---|
 | [App Store](https://apps.apple.com/app/obs-blade/id1523915884) | The current release for iPhone and iPad ![App Store version](https://img.shields.io/itunes/v/1523915884?label=&color=FF4654) |
 | [Google Play](https://play.google.com/store/apps/details?id=com.kounex.obsBlade) | The current release for Android phones and tablets |
-| [F-Droid](https://f-droid.org/packages/com.kounex.obsBlade/) · [GitHub Releases](https://github.com/Kounex/obs_blade/releases/latest) | An older open source build (3.2.0) from the [`foss`](https://github.com/Kounex/obs_blade/tree/foss) branch, without the features added since |
+| [F-Droid](https://f-droid.org/packages/com.kounex.obsBlade/) · [GitHub Releases](https://github.com/Kounex/obs_blade/releases/latest) | The open source build of the same release: no in-app purchases, without the Pro extras ([how it's built](docs/foss-build.md)). F-Droid follows a few days after GitHub. Coming from 3.2.0? Uninstall it first, the signing key changed |
 
 ## Preparation
 
@@ -117,7 +117,7 @@ Generated code (MobX stores, Hive adapters, freezed models) is checked in. If yo
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-**Branches:** `master` is the current app. `foss` builds the F-Droid version, and `legacy` keeps the old app for OBS WebSocket 4.x.
+**Branches:** `master` is the current app, and the open source build (F-Droid / GitHub APK) is built from it too ([`docs/foss-build.md`](docs/foss-build.md)). `legacy` keeps the old app for OBS WebSocket 4.x; `foss` is the retired 3.2.0 open source branch.
 
 **Contributing:** issues and pull requests are welcome. [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) explain the architecture, starting with [`docs/obs-websocket-architecture.md`](docs/obs-websocket-architecture.md).
 

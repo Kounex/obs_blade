@@ -5,7 +5,8 @@
 `lib/utils/revenuecat_config.dart`, and per-region pricing was re-applied to
 the live stores 2026-10. The app runs the RevenueCat path
 (`purchases_flutter`, entitlement `pro`); the legacy direct-IAP path remains
-as the key-less fallback (foss strip, dev platforms). This doc is now
+as the key-less fallback (dev platforms; the FOSS build has neither SDK,
+see `docs/foss-build.md`). This doc is now
 reference — what's wired, what to dogfood, and the gotchas.
 
 **Re-provisioning / price refreshes:** `tool/provisioning/` is idempotent —
@@ -64,8 +65,8 @@ chat up behind the locked pane). WebView chat stays free forever
 guarded `restorePurchases()` (legacy path) + explicit button. On the RC
 path, CustomerInfo entitlement state is the truth (lapsed subscriptions
 revoke — the direct-IAP blind spot is fixed); `BoughtPro` is the offline
-mirror. foss branch: strip this additively (same pattern as
-tips/blacksmith).
+mirror. FOSS build: `kFoss` keeps `isPro` false and
+`tool/foss/prepare.sh` strips both SDKs - see `docs/foss-build.md`.
 
 ## 1. Entitlement + offering (dashboard)
 
@@ -99,8 +100,7 @@ Apple key too.
 
 1. `flutter test test/pro/` — the backend-selection tests now pin the
    real-keys default (RevenueCat on iOS/Android/macOS, legacy on
-   key-less platforms like desktop/web — the foss strip's empty-keys
-   state).
+   key-less platforms like desktop/web).
 2. Sandbox dogfood (physical device, sandbox tester / license tester):
    - paywall now shows live prices (placeholder state replaced),
    - buy `pro_yearly` → confetti + entitlement → native chat unlocks
@@ -125,9 +125,9 @@ Apple key too.
   One image for all three products is fine; review-only, never public.
   The scheme ships WITHOUT the config attached so dogfood runs hit the
   real Apple sandbox.
-- **foss branch:** strip `purchases_flutter` alongside the existing IAP
-  strip — all RC code is additive; with empty keys the app never touches
-  the SDK.
+- **FOSS build:** `tool/foss/prepare.sh` strips `purchases_flutter` and
+  `in_app_purchase` and swaps in SDK-free stand-ins
+  (`docs/foss-build.md`).
 - Tips stay unchanged on direct `in_app_purchase` (`PurchaseBase`).
   Blacksmith is no longer sold — restore-only legacy on the same direct
   IAP stream (the paywall's Restore purchases fires the plugin restore
