@@ -5,7 +5,7 @@
 <h3 align="center">The open source remote for OBS Studio, on iPhone, iPad and Android.</h3>
 
 <p align="center">
-  <a href="https://apps.apple.com/app/obs-blade/id1523915884"><img src="docs/readme/badge-app-store.svg" alt="Download on the App Store" height="52"></a>&nbsp;
+  <a href="https://apps.apple.com/app/obs-blade/id1523915884"><img src="docs/readme/badge-app-store.svg" alt="Download on the App Store" height="48"></a>&nbsp;
   <a href="https://play.google.com/store/apps/details?id=com.kounex.obsBlade"><img src="docs/readme/badge-google-play.png" alt="Get it on Google Play" height="48"></a>&nbsp;
   <a href="https://f-droid.org/packages/com.kounex.obsBlade/"><img src="docs/readme/badge-f-droid.png" alt="Get it on F-Droid" height="48"></a>
 </p>
