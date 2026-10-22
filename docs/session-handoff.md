@@ -39,9 +39,11 @@ GitHub APK + F-Droid (`kFoss`, `tool/foss/prepare.sh`, Pro left out).
 of Gradle heap, fixed by 4G). F-Droid: **fdroiddata MR !53709**
 (branch `obs-blade-4.2.0` on the user's fork, made via the Commits API
 with `start_project` - the fork's master is from 2023 and GitLab's
-sync-fork doesn't apply a 54k-commit gap). Next: watch the MR pipeline
-(`fdroid build` = the reproducibility check against our APK) and the
-reviewers' comments; answer in the user's voice. Old 3.2.0 users must
+sync-fork doesn't apply a 54k-commit gap). MR pipeline **green**:
+F-Droid's build reproduced our GitHub APK byte for byte ("compared built
+binary to supplied reference binary successfully"). Next: answer F-Droid
+reviewers on !53709 in the user's voice; after merge + publish, check
+the F-Droid page. Old 3.2.0 users must
 uninstall first (key lost - changelog 2026-10-22). Not done: on-device
 check on a real Android phone (emulator only).
 

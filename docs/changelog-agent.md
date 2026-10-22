@@ -47,7 +47,10 @@ strip commit couldn't follow master. Now master builds the FOSS APK:
 - **Released:** `foss-4.2.0` on GitHub (Latest). The first tag build
   died in Jetifier with "Java heap space" (Gradle heap was the Flutter
   2.5 template's 1.5G) - raised to 4G, tag moved before anything was
-  published. F-Droid: fdroiddata MR !53709.
+  published. F-Droid: fdroiddata MR !53709 - pipeline green, F-Droid's
+  build matched our APK. First pipeline failed: F-Droid's build server
+  is Debian trixie (no OpenJDK 17 - now from bookworm, `JAVA_HOME` set)
+  and rewritemeta wants `ndk:` after `build:`.
 
 ## 2026-10-21 - 4.2.0 released (build 2026102003)
 
