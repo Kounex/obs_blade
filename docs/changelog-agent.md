@@ -51,6 +51,16 @@ strip commit couldn't follow master. Now master builds the FOSS APK:
   build matched our APK. First pipeline failed: F-Droid's build server
   is Debian trixie (no OpenJDK 17 - now from bookworm, `JAVA_HOME` set)
   and rewritemeta wants `ndk:` after `build:`.
+- **Review round 1 (!53709):** F-Droid enforces lockfiles - the strip
+  changes `pubspec.yaml`, so `pubspec-foss.lock` is committed and moved in
+  place by `prepare.sh` (regenerate: `prepare.sh lock`; the `foss` CI job
+  runs `lock --check`; the release workflow uses `--enforce-lockfile`).
+  Recipe: `commit:` as a hash (`9722799a`, the lockfile commit - not the
+  tag, which stays put; rebuilt APK byte-identical to the released one),
+  3.2.0 disabled, old signing key removed. The reviewer noted 3.2.0 users
+  never see the changelog (no update offered across signers; client 2.0
+  lists it under Issues), so the uninstall-first note is also a line in
+  the F-Droid description.
 
 ## 2026-10-21 - 4.2.0 released (build 2026102003)
 

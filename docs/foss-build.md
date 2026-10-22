@@ -134,8 +134,9 @@ the same:
 
 `metadata/com.kounex.obsBlade.yml` in
 [fdroiddata](https://gitlab.com/fdroid/fdroiddata), updated by a merge
-request. Draft for 4.2.0 (keep the 3.2.0 build entry above it;
-`AllowedAPKSigningKeys` is the FOSS key's certificate):
+request. The 4.2.0 entry as in the MR (the 3.2.0 entry above it stays, with
+`disable: signed with a lost key, replaced by 4.2.0`; `AllowedAPKSigningKeys`
+is the FOSS key's certificate):
 
 ```yaml
 Donate: https://www.buymeacoffee.com/Kounex
@@ -143,7 +144,7 @@ Donate: https://www.buymeacoffee.com/Kounex
 Builds:
   - versionName: 4.2.0
     versionCode: 2026102003
-    commit: foss-4.2.0
+    commit: 9722799a9b4f164b1bf5300d382c24c63f27c006
     submodules: true
     sudo:
       - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
@@ -165,7 +166,7 @@ Builds:
       - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
       - tool/foss/prepare.sh
       - .flutter/bin/flutter config --no-analytics
-      - .flutter/bin/flutter pub get
+      - .flutter/bin/flutter pub get --enforce-lockfile
       - popd
       - mv /tmp/build com.kounex.obsBlade
     scanignore:
@@ -185,9 +186,7 @@ Builds:
       - mv /tmp/build com.kounex.obsBlade
     ndk: 27.0.12077973
 
-AllowedAPKSigningKeys:
-  - 9183c56b5518a3215d18c0fe9e244d64a1a94917dd4df86019c46ad7a7f03ac1
-  - dacd5fe5e0e07a61ead879829101c36d664e56c5af269f6e9789e102c64a4c19
+AllowedAPKSigningKeys: dacd5fe5e0e07a61ead879829101c36d664e56c5af269f6e9789e102c64a4c19
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^foss-
@@ -197,8 +196,12 @@ CurrentVersionCode: 2026102003
 ```
 
 Submitted as [fdroiddata !53709](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/53709)
-(2026-10-22; the old key stays listed so the 3.2.0 entry still
-verifies). Later versions need no merge request: checkupdates sees the
+(2026-10-22). Review asked for: `--enforce-lockfile` (hence
+`pubspec-foss.lock`), a commit hash instead of the tag, and `disable` on
+3.2.0 (so the old key is gone from the list). `commit` is the master
+commit that added `pubspec-foss.lock`, one after the `foss-4.2.0` tag -
+same app code and dependencies, so its APK equals the published
+`foss-4.2.0` one. Later versions need no merge request: checkupdates sees the
 next `foss-*` tag and copies the last build entry. Only a recipe change
 (new prebuild step, JDK / NDK bump) needs one. Maintainer note: the
 `Kounex/fdroiddata` fork's master is years behind and GitLab's

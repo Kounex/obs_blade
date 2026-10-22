@@ -41,10 +41,15 @@ of Gradle heap, fixed by 4G). F-Droid: **fdroiddata MR !53709**
 with `start_project` - the fork's master is from 2023 and GitLab's
 sync-fork doesn't apply a 54k-commit gap). MR pipeline **green**:
 F-Droid's build reproduced our GitHub APK byte for byte ("compared built
-binary to supplied reference binary successfully"). Next: answer F-Droid
-reviewers on !53709 in the user's voice; after merge + publish, check
-the F-Droid page. Old 3.2.0 users must
-uninstall first (key lost - changelog 2026-10-22). Not done: on-device
+binary to supplied reference binary successfully"). Review round 1
+(licaon-kter) done: `--enforce-lockfile` -> committed `pubspec-foss.lock`
+(`prepare.sh lock`, CI `lock --check`), `commit:` is now the hash
+`9722799a` (one commit after the tag, APK byte-identical `13ee8eb4`, tag
+NOT moved), 3.2.0 `disable`d, old key dropped. Next: further review
+replies in the user's voice; after merge + publish, check the F-Droid
+page. Old 3.2.0 users must uninstall first (key lost) - the F-Droid
+client won't offer the update across signers, so the note is in the
+listing description, not only the changelog. Not done: on-device
 check on a real Android phone (emulator only).
 
 **Watch:** crash reports + reviews for 4.2.0 (new: preview
