@@ -102,7 +102,7 @@ the same:
 - **path:** source at `/tmp/build`, `PUB_CACHE=/tmp/build/.pub-cache`
 - **Flutter:** the `.flutter` submodule (bump it together with the
   maintainer machines' SDK; the recipe needs no edit)
-- **JDK 17**, NDK `28.2.13676358` (Flutter 3.47.2's `flutter.ndkVersion`)
+- **JDK 17**, NDK `27.0.12077973` (pinned in `android/app/build.gradle`)
 - **no dependency metadata** in the APK (`dependenciesInfo` in
   `android/app/build.gradle`)
 
@@ -110,8 +110,8 @@ the same:
 
 `metadata/com.kounex.obsBlade.yml` in
 [fdroiddata](https://gitlab.com/fdroid/fdroiddata), updated by a merge
-request. Draft for 4.2.0 (keep the 3.2.0 build entry above it; put the
-real certificate hash in `AllowedAPKSigningKeys`):
+request. Draft for 4.2.0 (keep the 3.2.0 build entry above it;
+`AllowedAPKSigningKeys` is the FOSS key's certificate):
 
 ```yaml
 Donate: https://www.buymeacoffee.com/Kounex
@@ -148,7 +148,7 @@ Builds:
     scandelete:
       - .flutter
       - .pub-cache
-    ndk: 28.2.13676358
+    ndk: 27.0.12077973
     build:
       - cd ..
       - mv com.kounex.obsBlade /tmp/build
@@ -158,7 +158,7 @@ Builds:
       - popd
       - mv /tmp/build com.kounex.obsBlade
 
-AllowedAPKSigningKeys: <sha256 of the FOSS signing certificate>
+AllowedAPKSigningKeys: dacd5fe5e0e07a61ead879829101c36d664e56c5af269f6e9789e102c64a4c19
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^foss-

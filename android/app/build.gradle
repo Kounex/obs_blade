@@ -32,6 +32,11 @@ android {
     namespace "com.kounex.obsBlade"
     compileSdkVersion flutter.compileSdkVersion
 
+    // Pinned (AGP 8.11's default): native libs are stripped with it, so the
+    // FOSS APK only builds reproducibly (F-Droid) when CI and F-Droid use
+    // the same NDK - keep docs/foss-build.md's recipe in step
+    ndkVersion "27.0.12077973"
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
