@@ -32,6 +32,18 @@ hotkey): answer drafted in the 2026-10-17 session; the user sends it.
 The Pro customer who ran out of YouTube quota: no mail from us (user's
 call); 4.2 cuts their chat to ~1,700 units/h.
 
+**FOSS build (2026-10-22, `docs/foss-build.md`):** master builds the
+GitHub APK + F-Droid now (`kFoss`, `tool/foss/prepare.sh`, Pro left
+out). Done: code, CI (`foss-release.yml`), new FOSS key + Actions
+secrets, F-Droid listing in `fastlane/metadata/android/` (Play listing
+moved to `fastlane/metadata/play/`). Next, in order:
+1. push master, run Actions -> FOSS release manually (build + verify
+   only), install the artifact APK on an Android device (device check);
+2. on the user's OK: tag + push `foss-4.2.0` -> GitHub release;
+3. fdroiddata merge request with the recipe from `docs/foss-build.md`
+   (user's GitLab account; mention the lost 3.2.0 key).
+Old 3.2.0 users must uninstall first (key lost - changelog 2026-10-22).
+
 **Watch:** crash reports + reviews for 4.2.0 (new: preview
 transitions, combined chat Save / Delete - build 5 had no device check;
 Kick chat complaints should stop). Kick's web client prefers Centrifugo now - if

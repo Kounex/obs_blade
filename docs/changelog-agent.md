@@ -4,6 +4,47 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-10-22 - FOSS build revived from master (GitHub APK + F-Droid)
+
+The `foss` branch (3.2.0, May 2023) was 1,150 commits behind and its
+strip commit couldn't follow master. Now master builds the FOSS APK:
+`docs/foss-build.md`.
+
+- **Audit:** only `in_app_purchase` (Play Billing 8.0) and
+  `purchases_flutter` (RevenueCat on Play Billing) are non-free; every
+  other Android plugin is clean (QR scanner = ZXing). Six `lib/` files
+  import them. Every Pro surface already sat behind `ProStore.isPro`.
+- **Signing key lost:** 3.2.0 (GitHub + F-Droid, reproducible) was signed
+  by the CI runner's throwaway debug key (`CN=Android Debug`,
+  `9183c56b…`); no copy on the Mac, NAS, MEGA or NASync. 3.2.0 users
+  have to uninstall + reinstall. New dedicated FOSS key (`dacd5fe5…`),
+  backup locations in `docs/private/maintainer-runbooks.md`.
+- **Build:** `kFoss` (`lib/utils/build_flavor.dart`); `tool/foss/prepare.sh`
+  strips both SDKs and swaps in stand-ins from `tool/foss/overlay/`,
+  `verify` checks lockfile + APK dex. Pro left out, not locked (user's
+  call): no native engines / Combined / activity / TTS / custom themes /
+  Pro row; Tip Jar opens Buy Me a Coffee; FAQ without Pro.
+- **Release:** tag `foss-<version>` -> `foss-release.yml` (F-Droid's
+  layout: `/tmp/build`, `.flutter` submodule at 3.47.2, JDK 17, NDK
+  `27.0.12077973` now pinned - it was AGP's default, Flutter's own 28.2
+  isn't used). APKs drop Google's dependency-metadata block.
+  `flutter-analyze.yml` failed on every push (unpinned SDK, warnings
+  fatal): pinned, errors-only, plus a FOSS job.
+- **Listing:** fdroidserver reads `fastlane/metadata/android/` of the
+  tag and merges screenshots across locations (checked in
+  `fdroidserver/update.py`), so the Play listing (Pro copy + Combined /
+  native-chat / themes shots) moved to `fastlane/metadata/play/`
+  (`release.yaml`, release-promote, playbook, store-shots project);
+  `fastlane/metadata/android/` is the FOSS listing (shots 2, 3, 5 of the
+  Play set - the others show Pro).
+- **Verified:** FOSS UI tests (`--dart-define=OBS_BLADE_FOSS=true
+  test/foss/`), regular Pro/chat/settings/activity suites (293), FOSS
+  tree `analyze lib` (same 5 warnings as master, 0 errors), widget shots
+  (`foss_shots_test.dart`), MacBook build in F-Droid's layout (unsigned,
+  signing stripped like fdroidserver's `remove_signing_keys`): 76 MB,
+  no billing / RevenueCat classes, permissions INTERNET / network /
+  Wi-Fi state / CAMERA, two clean builds byte-identical.
+
 ## 2026-10-21 - 4.2.0 released (build 2026102003)
 
 - **iOS:** approved, `release publish ios` -> `READY_FOR_SALE` (no
