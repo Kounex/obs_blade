@@ -150,7 +150,7 @@ Builds:
       - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
       - apt-get update
       - apt-get install -y -t bookworm openjdk-17-jdk-headless
-      - update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+      - update-java-alternatives -s java-1.17.0-openjdk-amd64
     output: build/app/outputs/flutter-apk/app-release.apk
     rm:
       - ios
