@@ -78,7 +78,9 @@ verifies without releasing; the APK is a workflow artifact.
 
 fdroidserver **merges** screenshots from every metadata location by file
 name, so an override can't remove a Pro screenshot - keep Pro images out
-of `fastlane/metadata/android/` entirely.
+of `fastlane/metadata/android/` entirely. That includes the feature
+graphic: the Play one shows the native combined chat, so the F-Droid
+listing has none (optional there) until a FOSS one exists.
 
 ## Signing
 
