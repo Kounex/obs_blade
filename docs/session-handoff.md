@@ -37,8 +37,9 @@ GitHub APK + F-Droid now (`kFoss`, `tool/foss/prepare.sh`, Pro left
 out). Done: code, CI (`foss-release.yml`), new FOSS key + Actions
 secrets, F-Droid listing in `fastlane/metadata/android/` (Play listing
 moved to `fastlane/metadata/play/`). Next, in order:
-1. push master, run Actions -> FOSS release manually (build + verify
-   only), install the artifact APK on an Android device (device check);
+1. device check on a real Android phone: the APK artifact of manual run
+   `39752867965` (signed with the FOSS key, verified; it already ran on
+   the read-only emulator - home, chat, settings, Tip Jar);
 2. on the user's OK: tag + push `foss-4.2.0` -> GitHub release;
 3. fdroiddata merge request with the recipe from `docs/foss-build.md`
    (user's GitLab account; mention the lost 3.2.0 key).
