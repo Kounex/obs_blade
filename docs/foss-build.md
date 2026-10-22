@@ -28,6 +28,7 @@ Every other Pro surface already hides when `isPro` is false.
 throwaway tree):
 
 1. drops `in_app_purchase` and `purchases_flutter` from `pubspec.yaml`
+   and moves `pubspec-foss.lock` over `pubspec.lock` (see Lockfile)
 2. turns `kFoss` into a plain `true` (no `--dart-define` to forget)
 3. copies `tool/foss/overlay/lib/**` over `lib/`: SDK-free stand-ins for
    `purchase_base.dart`, `utils/pro_purchase_service.dart` and the Tip Jar
@@ -38,6 +39,18 @@ throwaway tree):
 `tool/foss/prepare.sh verify` (after the build) fails if `pubspec.lock`
 still resolves a store SDK or the APK's dex holds Play Billing /
 RevenueCat classes.
+
+## Lockfile
+
+F-Droid builds with `flutter pub get --enforce-lockfile` (reviewer
+requirement, MR !53709), and the stripped `pubspec.yaml` no longer
+matches `pubspec.lock`. So `pubspec-foss.lock` is committed: the same
+lock without the store packages, as pub resolves it.
+`tool/foss/prepare.sh lock` regenerates it (needs a Flutter SDK - the
+`.flutter` submodule or `flutter` on PATH); **do that and commit it with
+every `pubspec.yaml` / `pubspec.lock` change**. The `foss` CI job runs
+`prepare.sh lock --check` and fails while it's stale, and the release
+workflow builds with `--enforce-lockfile` too, like F-Droid.
 
 **When master adds a store-SDK import**, the `foss` job in
 `.github/workflows/flutter-analyze.yml` fails: give the file a stand-in in
@@ -55,14 +68,19 @@ Without the define those tests skip.
 ## Releasing
 
 1. The version is master's `pubspec.yaml` version (same as the stores).
-2. Write `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
+2. `pubspec-foss.lock` is current (`tool/foss/prepare.sh lock --check`;
+   the `foss` CI job on master is green).
+3. Write `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`
    (F-Droid's "What's new" and the GitHub release notes, max 500 chars;
    no Pro features).
-3. Tag and push: `git tag foss-<version> && git push origin foss-<version>`.
-4. `.github/workflows/foss-release.yml` builds, verifies and publishes the
+4. Tag and push: `git tag foss-<version> && git push origin foss-<version>`.
+   Never move a published `foss-*` tag (F-Droid pins commit hashes for
+   exactly that reason) - fix forward with the next version.
+5. `.github/workflows/foss-release.yml` builds, verifies and publishes the
    GitHub release `foss-<version>` with `obs-blade-foss-<version>.apk`.
-5. F-Droid's checkupdates picks the `foss-*` tag up on its own, builds it
-   from source and publishes our APK if the builds match.
+6. F-Droid's checkupdates picks the `foss-*` tag up on its own (writing
+   the tag's commit hash into the new build entry), builds it from source
+   and publishes our APK if the builds match.
 
 A manual run of the workflow (Actions → FOSS release → Run) builds and
 verifies without releasing; the APK is a workflow artifact.

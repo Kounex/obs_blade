@@ -38,9 +38,13 @@ jobs:
         run: |
           .flutter/bin/flutter pub get
           .flutter/bin/flutter test --dart-define=OBS_BLADE_FOSS=true test/foss/
+      # F-Droid builds with --enforce-lockfile: pubspec-foss.lock has to
+      # follow every pubspec.yaml / pubspec.lock change
+      - name: pubspec-foss.lock up to date
+        run: tool/foss/prepare.sh lock --check
       - name: Strip the store SDKs
         run: tool/foss/prepare.sh
       - name: Analyze the FOSS tree
         run: |
-          .flutter/bin/flutter pub get
+          .flutter/bin/flutter pub get --enforce-lockfile
           .flutter/bin/flutter analyze lib --no-fatal-infos --no-fatal-warnings

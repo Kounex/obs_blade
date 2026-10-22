@@ -20,3 +20,5 @@ Built for phone and tablet alike. Needs OBS Studio 28 or newer (OBS WebSocket 5 
 This is the open source build: no in-app purchases, no tracking. The App Store / Google Play version additionally sells "Pro" extras (native chat engines, activity feed, chat read aloud, custom themes) - those aren't part of this build.
 
 Got a bug, an idea or a feature request? Get in touch - on GitHub or at contact@kounex.com
+
+Coming from 3.2.0? Uninstall it first - the signing key changed, so Android won't update it in place.

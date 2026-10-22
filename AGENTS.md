@@ -168,7 +168,9 @@ fallback. WebView chat stays free forever. Gate mechanics + wiring:
 SDKs stripped by `tool/foss/prepare.sh`, Pro left out (not locked).
 Released by tagging `foss-<version>`. A new store-SDK import needs a
 stand-in in `tool/foss/overlay/`; a new Pro surface must hide when
-`isPro` is false. Details: [`docs/foss-build.md`](docs/foss-build.md).
+`isPro` is false; any `pubspec.yaml` / `pubspec.lock` change needs
+`tool/foss/prepare.sh lock` (commits `pubspec-foss.lock`, F-Droid
+enforces it). Details: [`docs/foss-build.md`](docs/foss-build.md).
 
 ## Docs index
 

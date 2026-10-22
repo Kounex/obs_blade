@@ -64,7 +64,7 @@ jobs:
         working-directory: /tmp/build
         run: |
           .flutter/bin/flutter config --no-analytics
-          .flutter/bin/flutter pub get
+          .flutter/bin/flutter pub get --enforce-lockfile
 
       - name: Signing key
         working-directory: /tmp/build

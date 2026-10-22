@@ -2,8 +2,15 @@
 # Turns this checkout into the FOSS build (GitHub APK + F-Droid) - see
 # docs/foss-build.md. Run from anywhere, before `flutter pub get`:
 #
-#   tool/foss/prepare.sh          # strip the store SDKs, switch kFoss on
-#   tool/foss/prepare.sh verify   # after the build: lockfile + APK check
+#   tool/foss/prepare.sh              # strip the store SDKs, switch kFoss on
+#   tool/foss/prepare.sh verify       # after the build: lockfile + APK check
+#   tool/foss/prepare.sh lock         # regenerate pubspec-foss.lock
+#   tool/foss/prepare.sh lock --check # fail if pubspec-foss.lock is stale
+#
+# pubspec-foss.lock is pubspec.lock as pub resolves it without the store
+# SDKs. F-Droid builds with `pub get --enforce-lockfile`, so it is
+# committed and moved in place here; regenerate it whenever pubspec.yaml or
+# pubspec.lock change (the FOSS CI job fails until you do).
 #
 # It REWRITES tracked files (pubspec.yaml, lib/...). Use a throwaway
 # checkout (CI, F-Droid's build server) or `git checkout . && git clean -fd
@@ -31,6 +38,40 @@ edit() {
   sed "$@" "$file" >"$file.foss" && mv "$file.foss" "$file"
 }
 
+# The store SDKs out of a pubspec.yaml (and the comment line above
+# in_app_purchase)
+strip_pubspec() {
+  edit "$1" -E \
+    -e '/^  # Enable and manage in-app purchases$/d' \
+    -e "/^  ($STORE_PACKAGES):/d"
+  if grep -qE "^  ($STORE_PACKAGES):" "$1"; then
+    fail "$1 still lists a store SDK"
+  fi
+}
+
+# Resolves the stripped pubspec against pubspec.lock in a scratch dir -
+# pub only drops the store packages, every other version stays as locked
+lock() {
+  local flutter="$REPO_ROOT/.flutter/bin/flutter"
+  [ -x "$flutter" ] || flutter="flutter"
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  cp pubspec.yaml pubspec.lock "$tmp/"
+  strip_pubspec "$tmp/pubspec.yaml"
+  (cd "$tmp" && "$flutter" pub get >/dev/null) ||
+    fail "pub get failed for the stripped pubspec"
+  if [ "${1:-}" = "--check" ]; then
+    if ! diff -u pubspec-foss.lock "$tmp/pubspec.lock"; then
+      fail "pubspec-foss.lock is stale - run tool/foss/prepare.sh lock and commit it"
+    fi
+    echo "foss: pubspec-foss.lock is up to date"
+  else
+    cp "$tmp/pubspec.lock" pubspec-foss.lock
+    echo "foss: wrote pubspec-foss.lock"
+  fi
+}
+
 verify() {
   if grep -qE "^  ($STORE_PACKAGES):" pubspec.lock; then
     fail "pubspec.lock still resolves a store SDK - run prepare before pub get"
@@ -47,15 +88,21 @@ verify() {
   echo "foss: $apk is free of store SDKs"
 }
 
-if [ "${1:-}" = "verify" ]; then
-  verify "${2:-}"
-  exit 0
-fi
+case "${1:-}" in
+  verify)
+    verify "${2:-}"
+    exit 0
+    ;;
+  lock)
+    lock "${2:-}"
+    exit 0
+    ;;
+esac
 
-# 1. Dependencies (and the comment line above in_app_purchase)
-edit pubspec.yaml -E \
-  -e '/^  # Enable and manage in-app purchases$/d' \
-  -e "/^  ($STORE_PACKAGES):/d"
+# 1. Dependencies, and the matching lockfile
+[ -f pubspec-foss.lock ] || fail "pubspec-foss.lock missing - run tool/foss/prepare.sh lock"
+strip_pubspec pubspec.yaml
+cp pubspec-foss.lock pubspec.lock
 
 # 2. kFoss on, without relying on a --dart-define
 edit lib/utils/build_flavor.dart \
@@ -76,8 +123,5 @@ rm -f \
 if left="$(grep -rlE "package:($STORE_PACKAGES)/" lib)"; then
   fail "still importing a store SDK: $left"
 fi
-if grep -qE "^  ($STORE_PACKAGES):" pubspec.yaml; then
-  fail "pubspec.yaml still lists a store SDK"
-fi
 
-echo "foss: tree prepared - next: flutter pub get && flutter build apk"
+echo "foss: tree prepared - next: flutter pub get --enforce-lockfile && flutter build apk"
