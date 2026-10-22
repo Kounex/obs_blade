@@ -21,7 +21,9 @@ jobs:
         run: git submodule update --init .flutter
       - run: .flutter/bin/flutter config --no-analytics
       - run: .flutter/bin/flutter pub get
-      - run: .flutter/bin/flutter analyze --no-fatal-infos --no-fatal-warnings
+      # The app only: tool/* holds standalone Dart packages with their
+      # own pubspecs (not resolved here)
+      - run: .flutter/bin/flutter analyze --no-fatal-infos --no-fatal-warnings lib test integration_test
 
   # The FOSS build (docs/foss-build.md) must keep compiling: a new store
   # SDK import on master needs a stand-in in tool/foss/overlay/
