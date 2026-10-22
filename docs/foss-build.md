@@ -104,7 +104,11 @@ the same:
 - **path:** source at `/tmp/build`, `PUB_CACHE=/tmp/build/.pub-cache`
 - **Flutter:** the `.flutter` submodule (bump it together with the
   maintainer machines' SDK; the recipe needs no edit)
-- **JDK 17**, NDK `27.0.12077973` (pinned in `android/app/build.gradle`)
+- **JDK 17**, NDK `27.0.12077973` (pinned in `android/app/build.gradle`).
+  F-Droid's build server is Debian trixie, which has no OpenJDK 17: the
+  recipe installs it from bookworm and sets `JAVA_HOME` - moving to a
+  newer JDK means changing CI and the recipe together (javac output can
+  differ between JDKs)
 - **no dependency metadata** in the APK (`dependenciesInfo` in
   `android/app/build.gradle`)
 
@@ -124,9 +128,10 @@ Builds:
     commit: foss-4.2.0
     submodules: true
     sudo:
+      - echo "deb https://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/bookworm.list
       - apt-get update
-      - apt-get install -y openjdk-17-jdk-headless
-      - update-alternatives --auto java
+      - apt-get install -y -t bookworm openjdk-17-jdk-headless
+      - update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
     output: build/app/outputs/flutter-apk/app-release.apk
     rm:
       - ios
@@ -139,6 +144,7 @@ Builds:
       - mv com.kounex.obsBlade /tmp/build
       - pushd /tmp/build
       - export PUB_CACHE=$(pwd)/.pub-cache
+      - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
       - tool/foss/prepare.sh
       - .flutter/bin/flutter config --no-analytics
       - .flutter/bin/flutter pub get
@@ -150,15 +156,16 @@ Builds:
     scandelete:
       - .flutter
       - .pub-cache
-    ndk: 27.0.12077973
     build:
       - cd ..
       - mv com.kounex.obsBlade /tmp/build
       - pushd /tmp/build
       - export PUB_CACHE=$(pwd)/.pub-cache
+      - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
       - .flutter/bin/flutter build apk --release
       - popd
       - mv /tmp/build com.kounex.obsBlade
+    ndk: 27.0.12077973
 
 AllowedAPKSigningKeys:
   - 9183c56b5518a3215d18c0fe9e244d64a1a94917dd4df86019c46ad7a7f03ac1
