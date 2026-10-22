@@ -160,7 +160,9 @@ Builds:
       - popd
       - mv /tmp/build com.kounex.obsBlade
 
-AllowedAPKSigningKeys: dacd5fe5e0e07a61ead879829101c36d664e56c5af269f6e9789e102c64a4c19
+AllowedAPKSigningKeys:
+  - 9183c56b5518a3215d18c0fe9e244d64a1a94917dd4df86019c46ad7a7f03ac1
+  - dacd5fe5e0e07a61ead879829101c36d664e56c5af269f6e9789e102c64a4c19
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^foss-
@@ -168,6 +170,16 @@ UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
 CurrentVersion: 4.2.0
 CurrentVersionCode: 2026102003
 ```
+
+Submitted as [fdroiddata !53709](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/53709)
+(2026-10-22; the old key stays listed so the 3.2.0 entry still
+verifies). Later versions need no merge request: checkupdates sees the
+next `foss-*` tag and copies the last build entry. Only a recipe change
+(new prebuild step, JDK / NDK bump) needs one. Maintainer note: the
+`Kounex/fdroiddata` fork's master is years behind and GitLab's
+sync-fork doesn't apply that gap - create the branch with the Commits
+API instead (`POST projects/<fork>/repository/commits` with
+`start_project: fdroid/fdroiddata`, `start_branch: master`).
 
 Changes from the 3.2.0 recipe: `tool/foss/prepare.sh` in prebuild, no
 `build_runner` (generated code is committed), JDK 17 + NDK pinned,
