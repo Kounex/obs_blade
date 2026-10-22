@@ -33,17 +33,17 @@ The Pro customer who ran out of YouTube quota: no mail from us (user's
 call); 4.2 cuts their chat to ~1,700 units/h.
 
 **FOSS build (2026-10-22, `docs/foss-build.md`):** master builds the
-GitHub APK + F-Droid now (`kFoss`, `tool/foss/prepare.sh`, Pro left
-out). Done: code, CI (`foss-release.yml`), new FOSS key + Actions
-secrets, F-Droid listing in `fastlane/metadata/android/` (Play listing
-moved to `fastlane/metadata/play/`). Next, in order:
-1. device check on a real Android phone: the APK artifact of manual run
-   `39752867965` (signed with the FOSS key, verified; it already ran on
-   the read-only emulator - home, chat, settings, Tip Jar);
-2. on the user's OK: tag + push `foss-4.2.0` -> GitHub release;
-3. fdroiddata merge request with the recipe from `docs/foss-build.md`
-   (user's GitLab account; mention the lost 3.2.0 key).
-Old 3.2.0 users must uninstall first (key lost - changelog 2026-10-22).
+GitHub APK + F-Droid (`kFoss`, `tool/foss/prepare.sh`, Pro left out).
+**`foss-4.2.0` is live on GitHub Releases** (Latest; tag on `e0edf45c`
+- moved once before anything was published: the first tag build ran out
+of Gradle heap, fixed by 4G). F-Droid: **fdroiddata MR !53709**
+(branch `obs-blade-4.2.0` on the user's fork, made via the Commits API
+with `start_project` - the fork's master is from 2023 and GitLab's
+sync-fork doesn't apply a 54k-commit gap). Next: watch the MR pipeline
+(`fdroid build` = the reproducibility check against our APK) and the
+reviewers' comments; answer in the user's voice. Old 3.2.0 users must
+uninstall first (key lost - changelog 2026-10-22). Not done: on-device
+check on a real Android phone (emulator only).
 
 **Watch:** crash reports + reviews for 4.2.0 (new: preview
 transitions, combined chat Save / Delete - build 5 had no device check;
