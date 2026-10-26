@@ -30,5 +30,5 @@ podman build --target test .
 ```
 
 Deploy (maintainer host details: `it-env` `docs/machines/hetzner.md`):
-build `localhost/kick-events:<version>` (semver, bumped on every rebuild, matching `Image=` in the Quadlet; `1.0.0` as of 2026-10-08), install `kick-events.container`
+the image is built and published by GitHub Actions (`.github/workflows/image-kick-events.yml`, runs the `test` stage first) as `ghcr.io/kounex/kick-events:<semver>`; every push touching this folder publishes the next patch. Install `kick-events.container`
 as a quadlet, data volume `/var/lib/kick-events` owned by uid 65531.
