@@ -52,7 +52,9 @@ jobs:
         if: >-
           steps.meta.outputs.package-ecosystem != 'github_actions' && (
             steps.meta.outputs.update-type == 'version-update:semver-patch' ||
-            contains(github.event.pull_request.head.ref, '/patches-') || (
+            contains(github.event.pull_request.head.ref, '/patches-') ||
+            (steps.meta.outputs.dependency-names == 'node' &&
+             steps.meta.outputs.update-type == 'version-update:semver-minor') || (
               steps.meta.outputs.package-ecosystem == 'docker' &&
               steps.meta.outputs.new-version != '' &&
               steps.meta.outputs.previous-version == steps.meta.outputs.new-version))
