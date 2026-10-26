@@ -106,6 +106,11 @@ jobs:
           file: ${{ inputs.file || format('{0}/Dockerfile', inputs.context) }}
           push: ${{ inputs.push }}
           tags: ghcr.io/kounex/${{ inputs.image }}:${{ steps.v.outputs.version }}
+          # A Dockerfile can declare `ARG BUILD_DATE` right before a step that
+          # must refetch on every publish (stem-studio's yt-dlp download); the
+          # layers above it stay cached.
+          build-args: |
+            BUILD_DATE=${{ github.run_id }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.title=${{ inputs.image }}
