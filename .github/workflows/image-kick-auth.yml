@@ -1,0 +1,62 @@
+# From it-env/templates/container-image/image-caller.example.yml (see its README).
+name: image kick-auth
+
+on:
+  push:
+    branches: [master]
+    paths: ["tool/kick_auth_proxy/**"]
+  pull_request:
+    paths: ["tool/kick_auth_proxy/**", ".github/workflows/**"]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version step
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: image-kick-auth-${{ github.event.pull_request.number || 'publish' }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-image.yml
+    with:
+      image: kick-auth
+      context: tool/kick_auth_proxy
+      tag_prefix: kick-auth-v
+      bump: ${{ inputs.bump || 'patch' }}
+      push: ${{ github.event_name != 'pull_request' }}
+      file: tool/kick_auth_proxy/Containerfile
+      release: false
+
+  automerge:
+    needs: build
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v3
+      - name: Merge patch / digest-only bumps and publish
+        # Only a real semver-patch, or a Docker bump whose tag stayed the same
+        # (digest-only = upstream rebuilt the base). Grouped PRs report no
+        # update-type at all, so they never qualify and wait for a human.
+        if: >-
+          steps.meta.outputs.package-ecosystem != 'github_actions' && (
+            steps.meta.outputs.update-type == 'version-update:semver-patch' || (
+              steps.meta.outputs.package-ecosystem == 'docker' &&
+              steps.meta.outputs.new-version != '' &&
+              steps.meta.outputs.previous-version == steps.meta.outputs.new-version))
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr merge "$PR" --squash --delete-branch
+          gh workflow run image-kick-auth.yml --ref "${{ github.event.repository.default_branch }}" -R "$GITHUB_REPOSITORY"

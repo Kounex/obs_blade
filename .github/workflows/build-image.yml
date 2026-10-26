@@ -1,0 +1,141 @@
+# Reusable workflow: next version -> build -> push to GHCR -> git tag -> release.
+#
+# Canonical copy: it-env/templates/container-image/build-image.yml. Every repo
+# that publishes our own images carries an identical copy at
+# .github/workflows/build-image.yml; change it here first, then copy it over.
+#
+# The version comes from the repo's git tags: the newest `<tag_prefix>X.Y.Z`
+# plus one `bump` step. The image is pushed as ghcr.io/kounex/<image>:X.Y.Z,
+# the commit is tagged `<tag_prefix>X.Y.Z`, and (unless release: false) a
+# GitHub release with generated notes is created, which is what the fleet
+# board shows as release notes. A repo needs one seed tag before the first run.
+name: build-image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: Package name, published as ghcr.io/kounex/<image>
+        type: string
+        required: true
+      context:
+        description: Build context directory
+        type: string
+        required: true
+      file:
+        description: Dockerfile path (default <context>/Dockerfile)
+        type: string
+        default: ""
+      tag_prefix:
+        description: Git tag prefix; `v` for one image per repo, `<image>-v` for several
+        type: string
+        default: v
+      bump:
+        description: patch, minor or major
+        type: string
+        default: patch
+      push:
+        description: false builds only (pull requests)
+        type: boolean
+        default: false
+      release:
+        description: Create a GitHub release for the new tag
+        type: boolean
+        default: true
+      test_target:
+        description: Optional Dockerfile stage that runs the tests; built first
+        type: string
+        default: ""
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Next version
+        id: v
+        env:
+          PREFIX: ${{ inputs.tag_prefix }}
+          BUMP: ${{ inputs.bump }}
+        run: |
+          last=$(git tag --list "${PREFIX}*" | sed "s/^${PREFIX}//" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          if [ -z "$last" ]; then
+            echo "::error::No ${PREFIX}X.Y.Z tag yet. Tag the commit that built the running image first."
+            exit 1
+          fi
+          IFS=. read -r major minor patch <<<"$last"
+          case "$BUMP" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+            *) echo "::error::bump must be patch, minor or major"; exit 1 ;;
+          esac
+          echo "previous=$last" >> "$GITHUB_OUTPUT"
+          echo "version=$major.$minor.$patch" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Tests (${{ inputs.test_target }})
+        if: inputs.test_target != ''
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.file || format('{0}/Dockerfile', inputs.context) }}
+          target: ${{ inputs.test_target }}
+          push: false
+          cache-from: type=gha,scope=${{ inputs.image }}
+
+      - name: Log in to GHCR
+        if: inputs.push
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build${{ inputs.push && ' and push' || '' }} ${{ inputs.image }}:${{ steps.v.outputs.version }}
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.file || format('{0}/Dockerfile', inputs.context) }}
+          push: ${{ inputs.push }}
+          tags: ghcr.io/kounex/${{ inputs.image }}:${{ steps.v.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.title=${{ inputs.image }}
+            org.opencontainers.image.version=${{ steps.v.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ inputs.image }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image }}
+
+      - name: Tag and release
+        if: inputs.push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ inputs.image }}
+          VERSION: ${{ steps.v.outputs.version }}
+          TAG: ${{ inputs.tag_prefix }}${{ steps.v.outputs.version }}
+          PREVIOUS: ${{ inputs.tag_prefix }}${{ steps.v.outputs.previous }}
+          RELEASE: ${{ inputs.release }}
+          CONTEXT: ${{ inputs.context }}
+        run: |
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "$TAG"
+          if [ "$RELEASE" = true ]; then
+            # Commits that touched this image's build context, newest first.
+            # (--generate-notes only lists merged PRs, so direct pushes came
+            # out empty.)
+            {
+              git log --no-merges --format='- %s (%h)' "$PREVIOUS..$GITHUB_SHA" -- "$CONTEXT"
+              echo
+              echo "**Full changelog**: https://github.com/$GITHUB_REPOSITORY/compare/$PREVIOUS...$TAG"
+            } > notes.md
+            gh release create "$TAG" --title "$IMAGE $VERSION" --notes-file notes.md --latest=false
+          fi
+          echo "Published ghcr.io/kounex/$IMAGE:$VERSION" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: docker
+    directories: ["/tool/kick_auth_proxy", "/tool/kick_events_relay"]
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directories: ["/tool/kick_events_relay"]
+    schedule:
+      interval: weekly
+    # Not grouped on purpose: a grouped PR has no update-type, so it could
+    # never merge itself. One PR per package lets patches go through alone.
