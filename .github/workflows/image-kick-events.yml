@@ -4,7 +4,7 @@ name: image kick-events
 on:
   push:
     branches: [master]
-    paths: ["tool/kick_events_relay/**"]
+    paths: ["tool/kick_events_relay/**", "!tool/kick_events_relay/**/*.md"]
   pull_request:
     paths: ["tool/kick_events_relay/**", ".github/workflows/**"]
   workflow_dispatch:

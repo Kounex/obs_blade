@@ -4,7 +4,7 @@ name: image kick-auth
 on:
   push:
     branches: [master]
-    paths: ["tool/kick_auth_proxy/**"]
+    paths: ["tool/kick_auth_proxy/**", "!tool/kick_auth_proxy/**/*.md"]
   pull_request:
     paths: ["tool/kick_auth_proxy/**", ".github/workflows/**"]
   workflow_dispatch:
