@@ -8,5 +8,7 @@ updates:
     directories: ["/tool/kick_events_relay"]
     schedule:
       interval: weekly
-    # Not grouped on purpose: a grouped PR has no update-type, so it could
-    # never merge itself. One PR per package lets patches go through alone.
+    groups:
+      patches:
+        update-types: ["patch"]
+        patterns: ["*"]
