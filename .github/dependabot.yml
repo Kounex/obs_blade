@@ -4,6 +4,14 @@ updates:
     directories: ["/tool/kick_auth_proxy", "/tool/kick_events_relay"]
     schedule:
       interval: weekly
+    ignore:
+      # Python minor/major and Node major upgrades are deliberate migrations
+      # (missing wheels, removed modules, yarn gone from node 25+), not
+      # refreshes. Patches and same-tag digests still flow.
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: pip
     directories: ["/tool/kick_events_relay"]
     schedule:
