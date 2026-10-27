@@ -15,8 +15,9 @@ version (the tool says "create version x in App Store Connect first").
 `HttpApiClient` (one-off script, removed); the iPhone App Preview was
 copied over by App Store Connect.
 
-Release env on the MacBook: `release-env.sh` now puts rbenv Ruby 3.4.2
-first (fastlane lives there; Homebrew Ruby is 4.0 without it) and
+Release env on the MacBook: `release-env.sh` puts mise's Ruby 3.4.2
+first (fastlane lives there; Homebrew Ruby is 4.0 without it; was rbenv
+until 2026-10-27) and
 `release()` is store-release - runbook updated.
 
 Dogfood (Kounex iOS, `31139f46`): YouTube streaming confirmed in the log
