@@ -131,9 +131,9 @@ source of truth; never leave work local-only when handing over.
 
 ## Process notes (keep them)
 
-- Default process tier **S**; feature work (OBS, chat, sign-ins, UI in
-  dashboard/chat): **M** via the `feature-work` skill (see `AGENTS.md`
-  § Definition of done).
+- Default process: in-session, no plan doc; feature work (OBS, chat,
+  sign-ins, UI in dashboard/chat) goes through the `feature-work` skill,
+  including its end review (see `AGENTS.md` § Definition of done).
 - Test gates on the NAS through **`dart tool/test_gate.dart`**
   (`--runs=N` for consecutive-clean proofs) - auto-retries the
   flutter_tester load flake. Full serial chat + persistence gate ≈ 5 min

@@ -15,55 +15,39 @@ Nothing defective reached `master` in any wave; the per-task review net
 held. This doc exists to cut the amendment round-trips (~1/task), not to
 fix a quality escape.
 
-## 0. Process tiers — size the process to the change (S is the default)
+## 0. How much process (default: none of this doc)
 
 Ratified 2026-08-08 after the moderation-actor wave burned a full 5h
 quota on ~300 LOC of production code: ~300KB of process text, 12
 subagent dispatches, and 4 full-suite gate runs for a 5-task SDD wave.
-The machinery works (zero Critical/Important escapes across four waves)
-but it must scale with the risk of the change, not run at max for
-everything.
+Simplified 2026-11-03 when the S/M/L tiers, the Superpowers plugin
+(brainstorming, writing-plans, subagent-driven-development) and the
+`sizing-the-process` fleet skill were retired: Opus 5.5 on the current
+Claude Code harness did better without them.
 
-- **S tier (default for anything the user hasn't flagged risky):** the
-  controller implements directly in its own context — no subagents, no
-  plan doc, no briefs. TDD, gates once at the end, one self-review of
-  the diff, commit per unit. Applies to: small features on understood
-  seams, bugfixes, doc/test changes. The moderation-actor wave would
-  have been S/M.
-- **M tier:** 1 implementer subagent + 1 reviewer at the END (not per
-  task). Plan = 1–2 pages of prose: behavior + assertions; code sketches
-  only where shape genuinely matters (fixtures, DTO field shapes,
-  typedef arity). No pre-dispatch verifier pass.
-- **L tier (full SDD, §1–§4):** only when the user flags risk
-  (persistence, protocol, release/money paths) or the work is genuinely
-  multi-day / multi-subsystem. Within L: tasks sized ≥ ~1h of
-  implementer work (fold micro-tasks into neighbors); tightly coupled
-  adjacent tasks (e.g. a DTO + its service dispatch) may share one
-  reviewer dispatch.
+- **Default:** implement directly in-session. No subagents, no plan doc,
+  no briefs. TDD, gates once at the end, one self-review of the diff,
+  commit per unit. Covers small features on understood seams, bugfixes,
+  doc/test changes.
+- **Only when the user flags risk** (persistence, protocol, release or
+  money paths) **or the work is genuinely multi-day:** write a short
+  prose plan (behavior + assertions; code sketches only where the shape
+  matters, such as fixtures, DTO fields or callback arity), run the §1
+  verification against it, and get one independent review at the end
+  with §2 as named probes.
 
-Cost rules for every tier:
+Cost rules whenever subagents are used:
 
 - **Gates once.** Implementers run only the test files they touched;
-  reviewers verify claims by READING code and re-run a test only when a
+  reviewers verify claims by reading code and re-run a test only when a
   specific claim looks off; the full suite + analyze run once at
-  wrap-up. The controller re-runs wrap-up gates only if HEAD moved after
-  the final reviewer's run — otherwise cite the reviewer's run.
-- **Resume, don't re-dispatch.** Fix loops resume the same implementer;
-  fix verification resumes the same reviewer. The fresh-eyes value is in
-  the first review, not the re-check.
-- **Terse reports.** Implementer/reviewer reports: files changed,
-  pass/fail counts, commit hash, deviations. Test output as `| tail`
-  counts only, never full dumps.
-- **Model routing.** Implementers/reviewers/verifiers go on the
-  secondary model; primary keeps orchestration + final review. If the
-  secondary quota is exhausted, SAY SO up front and drop a tier — do not
-  run the full pipeline on primary at 5× the cost.
-- **Small ranges skip the .diff file.** A reviewer can `git diff
-  BASE..HEAD` itself; pre-generate the review package only for ranges
-  it would otherwise have to reconstruct (multi-task whole-branch
-  reviews).
+  wrap-up.
+- **Resume, don't re-dispatch.** Fix loops resume the same agent; the
+  fresh-eyes value is in the first review, not the re-check.
+- **Terse reports.** Files changed, pass/fail counts, commit hash,
+  deviations. Test output as `| tail` counts only.
 
-## 1. Pre-dispatch plan-verification pass (L tier only — see §0)
+## 1. Plan-verification pass (planned, risky work only — see §0)
 
 After the plan is approved (and after any later amendment), **before the
 Task 1 brief is dispatched**, run ONE read-only verifier subagent with a
@@ -171,10 +155,9 @@ If a task modifies any file containing `@freezed`, `@observable`,
 
 ## 4. Wiring
 
-- **Tier selection (§0) comes first:** default S; upgrade only on user
-  risk flag or genuine multi-day scope. Record the chosen tier + one-line
-  justification in the ledger header before any dispatch.
-- **Plan-author prompts** (writing-plans / brainstorm→plan handoff):
+- **§0 comes first:** default is in-session with no plan; a plan only on
+  a user risk flag or genuine multi-day scope.
+- **When writing a plan:**
   paste §2 + §3 as "named constraints — verify each against the repo
   before writing code that depends on it".
 - **Verifier dispatch** (§1): paste the 5-item checklist.

@@ -15,8 +15,11 @@ outdated console steps). None was wrong code - each was a wrong
 how assumptions get checked: ask, verify against reality, walk the
 journeys. Don't report before phase 7.
 
-**Process size:** at least tier M (`sizing-the-process`) for anything
-touching protocol / platform APIs + UI (+ persistence), new or existing.
+**Process size:** this skill is the process for anything touching
+protocol / platform APIs + UI (+ persistence), new or existing: work
+in-session, with the one fresh-context review in phase 6. A written plan
+only when it is risky or multi-day (see
+`docs/superpowers/plan-defect-checklist.md` §0).
 
 ## 0. Understand the request - ask, don't assume
 

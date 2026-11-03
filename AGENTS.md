@@ -52,8 +52,8 @@ Feature work - new **or** a change / fix to an existing feature - that
 talks to OBS (requests, events, plugin vendor calls), to a chat platform
 (chat, sign-ins, activity feed, TTS) or changes the dashboard / chat UI
 goes through the **`feature-work` skill** (`.claude/skills/feature-work/`;
-agents without skills: read it as a runbook). It's at least process tier
-M, whatever the handoff's default. Not done before:
+agents without skills: read it as a runbook), including its end review,
+whatever the handoff's default. Not done before:
 
 1. the request clarified with the user where it leaves room (states,
    platforms, scope, taste) - ask, don't assume;
@@ -294,19 +294,14 @@ enforces it). Details: [`docs/foss-build.md`](docs/foss-build.md).
   flake doesn't force manual babysitting. `--runs=N` repeats the whole gate
   N times, failing fast. It prefers `~/flutter/bin/flutter` and falls back
   to `flutter` on PATH, so it works on any machine.
-- **Process tiers (default S):** size the process to the change — S:
-  implement directly in-session (no subagents/plan doc), TDD + gates
-  once at the end; M: 1 implementer subagent + 1 end reviewer, prose
-  mini-plan; L: full SDD per `docs/superpowers/plan-defect-checklist.md`
-  §0 (verifier pass, per-task reviews, defect probes). Upgrade past S
-  only when the user flags risk (persistence/protocol/release paths) or
-  the work is genuinely multi-day. Subagents go on the secondary model;
-  if its quota is exhausted, say so and drop a tier instead of running
-  the full pipeline on primary. This tier policy is the project's
-  explicit override of the superpowers-skill defaults (brainstorming,
-  subagent-driven-development) for process sizing — skills still apply
-  within the chosen tier. Append new ratified defect classes to
-  the checklist at wave wrap-up.
+- **Process (default: in-session):** size the process to the change.
+  Default is implementing directly in-session, with no subagents or plan
+  doc, TDD, and the gates once at the end. Only when the user flags risk
+  (persistence/protocol/release paths) or the work is genuinely multi-day:
+  write a short prose plan first, run it against
+  `docs/superpowers/plan-defect-checklist.md` §0, and get one independent
+  review at the end. Append new ratified defect classes to the checklist
+  at wave wrap-up.
 - Branch: `master`
 
 ## Related
