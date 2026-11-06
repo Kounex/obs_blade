@@ -240,6 +240,65 @@ void main() {
     );
   });
 
+  test('GetVersion obsVersion picks the audio monitoring control', () async {
+    /// Real OBS 33.0.1 answer shape (obs-websocket 5.7.6)
+    peer.responseData['GetVersion'] = {
+      'obsVersion': '33.0.1',
+      'obsWebSocketVersion': '5.7.6',
+      'rpcVersion': 1,
+      'availableRequests': ['SetInputAudioMonitorType'],
+      'supportedImageFormats': ['jpg', 'png'],
+      'platform': 'windows',
+      'platformDescription': 'Windows 11 Version 25H2',
+    };
+    await connect();
+    dashboardStore.handleStream();
+    expect(dashboardStore.monitoringIsOnOff, isFalse);
+
+    await NetworkHelper.makeRequest(
+      networkStore.activeSession!.socket,
+      RequestType.GetVersion,
+    );
+    await waitFor(
+      () => dashboardStore.obsVersion == '33.0.1',
+      'obsVersion applied',
+    );
+    expect(dashboardStore.monitoringIsOnOff, isTrue);
+
+    /// Reconnect to an older OBS: the next GetVersion replaces it
+    peer.responseData['GetVersion'] = {
+      ...peer.responseData['GetVersion']!,
+      'obsVersion': '32.2.2',
+    };
+    await NetworkHelper.makeRequest(
+      networkStore.activeSession!.socket,
+      RequestType.GetVersion,
+    );
+    await waitFor(
+      () => dashboardStore.obsVersion == '32.2.2',
+      'older obsVersion applied',
+    );
+    expect(dashboardStore.monitoringIsOnOff, isFalse);
+  });
+
+  test('monitoringIsOnOff from the OBS version string', () {
+    const cases = <String?, bool>{
+      null: false,
+      '': false,
+      'garbage': false,
+      '30.2.3': false,
+      '32.2.2': false,
+      '33.0.0-rc1': true,
+      '33.0.1': true,
+      '33.1.0-beta1-modified': true,
+      '34.0.0': true,
+    };
+    cases.forEach((version, expected) {
+      dashboardStore.obsVersion = version;
+      expect(dashboardStore.monitoringIsOnOff, expected, reason: '$version');
+    });
+  });
+
   test(
     'audio settings: load on demand, live events, resync on failure',
     () async {

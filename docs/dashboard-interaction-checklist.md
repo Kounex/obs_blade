@@ -76,6 +76,7 @@ mid-pane) and on the tall audio rows.
 | Scene collection switch | scenes / canvases / items re-read |
 | Something changed in OBS with no event | periodic re-read where it matters (canvas size, profile settings) |
 | Plugin installed / removed / not answering | feature degrades with an explanation, never dead buttons |
+| Newer / older OBS behind the same request | OBS can change what a request *does* without changing the protocol (OBS 33: audio monitoring is on / off only) - check the behavior per OBS major against libobs, gate on `DashboardStore.obsVersion`, keep the old behavior for older OBS |
 | Leaving / re-entering the dashboard | store lifetime, timers stopped |
 
 ## Form factors + presentation

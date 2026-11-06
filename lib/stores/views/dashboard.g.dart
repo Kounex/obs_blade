@@ -40,6 +40,13 @@ mixin _$DashboardStore on _DashboardStore, Store {
     () => super.screenshotPath,
     name: '_DashboardStore.screenshotPath',
   )).value;
+  Computed<bool>? _$monitoringIsOnOffComputed;
+
+  @override
+  bool get monitoringIsOnOff => (_$monitoringIsOnOffComputed ??= Computed<bool>(
+    () => super.monitoringIsOnOff,
+    name: '_DashboardStore.monitoringIsOnOff',
+  )).value;
 
   late final _$isLiveAtom = Atom(
     name: '_DashboardStore.isLive',
@@ -805,6 +812,24 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$obsVersionAtom = Atom(
+    name: '_DashboardStore.obsVersion',
+    context: context,
+  );
+
+  @override
+  String? get obsVersion {
+    _$obsVersionAtom.reportRead();
+    return super.obsVersion;
+  }
+
+  @override
+  set obsVersion(String? value) {
+    _$obsVersionAtom.reportWrite(value, super.obsVersion, () {
+      super.obsVersion = value;
+    });
+  }
+
   late final _$_checkOBSConnectionAsyncAction = AsyncAction(
     '_DashboardStore._checkOBSConnection',
     context: context,
@@ -1023,10 +1048,12 @@ studioMode: ${studioMode},
 studioModePreviewSceneName: ${studioModePreviewSceneName},
 editSceneVisibility: ${editSceneVisibility},
 availableRequests: ${availableRequests},
+obsVersion: ${obsVersion},
 mediaSceneItems: ${mediaSceneItems},
 currentInputs: ${currentInputs},
 globalInputs: ${globalInputs},
-screenshotPath: ${screenshotPath}
+screenshotPath: ${screenshotPath},
+monitoringIsOnOff: ${monitoringIsOnOff}
     ''';
   }
 }

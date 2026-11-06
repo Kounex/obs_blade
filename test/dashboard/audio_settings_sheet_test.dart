@@ -81,4 +81,78 @@ void main() {
     await tester.pump();
     expect(find.text('Center'), findsOneWidget);
   });
+
+  group('OBS version picks the monitoring segments', () {
+    Future<List<String>> pumpWith(
+      WidgetTester tester, {
+      required String obsVersion,
+      required String monitorType,
+    }) async {
+      dashboardStore.obsVersion = obsVersion;
+      dashboardStore.allInputs = ObservableList.of([
+        Input(
+          inputKind: 'wasapi_input_capture',
+          inputName: 'Mic',
+          unversionedInputKind: 'wasapi_input_capture',
+          monitorType: monitorType,
+        ),
+      ]);
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+      final control = tester.widget<CupertinoSlidingSegmentedControl<String>>(
+        find.byType(CupertinoSlidingSegmentedControl<String>),
+      );
+      expect(control.groupValue, isNotNull);
+      return control.children.keys.toList();
+    }
+
+    testWidgets('OBS 33: Off / On, On is what OBS reports back', (
+      tester,
+    ) async {
+      final keys = await pumpWith(
+        tester,
+        obsVersion: '33.0.1',
+        monitorType: kMonitorTypeMonitorAndOutput,
+      );
+      expect(keys, [kMonitorTypeNone, kMonitorTypeMonitorAndOutput]);
+      expect(find.text('On'), findsOneWidget);
+      expect(find.text('Monitor'), findsNothing);
+      expect(find.textContaining('unless you mute it'), findsOneWidget);
+      expect(
+        tester
+            .widget<CupertinoSlidingSegmentedControl<String>>(
+              find.byType(CupertinoSlidingSegmentedControl<String>),
+            )
+            .groupValue,
+        kMonitorTypeMonitorAndOutput,
+      );
+    });
+
+    testWidgets('OBS 32: Off / Monitor / Both stay', (tester) async {
+      final keys = await pumpWith(
+        tester,
+        obsVersion: '32.2.2',
+        monitorType: kMonitorTypeMonitorOnly,
+      );
+      expect(keys, [
+        kMonitorTypeNone,
+        kMonitorTypeMonitorOnly,
+        kMonitorTypeMonitorAndOutput,
+      ]);
+      expect(find.textContaining('without sending it'), findsOneWidget);
+    });
+  });
+
+  test('monitorTypeSegment maps a stray MONITOR_ONLY to On on OBS 33', () {
+    expect(
+      monitorTypeSegment(kMonitorTypeMonitorOnly, onOff: true),
+      kMonitorTypeMonitorAndOutput,
+    );
+    expect(monitorTypeSegment(kMonitorTypeNone, onOff: true), kMonitorTypeNone);
+    expect(monitorTypeSegment(null, onOff: true), isNull);
+    expect(
+      monitorTypeSegment(kMonitorTypeMonitorOnly, onOff: false),
+      kMonitorTypeMonitorOnly,
+    );
+  });
 }

@@ -4,8 +4,8 @@ import 'base.dart';
 class GetVersionResponse extends BaseResponse {
   GetVersionResponse(super.json);
 
-  /// Current OBS Studio version
-  String get obsVersion => this.json['obsVersion'];
+  /// Current OBS Studio version, e.g. `33.0.1` or `33.1.0-beta1`
+  String? get obsVersion => this.json['obsVersion'];
 
   /// Current obs-websocket version
   String get obsWebSocketVersion => this.json['obsWebSocketVersion'];

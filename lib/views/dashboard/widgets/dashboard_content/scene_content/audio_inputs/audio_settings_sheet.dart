@@ -9,17 +9,37 @@ import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/input.dart';
 import '../../../../../../types/enums/request_type.dart';
 
-/// OBS monitor types (Advanced Audio Properties' "Audio Monitoring")
-const Map<String, String> kMonitorTypes = {
-  'OBS_MONITORING_TYPE_NONE': 'Off',
-  'OBS_MONITORING_TYPE_MONITOR_ONLY': 'Monitor',
-  'OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT': 'Both',
-};
+const String kMonitorTypeNone = 'OBS_MONITORING_TYPE_NONE';
+const String kMonitorTypeMonitorOnly = 'OBS_MONITORING_TYPE_MONITOR_ONLY';
+const String kMonitorTypeMonitorAndOutput =
+    'OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT';
+
+/// OBS monitor types (Advanced Audio Properties' "Audio Monitoring") as
+/// segment value -> label. OBS 33+ only knows on / off: anything but NONE
+/// is saved and reported as MONITOR_AND_OUTPUT, so On sends exactly that
+/// and the control never jumps after the event
+Map<String, String> monitorTypeOptions({required bool onOff}) => onOff
+    ? const {kMonitorTypeNone: 'Off', kMonitorTypeMonitorAndOutput: 'On'}
+    : const {
+        kMonitorTypeNone: 'Off',
+        kMonitorTypeMonitorOnly: 'Monitor',
+        kMonitorTypeMonitorAndOutput: 'Both',
+      };
+
+/// The selected segment for [monitorType]. On OBS 33+ a stray
+/// MONITOR_ONLY (never reported there, but cheap to cover) still reads
+/// as On
+String? monitorTypeSegment(String? monitorType, {required bool onOff}) {
+  if (!onOff || monitorType == null || monitorType == kMonitorTypeNone) {
+    return monitorType;
+  }
+  return kMonitorTypeMonitorAndOutput;
+}
 
 /// Per-input advanced audio: balance + monitoring, the two settings a
-/// streamer reaches for mid-stream (hear a source without sending it,
-/// fix a one-sided mic). Loaded on open - the inputs batch doesn't carry
-/// them - and kept live via the Input* events.
+/// streamer reaches for mid-stream (hear a source on the OBS PC, fix a
+/// one-sided mic). Loaded on open - the inputs batch doesn't carry them -
+/// and kept live via the Input* events.
 class AudioSettingsSheet extends StatefulWidget {
   final String inputName;
 
@@ -60,7 +80,11 @@ class _AudioSettingsSheetState extends State<AudioSettingsSheet> {
           if (candidate.inputName == this.widget.inputName) input = candidate;
         }
         final double? balance = _draggingBalance ?? input?.audioBalance;
-        final String? monitorType = input?.monitorType;
+        final bool monitoringIsOnOff = dashboardStore.monitoringIsOnOff;
+        final String? monitorType = monitorTypeSegment(
+          input?.monitorType,
+          onOff: monitoringIsOnOff,
+        );
 
         return SingleChildScrollView(
           padding:
@@ -122,7 +146,9 @@ class _AudioSettingsSheetState extends State<AudioSettingsSheet> {
               Text('Audio Monitoring', style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Monitor lets you hear this source on the PC running OBS without sending it to the stream; Both does both.',
+                monitoringIsOnOff
+                    ? 'Hear this source on the PC running OBS. It still goes to the stream unless you mute it.'
+                    : 'Monitor lets you hear this source on the PC running OBS without sending it to the stream; Both does both.',
                 style: theme.textTheme.bodySmall!.copyWith(
                   color: textColors.textSecondary,
                 ),
@@ -134,7 +160,9 @@ class _AudioSettingsSheetState extends State<AudioSettingsSheet> {
                   child: CupertinoSlidingSegmentedControl<String>(
                     groupValue: monitorType,
                     children: {
-                      for (final entry in kMonitorTypes.entries)
+                      for (final entry in monitorTypeOptions(
+                        onOff: monitoringIsOnOff,
+                      ).entries)
                         entry.key: Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: AppSpacing.sm,

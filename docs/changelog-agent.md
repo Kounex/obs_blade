@@ -4,6 +4,29 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-06 - OBS 33: audio monitoring is Off / On
+
+OBS 33 turned audio monitoring into on / off (obs-studio #13599): the
+Audio Settings sheet's "Monitor" jumped to "Both" after the tap (OBS
+reports `MONITOR_AND_OUTPUT`), Monitor while on Both did nothing, and
+the helper text promised "without sending it to the stream".
+
+- `DashboardStore.obsVersion` (from GetVersion, replaced on every
+  session) + `monitoringIsOnOff` (major >= 33; unknown keeps the old
+  control).
+- Sheet: Off / On on OBS 33+ (On sends `MONITOR_AND_OUTPUT`, what OBS
+  reports back), helper text "...still goes to the stream unless you mute
+  it"; Off / Monitor / Both unchanged for older OBS (32.2.2 still honors
+  Monitor Only). User's choices: segments, not a switch; mention muting.
+- Facts: `docs/obs-protocol-gotchas.md` § Audio monitoring. Checklist row
+  for "newer / older OBS behind the same request".
+- Tests: GetVersion -> obsVersion via the fake peer (33.0.1 then 32.2.2),
+  version-string matrix, both sheet variants. Shots:
+  `tool/widget_shots/audio_monitoring_shots_test.dart`.
+- Not done: modelling OBS 33's coercion in `FakeObsPeer` (it holds no
+  monitor state; the sheet sends the value OBS reports, so there's
+  nothing to coerce in the app's path).
+
 ## 2026-10-22 - FOSS build revived from master (GitHub APK + F-Droid)
 
 The `foss` branch (3.2.0, May 2023) was 1,150 commits behind and its

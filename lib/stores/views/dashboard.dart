@@ -362,6 +362,23 @@ abstract class _DashboardStore with Store {
   bool supportsRequest(RequestType request) =>
       this.availableRequests.contains(request.name);
 
+  /// OBS Studio version from GetVersion (`33.0.1`, `33.1.0-beta1`) - gates
+  /// behavior that changed in OBS itself while the request stayed the same
+  @observable
+  String? obsVersion;
+
+  /// OBS 33+ turned audio monitoring into on / off (obs-studio #13599):
+  /// MONITOR_ONLY is saved as MONITOR_AND_OUTPUT and never reported back,
+  /// so the sheet offers Off / On there instead of Off / Monitor / Both.
+  /// Unknown version (GetVersion not answered yet) keeps the old control
+  @computed
+  bool get monitoringIsOnOff {
+    final int? major = int.tryParse(
+      this.obsVersion?.split('.').first.trim() ?? '',
+    );
+    return major != null && major >= 33;
+  }
+
   String previewFileFormat = 'jpeg';
 
   /// OBS base (canvas) width from GetVideoSettings - caps the preview width
@@ -2378,6 +2395,7 @@ abstract class _DashboardStore with Store {
         this.availableRequests = ObservableSet.of(
           getVersionResponse.availableRequests.cast<String>(),
         );
+        this.obsVersion = getVersionResponse.obsVersion;
 
         if (!getVersionResponse.supportedImageFormats.contains('jpg') &&
             !getVersionResponse.supportedImageFormats.contains('jpeg')) {

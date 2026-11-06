@@ -140,6 +140,27 @@ Details + probe output: `superpowers/specs/2026-10-06-preview-transitions-design
   source_colors_probe.dart` (raw answers) and
   `source_colors_live_test.dart` (real DashboardStore vs OBS).
 
+## Audio monitoring (OBS 33+, verified against obs-studio 33.0.1 / obs-websocket 5.7.6, 2026-11-06)
+
+- OBS 33 replaced the monitor type with an on / off flag (obs-studio
+  #13599, `obs_source_set_monitoring_enabled`). The obs-websocket
+  requests / event didn't change: `SetInputAudioMonitorType` maps any
+  type other than `OBS_MONITORING_TYPE_NONE` to **on**, and OBS stores and
+  reports on as `OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT` -
+  `MONITOR_ONLY` is never reported back (`libobs/obs-source.c`).
+- Setting a type with the same on / off state is a no-op: no
+  `InputAudioMonitorTypeChanged` event (Monitor -> Both on OBS 33 does
+  nothing).
+- Monitoring no longer keeps a source off the stream - muting does that.
+  Scene collections saved by older OBS load with `MONITOR_ONLY` as on
+  (`libobs/obs.c`, `prev_ver < 33.0.0`).
+- OBS 32.2.2 still treats `MONITOR_ONLY` as "monitor, not in the output"
+  (`obs-audio.c`), so the three-way control stays for OBS < 33. The app
+  gates on `DashboardStore.monitoringIsOnOff` (GetVersion `obsVersion`
+  major >= 33).
+- Also new in OBS 33: the WebSocket server doesn't start in Safe Mode
+  (obs-websocket 5.7.6) - the app simply can't connect.
+
 ## General
 
 - Responses of scoped requests (`NetworkHelper.makeScopedRequest`) never
