@@ -15,6 +15,7 @@ import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
 
 import '../models/connection.dart';
+import 'remote/remote_connect.dart';
 import '../models/enums/log_level.dart';
 import '../types/classes/obs_request_ack.dart';
 import '../types/classes/stream/batch_responses/base.dart';
@@ -103,10 +104,15 @@ class NetworkHelper {
   /// [connectTimeout] bounds the TCP/WebSocket upgrade. The channel is returned
   /// immediately; await [IOWebSocketChannel.ready] (and treat failure as
   /// unreachable) before assuming the peer is OBS.
+  ///
+  /// [remote]: connect through the remote relay instead (Pro) - its URL and
+  /// the pairing's token header; the session after that is plain
+  /// obs-websocket (the bridge next to OBS handles OBS's password).
   static IOWebSocketChannel establishWebSocket(
     Connection connection, {
     Duration pingInterval = socketPingInterval,
     Duration? connectTimeout,
+    RemoteSocketTarget? remote,
   }) {
     NetworkHelper._requestBodyByUUID = {};
     NetworkHelper._requestBatchByUUID = {};
@@ -115,6 +121,15 @@ class NetworkHelper {
     /// waiting for their ack on it will never be answered
     NetworkHelper.failAllPendingAcks();
 
+    if (remote != null) {
+      return IOWebSocketChannel.connect(
+        remote.uri,
+        headers: remote.headers,
+        protocols: const ['obswebsocket.json'],
+        pingInterval: pingInterval,
+        connectTimeout: connectTimeout,
+      );
+    }
     return IOWebSocketChannel.connect(
       NetworkHelper.websocketUri(connection),
       pingInterval: pingInterval,

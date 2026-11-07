@@ -24,13 +24,18 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
       )
       ..name = fields[0] as String?
       ..ssid = fields[2] as String?
-      ..lastConnectedMs = (fields[6] as num?)?.toInt();
+      ..lastConnectedMs = (fields[6] as num?)?.toInt()
+      ..relayBridgeId = fields[7] as String?
+      ..relayAppToken = fields[8] as String?
+      ..relayDeviceId = fields[9] as String?
+      ..relayBridgeName = fields[10] as String?
+      ..relayBridgeKind = fields[11] as String?;
   }
 
   @override
   void write(BinaryWriter writer, Connection obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -44,7 +49,17 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
       ..writeByte(5)
       ..write(obj.isDomain)
       ..writeByte(6)
-      ..write(obj.lastConnectedMs);
+      ..write(obj.lastConnectedMs)
+      ..writeByte(7)
+      ..write(obj.relayBridgeId)
+      ..writeByte(8)
+      ..write(obj.relayAppToken)
+      ..writeByte(9)
+      ..write(obj.relayDeviceId)
+      ..writeByte(10)
+      ..write(obj.relayBridgeName)
+      ..writeByte(11)
+      ..write(obj.relayBridgeKind);
   }
 
   @override

@@ -199,6 +199,15 @@ class RevenueCatProGateway implements ProPurchaseBackend {
   Future<bool> restore() async =>
       proEntitlementActive(await Purchases.restorePurchases());
 
+  @override
+  Future<String?> appUserId() async {
+    try {
+      return await Purchases.appUserID;
+    } catch (_) {
+      return null; // not configured yet
+    }
+  }
+
   Future<void> dispose() async {
     await this._entitlementController.close();
     await this._planController.close();

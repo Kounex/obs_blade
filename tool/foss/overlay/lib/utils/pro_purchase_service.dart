@@ -31,5 +31,7 @@ class ProPurchaseService {
 
   Future<bool> restore() async => false;
 
+  Future<String?> appUserId() async => null;
+
   Future<void> restoreLegacyPurchases() async {}
 }

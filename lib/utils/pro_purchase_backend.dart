@@ -52,4 +52,8 @@ abstract class ProPurchaseBackend {
   /// path always returns false — restored purchases arrive on the IAP
   /// purchase stream instead, where `PurchaseBase` handles them.
   Future<bool> restore();
+
+  /// The id the store backend knows this user by (RevenueCat app user id),
+  /// for server-side Pro checks (the remote relay). Null on the legacy path.
+  Future<String?> appUserId();
 }

@@ -106,6 +106,11 @@ class FakeProPurchaseBackend implements ProPurchaseBackend {
     return this.restoreResult;
   }
 
+  String? appUserIdResult = r'$RCAnonymousID:fake';
+
+  @override
+  Future<String?> appUserId() async => this.appUserIdResult;
+
   Future<void> close() async {
     await this.entitlementController.close();
     await this.planController.close();

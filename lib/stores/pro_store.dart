@@ -126,6 +126,10 @@ abstract class _ProStore with Store {
     }
   }
 
+  /// RevenueCat app user id for server-side Pro checks (remote relay);
+  /// null in the FOSS build and on the legacy path.
+  Future<String?> appUserId() async => kFoss ? null : this._service.appUserId();
+
   void dispose() {
     this._settingsSubscription?.cancel();
     this._entitlementSubscription?.cancel();

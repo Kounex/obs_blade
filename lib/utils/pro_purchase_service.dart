@@ -115,6 +115,9 @@ class InAppPurchaseProBackend implements ProPurchaseBackend {
     await this.gateway.restorePurchases();
     return false;
   }
+
+  @override
+  Future<String?> appUserId() async => null;
 }
 
 /// Thin wrapper over the active pro purchase backend so `ProStore` stays
@@ -192,6 +195,9 @@ class ProPurchaseService {
   /// True when the restore surfaced an active entitlement (RevenueCat
   /// only — the legacy path reports via the purchase stream).
   Future<bool> restore() => this._backend.restore();
+
+  /// RevenueCat app user id (server-side Pro checks), null on the legacy path.
+  Future<String?> appUserId() => this._backend.appUserId();
 
   /// Restore on the direct IAP plugin stream — blacksmith (restore-only
   /// legacy product) restores arrive there for [PurchaseBase] to pick up,

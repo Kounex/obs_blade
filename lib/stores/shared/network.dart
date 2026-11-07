@@ -17,6 +17,7 @@ import '../../types/enums/event_type.dart';
 import '../../types/interfaces/message.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
+import '../../utils/remote/remote_connect.dart';
 
 part 'network.g.dart';
 
@@ -26,6 +27,15 @@ const Duration kObsHandshakeTimeout = Duration(seconds: 10);
 class NetworkStore = _NetworkStore with _$NetworkStore;
 
 abstract class _NetworkStore with Store {
+  _NetworkStore({RemoteConnectEnvironment? remote}) : _remoteEnv = remote;
+
+  RemoteConnectEnvironment? _remoteEnv;
+
+  /// Remote access (Pro) - created on first use so plain LAN setups and
+  /// tests never build it.
+  RemoteConnectEnvironment get _remote =>
+      _remoteEnv ??= RemoteConnectEnvironment.live();
+
   @observable
   Session? activeSession;
   @observable
@@ -54,6 +64,12 @@ abstract class _NetworkStore with Store {
   /// can send on it (OBS closes a socket with 4007 NotIdentified when any
   /// non-Identify message arrives first). On a failed reconnect the previous
   /// (dead) session stays in place so the reconnect loop keeps its target.
+  ///
+  /// A connection paired for remote access (Pro) may go through the relay:
+  /// [RemoteConnectEnvironment.planFor] picks the legs, a LAN leg followed
+  /// by the relay gets [kLanProbeTimeout], and only an unreachable LAN
+  /// ([lanUnreachable]) moves on. [connectionInProgress] stays true across
+  /// legs so Home shows one "Connecting…" and one result.
   @action
   Future<WebSocketCloseCode> setOBSWebSocket(
     Connection connection, {
@@ -70,6 +86,47 @@ abstract class _NetworkStore with Store {
     this.connectionClodeCode = null;
     this.lastConnectionResult = null;
     this.connectionInProgress = true;
+
+    final legs = await _remote.planFor(connection);
+    WebSocketCloseCode closeCode = WebSocketCloseCode.UnknownReason;
+    for (int i = 0; i < legs.length; i++) {
+      final bool last = i == legs.length - 1;
+      final bool remote = legs[i] == ConnectLeg.remote;
+      closeCode = await _attempt(
+        connection,
+        timeout: remote || last ? timeout : kLanProbeTimeout,
+        remote: remote,
+      );
+      if (closeCode == WebSocketCloseCode.DontClose || last) break;
+      if (!lanUnreachable(this.lastConnectionResult)) break;
+      GeneralHelper.advLog(
+        'Handshake: OBS not reachable on the local network, trying the '
+        'remote relay',
+        includeInLogs: true,
+      );
+    }
+
+    /// The relay says this device's pairing is gone (removed on the PC or
+    /// another device): forget it, so the card stops offering remote access
+    if (this.lastConnectionResult?.closeCode ==
+        WebSocketCloseCode.RemoteUnpaired) {
+      connection.clearRemote();
+      if (connection.isInBox) connection.save();
+    }
+
+    this.connectionInProgress = false;
+    return closeCode;
+  }
+
+  /// One handshake over one route; sets [lastConnectionResult] and
+  /// [connectionClodeCode], publishes [activeSession] on success.
+  Future<WebSocketCloseCode> _attempt(
+    Connection connection, {
+    required Duration timeout,
+    required bool remote,
+  }) async {
+    this.connectionClodeCode = null;
+    this.lastConnectionResult = null;
     _handshakeStage = ConnectionStage.connecting;
 
     Session? session;
@@ -79,15 +136,23 @@ abstract class _NetworkStore with Store {
       final startedAt = DateTime.now();
 
       session = Session(
-        NetworkHelper.establishWebSocket(connection, connectTimeout: timeout),
+        NetworkHelper.establishWebSocket(
+          connection,
+          connectTimeout: timeout,
+          remote: remote ? await _remote.socketTarget(connection) : null,
+        ),
         connection,
+        viaRemote: remote,
       );
 
       session.socketStream = session.socket.stream.asBroadcastStream();
 
       GeneralHelper.advLog(
-        'Handshake: connecting to ${connection.host}'
-        '${connection.port != null ? ":${connection.port}" : ""}',
+        remote
+            ? 'Handshake: connecting through the remote relay to '
+                  '${connection.relayBridgeName ?? 'the paired PC'}'
+            : 'Handshake: connecting to ${connection.host}'
+                  '${connection.port != null ? ":${connection.port}" : ""}',
         includeInLogs: true,
       );
 
@@ -106,9 +171,13 @@ abstract class _NetworkStore with Store {
           stage: ConnectionStage.connecting,
           detail: e.toString(),
         );
+        if (remote) {
+          this.lastConnectionResult = this.lastConnectionResult!.withRemote(
+            connection.relayBridgeName,
+          );
+        }
         this.connectionClodeCode = this.lastConnectionResult!.closeCode;
         session.socket.sink.close();
-        this.connectionInProgress = false;
         return this.connectionClodeCode!;
       }
 
@@ -138,6 +207,11 @@ abstract class _NetworkStore with Store {
 
       await _cancelAuthSubscription();
 
+      if (remote) {
+        this.lastConnectionResult = this.lastConnectionResult!.withRemote(
+          connection.relayBridgeName,
+        );
+      }
       this.connectionClodeCode = this.lastConnectionResult!.closeCode;
 
       GeneralHelper.advLog(
@@ -168,12 +242,13 @@ abstract class _NetworkStore with Store {
         closeCode: WebSocketCloseCode.UnknownReason,
         stage: _handshakeStage,
         detail: e.toString(),
+        viaRemote: remote,
+        remoteName: remote ? connection.relayBridgeName : null,
       );
       this.connectionClodeCode = WebSocketCloseCode.UnknownReason;
       session?.socket.sink.close();
     }
 
-    this.connectionInProgress = false;
     return this.connectionClodeCode!;
   }
 

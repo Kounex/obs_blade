@@ -29,9 +29,41 @@ class Connection extends HiveObject {
   @HiveField(6)
   int? lastConnectedMs;
 
+  /// Remote access (Pro, `docs/superpowers/specs/2026-11-07-remote-relay-design.md`):
+  /// the bridge next to OBS this connection is paired with and this
+  /// device's token for it. Additive - legacy boxes decode as null.
+  @HiveField(7)
+  String? relayBridgeId;
+
+  @HiveField(8)
+  String? relayAppToken;
+
+  @HiveField(9)
+  String? relayDeviceId;
+
+  /// The PC's name as the bridge reports it (display only)
+  @HiveField(10)
+  String? relayBridgeName;
+
+  /// `plugin` or `standalone` - only a standalone can start OBS
+  @HiveField(11)
+  String? relayBridgeKind;
+
   String? challenge;
   String? salt;
   bool? reachable;
+
+  bool get hasRemote =>
+      (this.relayBridgeId?.isNotEmpty ?? false) &&
+      (this.relayAppToken?.isNotEmpty ?? false);
+
+  void clearRemote() {
+    this.relayBridgeId = null;
+    this.relayAppToken = null;
+    this.relayDeviceId = null;
+    this.relayBridgeName = null;
+    this.relayBridgeKind = null;
+  }
 
   Connection(this.host, this.port, [this.pw, this.isDomain]);
 }

@@ -9,5 +9,8 @@ class Session {
   Stream? socketStream;
   Connection connection;
 
-  Session(this.socket, this.connection);
+  /// Reached through the remote relay (Pro) instead of the LAN
+  final bool viaRemote;
+
+  Session(this.socket, this.connection, {this.viaRemote = false});
 }
