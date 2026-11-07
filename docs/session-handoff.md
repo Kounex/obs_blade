@@ -53,12 +53,26 @@ client won't offer the update across signers, so the note is in the
 listing description, not only the changelog. Not done: on-device
 check on a real Android phone (emulator only).
 
-**Scheduled (unattended): Kick services move to the Hetzner VPS on
-2026-11-07 08:00 Berlin** (user timer `kick-move-2026-11-07.timer` on the
-NAS, script `it-env/scripts/oneoff/2026-11-07-kick-to-vps.sh`, log
-`~/.local/state/kick-migration-2026-11-07.log`; ntfy either way). Cancel with
-`systemctl --user stop kick-move-2026-11-07.timer`. Keep this repo's working
-tree clean until then: the script commits the relay README + Quadlet tags.
+**Kick services run on the Hetzner VPS since 2026-11-07** (moved
+unattended 07:00-07:16 UTC, no rollback; Hetzner leftovers removed by
+`kick-hetzner-cleanup.timer` on the NAS on 2026-11-14 once a real Kick
+event reached the VPS relay).
+
+**In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
+`docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
+`desktop/README.md`.
+- Done: relay server `tool/remote_relay/` (33 tests, image
+  `ghcr.io/kounex/remote-relay:0.0.1`, not deployed); bridge core
+  `desktop/core/` (Rust, 16 tests, green end to end against OBS 32.2.2
+  on the MacBook with and without OBS auth).
+- Blocked on the user: a RevenueCat **v2 secret key** (read access to
+  customer information + project configuration) and the project id, for
+  `/etc/remote-relay.env` on the VPS. Then: Quadlet, `relay.obs-blade.com`
+  on the `vps` tunnel, fleet catalog entry.
+- Next: app (pairing on the LAN with the code re-sent every 2 s, relay
+  fallback, close-code copy, Pro + FOSS gating), plugin shell, Qt panel +
+  standalone, packaging. MacBook has rustup + cmake (Homebrew) since
+  2026-11-07; build scratch in `~/agent-build/`.
 
 **Watch:** crash reports + reviews for 4.2.0 (new: preview
 transitions, combined chat Save / Delete - build 5 had no device check;
