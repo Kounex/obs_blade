@@ -212,3 +212,18 @@ Not OBS, but the same kind of trap - verified 2026-10-02, details in
   `sceneName` (`OBS_WEBSOCKET_SCENE_FILTER_SCENE_OR_GROUP`). Item ids are
   unique per scene only - a group child can share its id with a
   top-level item of the scene that holds the group.
+
+## Plugin API and server config (verified against obs-websocket master, 2026-11-07)
+
+- A plugin can call any request in-process: `obs_websocket_call_request`
+  (`lib/obs-websocket-api.h`, since 2022-05) and receive events with
+  `obs_websocket_register_event_callback` (commit `ee283c7`, first in
+  obs-websocket **5.5.0**). Vendors must be registered from
+  `obs_module_post_load`.
+- Event callbacks don't count as a subscription: high-volume events
+  (`InputVolumeMeters`, ...) only flow while a websocket client
+  subscribed to them.
+- The server settings, incl. the password, live in
+  `<OBS config>/plugin_config/obs-websocket/config.json` (`src/Config.cpp`;
+  older versions kept them in `global.ini`, migrated on first load).
+- Remote relay design built on these: `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
