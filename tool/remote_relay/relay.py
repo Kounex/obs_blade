@@ -9,6 +9,7 @@ Protocol: README.md and protocol.py.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -110,6 +111,15 @@ class AppSession:
     queued_bytes: int = 0
     writer: asyncio.Task | None = None
     ended_by_relay: bool = False
+    # (code, reason) once the relay ends the session. Only the socket's
+    # handler closes it: aiohttp's close() from another task while the
+    # handler reads skips waiting for the phone's close reply, the TCP
+    # connection closes right behind the close frame, and cloudflared
+    # drops that frame - the phone sees 1006 instead of the reason
+    # (measured through the tunnel, 2026-11-07).
+    close_signal: asyncio.Future = field(
+        default_factory=lambda: asyncio.get_running_loop().create_future()
+    )
 
     def start(self) -> None:
         self.writer = asyncio.create_task(self._write())
@@ -122,11 +132,14 @@ class AppSession:
                     self.queued_bytes -= len(item)
                     await self.ws.send_str(item)
                     continue
-                code, reason = item
-                await self.ws.close(code=code, message=reason.encode()[:120])
+                self._signal_close(*item)
                 return
         except (ConnectionResetError, RuntimeError, aiohttp.ClientError):
             pass
+
+    def _signal_close(self, code: int, reason: str) -> None:
+        if not self.close_signal.done():
+            self.close_signal.set_result((code, reason))
 
     def deliver(self, text: str) -> None:
         if self.ended_by_relay:
@@ -149,7 +162,7 @@ class AppSession:
             return
         if self.writer:
             self.writer.cancel()
-        _spawn(self.ws.close(code=code, message=reason.encode()[:120]))
+        self._signal_close(code, reason)
 
 
 @dataclass(eq=False)
@@ -488,13 +501,37 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
             json.dumps({"device": device.id, "name": device.name}).encode(),
         )
     )
+    async def release() -> None:
+        """Still listed = the bridge didn't end it (the phone left, or the
+        relay ended it): the bridge must close its OBS connection. Done
+        before waiting on the phone's close reply - a phone that stopped
+        reading would hold that up for the close timeout."""
+        if hub.by_device.get(device.id) is session:
+            hub.by_device.pop(device.id, None)
+        if link.sessions.get(session.sid) is session:
+            link.sessions.pop(session.sid, None)
+            await link.send_frame(protocol.pack(protocol.CLOSE, session.sid))
+
     if not opened:
         session.end(protocol.BRIDGE_GONE, "bridge gone", drain=False)
     try:
-        async for message in ws:
+        while True:
+            receive = asyncio.ensure_future(ws.receive())
+            await asyncio.wait(
+                {receive, session.close_signal}, return_when=asyncio.FIRST_COMPLETED
+            )
+            if not receive.done():
+                receive.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await receive
+                code, reason = session.close_signal.result()
+                await release()
+                await ws.close(code=code, message=reason.encode()[:120])
+                break
+            message = receive.result()
             if message.type == aiohttp.WSMsgType.TEXT:
                 if session.ended_by_relay:
-                    break
+                    continue  # the close follows once the queue drained
                 sent = await link.send_frame(
                     protocol.pack(protocol.DATA, session.sid, message.data.encode())
                 )
@@ -503,22 +540,12 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
             elif message.type == aiohttp.WSMsgType.BINARY:
                 # obs-websocket's msgpack subprotocol isn't offered.
                 session.end(1003, "text frames only", drain=False)
-            elif message.type == aiohttp.WSMsgType.ERROR:
+            else:  # CLOSE / CLOSING / CLOSED / ERROR: the phone is gone
                 break
     finally:
-        if hub.by_device.get(device.id) is session:
-            hub.by_device.pop(device.id, None)
-        # Still listed = the bridge didn't end it (the phone left, or the
-        # relay ended it): the bridge must close its OBS connection.
-        if link.sessions.get(session.sid) is session:
-            link.sessions.pop(session.sid, None)
-            await link.send_frame(protocol.pack(protocol.CLOSE, session.sid))
+        await release()
         if session.writer and not session.writer.done():
-            # Let a queued close go out; anything else is moot now.
-            try:
-                await asyncio.wait_for(asyncio.shield(session.writer), 2)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
-                session.writer.cancel()
+            session.writer.cancel()
         store.device_used(device.id)
     return ws
 
