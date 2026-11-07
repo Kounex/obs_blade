@@ -61,18 +61,33 @@ event reached the VPS relay).
 **In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
 `desktop/README.md`.
-- Done: relay server `tool/remote_relay/` (33 tests, image
-  `ghcr.io/kounex/remote-relay:0.0.1`, not deployed); bridge core
-  `desktop/core/` (Rust, 16 tests, green end to end against OBS 32.2.2
-  on the MacBook with and without OBS auth).
-- Blocked on the user: a RevenueCat **v2 secret key** (read access to
-  customer information + project configuration) and the project id, for
-  `/etc/remote-relay.env` on the VPS. Then: Quadlet, `relay.obs-blade.com`
-  on the `vps` tunnel, fleet catalog entry.
-- Next: app (pairing on the LAN with the code re-sent every 2 s, relay
-  fallback, close-code copy, Pro + FOSS gating), plugin shell, Qt panel +
-  standalone, packaging. MacBook has rustup + cmake (Homebrew) since
-  2026-11-07; build scratch in `~/agent-build/`.
+- **Relay live** at `https://relay.obs-blade.com` (VPS, Quadlet
+  `remote-relay`, image 0.0.1, `/etc/remote-relay.env` with the RevenueCat
+  v2 key - NAS copy `~/.config/obs-blade/revenuecat-v2.key`, project
+  `proja0a254d6`, `pro` = `entl2dd6e8fb75`). Live checks through
+  Cloudflare passed: non-Pro pairing 403, bad bridge token 401, close code
+  4904 reaches the phone. **The key was pasted in chat once (2026-11-07):
+  rotate it** (new v2 key, replace both copies, `systemctl restart
+  remote-relay`, revoke the old one).
+- **Home DNS:** Quad9 (AdGuard's upstream) still returned NXDOMAIN for
+  `relay.obs-blade.com` from some servers at 17:45 UTC - the home network
+  (Mac, phone on Wi-Fi) can't resolve it until that expires. The full
+  session through Cloudflare (`desktop/core/tests/e2e_relay.py --relay-url
+  https://relay.obs-blade.com --user <id>` with that id temporarily in
+  `RELAY_PRO_ALLOW`) is still owed.
+- **Bridge core** `desktop/core/` (Rust, 16 tests; e2e green against OBS
+  32.2.2 on the MacBook with and without OBS auth, local relay).
+- **App** (commits e33643b0..02260328): relay routing in `NetworkStore`
+  (smart fallback), close codes 4900-4910 with copy, pairing store +
+  dashboard sheet (⋯ → Remote Access), card line, relay globe, Start OBS
+  offer. Tests `test/remote/`, shots `tool/widget_shots/remote_access_shots_test.dart`.
+- **Dogfood path before the plugin exists:** run `obb` (the core's CLI) on
+  the MacBook next to OBS as the bridge; the dogfood device's RevenueCat
+  app user id must have Pro (or sit in `RELAY_PRO_ALLOW`).
+- Next: plugin shell (C++, vendor `obs-blade-bridge`/`Pair`), Qt panel +
+  standalone tray/watcher, packaging (macOS notarized, Windows unsigned
+  for now, Linux). MacBook has rustup + cmake (Homebrew); build scratch
+  `~/agent-build/`.
 
 **Watch:** crash reports + reviews for 4.2.0 (new: preview
 transitions, combined chat Save / Delete - build 5 had no device check;
