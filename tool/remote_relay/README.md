@@ -18,6 +18,12 @@ Access policy: the tokens below are the auth).
 | 3 | bridge | `POST /v1/pairings/redeem` `{"code", "name", "kind", "version"}`, `Authorization: Bearer <bridge token>` if already paired | `200 {"bridge_id", "bridge_token"?}` (token only for a new bridge, store it); `404 invalid_code` (unknown, used or expired), `401 unknown_bridge`, `409 too_many_devices` |
 | 4 | app, every ~2 s | `POST /v1/pairings/collect` `{"pairing_id"}` | `200 {"state": "waiting", "expires_in"}`, then once `200 {"state": "paired", "device_id", "app_token", "bridge": {"id", "name", "kind"}}`; `404 unknown_pairing` (expired, or already collected) |
 
+Step 2 is fire-and-forget (a CustomEvent reaches only bridges connected to
+OBS at that moment, e.g. not one that is still starting): the app sends it
+right away and again every 2 s until step 4 answers `paired`; the bridge
+ignores repeats of a code it already handled. A vendor request gets an
+answer, so the plugin path needs no repeat unless the call failed.
+
 The code is 8 characters from `23456789ABCDEFGHJKMNPQRSTUVWXYZ`; case,
 spaces and dashes are ignored. A code is single use and lives 2 minutes;
 a redeemed pairing waits 10 minutes to be collected. The `pairing_id` is a

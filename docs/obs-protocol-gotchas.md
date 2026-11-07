@@ -226,4 +226,15 @@ Not OBS, but the same kind of trap - verified 2026-10-02, details in
 - The server settings, incl. the password, live in
   `<OBS config>/plugin_config/obs-websocket/config.json` (`src/Config.cpp`;
   older versions kept them in `global.ini`, migrated on first load).
+- `GetSourceScreenshot` with **both** `imageWidth` and `imageHeight`
+  renders exactly that size and stretches - the request's doc comment
+  ("scale to inner, aspect ratio kept") is wrong, `TakeSourceScreenshot`
+  only derives a missing side from the source's aspect. Send one side
+  (the app does), or both already in the source's ratio. Measured on OBS
+  32.2.2: 1179x493 scene, width+height 640 -> a 640x640 image.
+- `--websocket_password` on OBS's command line forces auth and is never
+  written to `config.json` (`Config.cpp`); a tool reading the file then
+  has the wrong password.
+- `BroadcastCustomEvent` reaches only clients identified at that moment
+  with the General subscription; there is no delivery receipt.
 - Remote relay design built on these: `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
