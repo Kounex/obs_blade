@@ -1,0 +1,25 @@
+FROM python:3.12.15-alpine3.24@sha256:b658b05ce9c4eb97ec6fc19424818a1f31993659c2b505a532f470e83807815d AS base
+
+RUN adduser -D -H -u 65532 relay
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY protocol.py store.py entitlement.py relay.py ./
+
+# `podman build --target test .` runs the suite; the default target does not.
+FROM base AS test
+COPY test_relay.py ./
+RUN python3 -m unittest -v test_relay
+
+FROM base
+USER 65532:65532
+EXPOSE 8426
+
+# Loopback only (Network=host in the quadlet); the Cloudflare tunnel is
+# the only public door. The database lives on a volume.
+ENV RELAY_LISTEN=127.0.0.1
+ENV RELAY_PORT=8426
+ENV RELAY_DB=/var/lib/remote-relay/relay.db
+
+CMD ["python3", "/app/relay.py"]

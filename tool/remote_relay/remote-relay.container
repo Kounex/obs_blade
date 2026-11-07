@@ -1,0 +1,25 @@
+[Unit]
+Description=OBS Blade remote relay (Pro: reach OBS from anywhere)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/kounex/remote-relay:0.1.0
+ContainerName=remote-relay
+Network=host
+# RC_PROJECT_ID, RC_API_KEY (RevenueCat v2 secret key, read-only customer
+# information + project configuration), optional RC_PRO_ENTITLEMENT_ID and
+# RELAY_PRO_ALLOW (comma-separated app user ids, maintainers' dogfooding).
+EnvironmentFile=/etc/remote-relay.env
+Volume=/var/lib/remote-relay:/var/lib/remote-relay:Z
+Exec=python3 /app/relay.py
+
+[Service]
+Restart=on-failure
+# Its own caps, so a traffic spike can't stall the Kick relays next to it.
+MemoryMax=384M
+CPUQuota=100%
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

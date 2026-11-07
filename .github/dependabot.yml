@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: docker
-    directories: ["/tool/kick_auth_proxy", "/tool/kick_events_relay"]
+    directories: ["/tool/kick_auth_proxy", "/tool/kick_events_relay", "/tool/remote_relay"]
     schedule:
       interval: weekly
     ignore:
@@ -13,7 +13,7 @@ updates:
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: pip
-    directories: ["/tool/kick_events_relay"]
+    directories: ["/tool/kick_events_relay", "/tool/remote_relay"]
     schedule:
       interval: weekly
     groups:
