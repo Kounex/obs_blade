@@ -8,6 +8,8 @@ import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/divider.dart';
 import '../../../../shared/general/base/icon_button.dart';
+import '../../../../shared/overlay/base_result.dart';
+import '../../../../utils/overlay_handler.dart';
 import '../../../../stores/views/remote_access.dart';
 import '../../../../utils/relative_time.dart';
 import '../../../../utils/remote/remote_relay_client.dart';
@@ -93,8 +95,18 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
             loading: store.infoLoading,
             unreachable: store.infoError?.isNetwork ?? false,
             viaRemote: this.widget.viaRemote,
-            onRemoveDevice: (id) => store.removeDevice(this.widget.connection, id),
-            onTurnOff: () => store.forget(this.widget.connection),
+            onRemoveDevice: (id) async {
+              if (!await store.removeDevice(this.widget.connection, id) &&
+                  context.mounted) {
+                _relayProblem(context);
+              }
+            },
+            onTurnOff: () async {
+              if (!await store.forget(this.widget.connection) &&
+                  context.mounted) {
+                _relayProblem(context);
+              }
+            },
           );
         } else {
           switch (store.phase) {
@@ -138,6 +150,14 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
     );
   }
 }
+
+void _relayProblem(BuildContext context) => OverlayHandler.showStatusOverlay(
+  context: context,
+  content: const BaseResult(
+    icon: BaseResultIcon.Negative,
+    text: 'Couldn\'t reach the OBS Blade relay. Try again in a moment.',
+  ),
+);
 
 TextStyle _secondary(BuildContext context) => Theme.of(context).textTheme.bodyMedium!.copyWith(
   color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
@@ -349,7 +369,7 @@ class _Paired extends StatelessWidget {
   final bool loading;
   final bool unreachable;
   final bool viaRemote;
-  final Future<bool> Function(String deviceId) onRemoveDevice;
+  final Future<void> Function(String deviceId) onRemoveDevice;
   final VoidCallback onTurnOff;
 
   const _Paired({

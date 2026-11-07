@@ -252,7 +252,9 @@ abstract class _RemoteAccessStore with Store {
     try {
       await _relay.removeDevice(deviceId, connection.relayAppToken!);
     } on RemoteRelayException catch (e) {
-      if (!e.isUnpaired && !(self && e.statusCode == 404)) {
+      // Turning it off here must work offline too: the relay drops a
+      // device nobody uses after 180 days, and its token is gone with us
+      if (!e.isUnpaired && !(self && (e.statusCode == 404 || e.isNetwork))) {
         GeneralHelper.logFailure('Remote access: removing a device failed', e);
         return false;
       }

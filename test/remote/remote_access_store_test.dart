@@ -187,6 +187,22 @@ void main() {
     expect(connection.hasRemote, isFalse);
   });
 
+  test('turning off works while the relay is unreachable', () async {
+    final s = store();
+    final connection = Connection('h', 4455);
+    await s.pair(connection, deviceName: 'iPhone', platform: 'ios');
+    final offline = RemoteAccessStore(
+      relay: RemoteRelayClient(
+        baseUrl: 'https://relay.example',
+        client: MockClient((_) async => throw http.ClientException('offline')),
+      ),
+      appUserId: () async => 'x',
+      sendCode: (_) async => true,
+    );
+    expect(await offline.forget(connection), isTrue);
+    expect(connection.hasRemote, isFalse);
+  });
+
   test('a revoked pairing (401) is forgotten on refresh', () async {
     final s = store();
     final connection = Connection('h', 4455);

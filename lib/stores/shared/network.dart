@@ -106,6 +106,21 @@ abstract class _NetworkStore with Store {
       );
     }
 
+    /// Paired, but Pro is gone: the relay wasn't tried - say why instead of
+    /// "check IP and Wi-Fi" (spec journey 5); the LAN keeps working
+    if (connection.hasRemote &&
+        !_remote.isPro() &&
+        lanUnreachable(this.lastConnectionResult)) {
+      this.lastConnectionResult = ConnectionAttemptResult(
+        closeCode: WebSocketCloseCode.RemoteProRequired,
+        stage: this.lastConnectionResult!.stage,
+        viaRemote: true,
+        remoteName: connection.relayBridgeName,
+      );
+      this.connectionClodeCode = WebSocketCloseCode.RemoteProRequired;
+      closeCode = WebSocketCloseCode.RemoteProRequired;
+    }
+
     /// The relay says this device's pairing is gone (removed on the PC or
     /// another device): forget it, so the card stops offering remote access
     if (this.lastConnectionResult?.closeCode ==

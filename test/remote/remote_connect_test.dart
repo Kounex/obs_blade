@@ -34,6 +34,20 @@ void main() {
     }
   });
 
+  test('a host reachable from anywhere is still tried first on mobile data', () {
+    expect(
+      connectPlan(hasRemote: true, isPro: true, onLocalNetwork: false, hostIsLanOnly: false),
+      [ConnectLeg.lan, ConnectLeg.remote],
+    );
+    for (final host in ['192.168.178.20', '10.0.0.5', '172.20.1.1', 'obs.local', 'localhost', '169.254.3.4', 'fd12::1', 'ws://192.168.1.2:4455']) {
+      expect(hostIsLanOnly(host), isTrue, reason: host);
+    }
+    // own domain, public IP, Tailscale/CGNAT
+    for (final host in ['obs.example.com', 'wss://obs.example.com', '203.0.113.7', '100.101.102.103', '172.32.0.1']) {
+      expect(hostIsLanOnly(host), isFalse, reason: host);
+    }
+  });
+
   test('only a LAN that never answered moves on to the relay', () {
     ConnectionAttemptResult r(WebSocketCloseCode code, ConnectionStage stage) =>
         ConnectionAttemptResult(closeCode: code, stage: stage);
@@ -177,7 +191,18 @@ void main() {
       final code = await network.setOBSWebSocket(paired('127.0.0.1', await closedPort()));
 
       expect(code, isNot(WebSocketCloseCode.DontClose));
-      expect(network.lastConnectionResult!.viaRemote, isFalse);
+      expect(endpoint.upgrades, isEmpty); // the relay is never asked
+    });
+
+    test('paired but Pro lapsed: away from home it says Pro, not "check Wi-Fi"', () async {
+      isPro = false;
+      final endpoint = await relay(FakeEndpointMode.obs);
+      final network = store(endpoint);
+
+      final code = await network.setOBSWebSocket(paired('127.0.0.1', await closedPort()));
+
+      expect(code, WebSocketCloseCode.RemoteProRequired);
+      expect(network.lastConnectionResult!.userMessage, 'Remote access is part of Pro.');
       expect(endpoint.upgrades, isEmpty);
     });
 

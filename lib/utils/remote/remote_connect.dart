@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
 
@@ -17,17 +19,41 @@ const Duration kLanProbeTimeout = Duration(seconds: 3);
 
 /// The legs of a connect, in order.
 ///
-/// - No pairing, or no Pro: the LAN only (as before remote access existed).
-/// - Paired and Pro, off the local network (mobile data): the relay only.
-/// - Paired and Pro on Wi-Fi / Ethernet: the LAN briefly, then the relay.
+/// - No pairing, or no Pro: the saved host only (as before remote access).
+/// - Paired and Pro, off the local network (mobile data) with a LAN-only
+///   host: the relay only.
+/// - Otherwise (on Wi-Fi, or a host reachable from anywhere - a domain,
+///   a public IP, a Tailscale address): the saved host briefly, then the
+///   relay. Setups that already reached OBS remotely keep working.
 List<ConnectLeg> connectPlan({
   required bool hasRemote,
   required bool isPro,
   required bool onLocalNetwork,
+  bool hostIsLanOnly = true,
 }) {
   if (!hasRemote || !isPro) return const [ConnectLeg.lan];
-  if (!onLocalNetwork) return const [ConnectLeg.remote];
+  if (!onLocalNetwork && hostIsLanOnly) return const [ConnectLeg.remote];
   return const [ConnectLeg.lan, ConnectLeg.remote];
+}
+
+/// A host only reachable inside a home network: RFC 1918, link-local,
+/// loopback or mDNS `.local`. Domains, public IPs and CGNAT / Tailscale
+/// (100.64/10) addresses are not.
+bool hostIsLanOnly(String rawHost) {
+  String host = rawHost.trim().toLowerCase();
+  if (host.contains('://')) host = Uri.tryParse(host)?.host ?? host;
+  if (host == 'localhost' || host.endsWith('.local')) return true;
+  final InternetAddress? address = InternetAddress.tryParse(host);
+  if (address == null) return false; // a domain name
+  if (address.isLoopback || address.isLinkLocal) return true;
+  if (address.type == InternetAddressType.IPv4) {
+    final List<int> b = address.rawAddress;
+    return b[0] == 10 ||
+        (b[0] == 172 && b[1] >= 16 && b[1] <= 31) ||
+        (b[0] == 192 && b[1] == 168);
+  }
+  // IPv6 unique local (fc00::/7)
+  return (address.rawAddress[0] & 0xfe) == 0xfc;
 }
 
 /// A LAN attempt that never reached OBS (no socket, nothing answered) -
@@ -76,7 +102,12 @@ class RemoteConnectEnvironment {
     } catch (_) {
       local = true; // unknown: try both
     }
-    return connectPlan(hasRemote: true, isPro: true, onLocalNetwork: local);
+    return connectPlan(
+      hasRemote: true,
+      isPro: true,
+      onLocalNetwork: local,
+      hostIsLanOnly: hostIsLanOnly(connection.host),
+    );
   }
 
   /// URL + headers of the relay socket for a paired [connection].

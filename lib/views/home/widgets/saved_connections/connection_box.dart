@@ -287,7 +287,10 @@ class ConnectionBox extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (!kFoss && this.connection.hasRemote) ...[
+                        if (!kFoss &&
+                            this.connection.hasRemote &&
+                            GetIt.instance.isRegistered<ProStore>() &&
+                            GetIt.instance<ProStore>().isPro) ...[
                           const SizedBox(height: AppSpacing.xs),
                           Row(
                             children: [
