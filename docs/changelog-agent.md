@@ -4,6 +4,26 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-07 - Remote access (Pro): relay, bridge core, app side
+
+Reach OBS from anywhere: spec
+`docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
+
+- Relay `tool/remote_relay/` (Python/aiohttp, VPS, `relay.obs-blade.com`):
+  pairing codes, one outbound bridge socket carrying every phone
+  session, Pro via RevenueCat REST v2 (pairing, connect, every 30 min;
+  24 h grace while RevenueCat is down), close codes 4900-4910.
+- Bridge core `desktop/core/` (Rust): one local OBS websocket per phone
+  session with local auth (password read from obs-websocket's
+  `config.json`), lighter preview (never adds a screenshot dimension -
+  OBS stretches when both are given), OBS monitor (state, status
+  snapshot, CustomEvent pairing), C ABI + `obb` CLI.
+- App: `NetworkStore` routes paired Pro connections (Wi-Fi: LAN 3 s then
+  relay; mobile data: relay), relay close codes with copy, revoked
+  pairings forgotten; `RemoteAccessStore` + dashboard sheet; card line;
+  globe on relay sessions; Start OBS for the standalone. Connection
+  HiveFields 7-11 (additive). Plugin and standalone shells still to come.
+
 ## 2026-11-06 - OBS 33: audio monitoring is Off / On
 
 OBS 33 turned audio monitoring into on / off (obs-studio #13599): the
