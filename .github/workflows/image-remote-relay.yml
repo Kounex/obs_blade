@@ -4,7 +4,7 @@ name: image remote-relay
 on:
   push:
     branches: [master]
-    paths: ["tool/remote_relay/**", "!tool/remote_relay/**/*.md"]
+    paths: ["tool/remote_relay/**", "!tool/remote_relay/**/*.md", "!tool/remote_relay/*.container"]
   pull_request:
     paths: ["tool/remote_relay/**", ".github/workflows/**"]
   workflow_dispatch:
