@@ -29,6 +29,6 @@ Run the tests (needs aiohttp + cryptography, so in the image):
 podman build --target test .
 ```
 
-Deploy (maintainer host details: `it-env` `docs/machines/hetzner.md`):
+Deploy (maintainer host details: `it-env` `docs/machines/hetzner-vps.md`):
 the image is built and published by GitHub Actions (`.github/workflows/image-kick-events.yml`, runs the `test` stage first) as `ghcr.io/kounex/kick-events:<semver>`; every push touching this folder publishes the next patch. Install `kick-events.container`
 as a quadlet, data volume `/var/lib/kick-events` owned by uid 65531.
