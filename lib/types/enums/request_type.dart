@@ -456,4 +456,11 @@ enum RequestType {
   /// {'requestType': String } - The request type to call
   /// (Optional) {'requestData': Object } - Object containing appropriate request data
   CallVendorRequest,
+
+  /// Sends a CustomEvent to every client identified with the General
+  /// subscription (no delivery receipt - reaches only clients connected
+  /// at that moment). Remote access pairing uses it for the standalone.
+  ///
+  /// {'eventData': Object } - Data payload to emit to all receivers
+  BroadcastCustomEvent,
 }
