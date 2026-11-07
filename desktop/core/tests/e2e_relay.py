@@ -4,6 +4,7 @@ real OBS, with this script as the phone.
 
     python3 e2e_relay.py --relay-dir ../../../tool/remote_relay --obb target/debug/obb \
         [--obs-password PW] [--stop-obs-cmd "obs_test_env.sh stop"]
+        [--relay-url https://relay.obs-blade.com --user <id in RELAY_PRO_ALLOW>]
 
 Needs aiohttp. Pro is granted through RELAY_PRO_ALLOW (no RevenueCat).
 Prints one line per check and exits non-zero on the first failure.
@@ -124,13 +125,20 @@ async def main() -> None:
     parser.add_argument("--obb", required=True)
     parser.add_argument("--obs-password")
     parser.add_argument("--stop-obs-cmd", help="shell command that quits OBS; then the phone must get 4901")
+    parser.add_argument("--relay-url", help="use this deployed relay instead of starting one")
+    parser.add_argument("--user", help="app user id the deployed relay treats as Pro (RELAY_PRO_ALLOW)")
     args = parser.parse_args()
+    global RELAY, USER
+    if args.relay_url:
+        RELAY = args.relay_url.rstrip("/")
+        USER = args.user or fail("--relay-url needs --user")
 
     tmp = tempfile.mkdtemp(prefix="obb-e2e-")
     env = dict(os.environ, RELAY_PORT=str(PORT), RELAY_DB=f"{tmp}/relay.db", RC_PROJECT_ID="e2e",
                RC_API_KEY="unused", RELAY_PRO_ALLOW=USER, RELAY_MIN_BRIDGE_VERSION="0.1.0")
-    relay = subprocess.Popen([sys.executable, "relay.py"], cwd=args.relay_dir, env=env,
-                             stdout=subprocess.DEVNULL, stderr=open(f"{tmp}/relay.log", "w"))
+    relay = None if args.relay_url else subprocess.Popen(
+        [sys.executable, "relay.py"], cwd=args.relay_dir, env=env,
+        stdout=subprocess.DEVNULL, stderr=open(f"{tmp}/relay.log", "w"))
     obb_args = [args.obb, "--relay", RELAY, "--state", f"{tmp}/bridge.json", "--name", "E2E-PC"]
     bridge = subprocess.Popen(obb_args, stdin=subprocess.PIPE, stdout=open(f"{tmp}/obb.log", "w"),
                               stderr=subprocess.STDOUT, text=True)
@@ -155,8 +163,9 @@ async def main() -> None:
             bridge.wait(timeout=5)
         except subprocess.TimeoutExpired:
             bridge.kill()
-        relay.terminate()
-        relay.wait(timeout=5)
+        if relay:
+            relay.terminate()
+            relay.wait(timeout=5)
         print(f"logs in {tmp}")
 
 

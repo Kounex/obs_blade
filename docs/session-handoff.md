@@ -62,19 +62,18 @@ event reached the VPS relay).
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
 `desktop/README.md`.
 - **Relay live** at `https://relay.obs-blade.com` (VPS, Quadlet
-  `remote-relay`, image 0.0.1, `/etc/remote-relay.env` with the RevenueCat
+  `remote-relay`, image 0.0.3, `/etc/remote-relay.env` with the RevenueCat
   v2 key - NAS copy `~/.config/obs-blade/revenuecat-v2.key`, project
   `proja0a254d6`, `pro` = `entl2dd6e8fb75`). Live checks through
   Cloudflare passed: non-Pro pairing 403, bad bridge token 401, close code
   4904 reaches the phone. **The key was pasted in chat once (2026-11-07):
   rotate it** (new v2 key, replace both copies, `systemctl restart
   remote-relay`, revoke the old one).
-- **Home DNS:** Quad9 (AdGuard's upstream) still returned NXDOMAIN for
-  `relay.obs-blade.com` from some servers at 17:45 UTC - the home network
-  (Mac, phone on Wi-Fi) can't resolve it until that expires. The full
-  session through Cloudflare (`desktop/core/tests/e2e_relay.py --relay-url
-  https://relay.obs-blade.com --user <id>` with that id temporarily in
-  `RELAY_PRO_ALLOW`) is still owed.
+- **End to end through Cloudflare: green** (2026-11-07, relay 0.0.3,
+  OBS 32.2.2 on the MacBook, `obb` as bridge): pairing via CustomEvent,
+  full session, 640 px preview, meters, status snapshot, 4901 after OBS
+  quit. 0.0.3 fixed relay-ended sessions arriving as 1006 through
+  cloudflared (close only from the socket's handler).
 - **Bridge core** `desktop/core/` (Rust, 16 tests; e2e green against OBS
   32.2.2 on the MacBook with and without OBS auth, local relay).
 - **App** (commits e33643b0..02260328): relay routing in `NetworkStore`

@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/kounex/remote-relay:0.0.1
+Image=ghcr.io/kounex/remote-relay:0.0.3
 ContainerName=remote-relay
 Network=host
 # RC_PROJECT_ID, RC_API_KEY (RevenueCat v2 secret key, read-only customer
