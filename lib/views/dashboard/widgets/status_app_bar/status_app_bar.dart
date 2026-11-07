@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
@@ -104,9 +105,36 @@ class StatusAppBar extends StatelessWidget {
               const GeneralActions(),
             ],
           ),
-          Text(
-            'Dashboard',
-            style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+          /// Remote access (Pro): a globe marks a session through the relay
+          Observer(
+            builder: (context) {
+              final bool viaRemote =
+                  GetIt.instance<NetworkStore>().activeSession?.viaRemote ??
+                  false;
+              final TextStyle style = CupertinoTheme.of(
+                context,
+              ).textTheme.navTitleTextStyle;
+              return Semantics(
+                label: viaRemote
+                    ? 'Dashboard, connected through the relay'
+                    : 'Dashboard',
+                excludeSemantics: true,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (viaRemote) ...[
+                      Icon(
+                        CupertinoIcons.globe,
+                        size: 16.0,
+                        color: style.color?.withValues(alpha: 0.7),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                    ],
+                    Text('Dashboard', style: style),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

@@ -291,6 +291,26 @@ abstract class _RemoteAccessStore with Store {
     }
   }
 
+  /// Start OBS on a standalone bridge and wait until the relay reports it
+  /// running (OBS needs a few seconds to load). False on refusal / timeout.
+  Future<bool> startObsAndWait(
+    Connection connection, {
+    Duration timeout = const Duration(seconds: 60),
+  }) async {
+    if (!await this.startObs(connection)) return false;
+    final DateTime deadline = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(_pollInterval);
+      await this.refresh(connection);
+      final RemoteBridgeInfo? info = this.info;
+      if (info != null && info.online && info.obsState == 'running') {
+        return true;
+      }
+      if (!connection.hasRemote) return false;
+    }
+    return false;
+  }
+
   @action
   void _forgetLocally(Connection connection) {
     connection.clearRemote();

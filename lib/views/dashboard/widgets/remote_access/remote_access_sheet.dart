@@ -1,0 +1,466 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+
+import '../../../../models/connection.dart';
+import '../../../../shared/animator/status_dot.dart';
+import '../../../../shared/design/design.dart';
+import '../../../../shared/general/base/button.dart';
+import '../../../../shared/general/base/divider.dart';
+import '../../../../shared/general/base/icon_button.dart';
+import '../../../../stores/views/remote_access.dart';
+import '../../../../utils/relative_time.dart';
+import '../../../../utils/remote/remote_relay_client.dart';
+
+/// Remote access (Pro): pair this device with OBS Blade Remote on the PC
+/// (the OBS plugin or the standalone app) while connected on the same
+/// network, then reach OBS from anywhere through the relay. Spec:
+/// `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
+class RemoteAccessSheet extends StatefulWidget {
+  /// The active session's connection
+  final Connection connection;
+
+  /// Saved connections only: the pairing lives on the saved entry
+  final bool saved;
+  final bool isPro;
+
+  /// This session runs through the relay right now
+  final bool viaRemote;
+
+  final RemoteAccessStore store;
+
+  /// Device name / platform sent to the relay (shown on the PC)
+  final String deviceName;
+  final String platform;
+
+  final VoidCallback onGetPro;
+  final VoidCallback onSaveConnection;
+
+  const RemoteAccessSheet({
+    super.key,
+    required this.connection,
+    required this.saved,
+    required this.isPro,
+    required this.viaRemote,
+    required this.store,
+    required this.deviceName,
+    required this.platform,
+    required this.onGetPro,
+    required this.onSaveConnection,
+  });
+
+  @override
+  State<RemoteAccessSheet> createState() => _RemoteAccessSheetState();
+}
+
+class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
+  @override
+  void initState() {
+    super.initState();
+    if (this.widget.isPro && this.widget.connection.hasRemote) {
+      this.widget.store.refresh(this.widget.connection);
+    }
+  }
+
+  @override
+  void dispose() {
+    this.widget.store.cancel();
+    super.dispose();
+  }
+
+  void _pair() => this.widget.store.pair(
+    this.widget.connection,
+    deviceName: this.widget.deviceName,
+    platform: this.widget.platform,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return Observer(
+      builder: (context) {
+        final RemoteAccessStore store = this.widget.store;
+        final Widget body;
+        if (!this.widget.isPro) {
+          body = _Locked(onGetPro: this.widget.onGetPro);
+        } else if (!this.widget.saved) {
+          body = _NeedsSavedConnection(onSave: this.widget.onSaveConnection);
+        } else if (this.widget.connection.hasRemote) {
+          body = _Paired(
+            connection: this.widget.connection,
+            info: store.info,
+            loading: store.infoLoading,
+            unreachable: store.infoError?.isNetwork ?? false,
+            viaRemote: this.widget.viaRemote,
+            onRemoveDevice: (id) => store.removeDevice(this.widget.connection, id),
+            onTurnOff: () => store.forget(this.widget.connection),
+          );
+        } else {
+          switch (store.phase) {
+            case RemotePairingPhase.starting:
+            case RemotePairingPhase.waitingForBridge:
+              body = _Waiting(code: store.code, onCancel: store.cancel);
+            case RemotePairingPhase.failed:
+              body = _Failed(
+                failure: store.failure!,
+                onRetry: this._pair,
+                onGetPro: this.widget.onGetPro,
+              );
+            case RemotePairingPhase.idle:
+            case RemotePairingPhase.paired:
+              body = _SetUp(onSetUp: this._pair);
+          }
+        }
+
+        return SingleChildScrollView(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24.0) +
+              EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
+              ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Remote Access', style: theme.textTheme.headlineSmall),
+              Text(
+                'Control OBS from anywhere',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const BaseDivider(),
+              const SizedBox(height: AppSpacing.lg),
+              body,
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+TextStyle _secondary(BuildContext context) => Theme.of(context).textTheme.bodyMedium!.copyWith(
+  color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
+);
+
+class _Locked extends StatelessWidget {
+  final VoidCallback onGetPro;
+
+  const _Locked({required this.onGetPro});
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Reach OBS on mobile data or from another network - no port '
+        'forwarding, no VPN. Remote access is part of Pro.',
+        style: _secondary(context),
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      SizedBox(
+        width: double.infinity,
+        child: BaseButton(text: 'Get Pro', onPressed: this.onGetPro),
+      ),
+    ],
+  );
+}
+
+class _NeedsSavedConnection extends StatelessWidget {
+  final VoidCallback onSave;
+
+  const _NeedsSavedConnection({required this.onSave});
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Save this connection first - remote access is set up for a saved '
+        'connection, so the app knows which PC to reach later.',
+        style: _secondary(context),
+      ),
+      const SizedBox(height: AppSpacing.lg),
+      SizedBox(
+        width: double.infinity,
+        child: BaseButton(text: 'Save Connection', onPressed: this.onSave),
+      ),
+    ],
+  );
+}
+
+class _SetUp extends StatelessWidget {
+  final VoidCallback onSetUp;
+
+  const _SetUp({required this.onSetUp});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'When OBS isn\'t on the same network as this device, OBS Blade '
+          'connects through the OBS Blade relay instead. Nothing to open '
+          'on your router, and your OBS password never leaves the PC.',
+          style: _secondary(context),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        Text('On the PC running OBS', style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Install OBS Blade Remote - the OBS plugin (runs with OBS), or the '
+          'app if you\'d rather not add plugins. Then set it up here while '
+          'you\'re connected to OBS like right now.',
+          style: _secondary(context),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(
+          width: double.infinity,
+          child: BaseButton(text: 'Set Up Remote Access', onPressed: this.onSetUp),
+        ),
+      ],
+    );
+  }
+}
+
+class _Waiting extends StatelessWidget {
+  final String? code;
+  final VoidCallback onCancel;
+
+  const _Waiting({required this.code, required this.onCancel});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const CupertinoActivityIndicator(),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                'Waiting for OBS Blade Remote on your PC…',
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          this.code == null
+              ? 'Asking the relay for a pairing code.'
+              : 'Pairing code ${this.code!.substring(0, 4)}-${this.code!.substring(4)} - '
+                    'it goes to the PC through OBS, nothing to type.',
+          style: _secondary(context),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(
+          width: double.infinity,
+          child: BaseButton(text: 'Cancel', secondary: true, onPressed: this.onCancel),
+        ),
+      ],
+    );
+  }
+}
+
+/// Copy for a failed pairing (and whether the Pro page helps).
+(String, bool) remotePairingFailureCopy(RemotePairingFailure failure) => switch (failure) {
+  RemotePairingFailure.noAccount => (
+    'Couldn\'t confirm Pro on this device. Open Pro, tap Restore '
+        'Purchases, then try again.',
+    true,
+  ),
+  RemotePairingFailure.proRequired => ('Remote access is part of Pro.', true),
+  RemotePairingFailure.verifyUnavailable => (
+    'Couldn\'t check Pro right now. Try again in a moment.',
+    false,
+  ),
+  RemotePairingFailure.rateLimited => (
+    'Too many attempts. Try again in a few minutes.',
+    false,
+  ),
+  RemotePairingFailure.network => (
+    'Couldn\'t reach the OBS Blade relay. Check your internet connection.',
+    false,
+  ),
+  RemotePairingFailure.noBridge => (
+    'OBS Blade Remote didn\'t answer. Make sure it\'s installed on the PC '
+        'running OBS and turned on, then try again.',
+    false,
+  ),
+};
+
+class _Failed extends StatelessWidget {
+  final RemotePairingFailure failure;
+  final VoidCallback onRetry;
+  final VoidCallback onGetPro;
+
+  const _Failed({required this.failure, required this.onRetry, required this.onGetPro});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final (String text, bool pro) = remotePairingFailureCopy(this.failure);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Not set up', style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.xs),
+        Text(text, style: _secondary(context)),
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(
+          width: double.infinity,
+          child: pro
+              ? BaseButton(text: 'Open Pro', onPressed: this.onGetPro)
+              : BaseButton(text: 'Try Again', onPressed: this.onRetry),
+        ),
+      ],
+    );
+  }
+}
+
+/// One line on the PC's state from the relay's view.
+String remoteBridgeStatusLine(RemoteBridgeInfo info, {DateTime? now}) {
+  if (info.updateRequired) return 'Update OBS Blade Remote on this PC';
+  if (!info.online) {
+    final seen = info.lastSeen;
+    if (info.obsState == 'closed' && info.kind == 'plugin') {
+      return seen == null ? 'OBS was closed' : 'OBS was closed ${relativeTimeAgo(seen, now: now)}';
+    }
+    return seen == null ? 'Offline' : 'Offline - last seen ${relativeTimeAgo(seen, now: now)}';
+  }
+  // The dot next to the name already says Online
+  return switch (info.obsState) {
+    'running' => 'OBS running',
+    'ws_off' => 'Turn on the WebSocket server in OBS',
+    'auth_failed' => 'OBS refused OBS Blade Remote\'s password',
+    'closed' || 'crashed' => 'OBS isn\'t running',
+    _ => 'Waiting for OBS',
+  };
+}
+
+class _Paired extends StatelessWidget {
+  final Connection connection;
+  final RemoteBridgeInfo? info;
+  final bool loading;
+  final bool unreachable;
+  final bool viaRemote;
+  final Future<bool> Function(String deviceId) onRemoveDevice;
+  final VoidCallback onTurnOff;
+
+  const _Paired({
+    required this.connection,
+    required this.info,
+    required this.loading,
+    required this.unreachable,
+    required this.viaRemote,
+    required this.onRemoveDevice,
+    required this.onTurnOff,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppStatusColors status = theme.extension<AppStatusColors>()!;
+    final AppTextColors textColors = theme.extension<AppTextColors>()!;
+    final RemoteBridgeInfo? info = this.info;
+    final String name = info?.name.isNotEmpty == true
+        ? info!.name
+        : (this.connection.relayBridgeName ?? 'Your PC');
+    final String kind = (info?.kind ?? this.connection.relayBridgeKind) == 'standalone'
+        ? 'OBS Blade Remote app'
+        : 'OBS plugin';
+    final bool online = info?.online ?? false;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(name, style: theme.textTheme.titleMedium)),
+            StatusDot(
+              size: 8.0,
+              pulsing: false,
+              color: info == null
+                  ? textColors.textOrnament
+                  : online
+                  ? status.reachable
+                  : status.unreachable,
+              text: info == null
+                  ? 'Checking'
+                  : online
+                  ? 'Online'
+                  : 'Offline',
+              style: theme.textTheme.titleSmall,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          info != null
+              ? '$kind · ${remoteBridgeStatusLine(info)}'
+              : this.unreachable
+              ? '$kind · couldn\'t reach the OBS Blade relay'
+              : '$kind · checking…',
+          style: _secondary(context),
+        ),
+        if (this.viaRemote) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text('Connected through the relay right now', style: _secondary(context)),
+        ],
+        if (info != null && info.devices.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.lg),
+          Text('Paired devices', style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xs),
+          for (final device in info.devices)
+            SizedBox(
+              /// One row height for every device, with or without the
+              /// Remove button's 44 pt hit area
+              height: kBaseIconButtonMinHitArea,
+              child: Row(
+                children: [
+                  Icon(
+                    device.platform == 'android'
+                        ? Icons.phone_android
+                        : CupertinoIcons.device_phone_portrait,
+                    size: 18.0,
+                    color: textColors.textSecondary,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      device.isThisDevice ? '${device.name} (this device)' : device.name,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  if (!device.isThisDevice)
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(kBaseIconButtonMinHitArea, kBaseIconButtonMinHitArea),
+                      onPressed: () => this.onRemoveDevice(device.id),
+                      child: Text(
+                        'Remove',
+                        style: theme.textTheme.bodyMedium!.copyWith(color: CupertinoColors.destructiveRed),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(
+          width: double.infinity,
+          child: BaseButton(
+            text: 'Turn Off on This Device',
+            isDestructive: true,
+            onPressed: this.onTurnOff,
+          ),
+        ),
+      ],
+    );
+  }
+}

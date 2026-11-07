@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
@@ -8,22 +10,69 @@ import '../../../../models/connection.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_actions.dart';
+import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../stores/pro_store.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/canvas_view.dart';
 import '../../../../stores/views/dashboard.dart';
+import '../../../../stores/views/remote_access.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/request_batch_type.dart';
 import '../../../../types/enums/request_type.dart';
 import '../../../../types/enums/settings_keys.dart';
+import '../../../../utils/build_flavor.dart';
 import '../../../../utils/modal_handler.dart';
+import '../../../../utils/routing_helper.dart';
 import '../../../../utils/network_helper.dart';
 import '../../services/record_stream.dart';
 import '../dialogs/save_edit_connection.dart';
+import '../remote_access/remote_access_sheet.dart';
 
 class GeneralActions extends StatelessWidget {
   const GeneralActions({super.key});
+
+  /// Remote access (Pro) for the active session's connection.
+  static void openRemoteAccess(BuildContext context) {
+    final NetworkStore networkStore = GetIt.instance<NetworkStore>();
+    final session = networkStore.activeSession;
+    if (session == null) return;
+    final bool tablet = MediaQuery.sizeOf(context).shortestSide >= 600;
+    ModalHandler.showBaseCupertinoBottomSheet(
+      context: context,
+      /// Card width on tablets - a full-width sheet stretches the buttons
+      maxWidth: kBaseCardMaxWidth,
+      modalWidgetBuilder: (sheetContext, controller) => RemoteAccessSheet(
+        connection: session.connection,
+        saved: session.connection.name != null && session.connection.isInBox,
+        isPro: GetIt.instance<ProStore>().isPro,
+        viaRemote: session.viaRemote,
+        store: RemoteAccessStore(),
+        deviceName: Platform.isIOS
+            ? (tablet ? 'iPad' : 'iPhone')
+            : Platform.isAndroid
+            ? (tablet ? 'Android tablet' : 'Android phone')
+            : Platform.operatingSystem,
+        platform: Platform.isIOS
+            ? 'ios'
+            : Platform.isAndroid
+            ? 'android'
+            : Platform.operatingSystem,
+        onGetPro: () {
+          Navigator.of(sheetContext).pop();
+          Navigator.of(context).pushNamed(HomeTabRoutingKeys.Pro.route);
+        },
+        onSaveConnection: () {
+          Navigator.of(sheetContext).pop();
+          ModalHandler.showBaseDialog(
+            context: context,
+            dialogWidget: const SaveEditConnectionDialog(newConnection: true),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,6 +333,14 @@ class GeneralActions extends StatelessWidget {
                             );
                           },
                   ),
+                  if (!kFoss)
+                    AppBarActionEntry(
+                      title: GetIt.instance<ProStore>().isPro
+                          ? 'Remote Access'
+                          : 'Remote Access (Pro)',
+                      leadingIcon: CupertinoIcons.globe,
+                      onAction: () => GeneralActions.openRemoteAccess(context),
+                    ),
                   AppBarActionEntry(
                     title: '${newConnection ? 'Save' : 'Edit'} Connection',
                     leadingIcon: CupertinoIcons.pencil_ellipsis_rectangle,

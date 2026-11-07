@@ -14,7 +14,11 @@ import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/base/icon_button.dart';
+import '../../../../shared/overlay/base_progress_indicator.dart';
+import '../../../../stores/pro_store.dart';
 import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/remote_access.dart';
+import '../../../../utils/build_flavor.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/relative_time.dart';
 import 'edit_dialog.dart';
@@ -56,6 +60,11 @@ class ConnectionBox extends StatelessWidget {
         this.connection.lastConnectedMs = DateTime.now().millisecondsSinceEpoch;
         this.connection.save();
       }
+      if (closeCode == WebSocketCloseCode.RemoteObsNotRunning &&
+          this.connection.relayBridgeKind == 'standalone' &&
+          context.mounted) {
+        this._offerStartObs(context);
+      }
       if (closeCode == WebSocketCloseCode.AuthenticationFailed &&
           context.mounted) {
         OverlayHandler.showStatusOverlay(
@@ -67,6 +76,46 @@ class ConnectionBox extends StatelessWidget {
         );
       }
     });
+  }
+
+  /// Journey 3 of the remote relay spec: the standalone OBS Blade Remote
+  /// can start OBS when it isn't running; connect once it's up.
+  Future<void> _offerStartObs(BuildContext context) async {
+    await OverlayHandler.closeAnyOverlay(immediately: true);
+    if (!context.mounted) return;
+    final String pc = this.connection.relayBridgeName ?? 'your PC';
+    ModalHandler.showBaseDialog(
+      context: context,
+      dialogWidget: ConfirmationDialog(
+        title: 'OBS Isn\'t Running',
+        body: 'OBS isn\'t running on $pc. Start it from here?',
+        noText: 'Cancel',
+        okText: 'Start OBS',
+        onOk: (_) async {
+          OverlayHandler.showStatusOverlay(
+            context: context,
+            showDuration: const Duration(seconds: 60),
+            content: BaseProgressIndicator(text: 'Starting OBS on $pc…'),
+          );
+          final bool started = await RemoteAccessStore().startObsAndWait(
+            this.connection,
+          );
+          if (!context.mounted) return;
+          if (started) {
+            this._connect(context);
+          } else {
+            OverlayHandler.showStatusOverlay(
+              context: context,
+              replaceIfActive: true,
+              content: BaseResult(
+                icon: BaseResultIcon.Negative,
+                text: 'OBS didn\'t start on $pc.',
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   void _edit(BuildContext context) {
@@ -238,6 +287,25 @@ class ConnectionBox extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (!kFoss && this.connection.hasRemote) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Row(
+                            children: [
+                              Icon(
+                                CupertinoIcons.globe,
+                                size: 14.0,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                'Remote access',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           this.connection.lastConnectedMs != null
@@ -255,6 +323,17 @@ class ConnectionBox extends StatelessWidget {
                     final bool connecting =
                         GetIt.instance<NetworkStore>().connectionInProgress;
 
+                    /// A paired connection connects through the relay
+                    /// when the LAN is out of reach - the pill keeps the
+                    /// LAN truth, the CTA stays prominent
+                    final bool viaRemoteToo =
+                        !kFoss &&
+                        this.connection.hasRemote &&
+                        GetIt.instance.isRegistered<ProStore>() &&
+                        GetIt.instance<ProStore>().isPro;
+                    final bool prominent =
+                        this.connection.reachable == true || viaRemoteToo;
+
                     /// Connect prominence follows reachability (user
                     /// directive 2026-09-20): online cards get the filled
                     /// accent CTA, checking/offline keep the ghost.
@@ -267,8 +346,8 @@ class ConnectionBox extends StatelessWidget {
                       switchInCurve: AppMotion.emphasized,
                       switchOutCurve: AppMotion.emphasized,
                       child: BaseButton(
-                        key: ValueKey(this.connection.reachable == true),
-                        secondary: this.connection.reachable != true,
+                        key: ValueKey(prominent),
+                        secondary: !prominent,
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md,
                           vertical: AppSpacing.sm,
