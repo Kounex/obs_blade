@@ -333,12 +333,28 @@ class ConnectionBox extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          this.connection.lastConnectedMs != null
-                              ? 'Last used: ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}'
-                              : 'Never used',
-                          style: Theme.of(context).textTheme.labelSmall!
-                              .copyWith(color: textColors.textTertiary),
+
+                        /// Same icon column as the endpoint / remote rows
+                        Row(
+                          children: [
+                            Icon(
+                              CupertinoIcons.clock,
+                              size: 14.0,
+                              color: textColors.textTertiary,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Flexible(
+                              child: Text(
+                                this.connection.lastConnectedMs != null
+                                    ? 'Last used: ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}'
+                                    : 'Never used',
+                                style: Theme.of(context).textTheme.labelSmall!
+                                    .copyWith(color: textColors.textTertiary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
