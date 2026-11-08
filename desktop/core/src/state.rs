@@ -19,6 +19,25 @@ pub struct Stored {
     /// Manual override when OBS runs with --websocket_port/--websocket_password.
     pub obs_port: Option<u16>,
     pub obs_password: Option<String>,
+    /// This bridge's X25519 static key pair (base64), for end-to-end
+    /// encryption (`e2e.rs`). Made once; the phones pin the public key.
+    pub e2e_private: Option<String>,
+    pub e2e_public: Option<String>,
+    /// The phones paired with this bridge: only their static keys open a
+    /// session. Exchanged through OBS when pairing, never via the relay.
+    pub app_keys: Vec<AppKey>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AppKey {
+    /// The relay's device id (assigned at redeem): removing the device
+    /// there removes its key here
+    pub device_id: String,
+    /// base64 X25519 public key
+    pub key: String,
+    /// Unix seconds: a key stays while the app hasn't collected the
+    /// pairing yet (the relay's device list doesn't have it then)
+    pub added_at: u64,
 }
 
 impl Default for Stored {
@@ -31,6 +50,9 @@ impl Default for Stored {
             preview_jpeg_quality: 60,
             obs_port: None,
             obs_password: None,
+            e2e_private: None,
+            e2e_public: None,
+            app_keys: Vec::new(),
         }
     }
 }

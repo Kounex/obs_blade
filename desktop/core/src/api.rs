@@ -1,15 +1,18 @@
 //! The bridge as the shells use it: start, send commands, stop.
 //!
 //! Commands (JSON, `{"cmd": ...}`):
-//! - `pair {code}` - redeem a code (the plugin's vendor request / the QR
-//!   fallback; the standalone also gets codes as a CustomEvent itself)
+//! - `pair {code, app_key}` - redeem a code with the phone's end-to-end
+//!   key (the plugin's vendor request; the standalone also gets codes as a
+//!   CustomEvent itself). The ack with this bridge's key goes back as the
+//!   `obs-blade-pair-ack` CustomEvent either way; `state.bridge_key` has
+//!   it too (for the vendor request's answer)
 //! - `set_enabled {value}`, `set_preview {max_edge, jpeg_quality}`,
 //!   `set_obs_override {port|null, password|null}`
 //! - `remove_device {id}`, `refresh_devices`, `unpair`
 //! - `obs_running {value}` - the shell's knowledge of the OBS process
 //!
 //! Events (JSON to the sink, from bridge threads - marshal to your UI
-//! thread): `state {...}`, `pair_result {ok, bridge_id | reason}`,
+//! thread): `state {...}`, `pair_result {ok, bridge_id, device_id | reason}`,
 //! `start_obs {device}` (standalone).
 
 use std::sync::Arc;
@@ -34,6 +37,8 @@ impl Bridge {
             .enable_all()
             .build()?;
         let shared = Shared::new(cfg, sink);
+        // Made up front: the panel / vendor answer shows the key at once.
+        shared.e2e_keypair();
         let tasks = {
             let _guard = runtime.enter();
             vec![
@@ -52,8 +57,9 @@ impl Bridge {
         match name {
             "pair" => {
                 let Some(code) = command["code"].as_str() else { return false };
+                let app_key = command["app_key"].as_str().unwrap_or_default();
                 let _guard = self.runtime.as_ref().map(|r| r.enter());
-                crate::pairing::pair(shared.clone(), code.to_owned());
+                crate::pairing::pair(shared.clone(), code.to_owned(), app_key.to_owned());
             }
             "set_enabled" => {
                 let Some(value) = command["value"].as_bool() else { return false };
@@ -96,6 +102,7 @@ impl Bridge {
                         shared.update(|s| {
                             s.bridge_token = None;
                             s.bridge_id = None;
+                            s.app_keys.clear();
                         });
                         shared.set_devices(Vec::new());
                     });

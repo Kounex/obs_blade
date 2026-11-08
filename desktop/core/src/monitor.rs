@@ -18,6 +18,8 @@ const RETRY: Duration = Duration::from_secs(3);
 /// EventSubscription::General - CustomEvent and ExitStarted live there.
 const SUBSCRIBE_GENERAL: u64 = 1;
 pub const PAIR_EVENT_KEY: &str = "obs-blade-pair";
+/// The bridge's answer to a pairing, with its end-to-end key.
+pub const PAIR_ACK_EVENT_KEY: &str = "obs-blade-pair-ack";
 pub const VENDOR: &str = "obs-blade-bridge";
 
 pub async fn run(shared: Arc<Shared>) {
@@ -84,8 +86,16 @@ async fn connect_once(shared: &Arc<Shared>) -> Outcome {
 
     let mut tick = tokio::time::interval(STATUS_INTERVAL);
     let mut previous_bytes: Option<(u64, Instant)> = None;
+    let mut outbox = shared.obs_outbox.subscribe();
     loop {
         tokio::select! {
+            queued = outbox.recv() => {
+                if let Ok(message) = queued
+                    && ws.send(Message::text(message)).await.is_err()
+                {
+                    return Outcome::Lost;
+                }
+            }
             _ = tick.tick() => {
                 for request in requests(shared.cfg.kind) {
                     if ws.send(Message::text(request)).await.is_err() {
@@ -137,8 +147,10 @@ fn handle(shared: &Arc<Shared>, message: &Value, previous_bytes: &mut Option<(u6
         Some(2) => shared.set_obs_state("running"),
         Some(5) => match d["eventType"].as_str() {
             Some("CustomEvent") => {
-                if let Some(code) = d["eventData"][PAIR_EVENT_KEY]["code"].as_str() {
-                    crate::pairing::pair(shared.clone(), code.to_owned());
+                let pair = &d["eventData"][PAIR_EVENT_KEY];
+                if let Some(code) = pair["code"].as_str() {
+                    let app_key = pair["app_key"].as_str().unwrap_or_default();
+                    crate::pairing::pair(shared.clone(), code.to_owned(), app_key.to_owned());
                 }
             }
             Some("ExitStarted") => shared.set_obs_state("closed"),

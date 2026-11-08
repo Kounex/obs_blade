@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS pairings (
     platform TEXT NOT NULL DEFAULT '',
     created_at REAL NOT NULL,
     expires_at REAL NOT NULL,
-    bridge_id TEXT
+    bridge_id TEXT,
+    device_id TEXT
 );
 """
 
@@ -121,6 +122,7 @@ class Pairing:
     platform: str
     expires_at: float
     bridge_id: str | None
+    device_id: str | None = None
 
 
 class PairingError(Exception):
@@ -137,6 +139,9 @@ class Store:
         self._db.execute("PRAGMA journal_mode=WAL")
         self._db.execute("PRAGMA foreign_keys=ON")
         self._db.executescript(SCHEMA)
+        columns = {row[1] for row in self._db.execute("PRAGMA table_info(pairings)")}
+        if "device_id" not in columns:  # databases from before 0.0.4
+            self._db.execute("ALTER TABLE pairings ADD COLUMN device_id TEXT")
         self._now = clock
 
     def close(self) -> None:
@@ -188,9 +193,10 @@ class Store:
         name: str,
         kind: str,
         version: str,
-    ) -> tuple[str, str | None]:
+    ) -> tuple[str, str | None, str]:
         """The bridge redeems a code. Returns (bridge_id, new bridge token
-        or None when the bridge was already paired)."""
+        or None when the bridge was already paired, the device id the app
+        gets when it collects)."""
         now = self._now()
         row = self._db.execute(
             "SELECT id_hash, expires_at, bridge_id FROM pairings WHERE code = ?",
@@ -223,21 +229,22 @@ class Store:
                 (bridge_id, hash_token(token), name[:64], kind[:16], version[:32], now, now),
             )
         # Single use: a second redeem of the same code sees bridge_id set.
+        device_id = new_id("d")
         updated = self._db.execute(
-            "UPDATE pairings SET bridge_id = ?, expires_at = ?"
+            "UPDATE pairings SET bridge_id = ?, device_id = ?, expires_at = ?"
             " WHERE id_hash = ? AND bridge_id IS NULL",
-            (bridge_id, now + COLLECT_SECONDS, row[0]),
+            (bridge_id, device_id, now + COLLECT_SECONDS, row[0]),
         ).rowcount
         if updated != 1:
             if token is not None:
                 self._db.execute("DELETE FROM bridges WHERE id = ?", (bridge_id,))
             raise PairingError("invalid_code")
-        return bridge_id, token
+        return bridge_id, token, device_id
 
     def pairing(self, pairing_id: str) -> Pairing | None:
         row = self._db.execute(
-            "SELECT code, app_user_id, device_name, platform, expires_at, bridge_id"
-            " FROM pairings WHERE id_hash = ?",
+            "SELECT code, app_user_id, device_name, platform, expires_at, bridge_id,"
+            " device_id FROM pairings WHERE id_hash = ?",
             (hash_token(pairing_id),),
         ).fetchone()
         if row is None or row[4] < self._now():
@@ -260,7 +267,7 @@ class Store:
         now = self._now()
         token = new_token()
         device = Device(
-            id=new_id("d"),
+            id=pairing.device_id or new_id("d"),
             bridge_id=pairing.bridge_id,
             name=pairing.device_name,
             platform=pairing.platform,

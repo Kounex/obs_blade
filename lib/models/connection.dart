@@ -50,6 +50,16 @@ class Connection extends HiveObject {
   @HiveField(11)
   String? relayBridgeKind;
 
+  /// This pairing's end-to-end private key (X25519, base64) - a secret
+  /// like [relayAppToken]; only the paired bridge knows its public half
+  @HiveField(12)
+  String? relayAppKey;
+
+  /// The bridge's end-to-end public key (base64), received through OBS
+  /// when pairing - a relay can't substitute it
+  @HiveField(13)
+  String? relayBridgeKey;
+
   String? challenge;
   String? salt;
 
@@ -61,9 +71,13 @@ class Connection extends HiveObject {
   /// (null: not paired, not Pro, or the relay didn't answer)
   RemoteReach? remoteReach;
 
+  /// A complete pairing. Pairings from before end-to-end encryption
+  /// (dogfood only, 2026-11-07) lack the keys and count as not paired.
   bool get hasRemote =>
       (this.relayBridgeId?.isNotEmpty ?? false) &&
-      (this.relayAppToken?.isNotEmpty ?? false);
+      (this.relayAppToken?.isNotEmpty ?? false) &&
+      (this.relayAppKey?.isNotEmpty ?? false) &&
+      (this.relayBridgeKey?.isNotEmpty ?? false);
 
   void clearRemote() {
     this.relayBridgeId = null;
@@ -71,6 +85,8 @@ class Connection extends HiveObject {
     this.relayDeviceId = null;
     this.relayBridgeName = null;
     this.relayBridgeKind = null;
+    this.relayAppKey = null;
+    this.relayBridgeKey = null;
   }
 
   Connection(this.host, this.port, [this.pw, this.isDomain]);

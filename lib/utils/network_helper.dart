@@ -13,9 +13,11 @@ import 'package:obs_blade/types/enums/web_socket_codes/request_batch_execution_t
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_op_code.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/connection.dart';
 import 'remote/remote_connect.dart';
+import 'remote/remote_e2e_channel.dart';
 import '../models/enums/log_level.dart';
 import '../types/classes/obs_request_ack.dart';
 import '../types/classes/stream/batch_responses/base.dart';
@@ -106,9 +108,10 @@ class NetworkHelper {
   /// unreachable) before assuming the peer is OBS.
   ///
   /// [remote]: connect through the remote relay instead (Pro) - its URL and
-  /// the pairing's token header; the session after that is plain
-  /// obs-websocket (the bridge next to OBS handles OBS's password).
-  static IOWebSocketChannel establishWebSocket(
+  /// the pairing's token header. The session inside is end-to-end
+  /// encrypted ([RemoteE2eChannel]) and otherwise plain obs-websocket (the
+  /// bridge next to OBS handles OBS's password).
+  static WebSocketChannel establishWebSocket(
     Connection connection, {
     Duration pingInterval = socketPingInterval,
     Duration? connectTimeout,
@@ -122,12 +125,16 @@ class NetworkHelper {
     NetworkHelper.failAllPendingAcks();
 
     if (remote != null) {
-      return IOWebSocketChannel.connect(
-        remote.uri,
-        headers: remote.headers,
-        protocols: const ['obswebsocket.json'],
-        pingInterval: pingInterval,
-        connectTimeout: connectTimeout,
+      return RemoteE2eChannel(
+        IOWebSocketChannel.connect(
+          remote.uri,
+          headers: remote.headers,
+          protocols: const ['obswebsocket.json'],
+          pingInterval: pingInterval,
+          connectTimeout: connectTimeout,
+        ),
+        appKey: remote.appKey,
+        bridgeKey: remote.bridgeKey,
       );
     }
     return IOWebSocketChannel.connect(
@@ -360,7 +367,7 @@ class NetworkHelper {
     /// and every domain connection read as offline. [ready] must be awaited
     /// either way: its error is unhandled otherwise and kills this isolate,
     /// leaving the whole check hanging.
-    IOWebSocketChannel? channel;
+    WebSocketChannel? channel;
     try {
       channel = NetworkHelper.establishWebSocket(
         connectionScan.connection,
@@ -393,7 +400,7 @@ class NetworkHelper {
   /// control ticks. Nothing is tracked, so polling costs no timers and a
   /// dropped socket has nothing of these to fail.
   static void sendRequest(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     RequestType request, [
     Map<String, dynamic>? fields,
   ]) {
@@ -412,7 +419,7 @@ class NetworkHelper {
   /// [ObsRequestFailureKind.connectionLost] when the connection drops first.
   /// Use [sendRequest] when nobody awaits the result.
   static Future<ObsRequestAck> makeRequest(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     RequestType request, [
     Map<String, dynamic>? fields,
   ]) {
@@ -438,7 +445,7 @@ class NetworkHelper {
   /// (DashboardStore) ignore the response instead of applying it to their
   /// own state.
   static Future<ObsRequestAck> makeScopedRequest(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     RequestType request, [
     Map<String, dynamic>? fields,
   ]) {
@@ -470,7 +477,7 @@ class NetworkHelper {
       NetworkHelper._scopedRequestIds.contains(uuid);
 
   static void _addRequest(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     String requestUUID,
     RequestType request,
     Map<String, dynamic>? fields, {
@@ -502,7 +509,7 @@ class NetworkHelper {
 
   /// Fire-and-forget pendant of [makeBatchRequest] - see [sendRequest]
   static void sendBatchRequest(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     RequestBatchType batchRequest,
     List<RequestBatchObject> batch,
   ) {
@@ -522,7 +529,7 @@ class NetworkHelper {
   /// per-request statuses of the batch (v5 batches answer with one status
   /// per entry) once OBS responds.
   static Future<ObsBatchAck> makeBatchRequest(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     RequestBatchType batchRequest,
     List<RequestBatchObject> batch,
   ) {
@@ -552,7 +559,7 @@ class NetworkHelper {
   }
 
   static void _addBatch(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     String requestUUID,
     RequestBatchType batchRequest,
     List<RequestBatchObject> batch,
@@ -571,7 +578,7 @@ class NetworkHelper {
   /// A timeout only means "OBS didn't answer" while the socket is still
   /// open - on a socket that died meanwhile the answer was lost with it
   static _PendingRequestAck _trackRequestAck(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     String requestUUID,
     RequestType? requestType,
   ) {
@@ -599,7 +606,7 @@ class NetworkHelper {
   }
 
   static _PendingBatchAck _trackBatchAck(
-    IOWebSocketChannel channel,
+    WebSocketChannel channel,
     String requestUUID,
   ) {
     final pending = _PendingBatchAck();

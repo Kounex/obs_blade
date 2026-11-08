@@ -35,7 +35,7 @@ import 'package:obs_blade/types/enums/request_batch_type.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/request_status.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/types/extensions/int.dart';
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../models/enums/log_level.dart';
 import '../../models/past_record_data.dart';
@@ -1071,7 +1071,7 @@ abstract class _DashboardStore with Store {
       ).get(SettingsKeys.ExposeStudioControls.name, defaultValue: false) &&
       this.studioMode;
 
-  void _sendPreviewImageRequest(IOWebSocketChannel socket) {
+  void _sendPreviewImageRequest(WebSocketChannel socket) {
     final String? sceneName = _previewShowsStudioPreview
         ? this.studioModePreviewSceneName
         : _previewSceneOverride ?? this.activeSceneName;

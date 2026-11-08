@@ -8,7 +8,9 @@ Bridge socket (one per bridge, carries all of its app sessions):
   - ``OPEN``  relay → bridge: a phone connected. Payload: JSON
     ``{"device": id, "name": str}``. The bridge opens its own local
     websocket to OBS for this session.
-  - ``DATA``  both ways: one OBS websocket text frame, UTF-8, untouched.
+  - ``DATA``  both ways: one end-to-end encrypted frame (a Noise
+    transport message, or a handshake message), forwarded untouched to /
+    from the phone's binary frames. The relay can't read it.
   - ``CLOSE`` both ways: the session ended. Payload: JSON
     ``{"code": int, "reason": str}`` (bridge → relay; the relay closes
     the phone's socket with that code) or empty (relay → bridge: the
@@ -60,6 +62,7 @@ TOO_MANY_SESSIONS = 4907  # bridge already carries the maximum
 BRIDGE_GONE = 4908  # bridge dropped mid-session; reconnecting may work
 VERIFY_UNAVAILABLE = 4909  # Pro couldn't be checked right now; retry later
 RATE_LIMITED = 4910
+E2E_FAILED = 4911  # end-to-end handshake / frame failed (sent by the bridge or the app)
 
 # Close codes a bridge may forward from OBS / its own session handling.
 # Anything else becomes 1011 so a buggy bridge can't send reserved codes.
@@ -73,6 +76,8 @@ _FORWARDABLE = set(range(4000, 4100)) | {
     1011,
     OBS_NOT_RUNNING,
     OBS_UNREACHABLE,
+    UNPAIRED,  # the bridge doesn't know this phone's end-to-end key
+    E2E_FAILED,
 }
 
 

@@ -215,7 +215,9 @@ void main() {
       ..relayAppToken = 'tok'
       ..relayDeviceId = 'd'
       ..relayBridgeName = 'PC'
-      ..relayBridgeKind = 'standalone';
+      ..relayBridgeKind = 'standalone'
+      ..relayAppKey = base64Encode(List.filled(32, 1))
+      ..relayBridgeKey = base64Encode(List.filled(32, 2));
 
     setUp(() {
       isPro = true;

@@ -16,6 +16,7 @@ use tokio_tungstenite::tungstenite::{Error as WsError, Message};
 use crate::monitor::STATUS_INTERVAL;
 use crate::session::{self, Out};
 use crate::shared::{Kind, RelayState, Shared};
+use crate::state::AppKey;
 use crate::wire;
 
 /// The relay pings every 30 s; this long without any frame = dead link.
@@ -124,6 +125,7 @@ async fn connect(
             shared.update(|stored| {
                 stored.bridge_token = None;
                 stored.bridge_id = None;
+                stored.app_keys.clear();
             });
             shared.set_devices(Vec::new());
             return Ended::Recheck;
@@ -140,7 +142,7 @@ async fn connect(
     }
 
     let (out_tx, mut out_rx) = mpsc::channel::<Out>(SESSION_BUFFER);
-    let mut sessions: HashMap<u32, mpsc::Sender<String>> = HashMap::new();
+    let mut sessions: HashMap<u32, mpsc::Sender<Vec<u8>>> = HashMap::new();
     let mut obs_state = shared.obs_state.subscribe();
     let mut plugin = shared.plugin_present.subscribe();
     let mut stop = shared.stop.subscribe();
@@ -168,13 +170,14 @@ async fn connect(
                                     } else {
                                         *shared.obs_running.borrow()
                                     },
+                                    bridge_private: shared.e2e_keypair().0,
+                                    app_keys: shared.app_keys(),
                                 };
                                 tokio::spawn(session::run(params, rx, out_tx.clone()));
                             }
                             wire::DATA => {
-                                let Ok(text) = std::str::from_utf8(payload) else { continue };
                                 if let Some(tx) = sessions.get(&sid)
-                                    && tx.send(text.to_owned()).await.is_err()
+                                    && tx.send(payload.to_vec()).await.is_err()
                                 {
                                     sessions.remove(&sid);
                                 }
@@ -202,7 +205,7 @@ async fn connect(
             out = out_rx.recv() => {
                 let Some(out) = out else { continue };
                 let frame = match out {
-                    Out::Data(sid, text) => wire::pack(wire::DATA, sid, text.as_bytes()),
+                    Out::Data(sid, frame) => wire::pack(wire::DATA, sid, &frame),
                     Out::Close(sid, code, reason) => {
                         sessions.remove(&sid);
                         wire::pack(wire::CLOSE, sid, &wire::close_payload(code, &reason))
@@ -273,6 +276,7 @@ fn control(shared: &Arc<Shared>, text: &str) -> Option<Ended> {
     match message["type"].as_str()? {
         "welcome" | "devices" => {
             let devices = message["devices"].as_array().cloned().unwrap_or_default();
+            prune_app_keys(shared, &devices);
             shared.set_devices(devices);
             None
         }
@@ -287,6 +291,7 @@ fn control(shared: &Arc<Shared>, text: &str) -> Option<Ended> {
             shared.update(|stored| {
                 stored.bridge_token = None;
                 stored.bridge_id = None;
+                stored.app_keys.clear();
             });
             shared.set_devices(Vec::new());
             Some(Ended::Recheck)
@@ -294,6 +299,22 @@ fn control(shared: &Arc<Shared>, text: &str) -> Option<Ended> {
         _ => None,
     }
 }
+
+/// A device removed at the relay loses its key here too. Keys younger
+/// than [KEY_GRACE] stay: the relay lists a device only once the app has
+/// collected its pairing.
+fn prune_app_keys(shared: &Arc<Shared>, devices: &[Value]) {
+    let listed: Vec<&str> = devices.iter().filter_map(|d| d["id"].as_str()).collect();
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    let stored = shared.reload();
+    let keep = |k: &AppKey| listed.contains(&k.device_id.as_str()) || now.saturating_sub(k.added_at) < KEY_GRACE.as_secs();
+    if stored.app_keys.iter().all(keep) {
+        return;
+    }
+    shared.update(|s| s.app_keys.retain(keep));
+}
+
+const KEY_GRACE: Duration = Duration::from_secs(15 * 60);
 
 #[cfg(test)]
 mod tests {

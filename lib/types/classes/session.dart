@@ -1,11 +1,13 @@
 import 'dart:async';
 
-import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../models/connection.dart';
 
 class Session {
-  IOWebSocketChannel socket;
+  /// A plain obs-websocket channel; through the relay a
+  /// [RemoteE2eChannel] (end-to-end encrypted)
+  WebSocketChannel socket;
   Stream? socketStream;
   Connection connection;
 

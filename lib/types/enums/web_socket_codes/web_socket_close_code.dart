@@ -79,7 +79,11 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
   RemoteVerifyUnavailable,
 
   /// Remote relay: too many attempts.
-  RemoteRateLimited;
+  RemoteRateLimited,
+
+  /// End-to-end encryption failed: the PC's key didn't verify (set by the
+  /// app) or the bridge couldn't read this device's handshake / frames.
+  RemoteE2eFailed;
 
   @override
   int get identifier => const {
@@ -108,6 +112,7 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
     WebSocketCloseCode.RemoteBridgeGone: 4908,
     WebSocketCloseCode.RemoteVerifyUnavailable: 4909,
     WebSocketCloseCode.RemoteRateLimited: 4910,
+    WebSocketCloseCode.RemoteE2eFailed: 4911,
   }[this]!;
 
   @override
@@ -161,9 +166,11 @@ enum WebSocketCloseCode implements BaseWebSocketCode {
         'Remote relay: Pro could not be verified right now.',
     WebSocketCloseCode.RemoteRateLimited:
         'Remote relay: too many attempts, rate limited.',
+    WebSocketCloseCode.RemoteE2eFailed:
+        'Remote access: the end-to-end encryption did not verify.',
   }[this]!;
 
-  bool get isRemote => this.identifier >= 4900 && this.identifier <= 4910;
+  bool get isRemote => this.identifier >= 4900 && this.identifier <= 4911;
 
   static WebSocketCloseCode fromIdentifier(int? code) {
     if (code == null) return WebSocketCloseCode.UnknownReason;

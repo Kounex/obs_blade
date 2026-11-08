@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../models/connection.dart';
 import '../../models/enums/log_level.dart';
+import '../../types/classes/stream/events/base.dart';
 import '../../types/enums/request_type.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
+import '../../utils/remote/noise_ik.dart';
 import '../../utils/remote/remote_relay_client.dart';
 import '../pro_store.dart';
 import '../shared/network.dart';
@@ -27,13 +30,22 @@ enum RemotePairingFailure {
   /// The code expired without a bridge redeeming it: nothing installed,
   /// or OBS Blade Remote switched off on the PC
   noBridge,
+
+  /// The relay paired, but the bridge's key never came back through OBS
+  /// (an OBS Blade Remote from before end-to-end encryption, or OBS
+  /// dropped the event): nothing is stored
+  noConfirmation,
 }
 
-/// Hands the pairing code to the bridge through OBS. Returns true when the
-/// plugin acknowledged it (vendor request) - then it isn't sent again;
-/// false when it went out as a CustomEvent (the standalone), which is
-/// fire-and-forget and gets repeated.
-typedef RemoteCodeSender = Future<bool> Function(String code);
+/// Hands the pairing code and this device's end-to-end key (base64) to the
+/// bridge through OBS - repeated until the bridge's ack arrives.
+typedef RemoteCodeSender = Future<void> Function(String code, String appKey);
+
+/// The bridge's answer through OBS: its end-to-end key for [code].
+typedef RemotePairAck = ({String code, String bridgeKey});
+
+/// The acks arriving on the OBS connection while pairing.
+typedef RemotePairAcks = Stream<RemotePairAck> Function();
 
 /// Remote access (Pro) for the dashboard's sheet: pairing this device with
 /// the bridge next to OBS while connected on the LAN, and the paired
@@ -44,6 +56,7 @@ abstract class _RemoteAccessStore with Store {
   final RemoteRelayClient _relay;
   final Future<String?> Function() _appUserId;
   final RemoteCodeSender _sendCode;
+  final RemotePairAcks _acks;
   final Duration _pollInterval;
   final Duration _resendInterval;
 
@@ -51,11 +64,13 @@ abstract class _RemoteAccessStore with Store {
     RemoteRelayClient? relay,
     Future<String?> Function()? appUserId,
     RemoteCodeSender? sendCode,
+    RemotePairAcks? acks,
     Duration pollInterval = const Duration(seconds: 2),
     Duration resendInterval = const Duration(seconds: 2),
   }) : _relay = relay ?? RemoteRelayClient(),
        _appUserId = appUserId ?? (() => GetIt.instance<ProStore>().appUserId()),
        _sendCode = sendCode ?? sendPairCodeThroughObs,
+       _acks = acks ?? pairAcksThroughObs,
        _pollInterval = pollInterval,
        _resendInterval = resendInterval;
 
@@ -128,66 +143,118 @@ abstract class _RemoteAccessStore with Store {
       this.phase = RemotePairingPhase.waitingForBridge;
     });
 
-    final DateTime deadline = DateTime.now().add(ticket.expiresIn);
-    bool acknowledged = false;
-    DateTime? lastSent;
-    while (generation == _generation && DateTime.now().isBefore(deadline)) {
-      if (!acknowledged &&
-          (lastSent == null ||
-              DateTime.now().difference(lastSent) >= _resendInterval)) {
-        lastSent = DateTime.now();
-        try {
-          acknowledged = await _sendCode(ticket.code);
-        } catch (_) {
-          // OBS connection hiccup: the next round sends again
-        }
+    /// This pairing's end-to-end key; the bridge's comes back through OBS
+    /// (never via the relay, which could swap it)
+    final NoiseKeyPair appKey = await NoiseKeyPair.generate();
+    final String appKeyText = base64Encode(appKey.publicKey);
+    String? bridgeKey;
+    final StreamSubscription<RemotePairAck> acks = _acks().listen((ack) {
+      if (_sameCode(ack.code, ticket.code) && _isKey(ack.bridgeKey)) {
+        bridgeKey = ack.bridgeKey;
       }
-      try {
-        final RemotePairing? pairing = await _relay.collectPairing(
-          ticket.pairingId,
-        );
+    });
+
+    final DateTime deadline = DateTime.now().add(ticket.expiresIn);
+    RemotePairing? collected;
+    DateTime? lastSent;
+    try {
+      while (generation == _generation && DateTime.now().isBefore(deadline)) {
+        if (bridgeKey == null &&
+            (lastSent == null ||
+                DateTime.now().difference(lastSent) >= _resendInterval)) {
+          lastSent = DateTime.now();
+          try {
+            await _sendCode(ticket.code, appKeyText);
+          } catch (_) {
+            // OBS connection hiccup: the next round sends again
+          }
+        }
+        if (collected == null) {
+          try {
+            collected = await _relay.collectPairing(ticket.pairingId);
+          } on RemoteRelayException catch (e) {
+            if (generation != _generation) return;
+            if (!e.isNetwork) {
+              // Expired (404) or refused: no point in polling on
+              GeneralHelper.logFailure('Remote access: pairing ended', e);
+              return _fail(
+                e.statusCode == 404
+                    ? RemotePairingFailure.noBridge
+                    : _failureOf(e),
+              );
+            }
+          }
+        }
         if (generation != _generation) return;
-        if (pairing != null) {
-          _store(connection, pairing);
+        final RemotePairing? pairing = collected;
+        final String? key = bridgeKey;
+        if (pairing != null && key != null) {
+          _store(connection, pairing, base64Encode(appKey.privateKey), key);
           runInAction(() => this.phase = RemotePairingPhase.paired);
           GeneralHelper.advLog(
             'Remote access: paired with ${pairing.bridgeName} '
-            '(${pairing.bridgeKind})',
+            '(${pairing.bridgeKind}), end-to-end encrypted',
             includeInLogs: true,
           );
           unawaited(this.refresh(connection));
           return;
         }
-      } on RemoteRelayException catch (e) {
-        if (generation != _generation) return;
-        if (!e.isNetwork) {
-          // Expired (404) or refused: no point in polling on
-          GeneralHelper.logFailure('Remote access: pairing ended', e);
-          return _fail(
-            e.statusCode == 404
-                ? RemotePairingFailure.noBridge
-                : _failureOf(e),
-          );
-        }
+        await Future<void>.delayed(_pollInterval);
       }
-      await Future<void>.delayed(_pollInterval);
+    } finally {
+      await acks.cancel();
     }
-    if (generation == _generation) {
+    if (generation != _generation) return;
+    final RemotePairing? orphan = collected;
+    if (orphan != null) {
+      // Paired at the relay, but no key from the bridge: don't keep a
+      // device there that can never open a session
       GeneralHelper.logFailure(
         'Remote access: pairing',
-        'no bridge redeemed the code before it expired',
+        'the bridge did not send its key back through OBS',
       );
-      _fail(RemotePairingFailure.noBridge);
+      unawaited(
+        _relay
+            .removeDevice(orphan.deviceId, orphan.appToken)
+            .catchError((_) {}),
+      );
+      return _fail(RemotePairingFailure.noConfirmation);
+    }
+    GeneralHelper.logFailure(
+      'Remote access: pairing',
+      'no bridge redeemed the code before it expired',
+    );
+    _fail(RemotePairingFailure.noBridge);
+  }
+
+  static String _normalizedCode(String code) =>
+      code.replaceAll(RegExp(r'[^A-Za-z0-9]'), '').toUpperCase();
+
+  static bool _sameCode(String a, String b) =>
+      _normalizedCode(a) == _normalizedCode(b);
+
+  static bool _isKey(String text) {
+    try {
+      return base64Decode(text).length == 32;
+    } on FormatException {
+      return false;
     }
   }
 
-  void _store(Connection connection, RemotePairing pairing) {
+  void _store(
+    Connection connection,
+    RemotePairing pairing,
+    String appKey,
+    String bridgeKey,
+  ) {
     connection
       ..relayBridgeId = pairing.bridgeId
       ..relayAppToken = pairing.appToken
       ..relayDeviceId = pairing.deviceId
       ..relayBridgeName = pairing.bridgeName
-      ..relayBridgeKind = pairing.bridgeKind;
+      ..relayBridgeKind = pairing.bridgeKind
+      ..relayAppKey = appKey
+      ..relayBridgeKey = bridgeKey;
     if (connection.isInBox) connection.save();
   }
 
@@ -325,27 +392,28 @@ abstract class _RemoteAccessStore with Store {
 }
 
 /// [RemoteCodeSender] over the active OBS session: the plugin's vendor
-/// request first (it answers), else a CustomEvent for the standalone.
-Future<bool> sendPairCodeThroughObs(String code) async {
+/// request (it takes the code), else a CustomEvent for the standalone.
+/// Either way the bridge answers with the `obs-blade-pair-ack` CustomEvent
+/// ([pairAcksThroughObs]).
+Future<void> sendPairCodeThroughObs(String code, String appKey) async {
   final socket = GetIt.instance<NetworkStore>().activeSession?.socket;
-  if (socket == null) return false;
+  if (socket == null) return;
+  final Map<String, String> pair = {'code': code, 'app_key': appKey};
   final vendor = await NetworkHelper.makeRequest(
     socket,
     RequestType.CallVendorRequest,
     {
       'vendorName': kRemoteBridgeVendor,
       'requestType': 'Pair',
-      'requestData': {'code': code},
+      'requestData': pair,
     },
   );
-  if (vendor.success) return true;
+  if (vendor.success) return;
   final event = await NetworkHelper.makeRequest(
     socket,
     RequestType.BroadcastCustomEvent,
     {
-      'eventData': {
-        kRemotePairEventKey: {'code': code},
-      },
+      'eventData': {kRemotePairEventKey: pair},
     },
   );
   if (!event.success) {
@@ -356,5 +424,20 @@ Future<bool> sendPairCodeThroughObs(String code) async {
       includeInLogs: true,
     );
   }
-  return false;
 }
+
+/// [RemotePairAcks] from the active OBS session (CustomEvents reach the
+/// app: it subscribes to General events).
+Stream<RemotePairAck> pairAcksThroughObs() => GetIt.instance<NetworkStore>()
+    .watchOBSStream()
+    .where((message) => message is BaseEvent)
+    .map((message) => (message as BaseEvent).jsonRAW['d'])
+    .where((d) => d is Map && d['eventType'] == 'CustomEvent')
+    .map((d) => (d as Map)['eventData'])
+    .where((data) => data is Map && data[kRemotePairAckEventKey] is Map)
+    .map((data) => (data as Map)[kRemotePairAckEventKey] as Map)
+    .where((ack) => ack['code'] is String && ack['bridge_key'] is String)
+    .map(
+      (ack) =>
+          (code: ack['code'] as String, bridgeKey: ack['bridge_key'] as String),
+    );

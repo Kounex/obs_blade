@@ -149,6 +149,44 @@ phone ──wss──► relay.obs-blade.com (VPS, Quadlet) ◄──wss── b
   standalone, OBS Blade Remote enabled. Fallback: scan the desktop's QR
   (same code flow, reversed).
 
+### End-to-end encryption (added 2026-11-08, before the first release)
+
+User decision 2026-11-08. TLS ended at Cloudflare and at the relay, so
+both saw every OBS frame: scene / source names, preview images and the
+stream key (`GetStreamServiceSettings`, which the app requests for the
+canvas view and the activity feed). Now the relay forwards bytes it
+can't read.
+
+- **Keys:** the bridge has one X25519 static key (`bridge.json`), each
+  pairing gets its own app key on the phone (Connection HiveFields 12
+  private, 13 the bridge's public key).
+- **Key exchange over OBS, never through the relay:** the app sends
+  `{code, app_key}` (plugin vendor request `Pair` / CustomEvent
+  `obs-blade-pair`); after a successful redeem the bridge stores the app
+  key under the device id the relay assigned at redeem and broadcasts
+  CustomEvent `obs-blade-pair-ack {code, bridge_key}` (re-sent for a
+  repeated code). The app stores the pairing only with both the relay's
+  token and the ack. The relay never carries a key, so it can't swap one.
+- **Session:** `Noise_IK_25519_ChaChaPoly_SHA256`, prologue
+  `obs-blade-remote/1`. The phone (initiator, knows the bridge key) sends
+  message 1 as its first binary frame; the bridge checks the phone's
+  static key against the paired keys (unknown -> close 4904, the app
+  forgets the pairing), answers message 2, then OBS's Hello flows. A
+  bridge key that doesn't verify closes with 4911 on the phone (shown as
+  "couldn't verify the PC", not forgotten automatically).
+- **Frames:** every websocket message phone <-> relay and every DATA
+  payload is one Noise transport message (max 65535 bytes). Plaintext
+  chunks are `[fin u8][bytes]`; an obs-websocket message is the chunks up
+  to `fin = 1` - big screenshots span several frames, and the relay can't
+  cut or reorder them unnoticed (AEAD nonces, fin inside the ciphertext).
+- **What the relay still sees:** which phone talks to which bridge, when,
+  from which IP, frame sizes and timing, close codes, and the bridge's
+  status snapshot for the dashboard (stream / record state, disk space -
+  sent as relay control messages, not session traffic).
+- Bridge 0.3.0, relay requires it (`RELAY_MIN_BRIDGE_VERSION`); phones
+  send binary only. Pairings from before need to be set up again
+  (dogfood only).
+
 ### Relay (`tool/remote_relay/`, VPS)
 
 - Python 3 + aiohttp, like the Kick relays (shared ops: Quadlet,
@@ -161,8 +199,8 @@ phone ──wss──► relay.obs-blade.com (VPS, Quadlet) ◄──wss── b
   `GET /v1/app?bridge=` (ws, `Authorization: Bearer`), `DELETE
   /v1/devices/{id}`, `/health`.
 - One bridge socket carries all of its app sessions: binary envelope
-  `[type u8][session u32][payload]`; the payload is the untouched OBS
-  frame, forwarded to the app as a text frame. Session open / close /
+  `[type u8][session u32][payload]`; the payload is an end-to-end
+  encrypted frame (above), forwarded to the app as a binary frame. Session open / close /
   "bridge gone" / "OBS not running" are control types.
 - Tokens: opaque, stored hashed (SHA-256), revocable. Pro: checked when
   pairing and on every app connect, cached 10 min, re-checked every 30

@@ -18,6 +18,10 @@ const String kRemoteRelayUrl = String.fromEnvironment(
 const String kRemoteBridgeVendor = 'obs-blade-bridge';
 const String kRemotePairEventKey = 'obs-blade-pair';
 
+/// CustomEvent key of the bridge's answer: `{code, bridge_key}` - its
+/// end-to-end key, through OBS only.
+const String kRemotePairAckEventKey = 'obs-blade-pair-ack';
+
 class RemoteRelayException implements Exception {
   final int? statusCode;
 
@@ -196,7 +200,9 @@ class RemoteRelayClient {
     return RemotePairingTicket(
       pairingId: id,
       code: code,
-      expiresIn: Duration(seconds: (body['expires_in'] as num?)?.toInt() ?? 120),
+      expiresIn: Duration(
+        seconds: (body['expires_in'] as num?)?.toInt() ?? 120,
+      ),
     );
   }
 
@@ -260,13 +266,12 @@ class RemoteRelayClient {
   }
 
   /// Removes any device of the same bridge, this one included.
-  Future<void> removeDevice(String deviceId, String appToken) => this
-      ._send(
-        'DELETE',
-        '/v1/devices/${Uri.encodeComponent(deviceId)}',
-        token: appToken,
-        ok: const {204},
-      );
+  Future<void> removeDevice(String deviceId, String appToken) => this._send(
+    'DELETE',
+    '/v1/devices/${Uri.encodeComponent(deviceId)}',
+    token: appToken,
+    ok: const {204},
+  );
 
   /// Standalone bridges only (a plugin ends with OBS).
   Future<void> startObs(String bridgeId, String appToken) => this._send(

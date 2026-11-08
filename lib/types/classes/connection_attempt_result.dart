@@ -91,6 +91,8 @@ class ConnectionAttemptResult {
         return 'Couldn\'t check Pro right now. Try again in a moment.';
       case WebSocketCloseCode.RemoteRateLimited:
         return 'Too many attempts. Try again in a minute.';
+      case WebSocketCloseCode.RemoteE2eFailed:
+        return 'Couldn\'t verify $_pc. Set up remote access again on your home Wi-Fi.';
     }
   }
 

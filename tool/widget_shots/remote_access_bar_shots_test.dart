@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -80,7 +81,9 @@ void main() {
         ..relayAppToken = 'tok'
         ..relayDeviceId = 'd_me'
         ..relayBridgeName = 'GAMING-PC'
-        ..relayBridgeKind = 'standalone';
+        ..relayBridgeKind = 'standalone'
+        ..relayAppKey = base64Encode(List.filled(32, 1))
+        ..relayBridgeKey = base64Encode(List.filled(32, 2));
     }
     return c;
   }

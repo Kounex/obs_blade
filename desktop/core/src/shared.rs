@@ -4,8 +4,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use serde_json::{Value, json};
-use tokio::sync::{Notify, mpsc, watch};
+use tokio::sync::{Notify, broadcast, mpsc, watch};
 
+use crate::e2e;
 use crate::obs_config::{self, WsConfig};
 use crate::rewrite::PreviewCap;
 use crate::state::{self, Stored};
@@ -98,9 +99,13 @@ pub struct Shared {
     pub control_rx: Mutex<Option<mpsc::UnboundedReceiver<Value>>>,
     sink: Sink,
     last_emitted: Mutex<String>,
-    /// Codes already redeemed or in flight: the app re-sends its code
-    /// until the pairing is collected (a CustomEvent can be missed).
-    recent_codes: Mutex<Vec<String>>,
+    /// Codes already redeemed (Some(ack)) or in flight (None): the app
+    /// re-sends its code until it has the bridge's ack (a CustomEvent can
+    /// be missed), a redeemed code gets the ack again.
+    recent_codes: Mutex<Vec<(String, Option<String>)>>,
+    /// obs-websocket messages for the monitor's OBS connection to send
+    /// (the pairing ack); dropped while OBS isn't connected.
+    pub obs_outbox: broadcast::Sender<String>,
     /// OBS base canvas width / height (GetVideoSettings), for the preview cap.
     pub canvas_aspect: Mutex<Option<f64>>,
 }
@@ -125,6 +130,7 @@ impl Shared {
             sink,
             last_emitted: Mutex::new(String::new()),
             recent_codes: Mutex::new(Vec::new()),
+            obs_outbox: broadcast::Sender::new(16),
             canvas_aspect: Mutex::new(None),
         })
     }
@@ -231,6 +237,7 @@ impl Shared {
             "preview_jpeg_quality": stored.preview_jpeg_quality,
             "obs_port": stored.obs_port,
             "obs_password_set": stored.obs_password.is_some(),
+            "bridge_key": stored.e2e_public,
             "name": self.cfg.name,
             "version": self.cfg.version,
         });
@@ -245,18 +252,58 @@ impl Shared {
         self.emit(event);
     }
 
-    /// False when this code was seen already (a repeat from the app).
-    pub fn first_sight_of(&self, code: &str) -> bool {
-        let code: String = code.chars().filter(char::is_ascii_alphanumeric).collect::<String>().to_ascii_uppercase();
+    /// What to do with a pairing code the app sent (it repeats it).
+    pub fn pair_attempt(&self, code: &str) -> PairAttempt {
+        let code = normalize_code(code);
         let mut recent = self.recent_codes.lock().unwrap();
-        if recent.contains(&code) {
-            return false;
+        if let Some((_, ack)) = recent.iter().find(|(c, _)| *c == code) {
+            return match ack {
+                Some(ack) => PairAttempt::Done(ack.clone()),
+                None => PairAttempt::InFlight,
+            };
         }
         if recent.len() >= 16 {
             recent.remove(0);
         }
-        recent.push(code);
-        true
+        recent.push((code, None));
+        PairAttempt::New
+    }
+
+    /// A redeem finished: [ack] (the CustomEvent to repeat), or None to
+    /// let the next repeat of the code try again.
+    pub fn pair_finished(&self, code: &str, ack: Option<String>) {
+        let code = normalize_code(code);
+        let mut recent = self.recent_codes.lock().unwrap();
+        match ack {
+            Some(ack) => {
+                if let Some(entry) = recent.iter_mut().find(|(c, _)| *c == code) {
+                    entry.1 = Some(ack);
+                }
+            }
+            None => recent.retain(|(c, _)| *c != code),
+        }
+    }
+
+    /// This bridge's end-to-end key pair, made on first use.
+    pub fn e2e_keypair(&self) -> (Vec<u8>, Vec<u8>) {
+        let stored = self.reload();
+        if let (Some(private), Some(public)) = (
+            stored.e2e_private.as_deref().and_then(e2e::key_from_b64),
+            stored.e2e_public.as_deref().and_then(e2e::key_from_b64),
+        ) {
+            return (private, public);
+        }
+        let keypair = e2e::generate();
+        self.update(|s| {
+            s.e2e_private = Some(e2e::key_to_b64(&keypair.private));
+            s.e2e_public = Some(e2e::key_to_b64(&keypair.public));
+        });
+        (keypair.private, keypair.public)
+    }
+
+    /// The paired phones' static keys (decoded).
+    pub fn app_keys(&self) -> Vec<Vec<u8>> {
+        self.reload().app_keys.iter().filter_map(|k| e2e::key_from_b64(&k.key)).collect()
     }
 
     pub fn relay_http(&self) -> String {
@@ -307,4 +354,16 @@ fn command_output(program: &str, args: &[&str]) -> Option<String> {
     let text = String::from_utf8(output.stdout).ok()?;
     let text = text.trim();
     (output.status.success() && !text.is_empty()).then(|| text.to_owned())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum PairAttempt {
+    New,
+    InFlight,
+    /// Redeemed already: the ack to broadcast again.
+    Done(String),
+}
+
+fn normalize_code(code: &str) -> String {
+    code.chars().filter(char::is_ascii_alphanumeric).collect::<String>().to_ascii_uppercase()
 }

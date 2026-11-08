@@ -14,15 +14,18 @@ Access policy: the tokens below are the auth).
 | Step | Who | Call | Answer |
 |---|---|---|---|
 | 1 | app (on the LAN, Pro) | `POST /v1/pairings` `{"app_user_id", "device_name", "platform"}` | `201 {"pairing_id", "code", "expires_in": 120}`; `403 pro_required`, `503 verify_unavailable` |
-| 2 | app → bridge, through OBS | plugin: `CallVendorRequest` vendor `obs-blade-bridge`, request `Pair`, `{"code"}`; standalone: `BroadcastCustomEvent` `{"obs-blade-pair": {"code"}}` | - |
-| 3 | bridge | `POST /v1/pairings/redeem` `{"code", "name", "kind", "version"}`, `Authorization: Bearer <bridge token>` if already paired | `200 {"bridge_id", "bridge_token"?}` (token only for a new bridge, store it); `404 invalid_code` (unknown, used or expired), `401 unknown_bridge`, `409 too_many_devices` |
+| 2 | app → bridge, through OBS | plugin: `CallVendorRequest` vendor `obs-blade-bridge`, request `Pair`, `{"code", "app_key"}`; standalone: `BroadcastCustomEvent` `{"obs-blade-pair": {"code", "app_key"}}` (`app_key`: the phone's X25519 public key for this pairing, base64) | - |
+| 3 | bridge | `POST /v1/pairings/redeem` `{"code", "name", "kind", "version"}`, `Authorization: Bearer <bridge token>` if already paired | `200 {"bridge_id", "device_id", "bridge_token"?}` (token only for a new bridge, store it; `device_id` is what the app will get - file the app key under it); `404 invalid_code` (unknown, used or expired), `401 unknown_bridge`, `409 too_many_devices` |
+| 3b | bridge → app, through OBS | `BroadcastCustomEvent` `{"obs-blade-pair-ack": {"code", "bridge_key"}}` after a successful redeem, again for every repeat of the code | - |
 | 4 | app, every ~2 s | `POST /v1/pairings/collect` `{"pairing_id"}` | `200 {"state": "waiting", "expires_in"}`, then once `200 {"state": "paired", "device_id", "app_token", "bridge": {"id", "name", "kind"}}`; `404 unknown_pairing` (expired, or already collected) |
 
 Step 2 is fire-and-forget (a CustomEvent reaches only bridges connected to
 OBS at that moment, e.g. not one that is still starting): the app sends it
-right away and again every 2 s until step 4 answers `paired`; the bridge
-ignores repeats of a code it already handled. A vendor request gets an
-answer, so the plugin path needs no repeat unless the call failed.
+right away and again every 2 s until it has both step 4's `paired` and
+step 3b's ack; the bridge answers a repeat of a code it already redeemed
+with the ack again. **The keys travel only through OBS** (steps 2 and
+3b), never through the relay, so the relay can't substitute one: it
+can't read or alter session traffic (end-to-end encryption, below).
 
 The code is 8 characters from `23456789ABCDEFGHJKMNPQRSTUVWXYZ`; case,
 spaces and dashes are ignored. A code is single use and lives 2 minutes;
@@ -34,10 +37,26 @@ secret (it yields the app token): POST body only, never in a URL.
 - `GET /v1/app?bridge=<bridge_id>` - websocket, `Authorization: Bearer
   <app_token>`, optional `X-RC-App-User-Id: <current RevenueCat app user
   id>` (the Pro check uses it and remembers it). Subprotocol
-  `obswebsocket.json` is offered. After the upgrade it **is** an
-  obs-websocket session: the first frame is OBS's Hello (without
-  `authentication`, the bridge authenticates locally), then Identify and
-  everything else as usual. Text frames only.
+  `obswebsocket.json` is offered. After the upgrade the phone sends the
+  end-to-end handshake (below) as its first binary frame; then it **is**
+  an obs-websocket session inside it: OBS's Hello (without
+  `authentication`, the bridge authenticates locally), Identify and
+  everything else as usual. **Binary frames only**; a text frame closes
+  the session with 1003 (it would be readable by the relay).
+
+### End-to-end encryption
+
+`Noise_IK_25519_ChaChaPoly_SHA256`, prologue `obs-blade-remote/1`. The
+phone is the initiator: static key = its pairing's app key, remote static
+= the bridge key from the pairing ack. Message 1 (phone → bridge, empty
+payload), message 2 (bridge → phone, empty payload), then every frame is
+one transport message (≤ 65535 bytes). An obs-websocket message is split
+into chunks of at most 65518 bytes, each sent as plaintext `[fin u8]
+[chunk]` (`fin` 1 on the last chunk). The relay forwards these frames
+untouched and can't read them; it still sees who connects to which
+bridge, when, sizes and timing, close codes and the bridge's status
+snapshot (control messages). Implementations: `desktop/core/src/e2e.rs`,
+`lib/utils/remote/noise_ik.dart`.
 - Close codes (besides OBS's own 4000-4012, which pass through):
 
   | Code | Meaning | App shows |
@@ -53,6 +72,7 @@ secret (it yields the app token): POST body only, never in a URL.
   | 4908 | bridge dropped mid-session | reconnect |
   | 4909 | Pro couldn't be verified right now | try again later |
   | 4910 | rate limited | try again later |
+  | 4911 | end-to-end handshake failed (sent by the bridge, or set by the app when the bridge's key didn't verify) | "Couldn't verify <PC>" - set up again |
   | 1013 | the phone didn't read fast enough | reconnect |
 
 - `GET /v1/bridges/{bridge_id}` (Bearer app token) → `{"id", "name",
@@ -76,11 +96,16 @@ secret (it yields the app token): POST body only, never in a URL.
     OBS's Hello on **without** `authentication` and add yours to the
     phone's Identify. OBS not running → `CLOSE {"code": 4901}`; server off
     or auth refused → `CLOSE {"code": 4902}`.
-  - `2 DATA` both ways: one OBS text frame, UTF-8, otherwise untouched
-    (except the preview screenshot rewrite, see the design doc).
+  - `2 DATA` both ways: one end-to-end encrypted frame, exactly as the
+    phone sent / gets it as a binary frame. The bridge decrypts, talks
+    plain obs-websocket to OBS (the preview screenshot rewrite happens
+    there) and encrypts the answers. A phone whose static key isn't one
+    of the bridge's paired keys → `CLOSE {"code": 4904}`; a handshake or
+    frame that doesn't decrypt → `CLOSE {"code": 4911}`.
   - `3 CLOSE` relay → bridge: the phone left (empty payload). Bridge →
-    relay: `{"code", "reason"}`; codes 4000-4099, 4901, 4902, 1000, 1001,
-    1003, 1007-1009, 1011 are forwarded, anything else becomes 1011.
+    relay: `{"code", "reason"}`; codes 4000-4099, 4901, 4902, 4904, 4911,
+    1000, 1001, 1003, 1007-1009, 1011 are forwarded, anything else
+    becomes 1011.
 - Text frames, JSON:
   - relay → bridge: `welcome {"bridge_id", "server_version", "devices"}`,
     `devices {"devices"}` (after a pairing or removal),

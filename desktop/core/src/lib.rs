@@ -4,6 +4,7 @@
 
 pub mod api;
 pub mod auth;
+pub mod e2e;
 pub mod ffi;
 pub mod monitor;
 pub mod obs_config;

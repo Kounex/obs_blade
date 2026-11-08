@@ -312,6 +312,11 @@ class _Waiting extends StatelessWidget {
         'running OBS and turned on, then try again.',
     false,
   ),
+  RemotePairingFailure.noConfirmation => (
+    'OBS Blade Remote on the PC didn\'t confirm. Update it to the latest '
+        'version, then try again.',
+    false,
+  ),
 };
 
 class _Failed extends StatelessWidget {

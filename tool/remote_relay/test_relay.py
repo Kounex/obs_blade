@@ -73,7 +73,7 @@ class RelayCase(AioHTTPTestCase):
         self.store = Store(os.path.join(self.tmp.name, "relay.db"), clock=self.clock)
         self.rc = FakeRevenueCat(self.clock)
         self.ent = Entitlements(self.rc, "proj1", clock=self.clock)
-        return relay.build_app(self.store, self.ent, jobs=False, min_version="0.2.0")
+        return relay.build_app(self.store, self.ent, jobs=False, min_version="0.3.0")
 
     async def asyncTearDown(self):
         await super().asyncTearDown()
@@ -91,7 +91,7 @@ class RelayCase(AioHTTPTestCase):
         headers = {"Authorization": f"Bearer {bridge_token}"} if bridge_token else {}
         r = await self.client.post(
             "/v1/pairings/redeem",
-            json={"code": created["code"], "name": name, "kind": kind, "version": "0.2.0"},
+            json={"code": created["code"], "name": name, "kind": kind, "version": "0.3.0"},
             headers=headers,
         )
         self.assertEqual(r.status, 200, await r.text())
@@ -99,6 +99,8 @@ class RelayCase(AioHTTPTestCase):
         r = await self.client.post("/v1/pairings/collect", json={"pairing_id": created["pairing_id"]})
         collected = await r.json()
         self.assertEqual(collected["state"], "paired")
+        # The bridge files the phone's end-to-end key under this id.
+        self.assertEqual(redeemed["device_id"], collected["device_id"])
         return (
             redeemed["bridge_id"],
             redeemed.get("bridge_token", bridge_token),
@@ -106,7 +108,7 @@ class RelayCase(AioHTTPTestCase):
             collected["app_token"],
         )
 
-    async def bridge(self, token, kind="standalone", version="0.2.0"):
+    async def bridge(self, token, kind="standalone", version="0.3.0"):
         ws = await self.client.ws_connect(
             "/v1/bridge",
             headers={
@@ -171,7 +173,7 @@ class PairingTests(RelayCase):
         code = created["code"].lower()
         r = await self.client.post(
             "/v1/pairings/redeem",
-            json={"code": f"{code[:4]}-{code[4:]}", "name": "PC", "kind": "plugin", "version": "0.2.0"},
+            json={"code": f"{code[:4]}-{code[4:]}", "name": "PC", "kind": "plugin", "version": "0.3.0"},
         )
         redeemed = await r.json()
         self.assertIn("bridge_token", redeemed)
@@ -186,7 +188,7 @@ class PairingTests(RelayCase):
     async def test_code_is_single_use(self):
         r = await self.client.post("/v1/pairings", json={"app_user_id": PRO})
         code = (await r.json())["code"]
-        body = {"code": code, "name": "PC", "kind": "plugin", "version": "0.2.0"}
+        body = {"code": code, "name": "PC", "kind": "plugin", "version": "0.3.0"}
         self.assertEqual((await self.client.post("/v1/pairings/redeem", json=body)).status, 200)
         r = await self.client.post("/v1/pairings/redeem", json=body)
         self.assertEqual(r.status, 404)
@@ -232,16 +234,30 @@ class PairingTests(RelayCase):
 
 class SessionTests(RelayCase):
     async def test_frames_pass_untouched_both_ways(self):
+        """End-to-end encrypted frames: opaque bytes, never decoded."""
         *_, b, p, sid = await self.session()
-        hello = '{"op":0,"d":{"obsWebSocketVersion":"5.7.6","rpcVersion":1}}'
-        await b.send_bytes(protocol.pack(protocol.DATA, sid, hello.encode()))
+        from_bridge = bytes(range(256)) * 3  # not UTF-8
+        await b.send_bytes(protocol.pack(protocol.DATA, sid, from_bridge))
         msg = await p.receive(timeout=3)
-        self.assertEqual((msg.type, msg.data), (aiohttp.WSMsgType.TEXT, hello))
-        identify = '{"op":1,"d":{"rpcVersion":1,"eventSubscriptions":66559}}'
-        await p.send_str(identify)
-        self.assertEqual(await self.next_frame(b), (protocol.DATA, sid, identify.encode()))
+        self.assertEqual((msg.type, msg.data), (aiohttp.WSMsgType.BINARY, from_bridge))
+        from_phone = b"\xff\x00noise message 1"
+        await p.send_bytes(from_phone)
+        self.assertEqual(await self.next_frame(b), (protocol.DATA, sid, from_phone))
         await p.close()
         self.assertEqual(await self.next_frame(b), (protocol.CLOSE, sid, b""))
+
+    async def test_readable_text_from_the_phone_is_refused(self):
+        *_, b, p, sid = await self.session()
+        await p.send_str('{"op":1,"d":{"rpcVersion":1}}')
+        self.assertEqual(await self.closed_with(p), 1003)
+        self.assertEqual(await self.next_frame(b), (protocol.CLOSE, sid, b""))
+
+    async def test_bridge_e2e_refusals_reach_the_phone(self):
+        for code in (protocol.UNPAIRED, protocol.E2E_FAILED):
+            *_, b, p, sid = await self.session()
+            await b.send_bytes(protocol.pack(protocol.CLOSE, sid, json.dumps({"code": code}).encode()))
+            self.assertEqual(await self.closed_with(p), code)
+            await b.close()
 
     async def test_bridge_close_reaches_phone_after_its_frames(self):
         *_, b, p, sid = await self.session()
@@ -250,7 +266,7 @@ class SessionTests(RelayCase):
             protocol.pack(protocol.CLOSE, sid, json.dumps({"code": protocol.OBS_NOT_RUNNING, "reason": "obs not running"}).encode())
         )
         msg = await p.receive(timeout=3)
-        self.assertEqual(msg.data, '{"op":0}')
+        self.assertEqual(msg.data, b'{"op":0}')
         self.assertEqual(await self.closed_with(p), protocol.OBS_NOT_RUNNING)
 
     async def test_bridge_cannot_send_reserved_close_codes(self):
@@ -347,7 +363,7 @@ class ProTests(RelayCase):
         self.rc.down = True
         self.clock.now += 3600
         await relay.recheck_pro(self.app)
-        await p.send_str('{"op":6}')
+        await p.send_bytes(b"sealed")
         kind, _, _ = await self.next_frame(b)
         self.assertEqual(kind, protocol.DATA)  # still open
         self.clock.now += 25 * 3600
@@ -367,6 +383,28 @@ class ProTests(RelayCase):
         self.assertEqual(self.store.device_by_token(app_token).app_user_id, restored)
         await p.close()
 
+
+
+class StoreMigrationTests(unittest.TestCase):
+    def test_a_database_from_before_0_0_4_gets_the_device_id_column(self):
+        import sqlite3
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "relay.db")
+            old = sqlite3.connect(path)
+            old.executescript(
+                "CREATE TABLE pairings (id_hash TEXT PRIMARY KEY, code TEXT NOT NULL UNIQUE,"
+                " app_user_id TEXT NOT NULL, device_name TEXT NOT NULL DEFAULT '',"
+                " platform TEXT NOT NULL DEFAULT '', created_at REAL NOT NULL,"
+                " expires_at REAL NOT NULL, bridge_id TEXT);"
+            )
+            old.close()
+            store = Store(path)
+            pairing_id, code = store.create_pairing(PRO, "iPhone", "ios")
+            _, _, device_id = store.redeem_pairing(code, None, "PC", "plugin", "0.3.0")
+            device, _ = store.collect_pairing(pairing_id)
+            self.assertEqual(device.id, device_id)
+            store.close()
 
 class EntitlementTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -409,7 +447,7 @@ class BridgeApiTests(RelayCase):
             headers={"Authorization": f"Bearer {bridge_token}", "X-Bridge-Version": "0.1.9", "X-Bridge-Kind": "plugin"},
         )
         message = await self.next_json(ws)
-        self.assertEqual(message, {"type": "update_required", "min_version": "0.2.0"})
+        self.assertEqual(message, {"type": "update_required", "min_version": "0.3.0"})
         self.assertEqual(await self.closed_with(ws), protocol.BRIDGE_OUTDATED)
         p = await self.phone(bridge_id, app_token)
         self.assertEqual(await self.closed_with(p), protocol.BRIDGE_OUTDATED)
@@ -489,7 +527,7 @@ class StoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             store = Store(os.path.join(tmp, "db"), clock=clock)
             pairing_id, code = store.create_pairing(PRO, "iPhone", "ios")
-            bridge_id, _ = store.redeem_pairing(code, None, "PC", "plugin", "1")
+            bridge_id, _, _ = store.redeem_pairing(code, None, "PC", "plugin", "1")
             device, _ = store.collect_pairing(pairing_id)
             clock.now += 181 * 24 * 3600
             self.assertEqual(store.purge(), [device.id])

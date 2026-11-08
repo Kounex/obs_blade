@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -8,6 +9,7 @@ import '../../stores/pro_store.dart';
 import '../../types/classes/connection_attempt_result.dart';
 import '../../types/enums/remote_reach.dart';
 import '../../types/enums/web_socket_codes/web_socket_close_code.dart';
+import 'noise_ik.dart';
 import 'remote_relay_client.dart';
 
 /// One way of reaching OBS for a connect attempt.
@@ -136,7 +138,8 @@ class RemoteConnectEnvironment {
     }
   }
 
-  /// URL + headers of the relay socket for a paired [connection].
+  /// URL, headers and end-to-end keys of the relay socket for a paired
+  /// [connection].
   Future<RemoteSocketTarget> socketTarget(Connection connection) async {
     final appUserId = await this.appUserId();
     return RemoteSocketTarget(
@@ -146,6 +149,10 @@ class RemoteConnectEnvironment {
         if (appUserId != null && appUserId.isNotEmpty)
           'X-RC-App-User-Id': appUserId,
       },
+      appKey: await NoiseKeyPair.fromPrivate(
+        base64Decode(connection.relayAppKey!),
+      ),
+      bridgeKey: base64Decode(connection.relayBridgeKey!),
     );
   }
 }
@@ -154,5 +161,15 @@ class RemoteSocketTarget {
   final Uri uri;
   final Map<String, String> headers;
 
-  const RemoteSocketTarget({required this.uri, required this.headers});
+  /// This pairing's key and the bridge's: the session is end-to-end
+  /// encrypted between them ([RemoteE2eChannel])
+  final NoiseKeyPair appKey;
+  final List<int> bridgeKey;
+
+  const RemoteSocketTarget({
+    required this.uri,
+    required this.headers,
+    required this.appKey,
+    required this.bridgeKey,
+  });
 }

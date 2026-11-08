@@ -49,9 +49,28 @@ void main() {
     'obs': obs,
     'update_required': update,
     'devices': [
-      {'id': 'd_me', 'name': 'iPhone', 'platform': 'ios', 'last_used': now, 'connected': true, 'self': true},
-      {'id': 'd_2', 'name': 'iPad', 'platform': 'ios', 'last_used': now - 86400, 'connected': false},
-      {'id': 'd_3', 'name': 'Android phone', 'platform': 'android', 'last_used': now - 3 * 86400, 'connected': false},
+      {
+        'id': 'd_me',
+        'name': 'iPhone',
+        'platform': 'ios',
+        'last_used': now,
+        'connected': true,
+        'self': true,
+      },
+      {
+        'id': 'd_2',
+        'name': 'iPad',
+        'platform': 'ios',
+        'last_used': now - 86400,
+        'connected': false,
+      },
+      {
+        'id': 'd_3',
+        'name': 'Android phone',
+        'platform': 'android',
+        'last_used': now - 3 * 86400,
+        'connected': false,
+      },
     ],
   };
 
@@ -61,25 +80,33 @@ void main() {
       client: MockClient(
         (_) async => bridge == null
             ? http.Response('', 503)
-            : http.Response(jsonEncode(bridge), 200, headers: {'content-type': 'application/json'}),
+            : http.Response(
+                jsonEncode(bridge),
+                200,
+                headers: {'content-type': 'application/json'},
+              ),
       ),
     ),
     appUserId: () async => 'x',
-    sendCode: (_) async => true,
+    sendCode: (_, _) async {},
+    acks: () => const Stream.empty(),
   );
 
   Connection connection({bool paired = false, String kind = 'plugin'}) {
     final c = Connection('192.168.178.20', 4455)
       ..name = 'GAMING-PC'
       ..pw = 'secret'
-      ..lastConnectedMs = DateTime.now().millisecondsSinceEpoch - 2 * 3600 * 1000;
+      ..lastConnectedMs =
+          DateTime.now().millisecondsSinceEpoch - 2 * 3600 * 1000;
     if (paired) {
       c
         ..relayBridgeId = 'b_1'
         ..relayAppToken = 'tok'
         ..relayDeviceId = 'd_me'
         ..relayBridgeName = 'GAMING-PC'
-        ..relayBridgeKind = kind;
+        ..relayBridgeKind = kind
+        ..relayAppKey = base64Encode(List.filled(32, 1))
+        ..relayBridgeKey = base64Encode(List.filled(32, 2));
     }
     return c;
   }
@@ -104,18 +131,35 @@ void main() {
 
   /// [build] per shot: closing a sheet cancels its store's pairing, so
   /// every shot gets its own (as every opened sheet does in the app)
-  Future<void> all(WidgetTester tester, String name, Widget Function() build) async {
+  Future<void> all(
+    WidgetTester tester,
+    String name,
+    Widget Function() build,
+  ) async {
     await harness.shot(tester, name, build());
-    await harness.shot(tester, '${name}_narrow', build(), size: const Size(320, 640));
+    await harness.shot(
+      tester,
+      '${name}_narrow',
+      build(),
+      size: const Size(320, 640),
+    );
     await harness.shot(tester, '${name}_tablet', build(), size: kShotTablet);
   }
 
   testWidgets('locked (not Pro)', (tester) async {
-    await harness.shot(tester, 'remote_locked', sheet(store(), connection(), pro: false));
+    await harness.shot(
+      tester,
+      'remote_locked',
+      sheet(store(), connection(), pro: false),
+    );
   });
 
   testWidgets('needs a saved connection', (tester) async {
-    await harness.shot(tester, 'remote_unsaved', sheet(store(), connection(), saved: false));
+    await harness.shot(
+      tester,
+      'remote_unsaved',
+      sheet(store(), connection(), saved: false),
+    );
   });
 
   testWidgets('set up', (tester) async {
@@ -134,33 +178,53 @@ void main() {
   });
 
   testWidgets('failures', (tester) async {
-    for (final failure in [RemotePairingFailure.noBridge, RemotePairingFailure.proRequired, RemotePairingFailure.network]) {
+    for (final failure in [
+      RemotePairingFailure.noBridge,
+      RemotePairingFailure.proRequired,
+      RemotePairingFailure.network,
+    ]) {
       final s = store();
       runInAction(() {
         s.phase = RemotePairingPhase.failed;
         s.failure = failure;
       });
-      await harness.shot(tester, 'remote_failed_${failure.name}', sheet(s, connection()));
+      await harness.shot(
+        tester,
+        'remote_failed_${failure.name}',
+        sheet(s, connection()),
+      );
     }
   });
 
   testWidgets('paired: online, via relay', (tester) async {
-    await all(tester, 'remote_paired_online', () => sheet(store(info()), connection(paired: true), viaRemote: true));
+    await all(
+      tester,
+      'remote_paired_online',
+      () => sheet(store(info()), connection(paired: true), viaRemote: true),
+    );
   });
 
   testWidgets('paired: plugin offline after OBS closed', (tester) async {
     await harness.shot(
       tester,
       'remote_paired_obs_closed',
-      sheet(store(info(online: false, obs: 'closed')), connection(paired: true)),
+      sheet(
+        store(info(online: false, obs: 'closed')),
+        connection(paired: true),
+      ),
     );
   });
 
-  testWidgets('paired: standalone offline, update required, ws off', (tester) async {
+  testWidgets('paired: standalone offline, update required, ws off', (
+    tester,
+  ) async {
     await harness.shot(
       tester,
       'remote_paired_offline_standalone',
-      sheet(store(info(online: false, obs: '', kind: 'standalone')), connection(paired: true, kind: 'standalone')),
+      sheet(
+        store(info(online: false, obs: '', kind: 'standalone')),
+        connection(paired: true, kind: 'standalone'),
+      ),
     );
     await harness.shot(
       tester,
@@ -175,14 +239,29 @@ void main() {
   });
 
   testWidgets('paired: relay unreachable', (tester) async {
-    await harness.shot(tester, 'remote_paired_relay_down', sheet(store(), connection(paired: true)));
+    await harness.shot(
+      tester,
+      'remote_paired_relay_down',
+      sheet(store(), connection(paired: true)),
+    );
   });
 
   testWidgets('saved connection card with remote access', (tester) async {
-    final Widget card = Center(child: ConnectionBox(connection: connection(paired: true)..reachable = false));
+    final Widget card = Center(
+      child: ConnectionBox(
+        connection: connection(paired: true)..reachable = false,
+      ),
+    );
     await harness.shot(tester, 'remote_card', card);
-    await harness.shot(tester, 'remote_card_narrow', card, size: const Size(320, 640));
-    final Widget plain = Center(child: ConnectionBox(connection: connection()..reachable = true));
+    await harness.shot(
+      tester,
+      'remote_card_narrow',
+      card,
+      size: const Size(320, 640),
+    );
+    final Widget plain = Center(
+      child: ConnectionBox(connection: connection()..reachable = true),
+    );
     await harness.shot(tester, 'remote_card_unpaired', plain);
   });
 }

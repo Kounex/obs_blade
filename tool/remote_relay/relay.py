@@ -30,7 +30,8 @@ log = logging.getLogger("remote-relay")
 LISTEN_HOST = os.environ.get("RELAY_LISTEN", "127.0.0.1")
 LISTEN_PORT = int(os.environ.get("RELAY_PORT", "8426"))
 DB_PATH = os.environ.get("RELAY_DB", "/var/lib/remote-relay/relay.db")
-MIN_BRIDGE_VERSION = os.environ.get("RELAY_MIN_BRIDGE_VERSION", "0.1.0")
+# 0.3.0: end-to-end encryption (older bridges send readable frames).
+MIN_BRIDGE_VERSION = os.environ.get("RELAY_MIN_BRIDGE_VERSION", "0.3.0")
 SERVER_VERSION = os.environ.get("RELAY_VERSION", "dev")
 
 MAX_SESSIONS_PER_BRIDGE = 4
@@ -128,9 +129,9 @@ class AppSession:
         try:
             while True:
                 item = await self.queue.get()
-                if isinstance(item, str):
+                if isinstance(item, bytes):
                     self.queued_bytes -= len(item)
-                    await self.ws.send_str(item)
+                    await self.ws.send_bytes(item)
                     continue
                 self._signal_close(*item)
                 return
@@ -141,15 +142,16 @@ class AppSession:
         if not self.close_signal.done():
             self.close_signal.set_result((code, reason))
 
-    def deliver(self, text: str) -> None:
+    def deliver(self, frame: bytes) -> None:
+        """One end-to-end encrypted frame for the phone (opaque here)."""
         if self.ended_by_relay:
             return
-        if self.queued_bytes + len(text) > MAX_QUEUED_BYTES:
+        if self.queued_bytes + len(frame) > MAX_QUEUED_BYTES:
             log.info("session %s: phone too slow, closing", self.sid)
             self.end(TOO_SLOW, "too slow", drain=False)
             return
-        self.queued_bytes += len(text)
-        self.queue.put_nowait(text)
+        self.queued_bytes += len(frame)
+        self.queue.put_nowait(frame)
 
     def end(self, code: int, reason: str = "", drain: bool = True) -> None:
         """Close the phone's socket. ``drain`` lets queued frames go out
@@ -320,7 +322,7 @@ async def handle_redeem(request: web.Request) -> web.Response:
     if not code:
         return _json(400, {"error": "missing_code"})
     try:
-        bridge_id, token = request.app[KEY_STORE].redeem_pairing(
+        bridge_id, token, device_id = request.app[KEY_STORE].redeem_pairing(
             code,
             _bearer(request) or None,
             name=_text(body, "name", 64),
@@ -330,7 +332,9 @@ async def handle_redeem(request: web.Request) -> web.Response:
     except PairingError as error:
         status = {"invalid_code": 404, "unknown_bridge": 401}.get(error.reason, 409)
         return _json(status, {"error": error.reason})
-    answer = {"bridge_id": bridge_id}
+    # The device id the app will get: the bridge files the phone's
+    # end-to-end key under it (removing the device removes the key).
+    answer = {"bridge_id": bridge_id, "device_id": device_id}
     if token:
         answer["bridge_token"] = token
     return _json(200, answer)
@@ -529,17 +533,18 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
                 await ws.close(code=code, message=reason.encode()[:120])
                 break
             message = receive.result()
-            if message.type == aiohttp.WSMsgType.TEXT:
+            if message.type == aiohttp.WSMsgType.BINARY:
+                # End-to-end encrypted: forwarded as is, never read here.
                 if session.ended_by_relay:
                     continue  # the close follows once the queue drained
                 sent = await link.send_frame(
-                    protocol.pack(protocol.DATA, session.sid, message.data.encode())
+                    protocol.pack(protocol.DATA, session.sid, message.data)
                 )
                 if not sent:
                     session.end(protocol.BRIDGE_GONE, "bridge gone", drain=False)
-            elif message.type == aiohttp.WSMsgType.BINARY:
-                # obs-websocket's msgpack subprotocol isn't offered.
-                session.end(1003, "text frames only", drain=False)
+            elif message.type == aiohttp.WSMsgType.TEXT:
+                # Plain obs-websocket would be readable here: refused.
+                session.end(1003, "end-to-end encryption required", drain=False)
             else:  # CLOSE / CLOSING / CLOSED / ERROR: the phone is gone
                 break
     finally:
@@ -670,10 +675,7 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
                 if session is None:
                     continue  # the phone left meanwhile
                 if frame_kind == protocol.DATA:
-                    try:
-                        session.deliver(payload.decode("utf-8"))
-                    except UnicodeDecodeError:
-                        session.end(1007, "invalid frame", drain=False)
+                    session.deliver(payload)
                 elif frame_kind == protocol.CLOSE:
                     code, reason = _close_payload(payload)
                     link.sessions.pop(sid, None)

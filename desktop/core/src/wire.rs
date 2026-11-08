@@ -7,6 +7,12 @@ pub const CLOSE: u8 = 3;
 /// Close codes the bridge sends for a session (relay README).
 pub const OBS_NOT_RUNNING: u16 = 4901;
 pub const OBS_UNREACHABLE: u16 = 4902;
+/// The phone's end-to-end key isn't paired with this bridge: the app
+/// forgets the pairing (same code as the relay's "unpaired").
+pub const UNKNOWN_DEVICE: u16 = 4904;
+/// The end-to-end handshake or a frame failed (a wrong bridge key on the
+/// phone, tampering): set up again.
+pub const E2E_FAILED: u16 = 4911;
 /// obs-websocket's AuthenticationFailed.
 pub const OBS_AUTH_FAILED: u16 = 4009;
 

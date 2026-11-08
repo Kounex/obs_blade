@@ -29,13 +29,15 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
       ..relayAppToken = fields[8] as String?
       ..relayDeviceId = fields[9] as String?
       ..relayBridgeName = fields[10] as String?
-      ..relayBridgeKind = fields[11] as String?;
+      ..relayBridgeKind = fields[11] as String?
+      ..relayAppKey = fields[12] as String?
+      ..relayBridgeKey = fields[13] as String?;
   }
 
   @override
   void write(BinaryWriter writer, Connection obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -59,7 +61,11 @@ class ConnectionAdapter extends TypeAdapter<Connection> {
       ..writeByte(10)
       ..write(obj.relayBridgeName)
       ..writeByte(11)
-      ..write(obj.relayBridgeKind);
+      ..write(obj.relayBridgeKind)
+      ..writeByte(12)
+      ..write(obj.relayAppKey)
+      ..writeByte(13)
+      ..write(obj.relayBridgeKey);
   }
 
   @override
