@@ -4,6 +4,24 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-09 - Sheets: dogfood round 1
+
+- Remote access stuck on "Checking" after dragging the sheet: the store
+  was created inside the sheet builder, which Flutter's BottomSheet runs
+  again on every drag start / end (`setState` for the drag handle state;
+  `modal_bottom_sheet` didn't) - the sheet then showed a fresh store
+  nobody refreshed. Created once in `GeneralActions.openRemoteAccess`;
+  the user card's fallback `TwitchUserService` hoisted the same way;
+  `ModalHandler.showBaseBottomSheet` documents the rule. Test drags the
+  real sheet (`test/remote/remote_access_sheet_test.dart`).
+- Remote access: only the store-driven states sit in an Observer (the
+  free / unsaved ones watched nothing - "No observables" warning).
+- Filters sheet: no pop during build (and no unassigned item crashing
+  that frame) when its item disappears; the OBS-quit reaction is disposed
+  with the sheet (it popped on a dead context after the sheet closed);
+  the 500 ms filter poll skips when the session is gone
+  (`test/dashboard/filter_list_sheet_test.dart`).
+
 ## 2026-11-08 - One sheet app-wide
 
 - Audit: four kinds of sheet - chat (Material sheet, handle, pinned

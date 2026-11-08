@@ -71,6 +71,11 @@ class ModalHandler {
   /// Build the content with [BaseSheetScaffold] (handle + pinned header +
   /// scrolling body). The bottom safe area and the keyboard inset are
   /// added here - content must not add them again.
+  ///
+  /// [builder] runs again whenever the sheet rebuilds - a drag starting /
+  /// ending, the keyboard, a size change. Create stores, controllers and
+  /// services before calling this, never inside [builder]: a fresh one
+  /// per run loses the state the sheet's State set up in initState.
   static Future<T?> showBaseBottomSheet<T>({
     required BuildContext context,
     required Widget Function(BuildContext context) builder,

@@ -61,20 +61,24 @@ void showChatUserCardSheet(
   required String userId,
   ChatUserCardConnection? connection,
   TwitchUserService? userService,
-}) => ModalHandler.showBaseBottomSheet(
-  context: context,
-  height: BaseSheetHeight.standard,
-  builder: (_) => ChatUserCardSheet(
-    userId: userId,
-    connection: connection,
-    hostContext: context,
-    userService:
-        userService ??
-        (GetIt.instance.isRegistered<TwitchUserService>()
-            ? GetIt.instance<TwitchUserService>()
-            : TwitchUserService()),
-  ),
-);
+}) {
+  /// Outside the builder - it runs again whenever the sheet rebuilds
+  final TwitchUserService service =
+      userService ??
+      (GetIt.instance.isRegistered<TwitchUserService>()
+          ? GetIt.instance<TwitchUserService>()
+          : TwitchUserService());
+  ModalHandler.showBaseBottomSheet(
+    context: context,
+    height: BaseSheetHeight.standard,
+    builder: (_) => ChatUserCardSheet(
+      userId: userId,
+      connection: connection,
+      hostContext: context,
+      userService: service,
+    ),
+  );
+}
 
 /// Twitch-style viewer card: avatar, identity, Helix facts, recent chat.
 class ChatUserCardSheet extends StatefulWidget {

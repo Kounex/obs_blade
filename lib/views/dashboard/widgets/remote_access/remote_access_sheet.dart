@@ -78,78 +78,74 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
     platform: this.widget.platform,
   );
 
+  /// The store-driven part: the paired state (bridge info) or the pairing
+  /// run. Only this observes the store - the free / unsaved states read
+  /// nothing from it, and an Observer around them watched nothing.
+  Widget _storeBody() => Observer(
+    builder: (context) {
+      final RemoteAccessStore store = this.widget.store;
+      if (this.widget.connection.hasRemote) {
+        return _Paired(
+          connection: this.widget.connection,
+          info: store.info,
+          loading: store.infoLoading,
+          unreachable: store.infoError?.isNetwork ?? false,
+          viaRemote: this.widget.viaRemote,
+          onRemoveDevice: (id) async {
+            if (!await store.removeDevice(this.widget.connection, id) &&
+                context.mounted) {
+              _relayProblem(context);
+            }
+          },
+          onTurnOff: () async {
+            if (!await store.forget(this.widget.connection) &&
+                context.mounted) {
+              _relayProblem(context);
+            }
+          },
+        );
+      }
+      return switch (store.phase) {
+        RemotePairingPhase.starting || RemotePairingPhase.waitingForBridge =>
+          _Waiting(code: store.code, onCancel: store.cancel),
+        RemotePairingPhase.failed => _Failed(
+          failure: store.failure!,
+          onRetry: this._pair,
+          onGetPro: this.widget.onGetPro,
+        ),
+        RemotePairingPhase.idle || RemotePairingPhase.paired => _SetUp(
+          buttonText: 'Set Up Remote Access',
+          onPressed: this._pair,
+        ),
+      };
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
-    return Observer(
-      builder: (context) {
-        final RemoteAccessStore store = this.widget.store;
-        final Widget body;
-        if (!this.widget.isPro) {
-          /// Free users read the same pitch as Pro users before setting
-          /// up - only the button leads to the paywall instead
-          /// (user directive 2026-11-08)
-          body = _SetUp(
-            buttonText: 'Unlock Pro',
-            onPressed: this.widget.onGetPro,
-          );
-        } else if (!this.widget.saved) {
-          body = _NeedsSavedConnection(onSave: this.widget.onSaveConnection);
-        } else if (this.widget.connection.hasRemote) {
-          body = _Paired(
-            connection: this.widget.connection,
-            info: store.info,
-            loading: store.infoLoading,
-            unreachable: store.infoError?.isNetwork ?? false,
-            viaRemote: this.widget.viaRemote,
-            onRemoveDevice: (id) async {
-              if (!await store.removeDevice(this.widget.connection, id) &&
-                  context.mounted) {
-                _relayProblem(context);
-              }
-            },
-            onTurnOff: () async {
-              if (!await store.forget(this.widget.connection) &&
-                  context.mounted) {
-                _relayProblem(context);
-              }
-            },
-          );
-        } else {
-          switch (store.phase) {
-            case RemotePairingPhase.starting:
-            case RemotePairingPhase.waitingForBridge:
-              body = _Waiting(code: store.code, onCancel: store.cancel);
-            case RemotePairingPhase.failed:
-              body = _Failed(
-                failure: store.failure!,
-                onRetry: this._pair,
-                onGetPro: this.widget.onGetPro,
-              );
-            case RemotePairingPhase.idle:
-            case RemotePairingPhase.paired:
-              body = _SetUp(
-                buttonText: 'Set Up Remote Access',
-                onPressed: this._pair,
-              );
-          }
-        }
+    final Widget body = !this.widget.isPro
+        /// Free users read the same pitch as Pro users before setting
+        /// up - only the button leads to the paywall instead
+        /// (user directive 2026-11-08)
+        ? _SetUp(buttonText: 'Unlock Pro', onPressed: this.widget.onGetPro)
+        : !this.widget.saved
+        ? _NeedsSavedConnection(onSave: this.widget.onSaveConnection)
+        : this._storeBody();
 
-        return BaseSheetScaffold(
-          header: const BaseSheetTitle(
-            'Remote Access',
-            subtitle: 'Control OBS from anywhere',
-            titleSuffix: ProBadge(scale: 1.2),
-          ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const BaseDivider(),
-              const SizedBox(height: AppSpacing.lg),
-              body,
-            ],
-          ),
-        );
-      },
+    return BaseSheetScaffold(
+      header: const BaseSheetTitle(
+        'Remote Access',
+        subtitle: 'Control OBS from anywhere',
+        titleSuffix: ProBadge(scale: 1.2),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const BaseDivider(),
+          const SizedBox(height: AppSpacing.lg),
+          body,
+        ],
+      ),
     );
   }
 }

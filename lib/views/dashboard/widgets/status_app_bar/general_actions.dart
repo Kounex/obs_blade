@@ -31,12 +31,23 @@ import '../remote_access/remote_access_sheet.dart';
 class GeneralActions extends StatelessWidget {
   const GeneralActions({super.key});
 
+  /// Tests answer the relay with a fake
+  @visibleForTesting
+  static RemoteAccessStore Function() createRemoteAccessStore =
+      RemoteAccessStore.new;
+
   /// Remote access (Pro) for the active session's connection.
   static void openRemoteAccess(BuildContext context) {
     final NetworkStore networkStore = GetIt.instance<NetworkStore>();
     final session = networkStore.activeSession;
     if (session == null) return;
     final bool tablet = MediaQuery.sizeOf(context).shortestSide >= 600;
+
+    /// Created once, outside the builder: the sheet re-runs its builder
+    /// when a drag starts / ends - a store made in there was a fresh,
+    /// never-refreshed one each time ("Checking" forever, dogfood
+    /// 2026-11-09)
+    final RemoteAccessStore store = createRemoteAccessStore();
     ModalHandler.showBaseBottomSheet(
       context: context,
       height: BaseSheetHeight.tall,
@@ -45,7 +56,7 @@ class GeneralActions extends StatelessWidget {
         saved: session.connection.name != null && session.connection.isInBox,
         isPro: GetIt.instance<ProStore>().isPro,
         viaRemote: session.viaRemote,
-        store: RemoteAccessStore(),
+        store: store,
         deviceName: Platform.isIOS
             ? (tablet ? 'iPad' : 'iPhone')
             : Platform.isAndroid

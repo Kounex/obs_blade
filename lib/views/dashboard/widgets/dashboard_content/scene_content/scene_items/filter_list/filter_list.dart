@@ -35,18 +35,39 @@ class _FilterListState extends State<FilterList> {
 
   late final Timer _timer;
 
+  /// The edited item as last seen in the dashboard's scene items - shown
+  /// for the one frame the sheet needs to close once it's gone
+  late SceneItem _sceneItem = this.widget.sceneItem;
+  bool _closing = false;
+
   @override
   void initState() {
     super.initState();
 
     _timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      /// The session can end a moment before the sheet closes
+      if (GetIt.instance<NetworkStore>().activeSession == null) return;
       GetIt.instance<DashboardStore>().fetchSceneItemsFilters();
     });
 
-    when(
-      (_) => GetIt.instance<NetworkStore>().obsTerminated,
-      () => Navigator.of(context).pop(),
+    /// Disposed with the sheet - it used to outlive it and pop on a dead
+    /// context when OBS quit later
+    _d.add(
+      when((_) => GetIt.instance<NetworkStore>().obsTerminated, this._close),
     );
+  }
+
+  /// Closes the sheet once, after the current frame (never from build)
+  void _close() {
+    if (_closing) return;
+    _closing = true;
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (this.mounted) Navigator.of(this.context).pop();
+      })
+      /// A post-frame callback alone waits for some other frame - from the
+      /// OBS-quit reaction nothing else rebuilds
+      ..ensureVisualUpdate();
   }
 
   @override
@@ -67,21 +88,22 @@ class _FilterListState extends State<FilterList> {
 
     return Observer(
       builder: (context) {
-        /// Hacky approach... this widget will be displayed in a
-        /// CupertinoModalBottomSheet which will be provided the [SceneItem]
-        /// which filters we are editing. When we update the filters, the
-        /// underlying [SceneItem] is updated but not a new one is provided
-        /// here in the widget since it's being called imperatively...
-        late SceneItem sceneItem;
-        try {
-          sceneItem = dashboardStore.currentSceneItems.firstWhere(
-            (currentSceneItem) =>
-                currentSceneItem.sceneItemId ==
-                this.widget.sceneItem.sceneItemId,
-          );
-        } catch (_) {
-          Navigator.of(context).pop();
+        /// The sheet gets the [SceneItem] once, when it opens; filter
+        /// updates replace the item in the dashboard's scene items, so the
+        /// current one is read from there. When it's gone (scene switched,
+        /// item removed) the sheet closes after this frame - popping
+        /// during build threw, and the unassigned item crashed the frame.
+        final SceneItem? current = dashboardStore.currentSceneItems
+            .where(
+              (item) => item.sceneItemId == this.widget.sceneItem.sceneItemId,
+            )
+            .firstOrNull;
+        if (current != null) {
+          _sceneItem = current;
+        } else {
+          this._close();
         }
+        final SceneItem sceneItem = _sceneItem;
         return BaseSheetScaffold(
           header: BaseSheetTitle('Filters', subtitle: sceneItem.sourceName),
           bodyIsScrollable: true,
