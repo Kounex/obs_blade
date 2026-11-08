@@ -11,7 +11,6 @@ import '../../../../models/connection.dart';
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/dialogs/confirmation.dart';
-import '../../../../shared/general/app_bar_actions.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/base/icon_button.dart';
@@ -126,19 +125,6 @@ class ConnectionBox extends StatelessWidget {
     );
   }
 
-  void _delete(BuildContext context) {
-    ModalHandler.showBaseDialog(
-      context: context,
-      dialogWidget: ConfirmationDialog(
-        title: 'Delete Connection',
-        body:
-            'Are you sure you want to delete this connection? This action can\'t be undone!',
-        isYesDestructive: true,
-        onOk: (_) => this.connection.delete(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final AppStatusColors statusColors = Theme.of(
@@ -236,8 +222,9 @@ class ConnectionBox extends StatelessWidget {
                       pulsing: this.connection.reachable == null,
                     ),
 
-                    /// Ellipsis menu (Edit / Delete) via the app's adaptive
-                    /// action-sheet idiom. The OverflowBox keeps the
+                    /// Opens the edit dialog straight away - it has Delete
+                    /// too, so no Edit / Delete sheet in between (user,
+                    /// 2026-11-08). The OverflowBox keeps the
                     /// transparent 44pt hit floor without letting it
                     /// inflate the row - title, pill and glyph share one
                     /// optical centerline
@@ -254,22 +241,7 @@ class ConnectionBox extends StatelessWidget {
                           foregroundColor: Theme.of(
                             context,
                           ).textTheme.bodySmall?.color,
-                          onTap: () => AppBarActions.showActions(
-                            context,
-                            actions: [
-                              AppBarActionEntry(
-                                title: 'Edit',
-                                leadingIcon: CupertinoIcons.pencil,
-                                onAction: () => this._edit(context),
-                              ),
-                              AppBarActionEntry(
-                                title: 'Delete',
-                                leadingIcon: CupertinoIcons.trash,
-                                isDestructive: true,
-                                onAction: () => this._delete(context),
-                              ),
-                            ],
-                          ),
+                          onTap: () => this._edit(context),
                         ),
                       ),
                     ),
