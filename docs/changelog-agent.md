@@ -4,6 +4,21 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-08 - Remote access: dogfood round 2
+
+- Saved card 192 x 292 (was 172 x 268; the phone carousel squeezed it to
+  ~249 - pages now follow the card width, 264 on 320 pt phones); header,
+  info lines and Connect spread evenly; clock on "Last used"; pill amber
+  "OBS closed" / "OBS blocked" while the PC answers through remote access,
+  red "Offline" only when nothing is reachable.
+- Remote Access sheet: free users get the setup content with "Unlock
+  Pro"; PRO flag (shared `ProBadge`) after the title - the sheet's close
+  button covers the far right; end-to-end note with a lock.
+- Relay 0.0.5 / bridge 0.3.1: websocket pings from the relay never reach
+  the bridge through the Cloudflare tunnel - idle bridges went "relay
+  silent" and reconnected every ~77 s (69x in one evening). The bridge
+  now sends `{type: ping}` every 25 s, the relay answers `pong`.
+
 ## 2026-11-08 - Remote access: end-to-end encryption
 
 User decision: the relay (and Cloudflare in front) could read every OBS

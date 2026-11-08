@@ -61,11 +61,12 @@ event reached the VPS relay).
 **In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
 `desktop/README.md`.
-- **End-to-end encrypted since 2026-11-08** (relay 0.0.4, bridge
-  0.3.0): the relay can't read sessions; keys are exchanged through OBS
+- **End-to-end encrypted since 2026-11-08** (relay 0.0.5, bridge
+  0.3.1 - 0.0.5 adds the bridge keepalive pong: websocket pings don't
+  cross the Cloudflare tunnel): the relay can't read sessions; keys are exchanged through OBS
   when pairing. Pairings from before have no keys and count as unpaired.
 - **Relay live** at `https://relay.obs-blade.com` (VPS, Quadlet
-  `remote-relay`, image 0.0.4, `/etc/remote-relay.env` with the RevenueCat
+  `remote-relay`, image 0.0.5, `/etc/remote-relay.env` with the RevenueCat
   v2 key - NAS copy `~/.config/obs-blade/revenuecat-v2.key`, project
   `proja0a254d6`, `pro` = `entl2dd6e8fb75`). Live checks through
   Cloudflare passed: non-Pro pairing 403, bad bridge token 401, close code
