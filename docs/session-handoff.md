@@ -61,27 +61,32 @@ event reached the VPS relay).
 **In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
 `desktop/README.md`.
+- **End-to-end encrypted since 2026-11-08** (relay 0.0.4, bridge
+  0.3.0): the relay can't read sessions; keys are exchanged through OBS
+  when pairing. Pairings from before have no keys and count as unpaired.
 - **Relay live** at `https://relay.obs-blade.com` (VPS, Quadlet
-  `remote-relay`, image 0.0.3, `/etc/remote-relay.env` with the RevenueCat
+  `remote-relay`, image 0.0.4, `/etc/remote-relay.env` with the RevenueCat
   v2 key - NAS copy `~/.config/obs-blade/revenuecat-v2.key`, project
   `proja0a254d6`, `pro` = `entl2dd6e8fb75`). Live checks through
   Cloudflare passed: non-Pro pairing 403, bad bridge token 401, close code
   4904 reaches the phone. **The key was pasted in chat once (2026-11-07):
   rotate it** (new v2 key, replace both copies, `systemctl restart
   remote-relay`, revoke the old one).
-- **End to end through Cloudflare: green** (2026-11-07, relay 0.0.3,
-  OBS 32.2.2 on the MacBook, `obb` as bridge): pairing via CustomEvent,
-  full session, 640 px preview, meters, status snapshot, 4901 after OBS
-  quit. 0.0.3 fixed relay-ended sessions arriving as 1006 through
+- **End to end through Cloudflare: green** (2026-11-08, relay 0.0.4,
+  OBS 32.2.2 on the MacBook, `obb` 0.3.0 as bridge, `noiseprotocol` as
+  the phone): key exchange via OBS, encrypted session, 640 px preview,
+  195 KB message over 4 frames, meters, status snapshot, 1003 for
+  plaintext, 4904 for an unknown key, 4901 after OBS quit. 0.0.3 fixed relay-ended sessions arriving as 1006 through
   cloudflared (close only from the socket's handler).
-- **Bridge core** `desktop/core/` (Rust, 16 tests; e2e green against OBS
+- **Bridge core** `desktop/core/` (Rust, 20 tests; e2e green against OBS
   32.2.2 on the MacBook with and without OBS auth, local relay).
 - **App** (commits e33643b0..02260328): relay routing in `NetworkStore`
   (smart fallback), close codes 4900-4910 with copy, pairing store +
   dashboard sheet (globe in the dashboard bar), card line, Start OBS
   offer. Tests `test/remote/`, shots `tool/widget_shots/remote_access_shots_test.dart`.
 - **Dogfood path before the plugin exists:** run `obb` (the core's CLI) on
-  the MacBook next to OBS as the bridge; the dogfood device's RevenueCat
+  the MacBook next to OBS as the bridge (`~/agent-build/obb_dogfood.py`
+  wraps it: OBS watcher + Start OBS, log `~/agent-build/obb-dogfood.log`); the dogfood device's RevenueCat
   app user id must have Pro (or sit in `RELAY_PRO_ALLOW`).
 - Next: plugin shell (C++, vendor `obs-blade-bridge`/`Pair`), Qt panel +
   standalone tray/watcher, packaging (macOS notarized, Windows unsigned

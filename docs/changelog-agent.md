@@ -4,6 +4,34 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-08 - Remote access: end-to-end encryption
+
+User decision: the relay (and Cloudflare in front) could read every OBS
+frame - scene / source names, previews, the stream key
+(`GetStreamServiceSettings`). Done before the first release, so no
+migration beyond re-pairing the dogfood phone. Spec section "End-to-end
+encryption", protocol in `tool/remote_relay/README.md`.
+
+- `Noise_IK_25519_ChaChaPoly_SHA256`, prologue `obs-blade-remote/1`; app =
+  initiator (pins the bridge key), bridge checks the phone's key. Frames
+  are Noise transport messages; messages over 64 KB as `[fin][chunk]`.
+- Keys only through OBS: `{code, app_key}` to the bridge, CustomEvent
+  `obs-blade-pair-ack {code, bridge_key}` back; the relay assigns the
+  device id at redeem so the bridge files the key under it.
+- Bridge 0.3.0 (`snow`), relay 0.0.4 (binary only, refuses bridges <
+  0.3.0, pairings.device_id migrated in place - DB backup
+  `/root/fleet-backups/remote-relay-db-before-0.0.4.db`), app: own Dart
+  Noise on `cryptography` 2.9.0 (cacophony vector, both roles),
+  `RemoteE2eChannel`, Connection HiveFields 12/13, close code 4911,
+  failure "PC didn't confirm".
+- Verified: e2e through Cloudflare against OBS 32.2.2 with
+  `noiseprotocol` (independent) as the phone - key exchange via OBS,
+  plaintext refused (1003), unknown phone key 4904, 195 KB message both
+  ways over 4 frames, 4901 after OBS quit.
+- Gotcha (again): `build_runner --build-filter` deleted ~30 committed
+  `.g.dart` files - restored from git, the Hive adapter edited by hand
+  (round-trip test added).
+
 ## 2026-11-08 - Remote access: dogfood round 1
 
 - Saved card: paired Pro connections also ask the relay (alongside the

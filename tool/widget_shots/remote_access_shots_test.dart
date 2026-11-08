@@ -180,6 +180,7 @@ void main() {
   testWidgets('failures', (tester) async {
     for (final failure in [
       RemotePairingFailure.noBridge,
+      RemotePairingFailure.noConfirmation,
       RemotePairingFailure.proRequired,
       RemotePairingFailure.network,
     ]) {
