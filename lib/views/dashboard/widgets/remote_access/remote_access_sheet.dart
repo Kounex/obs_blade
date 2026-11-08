@@ -9,6 +9,7 @@ import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/divider.dart';
 import '../../../../shared/general/base/icon_button.dart';
 import '../../../../shared/overlay/base_result.dart';
+import '../../../pro/widgets/pro_badge.dart';
 import '../../../../utils/overlay_handler.dart';
 import '../../../../stores/views/remote_access.dart';
 import '../../../../utils/relative_time.dart';
@@ -85,7 +86,13 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
         final RemoteAccessStore store = this.widget.store;
         final Widget body;
         if (!this.widget.isPro) {
-          body = _Locked(onGetPro: this.widget.onGetPro);
+          /// Free users read the same pitch as Pro users before setting
+          /// up - only the button leads to the paywall instead
+          /// (user directive 2026-11-08)
+          body = _SetUp(
+            buttonText: 'Unlock Pro',
+            onPressed: this.widget.onGetPro,
+          );
         } else if (!this.widget.saved) {
           body = _NeedsSavedConnection(onSave: this.widget.onSaveConnection);
         } else if (this.widget.connection.hasRemote) {
@@ -121,7 +128,10 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
               );
             case RemotePairingPhase.idle:
             case RemotePairingPhase.paired:
-              body = _SetUp(onSetUp: this._pair);
+              body = _SetUp(
+                buttonText: 'Set Up Remote Access',
+                onPressed: this._pair,
+              );
           }
         }
 
@@ -134,7 +144,20 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Remote Access', style: theme.textTheme.headlineSmall),
+              /// The Pro flag rides the title's line, right-aligned -
+              /// a Pro feature for everyone who sees it
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Remote Access',
+                      style: theme.textTheme.headlineSmall,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const ProBadge(),
+                ],
+              ),
               Text(
                 'Control OBS from anywhere',
                 style: theme.textTheme.bodySmall,
@@ -159,33 +182,10 @@ void _relayProblem(BuildContext context) => OverlayHandler.showStatusOverlay(
   ),
 );
 
-TextStyle _secondary(BuildContext context) => Theme.of(context).textTheme.bodyMedium!.copyWith(
-  color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
-);
-
-class _Locked extends StatelessWidget {
-  final VoidCallback onGetPro;
-
-  const _Locked({required this.onGetPro});
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Reach OBS on mobile data or from another network - no port '
-        'forwarding, no VPN, end-to-end encrypted. Remote access is part '
-        'of Pro.',
-        style: _secondary(context),
-      ),
-      const SizedBox(height: AppSpacing.lg),
-      SizedBox(
-        width: double.infinity,
-        child: BaseButton(text: 'Get Pro', onPressed: this.onGetPro),
-      ),
-    ],
-  );
-}
+TextStyle _secondary(BuildContext context) =>
+    Theme.of(context).textTheme.bodyMedium!.copyWith(
+      color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
+    );
 
 /// What the relay can't see (spec "End-to-end encryption", 2026-11-08)
 class _EndToEndNote extends StatelessWidget {
@@ -238,10 +238,13 @@ class _NeedsSavedConnection extends StatelessWidget {
   );
 }
 
+/// The pitch and the PC side - with the setup button for Pro users, the
+/// paywall's for free users
 class _SetUp extends StatelessWidget {
-  final VoidCallback onSetUp;
+  final String buttonText;
+  final VoidCallback onPressed;
 
-  const _SetUp({required this.onSetUp});
+  const _SetUp({required this.buttonText, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +272,7 @@ class _SetUp extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         SizedBox(
           width: double.infinity,
-          child: BaseButton(text: 'Set Up Remote Access', onPressed: this.onSetUp),
+          child: BaseButton(text: this.buttonText, onPressed: this.onPressed),
         ),
       ],
     );
@@ -311,7 +314,11 @@ class _Waiting extends StatelessWidget {
         const SizedBox(height: AppSpacing.lg),
         SizedBox(
           width: double.infinity,
-          child: BaseButton(text: 'Cancel', secondary: true, onPressed: this.onCancel),
+          child: BaseButton(
+            text: 'Cancel',
+            secondary: true,
+            onPressed: this.onCancel,
+          ),
         ),
       ],
     );
@@ -319,43 +326,51 @@ class _Waiting extends StatelessWidget {
 }
 
 /// Copy for a failed pairing (and whether the Pro page helps).
-(String, bool) remotePairingFailureCopy(RemotePairingFailure failure) => switch (failure) {
-  RemotePairingFailure.noAccount => (
-    'Couldn\'t confirm Pro on this device. Open Pro, tap Restore '
-        'Purchases, then try again.',
-    true,
-  ),
-  RemotePairingFailure.proRequired => ('Remote access is part of Pro.', true),
-  RemotePairingFailure.verifyUnavailable => (
-    'Couldn\'t check Pro right now. Try again in a moment.',
-    false,
-  ),
-  RemotePairingFailure.rateLimited => (
-    'Too many attempts. Try again in a few minutes.',
-    false,
-  ),
-  RemotePairingFailure.network => (
-    'Couldn\'t reach the OBS Blade relay. Check your internet connection.',
-    false,
-  ),
-  RemotePairingFailure.noBridge => (
-    'OBS Blade Remote didn\'t answer. Make sure it\'s installed on the PC '
-        'running OBS and turned on, then try again.',
-    false,
-  ),
-  RemotePairingFailure.noConfirmation => (
-    'OBS Blade Remote on the PC didn\'t confirm. Update it to the latest '
-        'version, then try again.',
-    false,
-  ),
-};
+(String, bool) remotePairingFailureCopy(RemotePairingFailure failure) =>
+    switch (failure) {
+      RemotePairingFailure.noAccount => (
+        'Couldn\'t confirm Pro on this device. Open Pro, tap Restore '
+            'Purchases, then try again.',
+        true,
+      ),
+      RemotePairingFailure.proRequired => (
+        'Remote access is part of Pro.',
+        true,
+      ),
+      RemotePairingFailure.verifyUnavailable => (
+        'Couldn\'t check Pro right now. Try again in a moment.',
+        false,
+      ),
+      RemotePairingFailure.rateLimited => (
+        'Too many attempts. Try again in a few minutes.',
+        false,
+      ),
+      RemotePairingFailure.network => (
+        'Couldn\'t reach the OBS Blade relay. Check your internet connection.',
+        false,
+      ),
+      RemotePairingFailure.noBridge => (
+        'OBS Blade Remote didn\'t answer. Make sure it\'s installed on the PC '
+            'running OBS and turned on, then try again.',
+        false,
+      ),
+      RemotePairingFailure.noConfirmation => (
+        'OBS Blade Remote on the PC didn\'t confirm. Update it to the latest '
+            'version, then try again.',
+        false,
+      ),
+    };
 
 class _Failed extends StatelessWidget {
   final RemotePairingFailure failure;
   final VoidCallback onRetry;
   final VoidCallback onGetPro;
 
-  const _Failed({required this.failure, required this.onRetry, required this.onGetPro});
+  const _Failed({
+    required this.failure,
+    required this.onRetry,
+    required this.onGetPro,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -385,9 +400,13 @@ String remoteBridgeStatusLine(RemoteBridgeInfo info, {DateTime? now}) {
   if (!info.online) {
     final seen = info.lastSeen;
     if (info.obsState == 'closed' && info.kind == 'plugin') {
-      return seen == null ? 'OBS was closed' : 'OBS was closed ${relativeTimeAgo(seen, now: now)}';
+      return seen == null
+          ? 'OBS was closed'
+          : 'OBS was closed ${relativeTimeAgo(seen, now: now)}';
     }
-    return seen == null ? 'Offline' : 'Offline - last seen ${relativeTimeAgo(seen, now: now)}';
+    return seen == null
+        ? 'Offline'
+        : 'Offline - last seen ${relativeTimeAgo(seen, now: now)}';
   }
   // The dot next to the name already says Online
   return switch (info.obsState) {
@@ -427,7 +446,8 @@ class _Paired extends StatelessWidget {
     final String name = info?.name.isNotEmpty == true
         ? info!.name
         : (this.connection.relayBridgeName ?? 'Your PC');
-    final String kind = (info?.kind ?? this.connection.relayBridgeKind) == 'standalone'
+    final String kind =
+        (info?.kind ?? this.connection.relayBridgeKind) == 'standalone'
         ? 'OBS Blade Remote app'
         : 'OBS plugin';
     final bool online = info?.online ?? false;
@@ -466,7 +486,10 @@ class _Paired extends StatelessWidget {
         ),
         if (this.viaRemote) ...[
           const SizedBox(height: AppSpacing.xs),
-          Text('Connected through the relay right now', style: _secondary(context)),
+          Text(
+            'Connected through the relay right now',
+            style: _secondary(context),
+          ),
         ],
         if (info != null && info.devices.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.lg),
@@ -489,18 +512,25 @@ class _Paired extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      device.isThisDevice ? '${device.name} (this device)' : device.name,
+                      device.isThisDevice
+                          ? '${device.name} (this device)'
+                          : device.name,
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
                   if (!device.isThisDevice)
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      minimumSize: const Size(kBaseIconButtonMinHitArea, kBaseIconButtonMinHitArea),
+                      minimumSize: const Size(
+                        kBaseIconButtonMinHitArea,
+                        kBaseIconButtonMinHitArea,
+                      ),
                       onPressed: () => this.onRemoveDevice(device.id),
                       child: Text(
                         'Remove',
-                        style: theme.textTheme.bodyMedium!.copyWith(color: CupertinoColors.destructiveRed),
+                        style: theme.textTheme.bodyMedium!.copyWith(
+                          color: CupertinoColors.destructiveRed,
+                        ),
                       ),
                     ),
                 ],

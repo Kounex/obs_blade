@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'pro_badge.dart';
 import '../../../shared/design/design.dart';
 import '../../../stores/pro_store.dart';
 import '../../../utils/pro_ids.dart';
-import '../../../utils/styling_helper.dart';
 
 /// Paywall hero: the OBS Blade vortex mark (brand icon, no wordmark) in a
 /// squircle on the scene-tile color idiom (token-delta §2.2) - full-strength
@@ -89,7 +89,7 @@ class ProHero extends StatelessWidget {
                 bottom: 0.0,
                 child: Transform.translate(
                   offset: const Offset(6.0, 4.0),
-                  child: _ProBadge(accent: accent),
+                  child: ProBadge(accent: accent, stacked: true),
                 ),
               ),
             ],
@@ -120,60 +120,6 @@ class ProHero extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// The hero's stacked badge - a small accent-gradient pill with a card-color
-/// ring (separates it from the vortex behind, coin-edge style) and a soft
-/// accent glow for the "fancy" lift.
-class _ProBadge extends StatelessWidget {
-  final Color accent;
-
-  const _ProBadge({required this.accent});
-
-  @override
-  Widget build(BuildContext context) {
-    final Color deep = Color.lerp(this.accent, Colors.black, 0.35)!;
-    final Color textColor = StylingHelper.surroundingAwareAccent(
-      surroundingColor: this.accent,
-    );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7.0, vertical: 3.0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [this.accent, deep],
-        ),
-        borderRadius: AppRadius.pill,
-        border: Border.all(color: Theme.of(context).cardColor, width: 2.0),
-        boxShadow: [
-          BoxShadow(
-            color: this.accent.withValues(alpha: 0.45),
-            blurRadius: 8.0,
-            spreadRadius: 0.5,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(CupertinoIcons.star_fill, size: 8.0, color: textColor),
-          const SizedBox(width: 2.0),
-          Text(
-            'PRO',
-            style: TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
-              height: 1.0,
-              color: textColor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

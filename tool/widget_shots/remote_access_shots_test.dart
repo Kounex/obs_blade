@@ -146,11 +146,11 @@ void main() {
     await harness.shot(tester, '${name}_tablet', build(), size: kShotTablet);
   }
 
-  testWidgets('locked (not Pro)', (tester) async {
-    await harness.shot(
+  testWidgets('locked (not Pro): the setup pitch, Unlock Pro', (tester) async {
+    await all(
       tester,
       'remote_locked',
-      sheet(store(), connection(), pro: false),
+      () => sheet(store(), connection(), pro: false),
     );
   });
 
