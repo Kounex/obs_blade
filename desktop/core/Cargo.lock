@@ -854,7 +854,7 @@ checksum = "521739c6d2bac4aa25192232afe6841231376b2b26d4d9fae5ecf8ca5772e441"
 
 [[package]]
 name = "obs-blade-bridge"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "base64",
  "dirs",

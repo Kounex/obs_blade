@@ -1,6 +1,6 @@
 [package]
 name = "obs-blade-bridge"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 description = "OBS Blade Remote bridge core: links OBS's local websocket to the OBS Blade relay"
 license = "GPL-3.0-or-later"

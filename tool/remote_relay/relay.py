@@ -608,6 +608,11 @@ async def _bridge_control(app: web.Application, link: BridgeLink, text: str) -> 
         if reason == "obs_exit":
             link.obs_state = "closed"
             store.set_obs_state(link.bridge_id, "closed")
+    elif kind == "ping":
+        # The bridge's keepalive: websocket pings don't make it through the
+        # Cloudflare tunnel, so it can only tell a live link by an answer
+        # (bridges went "relay silent" every ~77 s, 2026-11-08)
+        await link.send_json({"type": "pong"})
     elif kind == "devices":
         await _push_devices(app, link.bridge_id)
     elif kind == "remove_device":

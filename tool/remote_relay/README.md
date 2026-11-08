@@ -116,7 +116,9 @@ snapshot (control messages). Implementations: `desktop/core/src/e2e.rs`,
     `auth_failed`), `status {"status": {...}}` every 20 s (≤ 8 KB, at most
     every 5 s), `bye {"reason": "obs_exit"}` before a clean OBS exit
     (plugin), `devices` (ask for the list), `remove_device {"id"}`,
-    `unpair` (forget this bridge entirely).
+    `unpair` (forget this bridge entirely), `ping` every 25 s → the relay
+    answers `pong` (websocket pings don't cross the Cloudflare tunnel; a
+    bridge that hears nothing for 75 s reconnects).
 - A second connection with the same token replaces the first (close
   4906 to the old one; its sessions get 4908).
 

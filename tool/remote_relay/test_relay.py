@@ -246,6 +246,15 @@ class SessionTests(RelayCase):
         await p.close()
         self.assertEqual(await self.next_frame(b), (protocol.CLOSE, sid, b""))
 
+    async def test_bridge_keepalive_ping_is_answered(self):
+        *_, b, p, sid = await self.session()
+        await b.send_str(json.dumps({"type": "ping"}))
+        for _ in range(5):
+            msg = await b.receive(timeout=3)
+            if msg.type == aiohttp.WSMsgType.TEXT and json.loads(msg.data).get("type") == "pong":
+                return
+        self.fail("no pong")
+
     async def test_readable_text_from_the_phone_is_refused(self):
         *_, b, p, sid = await self.session()
         await p.send_str('{"op":1,"d":{"rpcVersion":1}}')

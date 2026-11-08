@@ -19,8 +19,12 @@ use crate::shared::{Kind, RelayState, Shared};
 use crate::state::AppKey;
 use crate::wire;
 
-/// The relay pings every 30 s; this long without any frame = dead link.
+/// This long without any frame from the relay = dead link.
 const SILENCE_LIMIT: Duration = Duration::from_secs(75);
+/// The bridge's own `ping` (answered with `pong`): websocket pings from the
+/// relay never arrive through Cloudflare, so without it every idle link
+/// "went silent" after 75 s (2026-11-08).
+const KEEPALIVE: Duration = Duration::from_secs(25);
 const MAX_BACKOFF: Duration = Duration::from_secs(60);
 const SESSION_BUFFER: usize = 1024;
 
@@ -148,6 +152,8 @@ async fn connect(
     let mut stop = shared.stop.subscribe();
     let mut status_tick = tokio::time::interval(STATUS_INTERVAL);
     let mut silence_tick = tokio::time::interval(Duration::from_secs(15));
+    let mut keepalive_tick = tokio::time::interval(KEEPALIVE);
+    keepalive_tick.reset(); // the first one after a full interval
     let mut last_frame = Instant::now();
 
     let ended = loop {
@@ -242,6 +248,14 @@ async fn connect(
             _ = silence_tick.tick() => {
                 if last_frame.elapsed() > SILENCE_LIMIT {
                     break Ended::Lost("relay silent".into());
+                }
+            }
+            _ = keepalive_tick.tick() => {
+                // Websocket pings don't cross the Cloudflare tunnel: ask the
+                // relay itself, its `pong` counts as a frame.
+                let ping = json!({"type": "ping"});
+                if sink.send(Message::text(ping.to_string())).await.is_err() {
+                    break Ended::Lost("send failed".into());
                 }
             }
             _ = shared.wake.notified() => {
