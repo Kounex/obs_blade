@@ -18,6 +18,17 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   the bridge through the Cloudflare tunnel - idle bridges went "relay
   silent" and reconnected every ~77 s (69x in one evening). The bridge
   now sends `{type: ping}` every 25 s, the relay answers `pong`.
+- At home the LAN comes first again: connectivity_plus answered `none`
+  right after the dashboard's listener left (fresh iOS NWPathMonitor) and
+  the plan went relay-only - `settledConnectivity()` waits for the real
+  answer, only "mobile data for sure" skips the LAN; plan + network type
+  are logged.
+- Mid-session route switch on the network change itself (was: only after
+  iOS timed out the dead LAN socket, up to ~30 s): Wi-Fi gone -> relay at
+  once, Wi-Fi back + OBS answering on the LAN -> back to the LAN. The
+  reconnect toast names the route. Remaining switch time is the cold
+  cellular link (log: 3.2 s to the relay socket, 2.9 s to OBS's Hello;
+  the handshake crypto itself is ~15 ms).
 
 ## 2026-11-08 - Remote access: end-to-end encryption
 
