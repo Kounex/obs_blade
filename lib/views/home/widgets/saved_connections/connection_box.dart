@@ -153,6 +153,15 @@ class ConnectionBox extends StatelessWidget {
     /// grammar note): "Online" is GREEN - dot and label in
     /// [AppStatusColors.reachable] on a 13% same-hue tint, the exact mirror
     /// of the Offline treatment. "Checking" stays neutral.
+    /// Three states (user directive 2026-11-08): Online (green), the PC
+    /// answering through remote access while OBS doesn't (amber, the
+    /// reason as label - Connect can still start OBS on a standalone),
+    /// Offline (red) only when nothing is reachable at all.
+    final RemoteReach? reach = this.connection.remoteReach;
+    final bool obsDownOnReachablePc =
+        this.connection.reachable == false &&
+        (reach == RemoteReach.obsNotRunning ||
+            reach == RemoteReach.obsUnreachable);
     final Color reachabilityDotColor;
     final Color reachabilityLabelColor;
     final Color reachabilityFillColor;
@@ -164,6 +173,10 @@ class ConnectionBox extends StatelessWidget {
       reachabilityDotColor = statusColors.reachable;
       reachabilityLabelColor = statusColors.reachable;
       reachabilityFillColor = statusColors.reachable.withValues(alpha: 0.13);
+    } else if (obsDownOnReachablePc) {
+      reachabilityDotColor = statusColors.warning;
+      reachabilityLabelColor = statusColors.warning;
+      reachabilityFillColor = statusColors.warning.withValues(alpha: 0.13);
     } else {
       reachabilityDotColor = statusColors.unreachable;
       reachabilityLabelColor = statusColors.recordingText;
@@ -174,6 +187,8 @@ class ConnectionBox extends StatelessWidget {
         ? 'Checking'
         : this.connection.reachable!
         ? 'Online'
+        : obsDownOnReachablePc
+        ? reach!.pillLabel!
         : 'Offline';
 
     return SizedBox(

@@ -127,6 +127,7 @@ void main() {
     for (final (name, reachable, reach) in [
       ('remote_card_relay_online', true, RemoteReach.obsRunning),
       ('remote_card_obs_not_running', false, RemoteReach.obsNotRunning),
+      ('remote_card_obs_unreachable', false, RemoteReach.obsUnreachable),
       ('remote_card_pc_offline', false, RemoteReach.pcOffline),
       ('remote_card_relay_unknown', false, null),
     ]) {
@@ -138,8 +139,7 @@ void main() {
         ),
       );
       await harness.shot(tester, name, card);
-      if (reach == RemoteReach.obsUnreachable ||
-          reach == RemoteReach.pcOffline) {
+      if (reach != RemoteReach.obsRunning) {
         await harness.shot(
           tester,
           '${name}_narrow',

@@ -282,7 +282,12 @@ void main() {
           box.values.firstWhere((c) => c.name == 'revoked').relayAppToken,
           isNull,
         );
-        expect(RemoteReach.obsRunning.cardProblem, isNull);
+        // Pill: amber with the reason while the PC answers; the line adds
+        // only what the pill doesn't say
+        expect(RemoteReach.obsNotRunning.pillLabel, 'OBS closed');
+        expect(RemoteReach.obsUnreachable.pillLabel, 'OBS blocked');
+        expect(RemoteReach.pcOffline.pillLabel, isNull);
+        expect(RemoteReach.obsNotRunning.cardProblem, isNull);
         expect(RemoteReach.pcOffline.cardProblem, 'PC offline');
       },
     );

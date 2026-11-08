@@ -25,12 +25,20 @@ enum RemoteReach {
     };
   }
 
-  /// Suffix of the card's "Remote access" line - only for what keeps
-  /// Connect from working; the pill already says "Online"
+  /// The card's status pill while the PC answers but OBS doesn't (amber);
+  /// null where the pill says Online / Offline. Short: a longer pill cut
+  /// the PC's name ("OBS not running" -> "GAMING...", 2026-11-08)
+  String? get pillLabel => switch (this) {
+    RemoteReach.obsNotRunning => 'OBS closed',
+    RemoteReach.obsUnreachable => 'OBS blocked',
+    RemoteReach.obsRunning || RemoteReach.pcOffline => null,
+  };
+
+  /// Suffix of the card's "Remote access" line - only what the pill
+  /// doesn't say already
   String? get cardProblem => switch (this) {
-    RemoteReach.obsRunning => null,
-    RemoteReach.obsNotRunning => 'OBS not running',
-    RemoteReach.obsUnreachable => 'OBS not reachable',
+    RemoteReach.obsUnreachable => 'check WebSocket',
     RemoteReach.pcOffline => 'PC offline',
+    _ => null,
   };
 }
