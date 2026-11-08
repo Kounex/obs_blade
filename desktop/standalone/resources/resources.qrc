@@ -1,0 +1,9 @@
+<RCC>
+	<qresource prefix="/">
+		<file>tray-mask.png</file>
+		<file>tray-mask@2x.png</file>
+		<file>app-32.png</file>
+		<file>app-64.png</file>
+		<file>app-256.png</file>
+	</qresource>
+</RCC>

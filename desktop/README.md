@@ -8,7 +8,7 @@ The bridge next to OBS that lets the app reach OBS through the relay
 |---|---|---|
 | `core/` | Rust: relay link, one local OBS websocket per phone session, preview cap, OBS monitor (state, status snapshot, pairing via CustomEvent), stored pairing; C ABI `core/include/obs_blade_bridge.h`; `obb` CLI (headless host) | built, tested |
 | `plugin/` | OBS plugin shell (C++, obs-plugintemplate 2025-12, OBS 31.1+): starts the core after load, vendor `obs-blade-bridge` `Pair` / `Status`, Tools -> OBS Blade Remote opens the panel, clean stop on OBS exit | builds + runs on macOS (OBS 32.2.2) |
-| `standalone/` | Tray app (C++/Qt6) + OBS watcher / Start OBS | next |
+| `standalone/` | Tray / menu bar app (C++/Qt6): the core as `standalone`, OBS watcher (process: `obs64.exe` / `OBS` / `obs`), Start OBS (macOS bundle id, Windows install dir from the uninstall key + `bin\\64bit`, Linux PATH / Flatpak), start at login (LaunchAgent / HKCU Run / XDG autostart, on by default), log `standalone.log` next to `bridge.json` | builds + runs on macOS |
 | `ui/` | Shared Qt settings panel (`remote_panel.*`); `ui/preview/` renders every state to PNGs offscreen | built |
 
 ## Plugin (macOS)
@@ -68,3 +68,18 @@ The core reads obs-websocket's password from
 `<OBS config>/plugin_config/obs-websocket/config.json` and stores its
 pairing in `<user config>/obs-blade-remote/bridge.json` (0600), shared by
 the plugin and the standalone.
+
+## Standalone (macOS dev build)
+
+```bash
+desktop/core/build-lib.sh
+cd desktop/standalone
+cmake -B build -DCMAKE_PREFIX_PATH=<Qt6, e.g. desktop/plugin/.deps/obs-deps-qt6-*> -DCMAKE_OSX_ARCHITECTURES=arm64
+cmake --build build
+open "build/OBS Blade Remote.app"
+```
+
+Menu bar only (`LSUIElement`); closing the window keeps it running; one
+instance per user (lock file). A dev build's "Start at login" points the
+LaunchAgent at the build folder - turn it off in the panel before
+deleting the build.
