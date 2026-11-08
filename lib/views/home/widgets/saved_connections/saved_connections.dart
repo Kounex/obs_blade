@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -12,8 +14,10 @@ import 'connection_box.dart';
 import 'placeholder_connection.dart';
 
 class SavedConnections extends StatelessWidget {
-  static const double _cardHeight = 172.0;
-  static const double _cardWidth = 268.0;
+  /// User directive 2026-11-08 (was 172 x 268): room for the remote access
+  /// line without squeezing the gaps
+  static const double _cardHeight = 192.0;
+  static const double _cardWidth = 320.0;
 
   const SavedConnections({super.key});
 
@@ -127,23 +131,48 @@ class _ConnectionCarousel extends StatefulWidget {
 }
 
 class _ConnectionCarouselState extends State<_ConnectionCarousel> {
-  late final PageController _controller;
+  /// Room left of and right of the current card: its neighbors peek in
+  static const double _peek = 28.0;
 
-  @override
-  void initState() {
-    super.initState();
-    this._controller = PageController(viewportFraction: 0.68);
+  PageController? _pageController;
+  double? _fraction;
+
+  /// The page is the card plus its padding; the card keeps its width
+  /// unless the screen is too narrow for it and a peek on both sides
+  /// (320 pt phones: 264 pt). Rebuilt on a width change (rotation).
+  PageController _controllerFor(double fraction) {
+    final PageController? previous = _pageController;
+    if (previous != null && (_fraction! - fraction).abs() < 0.001) {
+      return previous;
+    }
+    final int page = previous != null && previous.hasClients
+        ? (previous.page ?? 0).round()
+        : 0;
+    _fraction = fraction;
+    _pageController = PageController(
+      viewportFraction: fraction,
+      initialPage: page,
+    );
+    if (previous != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => previous.dispose());
+    }
+    return _pageController!;
   }
 
   @override
   void dispose() {
-    this._controller.dispose();
+    _pageController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final count = this.widget.connections.length;
+    final double screen = MediaQuery.sizeOf(context).width;
+    final double cardWidth = min(this.widget.width, screen - 2 * _peek);
+    final PageController controller = _controllerFor(
+      min(1.0, (cardWidth + 2 * AppSpacing.sm) / screen),
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -151,17 +180,16 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
         SizedBox(
           height: this.widget.height + AppSpacing.sm,
           child: PageView.builder(
-            controller: this._controller,
+            controller: controller,
             itemCount: count,
             itemBuilder: (context, index) {
               return AnimatedBuilder(
-                animation: this._controller,
+                animation: controller,
                 builder: (context, child) {
                   double scale = 1.0;
-                  if (this._controller.position.haveDimensions) {
+                  if (controller.position.haveDimensions) {
                     final page =
-                        this._controller.page ??
-                        this._controller.initialPage.toDouble();
+                        controller.page ?? controller.initialPage.toDouble();
                     final distance = (page - index).abs();
                     scale = (1.0 - (distance * 0.06)).clamp(0.94, 1.0);
                   }
@@ -180,7 +208,7 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
                   child: _animatedConnectionBox(
                     this.widget.connections[index],
                     index,
-                    width: this.widget.width,
+                    width: cardWidth,
                     height: this.widget.height,
                   ),
                 ),
@@ -192,7 +220,7 @@ class _ConnectionCarouselState extends State<_ConnectionCarousel> {
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.sm),
             child: SmoothPageIndicator(
-              controller: this._controller,
+              controller: controller,
               count: count,
               effect: ExpandingDotsEffect(
                 dotHeight: 6.0,

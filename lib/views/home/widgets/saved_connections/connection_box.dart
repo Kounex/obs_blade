@@ -32,8 +32,8 @@ class ConnectionBox extends StatelessWidget {
   const ConnectionBox({
     super.key,
     required this.connection,
-    this.height = 172.0,
-    this.width = 268.0,
+    this.height = 192.0,
+    this.width = 320.0,
   });
 
   String get _displayName {
