@@ -160,6 +160,15 @@ class ModalHandler {
       ),
       child: Stack(
         children: [
+          Padding(
+            padding: EdgeInsets.only(top: includeCloseButton ? 24.0 : 0),
+            child: modalWidget,
+          ),
+
+          /// Last, so it sits above the content: its 44 pt hit area
+          /// reaches below where the content starts (24 pt), and as the
+          /// first child the content took every tap on its lower half
+          /// (dogfood 2026-11-08: "barely hittable")
           if (includeCloseButton)
             Positioned(
               top: 4.0,
@@ -174,10 +183,6 @@ class ModalHandler {
                 ),
               ),
             ),
-          Padding(
-            padding: EdgeInsets.only(top: includeCloseButton ? 24.0 : 0),
-            child: modalWidget,
-          ),
         ],
       ),
     );

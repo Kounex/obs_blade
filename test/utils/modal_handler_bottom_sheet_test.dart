@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
 void main() {
@@ -282,4 +284,54 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  /// Dogfood 2026-11-08: the close button sat below the content in the
+  /// sheet's Stack - content starting 24 pt down covered its lower half,
+  /// so only a sliver at the top took taps
+  testWidgets('the Cupertino sheet close button takes taps on its whole '
+      '44 pt area, also where the content starts', (tester) async {
+    for (final dy in [-16.0, 0.0, 16.0]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: CupertinoScaffold(
+            body: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
+                    context: context,
+                    modalWidgetBuilder: (_, controller) => ListView(
+                      controller: controller,
+                      shrinkWrap: true,
+                      children: [
+                        for (var i = 0; i < 5; i++)
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {},
+                            child: const SizedBox(
+                              height: 48,
+                              child: Text('sheet row'),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.text('sheet row'), findsWidgets);
+
+      final Offset center = tester.getCenter(
+        find.byIcon(CupertinoIcons.clear_circled_solid),
+      );
+      await tester.tapAt(center + Offset(0, dy));
+      await tester.pumpAndSettle();
+      expect(find.text('sheet row'), findsNothing, reason: 'tap at dy=$dy');
+    }
+  });
 }
