@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../models/connection.dart';
 import '../../stores/pro_store.dart';
 import '../../types/classes/connection_attempt_result.dart';
+import '../connectivity_state.dart';
+import '../general_helper.dart';
 import '../../types/enums/remote_reach.dart';
 import '../../types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'noise_ik.dart';
@@ -87,10 +88,16 @@ class RemoteConnectEnvironment {
     isPro: () =>
         GetIt.instance.isRegistered<ProStore>() &&
         GetIt.instance<ProStore>().isPro,
+
+    /// "Off the local network" only when the device is on mobile data for
+    /// sure - an unclear answer (none, vpn, other) tries the LAN first
     onLocalNetwork: () async {
-      final results = await Connectivity().checkConnectivity();
-      return results.contains(ConnectivityResult.wifi) ||
-          results.contains(ConnectivityResult.ethernet);
+      final results = await settledConnectivity();
+      GeneralHelper.advLog(
+        'Remote access: network ${results.map((r) => r.name).join('+')}',
+        includeInLogs: true,
+      );
+      return !mobileDataOnly(results);
     },
     appUserId: () async => GetIt.instance.isRegistered<ProStore>()
         ? GetIt.instance<ProStore>().appUserId()

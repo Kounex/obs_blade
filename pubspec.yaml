@@ -106,6 +106,8 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  # Faking connectivity_plus's stale iOS answer (connectivity_state_test)
+  connectivity_plus_platform_interface: ^2.1.0
   # Faking url_launcher in widget tests (legal links)
   plugin_platform_interface: ^2.1.8
   url_launcher_platform_interface: ^2.3.2

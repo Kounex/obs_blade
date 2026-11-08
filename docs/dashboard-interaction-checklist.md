@@ -90,4 +90,5 @@ mid-pane) and on the tall audio rows.
 | Accessibility | one semantics node per control with a state + hint |
 | Hit areas | every control takes taps on its whole 44 pt area - an overlapping sibling painted later (Stack order, content padding) steals them; test a tap off-center, not just `tester.tap` (2026-11-08: sheet close button) |
 | Sheets in their frame | shot a sheet inside the real `ModalHandler` sheet (close button top right, top inset), not its content alone - a header's right edge sits under the close button (2026-11-08: PRO flag) |
+| Network type | connectivity_plus on iOS answers "none" right after the last listener left (the dashboard's) - read it through `settledConnectivity()`, never treat an unclear answer as "mobile data" (2026-11-08: relay at home) |
 | Theme accent | `accentText` is red in some themes - a status color for "through the relay" etc. uses `highlightText` (2026-11-08) |

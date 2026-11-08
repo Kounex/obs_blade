@@ -88,6 +88,12 @@ abstract class _NetworkStore with Store {
     this.connectionInProgress = true;
 
     final legs = await _remote.planFor(connection);
+    if (connection.hasRemote) {
+      GeneralHelper.advLog(
+        'Handshake: plan ${legs.map((l) => l.name).join(' -> ')}',
+        includeInLogs: true,
+      );
+    }
     WebSocketCloseCode closeCode = WebSocketCloseCode.UnknownReason;
     for (int i = 0; i < legs.length; i++) {
       final bool last = i == legs.length - 1;

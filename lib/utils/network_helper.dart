@@ -16,6 +16,7 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../models/connection.dart';
+import 'connectivity_state.dart';
 import 'remote/remote_connect.dart';
 import 'remote/remote_e2e_channel.dart';
 import '../models/enums/log_level.dart';
@@ -170,9 +171,7 @@ class NetworkHelper {
   /// is triggered (therefore [SocketException] is thrown) or if not, there is
   /// an application (most likely OBS in this case) which listens on this port
   static Future<List<Connection>> getAvailableOBSIPs(int port) async {
-    if ((await Connectivity().checkConnectivity()).contains(
-      ConnectivityResult.wifi,
-    )) {
+    if ((await settledConnectivity()).contains(ConnectivityResult.wifi)) {
       NetworkStore networkStore = GetIt.instance<NetworkStore>();
       NetworkInfo info = NetworkInfo();
       networkStore.ip = await info.getWifiIP();
