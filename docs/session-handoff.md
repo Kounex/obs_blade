@@ -78,7 +78,7 @@ event reached the VPS relay).
   32.2.2 on the MacBook with and without OBS auth, local relay).
 - **App** (commits e33643b0..02260328): relay routing in `NetworkStore`
   (smart fallback), close codes 4900-4910 with copy, pairing store +
-  dashboard sheet (⋯ → Remote Access), card line, relay globe, Start OBS
+  dashboard sheet (globe in the dashboard bar), card line, Start OBS
   offer. Tests `test/remote/`, shots `tool/widget_shots/remote_access_shots_test.dart`.
 - **Dogfood path before the plugin exists:** run `obb` (the core's CLI) on
   the MacBook next to OBS as the bridge; the dogfood device's RevenueCat

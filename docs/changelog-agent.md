@@ -13,7 +13,7 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   connect. Was: "Offline" on 5G while Connect worked.
 - Dashboard bar: a globe next to the actions menu opens Remote Access
   (muted: not set up, regular: set up, highlight blue: through the
-  relay); replaces the globe before the title. The menu entry stays.
+  relay); replaces the globe before the title and the ⋯ menu entry.
   User's pick, 2026-11-08 - the menu entry alone was too hidden.
 - "Save this connection first" continues into setup once saved.
 

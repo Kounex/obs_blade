@@ -22,7 +22,6 @@ import '../../../../types/enums/hive_keys.dart';
 import '../../../../types/enums/request_batch_type.dart';
 import '../../../../types/enums/request_type.dart';
 import '../../../../types/enums/settings_keys.dart';
-import '../../../../utils/build_flavor.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import '../../../../utils/network_helper.dart';
@@ -344,14 +343,9 @@ class GeneralActions extends StatelessWidget {
                             );
                           },
                   ),
-                  if (!kFoss)
-                    AppBarActionEntry(
-                      title: GetIt.instance<ProStore>().isPro
-                          ? 'Remote Access'
-                          : 'Remote Access (Pro)',
-                      leadingIcon: CupertinoIcons.globe,
-                      onAction: () => GeneralActions.openRemoteAccess(context),
-                    ),
+                  /// Remote Access lives on the globe next to this menu
+                  /// (RemoteAccessButton) - not repeated here (user,
+                  /// 2026-11-08)
                   AppBarActionEntry(
                     title: '${newConnection ? 'Save' : 'Edit'} Connection',
                     leadingIcon: CupertinoIcons.pencil_ellipsis_rectangle,
