@@ -1,5 +1,6 @@
 import 'package:hive_ce/hive.dart';
 
+import '../types/enums/remote_reach.dart';
 import 'type_ids.dart';
 
 part 'connection.g.dart';
@@ -51,7 +52,14 @@ class Connection extends HiveObject {
 
   String? challenge;
   String? salt;
+
+  /// OBS can be connected to right now - on the LAN, or through the
+  /// relay for a paired connection (see [remoteReach])
   bool? reachable;
+
+  /// The relay's view of a paired PC, from the last reachability check
+  /// (null: not paired, not Pro, or the relay didn't answer)
+  RemoteReach? remoteReach;
 
   bool get hasRemote =>
       (this.relayBridgeId?.isNotEmpty ?? false) &&

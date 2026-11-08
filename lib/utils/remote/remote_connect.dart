@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import '../../models/connection.dart';
 import '../../stores/pro_store.dart';
 import '../../types/classes/connection_attempt_result.dart';
+import '../../types/enums/remote_reach.dart';
 import '../../types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'remote_relay_client.dart';
 
@@ -108,6 +109,31 @@ class RemoteConnectEnvironment {
       onLocalNetwork: local,
       hostIsLanOnly: hostIsLanOnly(connection.host),
     );
+  }
+
+  /// The relay's view of a paired [connection] for the saved card - null
+  /// when it isn't paired, without Pro, or the relay doesn't answer within
+  /// [timeout]. A revoked pairing (401) is forgotten, as on connect.
+  Future<RemoteReach?> reach(
+    Connection connection, {
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
+    if (!connection.hasRemote || !this.isPro()) return null;
+    try {
+      return RemoteReach.of(
+        await this.relay
+            .bridgeInfo(connection.relayBridgeId!, connection.relayAppToken!)
+            .timeout(timeout),
+      );
+    } on RemoteRelayException catch (e) {
+      if (e.isUnpaired) {
+        connection.clearRemote();
+        if (connection.isInBox) await connection.save();
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// URL + headers of the relay socket for a paired [connection].

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/overlay/base_result.dart';
+import 'package:obs_blade/types/enums/remote_reach.dart';
 import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dart';
 import 'package:obs_blade/utils/overlay_handler.dart';
 
@@ -302,9 +303,16 @@ class ConnectionBox extends StatelessWidget {
                                 ).textTheme.bodySmall?.color,
                               ),
                               const SizedBox(width: AppSpacing.sm),
-                              Text(
-                                'Remote access',
-                                style: Theme.of(context).textTheme.bodySmall,
+                              Flexible(
+                                child: Text(
+                                  [
+                                    'Remote access',
+                                    ?this.connection.remoteReach?.cardProblem,
+                                  ].join(' · '),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ],
                           ),
@@ -326,16 +334,23 @@ class ConnectionBox extends StatelessWidget {
                     final bool connecting =
                         GetIt.instance<NetworkStore>().connectionInProgress;
 
-                    /// A paired connection connects through the relay
-                    /// when the LAN is out of reach - the pill keeps the
-                    /// LAN truth, the CTA stays prominent
+                    /// [Connection.reachable] covers the relay for a
+                    /// paired connection. When the relay didn't answer,
+                    /// or a standalone can start OBS, Connect still
+                    /// stays prominent - it may well work
                     final bool viaRemoteToo =
                         !kFoss &&
                         this.connection.hasRemote &&
                         GetIt.instance.isRegistered<ProStore>() &&
                         GetIt.instance<ProStore>().isPro;
+                    final RemoteReach? reach = this.connection.remoteReach;
                     final bool prominent =
-                        this.connection.reachable == true || viaRemoteToo;
+                        this.connection.reachable == true ||
+                        (viaRemoteToo &&
+                            (reach == null ||
+                                (reach == RemoteReach.obsNotRunning &&
+                                    this.connection.relayBridgeKind ==
+                                        'standalone')));
 
                     /// Connect prominence follows reachability (user
                     /// directive 2026-09-20): online cards get the filled

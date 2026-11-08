@@ -5,13 +5,24 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/stores/views/home.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/remote_reach.dart';
+import 'package:obs_blade/utils/build_flavor.dart';
 import 'package:obs_blade/utils/network_helper.dart';
+import 'package:obs_blade/utils/remote/remote_connect.dart';
 
 class ReachableBuilder extends StatefulWidget {
   final Widget Function(List<Connection> savedConnections)
   savedConnectionsBuilder;
 
-  const ReachableBuilder({super.key, required this.savedConnectionsBuilder});
+  /// Asks the relay about paired connections; defaults to the live one
+  /// (none in the FOSS build)
+  final RemoteConnectEnvironment? remote;
+
+  const ReachableBuilder({
+    super.key,
+    required this.savedConnectionsBuilder,
+    this.remote,
+  });
 
   @override
   State<ReachableBuilder> createState() => _ReachableBuilderState();
@@ -24,6 +35,9 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
   /// Endpoint per saved connection (by Hive key) as of the last check -
   /// tells [didUpdateWidget] whether a box change needs a new check
   Map<dynamic, String> _checkedEndpoints = {};
+
+  late final RemoteConnectEnvironment? _remote =
+      this.widget.remote ?? (kFoss ? null : RemoteConnectEnvironment.live());
 
   /// Bumped per check so a slower, older check can't overwrite a newer one
   int _checkGeneration = 0;
@@ -87,6 +101,7 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
 
     for (var connection in connections) {
       connection.reachable = null;
+      connection.remoteReach = null;
     }
     _checkedEndpoints = {
       for (var connection in connections) connection.key: _endpoint(connection),
@@ -96,18 +111,35 @@ class _ReachableBuilderState extends State<ReachableBuilder> {
       setState(() {});
     }
 
+    /// Paired connections also ask the relay, alongside the LAN check: a
+    /// PC away from this network is still "Online" when Connect would
+    /// reach it through the relay (dogfood 2026-11-08: the card said
+    /// Offline while Connect worked on 5G)
+    final RemoteConnectEnvironment? remote = _remote;
+    final Map<Connection, Future<RemoteReach?>> remoteChecks = {
+      if (remote != null)
+        for (var connection in connections)
+          if (connection.hasRemote) connection: remote.reach(connection),
+    };
+
     List<Connection> availableConnections =
         await NetworkHelper.checkConnectionAvailabilities(connections);
+    final Map<Connection, RemoteReach?> reaches = {
+      for (var entry in remoteChecks.entries) entry.key: await entry.value,
+    };
 
     if (generation != _checkGeneration) return;
 
     for (var connection in connections) {
-      connection.reachable = availableConnections.any(
+      final bool onLan = availableConnections.any(
         (availableConnection) =>
             availableConnection.host == connection.host &&
             availableConnection.port == connection.port &&
             availableConnection.isDomain == connection.isDomain,
       );
+      connection.remoteReach = reaches[connection];
+      connection.reachable =
+          onLan || connection.remoteReach == RemoteReach.obsRunning;
     }
     _sort();
 

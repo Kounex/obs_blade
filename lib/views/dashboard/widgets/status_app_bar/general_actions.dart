@@ -41,6 +41,7 @@ class GeneralActions extends StatelessWidget {
     final bool tablet = MediaQuery.sizeOf(context).shortestSide >= 600;
     ModalHandler.showBaseCupertinoBottomSheet(
       context: context,
+
       /// Card width on tablets - a full-width sheet stretches the buttons
       maxWidth: kBaseCardMaxWidth,
       modalWidgetBuilder: (sheetContext, controller) => RemoteAccessSheet(
@@ -63,12 +64,22 @@ class GeneralActions extends StatelessWidget {
           Navigator.of(sheetContext).pop();
           Navigator.of(context).pushNamed(HomeTabRoutingKeys.Pro.route);
         },
-        onSaveConnection: () {
+
+        /// Saving is a step of the setup, not a detour: once the
+        /// connection is saved, the sheet comes back to set up
+        onSaveConnection: () async {
           Navigator.of(sheetContext).pop();
-          ModalHandler.showBaseDialog(
+          await ModalHandler.showBaseDialog(
             context: context,
             dialogWidget: const SaveEditConnectionDialog(newConnection: true),
           );
+          final saved = networkStore.activeSession?.connection;
+          if (context.mounted &&
+              saved != null &&
+              saved.name != null &&
+              saved.isInBox) {
+            GeneralActions.openRemoteAccess(context);
+          }
         },
       ),
     );

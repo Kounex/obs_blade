@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/design/design.dart';
@@ -13,6 +12,7 @@ import '../../../../stores/views/dashboard.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/routing_helper.dart';
 import 'general_actions.dart';
+import 'remote_access_button.dart';
 import 'on_air_status_cluster.dart';
 
 /// Height of the LIVE/REC pills row pinned as the app bar's `bottom` -
@@ -102,39 +102,15 @@ class StatusAppBar extends StatelessWidget {
                   ),
                 ),
               ),
-              const GeneralActions(),
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [RemoteAccessButton(), GeneralActions()],
+              ),
             ],
           ),
-          /// Remote access (Pro): a globe marks a session through the relay
-          Observer(
-            builder: (context) {
-              final bool viaRemote =
-                  GetIt.instance<NetworkStore>().activeSession?.viaRemote ??
-                  false;
-              final TextStyle style = CupertinoTheme.of(
-                context,
-              ).textTheme.navTitleTextStyle;
-              return Semantics(
-                label: viaRemote
-                    ? 'Dashboard, connected through the relay'
-                    : 'Dashboard',
-                excludeSemantics: true,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (viaRemote) ...[
-                      Icon(
-                        CupertinoIcons.globe,
-                        size: 16.0,
-                        color: style.color?.withValues(alpha: 0.7),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                    ],
-                    Text('Dashboard', style: style),
-                  ],
-                ),
-              );
-            },
+          Text(
+            'Dashboard',
+            style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
           ),
         ],
       ),

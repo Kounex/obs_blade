@@ -8,7 +8,13 @@ import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/stores/views/home.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/remote_reach.dart';
+import 'package:obs_blade/utils/remote/remote_connect.dart';
+import 'package:obs_blade/utils/remote/remote_relay_client.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/reachable_builder.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'dart:convert';
 
 /// The saved-connection cards: [ReachableBuilder] sits under a [HiveBuilder]
 /// that rebuilds on every box change, so its list has to follow the box.
@@ -41,10 +47,11 @@ void main() {
   Connection saved(String name) =>
       Connection(InternetAddress.loopbackIPv4.address, deadPort)..name = name;
 
-  Widget subject() => MaterialApp(
+  Widget subject({RemoteConnectEnvironment? remote}) => MaterialApp(
     home: HiveBuilder<Connection>(
       hiveKey: HiveKeys.SavedConnections,
       builder: (context, _, _) => ReachableBuilder(
+        remote: remote,
         savedConnectionsBuilder: (connections) => Column(
           children: [
             for (final connection in connections) Text(connection.name!),
@@ -166,5 +173,127 @@ void main() {
     await tester.pump();
 
     expect(alpha.reachable, isFalse);
+  });
+
+  group('paired connections ask the relay', () {
+    /// GET /v1/bridges/{id} answers per bridge id, as tool/remote_relay
+    /// does: 200 with online / obs, or 401 for a revoked pairing
+    late Map<String, (int, bool, String)> bridges;
+    late bool isPro;
+
+    RemoteConnectEnvironment env() => RemoteConnectEnvironment(
+      isPro: () => isPro,
+      onLocalNetwork: () async => true,
+      appUserId: () async => 'x',
+      relay: RemoteRelayClient(
+        baseUrl: 'https://relay.example',
+        client: MockClient((request) async {
+          final (status, online, obs) =
+              bridges[request.url.pathSegments.last] ?? (404, false, '');
+          return http.Response(
+            jsonEncode(
+              status == 200
+                  ? {
+                      'id': 'b',
+                      'name': 'PC',
+                      'kind': 'standalone',
+                      'online': online,
+                      'obs': obs,
+                      'devices': [],
+                    }
+                  : {'error': 'unpaired'},
+            ),
+            status,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      ),
+    );
+
+    Connection paired(String name, String bridgeId) => saved(name)
+      ..relayBridgeId = bridgeId
+      ..relayAppToken = 'tok'
+      ..relayDeviceId = 'd'
+      ..relayBridgeName = 'PC'
+      ..relayBridgeKind = 'standalone';
+
+    setUp(() {
+      isPro = true;
+      bridges = {
+        'running': (200, true, 'running'),
+        'closed': (200, true, 'closed'),
+        'wsoff': (200, true, 'ws_off'),
+        'offline': (200, false, 'closed'),
+        'revoked': (401, false, ''),
+      };
+    });
+
+    testWidgets(
+      'LAN out of reach: the relay decides Online and the line',
+      timeout: const Timeout(Duration(seconds: 90)),
+      (tester) async {
+        final cards = {
+          for (final id in ['running', 'closed', 'wsoff', 'offline', 'revoked'])
+            id: paired(id, id),
+        };
+        await tester.runAsync(() async {
+          for (final c in cards.values) {
+            await box.add(c);
+          }
+        });
+
+        await tester.pumpWidget(subject(remote: env()));
+        await pumpUntil(
+          tester,
+          () => cards.values.every((c) => c.reachable != null),
+          'checks resolve',
+        );
+
+        expect(
+          {
+            for (final e in cards.entries)
+              e.key: (e.value.reachable, e.value.remoteReach),
+          },
+          {
+            'running': (true, RemoteReach.obsRunning),
+            'closed': (false, RemoteReach.obsNotRunning),
+            'wsoff': (false, RemoteReach.obsUnreachable),
+            'offline': (false, RemoteReach.pcOffline),
+            'revoked': (false, null),
+          },
+        );
+        expect(
+          cards['revoked']!.hasRemote,
+          isFalse,
+          reason: 'a revoked pairing is forgotten',
+        );
+
+        /// Let the forget's Hive write land before tearDown closes the box
+        for (var i = 0; i < 10; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+          await tester.pump();
+        }
+        await tester.runAsync(() => box.flush());
+        expect(
+          box.values.firstWhere((c) => c.name == 'revoked').relayAppToken,
+          isNull,
+        );
+        expect(RemoteReach.obsRunning.cardProblem, isNull);
+        expect(RemoteReach.pcOffline.cardProblem, 'PC offline');
+      },
+    );
+
+    testWidgets('without Pro the relay is not asked', (tester) async {
+      isPro = false;
+      final c = paired('running', 'running');
+      await tester.runAsync(() => box.add(c));
+
+      await tester.pumpWidget(subject(remote: env()));
+      await pumpUntil(tester, () => c.reachable != null, 'check resolves');
+
+      expect((c.reachable, c.remoteReach), (false, null));
+    });
   });
 }

@@ -4,6 +4,19 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-08 - Remote access: dogfood round 1
+
+- Saved card: paired Pro connections also ask the relay (alongside the
+  LAN check, 6 s cap). "Online" when Connect would reach OBS through the
+  relay; the "Remote access" line names what blocks it (OBS not running,
+  OBS not reachable, PC offline). A 401 forgets the pairing, as on
+  connect. Was: "Offline" on 5G while Connect worked.
+- Dashboard bar: a globe next to the actions menu opens Remote Access
+  (muted: not set up, regular: set up, highlight blue: through the
+  relay); replaces the globe before the title. The menu entry stays.
+  User's pick, 2026-11-08 - the menu entry alone was too hidden.
+- "Save this connection first" continues into setup once saved.
+
 ## 2026-11-07 - Remote access (Pro): relay, bridge core, app side
 
 Reach OBS from anywhere: spec
