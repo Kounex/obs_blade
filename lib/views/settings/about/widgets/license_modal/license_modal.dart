@@ -16,37 +16,39 @@ class LicenseModal extends StatelessWidget {
     return BaseSheetScaffold(
       header: const BaseSheetTitle('Credits'),
       bodyIsScrollable: true,
-      body: Column(
-        children: [
-          Align(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-              child: SizedBox(
-                width: 256.0,
-                child: Image.asset(
-                  StylingHelper.brightnessAwareOBSLogo(context),
+      body: LicenseEntries(
+        leading: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                child: SizedBox(
+                  width: 256.0,
+                  child: Image.asset(
+                    StylingHelper.brightnessAwareOBSLogo(context),
+                  ),
                 ),
               ),
             ),
-          ),
-          const BaseDivider(),
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  height: 32.0,
-                  child: Image.asset('assets/images/flutter_logo_render.png'),
-                ),
-                const Text('Powered by Flutter'),
-              ],
+            const BaseDivider(),
+            Padding(
+              padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    height: 32.0,
+                    child: Image.asset('assets/images/flutter_logo_render.png'),
+                  ),
+                  const Text('Powered by Flutter'),
+                ],
+              ),
             ),
-          ),
-          const BaseDivider(),
-          const Expanded(child: LicenseEntries()),
-        ],
+            const BaseDivider(),
+          ],
+        ),
       ),
     );
   }

@@ -7,7 +7,7 @@ import '../../../../../shared/general/base/sheet.dart';
 
 /// One package's licenses - a sheet over the Credits sheet; the back
 /// chevron (or a drag) returns to the package list
-class LicenseDetail extends StatelessWidget {
+class LicenseDetail extends StatefulWidget {
   final String package;
   final List<LicenseEntry> licenseEntries;
 
@@ -18,18 +18,35 @@ class LicenseDetail extends StatelessWidget {
   });
 
   @override
+  State<LicenseDetail> createState() => _LicenseDetailState();
+}
+
+class _LicenseDetailState extends State<LicenseDetail> {
+  /// Shared by the list and its Scrollbar - the sheet route's primary
+  /// controller has no scroll view attached (the list isn't primary), so
+  /// a Scrollbar without one couldn't be dragged
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BaseSheetScaffold(
       header: BaseSheetBackTitle(
-        title: this.package,
+        title: this.widget.package,
         onBack: () => Navigator.of(context).pop(),
       ),
       bodyIsScrollable: true,
       body: Scrollbar(
+        controller: _scrollController,
         child: ListView(
-          primary: false,
+          controller: _scrollController,
           padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-          children: this.licenseEntries
+          children: this.widget.licenseEntries
               .map(
                 (licenseEntry) => BaseCard(
                   topPadding: 0.0,

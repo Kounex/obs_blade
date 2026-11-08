@@ -432,4 +432,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Title'), findsNothing);
   });
+
+  /// Review 2026-11-08: with the keyboard up, min(cap, screen - keyboard)
+  /// left the sheet the whole space above the keyboard and its header
+  /// went up behind the status bar / Dynamic Island
+  testWidgets('with the keyboard up a tall sheet stays below the status bar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.padding = const FakeViewPadding(top: 59, bottom: 34);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336);
+    addTearDown(tester.view.reset);
+
+    for (final height in BaseSheetHeight.values) {
+      await tester.pumpWidget(
+        opener(
+          height: height,
+          builder: (_) => BaseSheetScaffold(
+            header: BaseSheetTitle('Sheet ${height.name}'),
+            bodyIsScrollable: true,
+            body: ListView(
+              primary: false,
+              children: [
+                for (var i = 0; i < 60; i++)
+                  const SizedBox(height: 48, child: Text('row')),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      final double top = tester
+          .getTopLeft(find.text('Sheet ${height.name}'))
+          .dy;
+      expect(top, greaterThanOrEqualTo(59), reason: height.name);
+      Navigator.of(tester.element(find.text('Sheet ${height.name}'))).pop();
+      await tester.pumpAndSettle();
+    }
+  });
 }

@@ -51,13 +51,21 @@ class LicenseData {
 }
 
 class LicenseEntries extends StatefulWidget {
-  const LicenseEntries({super.key});
+  /// First in the list, scrolling with it (the Credits logo) - pinned, it
+  /// left a landscape phone no room for the packages
+  final Widget? leading;
+
+  const LicenseEntries({super.key, this.leading});
 
   @override
   _LicenseEntriesState createState() => _LicenseEntriesState();
 }
 
 class _LicenseEntriesState extends State<LicenseEntries> {
+  /// Shared by the list and its Scrollbar - the sheet route's primary
+  /// controller has no scroll view attached (the list isn't primary), so
+  /// a Scrollbar without one couldn't be dragged
+  final ScrollController _scrollController = ScrollController();
   late Future<LicenseData> _licenses;
 
   @override
@@ -86,57 +94,81 @@ class _LicenseEntriesState extends State<LicenseEntries> {
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<LicenseData>(
       future: _licenses,
       builder: (context, snapshot) {
+        final int lead = this.widget.leading != null ? 1 : 0;
+
+        /// Error / empty / loading below the leading block, scrolling with
+        /// it like the list does
+        Widget state(Widget child) => ListView(
+          controller: _scrollController,
+          children: [
+            ?this.widget.leading,
+            SizedBox(height: 160.0, child: child),
+          ],
+        );
+
         /// The registry future can also complete with an error / timeout or
         /// with zero packages - both used to render nothing (blank area or
         /// a spinner that never resolved), so they get explicit states now
         if (snapshot.hasError) {
-          return const _LicenseStateMessage(
-            text: 'The license information could not be loaded.',
+          return state(
+            const _LicenseStateMessage(
+              text: 'The license information could not be loaded.',
+            ),
           );
         }
         if (snapshot.hasData) {
           if (snapshot.data!.packages.isEmpty) {
-            return const _LicenseStateMessage(
-              text: 'No license information available.',
+            return state(
+              const _LicenseStateMessage(
+                text: 'No license information available.',
+              ),
             );
           }
           return Scrollbar(
+            controller: _scrollController,
             child: ListView.builder(
-              primary: false,
+              controller: _scrollController,
               padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-              itemCount: snapshot.data!.packages.length,
-              itemBuilder: (context, index) => ListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                ),
-                onTap: () => ModalHandler.showBaseBottomSheet(
-                  context: context,
-                  height: BaseSheetHeight.tall,
-                  builder: (context) => LicenseDetail(
-                    package: snapshot.data!.packages[index],
-                    licenseEntries: _getLicensesForPackage(
-                      snapshot.data!,
-                      snapshot.data!.packages[index],
+              itemCount: snapshot.data!.packages.length + lead,
+              itemBuilder: (context, i) {
+                if (i < lead) return this.widget.leading!;
+                final int index = i - lead;
+                return ListTile(
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                  ),
+                  onTap: () => ModalHandler.showBaseBottomSheet(
+                    context: context,
+                    height: BaseSheetHeight.tall,
+                    builder: (context) => LicenseDetail(
+                      package: snapshot.data!.packages[index],
+                      licenseEntries: _getLicensesForPackage(
+                        snapshot.data!,
+                        snapshot.data!.packages[index],
+                      ),
                     ),
                   ),
-                ),
-                title: Text(snapshot.data!.packages[index]),
-                subtitle: Text(
-                  '${snapshot.data!.packageLicenseBindings[snapshot.data!.packages[index]]!.length} licenses',
-                ),
-              ),
+                  title: Text(snapshot.data!.packages[index]),
+                  subtitle: Text(
+                    '${snapshot.data!.packageLicenseBindings[snapshot.data!.packages[index]]!.length} licenses',
+                  ),
+                );
+              },
             ),
           );
         }
-        return Container(
-          alignment: Alignment.center,
-          child: BaseProgressIndicator(text: 'Fetching...'),
-        );
+        return state(BaseProgressIndicator(text: 'Fetching...'));
       },
     );
   }

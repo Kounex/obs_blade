@@ -13,7 +13,8 @@ import '../shared/general/base/icon_button.dart';
 import 'styling_helper.dart';
 
 /// Sheet callers pick a height / read the width without a second import
-export '../shared/general/base/sheet.dart' show BaseSheetHeight, kBaseSheetMaxWidth;
+export '../shared/general/base/sheet.dart'
+    show BaseSheetHeight, kBaseSheetMaxWidth;
 
 class ModalHandler {
   static Duration transitionDelayDuration = const Duration(milliseconds: 350);
@@ -82,6 +83,12 @@ class ModalHandler {
     enableDrag: true,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+
+    /// Keeps the sheet under the status bar / Dynamic Island: with the
+    /// keyboard up, the height cap left more than the screen above the
+    /// keyboard and the header went up behind the clock (SafeArea with
+    /// bottom: false - the bottom inset stays ours, [_ModalSheetBody])
+    useSafeArea: true,
 
     /// Explicit, so the width doesn't hang on the theme's Material
     /// version (M3's default is the same 640)

@@ -27,6 +27,10 @@ class FilterList extends StatefulWidget {
 }
 
 class _FilterListState extends State<FilterList> {
+  /// Shared by the list and its Scrollbar - the sheet route's primary
+  /// controller has no scroll view attached (the list isn't primary), so
+  /// a Scrollbar without one couldn't be dragged
+  final ScrollController _scrollController = ScrollController();
   final List<ReactionDisposer> _d = [];
 
   late final Timer _timer;
@@ -52,6 +56,7 @@ class _FilterListState extends State<FilterList> {
     }
 
     _timer.cancel();
+    _scrollController.dispose();
 
     super.dispose();
   }
@@ -97,8 +102,9 @@ class _FilterListState extends State<FilterList> {
               ),
               Expanded(
                 child: Scrollbar(
+                  controller: _scrollController,
                   child: ListView(
-                    primary: false,
+                    controller: _scrollController,
                     padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                     children: sceneItem.filters
                         .map(

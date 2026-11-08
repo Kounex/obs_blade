@@ -22,6 +22,10 @@ class HotkeyList extends StatefulWidget {
 }
 
 class _HotkeyListState extends State<HotkeyList> {
+  /// Shared by the list and its Scrollbar - the sheet route's primary
+  /// controller has no scroll view attached (the list isn't primary), so
+  /// a Scrollbar without one couldn't be dragged
+  final ScrollController _scrollController = ScrollController();
   late final TextEditingController _controller;
 
   List<Hotkey> _filteredAllHotkeys = [];
@@ -56,6 +60,13 @@ class _HotkeyListState extends State<HotkeyList> {
               _lowerCaseContains(hotkey.name, _controller.text),
         )
         .toList();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -105,8 +116,9 @@ class _HotkeyListState extends State<HotkeyList> {
                     );
 
                     return Scrollbar(
+                      controller: _scrollController,
                       child: ListView(
-                        primary: false,
+                        controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.lg,
                           0.0,

@@ -32,6 +32,12 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   `connectivity_plus_platform_interface` from the relay work, which had
   left it stale).
 - Shots: `tool/widget_shots/sheets_shots_test.dart`, `ShotsHarness.inSheet`.
+- Review round: `useSafeArea: true` - with the keyboard up a sheet's
+  header went up behind the status bar (the cap left it the whole space
+  above the keyboard; the chat setup sheets had it too); Credits' logo
+  scrolls with the package list (a landscape phone had 0 pt for it);
+  Scrollbars in Hotkeys / Filters / Credits / licenses get their list's
+  controller (the thumb couldn't be dragged).
 
 ## 2026-11-08 - Remote access: dogfood round 2
 
