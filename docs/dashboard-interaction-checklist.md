@@ -88,3 +88,5 @@ mid-pane) and on the tall audio rows.
 | Copy | names the thing the user knows (canvas name, platform), no internal jargon; never contradicts itself (status vs button) |
 | Color grammar | live green = on air only, red = recording / program, amber = paused |
 | Accessibility | one semantics node per control with a state + hint |
+| Hit areas | every control takes taps on its whole 44 pt area - an overlapping sibling painted later (Stack order, content padding) steals them; test a tap off-center, not just `tester.tap` (2026-11-08: sheet close button) |
+| Theme accent | `accentText` is red in some themes - a status color for "through the relay" etc. uses `highlightText` (2026-11-08) |
