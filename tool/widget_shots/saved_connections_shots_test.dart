@@ -10,7 +10,7 @@ import 'package:obs_blade/views/home/widgets/saved_connections/saved_connections
 
 import 'support/shots_harness.dart';
 
-/// Home's saved connections at the card size (192 x 320, 2026-11-08):
+/// Home's saved connections at the card size (192 x 292, 2026-11-08):
 /// the phone carousel with its neighbors peeking, a 320 pt phone (the card
 /// narrows) and the tablet row.
 void main() {

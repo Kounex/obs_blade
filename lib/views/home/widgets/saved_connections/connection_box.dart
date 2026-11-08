@@ -33,7 +33,7 @@ class ConnectionBox extends StatelessWidget {
     super.key,
     required this.connection,
     this.height = 192.0,
-    this.width = 320.0,
+    this.width = 292.0,
   });
 
   String get _displayName {

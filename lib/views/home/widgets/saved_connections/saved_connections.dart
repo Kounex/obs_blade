@@ -14,10 +14,10 @@ import 'connection_box.dart';
 import 'placeholder_connection.dart';
 
 class SavedConnections extends StatelessWidget {
-  /// User directive 2026-11-08 (was 172 x 268): room for the remote access
+  /// User directive 2026-11-08 (was 172 x 268, briefly 320 wide): room for the remote access
   /// line without squeezing the gaps
   static const double _cardHeight = 192.0;
-  static const double _cardWidth = 320.0;
+  static const double _cardWidth = 292.0;
 
   const SavedConnections({super.key});
 
