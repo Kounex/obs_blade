@@ -88,6 +88,7 @@ mid-pane) and on the tall audio rows.
 | Copy | names the thing the user knows (canvas name, platform), no internal jargon; never contradicts itself (status vs button) |
 | Color grammar | live green = on air only, red = recording / program, amber = paused |
 | Accessibility | one semantics node per control with a state + hint |
+| Page transitions | every routed view paints its own background (`Scaffold`, or `ColoredBox` in the scaffold color) - the Cupertino page slide shows the previous route through a transparent page; look at the push mid-slide (2026-11-08: Home -> Dashboard after `CupertinoScaffold` went) |
 | Hit areas | every control takes taps on its whole 44 pt area - an overlapping sibling painted later (Stack order, content padding) steals them; test a tap off-center, not just `tester.tap` (2026-11-08: sheet close button) |
 | Sheets in their frame | shot a sheet inside the real sheet (`ShotsHarness.inSheet`: handle, 640 pt cap, glass on iOS), not its content alone - the chrome around it is part of the layout (2026-11-08: PRO flag) |
 | Sheets (every one) | opened with `ModalHandler.showBaseBottomSheet`, built on `BaseSheetScaffold` (handle + pinned title, only the body scrolls); no close / Done / Cancel button (tap outside or drag closes - a result-returning sheet treats `null` as cancel); no own bottom safe area / keyboard inset (the helper adds both); a centered card at most 640 pt on tablets; a picker wheel or reorder list inside still works (2026-11-08: one sheet app-wide) |

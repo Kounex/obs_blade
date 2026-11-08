@@ -179,60 +179,66 @@ class _DashboardViewState extends State<DashboardView>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        HiveBuilder<dynamic>(
-          hiveKey: HiveKeys.Settings,
-          rebuildKeys: const [SettingsKeys.StreamingMode],
-          builder: (context, settingsBox, child) => Observer(
-            builder: (context) => CustomScrollView(
-              physics:
-                  settingsBox.get(
-                    SettingsKeys.StreamingMode.name,
-                    defaultValue: false,
-                  )
-                  ? const NeverScrollableScrollPhysics()
-                  : StylingHelper.platformAwareScrollPhysics,
-              controller:
-                  ModalRoute.of(context)!.settings.arguments
-                      as ScrollController,
-              slivers: [
-                const StatusAppBar(),
-                settingsBox.get(
+    /// Opaque page: the Cupertino page transition slides this route over
+    /// the previous one - without a background of its own the old route
+    /// shows through (CupertinoScaffold painted this until 2026-11-08)
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          HiveBuilder<dynamic>(
+            hiveKey: HiveKeys.Settings,
+            rebuildKeys: const [SettingsKeys.StreamingMode],
+            builder: (context, settingsBox, child) => Observer(
+              builder: (context) => CustomScrollView(
+                physics:
+                    settingsBox.get(
                       SettingsKeys.StreamingMode.name,
                       defaultValue: false,
                     )
-                    ? const DashboardContentStreaming()
-                    : const DashboardContent(),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          /// Anchored below the status app bar's full occupied height
-          /// (55pt bar + LIVE/REC status cluster + safe-area top) so the
-          /// toasts never cover the pills row
-          top:
-              MediaQuery.paddingOf(context).top +
-              GlassBar.minContentHeight +
-              kStatusClusterHeight,
-          child: Align(
-            alignment: Alignment.center,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  ReconnectToast(),
-                  SizedBox(height: AppSpacing.sm),
-                  CommandFailureToast(),
+                    ? const NeverScrollableScrollPhysics()
+                    : StylingHelper.platformAwareScrollPhysics,
+                controller:
+                    ModalRoute.of(context)!.settings.arguments
+                        as ScrollController,
+                slivers: [
+                  const StatusAppBar(),
+                  settingsBox.get(
+                        SettingsKeys.StreamingMode.name,
+                        defaultValue: false,
+                      )
+                      ? const DashboardContentStreaming()
+                      : const DashboardContent(),
                 ],
               ),
             ),
           ),
-        ),
-      ],
+          Positioned(
+            /// Anchored below the status app bar's full occupied height
+            /// (55pt bar + LIVE/REC status cluster + safe-area top) so the
+            /// toasts never cover the pills row
+            top:
+                MediaQuery.paddingOf(context).top +
+                GlassBar.minContentHeight +
+                kStatusClusterHeight,
+            child: Align(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    ReconnectToast(),
+                    SizedBox(height: AppSpacing.sm),
+                    CommandFailureToast(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

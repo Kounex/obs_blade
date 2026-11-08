@@ -60,131 +60,137 @@ class _CustomThemeViewState extends State<CustomThemeView> {
     /// in this process since it's a [StatefulWidget] and the state itself
     /// is not being rebuild (would have to trigger this specifically with keys
     /// or overriding updateWidget or similar)
-    return HiveBuilder<dynamic>(
-      hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [
-        SettingsKeys.ActiveCustomThemeUUID,
-        SettingsKeys.CustomTheme,
-        SettingsKeys.BoughtBlacksmith,
-      ],
-      builder: (context, settingsBox, child) {
-        /// Explicit [AnimatedTheme] on the activation surface: the
-        /// MaterialApp subtree is not keyed, so its implicit crossfade
-        /// already plays app-wide - this re-wraps the editor itself so
-        /// the screen the user activates the theme on visibly morphs at
-        /// the design system's theme-change duration ([AppMotion.slow])
-        /// instead of the shorter framework default.
-        return AnimatedTheme(
-          data: Theme.of(context),
-          duration: AppMotion.slow,
-          curve: AppMotion.standard,
-          child: TransculentCupertinoNavBarWrapper(
-            previousTitle: 'Settings',
-            title: 'Custom Theme',
-            listViewChildren: [
-              StaggeredEntrance(
-                scaleFrom: 0.985,
-                index: 0,
-                child: BaseCard(
-                  bottomPadding: 12.0,
-                  child: CleanListTile(
-                    title: 'Use Custom Theme',
-                    description:
-                        'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
-                    trailing: BaseAdaptiveSwitch(
-                      value: settingsBox.get(
-                        SettingsKeys.CustomTheme.name,
-                        defaultValue: false,
-                      ),
-                      onChanged: (customTheme) {
-                        settingsBox.put(
+    /// Opaque page: the Cupertino page transition slides this route over
+    /// the previous one - without a background of its own the old route
+    /// shows through (CupertinoScaffold painted this until 2026-11-08)
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: HiveBuilder<dynamic>(
+        hiveKey: HiveKeys.Settings,
+        rebuildKeys: const [
+          SettingsKeys.ActiveCustomThemeUUID,
+          SettingsKeys.CustomTheme,
+          SettingsKeys.BoughtBlacksmith,
+        ],
+        builder: (context, settingsBox, child) {
+          /// Explicit [AnimatedTheme] on the activation surface: the
+          /// MaterialApp subtree is not keyed, so its implicit crossfade
+          /// already plays app-wide - this re-wraps the editor itself so
+          /// the screen the user activates the theme on visibly morphs at
+          /// the design system's theme-change duration ([AppMotion.slow])
+          /// instead of the shorter framework default.
+          return AnimatedTheme(
+            data: Theme.of(context),
+            duration: AppMotion.slow,
+            curve: AppMotion.standard,
+            child: TransculentCupertinoNavBarWrapper(
+              previousTitle: 'Settings',
+              title: 'Custom Theme',
+              listViewChildren: [
+                StaggeredEntrance(
+                  scaleFrom: 0.985,
+                  index: 0,
+                  child: BaseCard(
+                    bottomPadding: 12.0,
+                    child: CleanListTile(
+                      title: 'Use Custom Theme',
+                      description:
+                          'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
+                      trailing: BaseAdaptiveSwitch(
+                        value: settingsBox.get(
                           SettingsKeys.CustomTheme.name,
-                          customTheme,
-                        );
-                        if ((settingsBox.get(
-                                  SettingsKeys.ActiveCustomThemeUUID.name,
-                                  defaultValue: '',
-                                )
-                                as String)
-                            .isEmpty) {
+                          defaultValue: false,
+                        ),
+                        onChanged: (customTheme) {
                           settingsBox.put(
-                            SettingsKeys.ActiveCustomThemeUUID.name,
-                            BuiltInThemes.themes.first.uuid,
+                            SettingsKeys.CustomTheme.name,
+                            customTheme,
                           );
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              StaggeredEntrance(
-                scaleFrom: 0.985,
-                index: 1,
-                child: BaseCard(
-                  above: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xxl,
-                    ),
-                    child: Text(
-                      'Predefined Themes'.toUpperCase(),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).extension<AppTextColors>()!.textTertiary,
+                          if ((settingsBox.get(
+                                    SettingsKeys.ActiveCustomThemeUUID.name,
+                                    defaultValue: '',
+                                  )
+                                  as String)
+                              .isEmpty) {
+                            settingsBox.put(
+                              SettingsKeys.ActiveCustomThemeUUID.name,
+                              BuiltInThemes.themes.first.uuid,
+                            );
+                          }
+                        },
                       ),
                     ),
                   ),
-                  topPadding: 8.0,
-                  bottomPadding: 12.0,
-                  paddingChild: const EdgeInsets.all(0),
-                  child: const CustomThemeList(predefinedThemes: true),
                 ),
-              ),
-              StaggeredEntrance(
-                scaleFrom: 0.985,
-                index: 2,
-                child: BaseCard(
-                  above: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xxl,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Your Themes'.toUpperCase(),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).extension<AppTextColors>()!.textTertiary,
-                              ),
-                        ),
-                        ThemedCupertinoButton(
-                          text: 'Add Theme',
-                          padding: const EdgeInsets.all(0),
-
-                          /// Evaluated at tap time (not at build), so the gate
-                          /// picks up a mid-session Pro purchase / blacksmith
-                          /// restore without a rebuild.
-                          onPressed: () => _openAddTheme(
+                StaggeredEntrance(
+                  scaleFrom: 0.985,
+                  index: 1,
+                  child: BaseCard(
+                    above: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl,
+                      ),
+                      child: Text(
+                        'Predefined Themes'.toUpperCase(),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(
                             context,
-                            unlocked: customThemesUnlocked(settingsBox),
-                          ),
+                          ).extension<AppTextColors>()!.textTertiary,
                         ),
-                      ],
+                      ),
                     ),
+                    topPadding: 8.0,
+                    bottomPadding: 12.0,
+                    paddingChild: const EdgeInsets.all(0),
+                    child: const CustomThemeList(predefinedThemes: true),
                   ),
-                  topPadding: 8.0,
-                  bottomPadding: 12.0,
-                  paddingChild: const EdgeInsets.all(0),
-                  child: const CustomThemeList(),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+                StaggeredEntrance(
+                  scaleFrom: 0.985,
+                  index: 2,
+                  child: BaseCard(
+                    above: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Your Themes'.toUpperCase(),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).extension<AppTextColors>()!.textTertiary,
+                                ),
+                          ),
+                          ThemedCupertinoButton(
+                            text: 'Add Theme',
+                            padding: const EdgeInsets.all(0),
+
+                            /// Evaluated at tap time (not at build), so the gate
+                            /// picks up a mid-session Pro purchase / blacksmith
+                            /// restore without a rebuild.
+                            onPressed: () => _openAddTheme(
+                              context,
+                              unlocked: customThemesUnlocked(settingsBox),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    topPadding: 8.0,
+                    bottomPadding: 12.0,
+                    paddingChild: const EdgeInsets.all(0),
+                    child: const CustomThemeList(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

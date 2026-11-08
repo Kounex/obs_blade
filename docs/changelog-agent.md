@@ -38,6 +38,10 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   scrolls with the package list (a landscape phone had 0 pt for it);
   Scrollbars in Hotkeys / Filters / Credits / licenses get their list's
   controller (the thumb couldn't be dragged).
+- Dogfood: Home -> Dashboard slid in see-through - `CupertinoScaffold`
+  also painted the page background. Home, Dashboard, About and Custom
+  theme (the four it wrapped without a `Scaffold`) get a `ColoredBox` in
+  the scaffold color; every other routed view has its own `Scaffold`.
 
 ## 2026-11-08 - Remote access: dogfood round 2
 
