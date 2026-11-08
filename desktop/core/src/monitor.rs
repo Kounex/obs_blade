@@ -14,6 +14,11 @@ use crate::shared::{Kind, Shared};
 use crate::wire::OBS_AUTH_FAILED;
 
 pub const STATUS_INTERVAL: Duration = Duration::from_secs(20);
+/// Standalone: how often it asks whether the plugin runs. Both on the same
+/// pairing replace each other at the relay (4906) until it knows - at OBS
+/// start the plugin registers its vendor after the websocket is up
+/// (2026-11-08: 20 s of flapping with the status interval).
+const PLUGIN_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 const RETRY: Duration = Duration::from_secs(3);
 /// EventSubscription::General - CustomEvent and ExitStarted live there.
 const SUBSCRIBE_GENERAL: u64 = 1;
@@ -85,10 +90,16 @@ async fn connect_once(shared: &Arc<Shared>) -> Outcome {
     }
 
     let mut tick = tokio::time::interval(STATUS_INTERVAL);
+    let mut plugin_tick = tokio::time::interval(PLUGIN_CHECK_INTERVAL);
     let mut previous_bytes: Option<(u64, Instant)> = None;
     let mut outbox = shared.obs_outbox.subscribe();
     loop {
         tokio::select! {
+            _ = plugin_tick.tick(), if shared.cfg.kind == Kind::Standalone => {
+                if ws.send(Message::text(plugin_request())).await.is_err() {
+                    return Outcome::Lost;
+                }
+            }
             queued = outbox.recv() => {
                 if let Ok(message) = queued
                     && ws.send(Message::text(message)).await.is_err()
@@ -97,7 +108,7 @@ async fn connect_once(shared: &Arc<Shared>) -> Outcome {
                 }
             }
             _ = tick.tick() => {
-                for request in requests(shared.cfg.kind) {
+                for request in requests() {
                     if ws.send(Message::text(request)).await.is_err() {
                         return Outcome::Lost;
                     }
@@ -121,8 +132,15 @@ async fn connect_once(shared: &Arc<Shared>) -> Outcome {
     }
 }
 
-fn requests(kind: Kind) -> Vec<String> {
-    let mut list = vec![
+/// Is the plugin loaded in this OBS? (standalone: it then only watches OBS)
+fn plugin_request() -> String {
+    json!({"op": 6, "d": {"requestType": "CallVendorRequest", "requestId": "obb-plugin",
+        "requestData": {"vendorName": VENDOR, "requestType": "Status", "requestData": {}}}})
+    .to_string()
+}
+
+fn requests() -> Vec<String> {
+    vec![
         json!({"op": 8, "d": {"requestId": "obb-status", "haltOnFailure": false, "requests": [
             {"requestType": "GetStreamStatus"},
             {"requestType": "GetRecordStatus"},
@@ -130,15 +148,7 @@ fn requests(kind: Kind) -> Vec<String> {
             {"requestType": "GetVideoSettings"}
         ]}})
         .to_string(),
-    ];
-    if kind == Kind::Standalone {
-        list.push(
-            json!({"op": 6, "d": {"requestType": "CallVendorRequest", "requestId": "obb-plugin",
-                "requestData": {"vendorName": VENDOR, "requestType": "Status", "requestData": {}}}})
-            .to_string(),
-        );
-    }
-    list
+    ]
 }
 
 fn handle(shared: &Arc<Shared>, message: &Value, previous_bytes: &mut Option<(u64, Instant)>) {
