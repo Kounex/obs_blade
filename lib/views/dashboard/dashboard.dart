@@ -70,7 +70,9 @@ class _DashboardViewState extends State<DashboardView>
       results,
     ) {
       if (!results.contains(ConnectivityResult.none)) {
-        GetIt.instance<DashboardStore>().checkConnectionNow();
+        /// Also switches LAN <-> remote relay right away for a paired
+        /// connection (Wi-Fi gone / back)
+        GetIt.instance<DashboardStore>().onNetworkChanged(results);
       }
     });
 

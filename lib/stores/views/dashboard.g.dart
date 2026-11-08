@@ -674,6 +674,24 @@ mixin _$DashboardStore on _DashboardStore, Store {
     });
   }
 
+  late final _$routeSwitchAtom = Atom(
+    name: '_DashboardStore.routeSwitch',
+    context: context,
+  );
+
+  @override
+  RouteSwitch? get routeSwitch {
+    _$routeSwitchAtom.reportRead();
+    return super.routeSwitch;
+  }
+
+  @override
+  set routeSwitch(RouteSwitch? value) {
+    _$routeSwitchAtom.reportWrite(value, super.routeSwitch, () {
+      super.routeSwitch = value;
+    });
+  }
+
   late final _$commandFailureNoticeAtom = Atom(
     name: '_DashboardStore.commandFailureNotice',
     context: context,
@@ -840,6 +858,16 @@ mixin _$DashboardStore on _DashboardStore, Store {
     return _$_checkOBSConnectionAsyncAction.run(
       () => super._checkOBSConnection(),
     );
+  }
+
+  late final _$_reconnectAsyncAction = AsyncAction(
+    '_DashboardStore._reconnect',
+    context: context,
+  );
+
+  @override
+  Future<void> _reconnect({bool force = false}) {
+    return _$_reconnectAsyncAction.run(() => super._reconnect(force: force));
   }
 
   late final _$_handleEventAsyncAction = AsyncAction(
@@ -1041,6 +1069,7 @@ shouldRequestPreviewImage: ${shouldRequestPreviewImage},
 scenePreviewImageBytes: ${scenePreviewImageBytes},
 manualScreenshotImageBytes: ${manualScreenshotImageBytes},
 reconnecting: ${reconnecting},
+routeSwitch: ${routeSwitch},
 commandFailureNotice: ${commandFailureNotice},
 editSceneItemVisibility: ${editSceneItemVisibility},
 editAudioVisibility: ${editAudioVisibility},

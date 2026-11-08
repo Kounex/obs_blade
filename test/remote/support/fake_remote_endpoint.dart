@@ -170,6 +170,9 @@ class FakeRemoteEndpoint {
   /// Readable frames that reached the bridge (must stay 0)
   int plainFrames = 0;
   final List<WebSocket> _sockets = [];
+
+  /// The server side of every upgraded socket
+  List<WebSocket> get sockets => List.unmodifiable(_sockets);
   final List<FakeUpgrade> upgrades = [];
   int closeCode = 4000;
 

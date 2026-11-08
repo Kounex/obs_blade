@@ -15,6 +15,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/remote_reach.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
+import 'package:obs_blade/views/dashboard/widgets/reconnect_toast.dart';
 import 'package:obs_blade/views/dashboard/widgets/status_app_bar/status_app_bar.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/connection_box.dart';
 import 'package:web_socket_channel/io.dart';
@@ -147,6 +148,49 @@ void main() {
           size: const Size(320, 640),
         );
       }
+    }
+  });
+
+  /// The reconnect toast when the route changed (Wi-Fi off -> relay, Wi-Fi
+  /// back -> LAN) and a plain reconnect
+  testWidgets('route switch toasts', (tester) async {
+    await setUpStores(tester);
+    for (final (name, route) in [
+      ('remote_toast_to_relay', RouteSwitch.toRelay),
+      ('remote_toast_to_lan', RouteSwitch.toLan),
+      ('remote_toast_reconnected', null),
+    ]) {
+      final DashboardStore store = GetIt.instance<DashboardStore>();
+      runInAction(() {
+        store.reconnecting = true;
+        store.routeSwitch = null;
+      });
+      await harness.shot(
+        tester,
+        name,
+        Center(
+          child: Builder(
+            builder: (context) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (store.reconnecting) {
+                  runInAction(() {
+                    store.routeSwitch = route;
+                    store.reconnecting = false;
+                  });
+                }
+              });
+              /// As the dashboard places it (dashboard.dart toast column)
+              return const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [ReconnectToast()],
+                ),
+              );
+            },
+          ),
+        ),
+      );
     }
   });
 }

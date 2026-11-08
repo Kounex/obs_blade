@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io' show Socket;
 import 'dart:typed_data';
 import 'dart:ui' show Color;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
@@ -37,7 +39,13 @@ import 'package:obs_blade/types/enums/web_socket_codes/web_socket_close_code.dar
 import 'package:obs_blade/types/extensions/int.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../models/connection.dart';
 import '../../models/enums/log_level.dart';
+import '../../types/classes/session.dart';
+import '../../utils/build_flavor.dart';
+import '../../utils/connectivity_state.dart';
+import '../../utils/remote/remote_connect.dart';
+import '../pro_store.dart';
 import '../../models/past_record_data.dart';
 import '../../models/past_stream_data.dart';
 import '../../types/classes/api/filter.dart';
@@ -314,6 +322,11 @@ abstract class _DashboardStore with Store {
   /// to in [ReconnectToast] to show the user that a reconnect attempt is ongoing
   @observable
   bool reconnecting = false;
+
+  /// Set by a reconnect that changed the route (LAN <-> remote relay), for
+  /// the reconnect toast to say so; cleared when the next reconnect starts
+  @observable
+  RouteSwitch? routeSwitch;
 
   /// Displayed OBS values may not reflect OBS's actual state and mutations
   /// cannot be delivered - the confirmation channel (the socket) is down.
@@ -1797,69 +1810,160 @@ abstract class _DashboardStore with Store {
     if (GetIt.instance<NetworkStore>().activeSession?.socket.closeCode !=
             null &&
         !GetIt.instance<NetworkStore>().obsTerminated) {
-      this.reconnecting = true;
-
-      /// Nothing may hit the wire until the new socket is identified -
-      /// polls on a dead socket only produce noise
-      _pauseStatsPolling();
-      WebSocketCloseCode? closeCode;
-      int tries = 0;
-
       GeneralHelper.advLog(
         'Lost active connection to OBS, trying to reconnect',
         level: LogLevel.Warning,
         includeInLogs: true,
       );
-
-      while ((Hive.box(HiveKeys.Settings.name).get(
-                SettingsKeys.UnlimitedReconnects.name,
-                defaultValue: false,
-              ) ||
-              tries < 5) &&
-          (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
-        /// First attempt right away - a WLAN blip is usually over by the
-        /// time the drop is detected; back off between retries only
-        if (tries > 0) await Future.delayed(const Duration(seconds: 3));
-        closeCode = await GetIt.instance<NetworkStore>().setOBSWebSocket(
-          GetIt.instance<NetworkStore>().activeSession!.connection,
-          reconnect: true,
-        );
-        tries++;
-        GeneralHelper.advLog(
-          '$tries. attempt to reconnect...',
-          level: LogLevel.Warning,
-          includeInLogs: true,
-        );
-      }
-      if (closeCode == null || closeCode != WebSocketCloseCode.DontClose) {
-        GeneralHelper.advLog(
-          'Not able to reconnect to OBS, initiating termination process!',
-          level: LogLevel.Warning,
-          includeInLogs: true,
-        );
-        GetIt.instance<NetworkStore>().obsTerminated = true;
-      } else {
-        GeneralHelper.advLog(
-          'Successfully reconnected to OBS!',
-          level: LogLevel.Warning,
-          includeInLogs: true,
-        );
-
-        this.reconnecting = false;
-        this.handleStream();
-        this.initialRequests();
-        _periodicStatsRequest();
-
-        /// The preview loop is response-driven - its last request died
-        /// with the old socket, so kick it again
-        if (this.shouldRequestPreviewImage) _requestPreviewImage();
-        _checkConnectionTimer?.cancel();
-        _checkConnectionTimer = Timer(
-          const Duration(seconds: 3),
-          () => _checkOBSConnection(),
-        );
-      }
+      await _reconnect();
     } else {
+      _checkConnectionTimer?.cancel();
+      _checkConnectionTimer = Timer(
+        const Duration(seconds: 3),
+        () => _checkOBSConnection(),
+      );
+    }
+  }
+
+  /// The network changed while the dashboard is up (remote access, Pro):
+  /// - Wi-Fi gone, only mobile data, on a LAN session to a home-network
+  ///   address: that socket can't survive, but iOS only reports it dead
+  ///   once the ping times out (up to ~30 s) - switch to the relay now.
+  /// - Wi-Fi back on a relay session and OBS answers on the LAN: back to
+  ///   the LAN (no relay overhead at home).
+  /// Anything else: the usual closed-socket check.
+  /// (Dogfood 2026-11-08: Wi-Fi off mid-session switched to the relay
+  /// only after the old socket timed out.)
+  Future<void> onNetworkChanged(List<ConnectivityResult> results) async {
+    final NetworkStore network = GetIt.instance<NetworkStore>();
+    final Session? session = network.activeSession;
+    if (this.reconnecting || session == null || network.obsTerminated) return;
+    final Connection connection = session.connection;
+    final bool remoteAccess =
+        !kFoss &&
+        connection.hasRemote &&
+        GetIt.instance.isRegistered<ProStore>() &&
+        GetIt.instance<ProStore>().isPro;
+    final bool lanOnlyHost =
+        !(connection.isDomain ?? false) && hostIsLanOnly(connection.host);
+
+    if (remoteAccess &&
+        !session.viaRemote &&
+        lanOnlyHost &&
+        mobileDataOnly(results)) {
+      GeneralHelper.advLog(
+        'Wi-Fi gone - the local connection to OBS can\'t last, switching '
+        'to the remote relay',
+        includeInLogs: true,
+      );
+      return _reconnect(force: true);
+    }
+    if (remoteAccess &&
+        session.viaRemote &&
+        lanOnlyHost &&
+        (results.contains(ConnectivityResult.wifi) ||
+            results.contains(ConnectivityResult.ethernet)) &&
+        await _lanAnswers(connection)) {
+      if (this.reconnecting || !identical(network.activeSession, session)) {
+        return;
+      }
+      GeneralHelper.advLog(
+        'Back on the local network - switching from the remote relay to '
+        'the local connection',
+        includeInLogs: true,
+      );
+      return _reconnect(force: true);
+    }
+    this.checkConnectionNow();
+  }
+
+  /// OBS's port accepts a connection on the LAN (a quick probe before
+  /// leaving a working relay session)
+  static Future<bool> _lanAnswers(Connection connection) async {
+    try {
+      final Socket socket = await Socket.connect(
+        connection.host,
+        connection.port ?? 4455,
+        timeout: const Duration(milliseconds: 1500),
+      );
+      socket.destroy();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// The reconnect loop. [force]: the current socket still looks open but
+  /// is known to be the wrong route - replaced (and closed) right away.
+  @action
+  Future<void> _reconnect({bool force = false}) async {
+    final NetworkStore network = GetIt.instance<NetworkStore>();
+    final Session? before = network.activeSession;
+    if (before == null) return;
+    _checkConnectionTimer?.cancel();
+    this.reconnecting = true;
+    this.routeSwitch = null;
+
+    /// Nothing may hit the wire until the new socket is identified -
+    /// polls on a dead socket only produce noise
+    _pauseStatsPolling();
+    WebSocketCloseCode? closeCode;
+    int tries = 0;
+
+    while ((Hive.box(
+              HiveKeys.Settings.name,
+            ).get(SettingsKeys.UnlimitedReconnects.name, defaultValue: false) ||
+            tries < 5) &&
+        (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
+      /// First attempt right away - a WLAN blip is usually over by the
+      /// time the drop is detected; back off between retries only
+      if (tries > 0) await Future.delayed(const Duration(seconds: 3));
+      closeCode = await network.setOBSWebSocket(
+        network.activeSession!.connection,
+        reconnect: true,
+      );
+      tries++;
+      GeneralHelper.advLog(
+        '$tries. attempt to reconnect...',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+    }
+    if (closeCode == null || closeCode != WebSocketCloseCode.DontClose) {
+      GeneralHelper.advLog(
+        'Not able to reconnect to OBS, initiating termination process!',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+      if (force) before.socket.sink.close();
+      network.obsTerminated = true;
+    } else {
+      GeneralHelper.advLog(
+        'Successfully reconnected to OBS!',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+
+      final Session after = network.activeSession!;
+      if (!identical(before, after)) {
+        /// A forced switch leaves the old socket open otherwise (the relay
+        /// session would linger on the bridge)
+        before.socket.sink.close();
+      }
+      this.routeSwitch = before.viaRemote == after.viaRemote
+          ? null
+          : after.viaRemote
+          ? RouteSwitch.toRelay
+          : RouteSwitch.toLan;
+
+      this.reconnecting = false;
+      this.handleStream();
+      this.initialRequests();
+      _periodicStatsRequest();
+
+      /// The preview loop is response-driven - its last request died
+      /// with the old socket, so kick it again
+      if (this.shouldRequestPreviewImage) _requestPreviewImage();
       _checkConnectionTimer?.cancel();
       _checkConnectionTimer = Timer(
         const Duration(seconds: 3),
@@ -3554,3 +3658,6 @@ abstract class _DashboardStore with Store {
     }
   }
 }
+
+/// How a reconnect changed the way OBS is reached (remote access, Pro)
+enum RouteSwitch { toRelay, toLan }

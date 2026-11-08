@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 
@@ -9,7 +10,9 @@ import '../../../shared/design/design.dart';
 import '../../../shared/general/base/card.dart';
 import '../../../stores/views/dashboard.dart';
 
-/// Brief "Reconnected" flash once a lost OBS connection is back. The lost
+/// Brief "Reconnected" flash once a lost OBS connection is back - naming
+/// the new route when the reconnect changed it (remote access: "Connected
+/// through the relay" / "Back on your local network", 2026-11-08). The lost
 /// state itself is NOT toasted here - the inline "LAST KNOWN STATE" badges
 /// ([StaleStateBadge], stream health pill) and the disabled controls
 /// already say it where the values are, and a second floating card on top
@@ -24,6 +27,9 @@ class ReconnectToast extends StatefulWidget {
 class _ReconnectToastState extends State<ReconnectToast>
     with TickerProviderStateMixin {
   static const Duration _visibleFor = Duration(seconds: 3);
+
+  /// A route change is news, not just "back again" - a little longer
+  static const Duration _visibleForRouteSwitch = Duration(seconds: 5);
 
   late AnimationController _controller;
   late Animation<double> _opacity;
@@ -57,7 +63,12 @@ class _ReconnectToastState extends State<ReconnectToast>
           _controller.reverse();
         } else {
           _controller.forward();
-          _hideTimer = Timer(_visibleFor, () => _controller.reverse());
+          _hideTimer = Timer(
+            GetIt.instance<DashboardStore>().routeSwitch == null
+                ? _visibleFor
+                : _visibleForRouteSwitch,
+            () => _controller.reverse(),
+          );
         }
       }),
     );
@@ -80,6 +91,9 @@ class _ReconnectToastState extends State<ReconnectToast>
     final AppStatusColors statusColors = Theme.of(
       context,
     ).extension<AppStatusColors>()!;
+    final AppTextColors textColors = Theme.of(
+      context,
+    ).extension<AppTextColors>()!;
 
     return IgnorePointer(
       ignoring: true,
@@ -87,25 +101,63 @@ class _ReconnectToastState extends State<ReconnectToast>
         opacity: _opacity,
         child: SlideTransition(
           position: _offset,
-          child: BaseCard(
-            paintBorder: true,
-            constrained: false,
-            borderColor: statusColors.reachable,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
+          child: Observer(
+            builder: (context) {
+              final RouteSwitch? route =
+                  GetIt.instance<DashboardStore>().routeSwitch;
+              final (
+                IconData icon,
+                Color color,
+                String title,
+                String? detail,
+              ) = switch (route) {
+                RouteSwitch.toRelay => (
+                  CupertinoIcons.globe,
+                  textColors.highlightText,
+                  'Connected through the relay',
+                  'End-to-end encrypted',
+                ),
+                RouteSwitch.toLan => (
+                  CupertinoIcons.wifi,
+                  statusColors.reachable,
+                  'Back on your local network',
+                  null,
+                ),
+                null => (
                   CupertinoIcons.checkmark_circle_fill,
-                  color: statusColors.reachable,
-                  size: 20.0,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
+                  statusColors.reachable,
                   'Reconnected to OBS',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  null,
                 ),
-              ],
-            ),
+              };
+              return BaseCard(
+                paintBorder: true,
+                constrained: false,
+                borderColor: color,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: color, size: 20.0),
+                    const SizedBox(width: AppSpacing.sm),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        if (detail != null)
+                          Text(
+                            detail,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
