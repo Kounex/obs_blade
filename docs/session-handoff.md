@@ -88,6 +88,12 @@ event reached the VPS relay).
   the MacBook next to OBS as the bridge (`~/agent-build/obb_dogfood.py`
   wraps it: OBS watcher + Start OBS, log `~/agent-build/obb-dogfood.log`); the dogfood device's RevenueCat
   app user id must have Pro (or sit in `RELAY_PRO_ALLOW`).
+- **Before a second bridge process (plugin + standalone) ships:**
+  `Shared::update` saves its in-memory copy without reloading
+  `bridge.json` first (`set_enabled` / `set_preview` /
+  `set_obs_override`) - one process could write back stale `app_keys` or
+  key pair over the other's (phone then gets 4904 / 4911). Reload inside
+  `update` (review 2026-11-08; not reachable while `obb` is the only one).
 - Next: plugin shell (C++, vendor `obs-blade-bridge`/`Pair`), Qt panel +
   standalone tray/watcher, packaging (macOS notarized, Windows unsigned
   for now, Linux). MacBook has rustup + cmake (Homebrew); build scratch
