@@ -208,8 +208,13 @@ class ConnectionBox extends StatelessWidget {
               AppSpacing.sm,
               AppSpacing.md,
             ),
+
+            /// Header, info lines and Connect spread evenly over the fixed
+            /// card height: the same gap above and below the info lines,
+            /// with or without the remote access line (user, 2026-11-08)
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -270,86 +275,59 @@ class ConnectionBox extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 1.0),
-                              child: Icon(
-                                this._hasPassword
-                                    ? CupertinoIcons.lock_fill
-                                    : CupertinoIcons.lock_slash,
-                                size: 14.0,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.color,
-                              ),
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 1.0),
+                            child: Icon(
+                              this._hasPassword
+                                  ? CupertinoIcons.lock_fill
+                                  : CupertinoIcons.lock_slash,
+                              size: 14.0,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
                             ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                this._endpoint,
-                                style: Theme.of(context).textTheme.bodySmall!
-                                    .copyWith(fontFeatures: kTabularFigures),
-                              ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              this._endpoint,
+                              style: Theme.of(context).textTheme.bodySmall!
+                                  .copyWith(fontFeatures: kTabularFigures),
                             ),
-                          ],
-                        ),
-                        if (!kFoss &&
-                            this.connection.hasRemote &&
-                            GetIt.instance.isRegistered<ProStore>() &&
-                            GetIt.instance<ProStore>().isPro) ...[
-                          const SizedBox(height: AppSpacing.xs),
-                          Row(
-                            children: [
-                              Icon(
-                                CupertinoIcons.globe,
-                                size: 14.0,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.color,
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Flexible(
-                                child: Text(
-                                  [
-                                    'Remote access',
-                                    ?this.connection.remoteReach?.cardProblem,
-                                  ].join(' · '),
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
                           ),
                         ],
+                      ),
+                      if (!kFoss &&
+                          this.connection.hasRemote &&
+                          GetIt.instance.isRegistered<ProStore>() &&
+                          GetIt.instance<ProStore>().isPro) ...[
                         const SizedBox(height: AppSpacing.xs),
-
-                        /// Same icon column as the endpoint / remote rows
                         Row(
                           children: [
                             Icon(
-                              CupertinoIcons.clock,
+                              CupertinoIcons.globe,
                               size: 14.0,
-                              color: textColors.textTertiary,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
                             ),
                             const SizedBox(width: AppSpacing.sm),
                             Flexible(
                               child: Text(
-                                this.connection.lastConnectedMs != null
-                                    ? 'Last used: ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}'
-                                    : 'Never used',
-                                style: Theme.of(context).textTheme.labelSmall!
-                                    .copyWith(color: textColors.textTertiary),
+                                [
+                                  'Remote access',
+                                  ?this.connection.remoteReach?.cardProblem,
+                                ].join(' · '),
+                                style: Theme.of(context).textTheme.bodySmall,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -357,7 +335,35 @@ class ConnectionBox extends StatelessWidget {
                           ],
                         ),
                       ],
-                    ),
+                      const SizedBox(height: AppSpacing.xs),
+
+                      /// Same icon column as the endpoint / remote rows
+                      Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.clock,
+                            size: 14.0,
+                            color: textColors.textTertiary,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Flexible(
+                            child: Text(
+                              this.connection.lastConnectedMs != null
+                                  ? 'Last used: ${relativeTimeAgo(DateTime.fromMillisecondsSinceEpoch(this.connection.lastConnectedMs!))}'
+                                  : 'Never used',
+                              style: Theme.of(context).textTheme.labelSmall!
+                                  .copyWith(color: textColors.textTertiary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      /// Optical balance: the text's line box leaves ~2 pt
+                      /// more air above the first line than below the last
+                      const SizedBox(height: 2.0),
+                    ],
                   ),
                 ),
                 Observer(
