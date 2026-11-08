@@ -30,11 +30,9 @@ ChatTtsStore? _ttsStoreOrNull() => GetIt.instance.isRegistered<ChatTtsStore>()
 /// options sheet)
 void showChatTtsSheet(BuildContext context) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
-  builder: (context) => NativeChatSheetScaffold(
-    header: Text('Text to speech', style: nativeChatSheetTitleStyle(context)),
+  height: BaseSheetHeight.standard,
+  builder: (context) => BaseSheetScaffold(
+    header: Text('Text to speech', style: baseSheetTitleStyle(context)),
     body: const ChatTtsSettingsRows(),
   ),
 );
@@ -419,7 +417,7 @@ class ChatTtsSettingsRows extends StatelessWidget {
             top: AppSpacing.lg,
             bottom: AppSpacing.xs,
           ),
-          child: Text(label, style: nativeChatSheetSectionStyle(context)),
+          child: Text(label, style: baseSheetSectionStyle(context)),
         );
 
         return Column(
@@ -750,14 +748,9 @@ void showChatTtsVoicesSheet(
   required ChatTtsStore store,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
-  builder: (context) => NativeChatSheetScaffold(
-    header: Text(
-      'Voices per language',
-      style: nativeChatSheetTitleStyle(context),
-    ),
+  height: BaseSheetHeight.standard,
+  builder: (context) => BaseSheetScaffold(
+    header: Text('Voices per language', style: baseSheetTitleStyle(context)),
     body: Observer(
       builder: (context) {
         final languages = chatTtsLanguages(store.voices ?? const []);

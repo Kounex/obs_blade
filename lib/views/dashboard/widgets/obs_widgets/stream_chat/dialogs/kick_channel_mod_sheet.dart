@@ -16,9 +16,7 @@ import 'channel_mod_chrome.dart';
 void showKickChannelModSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
+      height: BaseSheetHeight.standard,
       builder: (_) => ChannelModSheetFrame(
         child: KickChannelModPanel(
           onToast: (message) => showChannelModToast(context, message),
@@ -113,7 +111,7 @@ class _KickChannelModPanelState extends State<KickChannelModPanel> {
             if (this.widget.showTitle)
               Text(
                 'Moderate ${this._store.selectedChannelSlug ?? 'Kick'}',
-                style: nativeChatSheetTitleStyle(context),
+                style: baseSheetTitleStyle(context),
               ),
             const ChannelModSectionHeader('Chat modes'),
             if (chatroom == null)

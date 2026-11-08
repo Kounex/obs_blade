@@ -149,10 +149,10 @@ void main() {
       tester,
       'tts_settings',
       Builder(
-        builder: (context) => NativeChatSheetScaffold(
+        builder: (context) => BaseSheetScaffold(
           header: Text(
             'Text to speech',
-            style: nativeChatSheetTitleStyle(context),
+            style: baseSheetTitleStyle(context),
           ),
           body: const ChatTtsSettingsRows(),
         ),

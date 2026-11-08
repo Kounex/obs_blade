@@ -199,9 +199,7 @@ class CombinedSendTargetChip extends StatelessWidget {
 Future<void> showCombinedSendTargetSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.5,
+      height: BaseSheetHeight.compact,
       builder: (_) => const CombinedSendTargetSheet(),
     );
 
@@ -218,8 +216,8 @@ class CombinedSendTargetSheet extends StatelessWidget {
           for (final source in store.activeSources)
             source.platform: source.label,
         };
-        return NativeChatSheetScaffold(
-          header: Text('Send to', style: nativeChatSheetTitleStyle(context)),
+        return BaseSheetScaffold(
+          header: Text('Send to', style: baseSheetTitleStyle(context)),
           body: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

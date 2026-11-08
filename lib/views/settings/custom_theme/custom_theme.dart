@@ -8,7 +8,6 @@ import '../../../shared/general/base/card.dart';
 import '../../../shared/general/clean_list_tile.dart';
 import '../../../shared/general/hive_builder.dart';
 import '../../../shared/general/themed/cupertino_button.dart';
-import '../../../shared/general/themed/cupertino_scaffold.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/pro_store.dart';
 import '../../../types/enums/hive_keys.dart';
@@ -40,10 +39,10 @@ class CustomThemeView extends StatefulWidget {
 class _CustomThemeViewState extends State<CustomThemeView> {
   void _openAddTheme(BuildContext context, {required bool unlocked}) {
     if (unlocked) {
-      ModalHandler.showBaseCupertinoBottomSheet(
+      ModalHandler.showBaseBottomSheet(
         context: context,
-        modalWidgetBuilder: (context, scrollController) =>
-            AddEditTheme(scrollController: scrollController),
+        height: BaseSheetHeight.tall,
+        builder: (context) => const AddEditTheme(),
       );
     } else {
       /// Blacksmith is no longer sold — the upsell is the Pro paywall.
@@ -53,141 +52,139 @@ class _CustomThemeViewState extends State<CustomThemeView> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemedCupertinoScaffold(
-      /// I need to use the [ValueListenableBuilder] here since this subtree
-      /// doesn't get rebuilded when [MaterialApp] rebuilds (there is a
-      /// [ValueListenableBuilder] wrapping [MaterialApp] which also listenes
-      /// to [SettingsKeys.ActiveCustomThemeUUID]) so changing and updating
-      /// the current theme works but this subtree doesn't get rebuilded
-      /// in this process since it's a [StatefulWidget] and the state itself
-      /// is not being rebuild (would have to trigger this specifically with keys
-      /// or overriding updateWidget or similar)
-      body: HiveBuilder<dynamic>(
-        hiveKey: HiveKeys.Settings,
-        rebuildKeys: const [
-          SettingsKeys.ActiveCustomThemeUUID,
-          SettingsKeys.CustomTheme,
-          SettingsKeys.BoughtBlacksmith,
-        ],
-        builder: (context, settingsBox, child) {
-          /// Explicit [AnimatedTheme] on the activation surface: the
-          /// MaterialApp subtree is not keyed, so its implicit crossfade
-          /// already plays app-wide - this re-wraps the editor itself so
-          /// the screen the user activates the theme on visibly morphs at
-          /// the design system's theme-change duration ([AppMotion.slow])
-          /// instead of the shorter framework default.
-          return AnimatedTheme(
-            data: Theme.of(context),
-            duration: AppMotion.slow,
-            curve: AppMotion.standard,
-            child: TransculentCupertinoNavBarWrapper(
-              previousTitle: 'Settings',
-              title: 'Custom Theme',
-              listViewChildren: [
-                StaggeredEntrance(
-                  scaleFrom: 0.985,
-                  index: 0,
-                  child: BaseCard(
-                    bottomPadding: 12.0,
-                    child: CleanListTile(
-                      title: 'Use Custom Theme',
-                      description:
-                          'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
-                      trailing: BaseAdaptiveSwitch(
-                        value: settingsBox.get(
+    /// I need to use the [ValueListenableBuilder] here since this subtree
+    /// doesn't get rebuilded when [MaterialApp] rebuilds (there is a
+    /// [ValueListenableBuilder] wrapping [MaterialApp] which also listenes
+    /// to [SettingsKeys.ActiveCustomThemeUUID]) so changing and updating
+    /// the current theme works but this subtree doesn't get rebuilded
+    /// in this process since it's a [StatefulWidget] and the state itself
+    /// is not being rebuild (would have to trigger this specifically with keys
+    /// or overriding updateWidget or similar)
+    return HiveBuilder<dynamic>(
+      hiveKey: HiveKeys.Settings,
+      rebuildKeys: const [
+        SettingsKeys.ActiveCustomThemeUUID,
+        SettingsKeys.CustomTheme,
+        SettingsKeys.BoughtBlacksmith,
+      ],
+      builder: (context, settingsBox, child) {
+        /// Explicit [AnimatedTheme] on the activation surface: the
+        /// MaterialApp subtree is not keyed, so its implicit crossfade
+        /// already plays app-wide - this re-wraps the editor itself so
+        /// the screen the user activates the theme on visibly morphs at
+        /// the design system's theme-change duration ([AppMotion.slow])
+        /// instead of the shorter framework default.
+        return AnimatedTheme(
+          data: Theme.of(context),
+          duration: AppMotion.slow,
+          curve: AppMotion.standard,
+          child: TransculentCupertinoNavBarWrapper(
+            previousTitle: 'Settings',
+            title: 'Custom Theme',
+            listViewChildren: [
+              StaggeredEntrance(
+                scaleFrom: 0.985,
+                index: 0,
+                child: BaseCard(
+                  bottomPadding: 12.0,
+                  child: CleanListTile(
+                    title: 'Use Custom Theme',
+                    description:
+                        'Once active the selected theme below will be used for this app. Choose one of the predefined themes or your own!',
+                    trailing: BaseAdaptiveSwitch(
+                      value: settingsBox.get(
+                        SettingsKeys.CustomTheme.name,
+                        defaultValue: false,
+                      ),
+                      onChanged: (customTheme) {
+                        settingsBox.put(
                           SettingsKeys.CustomTheme.name,
-                          defaultValue: false,
-                        ),
-                        onChanged: (customTheme) {
+                          customTheme,
+                        );
+                        if ((settingsBox.get(
+                                  SettingsKeys.ActiveCustomThemeUUID.name,
+                                  defaultValue: '',
+                                )
+                                as String)
+                            .isEmpty) {
                           settingsBox.put(
-                            SettingsKeys.CustomTheme.name,
-                            customTheme,
+                            SettingsKeys.ActiveCustomThemeUUID.name,
+                            BuiltInThemes.themes.first.uuid,
                           );
-                          if ((settingsBox.get(
-                                    SettingsKeys.ActiveCustomThemeUUID.name,
-                                    defaultValue: '',
-                                  )
-                                  as String)
-                              .isEmpty) {
-                            settingsBox.put(
-                              SettingsKeys.ActiveCustomThemeUUID.name,
-                              BuiltInThemes.themes.first.uuid,
-                            );
-                          }
-                        },
-                      ),
+                        }
+                      },
                     ),
                   ),
                 ),
-                StaggeredEntrance(
-                  scaleFrom: 0.985,
-                  index: 1,
-                  child: BaseCard(
-                    above: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xxl,
+              ),
+              StaggeredEntrance(
+                scaleFrom: 0.985,
+                index: 1,
+                child: BaseCard(
+                  above: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxl,
+                    ),
+                    child: Text(
+                      'Predefined Themes'.toUpperCase(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).extension<AppTextColors>()!.textTertiary,
                       ),
-                      child: Text(
-                        'Predefined Themes'.toUpperCase(),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).extension<AppTextColors>()!.textTertiary,
+                    ),
+                  ),
+                  topPadding: 8.0,
+                  bottomPadding: 12.0,
+                  paddingChild: const EdgeInsets.all(0),
+                  child: const CustomThemeList(predefinedThemes: true),
+                ),
+              ),
+              StaggeredEntrance(
+                scaleFrom: 0.985,
+                index: 2,
+                child: BaseCard(
+                  above: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxl,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Your Themes'.toUpperCase(),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).extension<AppTextColors>()!.textTertiary,
+                              ),
                         ),
-                      ),
-                    ),
-                    topPadding: 8.0,
-                    bottomPadding: 12.0,
-                    paddingChild: const EdgeInsets.all(0),
-                    child: const CustomThemeList(predefinedThemes: true),
-                  ),
-                ),
-                StaggeredEntrance(
-                  scaleFrom: 0.985,
-                  index: 2,
-                  child: BaseCard(
-                    above: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xxl,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Your Themes'.toUpperCase(),
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).extension<AppTextColors>()!.textTertiary,
-                                ),
-                          ),
-                          ThemedCupertinoButton(
-                            text: 'Add Theme',
-                            padding: const EdgeInsets.all(0),
+                        ThemedCupertinoButton(
+                          text: 'Add Theme',
+                          padding: const EdgeInsets.all(0),
 
-                            /// Evaluated at tap time (not at build), so the gate
-                            /// picks up a mid-session Pro purchase / blacksmith
-                            /// restore without a rebuild.
-                            onPressed: () => _openAddTheme(
-                              context,
-                              unlocked: customThemesUnlocked(settingsBox),
-                            ),
+                          /// Evaluated at tap time (not at build), so the gate
+                          /// picks up a mid-session Pro purchase / blacksmith
+                          /// restore without a rebuild.
+                          onPressed: () => _openAddTheme(
+                            context,
+                            unlocked: customThemesUnlocked(settingsBox),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    topPadding: 8.0,
-                    bottomPadding: 12.0,
-                    paddingChild: const EdgeInsets.all(0),
-                    child: const CustomThemeList(),
                   ),
+                  topPadding: 8.0,
+                  bottomPadding: 12.0,
+                  paddingChild: const EdgeInsets.all(0),
+                  child: const CustomThemeList(),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

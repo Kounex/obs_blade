@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:obs_blade/shared/general/base/sheet.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
 void main() {
@@ -15,9 +15,7 @@ void main() {
             builder: (context) => TextButton(
               onPressed: () => ModalHandler.showBaseBottomSheet(
                 context: context,
-                barrierDismissible: true,
-                enableDrag: true,
-                maxHeightFraction: 0.72,
+                height: BaseSheetHeight.standard,
                 builder: (_) => const Padding(
                   padding: EdgeInsets.all(24),
                   child: Text('sheet body'),
@@ -42,9 +40,7 @@ void main() {
   Widget scrollingSheet(BuildContext context) => TextButton(
     onPressed: () => ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.86,
+      height: BaseSheetHeight.tall,
       builder: (_) => ListView(
         primary: false,
         children: [
@@ -232,9 +228,7 @@ void main() {
   Widget shortSheet(BuildContext context) => TextButton(
     onPressed: () => ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.86,
+      height: BaseSheetHeight.tall,
       builder: (_) => ListView(
         primary: false,
         children: const [SizedBox(height: 48, child: Text('short row'))],
@@ -285,53 +279,157 @@ void main() {
     },
   );
 
-  /// Dogfood 2026-11-08: the close button sat below the content in the
-  /// sheet's Stack - content starting 24 pt down covered its lower half,
-  /// so only a sliver at the top took taps
-  testWidgets('the Cupertino sheet close button takes taps on its whole '
-      '44 pt area, also where the content starts', (tester) async {
-    for (final dy in [-16.0, 0.0, 16.0]) {
+  Widget opener({
+    TargetPlatform platform = TargetPlatform.android,
+    BaseSheetHeight height = BaseSheetHeight.standard,
+    required Widget Function(BuildContext) builder,
+  }) => MaterialApp(
+    theme: ThemeData(platform: platform),
+    home: Scaffold(
+      body: Builder(
+        builder: (context) => TextButton(
+          onPressed: () => ModalHandler.showBaseBottomSheet(
+            context: context,
+            height: height,
+            builder: builder,
+          ),
+          child: const Text('open'),
+        ),
+      ),
+    ),
+  );
+
+  /// Tablets: every sheet is a centered card, never the full width
+  /// (the dashboard / settings sheets were full width before 2026-11)
+  testWidgets('a sheet is at most kBaseSheetMaxWidth wide, centered', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1180, 820);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      opener(
+        builder: (_) => const SizedBox(
+          key: Key('wide-content'),
+          width: double.infinity,
+          height: 120,
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    final Rect sheet = tester.getRect(find.byKey(const Key('wide-content')));
+    expect(sheet.width, kBaseSheetMaxWidth);
+    expect(sheet.center.dx, 1180 / 2);
+  });
+
+  testWidgets("a sheet is at most its height's share of the screen", (
+    tester,
+  ) async {
+    for (final height in BaseSheetHeight.values) {
       await tester.pumpWidget(
-        MaterialApp(
-          home: CupertinoScaffold(
-            body: Scaffold(
-              body: Builder(
-                builder: (context) => TextButton(
-                  onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
-                    context: context,
-                    modalWidgetBuilder: (_, controller) => ListView(
-                      controller: controller,
-                      shrinkWrap: true,
-                      children: [
-                        for (var i = 0; i < 5; i++)
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {},
-                            child: const SizedBox(
-                              height: 48,
-                              child: Text('sheet row'),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  child: const Text('open'),
-                ),
-              ),
-            ),
+        opener(
+          height: height,
+          builder: (_) => ListView(
+            primary: false,
+            children: [
+              for (var i = 0; i < 60; i++)
+                const SizedBox(height: 48, child: Text('row')),
+            ],
           ),
         ),
       );
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
-      expect(find.text('sheet row'), findsWidgets);
 
-      final Offset center = tester.getCenter(
-        find.byIcon(CupertinoIcons.clear_circled_solid),
+      final double screen =
+          tester.view.physicalSize.height / tester.view.devicePixelRatio;
+      final Rect list = tester.getRect(find.byType(ListView));
+      expect(
+        list.height,
+        lessThanOrEqualTo(screen * height.fraction),
+        reason: height.name,
       );
-      await tester.tapAt(center + Offset(0, dy));
+      expect(
+        list.height,
+        greaterThan(screen * height.fraction - 60),
+        reason: '${height.name}: a long list fills its cap',
+      );
+      Navigator.of(tester.element(find.byType(ListView))).pop();
       await tester.pumpAndSettle();
-      expect(find.text('sheet row'), findsNothing, reason: 'tap at dy=$dy');
     }
+  });
+
+  testWidgets('frosted glass on iOS, solid card on Android', (tester) async {
+    for (final (platform, glass) in [
+      (TargetPlatform.iOS, true),
+      (TargetPlatform.android, false),
+    ]) {
+      await tester.pumpWidget(
+        opener(
+          platform: platform,
+          builder: (_) => const SizedBox(key: Key('content'), height: 120),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(BackdropFilter),
+        glass ? findsOneWidget : findsNothing,
+        reason: platform.name,
+      );
+      Navigator.of(tester.element(find.byKey(const Key('content')))).pop();
+      await tester.pumpAndSettle();
+    }
+  });
+
+  /// The date picker sheet: running a wheel past its first entry picks a
+  /// date, it doesn't drag the sheet away
+  testWidgets('a picker wheel at its start does not drag the sheet', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      opener(
+        builder: (_) => BaseSheetScaffold(
+          header: const BaseSheetTitle('Date'),
+          body: SizedBox(
+            height: 216,
+            child: CupertinoPicker(
+              itemExtent: 32,
+              onSelectedItemChanged: (_) {},
+              children: [for (var i = 0; i < 10; i++) Text('item $i')],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.fling(find.text('item 0'), const Offset(0, 300), 1500);
+    await tester.pumpAndSettle();
+    expect(find.text('Date'), findsOneWidget);
+  });
+
+  testWidgets('a BaseSheetScaffold sheet closes by dragging its header', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      opener(
+        builder: (_) => const BaseSheetScaffold(
+          header: BaseSheetTitle('Title'),
+          body: SizedBox(height: 200),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Title'), findsOneWidget);
+
+    await tester.fling(find.text('Title'), const Offset(0, 400), 1500);
+    await tester.pumpAndSettle();
+    expect(find.text('Title'), findsNothing);
   });
 }

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/app.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 
 import '../../../test/persistence/support/hive_test_harness.dart';
@@ -86,6 +87,31 @@ class ShotsHarness {
     await _hive.close();
     if (_tempDir.existsSync()) _tempDir.deleteSync(recursive: true);
   }
+
+  /// [build] opened the way the app opens a sheet
+  /// ([ModalHandler.showBaseBottomSheet]: handle, width cap, height cap,
+  /// glass on Apple) over a dark stand-in screen - shoot this, not the
+  /// sheet's content alone, so the sheet chrome is in the picture
+  static Widget inSheet(
+    Widget Function() build, {
+    BaseSheetHeight height = BaseSheetHeight.standard,
+  }) => Builder(
+    builder: (context) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ModalRoute.of(context)?.isCurrent ?? false) {
+          ModalHandler.showBaseBottomSheet(
+            context: context,
+            height: height,
+            builder: (_) => build(),
+          );
+        }
+      });
+      return const ColoredBox(
+        color: Color(0xFF3A3F55),
+        child: Center(child: Text('screen behind the sheet')),
+      );
+    },
+  );
 
   /// Pumps [child] in a [MaterialApp] with the app's theme (current Hive
   /// settings) inside a [Scaffold], lets animations settle and writes

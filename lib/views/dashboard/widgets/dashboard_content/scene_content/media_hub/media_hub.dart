@@ -55,19 +55,16 @@ class _MediaHubState extends State<MediaHub>
     super.dispose();
   }
 
-  void _openTransport(String inputName) =>
-      ModalHandler.showBaseCupertinoBottomSheet(
-        context: this.context,
-        modalWidgetBuilder: (context, controller) =>
-            MediaTransportSheet(inputName: inputName),
-      );
+  void _openTransport(String inputName) => ModalHandler.showBaseBottomSheet(
+    context: this.context,
+    builder: (context) => MediaTransportSheet(inputName: inputName),
+  );
 
-  void _openArrange(String connectionKey) =>
-      ModalHandler.showBaseCupertinoBottomSheet(
-        context: this.context,
-        modalWidgetBuilder: (context, controller) =>
-            MediaHubArrangeSheet(connectionKey: connectionKey),
-      );
+  void _openArrange(String connectionKey) => ModalHandler.showBaseBottomSheet(
+    context: this.context,
+    height: BaseSheetHeight.tall,
+    builder: (context) => MediaHubArrangeSheet(connectionKey: connectionKey),
+  );
 
   @override
   Widget build(BuildContext context) {

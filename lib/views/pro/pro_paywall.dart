@@ -5,7 +5,6 @@ import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 
 import '../../shared/design/design.dart';
-import '../../shared/general/themed/cupertino_scaffold.dart';
 import '../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../stores/pro_store.dart';
 import 'widgets/pro_sales.dart';
@@ -78,39 +77,34 @@ class _ProPaywallViewState extends State<ProPaywallView> {
 
   @override
   Widget build(BuildContext context) {
-    return ThemedCupertinoScaffold(
-      /// Own material Scaffold so ScaffoldMessenger (placeholder-buy /
-      /// debug-toggle snackbars) has a descendant to present to - the
-      /// Cupertino shell doesn't register one
-      body: Scaffold(
-        body: TransculentCupertinoNavBarWrapper(
-          /// Back-only bar (token-delta §5, v12): a title here duplicates
-          /// the hero's brand mark - double naming. The body extends
-          /// behind the bar so scrolling content makes the blur visible
-          /// (same as the sliver-based views).
-          extendBodyBehindBar: true,
-          customBody: Observer(
-            builder: (context) => AnimatedSwitcher(
-              duration: AppMotion.medium,
+    /// Own material Scaffold so ScaffoldMessenger (placeholder-buy /
+    /// debug-toggle snackbars) has a descendant to present to
+    return Scaffold(
+      body: TransculentCupertinoNavBarWrapper(
+        /// Back-only bar (token-delta §5, v12): a title here duplicates
+        /// the hero's brand mark - double naming. The body extends
+        /// behind the bar so scrolling content makes the blur visible
+        /// (same as the sliver-based views).
+        extendBodyBehindBar: true,
+        customBody: Observer(
+          builder: (context) => AnimatedSwitcher(
+            duration: AppMotion.medium,
 
-              /// The default layout is a loose Stack - the scroll views
-              /// would shrink-wrap short content and clip it at their own
-              /// bottom edge while bouncing, above the tab bar
-              layoutBuilder: (current, previous) => Stack(
-                fit: StackFit.expand,
-                children: [...previous, ?current],
-              ),
-              child: this._store.isPro
-                  ? ProUnlockedView(
-                      key: const ValueKey('pro-unlocked'),
-                      store: this._store,
-                      confettiController: this._confettiController,
-                    )
-                  : ProSalesView(
-                      key: const ValueKey('pro-sales'),
-                      store: this._store,
-                    ),
-            ),
+            /// The default layout is a loose Stack - the scroll views
+            /// would shrink-wrap short content and clip it at their own
+            /// bottom edge while bouncing, above the tab bar
+            layoutBuilder: (current, previous) =>
+                Stack(fit: StackFit.expand, children: [...previous, ?current]),
+            child: this._store.isPro
+                ? ProUnlockedView(
+                    key: const ValueKey('pro-unlocked'),
+                    store: this._store,
+                    confettiController: this._confettiController,
+                  )
+                : ProSalesView(
+                    key: const ValueKey('pro-sales'),
+                    store: this._store,
+                  ),
           ),
         ),
       ),

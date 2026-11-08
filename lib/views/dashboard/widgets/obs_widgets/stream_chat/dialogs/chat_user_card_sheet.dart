@@ -54,10 +54,6 @@ class ChatUserCardConnection {
   });
 }
 
-/// Height cap of every platform's user card: the chat stays visible above
-/// it; a long history scrolls under the pinned name, facts and LIVE.
-const double kChatUserCardMaxHeightFraction = 2 / 3;
-
 /// Opens the native chat user card for [userId]. Pass [connection] when
 /// showing the logged-in user's merged self sheet (status + actions).
 void showChatUserCardSheet(
@@ -67,9 +63,7 @@ void showChatUserCardSheet(
   TwitchUserService? userService,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: kChatUserCardMaxHeightFraction,
+  height: BaseSheetHeight.standard,
   builder: (_) => ChatUserCardSheet(
     userId: userId,
     connection: connection,
@@ -122,8 +116,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
   List<UserCardMessage<ChatMessageEvent>> get _bufferedMessages =>
       this._store.messagesForChatter(this.widget.userId);
 
-  ChatMessageEvent? get _newestBuffered =>
-      this._bufferedMessages.isEmpty ? null : this._bufferedMessages.first.message;
+  ChatMessageEvent? get _newestBuffered => this._bufferedMessages.isEmpty
+      ? null
+      : this._bufferedMessages.first.message;
 
   bool get _isSelf => this._store.user?.id == this.widget.userId;
 
@@ -255,7 +250,7 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
     final newest = this._newestBuffered;
     final messages = this._bufferedMessages;
 
-    return NativeChatSheetScaffold(
+    return BaseSheetScaffold(
       headerGap: AppSpacing.lg,
       header: this._header(context, newest),
 
@@ -341,10 +336,9 @@ class _ChatUserCardSheetState extends State<ChatUserCardSheet> {
       deletedMarker:
           snapshot?.marker ??
           (liveInfo == null ? ' -Deleted' : chatTombstoneMarker(liveInfo)),
-      deletedActor:
-          snapshot != null
-              ? snapshot.actor
-              : this._store.deletedMessageActor(event.messageId),
+      deletedActor: snapshot != null
+          ? snapshot.actor
+          : this._store.deletedMessageActor(event.messageId),
     );
   }
 

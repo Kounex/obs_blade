@@ -15,6 +15,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/kick/kick_auth_service.dart';
 import 'package:obs_blade/utils/youtube/youtube_auth_service.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/kick_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/dialogs/youtube_user_card_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/twitch_chat_message_row.dart'
@@ -110,7 +111,7 @@ void main() {
       );
     });
 
-    testWidgets('a chatty viewer: the card stops at 2/3 of the screen and '
+    testWidgets('a chatty viewer: the card stops at the standard sheet cap '
         'the history scrolls under the pinned name', (tester) async {
       /// A portrait phone - a short sheet scrolls as a whole
       tester.view.physicalSize = const Size(390.0, 844.0);
@@ -148,7 +149,10 @@ void main() {
       final screen =
           tester.view.physicalSize.height / tester.view.devicePixelRatio;
       final sheet = tester.getSize(find.byType(YouTubeUserCardSheet));
-      expect(sheet.height, lessThanOrEqualTo(screen * 2 / 3 + 1));
+      expect(
+        sheet.height,
+        lessThanOrEqualTo(screen * BaseSheetHeight.standard.fraction + 1),
+      );
 
       /// Newest first; the oldest of the 20 is lazily unbuilt until
       /// scrolled to (the history list builds on demand now)

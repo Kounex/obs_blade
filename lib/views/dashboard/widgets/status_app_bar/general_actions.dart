@@ -10,7 +10,6 @@ import '../../../../models/connection.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/app_bar_actions.dart';
-import '../../../../shared/general/base/card.dart';
 import '../../../../shared/general/hive_builder.dart';
 import '../../../../shared/overlay/base_progress_indicator.dart';
 import '../../../../stores/pro_store.dart';
@@ -38,12 +37,10 @@ class GeneralActions extends StatelessWidget {
     final session = networkStore.activeSession;
     if (session == null) return;
     final bool tablet = MediaQuery.sizeOf(context).shortestSide >= 600;
-    ModalHandler.showBaseCupertinoBottomSheet(
+    ModalHandler.showBaseBottomSheet(
       context: context,
-
-      /// Card width on tablets - a full-width sheet stretches the buttons
-      maxWidth: kBaseCardMaxWidth,
-      modalWidgetBuilder: (sheetContext, controller) => RemoteAccessSheet(
+      height: BaseSheetHeight.tall,
+      builder: (sheetContext) => RemoteAccessSheet(
         connection: session.connection,
         saved: session.connection.name != null && session.connection.isInBox,
         isPro: GetIt.instance<ProStore>().isPro,
@@ -343,6 +340,7 @@ class GeneralActions extends StatelessWidget {
                             );
                           },
                   ),
+
                   /// Remote Access lives on the globe next to this menu
                   /// (RemoteAccessButton) - not repeated here (user,
                   /// 2026-11-08)

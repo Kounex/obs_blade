@@ -194,7 +194,7 @@ source of truth; never leave work local-only when handing over.
   to the older local SDK - `git checkout pubspec.lock` before committing.
   `pkill -f <pattern>` matching your own command kills your shell - kill
   by pid. Never answer an interactive `rm -i`/`cp -i` - use `-f`.
-- Chat conventions: sheets on `NativeChatSheetScaffold`; mod rows from
+- Chat conventions: sheets on `BaseSheetScaffold` (every sheet in the app); mod rows from
   `dialogs/channel_mod_chrome.dart`; history rows `isHistorical` +
   `kChatHistoryOpacity` + `ChatHistoryDivider`; "LIVE"/live green = on air
   only (connection problems use markers); Kick/YouTube mod actions: always

@@ -6,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/divider.dart';
+import '../../../../../../shared/general/base/sheet.dart';
 import '../../../../../../shared/general/hive_builder.dart';
 import '../../../../../../stores/shared/network.dart';
 import '../../../../../../stores/views/dashboard.dart';
@@ -49,103 +50,104 @@ class MediaHubArrangeSheet extends StatelessWidget {
             writeMediaHubLayout(raw, this.connectionKey, next),
           );
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Arrange Media', style: theme.textTheme.headlineSmall),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Drag to reorder, tap the eye to hide a source from the hub. Saved for this connection.',
-                      style: theme.textTheme.bodySmall!.copyWith(
-                        color: textColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    const BaseDivider(),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: ReorderableListView.builder(
-                  shrinkWrap: true,
-                  buildDefaultDragHandles: false,
-                  padding: EdgeInsets.only(
-                    bottom:
-                        MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
+          return BaseSheetScaffold(
+            header: const BaseSheetTitle('Arrange Media'),
+            bodyIsScrollable: true,
+            body: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
                   ),
-                  itemCount: names.length,
-                  onReorderItem: (oldIndex, newIndex) {
-                    final List<String> order = [...names];
-                    order.insert(newIndex, order.removeAt(oldIndex));
-                    save(layout.withOrder(order));
-                  },
-                  itemBuilder: (context, index) {
-                    final String name = names[index];
-                    final bool hidden = layout.isHidden(name);
-                    return Material(
-                      key: ValueKey(name),
-                      color: Colors.transparent,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.only(
-                          left: 24.0,
-                          right: AppSpacing.md,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Drag to reorder, tap the eye to hide a source from the hub. Saved for this connection.',
+                        style: theme.textTheme.bodySmall!.copyWith(
+                          color: textColors.textSecondary,
                         ),
-                        title: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: hidden
-                              ? TextStyle(color: textColors.textTertiary)
-                              : null,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Semantics(
-                              button: true,
-                              toggled: !hidden,
-                              label: hidden ? 'Show $name' : 'Hide $name',
-                              excludeSemantics: true,
-                              child: Pressable(
-                                haptic: true,
-                                onTap: () =>
-                                    save(layout.withHidden(name, !hidden)),
-                                child: SizedBox(
-                                  width: 44.0,
-                                  height: 44.0,
-                                  child: Icon(
-                                    hidden
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: hidden
-                                        ? theme.disabledColor
-                                        : theme.colorScheme.onSurface,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      const BaseDivider(),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ReorderableListView.builder(
+                    shrinkWrap: true,
+                    buildDefaultDragHandles: false,
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                    itemCount: names.length,
+                    onReorderItem: (oldIndex, newIndex) {
+                      final List<String> order = [...names];
+                      order.insert(newIndex, order.removeAt(oldIndex));
+                      save(layout.withOrder(order));
+                    },
+                    itemBuilder: (context, index) {
+                      final String name = names[index];
+                      final bool hidden = layout.isHidden(name);
+                      return Material(
+                        key: ValueKey(name),
+                        color: Colors.transparent,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.only(
+                            left: AppSpacing.lg,
+                            right: AppSpacing.sm,
+                          ),
+                          title: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: hidden
+                                ? TextStyle(color: textColors.textTertiary)
+                                : null,
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Semantics(
+                                button: true,
+                                toggled: !hidden,
+                                label: hidden ? 'Show $name' : 'Hide $name',
+                                excludeSemantics: true,
+                                child: Pressable(
+                                  haptic: true,
+                                  onTap: () =>
+                                      save(layout.withHidden(name, !hidden)),
+                                  child: SizedBox(
+                                    width: 44.0,
+                                    height: 44.0,
+                                    child: Icon(
+                                      hidden
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                      color: hidden
+                                          ? theme.disabledColor
+                                          : theme.colorScheme.onSurface,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            ReorderableDragStartListener(
-                              index: index,
-                              child: const SizedBox(
-                                width: 44.0,
-                                height: 44.0,
-                                child: Icon(CupertinoIcons.line_horizontal_3),
+                              ReorderableDragStartListener(
+                                index: index,
+                                child: const SizedBox(
+                                  width: 44.0,
+                                  height: 44.0,
+                                  child: Icon(CupertinoIcons.line_horizontal_3),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

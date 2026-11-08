@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/divider.dart';
+import '../../../../../../shared/general/base/sheet.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/input.dart';
 import '../../../../../../types/enums/request_type.dart';
@@ -86,18 +87,14 @@ class _AudioSettingsSheetState extends State<AudioSettingsSheet> {
           onOff: monitoringIsOnOff,
         );
 
-        return SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24.0) +
-              EdgeInsets.only(
-                bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
-              ),
-          child: Column(
+        return BaseSheetScaffold(
+          header: BaseSheetTitle(
+            'Audio Settings',
+            subtitle: this.widget.inputName,
+          ),
+          body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Audio Settings', style: theme.textTheme.headlineSmall),
-              Text(this.widget.inputName, style: theme.textTheme.bodySmall),
-              const SizedBox(height: AppSpacing.lg),
               const BaseDivider(),
               const SizedBox(height: AppSpacing.lg),
               Row(

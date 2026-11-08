@@ -17,9 +17,7 @@ import '../native_chat_chrome.dart';
 void showChannelBansSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
+      height: BaseSheetHeight.standard,
       builder: (_) => ChannelBansSheet(
         onFailure: (message) => ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -134,13 +132,13 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           Row(
             children: [
               Expanded(
                 child: Text(
                   'Bans & requests',
-                  style: nativeChatSheetTitleStyle(context),
+                  style: baseSheetTitleStyle(context),
                 ),
               ),
               Pressable(
@@ -261,7 +259,7 @@ class _ChannelBansSheetState extends State<ChannelBansSheet> {
 
   Widget _sectionHeader(BuildContext context, String title) => Padding(
     padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs),
-    child: Text(title, style: nativeChatSheetSectionStyle(context)),
+    child: Text(title, style: baseSheetSectionStyle(context)),
   );
 
   Widget _requestRow(BuildContext context, TwitchUnbanRequest request) =>

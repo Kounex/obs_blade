@@ -4,6 +4,35 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-08 - One sheet app-wide
+
+- Audit: four kinds of sheet - chat (Material sheet, handle, pinned
+  title, 720 requested / 640 effective), dashboard + settings
+  (`modal_bottom_sheet` Cupertino card with page-shrink, X button, title
+  scrolled away, **full width on tablets**), pickers (date / color /
+  Android menu: no tap-out, no drag) and iOS action menus (near full
+  width on an iPad in portrait).
+- Now one: `ModalHandler.showBaseBottomSheet` + `BaseSheetScaffold`
+  (moved from the chat chrome to `lib/shared/general/base/sheet.dart`,
+  `NativeChatSheet*` -> `BaseSheet*`). Handle only - X, Close, Done and
+  the pickers' Cancel are gone (tap outside / drag cancels); frosted glass
+  on Apple for every sheet; `BaseSheetHeight` compact / standard / tall
+  replaces seven fractions (user cards 2/3 -> 0.72); 640 pt cap; iOS
+  action sheet capped through a narrower MediaQuery. `modal_bottom_sheet`
+  and `ThemedCupertinoScaffold` removed (no page-shrink).
+- Converted: Hotkeys, Audio settings, Media transport, Arrange media,
+  Edit text, Filters, Quick Connect QR, Credits (+ a package's licenses
+  as a sheet on top), Add / Edit theme, color picker, date picker,
+  Remote access, Android action menu. 24 pt side padding -> 16 like chat.
+- Fixes on the way: ListTile ink in sheets (Material now above the sheet
+  color), color picker `reset ? ...` on a null result (Save already threw
+  it unhandled), picker wheels don't drag the sheet, double keyboard inset
+  in Edit text, blur clipped to the rounded corners.
+- `pubspec-foss.lock` regenerated (also picks up `cryptography` +
+  `connectivity_plus_platform_interface` from the relay work, which had
+  left it stale).
+- Shots: `tool/widget_shots/sheets_shots_test.dart`, `ShotsHarness.inSheet`.
+
 ## 2026-11-08 - Remote access: dogfood round 2
 
 - Saved card 192 x 292 (was 172 x 268; the phone carousel squeezed it to

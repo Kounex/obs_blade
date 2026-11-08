@@ -50,15 +50,19 @@ class ThemeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Pressable(
       onTap: this.onSave != null
-          ? () => ModalHandler.showBaseBottomSheet(
+          ? () => ModalHandler.showBaseBottomSheet<bool>(
               context: context,
+              height: BaseSheetHeight.tall,
               builder: (context) => ColorPicker(
                 title: this.title ?? 'Title',
                 description: this.description ?? 'Description',
                 color: this.colorHex,
                 onSave: (colorHex) => this.onSave?.call(colorHex),
               ),
-            ).then((reset) => reset ? this.onReset?.call() : null)
+
+              /// null when closed by tapping outside / dragging - same as
+              /// Cancel, nothing to reset
+            ).then((reset) => reset == true ? this.onReset?.call() : null)
           : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

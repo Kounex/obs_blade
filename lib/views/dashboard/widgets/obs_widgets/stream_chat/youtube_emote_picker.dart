@@ -139,8 +139,8 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
-          Text('Emotes', style: nativeChatSheetTitleStyle(context)),
+          baseSheetDragHandle(context),
+          Text('Emotes', style: baseSheetTitleStyle(context)),
           const SizedBox(height: AppSpacing.sm),
           NativeChatTextField(
             onChanged: (value) => this.setState(() => this._query = value),
@@ -217,10 +217,7 @@ class _YouTubeEmotePickerSheetState extends State<YouTubeEmotePickerSheet> {
                       return ListView(
                         children: [
                           for (final (label, hint, emojis) in sections) ...[
-                            Text(
-                              label,
-                              style: nativeChatSheetSectionStyle(context),
-                            ),
+                            Text(label, style: baseSheetSectionStyle(context)),
                             if (hint != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 2.0),

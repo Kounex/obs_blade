@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/divider.dart';
+import '../../../../../../shared/general/base/sheet.dart';
 import '../../../../../../shared/general/base/icon_button.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/api/input.dart';
@@ -61,22 +62,16 @@ class _MediaTransportSheetState extends State<MediaTransportSheet> {
           mediaAction,
         );
 
-        return SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24.0) +
-              EdgeInsets.only(
-                bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
-              ),
-          child: Column(
+        return BaseSheetScaffold(
+          header: BaseSheetTitle(
+            this.widget.inputName,
+            subtitle: vlc ? 'VLC Video Source' : 'Media Source',
+          ),
+          body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(this.widget.inputName, style: theme.textTheme.headlineSmall),
-              Text(
-                vlc ? 'VLC Video Source' : 'Media Source',
-                style: theme.textTheme.bodySmall,
-              ),
               if (!inProgram) ...[
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [
                     Icon(

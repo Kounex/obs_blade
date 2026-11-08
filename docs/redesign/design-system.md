@@ -73,6 +73,7 @@ OBS Blade is a **first-party phone and tablet** app. Prefer great UI on both; ne
 | Swap widget | `ResponsiveWidgetWrapper` | Pass `mobileWidget` + `tabletWidget`; respects breakpoint + Force Tablet Mode |
 | Content column | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **720** (every `BaseCard`) | Keeps readable measure on very wide screens (text, lists, forms) |
 | Wide column | `kWideContentMaxWidth` **1040** (`BaseCard(maxWidth:)`, `StatsContainer(maxWidth:)`) | Data-dense tablet screens (charts, stat grids) — statistic detail lays charts 2 per row via `StatsChartGrid` |
+| Sheets | `kBaseSheetMaxWidth` **640** (`ModalHandler.showBaseBottomSheet`, iOS action menus) | Every sheet is a centered card on tablets, never full width |
 
 **Composition patterns (dashboard):**
 - **Phone:** adjacent Scene Items + Audio (and Chat + Stats) compose into one **tabbed** block to save scroll. Separating them in Elements Order stacks them independently.
@@ -115,6 +116,15 @@ When editing dashboard layout or the order feature, route through `ResponsiveWid
 - Status: pill clusters (LIVE/REC) with `TagBox` lineage; semantic colors via extension.
 - Dialogs/sheets: unified radius (12 sheets / 16 dialogs), entrance fade+scale 250ms;
   keep `BaseAdaptiveDialog` API + adaptive semantics + `onOk(bool)` signature.
+- Sheets (since 2026-11-08, one kind app-wide - chat, dashboard, settings,
+  pickers): `ModalHandler.showBaseBottomSheet` + `BaseSheetScaffold`
+  (`lib/shared/general/base/sheet.dart`). Drag handle is the only close
+  control (tap outside / drag / pull past the top of the body closes);
+  title pinned, body scrolls; frosted glass on Apple (bar 0.75 / σ10),
+  solid card elsewhere; heights `BaseSheetHeight` compact 0.5 / standard
+  0.72 / tall 0.88 (caps - short content stays short). No page-shrink
+  behind the sheet. iOS action menus stay `CupertinoActionSheet`
+  (`AppBarActions.showActions`), capped to the same width.
 
 ## Per-surface direction
 

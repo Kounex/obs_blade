@@ -7,6 +7,7 @@ import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/shared/general/base/divider.dart';
+import 'package:obs_blade/shared/general/base/sheet.dart';
 import 'package:obs_blade/shared/general/base/icon_button.dart';
 import 'package:obs_blade/stores/shared/network.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
@@ -76,125 +77,119 @@ class _FilterListState extends State<FilterList> {
         } catch (_) {
           Navigator.of(context).pop();
         }
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Filters',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Text(
-                    sceneItem.sourceName!,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  const Text(
-                    'List of filters which are attached to the selected scene item.',
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  const BaseDivider(),
-                ],
+        return BaseSheetScaffold(
+          header: BaseSheetTitle('Filters', subtitle: sceneItem.sourceName),
+          bodyIsScrollable: true,
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'List of filters which are attached to the selected scene item.',
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    const BaseDivider(),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: Scrollbar(
-                child: ListView(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.paddingOf(context).bottom + 24.0,
-                  ),
-                  children: sceneItem.filters
-                      .map(
-                        (filter) => BaseCard(
-                          leftPadding: 24.0,
-                          rightPadding: 24.0,
-                          bottomPadding: 0,
-                          title: filter.filterName,
-                          titlePadding: const EdgeInsets.symmetric(
-                            horizontal: 18.0,
-                            vertical: 12.0,
-                          ),
-                          titleStyle: Theme.of(context).textTheme.bodyLarge,
-                          trailingTitleWidget: StaleGuard(
-                            child: Pressable(
-                              haptic: true,
-                              onTap: () =>
-                                  GetIt.instance<DashboardStore>().sendMutation(
-                                    RequestType.SetSourceFilterEnabled,
-                                    fields: {
-                                      'sourceName': sceneItem.sourceName,
-                                      'filterName': filter.filterName,
-                                      'filterEnabled': !filter.filterEnabled,
-                                    },
-                                    label: 'Filter toggle',
-                                  ),
-                              child: SizedBox(
-                                width: kBaseIconButtonMinHitArea,
-                                height: kBaseIconButtonMinHitArea,
-                                child: Center(
-                                  child: AnimatedToggleIcon(
-                                    icon: filter.filterEnabled
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    color: filter.filterEnabled
-                                        ? Theme.of(
-                                            context,
-                                          ).colorScheme.onSurface
-                                        : Theme.of(context).disabledColor,
+              Expanded(
+                child: Scrollbar(
+                  child: ListView(
+                    primary: false,
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                    children: sceneItem.filters
+                        .map(
+                          (filter) => BaseCard(
+                            leftPadding: AppSpacing.lg,
+                            rightPadding: AppSpacing.lg,
+                            bottomPadding: 0,
+                            title: filter.filterName,
+                            titlePadding: const EdgeInsets.symmetric(
+                              horizontal: 18.0,
+                              vertical: 12.0,
+                            ),
+                            titleStyle: Theme.of(context).textTheme.bodyLarge,
+                            trailingTitleWidget: StaleGuard(
+                              child: Pressable(
+                                haptic: true,
+                                onTap: () => GetIt.instance<DashboardStore>()
+                                    .sendMutation(
+                                      RequestType.SetSourceFilterEnabled,
+                                      fields: {
+                                        'sourceName': sceneItem.sourceName,
+                                        'filterName': filter.filterName,
+                                        'filterEnabled': !filter.filterEnabled,
+                                      },
+                                      label: 'Filter toggle',
+                                    ),
+                                child: SizedBox(
+                                  width: kBaseIconButtonMinHitArea,
+                                  height: kBaseIconButtonMinHitArea,
+                                  child: Center(
+                                    child: AnimatedToggleIcon(
+                                      icon: filter.filterEnabled
+                                          ? Icons.visibility
+                                          : Icons.visibility_off,
+                                      color: filter.filterEnabled
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface
+                                          : Theme.of(context).disabledColor,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          child: Column(
-                            children: filter.filterSettings.entries
-                                .map(
-                                  (filterSetting) => StaleGuard(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: AppSpacing.sm,
-                                      ),
-                                      child: DynamicInput(
-                                        label: filterSetting.key,
-                                        value: filterSetting.value,
-                                        onUpdate: (updatedValue) {
-                                          GetIt.instance<DashboardStore>()
-                                              .sendMutation(
-                                                RequestType
-                                                    .SetSourceFilterSettings,
-                                                fields: {
-                                                  'sourceName':
-                                                      sceneItem.sourceName,
-                                                  'filterName':
-                                                      filter.filterName,
-                                                  'filterSettings': {}
-                                                    ..addAll(
-                                                      filter.filterSettings,
-                                                    )
-                                                    ..update(
-                                                      filterSetting.key,
-                                                      (value) => updatedValue,
-                                                    ),
-                                                },
-                                                label: 'Filter settings',
-                                              );
-                                        },
+                            child: Column(
+                              children: filter.filterSettings.entries
+                                  .map(
+                                    (filterSetting) => StaleGuard(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: AppSpacing.sm,
+                                        ),
+                                        child: DynamicInput(
+                                          label: filterSetting.key,
+                                          value: filterSetting.value,
+                                          onUpdate: (updatedValue) {
+                                            GetIt.instance<DashboardStore>()
+                                                .sendMutation(
+                                                  RequestType
+                                                      .SetSourceFilterSettings,
+                                                  fields: {
+                                                    'sourceName':
+                                                        sceneItem.sourceName,
+                                                    'filterName':
+                                                        filter.filterName,
+                                                    'filterSettings': {}
+                                                      ..addAll(
+                                                        filter.filterSettings,
+                                                      )
+                                                      ..update(
+                                                        filterSetting.key,
+                                                        (value) => updatedValue,
+                                                      ),
+                                                  },
+                                                  label: 'Filter settings',
+                                                );
+                                          },
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                )
-                                .toList(),
+                                  )
+                                  .toList(),
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
+                        )
+                        .toList(),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

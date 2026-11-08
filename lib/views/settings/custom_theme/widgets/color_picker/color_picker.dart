@@ -6,6 +6,7 @@ import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/base/sheet.dart';
 import '../../../../../shared/general/base/icon_button.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../types/extensions/color.dart';
@@ -245,42 +246,30 @@ class _ColorPickerState extends State<ColorPicker> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+    final ThemeData theme = Theme.of(context);
+    return BaseSheetScaffold(
+      header: BaseSheetTitle(
+        this.widget.title,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ThemedCupertinoButton(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  text: 'Reset',
-                  isDestructive: true,
-                  onPressed: () => ModalHandler.showBaseDialog(
-                    context: context,
-                    dialogWidget: ConfirmationDialog(
-                      title: 'Reset Color',
-                      body:
-                          'Are you sure you want to reset this color? It will be set to it\'s initial value!',
-                      isYesDestructive: true,
-                      onOk: (_) => Navigator.of(context).pop(true),
-                    ),
-                  ),
+            ThemedCupertinoButton(
+              padding: const EdgeInsets.only(left: AppSpacing.lg),
+              text: 'Reset',
+              isDestructive: true,
+              onPressed: () => ModalHandler.showBaseDialog(
+                context: context,
+                dialogWidget: ConfirmationDialog(
+                  title: 'Reset Color',
+                  body:
+                      'Are you sure you want to reset this color? It will be set to it\'s initial value!',
+                  isYesDestructive: true,
+                  onOk: (_) => Navigator.of(context).pop(true),
                 ),
               ),
             ),
             ThemedCupertinoButton(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              text: 'Cancel',
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            ThemedCupertinoButton(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              padding: const EdgeInsets.only(left: AppSpacing.lg),
               text: 'Save',
               onPressed: () {
                 if (_hexController.isValid &&
@@ -303,331 +292,277 @@ class _ColorPickerState extends State<ColorPicker> {
             ),
           ],
         ),
-        const BaseDivider(),
-        Padding(
-          padding: const EdgeInsets.only(
-            top: AppSpacing.md,
-            left: AppSpacing.md,
-            bottom: AppSpacing.xs,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  this.widget.title,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            bottom: AppSpacing.md,
-          ),
-          child: Text(
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
             this.widget.description,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.extension<AppTextColors>()!.textSecondary,
+            ),
           ),
-        ),
-        const BaseDivider(),
-        Flexible(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: AppSpacing.md),
+          const BaseDivider(),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Center(
+              child: CupertinoSlidingSegmentedControl<PickerType>(
+                groupValue: _pickerType,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.xs,
+                  horizontal: 2.0,
+                ),
+                children: {
+                  PickerType.RGB: SizedBox(
+                    width: 96.0,
+                    child: Text(
+                      PickerType.RGB.name,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  PickerType.HSL: SizedBox(
+                    width: 96.0,
+                    child: Text(
+                      PickerType.HSL.name,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                },
+                onValueChanged: (pickerType) {
+                  _setHSLColor();
+                  setState(() => _pickerType = pickerType!);
+                },
+              ),
+            ),
+          ),
+          const BaseDivider(),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: Text(
+              'FROM CURRENT THEME',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).extension<AppTextColors>()!.textTertiary,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Wrap(
+              /// 32pt swatch glyphs ride centered in abutting 44pt
+              /// boxes - glyph pitch stays 44pt (32 + old 12 gap)
+              /// while the transparent expansion carries the hit floor
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  child: Center(
-                    child: CupertinoSlidingSegmentedControl<PickerType>(
-                      groupValue: _pickerType,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xs,
-                        horizontal: 2.0,
-                      ),
-                      children: {
-                        PickerType.RGB: SizedBox(
-                          width: 96.0,
-                          child: Text(
-                            PickerType.RGB.name,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        PickerType.HSL: SizedBox(
-                          width: 96.0,
-                          child: Text(
-                            PickerType.HSL.name,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      },
-                      onValueChanged: (pickerType) {
-                        _setHSLColor();
-                        setState(() => _pickerType = pickerType!);
-                      },
-                    ),
-                  ),
-                ),
-                const BaseDivider(),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    top: AppSpacing.md,
-                    left: AppSpacing.md,
-                    right: AppSpacing.md,
-                  ),
-                  child: Text(
-                    'FROM CURRENT THEME',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).extension<AppTextColors>()!.textTertiary,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Wrap(
-                    /// 32pt swatch glyphs ride centered in abutting 44pt
-                    /// boxes - glyph pitch stays 44pt (32 + old 12 gap)
-                    /// while the transparent expansion carries the hit floor
-                    children: [
-                      for (final Color swatch in _themeSwatches(context))
-                        Pressable(
-                          springy: false,
-                          onTap: () => _applySwatch(swatch),
-                          child: SizedBox(
-                            width: kBaseIconButtonMinHitArea,
-                            height: kBaseIconButtonMinHitArea,
-                            child: Center(
-                              child: ColorBubble(color: swatch, size: 32.0),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const BaseDivider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              right: AppSpacing.xl,
-                            ),
-                            child: Text(
-                              'Hex:',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 150.0,
-                            height: 82.0,
-                            child: StatefulBuilder(
-                              builder: (context, setInnerState) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: AppSpacing.xl,
-                                  ),
-                                  child: TextFormField(
-                                    controller: _hexController,
-                                    focusNode: _hexFocusNode,
-                                    decoration: InputDecoration(
-                                      isDense: true,
-                                      filled: true,
-                                      fillColor: Theme.of(context)
-                                          .scaffoldBackgroundColor
-                                          .withValues(alpha: 0.5),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: AppSpacing.md,
-                                            vertical: AppSpacing.md,
-                                          ),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          AppRadius.sm,
-                                        ),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      counterText: '',
-                                      suffixText:
-                                          '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
-                                      suffixStyle: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                    validator: (color) =>
-                                        ValidationHelper.colorHexValidator(
-                                          color,
-                                        ),
-                                    autovalidateMode: AutovalidateMode.always,
-                                    autocorrect: false,
-                                    maxLength: this.widget.useAlpha ? 8 : 6,
-                                    maxLengthEnforcement:
-                                        MaxLengthEnforcement.enforced,
-                                    // inputFormatters: [
-                                    //   FilteringTextInputFormatter.allow(
-                                    //     r'^[a-fA-F0-9]+$',
-                                    //     replacementString: _color.text,
-                                    //   )
-                                    // ],
-                                    onChanged: (value) {
-                                      if (ValidationHelper.colorHexValidator(
-                                            _hexController.text,
-                                          ) ==
-                                          null) {
-                                        _latestValidHexValue = value;
-                                        _setHSLColor();
-                                        setState(() {});
-                                      }
-                                      setInnerState(() {});
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: AppSpacing.md),
-                        child: ColorBubble(
-                          color: _latestValidHexValue.hexToColor(),
-                          size: 48.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const BaseDivider(),
-                Padding(
-                  padding: const EdgeInsets.only(
-                    top: AppSpacing.md,
-                    left: AppSpacing.xl,
-                    right: AppSpacing.lg,
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: AppMotion.fast,
-                    switchInCurve: AppMotion.standard,
-                    switchOutCurve: AppMotion.exit,
-                    child: KeyedSubtree(
-                      key: ValueKey(_pickerType),
-                      child: Column(
-                        children: [
-                          if (_pickerType == PickerType.RGB) ...[
-                            ColorSlider(
-                              controller: this.widget.editableColorValues
-                                  ? _rController
-                                  : null,
-                              pickerType: _pickerType,
-                              colorType: ColorType.R,
-                              value: _getColorSliderValue(ColorType.R),
-                              activeColor: _kChannelR,
-                              onChanged: (colorVal) =>
-                                  _onColorSlideChange(colorVal, ColorType.R),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            ColorSlider(
-                              controller: this.widget.editableColorValues
-                                  ? _gController
-                                  : null,
-                              pickerType: _pickerType,
-                              colorType: ColorType.G,
-                              value: _getColorSliderValue(ColorType.G),
-                              activeColor: _kChannelG,
-                              onChanged: (colorVal) =>
-                                  _onColorSlideChange(colorVal, ColorType.G),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            ColorSlider(
-                              controller: this.widget.editableColorValues
-                                  ? _bController
-                                  : null,
-                              pickerType: _pickerType,
-                              colorType: ColorType.B,
-                              value: _getColorSliderValue(ColorType.B),
-                              activeColor: _kChannelB,
-                              onChanged: (colorVal) =>
-                                  _onColorSlideChange(colorVal, ColorType.B),
-                            ),
-                          ],
-                          if (_pickerType == PickerType.HSL) ...[
-                            ColorSlider(
-                              controller: this.widget.editableColorValues
-                                  ? _hController
-                                  : null,
-                              pickerType: _pickerType,
-                              colorType: ColorType.H,
-                              value: _getColorSliderValue(ColorType.H),
-                              saturation: _saturation,
-                              lightness: _lightness,
-                              onChanged: (colorVal) =>
-                                  _onColorSlideChange(colorVal, ColorType.H),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            ColorSlider(
-                              controller: this.widget.editableColorValues
-                                  ? _sController
-                                  : null,
-                              pickerType: _pickerType,
-                              colorType: ColorType.S,
-                              value: _getColorSliderValue(ColorType.S),
-                              hue: _hue,
-                              lightness: _lightness,
-                              onChanged: (colorVal) =>
-                                  _onColorSlideChange(colorVal, ColorType.S),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            ColorSlider(
-                              controller: this.widget.editableColorValues
-                                  ? _lController
-                                  : null,
-                              pickerType: _pickerType,
-                              colorType: ColorType.L,
-                              value: _getColorSliderValue(ColorType.L),
-                              hue: _hue,
-                              saturation: _saturation,
-                              onChanged: (colorVal) =>
-                                  _onColorSlideChange(colorVal, ColorType.L),
-                            ),
-                          ],
-                        ],
+                for (final Color swatch in _themeSwatches(context))
+                  Pressable(
+                    springy: false,
+                    onTap: () => _applySwatch(swatch),
+                    child: SizedBox(
+                      width: kBaseIconButtonMinHitArea,
+                      height: kBaseIconButtonMinHitArea,
+                      child: Center(
+                        child: ColorBubble(color: swatch, size: 32.0),
                       ),
                     ),
                   ),
-                ),
-                if (this.widget.useAlpha)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: AppSpacing.xl,
-                      right: AppSpacing.lg,
-                    ),
-                    child: ColorSlider(
-                      controller: this.widget.editableColorValues
-                          ? _aController
-                          : null,
-                      pickerType: _pickerType,
-                      colorType: ColorType.A,
-                      value: _getColorSliderValue(ColorType.A),
-                      activeColor: _kChannelA,
-                      onChanged: (colorVal) =>
-                          _onColorSlideChange(colorVal, ColorType.A),
-                    ),
-                  ),
-                const SizedBox(height: AppSpacing.md),
               ],
             ),
           ),
-        ),
-      ],
+          const BaseDivider(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.xl),
+                    child: Text(
+                      'Hex:',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 150.0,
+                    height: 82.0,
+                    child: StatefulBuilder(
+                      builder: (context, setInnerState) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.xl),
+                          child: TextFormField(
+                            controller: _hexController,
+                            focusNode: _hexFocusNode,
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: Theme.of(
+                                context,
+                              ).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.md,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                borderSide: BorderSide.none,
+                              ),
+                              counterText: '',
+                              suffixText:
+                                  '${_hexController.text.length} / ${this.widget.useAlpha ? 8 : 6}',
+                              suffixStyle: Theme.of(
+                                context,
+                              ).textTheme.bodySmall,
+                            ),
+                            validator: (color) =>
+                                ValidationHelper.colorHexValidator(color),
+                            autovalidateMode: AutovalidateMode.always,
+                            autocorrect: false,
+                            maxLength: this.widget.useAlpha ? 8 : 6,
+                            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                            // inputFormatters: [
+                            //   FilteringTextInputFormatter.allow(
+                            //     r'^[a-fA-F0-9]+$',
+                            //     replacementString: _color.text,
+                            //   )
+                            // ],
+                            onChanged: (value) {
+                              if (ValidationHelper.colorHexValidator(
+                                    _hexController.text,
+                                  ) ==
+                                  null) {
+                                _latestValidHexValue = value;
+                                _setHSLColor();
+                                setState(() {});
+                              }
+                              setInnerState(() {});
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              ColorBubble(color: _latestValidHexValue.hexToColor(), size: 48.0),
+            ],
+          ),
+          const BaseDivider(),
+          Padding(
+            padding: const EdgeInsets.only(
+              top: AppSpacing.md,
+              left: AppSpacing.sm,
+            ),
+            child: AnimatedSwitcher(
+              duration: AppMotion.fast,
+              switchInCurve: AppMotion.standard,
+              switchOutCurve: AppMotion.exit,
+              child: KeyedSubtree(
+                key: ValueKey(_pickerType),
+                child: Column(
+                  children: [
+                    if (_pickerType == PickerType.RGB) ...[
+                      ColorSlider(
+                        controller: this.widget.editableColorValues
+                            ? _rController
+                            : null,
+                        pickerType: _pickerType,
+                        colorType: ColorType.R,
+                        value: _getColorSliderValue(ColorType.R),
+                        activeColor: _kChannelR,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, ColorType.R),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ColorSlider(
+                        controller: this.widget.editableColorValues
+                            ? _gController
+                            : null,
+                        pickerType: _pickerType,
+                        colorType: ColorType.G,
+                        value: _getColorSliderValue(ColorType.G),
+                        activeColor: _kChannelG,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, ColorType.G),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ColorSlider(
+                        controller: this.widget.editableColorValues
+                            ? _bController
+                            : null,
+                        pickerType: _pickerType,
+                        colorType: ColorType.B,
+                        value: _getColorSliderValue(ColorType.B),
+                        activeColor: _kChannelB,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, ColorType.B),
+                      ),
+                    ],
+                    if (_pickerType == PickerType.HSL) ...[
+                      ColorSlider(
+                        controller: this.widget.editableColorValues
+                            ? _hController
+                            : null,
+                        pickerType: _pickerType,
+                        colorType: ColorType.H,
+                        value: _getColorSliderValue(ColorType.H),
+                        saturation: _saturation,
+                        lightness: _lightness,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, ColorType.H),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ColorSlider(
+                        controller: this.widget.editableColorValues
+                            ? _sController
+                            : null,
+                        pickerType: _pickerType,
+                        colorType: ColorType.S,
+                        value: _getColorSliderValue(ColorType.S),
+                        hue: _hue,
+                        lightness: _lightness,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, ColorType.S),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      ColorSlider(
+                        controller: this.widget.editableColorValues
+                            ? _lController
+                            : null,
+                        pickerType: _pickerType,
+                        colorType: ColorType.L,
+                        value: _getColorSliderValue(ColorType.L),
+                        hue: _hue,
+                        saturation: _saturation,
+                        onChanged: (colorVal) =>
+                            _onColorSlideChange(colorVal, ColorType.L),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (this.widget.useAlpha)
+            Padding(
+              padding: const EdgeInsets.only(left: AppSpacing.sm),
+              child: ColorSlider(
+                controller: this.widget.editableColorValues
+                    ? _aController
+                    : null,
+                pickerType: _pickerType,
+                colorType: ColorType.A,
+                value: _getColorSliderValue(ColorType.A),
+                activeColor: _kChannelA,
+                onChanged: (colorVal) =>
+                    _onColorSlideChange(colorVal, ColorType.A),
+              ),
+            ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+      ),
     );
   }
 }

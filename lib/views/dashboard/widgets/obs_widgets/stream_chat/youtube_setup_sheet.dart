@@ -39,9 +39,7 @@ const String kYouTubeApiCredentialsUrl =
 Future<void> showYouTubeSetupSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.86,
+      height: BaseSheetHeight.tall,
       builder: (sheetContext) => YouTubeSetupSheet(hostContext: context),
     );
 
@@ -52,9 +50,7 @@ Future<void> showYouTubeSetupSheet(BuildContext context) =>
 Future<void> showYouTubeSignInSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.86,
+      height: BaseSheetHeight.tall,
       builder: (sheetContext) =>
           YouTubeSetupSheet(hostContext: context, signInOnly: true),
     );
@@ -532,12 +528,12 @@ class _YouTubeSetupSheetState extends State<YouTubeSetupSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              nativeChatSheetDragHandle(context),
+              baseSheetDragHandle(context),
               Text(
                 this.widget.signInOnly
                     ? 'YouTube sign-in'
                     : 'YouTube chat setup',
-                style: nativeChatSheetTitleStyle(context),
+                style: baseSheetTitleStyle(context),
               ),
               const SizedBox(height: AppSpacing.md),
             ],

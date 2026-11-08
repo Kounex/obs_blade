@@ -44,8 +44,8 @@ class AddChatSheetFrame extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
-          Text(this.title, style: nativeChatSheetTitleStyle(context)),
+          baseSheetDragHandle(context),
+          Text(this.title, style: baseSheetTitleStyle(context)),
           Padding(
             padding: const EdgeInsets.only(
               top: AppSpacing.sm,
@@ -84,7 +84,7 @@ class AddChatSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-    child: Text(this.title, style: nativeChatSheetSectionStyle(context)),
+    child: Text(this.title, style: baseSheetSectionStyle(context)),
   );
 }
 

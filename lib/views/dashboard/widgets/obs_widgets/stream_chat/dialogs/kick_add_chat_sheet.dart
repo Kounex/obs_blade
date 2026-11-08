@@ -23,9 +23,7 @@ Future<String?> showKickAddChatSheet(
   String? languageCode,
 }) => ModalHandler.showBaseBottomSheet<String>(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (context) =>
       KickAddChatSheet(pickOnly: pickOnly, languageCode: languageCode),
 );

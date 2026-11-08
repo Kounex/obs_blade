@@ -204,12 +204,11 @@ class _AudioSliderState extends State<AudioSlider> {
                 child: Pressable(
                   onTap: this.widget.input.inputName == null
                       ? null
-                      : () => ModalHandler.showBaseCupertinoBottomSheet(
+                      : () => ModalHandler.showBaseBottomSheet(
                           context: context,
-                          modalWidgetBuilder: (context, controller) =>
-                              AudioSettingsSheet(
-                                inputName: this.widget.input.inputName!,
-                              ),
+                          builder: (context) => AudioSettingsSheet(
+                            inputName: this.widget.input.inputName!,
+                          ),
                         ),
                   child: SizedBox(
                     width: kBaseIconButtonMinHitArea,

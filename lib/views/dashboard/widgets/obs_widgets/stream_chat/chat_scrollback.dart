@@ -23,11 +23,9 @@ class ChatScrollback {
   /// (one YouTube poll can bring hundreds).
   static const int freezeAt = kChatHeldRows - 500;
 
-  ChatScrollback({
-    required VoidCallback hold,
-    required VoidCallback release,
-  }) : _hold = hold,
-       _release = release;
+  ChatScrollback({required VoidCallback hold, required VoidCallback release})
+    : _hold = hold,
+      _release = release;
 
   bool get frozen => this._frozen != null;
 

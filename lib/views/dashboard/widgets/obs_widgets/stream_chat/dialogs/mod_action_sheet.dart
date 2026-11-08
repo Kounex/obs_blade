@@ -40,9 +40,7 @@ Future<void> showModActionSheet(
   first: ModActionStep.root,
   open: (step) => ModalHandler.showBaseBottomSheet<ModActionStep>(
     context: context,
-    barrierDismissible: true,
-    enableDrag: true,
-    maxHeightFraction: 0.72,
+    height: BaseSheetHeight.standard,
     builder: (_) => ModActionSheet(
       event: event,
       step: step,
@@ -74,9 +72,7 @@ Future<void> showMessageActionSheet(
   String? userListName,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (_) => MessageActionSheet(
     authorName: authorName,
     onReply: onReply,
@@ -233,17 +229,17 @@ class _ModActionSheetState extends State<ModActionSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           this._titleRow(context, name),
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
               child: this._timeoutStep
-                      ? this._buildTimeoutPresets(context)
-                      : this._warnStep
-                      ? this._buildWarnCompose(context)
-                      : this._buildRootActions(context),
+                  ? this._buildTimeoutPresets(context)
+                  : this._warnStep
+                  ? this._buildWarnCompose(context)
+                  : this._buildRootActions(context),
             ),
           ),
         ],
@@ -425,9 +421,9 @@ class _ModActionSheetState extends State<ModActionSheet> {
         ? 'Warn $chatterName'
         : 'Moderate $chatterName';
     if (!this._timeoutStep && !this._warnStep) {
-      return Text(title, style: nativeChatSheetTitleStyle(context));
+      return Text(title, style: baseSheetTitleStyle(context));
     }
-    return NativeChatSheetBackTitle(
+    return BaseSheetBackTitle(
       title: title,
       onBack: this._running ? null : () => this._go(ModActionStep.root),
     );
@@ -622,10 +618,10 @@ class MessageActionSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           Text(
             'Message from @${this.authorName}',
-            style: nativeChatSheetTitleStyle(context),
+            style: baseSheetTitleStyle(context),
           ),
           const SizedBox(height: AppSpacing.sm),
           Padding(

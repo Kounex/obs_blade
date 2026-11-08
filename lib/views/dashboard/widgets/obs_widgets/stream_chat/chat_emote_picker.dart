@@ -58,9 +58,7 @@ class ChatEmotePickerButton extends StatelessWidget {
           this.focusNode.unfocus();
           final applied = await ModalHandler.showBaseBottomSheet<bool>(
             context: context,
-            barrierDismissible: true,
-            enableDrag: true,
-            maxHeightFraction: 0.85,
+            height: BaseSheetHeight.tall,
             builder: (context) => ChatEmotePickerSheet(
               controller: this.controller,
               canReadEmotes: this.canReadEmotes,
@@ -203,8 +201,8 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
-          Text('Emotes', style: nativeChatSheetTitleStyle(context)),
+          baseSheetDragHandle(context),
+          Text('Emotes', style: baseSheetTitleStyle(context)),
           const SizedBox(height: AppSpacing.sm),
           NativeChatTextField(
             onChanged: (value) => this.setState(() => this._query = value),
@@ -372,7 +370,7 @@ class _ChatEmotePickerSheetState extends State<ChatEmotePickerSheet> {
                                 children: [
                                   Text(
                                     section.$1,
-                                    style: nativeChatSheetSectionStyle(context),
+                                    style: baseSheetSectionStyle(context),
                                   ),
                                   const SizedBox(height: AppSpacing.xs),
                                   GridView(

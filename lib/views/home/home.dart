@@ -8,7 +8,6 @@ import '../../models/enums/log_level.dart';
 import '../../shared/design/design.dart';
 import '../../shared/dialogs/info.dart';
 import '../../shared/general/custom_sliver_list.dart';
-import '../../shared/general/themed/cupertino_scaffold.dart';
 import '../../shared/overlay/base_progress_indicator.dart';
 import '../../shared/overlay/base_result.dart';
 import '../../stores/shared/network.dart';
@@ -194,57 +193,56 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     HomeStore homeStore = GetIt.instance<HomeStore>();
-    return ThemedCupertinoScaffold(
-      /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
-      /// our extendedHeight, where we are ready to trigger searching for OBS connections,
-      /// it is being set to true, false otherwise. I want to trigger the actual refresh only
-      /// if, once the extendedHeight is reached, the user lets go off the screen and could just
-      /// scroll up again without triggering a refresh (feels more natural in my opinion)
-      body: Listener(
-        onPointerUp: (_) {
-          if (homeStore.refreshable) {
-            /// Used to globally (at least where [HomeStore] is listened to) to act on the
-            /// refresh action which has now been triggered
-            homeStore.initiateRefresh();
 
-            /// Switch back to autodiscover mode (of our [SwitcherCard]) if we refresh so the
-            /// user can actually see the part thats refreshing
-            if (homeStore.connectMode != ConnectMode.Autodiscover) {
-              homeStore.setConnectMode(ConnectMode.Autodiscover);
-            }
-            homeStore.updateAutodiscoverConnections();
+    /// refreshable is being maintained in our RefresherAppBar - as soon as we reach
+    /// our extendedHeight, where we are ready to trigger searching for OBS connections,
+    /// it is being set to true, false otherwise. I want to trigger the actual refresh only
+    /// if, once the extendedHeight is reached, the user lets go off the screen and could just
+    /// scroll up again without triggering a refresh (feels more natural in my opinion)
+    return Listener(
+      onPointerUp: (_) {
+        if (homeStore.refreshable) {
+          /// Used to globally (at least where [HomeStore] is listened to) to act on the
+          /// refresh action which has now been triggered
+          homeStore.initiateRefresh();
+
+          /// Switch back to autodiscover mode (of our [SwitcherCard]) if we refresh so the
+          /// user can actually see the part thats refreshing
+          if (homeStore.connectMode != ConnectMode.Autodiscover) {
+            homeStore.setConnectMode(ConnectMode.Autodiscover);
           }
-        },
-        child: CustomScrollView(
-          physics: StylingHelper.platformAwareScrollPhysics,
-          controller:
-              ModalRoute.of(context)!.settings.arguments as ScrollController,
+          homeStore.updateAutodiscoverConnections();
+        }
+      },
+      child: CustomScrollView(
+        physics: StylingHelper.platformAwareScrollPhysics,
+        controller:
+            ModalRoute.of(context)!.settings.arguments as ScrollController,
 
-          /// Scrolling has a unique behaviour on iOS and macOS where we bounce as soon as
-          /// we reach the end. Since we are using the stretch of [RefresherAppBar], which uses
-          /// [SliverAppBar] internally, to refresh (looking for OBS connections) we need to
-          /// be able to scroll even though we reached the end. To achieve this we need different behaviour
-          /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
-          /// for the first group and [BouncingScrollPhysics] for the second
-          // physics: StylingHelper.platformAwareScrollPhysics,
-          slivers: [
-            const RefresherAppBar(expandedHeight: 192.0),
-            const CustomSliverList(
-              children: [
-                StaggeredEntrance(
-                  index: 0,
-                  scaleFrom: 0.985,
-                  child: ConnectBox(),
-                ),
-                StaggeredEntrance(
-                  index: 2,
-                  scaleFrom: 0.985,
-                  child: SavedConnections(),
-                ),
-              ],
-            ),
-          ],
-        ),
+        /// Scrolling has a unique behaviour on iOS and macOS where we bounce as soon as
+        /// we reach the end. Since we are using the stretch of [RefresherAppBar], which uses
+        /// [SliverAppBar] internally, to refresh (looking for OBS connections) we need to
+        /// be able to scroll even though we reached the end. To achieve this we need different behaviour
+        /// for iOS (macOS) and Android (and possibly the rest) where we use [AlwaysScrollableScrollPhysics]
+        /// for the first group and [BouncingScrollPhysics] for the second
+        // physics: StylingHelper.platformAwareScrollPhysics,
+        slivers: [
+          const RefresherAppBar(expandedHeight: 192.0),
+          const CustomSliverList(
+            children: [
+              StaggeredEntrance(
+                index: 0,
+                scaleFrom: 0.985,
+                child: ConnectBox(),
+              ),
+              StaggeredEntrance(
+                index: 2,
+                scaleFrom: 0.985,
+                child: SavedConnections(),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

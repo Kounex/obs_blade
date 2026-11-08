@@ -27,10 +27,10 @@ class HotkeysControl extends StatelessWidget {
       GetIt.instance<NetworkStore>().activeSession!.socket,
       RequestType.GetHotkeyList,
     );
-    ModalHandler.showBaseCupertinoBottomSheet(
+    ModalHandler.showBaseBottomSheet(
       context: context,
-      modalWidgetBuilder: (context, controller) =>
-          HotkeyList(controller: controller),
+      height: BaseSheetHeight.tall,
+      builder: (context) => const HotkeyList(),
     );
   }
 

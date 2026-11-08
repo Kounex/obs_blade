@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/card.dart';
-import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../../../shared/general/base/sheet.dart';
 
+/// One package's licenses - a sheet over the Credits sheet; the back
+/// chevron (or a drag) returns to the package list
 class LicenseDetail extends StatelessWidget {
   final String package;
   final List<LicenseEntry> licenseEntries;
@@ -16,34 +19,38 @@ class LicenseDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: TransculentCupertinoNavBarWrapper(
-        previousTitle: 'Packages',
+    return BaseSheetScaffold(
+      header: BaseSheetBackTitle(
         title: this.package,
-        showScrollBar: true,
-        listViewChildren: this.licenseEntries
-            .map(
-              (licenseEntry) => BaseCard(
-                child: Column(
-                  children: [
-                    ...licenseEntry.paragraphs
+        onBack: () => Navigator.of(context).pop(),
+      ),
+      bodyIsScrollable: true,
+      body: Scrollbar(
+        child: ListView(
+          primary: false,
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          children: this.licenseEntries
+              .map(
+                (licenseEntry) => BaseCard(
+                  topPadding: 0.0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: licenseEntry.paragraphs
                         .map(
                           (paragraph) => Padding(
-                            padding: const EdgeInsets.only(bottom: 24.0),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                left: 24.0 * paragraph.indent,
-                              ),
-                              child: Text(paragraph.text),
+                            padding: EdgeInsets.only(
+                              bottom: AppSpacing.xl,
+                              left: AppSpacing.xl * paragraph.indent,
                             ),
+                            child: Text(paragraph.text),
                           ),
                         )
                         .toList(),
-                  ],
+                  ),
                 ),
-              ),
-            )
-            .toList(),
+              )
+              .toList(),
+        ),
       ),
     );
   }

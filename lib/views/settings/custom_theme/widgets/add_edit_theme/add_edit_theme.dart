@@ -7,7 +7,7 @@ import '../../../../../models/custom_theme.dart';
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/dialogs/confirmation.dart';
 import '../../../../../shared/general/base/adaptive_text_field.dart';
-import '../../../../../shared/general/base/divider.dart';
+import '../../../../../shared/general/base/sheet.dart';
 import '../../../../../shared/general/themed/cupertino_button.dart';
 import '../../../../../types/enums/hive_keys.dart';
 import '../../../../../types/enums/settings_keys.dart';
@@ -20,9 +20,7 @@ import 'theme_row.dart';
 
 class AddEditTheme extends StatefulWidget {
   final CustomTheme? customTheme;
-  final ScrollController? scrollController;
-
-  const AddEditTheme({super.key, this.customTheme, this.scrollController});
+  const AddEditTheme({super.key, this.customTheme});
 
   @override
   _AddEditThemeState createState() => _AddEditThemeState();
@@ -83,291 +81,251 @@ class _AddEditThemeState extends State<AddEditTheme> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
-      child: Column(
+    return BaseSheetScaffold(
+      header: BaseSheetTitle(
+        this.widget.customTheme != null ? 'Edit Theme' : 'Add Theme',
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ThemedCupertinoButton(
+              padding: const EdgeInsets.only(left: 24.0),
+              text: 'Save',
+              onPressed: () {
+                _name.submit();
+                if (_name.isValid) {
+                  if (this.widget.customTheme != null) {
+                    CustomTheme.copyFrom(
+                      _customTheme,
+                      this.widget.customTheme!,
+                    );
+                    this.widget.customTheme!.name = _name.text.trim();
+                    this.widget.customTheme!.description = _description.text
+                        .trim();
+                    this.widget.customTheme!.dateUpdatedMS =
+                        DateTime.now().millisecondsSinceEpoch;
+                    this.widget.customTheme!.save();
+                  } else {
+                    _customTheme.name = _name.text.trim();
+                    _customTheme.description = _description.text.trim();
+                    Hive.box<CustomTheme>(
+                      HiveKeys.CustomTheme.name,
+                    ).add(_customTheme);
+                  }
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            ThemedCupertinoButton(
+              padding: const EdgeInsets.only(left: 24.0),
+              isDestructive: this.widget.customTheme != null,
+              text: 'Delete',
+              onPressed: this.widget.customTheme != null
+                  ? () => ModalHandler.showBaseDialog(
+                      context: context,
+                      dialogWidget: ConfirmationDialog(
+                        title: 'Delete Theme',
+                        isYesDestructive: true,
+                        body:
+                            'Are you sure you want to delete this custom theme? This action can\'t be undone!',
+                        onOk: (_) {
+                          Box settingsBox = Hive.box(HiveKeys.Settings.name);
+                          if (settingsBox.get(
+                                SettingsKeys.ActiveCustomThemeUUID.name,
+                                defaultValue: '',
+                              ) ==
+                              this.widget.customTheme!.uuid) {
+                            settingsBox.put(
+                              SettingsKeys.ActiveCustomThemeUUID.name,
+                              '',
+                            );
+                          }
+                          this.widget.customTheme!.delete();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                this.widget.customTheme != null ? 'Edit Theme' : 'Add Theme',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              Row(
-                children: [
-                  ThemedCupertinoButton(
-                    padding: const EdgeInsets.only(left: 24.0),
-                    text: 'Save',
-                    onPressed: () {
-                      _name.submit();
-                      if (_name.isValid) {
-                        if (this.widget.customTheme != null) {
-                          CustomTheme.copyFrom(
-                            _customTheme,
-                            this.widget.customTheme!,
-                          );
-                          this.widget.customTheme!.name = _name.text.trim();
-                          this.widget.customTheme!.description = _description
-                              .text
-                              .trim();
-                          this.widget.customTheme!.dateUpdatedMS =
-                              DateTime.now().millisecondsSinceEpoch;
-                          this.widget.customTheme!.save();
-                        } else {
-                          _customTheme.name = _name.text.trim();
-                          _customTheme.description = _description.text.trim();
-                          Hive.box<CustomTheme>(
-                            HiveKeys.CustomTheme.name,
-                          ).add(_customTheme);
-                        }
-                        Navigator.of(context).pop();
-                      }
-                    },
-                  ),
-                  ThemedCupertinoButton(
-                    padding: const EdgeInsets.only(left: 24.0),
-                    isDestructive: this.widget.customTheme != null,
-                    text: 'Delete',
-                    onPressed: this.widget.customTheme != null
-                        ? () => ModalHandler.showBaseDialog(
-                            context: context,
-                            dialogWidget: ConfirmationDialog(
-                              title: 'Delete Theme',
-                              isYesDestructive: true,
-                              body:
-                                  'Are you sure you want to delete this custom theme? This action can\'t be undone!',
-                              onOk: (_) {
-                                Box settingsBox = Hive.box(
-                                  HiveKeys.Settings.name,
-                                );
-                                if (settingsBox.get(
-                                      SettingsKeys.ActiveCustomThemeUUID.name,
-                                      defaultValue: '',
-                                    ) ==
-                                    this.widget.customTheme!.uuid) {
-                                  settingsBox.put(
-                                    SettingsKeys.ActiveCustomThemeUUID.name,
-                                    '',
-                                  );
-                                }
-                                this.widget.customTheme!.delete();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          )
-                        : null,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const BaseDivider(),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: this.widget.scrollController,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  StaggeredEntrance(
-                    scaleFrom: 0.985,
-                    index: 0,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader('General'),
-                        BaseAdaptiveTextField(
-                          controller: _name,
-                          placeholder: 'Name',
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        BaseAdaptiveTextField(
-                          controller: _description,
-                          placeholder: 'Description (Optional)',
-                          minLines: 3,
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Is this a light theme?',
-                          description:
-                              'If this theme is intended to be a light theme, this option should be checked so text / system UI correctly adapts',
-                          active: _customTheme.useLightBrightness,
-                          onActiveChanged: (active) => setState(
-                            () => _customTheme.useLightBrightness = active,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  StaggeredEntrance(
-                    scaleFrom: 0.985,
-                    index: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader('Load From'),
-                        ThemeLoader(
-                          onLoadTheme: (theme) => setState(
-                            () => CustomTheme.copyFrom(theme, _customTheme),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  StaggeredEntrance(
-                    scaleFrom: 0.985,
-                    index: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader('Logo'),
-                        CustomLogoRow(
-                          customTheme: _customTheme,
-                          onReset: () =>
-                              setState(() => _customTheme.customLogo = null),
-                          onSelectLogo: (imageBytes) => setState(
-                            () => _customTheme.customLogo = base64Encode(
-                              imageBytes,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Logo Background',
-                          description:
-                              'If you want to have a specific background color for your logo instead of the app bar color, you can customise it here',
-                          colorHex: _customTheme.logoAppBarColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.logoAppBarColorHex = null,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.logoAppBarColorHex = colorHex,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  StaggeredEntrance(
-                    scaleFrom: 0.985,
-                    index: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _sectionHeader('Colors'),
-                        ThemeRow(
-                          title: 'App Background',
-                          description:
-                              'The canvas behind all UI elements - everything else sits on top of it',
-                          colorHex: _customTheme.backgroundColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.backgroundColorHex =
-                                _initialTheme.backgroundColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.backgroundColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Cards & Sheets',
-                          description:
-                              'The surface tone of cards, bottom sheets and dialogs - most UI elements live on these',
-                          colorHex: _customTheme.cardColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.cardColorHex =
-                                _initialTheme.cardColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.cardColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Navigation Bars',
-                          description:
-                              'The floating bars at the top (title, back navigation) and bottom (tabs) of the app',
-                          colorHex: _customTheme.appBarColorHex,
-                          onReset: () => setState(() {
-                            _customTheme.appBarColorHex =
-                                _initialTheme.appBarColorHex;
-                            _customTheme.tabBarColorHex =
-                                _initialTheme.tabBarColorHex;
-                          }),
-                          onSave: (colorHex) => setState(() {
-                            _customTheme.appBarColorHex = colorHex;
-                            _customTheme.tabBarColorHex = colorHex;
-                          }),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Brand Accent',
-                          description:
-                              'Brand moments, filled buttons and selection',
-                          colorHex: _customTheme.accentColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.accentColorHex =
-                                _initialTheme.accentColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.accentColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Controls & Links',
-                          description:
-                              'Switches, sliders, links and control states',
-                          colorHex: _customTheme.highlightColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.highlightColorHex =
-                                _initialTheme.highlightColorHex,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.highlightColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Card Border Color',
-                          description:
-                              'You can set an outline color for the card elements used throughout the app to give them an extra touch',
-                          colorHex: _customTheme.cardBorderColorHex,
-                          onReset: () => setState(
-                            () => _customTheme.cardBorderColorHex = null,
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.cardBorderColorHex = colorHex,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xl),
-                        ThemeRow(
-                          title: 'Divider Color',
-                          description:
-                              'To separate elements, I mainly used so called Dividers which are basically thin lines. You can even change the color of those',
-                          colorHex:
-                              _customTheme.dividerColorHex ??
-                              Theme.of(context).dividerColor.toHex(),
-                          onReset: () => setState(
-                            () => _customTheme.dividerColorHex = StylingHelper
-                                .light_divider_color
-                                .toHex(),
-                          ),
-                          onSave: (colorHex) => setState(
-                            () => _customTheme.dividerColorHex = colorHex,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height:
-                        MediaQuery.paddingOf(context).bottom + AppSpacing.xxl,
-                  ),
-                ],
-              ),
+          StaggeredEntrance(
+            scaleFrom: 0.985,
+            index: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader('General'),
+                BaseAdaptiveTextField(controller: _name, placeholder: 'Name'),
+                const SizedBox(height: AppSpacing.md),
+                BaseAdaptiveTextField(
+                  controller: _description,
+                  placeholder: 'Description (Optional)',
+                  minLines: 3,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Is this a light theme?',
+                  description:
+                      'If this theme is intended to be a light theme, this option should be checked so text / system UI correctly adapts',
+                  active: _customTheme.useLightBrightness,
+                  onActiveChanged: (active) =>
+                      setState(() => _customTheme.useLightBrightness = active),
+                ),
+              ],
             ),
           ),
+          StaggeredEntrance(
+            scaleFrom: 0.985,
+            index: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader('Load From'),
+                ThemeLoader(
+                  onLoadTheme: (theme) =>
+                      setState(() => CustomTheme.copyFrom(theme, _customTheme)),
+                ),
+              ],
+            ),
+          ),
+          StaggeredEntrance(
+            scaleFrom: 0.985,
+            index: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader('Logo'),
+                CustomLogoRow(
+                  customTheme: _customTheme,
+                  onReset: () => setState(() => _customTheme.customLogo = null),
+                  onSelectLogo: (imageBytes) => setState(
+                    () => _customTheme.customLogo = base64Encode(imageBytes),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Logo Background',
+                  description:
+                      'If you want to have a specific background color for your logo instead of the app bar color, you can customise it here',
+                  colorHex: _customTheme.logoAppBarColorHex,
+                  onReset: () =>
+                      setState(() => _customTheme.logoAppBarColorHex = null),
+                  onSave: (colorHex) => setState(
+                    () => _customTheme.logoAppBarColorHex = colorHex,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          StaggeredEntrance(
+            scaleFrom: 0.985,
+            index: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _sectionHeader('Colors'),
+                ThemeRow(
+                  title: 'App Background',
+                  description:
+                      'The canvas behind all UI elements - everything else sits on top of it',
+                  colorHex: _customTheme.backgroundColorHex,
+                  onReset: () => setState(
+                    () => _customTheme.backgroundColorHex =
+                        _initialTheme.backgroundColorHex,
+                  ),
+                  onSave: (colorHex) => setState(
+                    () => _customTheme.backgroundColorHex = colorHex,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Cards & Sheets',
+                  description:
+                      'The surface tone of cards, bottom sheets and dialogs - most UI elements live on these',
+                  colorHex: _customTheme.cardColorHex,
+                  onReset: () => setState(
+                    () =>
+                        _customTheme.cardColorHex = _initialTheme.cardColorHex,
+                  ),
+                  onSave: (colorHex) =>
+                      setState(() => _customTheme.cardColorHex = colorHex),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Navigation Bars',
+                  description:
+                      'The floating bars at the top (title, back navigation) and bottom (tabs) of the app',
+                  colorHex: _customTheme.appBarColorHex,
+                  onReset: () => setState(() {
+                    _customTheme.appBarColorHex = _initialTheme.appBarColorHex;
+                    _customTheme.tabBarColorHex = _initialTheme.tabBarColorHex;
+                  }),
+                  onSave: (colorHex) => setState(() {
+                    _customTheme.appBarColorHex = colorHex;
+                    _customTheme.tabBarColorHex = colorHex;
+                  }),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Brand Accent',
+                  description: 'Brand moments, filled buttons and selection',
+                  colorHex: _customTheme.accentColorHex,
+                  onReset: () => setState(
+                    () => _customTheme.accentColorHex =
+                        _initialTheme.accentColorHex,
+                  ),
+                  onSave: (colorHex) =>
+                      setState(() => _customTheme.accentColorHex = colorHex),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Controls & Links',
+                  description: 'Switches, sliders, links and control states',
+                  colorHex: _customTheme.highlightColorHex,
+                  onReset: () => setState(
+                    () => _customTheme.highlightColorHex =
+                        _initialTheme.highlightColorHex,
+                  ),
+                  onSave: (colorHex) =>
+                      setState(() => _customTheme.highlightColorHex = colorHex),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Card Border Color',
+                  description:
+                      'You can set an outline color for the card elements used throughout the app to give them an extra touch',
+                  colorHex: _customTheme.cardBorderColorHex,
+                  onReset: () =>
+                      setState(() => _customTheme.cardBorderColorHex = null),
+                  onSave: (colorHex) => setState(
+                    () => _customTheme.cardBorderColorHex = colorHex,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                ThemeRow(
+                  title: 'Divider Color',
+                  description:
+                      'To separate elements, I mainly used so called Dividers which are basically thin lines. You can even change the color of those',
+                  colorHex:
+                      _customTheme.dividerColorHex ??
+                      Theme.of(context).dividerColor.toHex(),
+                  onReset: () => setState(
+                    () => _customTheme.dividerColorHex = StylingHelper
+                        .light_divider_color
+                        .toHex(),
+                  ),
+                  onSave: (colorHex) =>
+                      setState(() => _customTheme.dividerColorHex = colorHex),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );

@@ -48,9 +48,7 @@ Future<YouTubeAddChatPick?> showYouTubeAddChatSheet(
   bool pickOnly = false,
 }) => ModalHandler.showBaseBottomSheet<YouTubeAddChatPick>(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (context) => YouTubeAddChatSheet(
     searchService: searchService,
     namer: namer,

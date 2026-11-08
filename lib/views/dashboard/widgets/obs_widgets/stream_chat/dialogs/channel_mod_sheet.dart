@@ -43,9 +43,7 @@ Future<ChannelModStep?> showChannelModStepSheet(
   required void Function(String message) onFailure,
 }) => ModalHandler.showBaseBottomSheet<ChannelModStep>(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (_) => ChannelModSheet(step: step, onFailure: onFailure),
 );
 
@@ -252,7 +250,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           this._titleRow(context),
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
@@ -273,9 +271,9 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
       ChannelModStep.announceCompose => 'Announce',
     };
     if (isRoot) {
-      return Text(title, style: nativeChatSheetTitleStyle(context));
+      return Text(title, style: baseSheetTitleStyle(context));
     }
-    return NativeChatSheetBackTitle(
+    return BaseSheetBackTitle(
       title: title,
       onBack: this._running ? null : () => this._go(ChannelModStep.root),
     );
@@ -283,7 +281,7 @@ class _ChannelModSheetState extends State<ChannelModSheet> {
 
   Widget _sectionHeader(BuildContext context, String title) => Padding(
     padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs),
-    child: Text(title, style: nativeChatSheetSectionStyle(context)),
+    child: Text(title, style: baseSheetSectionStyle(context)),
   );
 
   Widget _buildRoot(BuildContext context) {

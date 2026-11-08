@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+
+import '../../../../../shared/design/design.dart';
+import '../../../../../utils/modal_handler.dart';
 
 import '../../../../../shared/overlay/base_progress_indicator.dart';
 import 'license_detail.dart';
@@ -49,9 +51,7 @@ class LicenseData {
 }
 
 class LicenseEntries extends StatefulWidget {
-  final ScrollController? scrollController;
-
-  const LicenseEntries({super.key, this.scrollController});
+  const LicenseEntries({super.key});
 
   @override
   _LicenseEntriesState createState() => _LicenseEntriesState();
@@ -106,23 +106,22 @@ class _LicenseEntriesState extends State<LicenseEntries> {
           }
           return Scrollbar(
             child: ListView.builder(
-              shrinkWrap: true,
-              controller: this.widget.scrollController,
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.paddingOf(context).bottom,
-              ),
+              primary: false,
+              padding: const EdgeInsets.only(bottom: AppSpacing.lg),
               itemCount: snapshot.data!.packages.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,
-                onTap: () => Navigator.of(context, rootNavigator: true).push(
-                  CupertinoModalBottomSheetRoute(
-                    expanded: true,
-                    builder: (context) => LicenseDetail(
-                      package: snapshot.data!.packages[index],
-                      licenseEntries: _getLicensesForPackage(
-                        snapshot.data!,
-                        snapshot.data!.packages[index],
-                      ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                ),
+                onTap: () => ModalHandler.showBaseBottomSheet(
+                  context: context,
+                  height: BaseSheetHeight.tall,
+                  builder: (context) => LicenseDetail(
+                    package: snapshot.data!.packages[index],
+                    licenseEntries: _getLicensesForPackage(
+                      snapshot.data!,
+                      snapshot.data!.packages[index],
                     ),
                   ),
                 ),

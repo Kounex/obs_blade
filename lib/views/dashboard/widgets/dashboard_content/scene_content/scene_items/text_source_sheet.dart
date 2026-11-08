@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import '../../../../../../shared/design/design.dart';
 import '../../../../../../shared/general/base/button.dart';
 import '../../../../../../shared/general/base/divider.dart';
+import '../../../../../../shared/general/base/sheet.dart';
 import '../../../../../../stores/shared/network.dart';
 import '../../../../../../stores/views/dashboard.dart';
 import '../../../../../../types/classes/stream/responses/base.dart';
@@ -96,23 +97,11 @@ class _TextSourceSheetState extends State<TextSourceSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return SingleChildScrollView(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 24.0) +
-          EdgeInsets.only(
-            bottom:
-                MediaQuery.viewInsetsOf(context).bottom +
-                MediaQuery.paddingOf(context).bottom +
-                AppSpacing.xl,
-          ),
-      child: Column(
+    return BaseSheetScaffold(
+      header: BaseSheetTitle('Edit Text', subtitle: this.widget.inputName),
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Edit Text', style: theme.textTheme.headlineSmall),
-          Text(this.widget.inputName, style: theme.textTheme.bodySmall),
-          const SizedBox(height: AppSpacing.lg),
           const BaseDivider(),
           const SizedBox(height: AppSpacing.lg),
           CupertinoTextField(

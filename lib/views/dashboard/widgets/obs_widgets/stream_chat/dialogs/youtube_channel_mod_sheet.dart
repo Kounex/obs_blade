@@ -17,9 +17,7 @@ import 'channel_mod_chrome.dart';
 void showYouTubeChannelModSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.85,
+      height: BaseSheetHeight.tall,
       builder: (_) => ChannelModSheetFrame(
         child: YouTubeChannelModPanel(
           onToast: (message) => showChannelModToast(context, message),
@@ -320,7 +318,7 @@ class _YouTubeChannelModPanelState extends State<YouTubeChannelModPanel> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (this.widget.showTitle)
-              Text('Moderate chat', style: nativeChatSheetTitleStyle(context)),
+              Text('Moderate chat', style: baseSheetTitleStyle(context)),
             const ChannelModSectionHeader('Poll'),
             if (live)
               this._pollSection(context)

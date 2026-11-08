@@ -1,8 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:obs_blade/shared/design/design.dart';
-import 'package:obs_blade/shared/general/base/divider.dart';
 import 'package:obs_blade/shared/general/base/icon_button.dart';
+import 'package:obs_blade/shared/general/base/sheet.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 
 class AppBarActionEntry {
@@ -59,30 +61,43 @@ class AppBarActions extends StatelessWidget {
         showCupertinoModalPopup(
           context: context,
           builder: (context) {
-            return CupertinoActionSheet(
-              title: actionSheetTitle != null ? Text(actionSheetTitle) : null,
-              actions: actions
-                  .map(
-                    (action) => CupertinoActionSheetAction(
-                      isDestructiveAction: action.isDestructive,
-                      onPressed: () {
-                        if (action.onAction != null) {
-                          Navigator.of(context).pop();
-                          action.onAction!.call();
-                        }
-                      },
-                      child: Text(
-                        action.title,
-                        style: action.onAction == null
-                            ? TextStyle(color: textColors.textTertiary)
-                            : null,
+            /// CupertinoActionSheet sizes itself to the screen width in
+            /// portrait (height in landscape) - near full width on a
+            /// tablet. A narrower MediaQuery caps it at the sheet width;
+            /// the popup route centers it.
+            final Size screen = MediaQuery.sizeOf(context);
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                size: Size(
+                  math.min(screen.width, kBaseSheetMaxWidth),
+                  screen.height,
+                ),
+              ),
+              child: CupertinoActionSheet(
+                title: actionSheetTitle != null ? Text(actionSheetTitle) : null,
+                actions: actions
+                    .map(
+                      (action) => CupertinoActionSheetAction(
+                        isDestructiveAction: action.isDestructive,
+                        onPressed: () {
+                          if (action.onAction != null) {
+                            Navigator.of(context).pop();
+                            action.onAction!.call();
+                          }
+                        },
+                        child: Text(
+                          action.title,
+                          style: action.onAction == null
+                              ? TextStyle(color: textColors.textTertiary)
+                              : null,
+                        ),
                       ),
-                    ),
-                  )
-                  .toList(),
-              cancelButton: CupertinoActionSheetAction(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                    )
+                    .toList(),
+                cancelButton: CupertinoActionSheetAction(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
               ),
             );
           },
@@ -90,40 +105,42 @@ class AppBarActions extends StatelessWidget {
       case _:
         ModalHandler.showBaseBottomSheet(
           context: context,
-          barrierDismissible: true,
-          builder: (context) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (actionSheetTitle != null) ...[
-                Text(actionSheetTitle),
-                const BaseDivider(),
-              ],
-              ...actions.map(
-                (action) => ListTile(
-                  onTap: () {
-                    if (action.onAction != null) {
-                      Navigator.of(context).pop();
-                      action.onAction!.call();
-                    }
-                  },
-                  enabled: action.onAction != null,
-                  title: Text(action.title),
-                  leading:
-                      action.leading ??
-                      (action.leadingIcon != null
-                          ? Icon(action.leadingIcon, size: 24.0)
-                          : null),
-                  trailing: action.trailing,
-                  visualDensity: VisualDensity.comfortable,
-                  textColor: action.isDestructive
-                      ? statusColors.destructiveText
-                      : null,
-                  iconColor: action.isDestructive
-                      ? statusColors.destructiveText
-                      : null,
-                ),
-              ),
-            ],
+          builder: (context) => BaseSheetScaffold(
+            header: actionSheetTitle != null
+                ? BaseSheetTitle(actionSheetTitle)
+                : const SizedBox.shrink(),
+            body: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: actions
+                  .map(
+                    (action) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      onTap: () {
+                        if (action.onAction != null) {
+                          Navigator.of(context).pop();
+                          action.onAction!.call();
+                        }
+                      },
+                      enabled: action.onAction != null,
+                      title: Text(action.title),
+                      leading:
+                          action.leading ??
+                          (action.leadingIcon != null
+                              ? Icon(action.leadingIcon, size: 24.0)
+                              : null),
+                      trailing: action.trailing,
+                      visualDensity: VisualDensity.comfortable,
+                      textColor: action.isDestructive
+                          ? statusColors.destructiveText
+                          : null,
+                      iconColor: action.isDestructive
+                          ? statusColors.destructiveText
+                          : null,
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
         );
     }

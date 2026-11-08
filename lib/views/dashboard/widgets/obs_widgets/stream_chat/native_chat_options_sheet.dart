@@ -55,9 +55,7 @@ Future<void> showNativeChatOptionsSheet(
     }
     return ModalHandler.showBaseBottomSheet<_OptionsStop>(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
+      height: BaseSheetHeight.standard,
       builder: (sheet) => stop.page == _OptionsPage.root
           ? NativeChatOptionsSheet(
               chatType: chatType,
@@ -322,11 +320,8 @@ class _NativeChatOptionsSheetState extends State<NativeChatOptionsSheet> {
   Widget build(BuildContext context) => this._buildRoot(context);
 
   Widget _buildRoot(BuildContext context) {
-    return NativeChatSheetScaffold(
-      header: Text(
-        'Native chat options',
-        style: nativeChatSheetTitleStyle(context),
-      ),
+    return BaseSheetScaffold(
+      header: Text('Native chat options', style: baseSheetTitleStyle(context)),
       body: this._buildRootBody(context),
     );
   }
@@ -650,9 +645,9 @@ class _PageScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColors =
         Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard;
-    return NativeChatSheetScaffold(
+    return BaseSheetScaffold(
       headerGap: 0.0,
-      header: NativeChatSheetBackTitle(
+      header: BaseSheetBackTitle(
         title: this.title,
         onBack: this.onBack,
         trailing: this.onReset == null

@@ -26,9 +26,7 @@ import 'native_chat_text_field.dart';
 Future<void> showKickSetupSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.86,
+      height: BaseSheetHeight.tall,
       builder: (sheetContext) => KickSetupSheet(hostContext: context),
     );
 
@@ -325,12 +323,9 @@ class _KickSetupSheetState extends State<KickSetupSheet> {
         Theme.of(context).buttonTheme.colorScheme?.secondary ??
         StylingHelper.accent_color;
 
-    return NativeChatSheetScaffold(
+    return BaseSheetScaffold(
       headerGap: AppSpacing.sm,
-      header: Text(
-        'Kick chat setup',
-        style: nativeChatSheetTitleStyle(context),
-      ),
+      header: Text('Kick chat setup', style: baseSheetTitleStyle(context)),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

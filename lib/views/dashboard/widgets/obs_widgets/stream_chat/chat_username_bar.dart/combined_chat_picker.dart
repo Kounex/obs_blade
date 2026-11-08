@@ -458,9 +458,7 @@ class _LivePip extends StatelessWidget {
 Future<void> showCombinedChatSwitcherSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.8,
+      height: BaseSheetHeight.tall,
       builder: (_) => CombinedChatSwitcherSheet(hostContext: context),
     );
 
@@ -497,9 +495,9 @@ class _CombinedChatSwitcherSheetState extends State<CombinedChatSwitcherSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return NativeChatSheetScaffold(
+    return BaseSheetScaffold(
       headerGap: AppSpacing.sm,
-      header: Text('Combined chats', style: nativeChatSheetTitleStyle(context)),
+      header: Text('Combined chats', style: baseSheetTitleStyle(context)),
       body: Observer(
         builder: (_) {
           final store = GetIt.instance<CombinedChatStore>();

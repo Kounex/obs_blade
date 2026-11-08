@@ -1,32 +1,22 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../../shared/design/design.dart';
 import '../../../../../shared/general/base/divider.dart';
-import '../../../../../shared/general/themed/cupertino_button.dart';
-import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../../../shared/general/base/sheet.dart';
 import '../../../../../utils/styling_helper.dart';
 import '../license_modal/license_entries.dart';
 
+/// Credits sheet: the app's logo, "Powered by Flutter" and every package
+/// license (a package opens its licenses in a sheet on top)
 class LicenseModal extends StatelessWidget {
-  final ScrollController? scrollController;
-
-  const LicenseModal({super.key, this.scrollController});
+  const LicenseModal({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return TransculentCupertinoNavBarWrapper(
-      title: 'Credits',
-
-      /// Empty leading suppresses the auto-implied back chevron - the
-      /// 'Done' action is the single dismiss control
-      leading: const SizedBox.shrink(),
-      actions: ThemedCupertinoButton(
-        padding: const EdgeInsets.all(0),
-        text: 'Done',
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      customBody: Column(
+    return BaseSheetScaffold(
+      header: const BaseSheetTitle('Credits'),
+      bodyIsScrollable: true,
+      body: Column(
         children: [
           Align(
             child: Padding(
@@ -55,9 +45,7 @@ class LicenseModal extends StatelessWidget {
             ),
           ),
           const BaseDivider(),
-          Expanded(
-            child: LicenseEntries(scrollController: this.scrollController),
-          ),
+          const Expanded(child: LicenseEntries()),
         ],
       ),
     );

@@ -219,14 +219,12 @@ class SceneItemTile extends StatelessWidget {
                         label: 'Edit text of ${this.sceneItem.sourceName}',
                         excludeSemantics: true,
                         child: Pressable(
-                          onTap: () =>
-                              ModalHandler.showBaseCupertinoBottomSheet(
-                                context: context,
-                                modalWidgetBuilder: (context, controller) =>
-                                    TextSourceSheet(
-                                      inputName: this.sceneItem.sourceName!,
-                                    ),
-                              ),
+                          onTap: () => ModalHandler.showBaseBottomSheet(
+                            context: context,
+                            builder: (context) => TextSourceSheet(
+                              inputName: this.sceneItem.sourceName!,
+                            ),
+                          ),
                           child: const SizedBox(
                             width: kBaseIconButtonMinHitArea,
                             height: kBaseIconButtonMinHitArea,
@@ -295,9 +293,10 @@ class SceneItemTile extends StatelessWidget {
                       excludeSemantics: true,
                       child: Pressable(
                         onTap: this.sceneItem.filters.isNotEmpty
-                            ? () => ModalHandler.showBaseCupertinoBottomSheet(
+                            ? () => ModalHandler.showBaseBottomSheet(
                                 context: context,
-                                modalWidgetBuilder: (context, controller) =>
+                                height: BaseSheetHeight.tall,
+                                builder: (context) =>
                                     FilterList(sceneItem: this.sceneItem),
                               )
                             : null,

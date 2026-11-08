@@ -94,6 +94,7 @@ assumptions. Put the reminder at the end of the final report.
 | Shared design system ("On Air") | `lib/shared/design/` |
 | Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |
 | Content column max width | `BaseConstrainedBox` / `kBaseConstrainedMaxWidth` **720** (text/list screens) · `kWideContentMaxWidth` **1040** (charts / data grids, e.g. statistic detail) |
+| Sheets (all of them) | `ModalHandler.showBaseBottomSheet` + `BaseSheetScaffold` (`lib/shared/general/base/sheet.dart`): handle only, glass on iOS, `BaseSheetHeight`, **640** max width - rules in `docs/redesign/design-system.md` § Surface language |
 
 **Stack:** MobX + GetIt · **Hive CE** · freezed for nested OBS API objects.
 

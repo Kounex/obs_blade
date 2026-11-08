@@ -16,7 +16,7 @@ const int kUserCardHistoryInitialCount = 50;
 /// the remaining count and reveals everything on tap.
 ///
 /// This is a ScrollView on purpose: pass it as
-/// [NativeChatSheetScaffold]'s `body` together with
+/// [BaseSheetScaffold]'s `body` together with
 /// `bodyIsScrollable: true` so the scaffold doesn't wrap it in another
 /// scroll view. Small histories (≤ initial count) shrink-wrap so the
 /// sheet still hugs its content.
@@ -112,9 +112,7 @@ class _UserCardHistoryListState extends State<UserCardHistoryList> {
                     minHeight: kMinInteractiveDimensionCupertino,
                   ),
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.xs,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: Text(
                     label,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(

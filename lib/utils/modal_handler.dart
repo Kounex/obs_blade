@@ -1,17 +1,19 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import '../shared/animator/fader.dart';
 import '../shared/design/design.dart';
 import '../shared/general/base/card.dart';
+import '../shared/general/base/sheet.dart';
 import '../shared/general/base/icon_button.dart';
 import 'styling_helper.dart';
+
+/// Sheet callers pick a height / read the width without a second import
+export '../shared/general/base/sheet.dart' show BaseSheetHeight, kBaseSheetMaxWidth;
 
 class ModalHandler {
   static Duration transitionDelayDuration = const Duration(milliseconds: 350);
@@ -58,137 +60,77 @@ class ModalHandler {
     builder: (context) => dialogWidget,
   );
 
+  /// The one sheet the app shows - chat, dashboard, settings, pickers.
+  /// A centered card at most [kBaseSheetMaxWidth] wide (tablets), at most
+  /// [height] of the screen tall, frosted glass on Apple platforms. Closed
+  /// by tapping outside, by dragging it down (also by pulling past the top
+  /// of its scroll view) - the drag handle in [BaseSheetScaffold] is the
+  /// visible close control; sheets don't add a close / Done button.
+  ///
+  /// Build the content with [BaseSheetScaffold] (handle + pinned header +
+  /// scrolling body). The bottom safe area and the keyboard inset are
+  /// added here - content must not add them again.
   static Future<T?> showBaseBottomSheet<T>({
     required BuildContext context,
     required Widget Function(BuildContext context) builder,
+    BaseSheetHeight height = BaseSheetHeight.standard,
     bool useRootNavigator = true,
-    bool barrierDismissible = false,
-    bool enableDrag = false,
-    bool includeCloseButton = false,
-    double maxWidth = kBaseCardMaxWidth,
-
-    /// Fraction of the screen height the sheet may occupy. `1.0` = no
-    /// practical cap (SafeArea still applies). Chat sheets that need a
-    /// top gap for barrier taps pass ~0.72.
-    double maxHeightFraction = 1.0,
-    double additionalBottomViewInsets = 0,
-
-    /// Linear while a scroll-driven drag is tracking the finger. The
-    /// default decelerate curve makes the open sheet barely move until
-    /// the controller has travelled a long way. Drag-to-dismiss sheets
-    /// use a linear curve unless the caller passed one.
-    AnimationStyle? sheetAnimationStyle,
   }) async => showModalBottomSheet(
     context: context,
     useRootNavigator: useRootNavigator,
-    isDismissible: barrierDismissible,
-    enableDrag: enableDrag,
+    isDismissible: true,
+    enableDrag: true,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    sheetAnimationStyle: enableDrag
-        ? (sheetAnimationStyle ??
-              const AnimationStyle(
-                curve: Curves.linear,
-                reverseCurve: Curves.linear,
-              ))
-        : sheetAnimationStyle,
-    builder: (context) => _bottomSheetWrapper(
-      context: context,
-      additionalBottomViewInsets: additionalBottomViewInsets,
-      includeCloseButton: includeCloseButton,
-      modalWidget: _ModalSheetBody(
-        overscrollDismiss: enableDrag,
-        child: builder(context),
-      ),
-      maxHeight: MediaQuery.sizeOf(context).height * maxHeightFraction,
-      maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
-    ),
-  );
 
-  static Future<T?> showBaseCupertinoBottomSheet<T>({
-    required BuildContext context,
-    required Widget Function(BuildContext context, ScrollController controller)
-    modalWidgetBuilder,
-    bool useRootNavigator = true,
-    double maxWidth = double.infinity,
-    bool? blurryBackground,
-    bool includeCloseButton = true,
-    double additionalBottomViewInsets = 0,
-  }) async => CupertinoScaffold.showCupertinoModalBottomSheet(
-    expand: false,
-    context: context,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black54,
-    shadow: const BoxShadow(
-      color: Colors.transparent,
-      blurRadius: 0,
-      offset: Offset(0, 0),
+    /// Explicit, so the width doesn't hang on the theme's Material
+    /// version (M3's default is the same 640)
+    constraints: const BoxConstraints(maxWidth: kBaseSheetMaxWidth),
+
+    /// Linear while a scroll-driven drag is tracking the finger. The
+    /// default decelerate curve makes the open sheet barely move until
+    /// the controller has travelled a long way.
+    sheetAnimationStyle: const AnimationStyle(
+      curve: Curves.linear,
+      reverseCurve: Curves.linear,
     ),
-    useRootNavigator: useRootNavigator,
     builder: (context) => _bottomSheetWrapper(
       context: context,
-      additionalBottomViewInsets: additionalBottomViewInsets,
-      blurryBackground: blurryBackground ?? StylingHelper.isApple(context),
-      includeCloseButton: includeCloseButton,
-      modalWidget: modalWidgetBuilder(
-        context,
-        ModalScrollController.of(context)!,
-      ),
-      maxWidth: min(MediaQuery.sizeOf(context).width, maxWidth),
+      blurryBackground: StylingHelper.isApple(context),
+      modalWidget: _ModalSheetBody(child: builder(context)),
+      maxHeight: MediaQuery.sizeOf(context).height * height.fraction,
     ),
   );
 
   static Widget _bottomSheetWrapper({
     required BuildContext context,
     required Widget modalWidget,
-    double maxWidth = double.infinity,
-    double maxHeight = double.infinity,
-    bool blurryBackground = false,
-    bool includeCloseButton = false,
-    double additionalBottomViewInsets = 0,
+    required double maxHeight,
+    required bool blurryBackground,
   }) {
     final AppGlass? glass = Theme.of(context).extension<AppGlass>();
+    const BorderRadius radius = BorderRadius.vertical(
+      top: Radius.circular(kBaseCardBorderRadius),
+    );
 
     Widget child = Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor.withValues(
           alpha: blurryBackground ? AppGlass.barAlpha : 1.0,
         ),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(kBaseCardBorderRadius),
-        ),
+        borderRadius: radius,
       ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: EdgeInsets.only(top: includeCloseButton ? 24.0 : 0),
-            child: modalWidget,
-          ),
 
-          /// Last, so it sits above the content: its 44 pt hit area
-          /// reaches below where the content starts (24 pt), and as the
-          /// first child the content took every tap on its lower half
-          /// (dogfood 2026-11-08: "barely hittable")
-          if (includeCloseButton)
-            Positioned(
-              top: 4.0,
-              right: 4.0,
-              child: Container(
-                padding: const EdgeInsets.only(right: 4.0),
-                alignment: Alignment.centerRight,
-                child: BaseIconButton(
-                  backgroundColor: Colors.transparent,
-                  icon: CupertinoIcons.clear_circled_solid,
-                  onTap: () => Navigator.of(context).pop(),
-                ),
-              ),
-            ),
-        ],
-      ),
+      /// Material above the sheet color: ListTile ink / backgrounds paint
+      /// on the nearest Material, which sat under the color before
+      child: Material(type: MaterialType.transparency, child: modalWidget),
     );
 
     if (blurryBackground) {
-      child = ClipRect(
+      /// Rounded clip: a plain rect clip blurred the corners outside the
+      /// card's radius without its tint
+      child = ClipRRect(
+        borderRadius: radius,
         child: BackdropFilter(
           filter: ImageFilter.blur(
             sigmaX: glass?.sigma ?? StylingHelper.sigma_blurry,
@@ -204,19 +146,16 @@ class ModalHandler {
     // transparent. heightFactor keeps width centering via Align.
     // Bottom safe inset is applied by [_ModalSheetBody].
     return Padding(
-      padding: EdgeInsets.only(
-        bottom:
-            MediaQuery.viewInsetsOf(context).bottom +
-            (MediaQuery.viewInsetsOf(context).bottom > 0
-                ? additionalBottomViewInsets
-                : 0),
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Align(
         alignment: Alignment.bottomCenter,
         heightFactor: 1.0,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight, maxWidth: maxWidth),
-          child: Material(type: MaterialType.transparency, child: child),
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+            maxWidth: kBaseSheetMaxWidth,
+          ),
+          child: child,
         ),
       ),
     );
@@ -225,13 +164,12 @@ class ModalHandler {
 
 /// Height-capped sheet body. A scrolling descendant gets a real max height
 /// (the modal column otherwise passes unbounded height, so a scroll view
-/// grows with its child and overflows). When [overscrollDismiss] is set,
-/// pulling past the top of that scroll view drags the sheet.
+/// grows with its child and overflows). Pulling past the top of that
+/// scroll view drags the sheet.
 class _ModalSheetBody extends StatefulWidget {
   final Widget child;
-  final bool overscrollDismiss;
 
-  const _ModalSheetBody({required this.child, required this.overscrollDismiss});
+  const _ModalSheetBody({required this.child});
 
   @override
   State<_ModalSheetBody> createState() => _ModalSheetBodyState();
@@ -242,17 +180,17 @@ class _ModalSheetBodyState extends State<_ModalSheetBody> {
 
   @override
   Widget build(BuildContext context) {
-    Widget body = this.widget.child;
-    if (this.widget.overscrollDismiss) {
-      body = ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          physics: const ClampingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics(),
-          ),
+    final Widget body = ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        physics: const ClampingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
         ),
-        child: _SheetOverscroll(sheetKey: this._sheetKey, child: body),
-      );
-    }
+      ),
+      child: _SheetOverscroll(
+        sheetKey: this._sheetKey,
+        child: this.widget.child,
+      ),
+    );
     return Column(
       key: this._sheetKey,
       mainAxisSize: MainAxisSize.min,
@@ -449,6 +387,10 @@ class _SheetOverscrollState extends State<_SheetOverscroll> {
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification.metrics.axis != Axis.vertical) return false;
+
+        /// A picker wheel (date picker) running past its first entry is
+        /// choosing, not closing the sheet
+        if (notification.metrics is FixedExtentMetrics) return false;
         final atTop =
             notification.metrics.pixels <= notification.metrics.minScrollExtent;
         if (notification is OverscrollNotification &&

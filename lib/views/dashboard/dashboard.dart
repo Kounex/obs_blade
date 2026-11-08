@@ -8,7 +8,6 @@ import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/shared/design/design.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
-import 'package:obs_blade/shared/general/themed/cupertino_scaffold.dart';
 import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content_streaming.dart';
@@ -180,62 +179,60 @@ class _DashboardViewState extends State<DashboardView>
 
   @override
   Widget build(BuildContext context) {
-    return ThemedCupertinoScaffold(
-      body: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          HiveBuilder<dynamic>(
-            hiveKey: HiveKeys.Settings,
-            rebuildKeys: const [SettingsKeys.StreamingMode],
-            builder: (context, settingsBox, child) => Observer(
-              builder: (context) => CustomScrollView(
-                physics:
-                    settingsBox.get(
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        HiveBuilder<dynamic>(
+          hiveKey: HiveKeys.Settings,
+          rebuildKeys: const [SettingsKeys.StreamingMode],
+          builder: (context, settingsBox, child) => Observer(
+            builder: (context) => CustomScrollView(
+              physics:
+                  settingsBox.get(
+                    SettingsKeys.StreamingMode.name,
+                    defaultValue: false,
+                  )
+                  ? const NeverScrollableScrollPhysics()
+                  : StylingHelper.platformAwareScrollPhysics,
+              controller:
+                  ModalRoute.of(context)!.settings.arguments
+                      as ScrollController,
+              slivers: [
+                const StatusAppBar(),
+                settingsBox.get(
                       SettingsKeys.StreamingMode.name,
                       defaultValue: false,
                     )
-                    ? const NeverScrollableScrollPhysics()
-                    : StylingHelper.platformAwareScrollPhysics,
-                controller:
-                    ModalRoute.of(context)!.settings.arguments
-                        as ScrollController,
-                slivers: [
-                  const StatusAppBar(),
-                  settingsBox.get(
-                        SettingsKeys.StreamingMode.name,
-                        defaultValue: false,
-                      )
-                      ? const DashboardContentStreaming()
-                      : const DashboardContent(),
+                    ? const DashboardContentStreaming()
+                    : const DashboardContent(),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          /// Anchored below the status app bar's full occupied height
+          /// (55pt bar + LIVE/REC status cluster + safe-area top) so the
+          /// toasts never cover the pills row
+          top:
+              MediaQuery.paddingOf(context).top +
+              GlassBar.minContentHeight +
+              kStatusClusterHeight,
+          child: Align(
+            alignment: Alignment.center,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  ReconnectToast(),
+                  SizedBox(height: AppSpacing.sm),
+                  CommandFailureToast(),
                 ],
               ),
             ),
           ),
-          Positioned(
-            /// Anchored below the status app bar's full occupied height
-            /// (55pt bar + LIVE/REC status cluster + safe-area top) so the
-            /// toasts never cover the pills row
-            top:
-                MediaQuery.paddingOf(context).top +
-                GlassBar.minContentHeight +
-                kStatusClusterHeight,
-            child: Align(
-              alignment: Alignment.center,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    ReconnectToast(),
-                    SizedBox(height: AppSpacing.sm),
-                    CommandFailureToast(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

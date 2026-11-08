@@ -201,9 +201,7 @@ class NativeChatWindow extends StatelessWidget {
                   }
                   ModalHandler.showBaseBottomSheet(
                     context: context,
-                    barrierDismissible: true,
-                    enableDrag: true,
-                    maxHeightFraction: 0.72,
+                    height: BaseSheetHeight.standard,
                     builder: (context) => _NativeChatConnectionSheet(
                       chatType: this.chatType,
                       status: this.status,
@@ -391,13 +389,13 @@ class _NativeChatConnectionSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           Row(
             children: [
               Expanded(
                 child: Text(
                   '${this.chatType.text} chat',
-                  style: nativeChatSheetTitleStyle(context),
+                  style: baseSheetTitleStyle(context),
                 ),
               ),
               Container(

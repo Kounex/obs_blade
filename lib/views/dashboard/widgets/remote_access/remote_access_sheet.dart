@@ -7,6 +7,7 @@ import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/button.dart';
 import '../../../../shared/general/base/divider.dart';
+import '../../../../shared/general/base/sheet.dart';
 import '../../../../shared/general/base/icon_button.dart';
 import '../../../../shared/overlay/base_result.dart';
 import '../../../pro/widgets/pro_badge.dart';
@@ -79,8 +80,6 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
     return Observer(
       builder: (context) {
         final RemoteAccessStore store = this.widget.store;
@@ -135,34 +134,15 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
           }
         }
 
-        return SingleChildScrollView(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24.0) +
-              EdgeInsets.only(
-                bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xl,
-              ),
-          child: Column(
+        return BaseSheetScaffold(
+          header: const BaseSheetTitle(
+            'Remote Access',
+            subtitle: 'Control OBS from anywhere',
+            titleSuffix: ProBadge(scale: 1.2),
+          ),
+          body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// The Pro flag follows the title - not at the far right,
-              /// where the sheet's close button sits (dogfood 2026-11-08)
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      'Remote Access',
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const ProBadge(scale: 1.2),
-                ],
-              ),
-              Text(
-                'Control OBS from anywhere',
-                style: theme.textTheme.bodySmall,
-              ),
-              const SizedBox(height: AppSpacing.lg),
               const BaseDivider(),
               const SizedBox(height: AppSpacing.lg),
               body,

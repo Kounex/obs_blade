@@ -36,9 +36,7 @@ Future<void> showCombinedChannelModSheet(BuildContext context) {
       }
       return ModalHandler.showBaseBottomSheet<ChannelModStep>(
         context: context,
-        barrierDismissible: true,
-        enableDrag: true,
-        maxHeightFraction: 0.85,
+        height: BaseSheetHeight.tall,
         builder: (_) => CombinedChannelModSheet(
           hostContext: context,
           onToast: onToast,
@@ -92,9 +90,7 @@ CombinedModBlock? combinedModBlock(CombinedSource source) {
       if (youTube.isSignedInState && youTube.signedInWithoutChannel) {
         return CombinedModBlock.noChannel;
       }
-      if (!youTube.isSignedInState ||
-          !youTube.canWrite ||
-          source.needsSignIn) {
+      if (!youTube.isSignedInState || !youTube.canWrite || source.needsSignIn) {
         return CombinedModBlock.signedOut;
       }
       return source.unavailable ? CombinedModBlock.unavailable : null;
@@ -273,11 +269,11 @@ class _CombinedChannelModSheetState extends State<CombinedChannelModSheet> {
             .firstOrNull;
         final selectedBlock = blocks[selected];
 
-        return NativeChatSheetScaffold(
+        return BaseSheetScaffold(
           header: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Moderate', style: nativeChatSheetTitleStyle(context)),
+              Text('Moderate', style: baseSheetTitleStyle(context)),
               if (platforms.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Row(

@@ -75,6 +75,7 @@ class _TextFieldDateState extends State<TextFieldDate> {
       readOnly: true,
       onTap: () => ModalHandler.showBaseBottomSheet(
         context: context,
+        height: BaseSheetHeight.tall,
         builder: (context) => DatePickerSheet(
           selectedDate: widget.selectedDate,
           minimumDate: widget.minimumDate,

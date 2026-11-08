@@ -18,9 +18,7 @@ import '../native_chat_chrome.dart';
 void showAutoModQueueSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
+      height: BaseSheetHeight.standard,
       builder: (_) => AutoModQueueSheet(
         onFailure: (message) => ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -95,8 +93,8 @@ class _AutoModQueueSheetState extends State<AutoModQueueSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
-          Text('AutoMod queue', style: nativeChatSheetTitleStyle(context)),
+          baseSheetDragHandle(context),
+          Text('AutoMod queue', style: baseSheetTitleStyle(context)),
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),

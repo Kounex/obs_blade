@@ -138,13 +138,11 @@ class ThemeEntry extends StatelessWidget {
               ThemedCupertinoButton(
                 padding: const EdgeInsets.only(right: AppSpacing.lg),
                 text: 'Edit',
-                onPressed: () => ModalHandler.showBaseCupertinoBottomSheet(
+                onPressed: () => ModalHandler.showBaseBottomSheet(
                   context: context,
-                  modalWidgetBuilder: (context, scrollController) =>
-                      AddEditTheme(
-                        customTheme: this.customTheme,
-                        scrollController: scrollController,
-                      ),
+                  height: BaseSheetHeight.tall,
+                  builder: (context) =>
+                      AddEditTheme(customTheme: this.customTheme),
                 ),
               ),
           ],

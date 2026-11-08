@@ -27,16 +27,14 @@ import 'activity_formatting.dart';
 Future<void> showActivitySheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.9,
+      height: BaseSheetHeight.tall,
       builder: (context) => SizedBox(
         height: MediaQuery.sizeOf(context).height * 0.85,
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.only(top: AppSpacing.sm),
-              child: nativeChatSheetDragHandle(context),
+              child: baseSheetDragHandle(context),
             ),
             const Expanded(child: ActivityFeed(inSheet: true)),
           ],
@@ -50,9 +48,7 @@ Future<void> showActivityPersonSheet(
   ActivityEvent event,
 ) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (context) => _PersonSheet(event: event),
 );
 
@@ -79,7 +75,7 @@ class _PersonSheet extends StatelessWidget {
         final totals = formatActivityTotals(ActivityTotals.of(history));
         final open = history.where((e) => e.isBig && !e.thanked).toList();
         final now = DateTime.now();
-        return NativeChatSheetScaffold(
+        return BaseSheetScaffold(
           header: Row(
             children: [
               Icon(
@@ -94,7 +90,7 @@ class _PersonSheet extends StatelessWidget {
                 child: Text(
                   activityActorName(this.event),
                   overflow: TextOverflow.ellipsis,
-                  style: nativeChatSheetTitleStyle(context),
+                  style: baseSheetTitleStyle(context),
                 ),
               ),
             ],
@@ -152,9 +148,7 @@ class _PersonSheet extends StatelessWidget {
 Future<void> showActivityOptionsSheet(BuildContext context) =>
     ModalHandler.showBaseBottomSheet(
       context: context,
-      barrierDismissible: true,
-      enableDrag: true,
-      maxHeightFraction: 0.72,
+      height: BaseSheetHeight.standard,
       builder: (context) => const _OptionsSheet(),
     );
 
@@ -170,8 +164,8 @@ class _OptionsSheet extends StatelessWidget {
         getIt.isRegistered<KickChatStore>() &&
         getIt.checkLazySingletonInstanceExists<KickChatStore>() &&
         getIt<KickChatStore>().ownChannelSlug != null;
-    return NativeChatSheetScaffold(
-      header: Text('Activity', style: nativeChatSheetTitleStyle(context)),
+    return BaseSheetScaffold(
+      header: Text('Activity', style: baseSheetTitleStyle(context)),
       body: Observer(
         builder: (context) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

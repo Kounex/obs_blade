@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
+import 'package:obs_blade/shared/design/design.dart';
+import 'package:obs_blade/shared/general/base/sheet.dart';
 import 'package:obs_blade/shared/general/hive_builder.dart';
 import 'package:obs_blade/shared/overlay/base_progress_indicator.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
@@ -13,9 +15,7 @@ import 'package:obs_blade/views/dashboard/widgets/dashboard_content/exposed_cont
 import '../../../../../../models/hotkey.dart';
 
 class HotkeyList extends StatefulWidget {
-  final ScrollController? controller;
-
-  const HotkeyList({super.key, this.controller});
+  const HotkeyList({super.key});
 
   @override
   State<HotkeyList> createState() => _HotkeyListState();
@@ -62,91 +62,95 @@ class _HotkeyListState extends State<HotkeyList> {
   Widget build(BuildContext context) {
     DashboardStore dashboardStore = GetIt.instance<DashboardStore>();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Hotkeys', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8.0),
-              const Text(
-                'Only these internal names are exposed by the WebSocket API, so a bit of guessing and try and error is necessary to find the correct ones. Users have also reported that some hotkeys do not work at all via the WebSocket API, so expect problems when using this feature.',
-              ),
-              const SizedBox(height: 12.0),
-              CupertinoTextField(
-                controller: _controller,
-                placeholder: 'Filter...',
-                clearButtonMode: OverlayVisibilityMode.editing,
-              ),
-              const SizedBox(height: 12.0),
-            ],
+    return BaseSheetScaffold(
+      header: const BaseSheetTitle('Hotkeys'),
+      bodyIsScrollable: true,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Only these internal names are exposed by the WebSocket API, so a bit of guessing and try and error is necessary to find the correct ones. Users have also reported that some hotkeys do not work at all via the WebSocket API, so expect problems when using this feature.',
+                ),
+                const SizedBox(height: 12.0),
+                CupertinoTextField(
+                  controller: _controller,
+                  placeholder: 'Filter...',
+                  clearButtonMode: OverlayVisibilityMode.editing,
+                ),
+                const SizedBox(height: 12.0),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: HiveBuilder<Hotkey>(
-            hiveKey: HiveKeys.Hotkey,
-            builder: (context, hotkeyBox, child) {
-              return Observer(
-                builder: (context) {
-                  if (dashboardStore.hotkeys == null) {
-                    return BaseProgressIndicator(text: 'Fetching...');
-                  }
+          Expanded(
+            child: HiveBuilder<Hotkey>(
+              hiveKey: HiveKeys.Hotkey,
+              builder: (context, hotkeyBox, child) {
+                return Observer(
+                  builder: (context) {
+                    if (dashboardStore.hotkeys == null) {
+                      return BaseProgressIndicator(text: 'Fetching...');
+                    }
 
-                  _filteredSavedHotkeys = _filterSavedHotkeys(hotkeyBox.values);
+                    _filteredSavedHotkeys = _filterSavedHotkeys(
+                      hotkeyBox.values,
+                    );
 
-                  _filteredAllHotkeys = _filterAllHotkeys(
-                    dashboardStore.hotkeys!,
-                    hotkeyBox.values,
-                  );
+                    _filteredAllHotkeys = _filterAllHotkeys(
+                      dashboardStore.hotkeys!,
+                      hotkeyBox.values,
+                    );
 
-                  return Scrollbar(
-                    controller: this.widget.controller,
-                    child: ListView(
-                      controller: this.widget.controller,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 24.0) +
-                          EdgeInsets.only(
-                            bottom: MediaQuery.paddingOf(context).bottom + 12.0,
-                          ),
-                      children: [
-                        if (hotkeyBox.values.isNotEmpty) ...[
-                          const SectionHeader(title: 'Favourites'),
-                          ..._filteredSavedHotkeys.map(
-                            (hotkey) => HotkeyEntry(
-                              hotkeyBox: hotkeyBox,
-                              hotkey: hotkey,
+                    return Scrollbar(
+                      child: ListView(
+                        primary: false,
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          0.0,
+                          AppSpacing.lg,
+                          AppSpacing.lg,
+                        ),
+                        children: [
+                          if (hotkeyBox.values.isNotEmpty) ...[
+                            const SectionHeader(title: 'Favourites'),
+                            ..._filteredSavedHotkeys.map(
+                              (hotkey) => HotkeyEntry(
+                                hotkeyBox: hotkeyBox,
+                                hotkey: hotkey,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 24.0),
-                        ],
-                        ...[
-                          if (hotkeyBox.values.isNotEmpty)
-                            const SectionHeader(title: 'All'),
-                          ..._filteredAllHotkeys.map(
-                            (hotkey) => HotkeyEntry(
-                              hotkeyBox: hotkeyBox,
-                              hotkey: hotkey,
+                            const SizedBox(height: 24.0),
+                          ],
+                          ...[
+                            if (hotkeyBox.values.isNotEmpty)
+                              const SectionHeader(title: 'All'),
+                            ..._filteredAllHotkeys.map(
+                              (hotkey) => HotkeyEntry(
+                                hotkeyBox: hotkeyBox,
+                                hotkey: hotkey,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                      // itemCount: _filteredHotkeys.length,
-                      // separatorBuilder: (context, index) =>
-                      //     const BaseDivider(),
-                      // itemBuilder: (context, index) => HotkeyEntry(
-                      //   hotkey: _filteredHotkeys[index],
-                      //   onStar: () {},
-                      // ),
-                    ),
-                  );
-                },
-              );
-            },
+                        // itemCount: _filteredHotkeys.length,
+                        // separatorBuilder: (context, index) =>
+                        //     const BaseDivider(),
+                        // itemBuilder: (context, index) => HotkeyEntry(
+                        //   hotkey: _filteredHotkeys[index],
+                        //   onStar: () {},
+                        // ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

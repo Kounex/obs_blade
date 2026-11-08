@@ -69,12 +69,6 @@ dependencies:
   qr_code_scanner_plus: ^2.3.0
 
   # Fancy done layout stuff
-  modal_bottom_sheet: ^3.0.0
-  # modal_bottom_sheet:
-  #   git:
-  #     url: https://github.com/Kounex/modal_bottom_sheet.git
-  #     ref: main
-  #     path: modal_bottom_sheet
   fl_chart: ^1.0.0
   smooth_page_indicator: ^2.0.0
   keyboard_actions: ^4.2.1

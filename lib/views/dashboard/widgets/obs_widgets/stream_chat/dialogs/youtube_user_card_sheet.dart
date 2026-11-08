@@ -18,7 +18,6 @@ import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/native_chat_chrome.dart';
 import 'package:obs_blade/views/dashboard/widgets/obs_widgets/stream_chat/youtube_chat_message_row.dart';
 
-import 'chat_user_card_sheet.dart' show kChatUserCardMaxHeightFraction;
 import 'chat_user_list_actions.dart';
 import 'user_card_history_list.dart';
 
@@ -30,9 +29,7 @@ void showYouTubeUserCardSheet(
   String? fallbackAvatarUrl,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: kChatUserCardMaxHeightFraction,
+  height: BaseSheetHeight.standard,
   builder: (_) => YouTubeUserCardSheet(
     channelId: channelId,
     fallbackName: fallbackName,
@@ -79,8 +76,9 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
   List<UserCardMessage<YouTubeChatMessage>> get _bufferedMessages =>
       this._store.messagesForChatter(this.widget.channelId);
 
-  YouTubeChatMessage? get _newestBuffered =>
-      this._bufferedMessages.isEmpty ? null : this._bufferedMessages.first.message;
+  YouTubeChatMessage? get _newestBuffered => this._bufferedMessages.isEmpty
+      ? null
+      : this._bufferedMessages.first.message;
 
   @override
   void initState() {
@@ -121,7 +119,7 @@ class _YouTubeUserCardSheetState extends State<YouTubeUserCardSheet> {
     final settingsBox = Hive.box(HiveKeys.Settings.name);
     final messages = this._bufferedMessages;
 
-    return NativeChatSheetScaffold(
+    return BaseSheetScaffold(
       headerGap: AppSpacing.lg,
       header: this._header(context),
 

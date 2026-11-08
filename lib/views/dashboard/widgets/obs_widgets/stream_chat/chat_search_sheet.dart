@@ -36,9 +36,7 @@ Future<T?> showChatSearchSheet<T extends Object>(
   T? back,
 }) => ModalHandler.showBaseBottomSheet<T>(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.86,
+  height: BaseSheetHeight.tall,
   builder: (sheet) => ChatSearchSheet(
     chatType: chatType,
     onBack: back == null ? null : () => Navigator.of(sheet).pop(back),
@@ -94,11 +92,11 @@ class _ChatSearchSheetState extends State<ChatSearchSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           if (this.widget.onBack case final onBack?)
-            NativeChatSheetBackTitle(title: 'Search chat', onBack: onBack)
+            BaseSheetBackTitle(title: 'Search chat', onBack: onBack)
           else
-            Text('Search chat', style: nativeChatSheetTitleStyle(context)),
+            Text('Search chat', style: baseSheetTitleStyle(context)),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: NativeChatTextField(

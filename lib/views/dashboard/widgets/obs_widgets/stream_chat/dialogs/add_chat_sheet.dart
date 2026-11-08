@@ -27,9 +27,7 @@ Future<TwitchChannelRef?> showAddChatSheet(
   bool pickOnly = false,
 }) => ModalHandler.showBaseBottomSheet<TwitchChannelRef>(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (context) =>
       AddChatSheet(channelService: channelService, pickOnly: pickOnly),
 );

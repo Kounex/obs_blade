@@ -41,9 +41,7 @@ Future<void> showCombinedChatBuilderSheet(
   CombinedMatchFinder? matchFinder,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.9,
+  height: BaseSheetHeight.tall,
   builder: (_) =>
       CombinedChatBuilderSheet(combo: combo, matchFinder: matchFinder),
 );
@@ -520,14 +518,14 @@ class _CombinedChatBuilderSheetState extends State<CombinedChatBuilderSheet> {
   @override
   Widget build(BuildContext context) {
     final canSave = this._picks.length >= 2;
-    return NativeChatSheetScaffold(
+    return BaseSheetScaffold(
       headerGap: AppSpacing.sm,
       header: Row(
         children: [
           Expanded(
             child: Text(
               this._editing ? 'Edit combined chat' : 'New combined chat',
-              style: nativeChatSheetTitleStyle(context),
+              style: baseSheetTitleStyle(context),
             ),
           ),
           ThemedCupertinoButton(

@@ -412,7 +412,7 @@ class _StreamChatState extends State<StreamChat>
     if (this.widget.usernameRowExpandable) {
       usernameBar = CustomExpansionTile(
         headerText: 'Chat options',
-        headerTextStyle: nativeChatSheetTitleStyle(context),
+        headerTextStyle: baseSheetTitleStyle(context),
         expandedBody: usernameBar,
       );
     }

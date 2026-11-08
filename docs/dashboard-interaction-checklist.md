@@ -89,6 +89,7 @@ mid-pane) and on the tall audio rows.
 | Color grammar | live green = on air only, red = recording / program, amber = paused |
 | Accessibility | one semantics node per control with a state + hint |
 | Hit areas | every control takes taps on its whole 44 pt area - an overlapping sibling painted later (Stack order, content padding) steals them; test a tap off-center, not just `tester.tap` (2026-11-08: sheet close button) |
-| Sheets in their frame | shot a sheet inside the real `ModalHandler` sheet (close button top right, top inset), not its content alone - a header's right edge sits under the close button (2026-11-08: PRO flag) |
+| Sheets in their frame | shot a sheet inside the real sheet (`ShotsHarness.inSheet`: handle, 640 pt cap, glass on iOS), not its content alone - the chrome around it is part of the layout (2026-11-08: PRO flag) |
+| Sheets (every one) | opened with `ModalHandler.showBaseBottomSheet`, built on `BaseSheetScaffold` (handle + pinned title, only the body scrolls); no close / Done / Cancel button (tap outside or drag closes - a result-returning sheet treats `null` as cancel); no own bottom safe area / keyboard inset (the helper adds both); a centered card at most 640 pt on tablets; a picker wheel or reorder list inside still works (2026-11-08: one sheet app-wide) |
 | Network type | connectivity_plus on iOS answers "none" right after the last listener left (the dashboard's) - read it through `settledConnectivity()`, never treat an unclear answer as "mobile data" (2026-11-08: relay at home) |
 | Theme accent | `accentText` is red in some themes - a status color for "through the relay" etc. uses `highlightText` (2026-11-08) |

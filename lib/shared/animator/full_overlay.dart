@@ -92,8 +92,8 @@ class FullOverlayState extends State<FullOverlay>
           builder: (context, child) => FadeTransition(
             opacity: _opacity,
 
-            /// Same scrim the sheets use
-            /// (`ModalHandler.showBaseCupertinoBottomSheet` barrierColor)
+            /// Same scrim the sheets use (Material's modal bottom sheet
+            /// barrier, `ModalHandler.showBaseBottomSheet`)
             child: ColoredBox(color: Colors.black54, child: child),
           ),
         ),

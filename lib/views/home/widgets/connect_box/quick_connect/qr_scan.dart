@@ -11,8 +11,7 @@ import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 import '../../../../../utils/obs_connect_uri.dart';
 import '../../../../../shared/design/design.dart';
-import '../../../../../shared/general/themed/cupertino_button.dart';
-import '../../../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
+import '../../../../../shared/general/base/sheet.dart';
 
 class QRScan extends StatefulWidget {
   const QRScan({super.key});
@@ -111,18 +110,16 @@ class _QRScanState extends State<QRScan> {
       );
     }
 
-    return TransculentCupertinoNavBarWrapper(
-      leading: const QuestionMarkTooltip(
-        message:
-            'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info',
+    return BaseSheetScaffold(
+      header: const BaseSheetTitle(
+        'Quick Connect',
+        trailing: QuestionMarkTooltip(
+          message:
+              'You can find the QR code in:\n\nTools -> WebSocket Server Settings -> Show Connect Info',
+        ),
       ),
-      title: 'Quick Connect',
-      actions: ThemedCupertinoButton(
-        padding: const EdgeInsets.all(0),
-        text: 'Close',
-        onPressed: () => Navigator.of(context).pop(),
-      ),
-      customBody: Column(
+      bodyIsScrollable: true,
+      body: Column(
         children: [
           Expanded(
             child: Stack(
@@ -165,13 +162,11 @@ class _QRScanState extends State<QRScan> {
               ],
             ),
           ),
-          SafeArea(
-            child: SizedBox(
-              height: MediaQuery.sizeOf(context).height / 5,
-              child: AnimatedSwitcher(
-                duration: AppMotion.medium,
-                child: scanState,
-              ),
+          SizedBox(
+            height: MediaQuery.sizeOf(context).height / 5,
+            child: AnimatedSwitcher(
+              duration: AppMotion.medium,
+              child: scanState,
             ),
           ),
         ],

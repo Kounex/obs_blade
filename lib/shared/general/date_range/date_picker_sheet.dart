@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../design/design.dart';
-import '../base/divider.dart';
+import '../base/sheet.dart';
 
 class DatePickerSheet extends StatefulWidget {
   final DateTime? minimumDate;
@@ -47,13 +47,18 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BaseSheetScaffold(
+      header: BaseSheetTitle(
+        'Date',
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             CupertinoButton(
+              padding: const EdgeInsets.only(left: AppSpacing.lg),
+              onPressed: () {
+                this.widget.updateDateTime?.call(null);
+                Navigator.of(context).pop();
+              },
               child: Text(
                 'Clear',
                 style: TextStyle(
@@ -62,47 +67,28 @@ class _DatePickerSheetState extends State<DatePickerSheet> {
                   ).extension<AppStatusColors>()!.destructiveText,
                 ),
               ),
-              onPressed: () {
-                this.widget.updateDateTime?.call(null);
-                Navigator.of(context, rootNavigator: true).pop();
-              },
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                CupertinoButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).pop();
-                  },
-                ),
-                CupertinoButton(
-                  child: const Text('Save'),
-                  onPressed: () {
-                    this.widget.updateDateTime?.call(_date);
-                    Navigator.of(context, rootNavigator: true).pop();
-                  },
-                ),
-              ],
+            CupertinoButton(
+              padding: const EdgeInsets.only(left: AppSpacing.lg),
+              onPressed: () {
+                this.widget.updateDateTime?.call(_date);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
             ),
           ],
         ),
-        const BaseDivider(),
-        Flexible(
-          child: SafeArea(
-            child: SizedBox(
-              height: 250.0,
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.date,
-                initialDateTime: _date,
-                minimumDate: this.widget.minimumDate,
-                maximumDate: this.widget.maximumDate ?? _initialDateTime(),
-                onDateTimeChanged: (dateTime) => _date = dateTime,
-              ),
-            ),
-          ),
+      ),
+      body: SizedBox(
+        height: 216.0,
+        child: CupertinoDatePicker(
+          mode: CupertinoDatePickerMode.date,
+          initialDateTime: _date,
+          minimumDate: this.widget.minimumDate,
+          maximumDate: this.widget.maximumDate ?? _initialDateTime(),
+          onDateTimeChanged: (dateTime) => _date = dateTime,
         ),
-      ],
+      ),
     );
   }
 }

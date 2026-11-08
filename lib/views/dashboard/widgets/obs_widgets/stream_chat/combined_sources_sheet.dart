@@ -53,9 +53,7 @@ Future<void> showCombinedSourcesSheet(
   String? comboId,
 }) => ModalHandler.showBaseBottomSheet(
   context: context,
-  barrierDismissible: true,
-  enableDrag: true,
-  maxHeightFraction: 0.72,
+  height: BaseSheetHeight.standard,
   builder: (_) => CombinedSourcesSheet(hostContext: context, comboId: comboId),
 );
 
@@ -89,7 +87,7 @@ class CombinedSourcesSheet extends StatelessWidget {
         for (final candidate in store.combos) {
           if (candidate.id == id) combo = candidate;
         }
-        return NativeChatSheetScaffold(
+        return BaseSheetScaffold(
           headerGap: AppSpacing.sm,
           header: Row(
             children: [
@@ -98,7 +96,7 @@ class CombinedSourcesSheet extends StatelessWidget {
                   combo?.displayName ?? 'My chats',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: nativeChatSheetTitleStyle(context),
+                  style: baseSheetTitleStyle(context),
                 ),
               ),
               if (combo != null)

@@ -18,7 +18,7 @@ class ChannelModSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs),
-    child: Text(this.title, style: nativeChatSheetSectionStyle(context)),
+    child: Text(this.title, style: baseSheetSectionStyle(context)),
   );
 }
 
@@ -263,7 +263,7 @@ class ChannelModSheetFrame extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [nativeChatSheetDragHandle(context), this.child],
+      children: [baseSheetDragHandle(context), this.child],
     ),
   );
 }

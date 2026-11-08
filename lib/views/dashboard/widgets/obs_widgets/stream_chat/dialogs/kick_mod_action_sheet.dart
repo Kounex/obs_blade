@@ -37,9 +37,7 @@ Future<void> showKickModActionSheet(
   first: ModActionStep.root,
   open: (step) => ModalHandler.showBaseBottomSheet<ModActionStep>(
     context: context,
-    barrierDismissible: true,
-    enableDrag: true,
-    maxHeightFraction: 0.72,
+    height: BaseSheetHeight.standard,
     builder: (_) => KickModActionSheet(
       message: message,
       step: step,
@@ -176,15 +174,15 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          nativeChatSheetDragHandle(context),
+          baseSheetDragHandle(context),
           this._titleRow(context, name),
           const SizedBox(height: AppSpacing.sm),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxListHeight),
             child: SingleChildScrollView(
               child: this._timeoutStep
-                      ? this._buildTimeoutPresets(context)
-                      : this._buildRootActions(context),
+                  ? this._buildTimeoutPresets(context)
+                  : this._buildRootActions(context),
             ),
           ),
         ],
@@ -311,9 +309,9 @@ class _KickModActionSheetState extends State<KickModActionSheet> {
         ? 'Timeout $authorName'
         : 'Moderate $authorName';
     if (!this._timeoutStep) {
-      return Text(title, style: nativeChatSheetTitleStyle(context));
+      return Text(title, style: baseSheetTitleStyle(context));
     }
-    return NativeChatSheetBackTitle(
+    return BaseSheetBackTitle(
       title: title,
       onBack: this._running ? null : () => this._go(ModActionStep.root),
     );

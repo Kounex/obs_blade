@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:obs_blade/models/kick_auth.dart';
 import 'package:obs_blade/models/youtube_auth.dart';
-import 'package:obs_blade/shared/general/base/card.dart';
 import 'package:obs_blade/stores/views/kick_chat.dart';
 import 'package:obs_blade/stores/views/youtube_chat.dart';
 import 'package:obs_blade/types/classes/kick/kick_channel_suggestion.dart';
@@ -77,12 +76,12 @@ void main() {
   });
 
   /// The sheet as showBaseBottomSheet presents it: bottom-aligned card,
-  /// capped at the card width on tablets.
+  /// capped at the sheet width on tablets.
   Widget sheet(Widget child) => Builder(
     builder: (context) => Align(
       alignment: Alignment.bottomCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: kBaseCardMaxWidth),
+        constraints: const BoxConstraints(maxWidth: kBaseSheetMaxWidth),
         child: Material(color: Theme.of(context).cardColor, child: child),
       ),
     ),
