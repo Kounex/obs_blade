@@ -174,7 +174,8 @@ class _Locked extends StatelessWidget {
     children: [
       Text(
         'Reach OBS on mobile data or from another network - no port '
-        'forwarding, no VPN. Remote access is part of Pro.',
+        'forwarding, no VPN, end-to-end encrypted. Remote access is part '
+        'of Pro.',
         style: _secondary(context),
       ),
       const SizedBox(height: AppSpacing.lg),
@@ -184,6 +185,34 @@ class _Locked extends StatelessWidget {
       ),
     ],
   );
+}
+
+/// What the relay can't see (spec "End-to-end encryption", 2026-11-08)
+class _EndToEndNote extends StatelessWidget {
+  const _EndToEndNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextStyle style = _secondary(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2.0),
+          child: Icon(CupertinoIcons.lock_fill, size: 16.0, color: style.color),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            'End-to-end encrypted: the relay passes your session on but '
+            'can\'t read it - not your scenes, your preview or your stream '
+            'key.',
+            style: style,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _NeedsSavedConnection extends StatelessWidget {
@@ -226,6 +255,8 @@ class _SetUp extends StatelessWidget {
           'on your router, and your OBS password never leaves the PC.',
           style: _secondary(context),
         ),
+        const SizedBox(height: AppSpacing.md),
+        const _EndToEndNote(),
         const SizedBox(height: AppSpacing.lg),
         Text('On the PC running OBS', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.xs),
