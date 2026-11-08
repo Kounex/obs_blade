@@ -13,7 +13,15 @@ class ProBadge extends StatelessWidget {
   final Color? accent;
   final bool stacked;
 
-  const ProBadge({super.key, this.accent, this.stacked = false});
+  /// 1.0 = the paywall hero's pill; headers use a larger one
+  final double scale;
+
+  const ProBadge({
+    super.key,
+    this.accent,
+    this.stacked = false,
+    this.scale = 1.0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +36,10 @@ class ProBadge extends StatelessWidget {
       label: 'Pro feature',
       excludeSemantics: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7.0, vertical: 3.0),
+        padding: EdgeInsets.symmetric(
+          horizontal: 7.0 * this.scale,
+          vertical: 3.0 * this.scale,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -52,12 +63,16 @@ class ProBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(CupertinoIcons.star_fill, size: 8.0, color: textColor),
-            const SizedBox(width: 2.0),
+            Icon(
+              CupertinoIcons.star_fill,
+              size: 8.0 * this.scale,
+              color: textColor,
+            ),
+            SizedBox(width: 2.0 * this.scale),
             Text(
               'PRO',
               style: TextStyle(
-                fontSize: 9.5,
+                fontSize: 9.5 * this.scale,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.4,
                 height: 1.0,

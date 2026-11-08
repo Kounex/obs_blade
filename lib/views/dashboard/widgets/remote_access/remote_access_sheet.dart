@@ -144,18 +144,18 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// The Pro flag rides the title's line, right-aligned -
-              /// a Pro feature for everyone who sees it
+              /// The Pro flag follows the title - not at the far right,
+              /// where the sheet's close button sits (dogfood 2026-11-08)
               Row(
                 children: [
-                  Expanded(
+                  Flexible(
                     child: Text(
                       'Remote Access',
                       style: theme.textTheme.headlineSmall,
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  const ProBadge(),
+                  const ProBadge(scale: 1.35),
                 ],
               ),
               Text(

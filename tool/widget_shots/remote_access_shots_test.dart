@@ -1,6 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:obs_blade/shared/general/base/card.dart';
+import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
@@ -145,6 +148,45 @@ void main() {
     );
     await harness.shot(tester, '${name}_tablet', build(), size: kShotTablet);
   }
+
+  /// The sheet as the app opens it (ModalHandler's Cupertino sheet: close
+  /// button top right, top inset, blur) - the content alone hid that the
+  /// header's right edge sits under the close button (2026-11-08)
+  Widget inRealSheet(Widget Function() build) => CupertinoScaffold(
+    body: Builder(
+      builder: (context) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (ModalRoute.of(context)?.isCurrent ?? false) {
+            ModalHandler.showBaseCupertinoBottomSheet(
+              context: context,
+              maxWidth: kBaseCardMaxWidth,
+              modalWidgetBuilder: (_, _) => build(),
+            );
+          }
+        });
+        return const ColoredBox(color: Color(0xFF101012));
+      },
+    ),
+  );
+
+  testWidgets('in the real sheet: header vs close button', (tester) async {
+    for (final (name, pro) in [
+      ('remote_sheet_free', false),
+      ('remote_sheet_pro', true),
+    ]) {
+      await harness.shot(
+        tester,
+        name,
+        inRealSheet(() => sheet(store(), connection(), pro: pro)),
+      );
+      await harness.shot(
+        tester,
+        '${name}_narrow',
+        inRealSheet(() => sheet(store(), connection(), pro: pro)),
+        size: const Size(320, 640),
+      );
+    }
+  });
 
   testWidgets('locked (not Pro): the setup pitch, Unlock Pro', (tester) async {
     await all(
