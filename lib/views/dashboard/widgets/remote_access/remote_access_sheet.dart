@@ -155,7 +155,7 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  const ProBadge(scale: 1.35),
+                  const ProBadge(scale: 1.2),
                 ],
               ),
               Text(
