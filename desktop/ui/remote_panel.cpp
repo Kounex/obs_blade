@@ -66,6 +66,49 @@ QString dot(const char *color)
 
 } // namespace
 
+namespace {
+
+class ContentFitter : public QObject {
+public:
+	explicit ContentFitter(QWidget *window) : QObject(window), window_(window) {}
+
+protected:
+	bool eventFilter(QObject *watched, QEvent *event) override
+	{
+		if (watched == window_ && (event->type() == QEvent::Resize || event->type() == QEvent::LayoutRequest ||
+					   event->type() == QEvent::Show))
+			fit();
+		return false;
+	}
+
+private:
+	void fit()
+	{
+		if (fitting_)
+			return;
+		fitting_ = true;
+		const int width = window_->width();
+		int needed = window_->heightForWidth(width);
+		if (needed < 0)
+			needed = window_->sizeHint().height();
+		if (window_->minimumHeight() != needed)
+			window_->setMinimumHeight(needed);
+		if (window_->height() < needed)
+			window_->resize(width, needed);
+		fitting_ = false;
+	}
+
+	QWidget *window_;
+	bool fitting_ = false;
+};
+
+} // namespace
+
+void fitWindowToContent(QWidget *window)
+{
+	window->installEventFilter(new ContentFitter(window));
+}
+
 QString relativeTime(qint64 unixSeconds, qint64 nowSeconds)
 {
 	if (unixSeconds <= 0)

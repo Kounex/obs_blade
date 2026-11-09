@@ -11,6 +11,8 @@
 #include <QPalette>
 #include <QStyleFactory>
 #include <QToolButton>
+#include <QVBoxLayout>
+#include <cstdio>
 
 namespace {
 
@@ -102,5 +104,28 @@ int main(int argc, char **argv)
 	closed.layout()->activate();
 	closed.resize(440, qMax(closed.sizeHint().height(), closed.heightForWidth(440)));
 	closed.grab().save(QStringLiteral("%1/panel_standalone_obs_closed.png").arg(out));
+
+	/// A window squeezed with Advanced open: fitWindowToContent keeps it
+	/// tall enough (dogfood 2026-11-09: the rows were drawn over each other)
+	QWidget window;
+	window.setMinimumWidth(360);
+	auto *windowLayout = new QVBoxLayout(&window);
+	auto *fitted = new obb_ui::RemotePanel([](const QJsonObject &) {}, obb_ui::Shell::Standalone, &window);
+	windowLayout->addWidget(fitted);
+	obb_ui::fitWindowToContent(&window);
+	fitted->applyState(base());
+	window.resize(440, 300);
+	window.show();
+	app.processEvents();
+	fitted->findChild<QToolButton *>()->setChecked(true);
+	for (const int width : {440, 360}) {
+		window.resize(width, 300);
+		for (int i = 0; i < 5; i++)
+			app.processEvents();
+		const int needed = window.heightForWidth(width);
+		std::printf("window %d: height %d, content needs %d -> %s\n", width, window.height(), needed,
+			    window.height() >= needed ? "ok" : "SQUEEZED");
+		window.grab().save(QStringLiteral("%1/window_advanced_%2.png").arg(out).arg(width));
+	}
 	return 0;
 }

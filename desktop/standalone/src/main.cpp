@@ -82,6 +82,7 @@ public:
 		auto *layout = new QVBoxLayout(this);
 		panel = new obb_ui::RemotePanel(send, obb_ui::Shell::Standalone, this);
 		layout->addWidget(panel);
+		obb_ui::fitWindowToContent(this);
 	}
 
 	void present()

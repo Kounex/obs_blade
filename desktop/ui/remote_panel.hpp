@@ -66,6 +66,12 @@ private:
 	std::function<void(bool)> onStartAtLogin_;
 };
 
+/// Keeps `window` at least as tall as its content needs at its current
+/// width - wrapped text grows taller when the window narrows, and opening
+/// Advanced or a new hint adds rows. Top-level windows don't follow
+/// heightForWidth on their own (both shells' windows use it).
+void fitWindowToContent(QWidget *window);
+
 /// "2 min ago", "3 days ago" for a unix timestamp (exposed for tests)
 QString relativeTime(qint64 unixSeconds, qint64 nowSeconds);
 

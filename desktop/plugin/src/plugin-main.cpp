@@ -102,13 +102,8 @@ void onEvent(const char *json, void *)
 		[event] {
 			if (!g_panel)
 				return;
+			/// A hint appearing grows the dialog (fitWindowToContent)
 			g_panel->applyState(event);
-			/// A hint appearing needs room - grow, never squeeze the rows
-			if (g_dialog) {
-				const int needed = g_dialog->heightForWidth(g_dialog->width());
-				if (needed > g_dialog->height())
-					g_dialog->resize(g_dialog->width(), needed);
-			}
 		},
 		Qt::QueuedConnection);
 }
@@ -164,6 +159,7 @@ void openPanel()
 	auto *layout = new QVBoxLayout(dialog);
 	auto *panel = new obb_ui::RemotePanel(send, obb_ui::Shell::Plugin, dialog);
 	layout->addWidget(panel);
+	obb_ui::fitWindowToContent(dialog);
 	panel->applyState(currentState());
 	g_dialog = dialog;
 	g_panel = panel;
