@@ -97,11 +97,13 @@ jobs:
           mkdir -p "$RUNNER_TEMP/out"
           linux/appimage.sh build "$RUNNER_TEMP/out/OBS-Blade-Remote-x86_64.AppImage"
 
-      # Starts (offscreen, no FUSE needed for the check) and logs its start line
+      # Starts on a virtual X server (the bundled xcb platform) and logs its
+      # start line
       - name: Smoke test
         run: |
+          sudo apt-get install -yq xvfb
           app="$RUNNER_TEMP/out/OBS-Blade-Remote-x86_64.AppImage"
-          QT_QPA_PLATFORM=offscreen APPIMAGE_EXTRACT_AND_RUN=1 timeout 15 "$app" --background || [ $? -eq 124 ]
+          APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a timeout 15 "$app" --background || [ $? -eq 124 ]
           grep "started (core" ~/.config/obs-blade-remote/standalone.log
 
       - uses: actions/upload-artifact@v4
