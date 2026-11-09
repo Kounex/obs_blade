@@ -10,6 +10,8 @@
 //!   `set_obs_override {port|null, password|null}`
 //! - `remove_device {id}`, `refresh_devices`, `unpair`
 //! - `obs_running {value}` - the shell's knowledge of the OBS process
+//! - `open_plugin_panel` - standalone, deferred: the plugin shows its panel
+//!   in OBS
 //!
 //! Events (JSON to the sink, from bridge threads - marshal to your UI
 //! thread): `state {...}`, `pair_result {ok, bridge_id, device_id | reason}`,
@@ -107,6 +109,9 @@ impl Bridge {
                         shared.set_devices(Vec::new());
                     });
                 }
+            }
+            "open_plugin_panel" => {
+                let _ = shared.obs_outbox.send(crate::monitor::open_plugin_panel_request());
             }
             "obs_running" => {
                 let value = command["value"].as_bool();

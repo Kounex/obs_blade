@@ -54,6 +54,7 @@ pub async fn run(shared: Arc<Shared>) {
         };
         shared.set_obs_state(state);
         shared.plugin_present.send_replace(false);
+        shared.plugin_checked.send_replace(true);
         tokio::select! {
             _ = tokio::time::sleep(RETRY) => {}
             _ = stop.changed() => return,
@@ -132,6 +133,14 @@ async fn connect_once(shared: &Arc<Shared>) -> Outcome {
     }
 }
 
+/// Standalone, while the plugin handles remote access: show the plugin's
+/// panel in OBS (one place for the settings and devices).
+pub fn open_plugin_panel_request() -> String {
+    json!({"op": 6, "d": {"requestType": "CallVendorRequest", "requestId": "obb-open-panel",
+        "requestData": {"vendorName": VENDOR, "requestType": "OpenPanel", "requestData": {}}}})
+    .to_string()
+}
+
 /// Is the plugin loaded in this OBS? (standalone: it then only watches OBS)
 fn plugin_request() -> String {
     json!({"op": 6, "d": {"requestType": "CallVendorRequest", "requestId": "obb-plugin",
@@ -171,6 +180,7 @@ fn handle(shared: &Arc<Shared>, message: &Value, previous_bytes: &mut Option<(u6
             if shared.plugin_present.send_replace(present) != present {
                 shared.wake.notify_waiters();
             }
+            shared.plugin_checked.send_replace(true);
         }
         Some(9) if d["requestId"] == "obb-status" => {
             if let Some(aspect) = canvas_aspect(d) {

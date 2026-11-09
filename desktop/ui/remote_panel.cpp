@@ -181,6 +181,16 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	hint_->setTextFormat(Qt::RichText);
 	root->addWidget(hint_);
 
+	/// Standalone while the plugin handles remote access: its settings and
+	/// devices live in OBS - shown there instead of a copy here that the
+	/// running plugin wouldn't follow
+	openInObs_ = new QPushButton(QStringLiteral("Open in OBS"), this);
+	connect(openInObs_, &QPushButton::clicked, this, [this] { send_(QJsonObject{{"cmd", "open_plugin_panel"}}); });
+	auto *openRow = new QHBoxLayout();
+	openRow->addWidget(openInObs_);
+	openRow->addStretch();
+	root->addLayout(openRow);
+
 	devicesBox_ = new QWidget(this);
 	auto *devicesLayout = new QVBoxLayout(devicesBox_);
 	devicesLayout->setContentsMargins(0, 6, 0, 0);
@@ -193,7 +203,8 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 
 	/// Preview quality: a heading over a left-aligned picker (a QFormLayout
 	/// right-aligns and indents its labels on macOS)
-	auto *previewBox = new QVBoxLayout();
+	previewSection_ = new QWidget(this);
+	auto *previewBox = new QVBoxLayout(previewSection_);
 	previewBox->setContentsMargins(0, 6, 0, 0);
 	previewBox->setSpacing(6);
 	previewBox->addWidget(heading(QStringLiteral("Preview quality"), this));
@@ -217,7 +228,7 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	previewBox->addWidget(secondary(QStringLiteral("The scene previews on phones connected through the "
 						      "relay. Smaller loads faster on mobile data."),
 					this));
-	root->addLayout(previewBox);
+	root->addWidget(previewSection_);
 
 	/// Advanced: OBS started with --websocket_port / --websocket_password
 	/// (its config file doesn't know them), and unpairing. A plain text
@@ -235,11 +246,12 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 		return open ? QStringLiteral("\u25BE  Advanced") : QStringLiteral("\u25B8  Advanced");
 	};
 	advancedToggle->setText(toggleText(false));
-	auto *advancedRow = new QHBoxLayout();
+	advancedHeader_ = new QWidget(this);
+	auto *advancedRow = new QHBoxLayout(advancedHeader_);
 	advancedRow->setContentsMargins(0, 6, 0, 0);
 	advancedRow->addWidget(advancedToggle);
 	advancedRow->addStretch();
-	root->addLayout(advancedRow);
+	root->addWidget(advancedHeader_);
 
 	advanced_ = new QWidget(this);
 	auto *advancedLayout = new QVBoxLayout(advanced_);
@@ -297,6 +309,7 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 
 	advanced_->setVisible(false);
 	connect(advancedToggle, &QToolButton::toggled, this, [this, advancedToggle, toggleText](bool open) {
+		advancedOpen_ = open;
 		advanced_->setVisible(open);
 		advancedToggle->setText(toggleText(open));
 	});
@@ -403,10 +416,19 @@ void RemotePanel::applyState(const QJsonObject &state)
 					"&#8209;&#8209;websocket_password, enter it under Advanced.");
 	else if (obs == "closed" && shell_ == Shell::Standalone && relay != "deferred")
 		hints << QStringLiteral("Phones can start it from the OBS Blade app.");
+	const bool deferred = relay == "deferred";
+	if (deferred)
+		hints = {QStringLiteral("Its settings and paired devices are in OBS under "
+					"<b>Tools&nbsp;&rarr;&nbsp;OBS&nbsp;Blade&nbsp;Remote</b>.")};
 	hint_->setText(hints.join(QStringLiteral("<br>")));
 	hint_->setVisible(!hints.isEmpty());
 
-	devicesBox_->setVisible(paired);
+	openInObs_->setVisible(deferred);
+	enabled_->setVisible(!deferred);
+	previewSection_->setVisible(!deferred);
+	advancedHeader_->setVisible(!deferred);
+	advanced_->setVisible(!deferred && advancedOpen_);
+	devicesBox_->setVisible(paired && !deferred);
 	rebuildDevices(state["devices"].toArray());
 
 	applyPreview(state["preview_max_edge"].toInt(640), state["preview_jpeg_quality"].toInt(60));

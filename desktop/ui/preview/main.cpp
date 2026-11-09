@@ -79,6 +79,7 @@ int main(int argc, char **argv)
 		{"disabled", with(base(), {{"relay", "disabled"}, {"enabled", false}})},
 		{"custom_preview", with(base(), {{"preview_max_edge", 800}, {"preview_jpeg_quality", 65}})},
 		{"advanced", base()},
+		{"deferred", with(base(), {{"relay", "deferred"}, {"kind", "standalone"}, {"devices", QJsonArray()}})},
 	};
 	for (const auto &[name, state] : states) {
 		for (const auto shell : {obb_ui::Shell::Plugin, obb_ui::Shell::Standalone}) {

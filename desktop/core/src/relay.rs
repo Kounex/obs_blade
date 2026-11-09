@@ -26,6 +26,9 @@ const SILENCE_LIMIT: Duration = Duration::from_secs(75);
 /// "went silent" after 75 s (2026-11-08).
 const KEEPALIVE: Duration = Duration::from_secs(25);
 const MAX_BACKOFF: Duration = Duration::from_secs(60);
+/// Standalone start: the longest the link waits for the plugin check (the
+/// monitor answers in well under a second when OBS runs or is closed).
+const PLUGIN_CHECK_WAIT: Duration = Duration::from_secs(8);
 const SESSION_BUFFER: usize = 1024;
 
 enum Ended {
@@ -55,6 +58,11 @@ pub async fn run(shared: Arc<Shared>) {
             None
         };
         if let Some(state) = blocked {
+            // Deferred: the plugin's link has the devices; a list kept from
+            // before would go stale (removed phones still listed)
+            if state == RelayState::Deferred {
+                shared.set_devices(Vec::new());
+            }
             shared.set_relay_state(state);
             let mut plugin = shared.plugin_present.subscribe();
             tokio::select! {
@@ -63,6 +71,21 @@ pub async fn run(shared: Arc<Shared>) {
                 _ = stop.changed() => return,
                 // Another process (the plugin / standalone) may have paired.
                 _ = tokio::time::sleep(Duration::from_secs(10)) => {}
+            }
+            continue;
+        }
+
+        // Standalone: know whether the plugin runs before taking the link
+        // (bounded - a hung OBS must not keep remote access off)
+        if shared.cfg.kind == Kind::Standalone && !*shared.plugin_checked.borrow() {
+            shared.set_relay_state(RelayState::Connecting);
+            let mut checked = shared.plugin_checked.subscribe();
+            tokio::select! {
+                _ = checked.wait_for(|known| *known) => {}
+                _ = tokio::time::sleep(PLUGIN_CHECK_WAIT) => {
+                    shared.plugin_checked.send_replace(true);
+                }
+                _ = stop.changed() => return,
             }
             continue;
         }

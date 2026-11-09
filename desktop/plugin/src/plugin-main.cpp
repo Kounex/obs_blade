@@ -167,6 +167,14 @@ void openPanel()
 	dialog->show();
 }
 
+/// `OpenPanel` - the standalone's "Open in OBS" while this plugin handles
+/// remote access (one place for the settings and devices)
+void onOpenPanel(obs_data_t *, obs_data_t *response, void *)
+{
+	QMetaObject::invokeMethod(qApp, [] { openPanel(); }, Qt::QueuedConnection);
+	obs_data_set_bool(response, "opened", true);
+}
+
 void stopBridge(bool obsExit)
 {
 	if (!g_bridge)
@@ -226,6 +234,7 @@ void obs_module_post_load(void)
 	if (vendor) {
 		obs_websocket_vendor_register_request(vendor, "Pair", onPair, nullptr);
 		obs_websocket_vendor_register_request(vendor, "Status", onStatus, nullptr);
+		obs_websocket_vendor_register_request(vendor, "OpenPanel", onOpenPanel, nullptr);
 	} else {
 		obs_log(LOG_WARNING, "obs-websocket isn't available - pairing works through the standalone only");
 	}

@@ -90,6 +90,10 @@ pub struct Shared {
     pub obs_state: watch::Sender<String>,
     pub obs_running: watch::Sender<Option<bool>>,
     pub plugin_present: watch::Sender<bool>,
+    /// Standalone: the monitor answered "is the plugin loaded?" once (or
+    /// found no OBS). The relay link waits for it - connecting first
+    /// replaced the plugin's link at the relay (4906) on every start.
+    pub plugin_checked: watch::Sender<bool>,
     pub status: watch::Sender<Option<Value>>,
     /// Stored settings / pairing changed.
     pub wake: Notify,
@@ -122,6 +126,7 @@ impl Shared {
             obs_state: watch::Sender::new(String::new()),
             obs_running: watch::Sender::new(None),
             plugin_present: watch::Sender::new(false),
+            plugin_checked: watch::Sender::new(false),
             status: watch::Sender::new(None),
             wake: Notify::new(),
             stop: watch::Sender::new(None),

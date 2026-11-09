@@ -23,6 +23,14 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   tool rendered Fusion only and never opened Advanced): text port field,
   left-aligned fields, plain disclosure, dimmed secondary text; windows
   keep the content height (`fitWindowToContent`).
+- Standalone while the plugin runs ("deferred"): it listed the devices
+  from its own brief link at startup, never updated (a phone unpaired in
+  the app stayed listed). Now it shows only the status and **Open in
+  OBS** (vendor `OpenPanel`; macOS brings OBS to the front) - settings
+  and devices live in one place at a time; the running plugin wouldn't
+  follow changes made in the standalone anyway. The standalone also waits
+  for the plugin check before its first relay connect (max 8 s): starting
+  it replaced the plugin's link (4906) every time.
 - `InputDialog.inputCheck`: valid is null, not '' (the doc said '' - a
   Save that never closed).
 

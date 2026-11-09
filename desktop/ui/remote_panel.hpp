@@ -60,6 +60,10 @@ private:
 	QComboBox *preview_;
 	QCheckBox *startAtLogin_;
 	QWidget *advanced_;
+	QWidget *advancedHeader_;
+	QWidget *previewSection_;
+	QPushButton *openInObs_;
+	bool advancedOpen_ = false;
 	QLineEdit *obsPort_;
 	QLineEdit *obsPassword_;
 	QPushButton *unpair_;

@@ -121,4 +121,12 @@ bool start(QString *error)
 
 #endif
 
+void bringToFront()
+{
+#ifdef Q_OS_MACOS
+	if (running())
+		QProcess::startDetached(QStringLiteral("open"), {QStringLiteral("-b"), QStringLiteral("com.obsproject.obs-studio")});
+#endif
+}
+
 } // namespace obs_process

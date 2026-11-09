@@ -7,7 +7,7 @@ The bridge next to OBS that lets the app reach OBS through the relay
 | Folder | What | State |
 |---|---|---|
 | `core/` | Rust: relay link, one local OBS websocket per phone session, preview cap, OBS monitor (state, status snapshot, pairing via CustomEvent), stored pairing; C ABI `core/include/obs_blade_bridge.h`; `obb` CLI (headless host) | built, tested |
-| `plugin/` | OBS plugin shell (C++, obs-plugintemplate 2025-12, OBS 31.1+): starts the core after load, vendor `obs-blade-bridge` `Pair` / `Status`, Tools -> OBS Blade Remote opens the panel, clean stop on OBS exit | builds + runs on macOS (OBS 32.2.2) |
+| `plugin/` | OBS plugin shell (C++, obs-plugintemplate 2025-12, OBS 31.1+): starts the core after load, vendor `obs-blade-bridge` `Pair` / `Status` / `OpenPanel`, Tools -> OBS Blade Remote opens the panel, clean stop on OBS exit | builds + runs on macOS (OBS 32.2.2) |
 | `standalone/` | Tray / menu bar app (C++/Qt6): the core as `standalone`, OBS watcher (process: `obs64.exe` / `OBS` / `obs`), Start OBS (macOS bundle id, Windows install dir from the uninstall key + `bin\\64bit`, Linux PATH / Flatpak), start at login (LaunchAgent / HKCU Run / XDG autostart, on by default), log `standalone.log` next to `bridge.json` | builds + runs on macOS |
 | `ui/` | Shared Qt settings panel (`remote_panel.*`); `ui/preview/` renders every state to PNGs offscreen | built |
 

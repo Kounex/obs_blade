@@ -42,6 +42,8 @@ void send(const QJsonObject &command)
 		return;
 	const QByteArray json = QJsonDocument(command).toJson(QJsonDocument::Compact);
 	obb_command(g_bridge, json.constData());
+	if (command["cmd"].toString() == QStringLiteral("open_plugin_panel"))
+		obs_process::bringToFront();
 }
 
 /// The core's folder for bridge.json (Rust dirs::config_dir): Qt's
