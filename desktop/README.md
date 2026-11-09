@@ -110,6 +110,23 @@ port and password under Advanced. It stores its
 pairing in `<user config>/obs-blade-remote/bridge.json` (0600), shared by
 the plugin and the standalone.
 
+## CI builds and macOS signing
+
+`.github/workflows/desktop.yml` builds on every push touching `desktop/`:
+Windows x64 (plugin folder + standalone with Qt, unsigned), a Linux
+compile check, and macOS universal - the plugin as `.pkg` (installs into
+`~/Library/Application Support/obs-studio/plugins`) and the standalone as
+`.dmg` (Qt bundled by `standalone/macos/package.sh`), both Developer ID
+signed with the hardened runtime, notarized and stapled
+(`desktop/notarize.sh`). Secrets: `MACOS_DEVID_APP_P12_BASE64`,
+`MACOS_DEVID_INSTALLER_P12_BASE64`, `MACOS_DEVID_P12_PASSWORD` (from
+the maintainer's `~/.config/obs-blade/developer-id/`) and
+`MACOS_NOTARY_KEY_BASE64` / `_KEY_ID` / `_ISSUER_ID` (the App Store
+Connect team key the app releases use). Without them (forks) the macOS
+builds are ad hoc signed and not notarized. Developer ID certificates
+can't be made in Xcode here (it sees the role as Admin): developer.apple.com
+with a CSR.
+
 ## Standalone (macOS dev build)
 
 ```bash

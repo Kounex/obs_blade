@@ -4,6 +4,23 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-09 - OBS Blade Remote: signed + notarized macOS builds in CI
+
+- Developer ID Application + Installer certificates made on
+  developer.apple.com with CSRs (Xcode refused: it shows the role as
+  Admin, App Store Connect says Account Holder); the 2022 Developer ID
+  key was lost. Notarization uses the existing App Store Connect team key.
+- `desktop.yml` macOS job: universal core / plugin / standalone, a
+  temporary keychain from the secrets, the plugin `.pkg` productsigned,
+  the standalone `.dmg` from `standalone/macos/package.sh` (QtCore / Gui /
+  Widgets + cocoa + mac style, rpaths into the bundle, signed inside out),
+  both notarized + stapled (`desktop/notarize.sh`). The template's
+  package no longer ships the dSYM into the user's plugins folder.
+- Verified: CI artifacts downloaded with a quarantine flag pass
+  Gatekeeper as "Notarized Developer ID" (pkg, dmg, app).
+- `core.fileMode` is off in this checkout: new scripts need
+  `git update-index --chmod=+x`.
+
 ## 2026-11-09 - OBS Blade Remote: portable OBS installs; Windows CI build
 
 - Asked: the plugin knows OBS's config path, the standalone guessed the
