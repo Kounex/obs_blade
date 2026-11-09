@@ -13,6 +13,9 @@ pub const UNKNOWN_DEVICE: u16 = 4904;
 /// The end-to-end handshake or a frame failed (a wrong bridge key on the
 /// phone, tampering): set up again.
 pub const E2E_FAILED: u16 = 4911;
+/// The relay closed this bridge link: the same pairing connected again
+/// (the plugin taking over from the standalone at OBS start, or back).
+pub const REPLACED: u16 = 4906;
 /// obs-websocket's AuthenticationFailed.
 pub const OBS_AUTH_FAILED: u16 = 4009;
 

@@ -30,7 +30,9 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   and devices live in one place at a time; the running plugin wouldn't
   follow changes made in the standalone anyway. The standalone also waits
   for the plugin check before its first relay connect (max 8 s): starting
-  it replaced the plugin's link (4906) every time.
+  it replaced the plugin's link (4906) every time. Replaced itself (4906 -
+  the plugin starting in OBS), it checks for the plugin again before
+  reconnecting - it kicked the plugin back once at every OBS start.
 - `InputDialog.inputCheck`: valid is null, not '' (the doc said '' - a
   Save that never closed).
 

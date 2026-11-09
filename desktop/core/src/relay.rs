@@ -223,7 +223,16 @@ async fn connect(
                         }
                     }
                     Some(Ok(Message::Close(frame))) => {
-                        let reason = frame.map(|f| format!("closed {}", u16::from(f.code))).unwrap_or_else(|| "closed".into());
+                        let code = frame.as_ref().map(|f| u16::from(f.code));
+                        // Standalone replaced: the plugin just started in OBS
+                        // (its vendor answers only from now on). Reconnecting
+                        // at once kicked it back; ask about the plugin first.
+                        if code == Some(crate::wire::REPLACED) && shared.cfg.kind == Kind::Standalone {
+                            shared.log("info", "relay link taken over - checking for the OBS plugin");
+                            shared.plugin_checked.send_replace(false);
+                            break Ended::Recheck;
+                        }
+                        let reason = code.map(|c| format!("closed {c}")).unwrap_or_else(|| "closed".into());
                         break Ended::Lost(reason);
                     }
                     Some(Ok(_)) => {}
