@@ -35,7 +35,12 @@ checks every 5 s whether the plugin answers `Status` and then steps back
 cd desktop/ui/preview
 cmake -B build -DCMAKE_PREFIX_PATH=<Qt6, e.g. desktop/plugin/.deps/obs-deps-qt6-*> && cmake --build build
 QT_QPA_PLATFORM=offscreen QT_PLUGIN_PATH=<Qt6>/plugins build/panel_preview shots
+# The platform's own style (what the standalone shows) - on the Mac itself,
+# also over ssh; check both, Fusion hides native-style problems
+QT_SCALE_FACTOR=2 build/panel_preview native --native
 ```
+
+Each run includes `panel_*_advanced.png` with the Advanced section open.
 
 ## Core
 

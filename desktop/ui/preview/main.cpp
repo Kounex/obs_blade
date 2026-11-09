@@ -10,6 +10,7 @@
 #include <QLayout>
 #include <QPalette>
 #include <QStyleFactory>
+#include <QToolButton>
 
 namespace {
 
@@ -55,8 +56,13 @@ void dark(QApplication &app)
 int main(int argc, char **argv)
 {
 	QApplication app(argc, argv);
-	app.setStyle(QStyleFactory::create("Fusion"));
-	dark(app);
+	/// --native: the platform's own style and palette (what the standalone
+	/// shows on macOS / Windows) instead of Fusion close to OBS's dark theme
+	const bool native = argc > 2 && QString::fromLocal8Bit(argv[2]) == QStringLiteral("--native");
+	if (!native) {
+		app.setStyle(QStyleFactory::create("Fusion"));
+		dark(app);
+	}
 	const QString out = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QStringLiteral(".");
 	QDir().mkpath(out);
 
@@ -69,6 +75,7 @@ int main(int argc, char **argv)
 		{"update_required", with(base(), {{"relay", "update_required"}, {"detail", "0.5.0"}})},
 		{"disabled", with(base(), {{"relay", "disabled"}, {"enabled", false}})},
 		{"custom_preview", with(base(), {{"preview_max_edge", 800}, {"preview_jpeg_quality", 65}})},
+		{"advanced", base()},
 	};
 	for (const auto &[name, state] : states) {
 		for (const auto shell : {obb_ui::Shell::Plugin, obb_ui::Shell::Standalone}) {
@@ -76,6 +83,8 @@ int main(int argc, char **argv)
 			if (shell == obb_ui::Shell::Standalone)
 				panel.setStartAtLogin(true, [](bool) {});
 			panel.applyState(state);
+			if (QString::fromUtf8(name) == QStringLiteral("advanced"))
+				panel.findChild<QToolButton *>()->setChecked(true);
 			/// The height the plugin's dialog grows to (heightForWidth -
 			/// wrapped hints included)
 			panel.resize(440, 100);

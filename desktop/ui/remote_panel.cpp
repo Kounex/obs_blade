@@ -1,16 +1,18 @@
 #include "remote_panel.hpp"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDateTime>
-#include <QFormLayout>
+#include <QEvent>
+#include <QGridLayout>
+#include <QIntValidator>
 #include <QHBoxLayout>
 #include <QJsonArray>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QSpinBox>
 #include <QToolButton>
 #include <QVBoxLayout>
 
@@ -21,22 +23,39 @@ namespace {
 /// Preview presets for relay sessions: longest edge + JPEG quality (the
 /// core rewrites the app's preview screenshots to these)
 struct Preset {
-	const char *label;
+	const char16_t *name;
 	int maxEdge;
 	int quality;
+
+	QString label() const
+	{
+		return QStringLiteral("%1 \u2013 %2 px").arg(QString::fromUtf16(name)).arg(maxEdge);
+	}
 };
 
 constexpr Preset kPresets[] = {
-	{"Data saver - 480 px", 480, 50},
-	{"Balanced - 640 px (default)", 640, 60},
-	{"Sharp - 960 px", 960, 70},
+	{u"Data saver", 480, 50},
+	{u"Balanced", 640, 60},
+	{u"Sharp", 960, 70},
 };
+
+/// Marks the labels RemotePanel::updateSecondaryColor dims
+constexpr const char *kSecondary = "obbSecondary";
 
 QLabel *secondary(const QString &text, QWidget *parent)
 {
 	auto *label = new QLabel(text, parent);
 	label->setWordWrap(true);
-	label->setStyleSheet("color: palette(placeholder-text);");
+	label->setProperty(kSecondary, true);
+	return label;
+}
+
+QLabel *heading(const QString &text, QWidget *parent)
+{
+	auto *label = new QLabel(text, parent);
+	QFont font = label->font();
+	font.setBold(true);
+	label->setFont(font);
 	return label;
 }
 
@@ -71,14 +90,14 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	root->setSizeConstraint(QLayout::SetMinimumSize);
 
 	auto *header = new QHBoxLayout();
-	auto *title = new QLabel(QStringLiteral("<b>OBS Blade Remote</b>"), this);
+	auto *title = heading(QStringLiteral("OBS Blade Remote"), this);
 	version_ = secondary(QString(), this);
 	version_->setWordWrap(false);
 	header->addWidget(title);
 	header->addStretch();
 	header->addWidget(version_);
 	root->addLayout(header);
-	root->addWidget(secondary(QStringLiteral("Control this OBS from the OBS Blade app anywhere - "
+	root->addWidget(secondary(QStringLiteral("Control this OBS from the OBS Blade app anywhere \u2013 "
 						 "end-to-end encrypted, no port forwarding."),
 				  this));
 
@@ -112,15 +131,25 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	devicesBox_ = new QWidget(this);
 	auto *devicesLayout = new QVBoxLayout(devicesBox_);
 	devicesLayout->setContentsMargins(0, 6, 0, 0);
-	devicesLayout->addWidget(new QLabel(QStringLiteral("<b>Paired devices</b>"), devicesBox_));
+	devicesLayout->setSpacing(6);
+	devicesLayout->addWidget(heading(QStringLiteral("Paired devices"), devicesBox_));
 	devicesList_ = new QVBoxLayout();
+	devicesList_->setSpacing(4);
 	devicesLayout->addLayout(devicesList_);
 	root->addWidget(devicesBox_);
 
-	auto *form = new QFormLayout();
+	/// Preview quality: a heading over a left-aligned picker (a QFormLayout
+	/// right-aligns and indents its labels on macOS)
+	auto *previewBox = new QVBoxLayout();
+	previewBox->setContentsMargins(0, 6, 0, 0);
+	previewBox->setSpacing(6);
+	previewBox->addWidget(heading(QStringLiteral("Preview quality"), this));
 	preview_ = new QComboBox(this);
 	for (const Preset &preset : kPresets)
-		preview_->addItem(QString::fromUtf8(preset.label));
+		preview_->addItem(preset.label());
+	preview_->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+	/// macOS: align the visible box, not its focus-ring margin, with the text
+	preview_->setAttribute(Qt::WA_LayoutUsesWidgetRect);
 	connect(preview_, &QComboBox::currentIndexChanged, this, [this](int index) {
 		if (applying_ || index < 0 || index >= int(std::size(kPresets)))
 			return;
@@ -128,42 +157,76 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 				  {"max_edge", kPresets[index].maxEdge},
 				  {"jpeg_quality", kPresets[index].quality}});
 	});
-	form->addRow(QStringLiteral("Preview over remote access"), preview_);
-
-	root->addLayout(form);
+	auto *previewRow = new QHBoxLayout();
+	previewRow->addWidget(preview_);
+	previewRow->addStretch();
+	previewBox->addLayout(previewRow);
+	previewBox->addWidget(secondary(QStringLiteral("The scene previews on phones connected through the "
+						      "relay. Smaller loads faster on mobile data."),
+					this));
+	root->addLayout(previewBox);
 
 	/// Advanced: OBS started with --websocket_port / --websocket_password
-	/// (its config file doesn't know them)
+	/// (its config file doesn't know them), and unpairing. A plain text
+	/// disclosure - a checkable QToolButton draws a box when open on macOS.
 	auto *advancedToggle = new QToolButton(this);
-	advancedToggle->setText(QStringLiteral("Advanced"));
 	advancedToggle->setCheckable(true);
-	advancedToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	advancedToggle->setArrowType(Qt::RightArrow);
-	advancedToggle->setAutoRaise(true);
-	root->addWidget(advancedToggle);
+	advancedToggle->setToolButtonStyle(Qt::ToolButtonTextOnly);
+	advancedToggle->setCursor(Qt::PointingHandCursor);
+	/// The headings' size, in the sheet: macOS gives tool buttons a smaller
+	/// font, and a widget style sheet ignores setFont
+	advancedToggle->setStyleSheet(QStringLiteral("QToolButton { border: none; background: transparent; padding: 0; "
+						     "font-weight: bold; font-size: %1pt; }")
+					      .arg(QApplication::font().pointSizeF()));
+	const auto toggleText = [](bool open) {
+		return open ? QStringLiteral("\u25BE  Advanced") : QStringLiteral("\u25B8  Advanced");
+	};
+	advancedToggle->setText(toggleText(false));
+	auto *advancedRow = new QHBoxLayout();
+	advancedRow->setContentsMargins(0, 6, 0, 0);
+	advancedRow->addWidget(advancedToggle);
+	advancedRow->addStretch();
+	root->addLayout(advancedRow);
 
 	advanced_ = new QWidget(this);
-	auto *advancedForm = new QFormLayout(advanced_);
-	advancedForm->setContentsMargins(12, 0, 0, 0);
-	advancedForm->addRow(secondary(QStringLiteral("Only needed when OBS runs with --websocket_port or "
-						      "--websocket_password. Leave empty to use OBS's own settings."),
-				       advanced_));
-	obsPort_ = new QSpinBox(advanced_);
-	obsPort_->setRange(0, 65535);
-	obsPort_->setSpecialValueText(QStringLiteral("From OBS"));
+	auto *advancedLayout = new QVBoxLayout(advanced_);
+	advancedLayout->setContentsMargins(0, 0, 0, 0);
+	advancedLayout->setSpacing(8);
+	/// Non-breaking hyphens: "--websocket_port" must not wrap at its dashes
+	auto *advancedNote = secondary(QStringLiteral("Only needed when OBS was started with "
+						      "&#8209;&#8209;websocket_port or &#8209;&#8209;websocket_password. "
+						      "Leave empty to use the settings from OBS."),
+				       advanced_);
+	advancedNote->setTextFormat(Qt::RichText);
+	advancedLayout->addWidget(advancedNote);
+
+	auto *grid = new QGridLayout();
+	grid->setHorizontalSpacing(12);
+	grid->setVerticalSpacing(8);
+	obsPort_ = new QLineEdit(advanced_);
+	obsPort_->setValidator(new QIntValidator(1, 65535, obsPort_));
+	obsPort_->setPlaceholderText(QStringLiteral("From OBS"));
+	obsPort_->setFixedWidth(180);
 	obsPassword_ = new QLineEdit(advanced_);
 	obsPassword_->setEchoMode(QLineEdit::Password);
 	obsPassword_->setPlaceholderText(QStringLiteral("From OBS"));
-	advancedForm->addRow(QStringLiteral("WebSocket port"), obsPort_);
-	advancedForm->addRow(QStringLiteral("WebSocket password"), obsPassword_);
+	obsPassword_->setFixedWidth(180);
 	auto *apply = new QPushButton(QStringLiteral("Apply"), advanced_);
 	connect(apply, &QPushButton::clicked, this, [this] {
 		QJsonObject command{{"cmd", "set_obs_override"}};
-		command["port"] = obsPort_->value() > 0 ? QJsonValue(obsPort_->value()) : QJsonValue();
+		const int port = obsPort_->text().toInt();
+		command["port"] = port > 0 ? QJsonValue(port) : QJsonValue();
 		command["password"] = obsPassword_->text().isEmpty() ? QJsonValue() : QJsonValue(obsPassword_->text());
 		send_(command);
 	});
-	advancedForm->addRow(QString(), apply);
+	grid->addWidget(new QLabel(QStringLiteral("WebSocket port"), advanced_), 0, 0);
+	grid->addWidget(obsPort_, 0, 1, Qt::AlignLeft);
+	grid->addWidget(new QLabel(QStringLiteral("WebSocket password"), advanced_), 1, 0);
+	grid->addWidget(obsPassword_, 1, 1, Qt::AlignLeft);
+	grid->addWidget(apply, 2, 1, Qt::AlignLeft);
+	grid->setColumnStretch(2, 1);
+	advancedLayout->addLayout(grid);
+
 	unpair_ = new QPushButton(QStringLiteral("Unpair This PC"), advanced_);
 	connect(unpair_, &QPushButton::clicked, this, [this] {
 		if (QMessageBox::question(this, QStringLiteral("Unpair This PC"),
@@ -172,14 +235,47 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 		    QMessageBox::Yes)
 			send_(QJsonObject{{"cmd", "unpair"}});
 	});
-	advancedForm->addRow(QString(), unpair_);
+	auto *unpairRow = new QHBoxLayout();
+	unpairRow->setContentsMargins(0, 8, 0, 0);
+	unpairRow->setSpacing(12);
+	unpairRow->addWidget(unpair_);
+	unpairRow->addWidget(secondary(QStringLiteral("All paired devices lose remote access."), advanced_), 1);
+	advancedLayout->addLayout(unpairRow);
+
 	advanced_->setVisible(false);
-	connect(advancedToggle, &QToolButton::toggled, this, [this, advancedToggle](bool open) {
+	connect(advancedToggle, &QToolButton::toggled, this, [this, advancedToggle, toggleText](bool open) {
 		advanced_->setVisible(open);
-		advancedToggle->setArrowType(open ? Qt::DownArrow : Qt::RightArrow);
+		advancedToggle->setText(toggleText(open));
 	});
 	root->addWidget(advanced_);
 	root->addStretch();
+	updateSecondaryColor();
+}
+
+void RemotePanel::changeEvent(QEvent *event)
+{
+	/// OBS theme switches and macOS light / dark change the palette
+	if (event->type() == QEvent::PaletteChange || event->type() == QEvent::StyleChange)
+		updateSecondaryColor();
+	QWidget::changeEvent(event);
+}
+
+void RemotePanel::updateSecondaryColor()
+{
+	/// Secondary text: the text color at 60 %. palette(placeholder-text)
+	/// renders as full white with the macOS dark palette; OBS themes set
+	/// their text color through a stylesheet, which polishing copies into
+	/// the palette read here.
+	QColor color = palette().color(QPalette::WindowText);
+	color.setAlphaF(0.6);
+	const QString sheet = QStringLiteral("color: rgba(%1, %2, %3, 60%);")
+				      .arg(color.red())
+				      .arg(color.green())
+				      .arg(color.blue());
+	for (QLabel *label : findChildren<QLabel *>()) {
+		if (label->property(kSecondary).toBool() && label->styleSheet() != sheet)
+			label->setStyleSheet(sheet);
+	}
 }
 
 void RemotePanel::setStartAtLogin(bool on, std::function<void(bool)> onChange)
@@ -210,22 +306,22 @@ void RemotePanel::applyState(const QJsonObject &state)
 	if (relay == "online") {
 		if (obs == "running") {
 			color = "#30d158";
-			status = QStringLiteral("Online - phones can reach this OBS");
+			status = QStringLiteral("Online \u2013 phones can reach this OBS");
 		} else if (obs == "closed") {
 			color = "#ffc107";
-			status = shell_ == Shell::Standalone ? QStringLiteral("Online - OBS isn't running")
-							     : QStringLiteral("Online - OBS is closing");
+			status = shell_ == Shell::Standalone ? QStringLiteral("Online \u2013 OBS isn't running")
+							     : QStringLiteral("Online \u2013 OBS is closing");
 		} else if (obs == "ws_off" || obs == "auth_failed") {
 			color = "#ffc107";
-			status = QStringLiteral("Online - but OBS doesn't let OBS Blade Remote in");
+			status = QStringLiteral("Online \u2013 but OBS doesn't let OBS Blade Remote in");
 		} else {
-			status = QStringLiteral("Online - checking OBS...");
+			status = QStringLiteral("Online \u2013 checking OBS...");
 		}
 	} else if (relay == "connecting") {
 		status = QStringLiteral("Connecting to the OBS Blade relay...");
 	} else if (relay == "offline") {
 		color = "#ff453a";
-		status = QStringLiteral("Can't reach the OBS Blade relay - retrying");
+		status = QStringLiteral("Can't reach the OBS Blade relay \u2013 retrying");
 	} else if (relay == "update_required") {
 		color = "#ff453a";
 		status = QStringLiteral("Update required");
@@ -247,7 +343,7 @@ void RemotePanel::applyState(const QJsonObject &state)
 	if (relay == "update_required")
 		hints << QStringLiteral("This version is too old for the relay (needs %1 or newer).").arg(detail);
 	if (obs == "ws_off")
-		hints << QStringLiteral("OBS's WebSocket server is off - turn it on in OBS under "
+		hints << QStringLiteral("OBS's WebSocket server is off \u2013 turn it on in OBS under "
 					"<b>Tools &rarr; WebSocket Server Settings</b>.");
 	else if (obs == "auth_failed")
 		hints << QStringLiteral("OBS refused the WebSocket password. If OBS was started with "
@@ -263,7 +359,7 @@ void RemotePanel::applyState(const QJsonObject &state)
 	applyPreview(state["preview_max_edge"].toInt(640), state["preview_jpeg_quality"].toInt(60));
 
 	if (!obsPort_->hasFocus())
-		obsPort_->setValue(state["obs_port"].isNull() ? 0 : state["obs_port"].toInt());
+		obsPort_->setText(state["obs_port"].isNull() ? QString() : QString::number(state["obs_port"].toInt()));
 	if (!obsPassword_->hasFocus() && !state["obs_password_set"].toBool())
 		obsPassword_->clear();
 	unpair_->setEnabled(paired);
@@ -280,6 +376,7 @@ void RemotePanel::rebuildDevices(const QJsonArray &devices)
 	}
 	if (devices.isEmpty()) {
 		devicesList_->addWidget(secondary(QStringLiteral("No devices yet."), devicesBox_));
+		updateSecondaryColor();
 		return;
 	}
 	const qint64 now = QDateTime::currentSecsSinceEpoch();
@@ -312,6 +409,7 @@ void RemotePanel::rebuildDevices(const QJsonArray &devices)
 		row->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 		devicesList_->addWidget(row);
 	}
+	updateSecondaryColor();
 }
 
 void RemotePanel::applyPreview(int maxEdge, int jpegQuality)
@@ -326,9 +424,9 @@ void RemotePanel::applyPreview(int maxEdge, int jpegQuality)
 	const int customIndex = int(std::size(kPresets));
 	if (index < 0) {
 		if (preview_->count() == customIndex)
-			preview_->addItem(QStringLiteral("Custom - %1 px").arg(maxEdge));
+			preview_->addItem(QStringLiteral("Custom \u2013 %1 px").arg(maxEdge));
 		else
-			preview_->setItemText(customIndex, QStringLiteral("Custom - %1 px").arg(maxEdge));
+			preview_->setItemText(customIndex, QStringLiteral("Custom \u2013 %1 px").arg(maxEdge));
 		index = customIndex;
 	} else if (preview_->count() > customIndex) {
 		preview_->removeItem(customIndex);

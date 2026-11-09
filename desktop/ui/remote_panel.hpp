@@ -16,7 +16,6 @@ class QComboBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
-class QSpinBox;
 class QVBoxLayout;
 class QWidget;
 
@@ -39,7 +38,11 @@ public slots:
 	/// A `state` event from the core (any thread -> call on the UI thread)
 	void applyState(const QJsonObject &state);
 
+protected:
+	void changeEvent(QEvent *event) override;
+
 private:
+	void updateSecondaryColor();
 	void rebuildDevices(const QJsonArray &devices);
 	void applyPreview(int maxEdge, int jpegQuality);
 
@@ -57,7 +60,7 @@ private:
 	QComboBox *preview_;
 	QCheckBox *startAtLogin_;
 	QWidget *advanced_;
-	QSpinBox *obsPort_;
+	QLineEdit *obsPort_;
 	QLineEdit *obsPassword_;
 	QPushButton *unpair_;
 	std::function<void(bool)> onStartAtLogin_;
