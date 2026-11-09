@@ -4,6 +4,23 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-09 - OBS Blade Remote moved to its own repo
+
+- User decision: the desktop side doesn't belong in the mobile app's repo.
+  `desktop/` went to **`Kounex/obs-blade-remote`** (public, local
+  `~/agent/obs-blade-remote`) with its history (`git subtree split`),
+  with its own CI and releases (tag `v<version>`, the built-in token).
+  Reason it surfaced: the FOSS APK holds this repo's "Latest" release
+  (F-Droid), so desktop downloads here couldn't have stable
+  `releases/latest/download` links, and publishing across repos needed a
+  token.
+- Here: `desktop/` and `.github/workflows/desktop.yml` removed, its macOS
+  signing secrets deleted (set on the new repo); references point there
+  (relay README + `protocol.py`, `noise_ik.dart`, the spec, AGENTS.md
+  quick map + Related). The relay and its protocol contract stay here.
+  Entries above about "OBS Blade Remote" describe work that now lives
+  there; its log continues in that repo's `docs/changelog.md`.
+
 ## 2026-11-09 - OBS Blade Remote: signed + notarized macOS builds in CI
 
 - Developer ID Application + Installer certificates made on

@@ -90,6 +90,7 @@ assumptions. Put the reminder at the end of the final report.
 | Chat (WebView + native Twitch/YouTube/Kick + Combined; dedicated tab, dashboard pane removed) | `lib/views/dashboard/widgets/obs_widgets/stream_chat/` |
 | Media hub (soundboard) | `lib/views/dashboard/widgets/dashboard_content/scene_content/media_hub/` (behind `ExposeMediaHub`; spec `docs/superpowers/specs/2026-09-27-media-hub-design.md`) |
 | Activity feed (own-channel events, seen / thanked, status banner, gaps) | `lib/stores/views/activity.dart`, `lib/utils/activity/` (own-YouTube poller, status builder), `lib/views/chat/widgets/activity/`; Kick webhook relay `tool/kick_events_relay/` |
+| Remote access (Pro): relay + app side | Relay `tool/remote_relay/` (protocol contract in its README), app `lib/utils/remote/`, `lib/stores/views/remote_access.dart`. The desktop side (bridge core, OBS plugin, standalone app, installers) is its own repo **`Kounex/obs-blade-remote`** (local `~/agent/obs-blade-remote`, has its own AGENTS.md) - a protocol change touches both |
 | YouTube video id helper | `lib/utils/youtube_video_id.dart` |
 | Shared design system ("On Air") | `lib/shared/design/` |
 | Responsive phone↔tablet swap | `lib/shared/general/responsive_widget_wrapper.dart` (width > `StylingHelper.max_width_mobile` **700**, or Settings → **Force Tablet Mode**) |
@@ -307,5 +308,6 @@ enforces it). Details: [`docs/foss-build.md`](docs/foss-build.md).
 
 ## Related
 
+- `Kounex/obs-blade-remote` — the desktop bridge for remote access (OBS plugin + standalone app, installers and releases); moved out of `desktop/` on 2026-11-09
 - `Kounex/obs_blade_page` — marketing site
 - `Kounex/obs_station_server` — separate Twitch-era backend (historical)

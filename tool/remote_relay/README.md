@@ -3,7 +3,7 @@
 Connects a paired phone to the bridge next to OBS (the OBS Blade Remote
 plugin or the standalone app) from anywhere, Pro only. Design:
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`. This README is
-the protocol contract for the bridge core (`desktop/core`) and the app;
+the protocol contract for the bridge core (`core/` of Kounex/obs-blade-remote) and the app;
 `protocol.py` holds the frame format and close codes.
 
 Public at `https://relay.obs-blade.com` (Cloudflare tunnel `vps`, no
@@ -55,7 +55,7 @@ into chunks of at most 65518 bytes, each sent as plaintext `[fin u8]
 [chunk]` (`fin` 1 on the last chunk). The relay forwards these frames
 untouched and can't read them; it still sees who connects to which
 bridge, when, sizes and timing, close codes and the bridge's status
-snapshot (control messages). Implementations: `desktop/core/src/e2e.rs`,
+snapshot (control messages). Implementations: `core/src/e2e.rs` (Kounex/obs-blade-remote),
 `lib/utils/remote/noise_ik.dart`.
 - Close codes (besides OBS's own 4000-4012, which pass through):
 

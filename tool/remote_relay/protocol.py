@@ -1,5 +1,5 @@
 """Wire format between the relay and a bridge, and the close codes the app
-sees. This module is the contract the bridge core (desktop/core) and the
+sees. This module is the contract the bridge core (core/ of Kounex/obs-blade-remote) and the
 app implement; README.md describes it in prose.
 
 Bridge socket (one per bridge, carries all of its app sessions):

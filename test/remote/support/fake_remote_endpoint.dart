@@ -8,7 +8,7 @@ import 'package:obs_blade/utils/remote/noise_ik.dart';
 /// What the endpoint does with a websocket after the upgrade.
 enum FakeEndpointMode {
   /// Behaves like the bridge + OBS behind the relay, as
-  /// `desktop/core/src/session.rs` does: the end-to-end handshake (an
+  /// `core/src/session.rs` (Kounex/obs-blade-remote) does: the end-to-end handshake (an
   /// app key not in [FakeRemoteEndpoint.pairedAppKeys] -> close 4904, a
   /// message 1 that doesn't decrypt -> 4911), then Hello without
   /// `authentication` and Identified on Identify - all encrypted.

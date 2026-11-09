@@ -14,7 +14,7 @@ const String kRemoteRelayUrl = String.fromEnvironment(
 );
 
 /// Vendor name the OBS plugin registers in obs-websocket, and the
-/// CustomEvent key the standalone listens for (`desktop/core`).
+/// CustomEvent key the standalone listens for (`core/` of Kounex/obs-blade-remote).
 const String kRemoteBridgeVendor = 'obs-blade-bridge';
 const String kRemotePairEventKey = 'obs-blade-pair';
 

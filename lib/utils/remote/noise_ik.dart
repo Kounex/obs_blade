@@ -10,7 +10,7 @@ import 'package:cryptography/dart.dart';
 ///
 /// `Noise_IK_25519_ChaChaPoly_SHA256` (noiseprotocol.org, rev. 34), the
 /// app as initiator: it knows the bridge's static key from pairing (sent
-/// through OBS, never via the relay). Mirrors `desktop/core/src/e2e.rs`
+/// through OBS, never via the relay). Mirrors `core/src/e2e.rs` (Kounex/obs-blade-remote)
 /// (snow); checked against the published cacophony test vector.
 const String kNoiseProtocolName = 'Noise_IK_25519_ChaChaPoly_SHA256';
 
@@ -277,7 +277,7 @@ class NoiseIKInitiator {
 }
 
 /// The bridge's side - here for tests and the fake bridge (the real one
-/// is snow in `desktop/core`).
+/// is snow in `core/` of Kounex/obs-blade-remote).
 class NoiseIKResponder {
   final NoiseKeyPair _static;
   final NoiseKeyPair? _fixedEphemeral;

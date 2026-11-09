@@ -87,7 +87,7 @@ phone ──wss──► relay.obs-blade.com (VPS, Quadlet) ◄──wss── b
 
 ### Bridge (one core, two shells)
 
-- **Core** (Rust, static library with a C ABI; `desktop/core/`):
+- **Core** (Rust, static library with a C ABI; `core/` in Kounex/obs-blade-remote):
   - one outbound wss connection to the relay (`/v1/bridge`, bridge token),
     reconnect with backoff, version handshake (the relay can say "update
     required");
@@ -111,20 +111,20 @@ phone ──wss──► relay.obs-blade.com (VPS, Quadlet) ◄──wss── b
   - Rust over C++ because this is the network-facing part (TLS via
     rustls, no OpenSSL to bundle on three OSes), and it has no libobs
     dependency (it talks websocket like any client).
-- **Plugin** (`desktop/plugin/`, C++, obs-plugintemplate CMake/CI):
+- **Plugin** (`plugin/` in Kounex/obs-blade-remote, C++, obs-plugintemplate CMake/CI):
   thin. Starts the core on `obs_module_post_load`, registers vendor
   `obs-blade-bridge` with `Pair` / `Status`, stops the core on
   `OBS_FRONTEND_EVENT_EXIT` (sends "clean shutdown" so the relay can tell
   it apart from a crash). Settings panel under **Tools → OBS Blade
   Remote**. Minimum OBS 30.2.
-- **Standalone** (`desktop/standalone/`, C++/Qt6, tray icon, autostart):
+- **Standalone** (`standalone/` in Kounex/obs-blade-remote, C++/Qt6, tray icon, autostart):
   same core, plus an **OBS watcher**: finds OBS (process + config dir),
   tells the relay running / closed / crashed (OBS's run sentinel in the
   config dir is left behind on a crash - verify the exact path in the
   OBS source before relying on it), and starts OBS on a relay request.
   If `CallVendorRequest obs-blade-bridge Status` answers, the plugin owns
   the relay link and the standalone only watches.
-- **Shared UI** (`desktop/ui/`, Qt6 Widgets): one settings widget used by
+- **Shared UI** (`ui/` in Kounex/obs-blade-remote, Qt6 Widgets): one settings widget used by
   both shells - remote access on/off, relay state, paired devices (remove),
   fallback QR code, preview quality. The plugin builds it against OBS's
   Qt, the standalone bundles Qt.

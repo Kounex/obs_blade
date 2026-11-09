@@ -60,7 +60,7 @@ event reached the VPS relay).
 
 **In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
-`desktop/README.md`.
+the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop side since 2026-11-09).
 - **End-to-end encrypted since 2026-11-08** (relay 0.0.5, bridge
   0.3.1 - 0.0.5 adds the bridge keepalive pong: websocket pings don't
   cross the Cloudflare tunnel): the relay can't read sessions; keys are exchanged through OBS
@@ -79,7 +79,7 @@ event reached the VPS relay).
   195 KB message over 4 frames, meters, status snapshot, 1003 for
   plaintext, 4904 for an unknown key, 4901 after OBS quit. 0.0.3 fixed relay-ended sessions arriving as 1006 through
   cloudflared (close only from the socket's handler).
-- **Bridge core** `desktop/core/` (Rust, 20 tests; e2e green against OBS
+- **Bridge core** `core/` in Kounex/obs-blade-remote (Rust, 20 tests; e2e green against OBS
   32.2.2 on the MacBook with and without OBS auth, local relay).
 - **App** (commits e33643b0..02260328): relay routing in `NetworkStore`
   (smart fallback), close codes 4900-4910 with copy, pairing store +
