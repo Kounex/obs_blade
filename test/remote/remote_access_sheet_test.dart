@@ -191,6 +191,10 @@ void main() {
     );
     await tester.tap(find.text('globe'));
     await _settle(tester);
+    /// The route, LAN session to an online PC (dogfood 2026-11-09: only
+    /// the relay had a line)
+    expect(find.text('Connected on your network'), findsOneWidget);
+    expect(find.text('Relay on standby'), findsOneWidget);
     expect(find.text('iPhone (this device)'), findsOneWidget);
     expect(find.text('Rename'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget, reason: 'the iPad only');

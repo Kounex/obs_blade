@@ -417,6 +417,69 @@ String remoteBridgeStatusLine(RemoteBridgeInfo info, {DateTime? now}) {
   };
 }
 
+/// How this session reaches OBS right now - the same colors and icons as
+/// the route toast and the globe (blue: relay, green: local network).
+/// Dogfood 2026-11-09: only a grey line said "relay", nothing said "local".
+class _RouteBanner extends StatelessWidget {
+  final bool viaRemote;
+
+  /// The PC is online at the relay: it could take over from the LAN
+  final bool relayReady;
+
+  const _RouteBanner({required this.viaRemote, required this.relayReady});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color color = this.viaRemote
+        ? theme.extension<AppTextColors>()!.highlightText
+        : theme.extension<AppStatusColors>()!.reachable;
+    final String? detail = this.viaRemote
+        ? 'End-to-end encrypted'
+        : this.relayReady
+        ? 'Relay on standby'
+        : null;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            this.viaRemote ? CupertinoIcons.globe : CupertinoIcons.wifi,
+            color: color,
+            size: 22.0,
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  this.viaRemote
+                      ? 'Connected through the relay'
+                      : 'Connected on your network',
+                  style: theme.textTheme.bodyMedium!.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (detail != null) ...[
+                  const SizedBox(height: 2.0),
+                  Text(detail, style: _secondary(context)),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Paired extends StatelessWidget {
   final Connection connection;
   final RemoteBridgeInfo? info;
@@ -456,6 +519,8 @@ class _Paired extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _RouteBanner(viaRemote: this.viaRemote, relayReady: online),
+        const SizedBox(height: AppSpacing.lg),
         Row(
           children: [
             Expanded(child: Text(name, style: theme.textTheme.titleMedium)),
@@ -485,13 +550,6 @@ class _Paired extends StatelessWidget {
               : '$kind · checking…',
           style: _secondary(context),
         ),
-        if (this.viaRemote) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Connected through the relay right now',
-            style: _secondary(context),
-          ),
-        ],
         if (info != null && info.devices.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.lg),
           Text('Paired devices', style: theme.textTheme.titleMedium),

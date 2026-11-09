@@ -231,6 +231,14 @@ void main() {
     );
   });
 
+  testWidgets('paired: online, on the local network', (tester) async {
+    await all(
+      tester,
+      'remote_paired_lan',
+      () => sheet(store(info()), connection(paired: true)),
+    );
+  });
+
   testWidgets('paired: plugin offline after OBS closed', (tester) async {
     await harness.shot(
       tester,
