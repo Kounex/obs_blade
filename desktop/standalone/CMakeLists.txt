@@ -63,6 +63,8 @@ if(APPLE)
       MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
   )
 elseif(WIN32)
+  # The exe's icon (Explorer, taskbar, Start menu)
+  target_sources(obs-blade-remote PRIVATE resources/app.rc)
   target_link_libraries(obs-blade-remote PRIVATE ws2_32 userenv ntdll bcrypt advapi32 kernel32)
 else()
   target_link_libraries(obs-blade-remote PRIVATE pthread dl m)

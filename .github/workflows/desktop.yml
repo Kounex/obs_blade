@@ -1,11 +1,15 @@
 # OBS Blade Remote (desktop/): the bridge core (Rust), the OBS plugin and
-# the standalone tray app, per OS. Artifacts are unsigned test builds;
-# signed installers and GitHub Releases come later.
+# the standalone tray app, per OS, as installers (artifacts). A tag
+# `remote-v<version>` (desktop/version.sh) also publishes them as release
+# v<version> of Kounex/obs-blade-remote - its own repo, so
+# releases/latest/download/<file> links stay stable (the FOSS APK holds
+# "Latest" here).
 name: desktop
 
 on:
   push:
     branches: [master]
+    tags: ["remote-v*"]
     paths: ["desktop/**", "!desktop/**/*.md", ".github/workflows/desktop.yml"]
   pull_request:
     paths: ["desktop/**", ".github/workflows/desktop.yml"]
@@ -59,15 +63,22 @@ jobs:
           Get-ChildItem "$qt/plugins/styles/*.dll" | Where-Object Name -notlike '*d.dll' | Copy-Item -Destination "$out/styles"
           Get-ChildItem -Recurse $out | Select-Object FullName, Length | Format-Table -AutoSize
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: obs-blade-remote-plugin-windows-x64
-          path: ${{ runner.temp }}/plugin
+      # Inno Setup (preinstalled on the runner); unsigned for now
+      - name: Installers
+        shell: bash
+        run: |
+          version=$(desktop/version.sh)
+          iscc="/c/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          out="$RUNNER_TEMP/out"
+          cd desktop/windows
+          "$iscc" -Q "-DVersion=$version" "-DSourceDir=$RUNNER_TEMP/standalone/OBS Blade Remote" "-DOutputDir=$out" standalone.iss
+          "$iscc" -Q "-DVersion=$version" "-DSourceDir=$RUNNER_TEMP/plugin" "-DOutputDir=$out" plugin.iss
+          ls -la "$out"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: obs-blade-remote-standalone-windows-x64
-          path: ${{ runner.temp }}/standalone
+          name: obs-blade-remote-windows-x64
+          path: ${{ runner.temp }}/out
 
   # The standalone as an AppImage (x86_64, Qt inside). Built on the oldest
   # supported Ubuntu: the AppImage needs its glibc (2.35) or newer - SteamOS,
@@ -172,11 +183,11 @@ jobs:
           cmake --install build_macos --config Release --prefix "$RUNNER_TEMP/plugin"
           mkdir -p "$RUNNER_TEMP/out"
           if [ "$SIGNING" = true ]; then
-            productsign --sign "$INSTALLER_IDENT" "$RUNNER_TEMP/plugin/obs-blade-remote.pkg" "$RUNNER_TEMP/out/obs-blade-remote-macos.pkg"
-            ../notarize.sh "$RUNNER_TEMP/out/obs-blade-remote-macos.pkg" "$RUNNER_TEMP/notary.p8" \
+            productsign --sign "$INSTALLER_IDENT" "$RUNNER_TEMP/plugin/obs-blade-remote.pkg" "$RUNNER_TEMP/out/obs-blade-remote-plugin-macos.pkg"
+            ../notarize.sh "$RUNNER_TEMP/out/obs-blade-remote-plugin-macos.pkg" "$RUNNER_TEMP/notary.p8" \
               "${{ secrets.MACOS_NOTARY_KEY_ID }}" "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
           else
-            cp "$RUNNER_TEMP/plugin/obs-blade-remote.pkg" "$RUNNER_TEMP/out/obs-blade-remote-macos.pkg"
+            cp "$RUNNER_TEMP/plugin/obs-blade-remote.pkg" "$RUNNER_TEMP/out/obs-blade-remote-plugin-macos.pkg"
           fi
 
       - name: Standalone
@@ -202,3 +213,34 @@ jobs:
         run: |
           security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
           rm -f "$RUNNER_TEMP/notary.p8"
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/remote-v')
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: obs-blade-remote-*
+          path: dist
+          merge-multiple: true
+
+      # Fixed file names: the README / site / app link
+      # releases/latest/download/<name>
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.REMOTE_RELEASES_TOKEN }}
+        run: |
+          version=$(desktop/version.sh "$GITHUB_REF_NAME")
+          notes="desktop/release-notes/$version.md"
+          [ -f "$notes" ] || { echo "missing $notes"; exit 1; }
+          for file in OBS-Blade-Remote-macos.dmg obs-blade-remote-plugin-macos.pkg \
+              OBS-Blade-Remote-windows-x64-setup.exe obs-blade-remote-plugin-windows-x64-setup.exe \
+              OBS-Blade-Remote-x86_64.AppImage; do
+            [ -f "dist/$file" ] || { echo "missing dist/$file"; ls -la dist; exit 1; }
+          done
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          gh release create "v$version" dist/* -R Kounex/obs-blade-remote --target main \
+            --title "OBS Blade Remote $version" --notes-file "$notes"
