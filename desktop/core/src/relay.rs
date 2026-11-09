@@ -29,12 +29,17 @@ const MAX_BACKOFF: Duration = Duration::from_secs(60);
 /// Standalone start: the longest the link waits for the plugin check (the
 /// monitor answers in well under a second when OBS runs or is closed).
 const PLUGIN_CHECK_WAIT: Duration = Duration::from_secs(8);
+/// After the plugin took the link: OBS is starting, its websocket can take
+/// a while to answer - reconnecting early kicked the plugin back.
+const TAKEOVER_CHECK_WAIT: Duration = Duration::from_secs(30);
 const SESSION_BUFFER: usize = 1024;
 
 enum Ended {
     Stop,
     /// Pairing / settings changed: re-evaluate before reconnecting.
     Recheck,
+    /// Standalone: the relay replaced this link (the plugin connected).
+    TakenOver,
     Lost(String),
     UpdateRequired(String),
 }
@@ -43,6 +48,7 @@ pub async fn run(shared: Arc<Shared>) {
     let mut control_rx = shared.control_rx.lock().unwrap().take().expect("relay::run once");
     let mut stop = shared.stop.subscribe();
     let mut failures: u32 = 0;
+    let mut check_wait = PLUGIN_CHECK_WAIT;
     loop {
         if shared.stopping() {
             return;
@@ -82,11 +88,12 @@ pub async fn run(shared: Arc<Shared>) {
             let mut checked = shared.plugin_checked.subscribe();
             tokio::select! {
                 _ = checked.wait_for(|known| *known) => {}
-                _ = tokio::time::sleep(PLUGIN_CHECK_WAIT) => {
+                _ = tokio::time::sleep(check_wait) => {
                     shared.plugin_checked.send_replace(true);
                 }
                 _ = stop.changed() => return,
             }
+            check_wait = PLUGIN_CHECK_WAIT;
             continue;
         }
 
@@ -96,6 +103,10 @@ pub async fn run(shared: Arc<Shared>) {
         let wait = match ended {
             Ended::Stop => return,
             Ended::Recheck => Duration::ZERO,
+            Ended::TakenOver => {
+                check_wait = TAKEOVER_CHECK_WAIT;
+                Duration::ZERO
+            }
             Ended::UpdateRequired(min) => {
                 shared.set_relay_state(RelayState::UpdateRequired(min));
                 Duration::from_secs(6 * 3600)
@@ -230,7 +241,7 @@ async fn connect(
                         if code == Some(crate::wire::REPLACED) && shared.cfg.kind == Kind::Standalone {
                             shared.log("info", "relay link taken over - checking for the OBS plugin");
                             shared.plugin_checked.send_replace(false);
-                            break Ended::Recheck;
+                            break Ended::TakenOver;
                         }
                         let reason = code.map(|c| format!("closed {c}")).unwrap_or_else(|| "closed".into());
                         break Ended::Lost(reason);

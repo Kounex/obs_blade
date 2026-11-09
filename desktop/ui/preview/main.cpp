@@ -13,6 +13,8 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <cstdio>
+#include <QElapsedTimer>
+#include <QThread>
 
 namespace {
 
@@ -54,6 +56,17 @@ void dark(QApplication &app)
 	app.setPalette(p);
 }
 
+/// Runs the event loop for [ms] (animations, queued layout requests)
+void settle(QApplication &app, int ms = 400)
+{
+	QElapsedTimer timer;
+	timer.start();
+	while (timer.elapsed() < ms) {
+		app.processEvents();
+		QThread::msleep(5);
+	}
+}
+
 } // namespace
 
 int main(int argc, char **argv)
@@ -87,8 +100,10 @@ int main(int argc, char **argv)
 			if (shell == obb_ui::Shell::Standalone)
 				panel.setStartAtLogin(true, [](bool) {});
 			panel.applyState(state);
-			if (QString::fromUtf8(name) == QStringLiteral("advanced"))
+			if (QString::fromUtf8(name) == QStringLiteral("advanced")) {
 				panel.findChild<QToolButton *>()->setChecked(true);
+				settle(app);
+			}
 			/// The height the plugin's dialog grows to (heightForWidth -
 			/// wrapped hints included)
 			panel.resize(440, 100);
@@ -107,27 +122,36 @@ int main(int argc, char **argv)
 	closed.resize(440, qMax(closed.sizeHint().height(), closed.heightForWidth(440)));
 	closed.grab().save(QStringLiteral("%1/panel_standalone_obs_closed.png").arg(out));
 
-	/// A window squeezed with Advanced open: fitWindowToContent keeps it
-	/// tall enough (dogfood 2026-11-09: the rows were drawn over each other)
+	/// The window follows its content: a fixed width, the height animated
+	/// with Advanced opening and closing (dogfood 2026-11-09: squeezed rows,
+	/// then empty room after closing)
 	QWidget window;
-	window.setMinimumWidth(360);
 	auto *windowLayout = new QVBoxLayout(&window);
 	auto *fitted = new obb_ui::RemotePanel([](const QJsonObject &) {}, obb_ui::Shell::Standalone, &window);
 	windowLayout->addWidget(fitted);
 	obb_ui::fitWindowToContent(&window);
 	fitted->applyState(base());
-	window.resize(440, 300);
 	window.show();
-	app.processEvents();
-	fitted->findChild<QToolButton *>()->setChecked(true);
-	for (const int width : {440, 360}) {
-		window.resize(width, 300);
-		for (int i = 0; i < 5; i++)
-			app.processEvents();
-		const int needed = window.heightForWidth(width);
-		std::printf("window %d: height %d, content needs %d -> %s\n", width, window.height(), needed,
-			    window.height() >= needed ? "ok" : "SQUEEZED");
-		window.grab().save(QStringLiteral("%1/window_advanced_%2.png").arg(out).arg(width));
-	}
+	settle(app, 100);
+	auto *toggle = fitted->findChild<QToolButton *>();
+	const auto check = [&](const char *what) {
+		const int needed = window.heightForWidth(window.width());
+		std::printf("window %s: %dx%d, content needs %d -> %s\n", what, window.width(), window.height(), needed,
+			    window.height() == needed ? "ok" : "MISMATCH");
+	};
+	const int closedHeight = window.height();
+	check("closed");
+	window.grab().save(QStringLiteral("%1/window_closed.png").arg(out));
+	toggle->setChecked(true);
+	settle(app, 90);
+	std::printf("window opening: height %d (between %d and the open height)\n", window.height(), closedHeight);
+	window.grab().save(QStringLiteral("%1/window_opening.png").arg(out));
+	settle(app);
+	check("open");
+	window.grab().save(QStringLiteral("%1/window_advanced.png").arg(out));
+	toggle->setChecked(false);
+	settle(app);
+	check("closed again");
+	std::printf("window closed again: %s\n", window.height() == closedHeight ? "back to the closed height" : "NOT BACK");
 	return 0;
 }

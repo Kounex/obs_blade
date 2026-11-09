@@ -80,7 +80,6 @@ public:
 	{
 		setWindowTitle(QStringLiteral("OBS Blade Remote"));
 		setWindowIcon(QIcon(QStringLiteral(":/app-256.png")));
-		setMinimumWidth(440);
 		auto *layout = new QVBoxLayout(this);
 		panel = new obb_ui::RemotePanel(send, obb_ui::Shell::Standalone, this);
 		layout->addWidget(panel);

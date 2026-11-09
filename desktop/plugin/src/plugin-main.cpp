@@ -155,7 +155,6 @@ void openPanel()
 	auto *dialog = new QDialog(main);
 	dialog->setWindowTitle(QStringLiteral("OBS Blade Remote"));
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
-	dialog->setMinimumWidth(420);
 	auto *layout = new QVBoxLayout(dialog);
 	auto *panel = new obb_ui::RemotePanel(send, obb_ui::Shell::Plugin, dialog);
 	layout->addWidget(panel);

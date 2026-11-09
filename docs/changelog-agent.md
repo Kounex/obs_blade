@@ -32,7 +32,13 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   for the plugin check before its first relay connect (max 8 s): starting
   it replaced the plugin's link (4906) every time. Replaced itself (4906 -
   the plugin starting in OBS), it checks for the plugin again before
-  reconnecting - it kicked the plugin back once at every OBS start.
+  reconnecting (up to 30 s; an OBS still starting refuses the websocket,
+  which no longer counts as "no plugin" while the process runs) - it
+  kicked the plugin back once at every OBS start.
+- Panel windows: fixed width, the height always exactly the content;
+  Advanced opens / closes animated (220 ms, `Collapsible` clips the full
+  content, the window follows frame by frame) - instant before, and the
+  window kept the open height after closing.
 - `InputDialog.inputCheck`: valid is null, not '' (the doc said '' - a
   Save that never closed).
 

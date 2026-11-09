@@ -54,7 +54,11 @@ pub async fn run(shared: Arc<Shared>) {
         };
         shared.set_obs_state(state);
         shared.plugin_present.send_replace(false);
-        shared.plugin_checked.send_replace(true);
+        // No plugin without OBS - but an OBS still starting refuses too:
+        // only a closed OBS (the shell's process watch) settles the check
+        if running != Some(true) {
+            shared.plugin_checked.send_replace(true);
+        }
         tokio::select! {
             _ = tokio::time::sleep(RETRY) => {}
             _ = stop.changed() => return,

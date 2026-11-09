@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
+#include <QVariantAnimation>
 #include <QVBoxLayout>
 
 namespace obb_ui {
@@ -71,7 +72,10 @@ namespace {
 
 class ContentFitter : public QObject {
 public:
-	explicit ContentFitter(QWidget *window) : QObject(window), window_(window) {}
+	ContentFitter(QWidget *window, int width) : QObject(window), window_(window)
+	{
+		window->setFixedWidth(width);
+	}
 
 protected:
 	bool eventFilter(QObject *watched, QEvent *event) override
@@ -88,14 +92,13 @@ private:
 		if (fitting_)
 			return;
 		fitting_ = true;
-		const int width = window_->width();
-		int needed = window_->heightForWidth(width);
+		int needed = window_->heightForWidth(window_->width());
 		if (needed < 0)
 			needed = window_->sizeHint().height();
-		if (window_->minimumHeight() != needed)
-			window_->setMinimumHeight(needed);
-		if (window_->height() < needed)
-			window_->resize(width, needed);
+		/// Exactly the content: no empty room after a section closes, and
+		/// an animating section (Collapsible) moves the bottom edge with it
+		if (window_->minimumHeight() != needed || window_->maximumHeight() != needed)
+			window_->setFixedHeight(needed);
 		fitting_ = false;
 	}
 
@@ -105,9 +108,79 @@ private:
 
 } // namespace
 
-void fitWindowToContent(QWidget *window)
+void fitWindowToContent(QWidget *window, int width)
 {
-	window->installEventFilter(new ContentFitter(window));
+	window->installEventFilter(new ContentFitter(window, width));
+}
+
+Collapsible::Collapsible(QWidget *parent) : QWidget(parent), animation_(new QVariantAnimation(this))
+{
+	QSizePolicy policy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+	policy.setHeightForWidth(true);
+	setSizePolicy(policy);
+	animation_->setDuration(220);
+	animation_->setEasingCurve(QEasingCurve::OutCubic);
+	connect(animation_, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
+		progress_ = value.toReal();
+		updateGeometry();
+	});
+	connect(animation_, &QVariantAnimation::finished, this, [this] {
+		if (progress_ <= 0.0 && content_)
+			content_->hide();
+	});
+}
+
+void Collapsible::setContent(QWidget *content)
+{
+	content_ = content;
+	content_->hide();
+}
+
+void Collapsible::setExpanded(bool open)
+{
+	if (!content_)
+		return;
+	if (open) {
+		content_->show();
+		layoutContent();
+	}
+	animation_->stop();
+	animation_->setStartValue(progress_);
+	animation_->setEndValue(open ? 1.0 : 0.0);
+	animation_->start();
+}
+
+int Collapsible::heightForWidth(int width) const
+{
+	return qRound(progress_ * contentHeight(width));
+}
+
+QSize Collapsible::sizeHint() const
+{
+	const int width = content_ ? content_->sizeHint().width() : 0;
+	return {width, heightForWidth(this->width() > 0 ? this->width() : width)};
+}
+
+void Collapsible::resizeEvent(QResizeEvent *event)
+{
+	layoutContent();
+	QWidget::resizeEvent(event);
+}
+
+int Collapsible::contentHeight(int width) const
+{
+	if (!content_)
+		return 0;
+	const int height = content_->hasHeightForWidth() ? content_->heightForWidth(width) : -1;
+	return height > 0 ? height : content_->sizeHint().height();
+}
+
+void Collapsible::layoutContent()
+{
+	/// Always the full content, clipped by this widget: revealed / covered
+	/// from the bottom, never squeezed
+	if (content_)
+		content_->setGeometry(0, 0, width(), contentHeight(width()));
 }
 
 QString addedDate(qint64 unixSeconds, qint64 nowSeconds)
@@ -246,16 +319,22 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 		return open ? QStringLiteral("\u25BE  Advanced") : QStringLiteral("\u25B8  Advanced");
 	};
 	advancedToggle->setText(toggleText(false));
+	/// Header and section in one box without spacing: a closed section
+	/// adds nothing below the toggle (the root's spacing did)
 	advancedHeader_ = new QWidget(this);
-	auto *advancedRow = new QHBoxLayout(advancedHeader_);
-	advancedRow->setContentsMargins(0, 6, 0, 0);
+	auto *advancedBox = new QVBoxLayout(advancedHeader_);
+	advancedBox->setContentsMargins(0, 6, 0, 0);
+	advancedBox->setSpacing(0);
+	auto *advancedRow = new QHBoxLayout();
 	advancedRow->addWidget(advancedToggle);
 	advancedRow->addStretch();
+	advancedBox->addLayout(advancedRow);
 	root->addWidget(advancedHeader_);
 
-	advanced_ = new QWidget(this);
+	advancedClip_ = new Collapsible(advancedHeader_);
+	advanced_ = new QWidget(advancedClip_);
 	auto *advancedLayout = new QVBoxLayout(advanced_);
-	advancedLayout->setContentsMargins(0, 0, 0, 0);
+	advancedLayout->setContentsMargins(0, 10, 0, 0);
 	advancedLayout->setSpacing(8);
 	/// Non-breaking hyphens: "--websocket_port" must not wrap at its dashes
 	auto *advancedNote = secondary(QStringLiteral("Only needed when OBS was started with "
@@ -307,13 +386,12 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	unpairRow->addWidget(secondary(QStringLiteral("All paired devices lose remote access."), advanced_), 1);
 	advancedLayout->addLayout(unpairRow);
 
-	advanced_->setVisible(false);
+	advancedClip_->setContent(advanced_);
 	connect(advancedToggle, &QToolButton::toggled, this, [this, advancedToggle, toggleText](bool open) {
-		advancedOpen_ = open;
-		advanced_->setVisible(open);
+		advancedClip_->setExpanded(open);
 		advancedToggle->setText(toggleText(open));
 	});
-	root->addWidget(advanced_);
+	advancedBox->addWidget(advancedClip_);
 	root->addStretch();
 	updateSecondaryColor();
 }
@@ -427,7 +505,6 @@ void RemotePanel::applyState(const QJsonObject &state)
 	enabled_->setVisible(!deferred);
 	previewSection_->setVisible(!deferred);
 	advancedHeader_->setVisible(!deferred);
-	advanced_->setVisible(!deferred && advancedOpen_);
 	devicesBox_->setVisible(paired && !deferred);
 	rebuildDevices(state["devices"].toArray());
 

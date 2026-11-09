@@ -16,12 +16,39 @@ class QComboBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
+class QVariantAnimation;
 class QVBoxLayout;
 class QWidget;
 
 namespace obb_ui {
 
 enum class Shell { Plugin, Standalone };
+
+/// A section that opens / closes by animating its height: the content
+/// keeps its full height and is clipped (revealed from the bottom, never
+/// squeezed), and the window follows frame by frame (fitWindowToContent)
+class Collapsible : public QWidget {
+public:
+	explicit Collapsible(QWidget *parent);
+	void setContent(QWidget *content);
+	void setExpanded(bool open);
+
+	bool hasHeightForWidth() const override { return true; }
+	int heightForWidth(int width) const override;
+	QSize sizeHint() const override;
+	QSize minimumSizeHint() const override { return {0, 0}; }
+
+protected:
+	void resizeEvent(QResizeEvent *event) override;
+
+private:
+	int contentHeight(int width) const;
+	void layoutContent();
+
+	QWidget *content_ = nullptr;
+	QVariantAnimation *animation_;
+	qreal progress_ = 0.0;
+};
 
 class RemotePanel : public QWidget {
 	Q_OBJECT
@@ -60,21 +87,22 @@ private:
 	QComboBox *preview_;
 	QCheckBox *startAtLogin_;
 	QWidget *advanced_;
+	Collapsible *advancedClip_;
 	QWidget *advancedHeader_;
 	QWidget *previewSection_;
 	QPushButton *openInObs_;
-	bool advancedOpen_ = false;
 	QLineEdit *obsPort_;
 	QLineEdit *obsPassword_;
 	QPushButton *unpair_;
 	std::function<void(bool)> onStartAtLogin_;
 };
 
-/// Keeps `window` at least as tall as its content needs at its current
-/// width - wrapped text grows taller when the window narrows, and opening
-/// Advanced or a new hint adds rows. Top-level windows don't follow
+/// Sizes `window` to its content: a fixed width, and exactly the height
+/// the content needs at it - updated on every layout change, so an
+/// animating Collapsible moves the window's bottom edge with it and a
+/// closed section leaves no empty room. Top-level windows don't follow
 /// heightForWidth on their own (both shells' windows use it).
-void fitWindowToContent(QWidget *window);
+void fitWindowToContent(QWidget *window, int width = 440);
 
 /// "2 min ago", "3 days ago" for a unix timestamp (exposed for tests)
 QString relativeTime(qint64 unixSeconds, qint64 nowSeconds);
