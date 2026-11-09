@@ -19,6 +19,13 @@ import 'noise_ik.dart';
 /// holds outgoing messages until the bridge's message 2 verified. A
 /// bridge key that doesn't verify, or a frame that doesn't decrypt, ends
 /// the session with [WebSocketCloseCode.RemoteE2eFailed] as [closeCode].
+///
+/// Liveness: nothing arriving for [silenceLimit] ends it with
+/// [WebSocketCloseCode.RemoteSilent]. The relay socket runs without
+/// dart:io's ping - that one closes when a pong is 15 s late even while
+/// data flows, and on a busy mobile line pongs queue behind screenshots
+/// (sessions closed every ~30 s, dogfood 2026-11-09). The dashboard asks
+/// for stats every second, so a live session always delivers.
 class RemoteE2eChannel extends StreamChannelMixin<dynamic>
     implements WebSocketChannel {
   final WebSocketChannel _inner;
@@ -34,22 +41,35 @@ class RemoteE2eChannel extends StreamChannelMixin<dynamic>
   int? _failedCode;
   String? _failedReason;
 
+  static const Duration defaultSilenceLimit = Duration(seconds: 20);
+  final Duration silenceLimit;
+  final Stopwatch _sinceFrame = Stopwatch();
+  Timer? _watchdog;
+
   RemoteE2eChannel(
     this._inner, {
     required NoiseKeyPair appKey,
     required List<int> bridgeKey,
+    this.silenceLimit = defaultSilenceLimit,
   }) : _initiator = NoiseIKInitiator(
          localStatic: appKey,
          remoteStatic: bridgeKey,
        ) {
     _inner.stream.listen(
-      (frame) => _chain = _chain.then((_) => _receive(frame)),
+      (frame) {
+        /// Arrival, not processing: a busy app isn't a dead line
+        _sinceFrame.reset();
+        _chain = _chain.then((_) => _receive(frame));
+      },
       onError: (Object error, StackTrace stack) {
         if (!_incoming.isClosed) _incoming.addError(error, stack);
       },
-      onDone: () => _chain = _chain.then((_) {
-        if (!_incoming.isClosed) _incoming.close();
-      }),
+      onDone: () {
+        _watchdog?.cancel();
+        _chain = _chain.then((_) {
+          if (!_incoming.isClosed) _incoming.close();
+        });
+      },
     );
     _inner.ready.then((_) async {
       try {
@@ -70,6 +90,18 @@ class RemoteE2eChannel extends StreamChannelMixin<dynamic>
       if (transport == null) {
         final (_, established) = await _initiator.readMessage2(frame);
         _transport = established;
+        _sinceFrame
+          ..reset()
+          ..start();
+        final Duration tick = silenceLimit ~/ 4;
+        _watchdog = Timer.periodic(tick, (_) {
+          if (_sinceFrame.elapsed >= silenceLimit) {
+            _end(
+              WebSocketCloseCode.RemoteSilent.identifier,
+              'nothing arrived for ${silenceLimit.inSeconds} s',
+            );
+          }
+        });
         for (final message in _waiting) {
           _send(message);
         }
@@ -93,11 +125,15 @@ class RemoteE2eChannel extends StreamChannelMixin<dynamic>
     }
   }
 
-  void _fail(String reason) {
+  void _fail(String reason) =>
+      _end(WebSocketCloseCode.RemoteE2eFailed.identifier, reason);
+
+  void _end(int code, String reason) {
     if (_failedCode != null) return;
-    _failedCode = WebSocketCloseCode.RemoteE2eFailed.identifier;
+    _watchdog?.cancel();
+    _failedCode = code;
     _failedReason = reason;
-    _inner.sink.close(_failedCode, 'e2e');
+    _inner.sink.close(code, code == 4911 ? 'e2e' : 'silent');
   }
 
   @override
@@ -145,6 +181,8 @@ class _E2eSink extends DelegatingStreamSink<dynamic> implements WebSocketSink {
   }
 
   @override
-  Future close([int? closeCode, String? closeReason]) =>
-      _channel._inner.sink.close(closeCode, closeReason);
+  Future close([int? closeCode, String? closeReason]) {
+    _channel._watchdog?.cancel();
+    return _channel._inner.sink.close(closeCode, closeReason);
+  }
 }

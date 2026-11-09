@@ -4,6 +4,29 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-09 - Remote access: relay sessions on mobile data
+
+- Dogfood: Wi-Fi off -> long "Reconnecting", scene switches late or lost,
+  again "Reconnecting" every so often. Logs (phone, relay, OBS): relay
+  sessions ended after 28-30 s or 60-70 s, over and over; the bridge link
+  itself stayed up, no plugin / standalone fighting. Twitch DNS and Kick
+  TLS failed on the phone at the same time - a full line.
+- Cause: the preview loop requests the next screenshot as soon as one
+  arrives (fine on the LAN) - over the relay that is as much as the line
+  carries, audio meters on top. dart:io's ping closes a socket whose pong
+  is 15 s late even while data flows (only a pong resets it); on a full
+  mobile line pongs queue behind screenshots -> closed at ~30 s, and every
+  reconnect reloads the whole dashboard on top. A 2-minute load probe from
+  the Mac (`desktop/core/tests/load_probe.py`, live relay, plugin bridge):
+  pongs 0.02 s, ~140 KB/s down for a simple scene - relay and bridge keep
+  up; the line is the limit.
+- Fixes: the preview over the relay at most 4 frames/s
+  (`remote_pacing.dart`, both preview loops); relay sockets without
+  dart:io's ping, `RemoteE2eChannel` closes after 20 s without any frame
+  (`RemoteSilent` 4998) instead; "Lost active connection" logs the close
+  code and route; the relay logs each session's end (who, code, length,
+  KB down / up, peak queue - sizes only).
+
 ## 2026-11-09 - Remote access: telling paired devices apart
 
 - Phones paired as "iPhone" / "Android phone" - two looked the same on

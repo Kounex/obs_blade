@@ -42,6 +42,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../models/connection.dart';
 import '../../models/enums/log_level.dart';
 import '../../types/classes/session.dart';
+import '../../utils/remote/remote_pacing.dart';
 import '../../utils/build_flavor.dart';
 import '../../utils/connectivity_state.dart';
 import '../../utils/remote/remote_connect.dart';
@@ -1036,8 +1037,12 @@ abstract class _DashboardStore with Store {
   /// scene switch).
   bool _previewInFlight = false;
 
-  /// Short pause before retrying after a failed screenshot
+  /// Short pause before retrying after a failed screenshot - and, over
+  /// the relay, the pause before the next one ([previewPause])
   Timer? _previewRetry;
+
+  /// When the screenshot in flight was requested (relay pacing)
+  DateTime? _previewRequestedAt;
 
   /// Set while the dashboard shows a non-main OBS canvas
   /// ([CanvasViewStore]) - that canvas runs its own preview loop, the
@@ -1057,6 +1062,7 @@ abstract class _DashboardStore with Store {
     final session = GetIt.instance<NetworkStore>().activeSession;
     if (session == null) return;
     _previewInFlight = true;
+    _previewRequestedAt = DateTime.now();
     _sendPreviewImageRequest(session.socket);
   }
 
@@ -1069,7 +1075,16 @@ abstract class _DashboardStore with Store {
     _previewInFlight = false;
     if (!this.shouldRequestPreviewImage) return;
     if (succeeded) {
-      _requestPreviewImage();
+      final Duration pause = previewPause(
+        viaRemote:
+            GetIt.instance<NetworkStore>().activeSession?.viaRemote ?? false,
+        requestedAt: _previewRequestedAt,
+      );
+      if (pause == Duration.zero) {
+        _requestPreviewImage();
+      } else {
+        _previewRetry = Timer(pause, _requestPreviewImage);
+      }
     } else {
       _previewRetry = Timer(const Duration(seconds: 1), _requestPreviewImage);
     }
@@ -1807,11 +1822,16 @@ abstract class _DashboardStore with Store {
   /// we get back to our [HomeView]
   @action
   Future<void> _checkOBSConnection() async {
-    if (GetIt.instance<NetworkStore>().activeSession?.socket.closeCode !=
-            null &&
+    final Session? lost = GetIt.instance<NetworkStore>().activeSession;
+    if (lost?.socket.closeCode != null &&
         !GetIt.instance<NetworkStore>().obsTerminated) {
+      /// Code and reason say who ended it (1001 from dart:io's ping, the
+      /// relay's 49xx, 4998 the relay watchdog, 1006 a dropped line)
+      final String reason = lost!.socket.closeReason ?? '';
       GeneralHelper.advLog(
-        'Lost active connection to OBS, trying to reconnect',
+        'Lost active connection to OBS (${lost.viaRemote ? 'relay' : 'local'}, '
+        'code ${lost.socket.closeCode}${reason.isEmpty ? '' : ': $reason'}), '
+        'trying to reconnect',
         level: LogLevel.Warning,
         includeInLogs: true,
       );

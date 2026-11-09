@@ -112,6 +112,12 @@ class AppSession:
     queued_bytes: int = 0
     writer: asyncio.Task | None = None
     ended_by_relay: bool = False
+    # Diagnostics for the session-end log line (sizes of opaque frames only)
+    started: float = field(default_factory=time.monotonic)
+    bytes_down: int = 0
+    bytes_up: int = 0
+    peak_queued: int = 0
+    end_reason: str = ""
     # (code, reason) once the relay ends the session. Only the socket's
     # handler closes it: aiohttp's close() from another task while the
     # handler reads skips waiting for the phone's close reply, the TCP
@@ -151,6 +157,8 @@ class AppSession:
             self.end(TOO_SLOW, "too slow", drain=False)
             return
         self.queued_bytes += len(frame)
+        self.bytes_down += len(frame)
+        self.peak_queued = max(self.peak_queued, self.queued_bytes)
         self.queue.put_nowait(frame)
 
     def end(self, code: int, reason: str = "", drain: bool = True) -> None:
@@ -159,6 +167,7 @@ class AppSession:
         if self.ended_by_relay:
             return
         self.ended_by_relay = True
+        self.end_reason = f"relay {code} {reason}".strip()
         if drain:
             self.queue.put_nowait((code, reason))
             return
@@ -555,6 +564,7 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
                 # End-to-end encrypted: forwarded as is, never read here.
                 if session.ended_by_relay:
                     continue  # the close follows once the queue drained
+                session.bytes_up += len(message.data)
                 sent = await link.send_frame(
                     protocol.pack(protocol.DATA, session.sid, message.data)
                 )
@@ -570,6 +580,18 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
         if session.writer and not session.writer.done():
             session.writer.cancel()
         store.device_used(device.id)
+        # Who ended it and how it went: a phone's close code (1001 = its
+        # ping timed out, 4998 = its data watchdog, 1006 = the line
+        # dropped) or the relay's reason. No content - frame sizes only.
+        log.info(
+            "session %s end after %.0fs: %s | down %d KB, up %d KB, peak queue %d KB",
+            session.sid,
+            time.monotonic() - session.started,
+            session.end_reason or f"phone {ws.close_code}",
+            session.bytes_down // 1024,
+            session.bytes_up // 1024,
+            session.peak_queued // 1024,
+        )
     return ws
 
 

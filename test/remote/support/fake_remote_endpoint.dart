@@ -151,6 +151,21 @@ class FakeRemoteEndpoint {
             'd': {'negotiatedRpcVersion': 1},
           });
         }
+
+        /// Requests: answered (an empty success), like OBS through the
+        /// bridge - the app's liveness counts these
+        if (message['op'] == 6) {
+          final d = message['d'] as Map<String, dynamic>;
+          send({
+            'op': 7,
+            'd': {
+              'requestType': d['requestType'],
+              'requestId': d['requestId'],
+              'requestStatus': {'result': true, 'code': 100},
+              'responseData': <String, dynamic>{},
+            },
+          });
+        }
       });
     });
   }

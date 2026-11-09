@@ -14,6 +14,7 @@ import '../../types/classes/session.dart';
 import '../../types/classes/stream/events/base.dart';
 import '../../types/enums/event_type.dart';
 import '../../types/enums/request_type.dart';
+import '../../utils/remote/remote_pacing.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
 import '../shared/network.dart';
@@ -935,6 +936,7 @@ abstract class _CanvasViewStore with Store {
     if (_previewInFlight || !_previewActive || sceneUuid == null) return;
     _previewInFlight = true;
     final generation = _viewGeneration;
+    final DateTime requestedAt = DateTime.now();
     final ack = await _request(RequestType.GetSourceScreenshot, {
       'sourceUuid': sceneUuid,
       'imageFormat': _dashboardStore.previewFileFormat,
@@ -952,7 +954,17 @@ abstract class _CanvasViewStore with Store {
       } catch (e) {
         GeneralHelper.advLog('Canvas preview decode failed: $e');
       }
-      _requestPreview();
+      final Duration pause = previewPause(
+        viaRemote:
+            GetIt.instance<NetworkStore>().activeSession?.viaRemote ?? false,
+        requestedAt: requestedAt,
+      );
+      if (pause == Duration.zero) {
+        _requestPreview();
+      } else {
+        _previewRetry?.cancel();
+        _previewRetry = Timer(pause, _requestPreview);
+      }
     } else {
       _previewRetry?.cancel();
       _previewRetry = Timer(const Duration(seconds: 1), _requestPreview);

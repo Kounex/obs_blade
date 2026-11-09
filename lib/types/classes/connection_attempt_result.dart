@@ -93,6 +93,8 @@ class ConnectionAttemptResult {
         return 'Too many attempts. Try again in a minute.';
       case WebSocketCloseCode.RemoteE2eFailed:
         return 'Couldn\'t verify $_pc. Set up remote access again on your home Wi-Fi.';
+      case WebSocketCloseCode.RemoteSilent:
+        return 'Lost the connection to $_pc. Trying again may work.';
     }
   }
 

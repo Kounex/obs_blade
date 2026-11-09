@@ -131,7 +131,9 @@ class NetworkHelper {
           remote.uri,
           headers: remote.headers,
           protocols: const ['obswebsocket.json'],
-          pingInterval: pingInterval,
+          /// No dart:io ping: its pong-or-close rule cut busy mobile
+          /// sessions; the channel's data watchdog decides instead
+          pingInterval: null,
           connectTimeout: connectTimeout,
         ),
         appKey: remote.appKey,
