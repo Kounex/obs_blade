@@ -55,7 +55,8 @@ jobs:
           Copy-Item build/Release/obs-blade-remote.exe $out
           foreach ($dll in 'Qt6Core', 'Qt6Gui', 'Qt6Widgets') { Copy-Item "$qt/bin/$dll.dll" $out }
           Copy-Item "$qt/plugins/platforms/qwindows.dll" "$out/platforms"
-          Copy-Item "$qt/plugins/styles/*.dll" "$out/styles"
+          # Release builds only (obs-deps ships the debug "...d.dll" next to them)
+          Get-ChildItem "$qt/plugins/styles/*.dll" | Where-Object Name -notlike '*d.dll' | Copy-Item -Destination "$out/styles"
           Get-ChildItem -Recurse $out | Select-Object FullName, Length | Format-Table -AutoSize
 
       - uses: actions/upload-artifact@v4
@@ -67,3 +68,27 @@ jobs:
         with:
           name: obs-blade-remote-standalone-windows-x64
           path: ${{ runner.temp }}/standalone
+
+  # Compile check for the Linux code paths (the standalone against the
+  # distribution's Qt6); the plugin and packages come with the release work
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Qt6
+        run: sudo apt-get update -q && sudo apt-get install -yq qt6-base-dev
+
+      - name: Core tests
+        working-directory: desktop/core
+        run: cargo test --lib
+
+      - name: Core (static library)
+        working-directory: desktop/core
+        run: ./build-lib.sh
+
+      - name: Standalone
+        working-directory: desktop/standalone
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j

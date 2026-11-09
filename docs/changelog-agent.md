@@ -4,6 +4,34 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-09 - OBS Blade Remote: portable OBS installs; Windows CI build
+
+- Asked: the plugin knows OBS's config path, the standalone guessed the
+  default folders - a portable OBS (Windows zip + `portable_mode.txt`, or
+  `--portable`) had its WebSocket password unfound, Start OBS and the
+  crash-mark cleanup aimed at the regular install, and the panel said
+  "the WebSocket server is off".
+- Facts (OBS source, frontend/OBSApp.cpp + obs-main.cpp): portable config
+  is `BASE_PATH/config` relative to the working dir (`../..` from
+  `bin/64bit` on Windows, `..` on Linux builds with
+  `ENABLE_PORTABLE_CONFIG`; macOS has no portable mode); marker files
+  `portable_mode(.txt)` / `obs_portable_mode(.txt)` or `--portable`.
+- The standalone reads the running OBS's executable (Windows
+  `QueryFullProcessImageName`, Linux `/proc/<pid>/exe`, not a Flatpak's)
+  and the core stores it (`obs_exe`): its portable config is read, Start
+  OBS starts it from its folder (`--portable` when there is no marker),
+  its crash marks are cleared. Settings found nowhere: OBS's default port
+  without a password is tried and the panel says so and opens Advanced
+  (the Advanced note no longer says it's only for command-line flags).
+- `.github/workflows/desktop.yml`: Windows (core tests, plugin, standalone
+  with obs-deps' Qt, unsigned artifacts) and a Linux compile check.
+  First Windows build: one MSVC warning-as-error in the panel (fixed).
+- Verified on the Windows PC (`desktop/core/tests/portable_start.py`):
+  the standalone found the portable OBS on port 4466 with its own
+  password, paired, a hard kill + phone start brought up the portable
+  copy without the Safe Mode question, end to end through the relay.
+  Steam Machine was off - Linux only compile-checked.
+
 ## 2026-11-09 - Remote access: relay sessions on mobile data
 
 - Dogfood: Wi-Fi off -> long "Reconnecting", scene switches late or lost,

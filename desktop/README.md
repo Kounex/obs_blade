@@ -8,7 +8,7 @@ The bridge next to OBS that lets the app reach OBS through the relay
 |---|---|---|
 | `core/` | Rust: relay link, one local OBS websocket per phone session, preview cap, OBS monitor (state, status snapshot, pairing via CustomEvent), stored pairing; C ABI `core/include/obs_blade_bridge.h`; `obb` CLI (headless host) | built, tested |
 | `plugin/` | OBS plugin shell (C++, obs-plugintemplate 2025-12, OBS 31.1+): starts the core after load, vendor `obs-blade-bridge` `Pair` / `Status` / `OpenPanel`, Tools -> OBS Blade Remote opens the panel, clean stop on OBS exit | builds + runs on macOS (OBS 32.2.2) |
-| `standalone/` | Tray / menu bar app (C++/Qt6): the core as `standalone`, OBS watcher (process: `obs64.exe` / `OBS` / `obs`), Start OBS (macOS bundle id, Windows install dir from the uninstall key + `bin\\64bit`, Linux PATH / Flatpak), start at login (LaunchAgent / HKCU Run / XDG autostart, on by default), log `standalone.log` next to `bridge.json` | builds + runs on macOS |
+| `standalone/` | Tray / menu bar app (C++/Qt6): the core as `standalone`, OBS watcher (process: `obs64.exe` / `OBS` / `obs`), Start OBS (the executable last seen running - portable installs, with `--portable` when they have no marker file; else macOS bundle id, Windows install dir from the uninstall key + `bin\\64bit`, Linux PATH / Flatpak), start at login (LaunchAgent / HKCU Run / XDG autostart, on by default), log `standalone.log` next to `bridge.json` | builds + runs on macOS and Windows (CI: `.github/workflows/desktop.yml`) |
 | `ui/` | Shared Qt settings panel (`remote_panel.*`); `ui/preview/` renders every state to PNGs offscreen | built |
 
 ## Plugin (macOS)
@@ -83,8 +83,30 @@ checks the plugin is back and a phone reaches OBS end to end, removes the
 device. Last green run: OBS 32.2.2, macOS, 2026-11-09 (takeover 1.7 s,
 plugin back 4.3 s after the start).
 
+A portable OBS on Windows with the standalone (CI build from
+`desktop.yml`, a portable OBS with `portable_mode.txt` whose WebSocket
+port and password differ from the regular install's, both running, a test
+id in `RELAY_PRO_ALLOW`):
+
+```bash
+py desktop/core/tests/portable_start.py --relay-url https://relay.obs-blade.com --user <id> \
+  --obs-dir C:\obb-test\OBS-portable --obs-port 4466 --obs-password <pw>
+```
+
+Pairs through the standalone over the portable OBS, kills OBS, starts it
+through the relay and checks the portable copy came up without the Safe
+Mode question and is reachable end to end. Last green run: OBS 32.2.2
+portable, Windows 11, 2026-11-09. GUI programs started over SSH land in
+a session without a desktop: start the standalone and OBS through a
+temporary scheduled task (`LogonType Interactive`).
+
 The core reads obs-websocket's password from
-`<OBS config>/plugin_config/obs-websocket/config.json` and stores its
+`<OBS config>/plugin_config/obs-websocket/config.json` - for the
+standalone also a portable install's `config/obs-studio` next to the OBS
+executable it saw running (`bridge.json` `obs_exe`; with a marker file
+it wins, after `--portable` the newest config does). Found nowhere: it
+tries OBS's default port without a password and the panel asks for the
+port and password under Advanced. It stores its
 pairing in `<user config>/obs-blade-remote/bridge.json` (0600), shared by
 the plugin and the standalone.
 
