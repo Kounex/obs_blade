@@ -55,7 +55,6 @@ class GeneralActions extends StatelessWidget {
         connection: session.connection,
         saved: session.connection.name != null && session.connection.isInBox,
         isPro: GetIt.instance<ProStore>().isPro,
-        viaRemote: session.viaRemote,
         store: store,
         deviceName: Platform.isIOS
             ? (tablet ? 'iPad' : 'iPhone')

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../../../models/connection.dart';
 import '../../../../shared/dialogs/input.dart';
@@ -14,6 +15,8 @@ import '../../../../shared/overlay/base_result.dart';
 import '../../../pro/widgets/pro_badge.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/overlay_handler.dart';
+import '../../../../stores/shared/network.dart';
+import '../../../../stores/views/dashboard.dart';
 import '../../../../stores/views/remote_access.dart';
 import '../../../../utils/relative_time.dart';
 import '../../../../utils/remote/remote_relay_client.dart';
@@ -30,8 +33,10 @@ class RemoteAccessSheet extends StatefulWidget {
   final bool saved;
   final bool isPro;
 
-  /// This session runs through the relay right now
-  final bool viaRemote;
+  /// This session runs through the relay - a fixed value (shots); null
+  /// follows the active session, so a route switch while the sheet is
+  /// open shows (dogfood 2026-11-09: the banner kept the old route)
+  final bool? viaRemote;
 
   final RemoteAccessStore store;
 
@@ -47,7 +52,7 @@ class RemoteAccessSheet extends StatefulWidget {
     required this.connection,
     required this.saved,
     required this.isPro,
-    required this.viaRemote,
+    this.viaRemote,
     required this.store,
     required this.deviceName,
     required this.platform,
@@ -87,12 +92,25 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
     builder: (context) {
       final RemoteAccessStore store = this.widget.store;
       if (this.widget.connection.hasRemote) {
+        /// The route, live: the session is replaced on a switch, and the
+        /// dashboard's reconnect flag covers the moment in between
+        final bool follow = this.widget.viaRemote == null;
+        final bool reconnecting =
+            follow &&
+            GetIt.instance.isRegistered<DashboardStore>() &&
+            GetIt.instance<DashboardStore>().reconnecting;
+        final bool viaRemote =
+            this.widget.viaRemote ??
+            (GetIt.instance.isRegistered<NetworkStore>() &&
+                (GetIt.instance<NetworkStore>().activeSession?.viaRemote ??
+                    false));
         return _Paired(
           connection: this.widget.connection,
           info: store.info,
           loading: store.infoLoading,
           unreachable: store.infoError?.isNetwork ?? false,
-          viaRemote: this.widget.viaRemote,
+          viaRemote: viaRemote,
+          reconnecting: reconnecting,
           onRemoveDevice: (id) async {
             if (!await store.removeDevice(this.widget.connection, id) &&
                 context.mounted) {
@@ -426,19 +444,40 @@ class _RouteBanner extends StatelessWidget {
   /// The PC is online at the relay: it could take over from the LAN
   final bool relayReady;
 
-  const _RouteBanner({required this.viaRemote, required this.relayReady});
+  /// Between two routes (the dashboard reconnects)
+  final bool reconnecting;
+
+  const _RouteBanner({
+    required this.viaRemote,
+    required this.relayReady,
+    required this.reconnecting,
+  });
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Color color = this.viaRemote
+    final Color color = this.reconnecting
+        ? theme.extension<AppTextColors>()!.textSecondary
+        : this.viaRemote
         ? theme.extension<AppTextColors>()!.highlightText
         : theme.extension<AppStatusColors>()!.reachable;
-    final String? detail = this.viaRemote
+    final String title = this.reconnecting
+        ? 'Reconnecting…'
+        : this.viaRemote
+        ? 'Connected through the relay'
+        : 'Connected on your network';
+    final String? detail = this.reconnecting
+        ? null
+        : this.viaRemote
         ? 'End-to-end encrypted'
         : this.relayReady
         ? 'Relay on standby'
         : null;
+    final IconData icon = this.reconnecting
+        ? CupertinoIcons.arrow_2_circlepath
+        : this.viaRemote
+        ? CupertinoIcons.globe
+        : CupertinoIcons.wifi;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -449,20 +488,14 @@ class _RouteBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            this.viaRemote ? CupertinoIcons.globe : CupertinoIcons.wifi,
-            color: color,
-            size: 22.0,
-          ),
+          Icon(icon, color: color, size: 22.0),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  this.viaRemote
-                      ? 'Connected through the relay'
-                      : 'Connected on your network',
+                  title,
                   style: theme.textTheme.bodyMedium!.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -486,6 +519,7 @@ class _Paired extends StatelessWidget {
   final bool loading;
   final bool unreachable;
   final bool viaRemote;
+  final bool reconnecting;
   final Future<void> Function(String deviceId) onRemoveDevice;
   final void Function(RemoteDevice device) onRenameDevice;
   final VoidCallback onTurnOff;
@@ -496,6 +530,7 @@ class _Paired extends StatelessWidget {
     required this.loading,
     required this.unreachable,
     required this.viaRemote,
+    required this.reconnecting,
     required this.onRemoveDevice,
     required this.onRenameDevice,
     required this.onTurnOff,
@@ -519,7 +554,11 @@ class _Paired extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _RouteBanner(viaRemote: this.viaRemote, relayReady: online),
+        _RouteBanner(
+          viaRemote: this.viaRemote,
+          relayReady: online,
+          reconnecting: this.reconnecting,
+        ),
         const SizedBox(height: AppSpacing.lg),
         Row(
           children: [

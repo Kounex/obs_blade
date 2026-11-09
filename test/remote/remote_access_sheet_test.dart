@@ -191,10 +191,23 @@ void main() {
     );
     await tester.tap(find.text('globe'));
     await _settle(tester);
+
     /// The route, LAN session to an online PC (dogfood 2026-11-09: only
     /// the relay had a line)
     expect(find.text('Connected on your network'), findsOneWidget);
     expect(find.text('Relay on standby'), findsOneWidget);
+
+    /// Wi-Fi off with the sheet open: the dashboard replaces the session -
+    /// the banner follows (dogfood 2026-11-09: it kept the old route)
+    final NetworkStore network = GetIt.instance<NetworkStore>();
+    network.activeSession = Session(
+      _UnusedSocket(),
+      network.activeSession!.connection,
+      viaRemote: true,
+    );
+    await _settle(tester);
+    expect(find.text('Connected through the relay'), findsOneWidget);
+    expect(find.text('Connected on your network'), findsNothing);
     expect(find.text('iPhone (this device)'), findsOneWidget);
     expect(find.text('Rename'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget, reason: 'the iPad only');
