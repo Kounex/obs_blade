@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=OBS Blade Remote
+Comment=Control OBS from the OBS Blade app from anywhere
+Exec=obs-blade-remote
+Icon=obs-blade-remote
+Categories=AudioVideo;Video;Network;
+Terminal=false
+StartupWMClass=obs-blade-remote

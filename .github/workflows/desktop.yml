@@ -69,15 +69,17 @@ jobs:
           name: obs-blade-remote-standalone-windows-x64
           path: ${{ runner.temp }}/standalone
 
-  # Compile check for the Linux code paths (the standalone against the
-  # distribution's Qt6); the plugin and packages come with the release work
+  # The standalone as an AppImage (x86_64, Qt inside). Built on the oldest
+  # supported Ubuntu: the AppImage needs its glibc (2.35) or newer - SteamOS,
+  # current Ubuntu / Fedora / Arch are newer. The plugin for Linux comes
+  # later (a Flatpak OBS needs a Flatpak extension).
   linux:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Qt6
-        run: sudo apt-get update -q && sudo apt-get install -yq qt6-base-dev
+        run: sudo apt-get update -q && sudo apt-get install -yq qt6-base-dev qt6-qpa-plugins libgl1-mesa-dev
 
       - name: Core tests
         working-directory: desktop/core
@@ -92,6 +94,20 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j
+          mkdir -p "$RUNNER_TEMP/out"
+          linux/appimage.sh build "$RUNNER_TEMP/out/OBS-Blade-Remote-x86_64.AppImage"
+
+      # Starts (offscreen, no FUSE needed for the check) and logs its start line
+      - name: Smoke test
+        run: |
+          app="$RUNNER_TEMP/out/OBS-Blade-Remote-x86_64.AppImage"
+          QT_QPA_PLATFORM=offscreen APPIMAGE_EXTRACT_AND_RUN=1 timeout 15 "$app" --background || [ $? -eq 124 ]
+          grep "started (core" ~/.config/obs-blade-remote/standalone.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obs-blade-remote-linux-x86_64
+          path: ${{ runner.temp }}/out
 
   # Universal (arm64 + x86_64). With the signing secrets (not on pull
   # requests from forks): Developer ID signed, notarized, stapled - the
