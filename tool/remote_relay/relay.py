@@ -427,6 +427,24 @@ async def handle_delete_device(request: web.Request) -> web.Response:
     return web.Response(status=204)
 
 
+async def handle_rename_device(request: web.Request) -> web.Response:
+    """Renames any device of the caller's bridge (like removing one) - the
+    name the PC's panel lists it under."""
+    if _limited(request, "api"):
+        return _json(429, {"error": "rate_limited"})
+    device = _device_for(request)
+    if device is None:
+        return _json(401, {"error": "unpaired"})
+    name = _text(await _body(request), "name", 64)
+    if not name:
+        return _json(400, {"error": "missing_name"})
+    target = request.match_info["device_id"]
+    if not request.app[KEY_STORE].rename_device(target, device.bridge_id, name):
+        return _json(404, {"error": "unknown_device"})
+    await _push_devices(request.app, device.bridge_id)
+    return web.Response(status=204)
+
+
 async def handle_start_obs(request: web.Request) -> web.Response:
     if _limited(request, "api"):
         return _json(429, {"error": "rate_limited"})
@@ -784,6 +802,7 @@ def build_app(
     app.router.add_get("/v1/bridges/{bridge_id}", handle_bridge_info)
     app.router.add_post("/v1/bridges/{bridge_id}/start-obs", handle_start_obs)
     app.router.add_delete("/v1/devices/{device_id}", handle_delete_device)
+    app.router.add_patch("/v1/devices/{device_id}", handle_rename_device)
     app.router.add_get("/v1/app", handle_app_socket)
     app.router.add_get("/v1/bridge", handle_bridge_socket)
     app.router.add_get("/health", handle_health)

@@ -4,6 +4,28 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-09 - Remote access: telling paired devices apart
+
+- Phones paired as "iPhone" / "Android phone" - two looked the same on
+  the PC. Now the model ("iPhone 17 Pro", `device_info_plus` 13.3 - its
+  table answers "Unknown device" for newer ids: the generic label then)
+  or on Android the device name from the settings
+  (`Settings.Global.DEVICE_NAME`, the model unless renamed; no
+  permission). The user's own iOS name needs Apple's
+  `user-assigned-device-name` entitlement since iOS 16 - not requested.
+- Rename: this device's row in the Remote Access sheet (others keep
+  Remove); relay `PATCH /v1/devices/{id}` (any device of the same bridge,
+  like DELETE; trimmed, 64 chars; the bridge gets a fresh devices push).
+  Pairings still named a generic label are renamed to the model the first
+  time the sheet sees them.
+- Panel: two-line rows - the name over "connected now · added Nov 8".
+- Desktop panel: Advanced reworked from the real macOS look (the preview
+  tool rendered Fusion only and never opened Advanced): text port field,
+  left-aligned fields, plain disclosure, dimmed secondary text; windows
+  keep the content height (`fitWindowToContent`).
+- `InputDialog.inputCheck`: valid is null, not '' (the doc said '' - a
+  Save that never closed).
+
 ## 2026-11-09 - Sheets: dogfood round 1
 
 - Remote access stuck on "Checking" after dragging the sheet: the store

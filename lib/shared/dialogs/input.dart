@@ -12,8 +12,9 @@ class InputDialog extends StatefulWidget {
   final String? inputPlaceholder;
   final void Function(String?) onSave;
 
-  /// Works like validation - return an empty String to tell it is valid and otherwise
-  /// the error text which should be displayed (prevents the 'Ok' dialog callback)
+  /// Works like validation - return null when the input is valid, otherwise
+  /// the error text to show (blocks Save; see
+  /// [CustomValidationTextEditingController.isValid])
   final String? Function(String?)? inputCheck;
 
   const InputDialog({

@@ -232,7 +232,9 @@ void main() {
         // crossed the relay
         expect(endpoint.received.map((m) => m['op']), contains(1));
         expect(endpoint.plainFrames, 0);
-        final upgrade = endpoint.upgrades.single;
+        /// The last attempt: under test-runner load a first one can time
+        /// out and be retried (seen 2026-11-09)
+        final upgrade = endpoint.upgrades.last;
         expect(upgrade.path, '/v1/app');
         expect(upgrade.query, {'bridge': 'b_1'});
         expect(upgrade.headers['authorization'], 'Bearer tok');

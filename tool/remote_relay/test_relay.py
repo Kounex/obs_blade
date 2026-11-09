@@ -518,6 +518,35 @@ class BridgeApiTests(RelayCase):
         r = await self.client.delete(f"/v1/devices/{other_device}", headers={"Authorization": f"Bearer {first_token}"})
         self.assertEqual(r.status, 404)
 
+    async def test_phone_renames_a_device(self):
+        bridge_id, bridge_token, first, first_token = await self.pair()
+        _, _, second, _ = await self.pair(bridge_token=bridge_token)
+        b = await self.bridge(bridge_token)
+        auth = {"Authorization": f"Bearer {first_token}"}
+        r = await self.client.patch(f"/v1/devices/{first}", json={"name": "  Rene's iPhone 17 Pro  "}, headers=auth)
+        self.assertEqual(r.status, 204)
+        pushed = await self.next_json(b)
+        self.assertEqual([d["name"] for d in pushed["devices"] if d["id"] == first], ["Rene's iPhone 17 Pro"])
+        # Any device of the same bridge, like removing one
+        r = await self.client.patch(f"/v1/devices/{second}", json={"name": "iPad"}, headers=auth)
+        self.assertEqual(r.status, 204)
+        await self.next_json(b)
+        r = await self.client.get(f"/v1/bridges/{bridge_id}", headers=auth)
+        self.assertEqual({d["id"]: d["name"] for d in (await r.json())["devices"]}[second], "iPad")
+        # Names are capped like at pairing; empty ones refused
+        r = await self.client.patch(f"/v1/devices/{first}", json={"name": "x" * 100}, headers=auth)
+        self.assertEqual(r.status, 204)
+        self.assertEqual(len((await self.next_json(b))["devices"][0]["name"]), 64)
+        r = await self.client.patch(f"/v1/devices/{first}", json={"name": "   "}, headers=auth)
+        self.assertEqual((r.status, (await r.json())["error"]), (400, "missing_name"))
+        # Other bridges' devices are out of reach; unknown tokens unpaired
+        _, _, other_device, _ = await self.pair(name="LAPTOP")
+        r = await self.client.patch(f"/v1/devices/{other_device}", json={"name": "mine"}, headers=auth)
+        self.assertEqual(r.status, 404)
+        r = await self.client.patch(f"/v1/devices/{first}", json={"name": "a"}, headers={"Authorization": "Bearer nope"})
+        self.assertEqual(r.status, 401)
+        await b.close()
+
     async def test_bridge_removes_device_and_unpairs(self):
         bridge_id, bridge_token, device_id, app_token, b, p, sid = await self.session()
         await b.send_str(json.dumps({"type": "remove_device", "id": device_id}))

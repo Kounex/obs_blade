@@ -10,6 +10,7 @@ import '../../types/classes/stream/events/base.dart';
 import '../../types/enums/request_type.dart';
 import '../../utils/general_helper.dart';
 import '../../utils/network_helper.dart';
+import '../../utils/remote/device_label.dart';
 import '../../utils/remote/noise_ik.dart';
 import '../../utils/remote/remote_relay_client.dart';
 import '../pro_store.dart';
@@ -60,6 +61,13 @@ abstract class _RemoteAccessStore with Store {
   final Duration _pollInterval;
   final Duration _resendInterval;
 
+  /// The model / device name sent at pairing (null: the sheet's generic
+  /// label)
+  final Future<String?> Function() _deviceLabel;
+
+  /// A pairing named before the model name is renamed once per sheet
+  bool _upgradedGenericName = false;
+
   _RemoteAccessStore({
     RemoteRelayClient? relay,
     Future<String?> Function()? appUserId,
@@ -67,7 +75,9 @@ abstract class _RemoteAccessStore with Store {
     RemotePairAcks? acks,
     Duration pollInterval = const Duration(seconds: 2),
     Duration resendInterval = const Duration(seconds: 2),
-  }) : _relay = relay ?? RemoteRelayClient(),
+    Future<String?> Function()? deviceLabel,
+  }) : _deviceLabel = deviceLabel ?? currentDeviceLabel,
+       _relay = relay ?? RemoteRelayClient(),
        _appUserId = appUserId ?? (() => GetIt.instance<ProStore>().appUserId()),
        _sendCode = sendCode ?? sendPairCodeThroughObs,
        _acks = acks ?? pairAcksThroughObs,
@@ -124,12 +134,14 @@ abstract class _RemoteAccessStore with Store {
     if (appUserId == null || appUserId.isEmpty) {
       return _fail(RemotePairingFailure.noAccount);
     }
+    final String name = await _deviceLabel() ?? deviceName;
+    if (generation != _generation) return;
 
     final RemotePairingTicket ticket;
     try {
       ticket = await _relay.createPairing(
         appUserId: appUserId,
-        deviceName: deviceName,
+        deviceName: name,
         platform: platform,
       );
     } on RemoteRelayException catch (e) {
@@ -302,12 +314,59 @@ abstract class _RemoteAccessStore with Store {
           if (connection.isInBox) connection.save();
         }
       });
+      unawaited(_upgradeGenericName(connection, info));
     } on RemoteRelayException catch (e) {
       runInAction(() => this.infoError = e);
       if (e.isUnpaired) _forgetLocally(connection);
     } finally {
       runInAction(() => this.infoLoading = false);
     }
+  }
+
+  /// Renames [deviceId] (the name the PC lists it under). Returns false
+  /// when the relay couldn't be reached or refused it.
+  Future<bool> renameDevice(
+    Connection connection,
+    String deviceId,
+    String name,
+  ) async {
+    final String trimmed = name.trim();
+    if (!connection.hasRemote || trimmed.isEmpty) return false;
+    try {
+      await _relay.renameDevice(
+        deviceId,
+        trimmed.length > kDeviceNameMaxLength
+            ? trimmed.substring(0, kDeviceNameMaxLength)
+            : trimmed,
+        connection.relayAppToken!,
+      );
+    } on RemoteRelayException catch (e) {
+      if (e.isUnpaired) {
+        _forgetLocally(connection);
+      } else {
+        GeneralHelper.logFailure('Remote access: renaming a device failed', e);
+      }
+      return false;
+    }
+    await this.refresh(connection);
+    return true;
+  }
+
+  /// Pairings from before the model name are listed as "iPhone" on the PC:
+  /// renamed to the model the first time the sheet sees one
+  Future<void> _upgradeGenericName(
+    Connection connection,
+    RemoteBridgeInfo info,
+  ) async {
+    if (_upgradedGenericName) return;
+    final RemoteDevice? self = info.devices
+        .where((d) => d.isThisDevice)
+        .firstOrNull;
+    if (self == null || !kGenericDeviceNames.contains(self.name)) return;
+    _upgradedGenericName = true;
+    final String? label = await _deviceLabel();
+    if (label == null || label == self.name) return;
+    await this.renameDevice(connection, self.id, label);
   }
 
   /// Removes [deviceId] from the bridge; this device's own id also forgets

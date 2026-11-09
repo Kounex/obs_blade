@@ -26,8 +26,9 @@ QJsonObject base()
 		{"preview_jpeg_quality", 60}, {"obs_port", QJsonValue()}, {"obs_password_set", false},
 		{"devices",
 		 QJsonArray{
-			 QJsonObject{{"id", "d_1"}, {"name", "iPhone"}, {"platform", "ios"}, {"last_used", now}, {"connected", true}},
-			 QJsonObject{{"id", "d_2"}, {"name", "iPad"}, {"platform", "ios"}, {"last_used", now - 3 * 86400}, {"connected", false}},
+			 QJsonObject{{"id", "d_1"}, {"name", "iPhone 17 Pro"}, {"platform", "ios"}, {"created_at", now - 86400}, {"last_used", now}, {"connected", true}},
+			 QJsonObject{{"id", "d_2"}, {"name", "iPhone 17 Pro"}, {"platform", "ios"}, {"created_at", now - 40 * 86400}, {"last_used", now - 3 * 86400}, {"connected", false}},
+			 QJsonObject{{"id", "d_3"}, {"name", "iPad Pro 11-Inch (M5)"}, {"platform", "ios"}, {"created_at", now - 400 * 86400}, {"last_used", now - 9 * 86400}, {"connected", false}},
 		 }},
 	};
 }

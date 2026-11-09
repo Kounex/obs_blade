@@ -75,4 +75,7 @@ void fitWindowToContent(QWidget *window);
 /// "2 min ago", "3 days ago" for a unix timestamp (exposed for tests)
 QString relativeTime(qint64 unixSeconds, qint64 nowSeconds);
 
+/// "Nov 8", or "Nov 8, 2025" from another year (exposed for tests)
+QString addedDate(qint64 unixSeconds, qint64 nowSeconds);
+
 } // namespace obb_ui

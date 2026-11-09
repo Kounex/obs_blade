@@ -83,6 +83,8 @@ snapshot (control messages). Implementations: `desktop/core/src/e2e.rs`,
   `409 bridge_offline` / `409 not_supported` (plugin bridges die with OBS).
 - `DELETE /v1/devices/{device_id}` (Bearer app token; any device of the
   same bridge, incl. itself) → `204`.
+- `PATCH /v1/devices/{device_id}` `{name}` (same rule; trimmed, max 64) →
+  `204`, the bridge gets a fresh `devices` push; `400 missing_name`.
 
 ## Bridge
 

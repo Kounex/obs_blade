@@ -387,6 +387,15 @@ class Store:
             == 1
         )
 
+    def rename_device(self, device_id: str, bridge_id: str, name: str) -> bool:
+        return (
+            self._db.execute(
+                "UPDATE devices SET name = ? WHERE id = ? AND bridge_id = ?",
+                (name, device_id, bridge_id),
+            ).rowcount
+            == 1
+        )
+
     # --- housekeeping -------------------------------------------------
 
     def purge(self) -> list[str]:

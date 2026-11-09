@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 import '../../../../models/connection.dart';
+import '../../../../shared/dialogs/input.dart';
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/design/design.dart';
 import '../../../../shared/general/base/button.dart';
@@ -11,6 +12,7 @@ import '../../../../shared/general/base/sheet.dart';
 import '../../../../shared/general/base/icon_button.dart';
 import '../../../../shared/overlay/base_result.dart';
 import '../../../pro/widgets/pro_badge.dart';
+import '../../../../utils/modal_handler.dart';
 import '../../../../utils/overlay_handler.dart';
 import '../../../../stores/views/remote_access.dart';
 import '../../../../utils/relative_time.dart';
@@ -97,6 +99,27 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
               _relayProblem(context);
             }
           },
+          onRenameDevice: (device) => ModalHandler.showBaseDialog(
+            context: context,
+            dialogWidget: InputDialog(
+              title: 'Rename Device',
+              body: 'The name your PC lists this device under.',
+              inputText: device.name,
+              inputPlaceholder: 'Device name',
+              inputCheck: (name) =>
+                  (name ?? '').trim().isEmpty ? 'Enter a name' : null,
+              onSave: (name) async {
+                if (!await store.renameDevice(
+                      this.widget.connection,
+                      device.id,
+                      name ?? '',
+                    ) &&
+                    context.mounted) {
+                  _relayProblem(context);
+                }
+              },
+            ),
+          ),
           onTurnOff: () async {
             if (!await store.forget(this.widget.connection) &&
                 context.mounted) {
@@ -401,6 +424,7 @@ class _Paired extends StatelessWidget {
   final bool unreachable;
   final bool viaRemote;
   final Future<void> Function(String deviceId) onRemoveDevice;
+  final void Function(RemoteDevice device) onRenameDevice;
   final VoidCallback onTurnOff;
 
   const _Paired({
@@ -410,6 +434,7 @@ class _Paired extends StatelessWidget {
     required this.unreachable,
     required this.viaRemote,
     required this.onRemoveDevice,
+    required this.onRenameDevice,
     required this.onTurnOff,
   });
 
@@ -494,21 +519,27 @@ class _Paired extends StatelessWidget {
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
-                  if (!device.isThisDevice)
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(
-                        kBaseIconButtonMinHitArea,
-                        kBaseIconButtonMinHitArea,
-                      ),
-                      onPressed: () => this.onRemoveDevice(device.id),
-                      child: Text(
-                        'Remove',
-                        style: theme.textTheme.bodyMedium!.copyWith(
-                          color: CupertinoColors.destructiveRed,
-                        ),
+
+                  /// This device: renamed here (turned off below); the
+                  /// others: removed
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(
+                      kBaseIconButtonMinHitArea,
+                      kBaseIconButtonMinHitArea,
+                    ),
+                    onPressed: device.isThisDevice
+                        ? () => this.onRenameDevice(device)
+                        : () => this.onRemoveDevice(device.id),
+                    child: Text(
+                      device.isThisDevice ? 'Rename' : 'Remove',
+                      style: theme.textTheme.bodyMedium!.copyWith(
+                        color: device.isThisDevice
+                            ? textColors.highlightText
+                            : CupertinoColors.destructiveRed,
                       ),
                     ),
+                  ),
                 ],
               ),
             ),

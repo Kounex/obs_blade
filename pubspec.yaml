@@ -21,6 +21,9 @@ dependencies:
   # Get project meta info
   package_info_plus: ^10.0.0
 
+  # The model name a phone shows up under on the PC (remote access)
+  device_info_plus: ^13.3.0
+
   # Webview
   # flutter_inappwebview: ^6.1.3
   webview_flutter: ^4.13.0

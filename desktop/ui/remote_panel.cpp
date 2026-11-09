@@ -11,6 +11,7 @@
 #include <QJsonArray>
 #include <QLabel>
 #include <QLineEdit>
+#include <QLocale>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QToolButton>
@@ -107,6 +108,15 @@ private:
 void fitWindowToContent(QWidget *window)
 {
 	window->installEventFilter(new ContentFitter(window));
+}
+
+QString addedDate(qint64 unixSeconds, qint64 nowSeconds)
+{
+	/// English like the rest of the panel; the year only when it isn't this one
+	const QLocale english(QLocale::English);
+	const QDate date = QDateTime::fromSecsSinceEpoch(unixSeconds).date();
+	const bool thisYear = date.year() == QDateTime::fromSecsSinceEpoch(nowSeconds).date().year();
+	return english.toString(date, thisYear ? QStringLiteral("MMM d") : QStringLiteral("MMM d, yyyy"));
 }
 
 QString relativeTime(qint64 unixSeconds, qint64 nowSeconds)
@@ -427,14 +437,24 @@ void RemotePanel::rebuildDevices(const QJsonArray &devices)
 		const QJsonObject device = value.toObject();
 		auto *row = new QWidget(devicesBox_);
 		auto *layout = new QHBoxLayout(row);
-		layout->setContentsMargins(0, 0, 0, 0);
+		layout->setContentsMargins(0, 2, 0, 2);
 		layout->setSpacing(12);
+		/// Name over "connected now · added Nov 8": model names are long
+		/// ("iPad Pro 11-Inch (M5)"), and two of the same model differ in
+		/// when they were added
+		auto *text = new QVBoxLayout();
+		text->setSpacing(1);
 		auto *name = new QLabel(device["name"].toString(), row);
-		const QString seen = device["connected"].toBool()
-					     ? QStringLiteral("connected now")
-					     : relativeTime(qint64(device["last_used"].toDouble()), now);
-		auto *when = secondary(seen, row);
-		when->setWordWrap(false);
+		name->setWordWrap(true);
+		QStringList details;
+		details << (device["connected"].toBool() ? QStringLiteral("connected now")
+							 : relativeTime(qint64(device["last_used"].toDouble()), now));
+		const qint64 added = qint64(device["created_at"].toDouble());
+		if (added > 0)
+			details << QStringLiteral("added %1").arg(addedDate(added, now));
+		auto *when = secondary(details.join(QStringLiteral(" \u00B7 ")), row);
+		text->addWidget(name);
+		text->addWidget(when);
 		auto *remove = new QPushButton(QStringLiteral("Remove"), row);
 		const QString id = device["id"].toString();
 		const QString deviceName = device["name"].toString();
@@ -444,9 +464,8 @@ void RemotePanel::rebuildDevices(const QJsonArray &devices)
 			    QMessageBox::Yes)
 				send_(QJsonObject{{"cmd", "remove_device"}, {"id", id}});
 		});
-		layout->addWidget(name);
-		layout->addWidget(when, 1);
-		layout->addWidget(remove);
+		layout->addLayout(text, 1);
+		layout->addWidget(remove, 0, Qt::AlignVCenter);
 		/// Rows never shrink below their height: a hint appearing above
 		/// must grow the panel, not squeeze the buttons together
 		row->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);

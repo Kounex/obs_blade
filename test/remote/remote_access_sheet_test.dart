@@ -30,7 +30,11 @@ class _UnusedSocket implements WebSocketChannel {
 }
 
 /// Bridge info like tool/remote_relay/relay.py answers it
-http.Client _relay() => MockClient((request) async {
+http.Client _relay({List<String>? renames}) => MockClient((request) async {
+  if (request.method == 'PATCH' && request.url.path == '/v1/devices/d_me') {
+    renames?.add(jsonDecode(request.body)['name'] as String);
+    return http.Response('', 204);
+  }
   if (request.url.path.startsWith('/v1/bridges/')) {
     return http.Response(
       jsonEncode({
@@ -50,6 +54,14 @@ http.Client _relay() => MockClient((request) async {
             'last_used': 1794000000,
             'connected': true,
             'self': true,
+          },
+          {
+            'id': 'd_ipad',
+            'name': 'iPad Pro 11-Inch (M5)',
+            'platform': 'ios',
+            'last_used': 1793000000,
+            'connected': false,
+            'self': false,
           },
         ],
       }),
@@ -154,5 +166,42 @@ void main() {
     expect(find.text('Online'), findsOneWidget);
     expect(find.text('Checking'), findsNothing);
     expect(storesCreated, 1);
+  });
+
+  /// Dogfood 2026-11-09: two phones both listed as "iPhone" on the PC
+  testWidgets('this device: Rename (sent to the relay); others: Remove', (
+    tester,
+  ) async {
+    final List<String> renames = [];
+    GeneralActions.createRemoteAccessStore = () => RemoteAccessStore(
+      relay: RemoteRelayClient(client: _relay(renames: renames)),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: App.buildTheme(Hive.box(HiveKeys.Settings.name)),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => GeneralActions.openRemoteAccess(context),
+              child: const Text('globe'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('globe'));
+    await _settle(tester);
+    expect(find.text('iPhone (this device)'), findsOneWidget);
+    expect(find.text('Rename'), findsOneWidget);
+    expect(find.text('Remove'), findsOneWidget, reason: 'the iPad only');
+
+    await tester.tap(find.text('Rename'));
+    await _settle(tester);
+    expect(find.text('Rename Device'), findsOneWidget);
+    await tester.enterText(find.byType(EditableText).last, '  Work iPhone ');
+    await tester.tap(find.text('Save'));
+    await _settle(tester);
+    expect(renames, ['Work iPhone']);
+    expect(find.text('Rename Device'), findsNothing);
   });
 }

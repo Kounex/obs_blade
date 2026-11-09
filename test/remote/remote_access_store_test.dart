@@ -24,6 +24,12 @@ class FakeRelay {
   bool collectGone = false;
   int collects = 0;
   final List<String> deleted = [];
+  final List<(String, String)> renamed = [];
+  final List<String> pairedNames = [];
+  int renameStatus = 204;
+
+  /// This device's name in the bridge info (renames change it)
+  String selfName = 'iPhone';
   int infoStatus = 200;
   bool collected = false;
 
@@ -37,6 +43,7 @@ class FakeRelay {
     if (path == '/v1/pairings') {
       if (createStatus != null)
         return answer(createStatus!, {'error': createError});
+      pairedNames.add(jsonDecode(request.body)['device_name'] as String);
       return answer(201, {
         'pairing_id': 'pid',
         'code': 'K7F3Q9XM',
@@ -57,6 +64,13 @@ class FakeRelay {
         'bridge': {'id': 'b_1', 'name': 'GAMING-PC', 'kind': 'plugin'},
       });
     }
+    if (path.startsWith('/v1/devices/') && request.method == 'PATCH') {
+      if (renameStatus != 204) return answer(renameStatus, {'error': 'x'});
+      final name = jsonDecode(request.body)['name'] as String;
+      renamed.add((path.split('/').last, name));
+      if (path.endsWith('/d_me')) selfName = name;
+      return answer(204);
+    }
     if (path.startsWith('/v1/devices/')) {
       deleted.add(path.split('/').last);
       return answer(204);
@@ -75,7 +89,7 @@ class FakeRelay {
         'devices': [
           {
             'id': 'd_me',
-            'name': 'iPhone',
+            'name': selfName,
             'platform': 'ios',
             'last_used': 1794000000,
             'connected': true,
@@ -123,29 +137,32 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  RemoteAccessStore store({String? appUserId = r'$RCAnonymousID:me'}) =>
-      RemoteAccessStore(
-        relay: RemoteRelayClient(
-          baseUrl: 'https://relay.example',
-          client: relay.client,
-        ),
-        appUserId: () async => appUserId,
-        sendCode: (code, appKey) async {
-          sentCodes.add(code);
-          sentKeys.add(appKey);
-          if (sentCodes.length == ackAfterSends) {
-            // Another pairing's ack on the same OBS first: ignored
-            acks.add((
-              code: 'ZZZZZZZZ',
-              bridgeKey: base64Encode(List.filled(32, 7)),
-            ));
-            acks.add((code: code.toLowerCase(), bridgeKey: bridgeKey));
-          }
-        },
-        acks: () => acks.stream,
-        pollInterval: const Duration(milliseconds: 5),
-        resendInterval: const Duration(milliseconds: 12),
-      );
+  RemoteAccessStore store({
+    String? appUserId = r'$RCAnonymousID:me',
+    String? deviceLabel,
+  }) => RemoteAccessStore(
+    deviceLabel: () async => deviceLabel,
+    relay: RemoteRelayClient(
+      baseUrl: 'https://relay.example',
+      client: relay.client,
+    ),
+    appUserId: () async => appUserId,
+    sendCode: (code, appKey) async {
+      sentCodes.add(code);
+      sentKeys.add(appKey);
+      if (sentCodes.length == ackAfterSends) {
+        // Another pairing's ack on the same OBS first: ignored
+        acks.add((
+          code: 'ZZZZZZZZ',
+          bridgeKey: base64Encode(List.filled(32, 7)),
+        ));
+        acks.add((code: code.toLowerCase(), bridgeKey: bridgeKey));
+      }
+    },
+    acks: () => acks.stream,
+    pollInterval: const Duration(milliseconds: 5),
+    resendInterval: const Duration(milliseconds: 12),
+  );
 
   test(
     'acked at once: pairing and both keys stored on the connection',
@@ -354,4 +371,67 @@ void main() {
       expect(restored.hasRemote, isTrue);
     },
   );
+
+  group('device names (2026-11-09: two phones both listed as "iPhone")', () {
+    test('pairing sends the model', () async {
+      await store(
+        deviceLabel: 'iPhone 17 Pro',
+      ).pair(Connection('h', 4455), deviceName: 'iPhone', platform: 'ios');
+      expect(relay.pairedNames, ['iPhone 17 Pro']);
+    });
+
+    test('pairing sends the generic label when the model is unknown', () async {
+      await store().pair(
+        Connection('h', 4455),
+        deviceName: 'iPhone',
+        platform: 'ios',
+      );
+      expect(relay.pairedNames, ['iPhone']);
+    });
+
+    test('an old pairing named "iPhone" is renamed to the model once, '
+        'a chosen name is left alone', () async {
+      final s = store(deviceLabel: 'iPhone 17 Pro');
+      final connection = Connection('h', 4455);
+      await s.pair(connection, deviceName: 'iPhone', platform: 'ios');
+      await s.refresh(connection);
+      await pumpEventQueue();
+      expect(relay.renamed, [('d_me', 'iPhone 17 Pro')]);
+      expect(s.info!.devices.single.name, 'iPhone 17 Pro');
+
+      relay.selfName = 'iPad';
+      final again = store(deviceLabel: 'iPhone 17 Pro');
+      await again.refresh(connection);
+      await again.refresh(connection);
+      await pumpEventQueue();
+      expect(relay.renamed, hasLength(2), reason: 'once per sheet');
+
+      relay.selfName = "Rene's phone";
+      await store(deviceLabel: 'iPhone 17 Pro').refresh(connection);
+      await pumpEventQueue();
+      expect(relay.renamed, hasLength(2), reason: 'a chosen name stays');
+    });
+
+    test('rename: trimmed and capped, refreshed; a refusal reports false, '
+        'unpaired forgets the pairing', () async {
+      final s = store();
+      final connection = Connection('h', 4455);
+      await s.pair(connection, deviceName: 'iPhone', platform: 'ios');
+      expect(
+        await s.renameDevice(connection, 'd_me', '  Work iPhone '),
+        isTrue,
+      );
+      expect(s.info!.devices.single.name, 'Work iPhone');
+      expect(await s.renameDevice(connection, 'd_me', '   '), isFalse);
+      await s.renameDevice(connection, 'd_me', 'x' * 80);
+      expect(relay.renamed.last.$2, hasLength(64));
+
+      relay.renameStatus = 500;
+      expect(await s.renameDevice(connection, 'd_me', 'Other'), isFalse);
+      expect(connection.hasRemote, isTrue);
+      relay.renameStatus = 401;
+      expect(await s.renameDevice(connection, 'd_me', 'Other'), isFalse);
+      expect(connection.hasRemote, isFalse);
+    });
+  });
 }

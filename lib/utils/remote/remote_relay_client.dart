@@ -265,6 +265,17 @@ class RemoteRelayClient {
     );
   }
 
+  /// Renames any device of the same bridge (the name the PC lists it
+  /// under), this one included.
+  Future<void> renameDevice(String deviceId, String name, String appToken) =>
+      this._send(
+        'PATCH',
+        '/v1/devices/${Uri.encodeComponent(deviceId)}',
+        body: {'name': name},
+        token: appToken,
+        ok: const {204},
+      );
+
   /// Removes any device of the same bridge, this one included.
   Future<void> removeDevice(String deviceId, String appToken) => this._send(
     'DELETE',
