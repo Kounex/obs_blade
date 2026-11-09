@@ -411,8 +411,7 @@ void RemotePanel::updateSecondaryColor()
 	/// renders as full white with the macOS dark palette; OBS themes set
 	/// their text color through a stylesheet, which polishing copies into
 	/// the palette read here.
-	QColor color = palette().color(QPalette::WindowText);
-	color.setAlphaF(0.6);
+	const QColor color = palette().color(QPalette::WindowText);
 	const QString sheet = QStringLiteral("color: rgba(%1, %2, %3, 60%);")
 				      .arg(color.red())
 				      .arg(color.green())
