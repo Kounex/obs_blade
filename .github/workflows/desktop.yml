@@ -92,3 +92,95 @@ jobs:
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j
+
+  # Universal (arm64 + x86_64). With the signing secrets (not on pull
+  # requests from forks): Developer ID signed, notarized, stapled - the
+  # plugin as .pkg (into ~/Library/Application Support/obs-studio/plugins),
+  # the standalone as .dmg. Without them: ad hoc signed, not notarized.
+  macos:
+    runs-on: macos-15
+    env:
+      SIGNING: ${{ secrets.MACOS_DEVID_APP_P12_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Core tests
+        working-directory: desktop/core
+        run: cargo test --lib
+
+      - name: Core (universal static library)
+        working-directory: desktop/core
+        run: ./build-lib.sh
+
+      - name: Signing keychain
+        if: env.SIGNING == 'true'
+        env:
+          APP_P12: ${{ secrets.MACOS_DEVID_APP_P12_BASE64 }}
+          INSTALLER_P12: ${{ secrets.MACOS_DEVID_INSTALLER_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.MACOS_DEVID_P12_PASSWORD }}
+          NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY_BASE64 }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password=$(openssl rand -base64 24)
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          for p12 in "$APP_P12" "$INSTALLER_P12"; do
+            echo "$p12" | base64 --decode > "$RUNNER_TEMP/identity.p12"
+            security import "$RUNNER_TEMP/identity.p12" -k "$keychain" -P "$P12_PASSWORD" \
+              -T /usr/bin/codesign -T /usr/bin/productsign -T /usr/bin/productbuild -T /usr/bin/pkgbuild
+          done
+          rm "$RUNNER_TEMP/identity.p12"
+          # Apple's Developer ID intermediate, for the chain
+          curl -sSfo "$RUNNER_TEMP/DeveloperIDG2CA.cer" https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+          security import "$RUNNER_TEMP/DeveloperIDG2CA.cer" -k "$keychain" || true
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" > /dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          echo "$NOTARY_KEY" | base64 --decode > "$RUNNER_TEMP/notary.p8"
+          app=$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)
+          installer=$(security find-identity -v -p basic "$keychain" | sed -n 's/.*"\(Developer ID Installer: .*\)"/\1/p' | head -1)
+          [ -n "$app" ] && [ -n "$installer" ] || { echo "identities missing"; exit 1; }
+          echo "CODESIGN_IDENT=$app" >> "$GITHUB_ENV"
+          echo "INSTALLER_IDENT=$installer" >> "$GITHUB_ENV"
+
+      # First configure downloads OBS sources, obs-deps and Qt6 into .deps;
+      # CODESIGN_IDENT (from the keychain step) makes Xcode sign with the
+      # hardened runtime and a timestamp (cmake/macos/xcode.cmake)
+      - name: Plugin
+        working-directory: desktop/plugin
+        run: |
+          cmake --preset macos
+          cmake --build --preset macos --config Release
+          cmake --install build_macos --config Release --prefix "$RUNNER_TEMP/plugin"
+          mkdir -p "$RUNNER_TEMP/out"
+          if [ "$SIGNING" = true ]; then
+            productsign --sign "$INSTALLER_IDENT" "$RUNNER_TEMP/plugin/obs-blade-remote.pkg" "$RUNNER_TEMP/out/obs-blade-remote-macos.pkg"
+            ../notarize.sh "$RUNNER_TEMP/out/obs-blade-remote-macos.pkg" "$RUNNER_TEMP/notary.p8" \
+              "${{ secrets.MACOS_NOTARY_KEY_ID }}" "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
+          else
+            cp "$RUNNER_TEMP/plugin/obs-blade-remote.pkg" "$RUNNER_TEMP/out/obs-blade-remote-macos.pkg"
+          fi
+
+      - name: Standalone
+        working-directory: desktop/standalone
+        run: |
+          qt=$(ls -d "$PWD"/../plugin/.deps/obs-deps-qt6-* | head -1)
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$qt" -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          cmake --build build -j
+          dmg="$RUNNER_TEMP/out/OBS-Blade-Remote-macos.dmg"
+          macos/package.sh "build/OBS Blade Remote.app" "$qt" "$dmg" "${CODESIGN_IDENT:--}"
+          if [ "$SIGNING" = true ]; then
+            ../notarize.sh "$dmg" "$RUNNER_TEMP/notary.p8" \
+              "${{ secrets.MACOS_NOTARY_KEY_ID }}" "${{ secrets.MACOS_NOTARY_ISSUER_ID }}"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obs-blade-remote-macos
+          path: ${{ runner.temp }}/out
+
+      - name: Remove the signing keychain
+        if: always() && env.SIGNING == 'true'
+        run: |
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
+          rm -f "$RUNNER_TEMP/notary.p8"

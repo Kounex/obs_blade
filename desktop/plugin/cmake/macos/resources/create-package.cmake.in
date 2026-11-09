@@ -4,12 +4,11 @@ if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@CMAKE_PROJECT_NAME@.plugin" AND
   file(INSTALL DESTINATION "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/package/Library/Application Support/obs-studio/plugins"
     TYPE DIRECTORY FILES "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@CMAKE_PROJECT_NAME@.plugin" USE_SOURCE_PERMISSIONS)
 
-  if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Rr][Ee][Ll][Ee][Aa][Ss][Ee])$" OR CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Mm][Ii][Nn][Ss][Ii][Zz][Ee][Rr][Ee][Ll])$")
-    if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@CMAKE_PROJECT_NAME@.plugin.dSYM" AND NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@CMAKE_PROJECT_NAME@.plugin.dSYM")
-      file(INSTALL DESTINATION "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/package/Library/Application Support/obs-studio/plugins" TYPE DIRECTORY FILES "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@CMAKE_PROJECT_NAME@.plugin.dSYM" USE_SOURCE_PERMISSIONS)
-    endif()
-  endif()
 endif()
+
+# OBS Blade Remote: no debug symbols in the user's plugins folder, and no
+# extended attributes (they'd travel as "._" entries in the package)
+execute_process(COMMAND /usr/bin/xattr -cr "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/package" COMMAND_ERROR_IS_FATAL ANY)
 
 make_directory("$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/temp")
 
