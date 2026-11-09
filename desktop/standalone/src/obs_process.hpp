@@ -16,4 +16,11 @@ bool start(QString *error = nullptr);
 /// all there is)
 void bringToFront();
 
+/// Phone-requested starts only, OBS not running: removes the marks OBS 32
+/// leaves after a crash (`obs-studio/.sentinel/run_*` in its config dir,
+/// frontend/utility/CrashHandler.cpp). Otherwise it opens to a "Launch in
+/// Safe Mode / Normally" dialog nobody at the PC answers - and Safe Mode
+/// turns the WebSocket off. Returns how many were removed.
+int clearCrashMarks();
+
 } // namespace obs_process

@@ -35,6 +35,13 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   reconnecting (up to 30 s; an OBS still starting refuses the websocket,
   which no longer counts as "no plugin" while the process runs) - it
   kicked the plugin back once at every OBS start.
+- Failover (plugin + standalone): OBS killed -> the standalone takes the
+  link in ~2 s, a phone starts OBS, the plugin is back ~4 s later
+  (`desktop/core/tests/failover.py`, live relay). After a crash OBS 32
+  asks "Launch in Safe Mode?" (a `run_*` mark left in
+  `obs-studio/.sentinel`, no flag to skip it; Safe Mode turns the
+  WebSocket off) - a phone-requested start now clears those marks first;
+  the tray's Start OBS keeps the question (someone is at the PC).
 - Panel windows: fixed width, the height always exactly the content;
   Advanced opens / closes animated (220 ms, `Collapsible` clips the full
   content, the window follows frame by frame) - instant before, and the

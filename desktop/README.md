@@ -69,6 +69,20 @@ aspect), `InputVolumeMeters`, the status snapshot and the 4901 close after
 OBS quits. Last green run: OBS 32.2.2 / obs-websocket 5.7.4, macOS,
 2026-11-07, with and without OBS auth.
 
+Failover with the plugin **and** the standalone installed (real OBS, the
+standalone running, a deployed relay with a test id in `RELAY_PRO_ALLOW`):
+
+```bash
+venv/bin/python3 desktop/core/tests/failover.py --relay-url https://relay.obs-blade.com --user <id>
+```
+
+Pairs a test device through the plugin, kills OBS (SIGKILL), checks the
+standalone takes over, starts OBS through the relay (no Safe Mode
+question - the standalone clears OBS's crash marks for phone starts),
+checks the plugin is back and a phone reaches OBS end to end, removes the
+device. Last green run: OBS 32.2.2, macOS, 2026-11-09 (takeover 1.7 s,
+plugin back 4.3 s after the start).
+
 The core reads obs-websocket's password from
 `<OBS config>/plugin_config/obs-websocket/config.json` and stores its
 pairing in `<user config>/obs-blade-remote/bridge.json` (0600), shared by

@@ -211,6 +211,10 @@ int main(int argc, char **argv)
 					} else if (type == "start_obs") {
 						logLine(QStringLiteral("a phone asked to start OBS"));
 						if (!obs_process::running()) {
+							if (const int marks = obs_process::clearCrashMarks())
+								logLine(QStringLiteral("OBS didn't shut down cleanly last time - "
+										       "starting it without the Safe Mode question (%1)")
+										.arg(marks));
 							QString error;
 							if (!obs_process::start(&error))
 								logLine(QStringLiteral("starting OBS failed: %1").arg(error));

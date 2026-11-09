@@ -129,4 +129,30 @@ void bringToFront()
 #endif
 }
 
+int clearCrashMarks()
+{
+	/// OBS's config dir (GetAppConfigPath): %APPDATA% / Application Support /
+	/// XDG config, the Flatpak's, and a portable Windows install's
+	QStringList dirs;
+#if defined(Q_OS_WIN)
+	dirs << qEnvironmentVariable("APPDATA") + QStringLiteral("/obs-studio/.sentinel")
+	     << installDir() + QStringLiteral("/config/obs-studio/.sentinel");
+#elif defined(Q_OS_MACOS)
+	dirs << QDir::homePath() + QStringLiteral("/Library/Application Support/obs-studio/.sentinel");
+#else
+	const QString xdg = qEnvironmentVariable("XDG_CONFIG_HOME", QDir::homePath() + QStringLiteral("/.config"));
+	dirs << xdg + QStringLiteral("/obs-studio/.sentinel")
+	     << QDir::homePath() + QStringLiteral("/.var/app/com.obsproject.Studio/config/obs-studio/.sentinel");
+#endif
+	int removed = 0;
+	for (const QString &path : dirs) {
+		QDir dir(path);
+		if (!dir.exists())
+			continue;
+		for (const QString &name : dir.entryList({QStringLiteral("run_*")}, QDir::Files))
+			removed += dir.remove(name) ? 1 : 0;
+	}
+	return removed;
+}
+
 } // namespace obs_process
