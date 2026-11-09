@@ -14,6 +14,7 @@
 class QCheckBox;
 class QComboBox;
 class QLabel;
+class QToolButton;
 class QLineEdit;
 class QPushButton;
 class QVariantAnimation;
@@ -88,6 +89,9 @@ private:
 	QCheckBox *startAtLogin_;
 	QWidget *advanced_;
 	Collapsible *advancedClip_;
+	QToolButton *advancedToggle_;
+	/// Advanced opened by itself once, for the "settings not found" hint
+	bool advancedShownForHint_ = false;
 	QWidget *advancedHeader_;
 	QWidget *previewSection_;
 	QPushButton *openInObs_;

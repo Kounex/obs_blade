@@ -87,6 +87,7 @@ int main(int argc, char **argv)
 		{"unpaired", with(base(), {{"relay", "unpaired"}, {"paired", false}, {"devices", QJsonArray()}})},
 		{"ws_off", with(base(), {{"obs", "ws_off"}})},
 		{"auth_failed", with(base(), {{"obs", "auth_failed"}})},
+		{"settings_missing", with(base(), {{"obs", "ws_off"}, {"kind", "standalone"}, {"obs_settings_found", false}})},
 		{"offline", with(base(), {{"relay", "offline"}, {"detail", "timeout"}})},
 		{"update_required", with(base(), {{"relay", "update_required"}, {"detail", "0.5.0"}})},
 		{"disabled", with(base(), {{"relay", "disabled"}, {"enabled", false}})},
@@ -100,10 +101,12 @@ int main(int argc, char **argv)
 			if (shell == obb_ui::Shell::Standalone)
 				panel.setStartAtLogin(true, [](bool) {});
 			panel.applyState(state);
-			if (QString::fromUtf8(name) == QStringLiteral("advanced")) {
+			if (QString::fromUtf8(name) == QStringLiteral("advanced"))
 				panel.findChild<QToolButton *>()->setChecked(true);
+			/// Advanced animates open
+			if (QString::fromUtf8(name) == QStringLiteral("advanced") ||
+			    QString::fromUtf8(name) == QStringLiteral("settings_missing"))
 				settle(app);
-			}
 			/// The height the plugin's dialog grows to (heightForWidth -
 			/// wrapped hints included)
 			panel.resize(440, 100);

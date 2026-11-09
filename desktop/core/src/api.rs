@@ -9,7 +9,9 @@
 //! - `set_enabled {value}`, `set_preview {max_edge, jpeg_quality}`,
 //!   `set_obs_override {port|null, password|null}`
 //! - `remove_device {id}`, `refresh_devices`, `unpair`
-//! - `obs_running {value}` - the shell's knowledge of the OBS process
+//! - `obs_running {value, exe?}` - the shell's knowledge of the OBS
+//!   process; `exe` is the running OBS's executable (stored, for portable
+//!   installs - `state.obs_exe` gives it back)
 //! - `open_plugin_panel` - standalone, deferred: the plugin shows its panel
 //!   in OBS
 //!
@@ -115,6 +117,11 @@ impl Bridge {
             }
             "obs_running" => {
                 let value = command["value"].as_bool();
+                if let Some(exe) = command["exe"].as_str().filter(|e| !e.is_empty())
+                    && shared.stored().obs_exe.as_deref() != Some(exe)
+                {
+                    shared.update(|s| s.obs_exe = Some(exe.to_owned()));
+                }
                 if shared.obs_running.send_replace(value) != value {
                     shared.wake.notify_waiters();
                 }

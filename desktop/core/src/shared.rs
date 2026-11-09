@@ -1,6 +1,6 @@
 //! State shared by the bridge's tasks and the shell (plugin / standalone).
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use serde_json::{Value, json};
@@ -89,6 +89,8 @@ pub struct Shared {
     pub relay_state: Mutex<RelayState>,
     pub obs_state: watch::Sender<String>,
     pub obs_running: watch::Sender<Option<bool>>,
+    /// Whether obs-websocket's settings were found (or entered by hand)
+    pub obs_settings_found: watch::Sender<bool>,
     pub plugin_present: watch::Sender<bool>,
     /// Standalone: the monitor answered "is the plugin loaded?" once (or
     /// found no OBS). The relay link waits for it - connecting first
@@ -125,6 +127,7 @@ impl Shared {
             relay_state: Mutex::new(RelayState::Connecting),
             obs_state: watch::Sender::new(String::new()),
             obs_running: watch::Sender::new(None),
+            obs_settings_found: watch::Sender::new(true),
             plugin_present: watch::Sender::new(false),
             plugin_checked: watch::Sender::new(false),
             status: watch::Sender::new(None),
@@ -164,11 +167,20 @@ impl Shared {
         self.emit_state();
     }
 
+    /// obs-websocket's settings plus the manual override. Not found
+    /// anywhere (a portable OBS before it was seen running, a custom
+    /// location): OBS's default port without a password is tried, and the
+    /// panel says the settings weren't found (`obs_settings_found`).
     pub fn ws_config(&self) -> WsConfig {
         let stored = self.stored();
-        let mut ws = obs_config::find(self.cfg.obs_ws_config.as_deref())
+        let found = obs_config::find(self.cfg.obs_ws_config.as_deref(), stored.obs_exe.as_deref().map(Path::new));
+        let settings_found = found.is_some() || stored.obs_port.is_some() || stored.obs_password.is_some();
+        if self.obs_settings_found.send_replace(settings_found) != settings_found {
+            self.emit_state();
+        }
+        let mut ws = found
             .map(|(_, c)| c)
-            .unwrap_or_default();
+            .unwrap_or(WsConfig { enabled: true, auth_required: false, ..WsConfig::default() });
         if let Some(port) = stored.obs_port {
             ws.port = port;
             ws.enabled = true;
@@ -242,6 +254,8 @@ impl Shared {
             "preview_jpeg_quality": stored.preview_jpeg_quality,
             "obs_port": stored.obs_port,
             "obs_password_set": stored.obs_password.is_some(),
+            "obs_settings_found": *self.obs_settings_found.borrow(),
+            "obs_exe": stored.obs_exe,
             "bridge_key": stored.e2e_public,
             "name": self.cfg.name,
             "version": self.cfg.version,

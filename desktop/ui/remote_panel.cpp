@@ -306,7 +306,8 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	/// Advanced: OBS started with --websocket_port / --websocket_password
 	/// (its config file doesn't know them), and unpairing. A plain text
 	/// disclosure - a checkable QToolButton draws a box when open on macOS.
-	auto *advancedToggle = new QToolButton(this);
+	advancedToggle_ = new QToolButton(this);
+	auto *advancedToggle = advancedToggle_;
 	advancedToggle->setCheckable(true);
 	advancedToggle->setToolButtonStyle(Qt::ToolButtonTextOnly);
 	advancedToggle->setCursor(Qt::PointingHandCursor);
@@ -337,9 +338,9 @@ RemotePanel::RemotePanel(Send send, Shell shell, QWidget *parent) : QWidget(pare
 	advancedLayout->setContentsMargins(0, 10, 0, 0);
 	advancedLayout->setSpacing(8);
 	/// Non-breaking hyphens: "--websocket_port" must not wrap at its dashes
-	auto *advancedNote = secondary(QStringLiteral("Only needed when OBS was started with "
-						      "&#8209;&#8209;websocket_port or &#8209;&#8209;websocket_password. "
-						      "Leave empty to use the settings from OBS."),
+	auto *advancedNote = secondary(QStringLiteral("Only needed when OBS's settings can't be read (OBS started with "
+						      "&#8209;&#8209;websocket_port or &#8209;&#8209;websocket_password, "
+						      "an unusual install). Leave empty to use the settings from OBS."),
 				       advanced_);
 	advancedNote->setTextFormat(Qt::RichText);
 	advancedLayout->addWidget(advancedNote);
@@ -486,7 +487,19 @@ void RemotePanel::applyState(const QJsonObject &state)
 					"globe on the dashboard, then <b>Set Up Remote Access</b>.");
 	if (relay == "update_required")
 		hints << QStringLiteral("This version is too old for the relay (needs %1 or newer).").arg(detail);
-	if (obs == "ws_off")
+	/// The standalone didn't find obs-websocket's settings (a portable or
+	/// custom install it hasn't seen running): the default port without a
+	/// password didn't work either
+	const bool settingsMissing = state["obs_settings_found"].isBool() && !state["obs_settings_found"].toBool() &&
+				     (obs == "ws_off" || obs == "auth_failed");
+	if (settingsMissing) {
+		hints << QStringLiteral("Couldn't find OBS's WebSocket settings \u2013 enter the port and password from "
+					"OBS's <b>Tools &rarr; WebSocket Server Settings</b> under Advanced.");
+		if (!advancedShownForHint_) {
+			advancedShownForHint_ = true;
+			advancedToggle_->setChecked(true);
+		}
+	} else if (obs == "ws_off")
 		hints << QStringLiteral("OBS's WebSocket server is off \u2013 turn it on in OBS under "
 					"<b>Tools &rarr; WebSocket Server Settings</b>.");
 	else if (obs == "auth_failed")

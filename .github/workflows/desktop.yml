@@ -1,0 +1,69 @@
+# OBS Blade Remote (desktop/): the bridge core (Rust), the OBS plugin and
+# the standalone tray app, per OS. Artifacts are unsigned test builds;
+# signed installers and GitHub Releases come later.
+name: desktop
+
+on:
+  push:
+    branches: [master]
+    paths: ["desktop/**", "!desktop/**/*.md", ".github/workflows/desktop.yml"]
+  pull_request:
+    paths: ["desktop/**", ".github/workflows/desktop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Core tests
+        working-directory: desktop/core
+        run: cargo test --lib
+
+      - name: Core (static library)
+        working-directory: desktop/core
+        run: cargo build --release --lib
+
+      # First configure downloads OBS sources, obs-deps and Qt6 into .deps
+      - name: Plugin
+        working-directory: desktop/plugin
+        run: |
+          cmake --preset windows-x64
+          cmake --build --preset windows-x64 --config RelWithDebInfo
+          cmake --install build_x64 --config RelWithDebInfo --prefix "$env:RUNNER_TEMP/plugin"
+
+      # Against the same Qt6 OBS ships (obs-deps)
+      - name: Standalone
+        working-directory: desktop/standalone
+        run: |
+          $qt = (Get-ChildItem ../plugin/.deps -Directory -Filter 'obs-deps-qt6-*' | Select-Object -First 1).FullName
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$qt"
+          cmake --build build --config Release
+          $out = "$env:RUNNER_TEMP/standalone/OBS Blade Remote"
+          New-Item -ItemType Directory -Force $out, "$out/platforms", "$out/styles" | Out-Null
+          Copy-Item build/Release/obs-blade-remote.exe $out
+          foreach ($dll in 'Qt6Core', 'Qt6Gui', 'Qt6Widgets') { Copy-Item "$qt/bin/$dll.dll" $out }
+          Copy-Item "$qt/plugins/platforms/qwindows.dll" "$out/platforms"
+          Copy-Item "$qt/plugins/styles/*.dll" "$out/styles"
+          Get-ChildItem -Recurse $out | Select-Object FullName, Length | Format-Table -AutoSize
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obs-blade-remote-plugin-windows-x64
+          path: ${{ runner.temp }}/plugin
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obs-blade-remote-standalone-windows-x64
+          path: ${{ runner.temp }}/standalone

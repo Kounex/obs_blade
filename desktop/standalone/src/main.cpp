@@ -35,6 +35,8 @@ Copyright (C) 2026 Kounex - GPL-3.0-or-later
 namespace {
 
 ObbBridge *g_bridge = nullptr;
+/// The OBS executable last seen running (the core stores it: state.obs_exe)
+QString g_obsExe;
 
 void send(const QJsonObject &command)
 {
@@ -156,7 +158,7 @@ int main(int argc, char **argv)
 	QObject::connect(open, &QAction::triggered, &window, &PanelWindow::present);
 	QObject::connect(startObs, &QAction::triggered, [] {
 		QString error;
-		if (!obs_process::start(&error))
+		if (!obs_process::start(g_obsExe, &error))
 			QMessageBox::warning(nullptr, QStringLiteral("OBS Blade Remote"), error);
 	});
 	QObject::connect(quit, &QAction::triggered, &app, &QApplication::quit);
@@ -205,18 +207,19 @@ int main(int argc, char **argv)
 				[event, ctx] {
 					const QString type = event["type"].toString();
 					if (type == "state") {
+						g_obsExe = event["obs_exe"].toString();
 						ctx->window->panel->applyState(event);
 						ctx->status->setText(statusText(event));
 						ctx->tray->setToolTip(QStringLiteral("OBS Blade Remote - %1").arg(statusText(event)));
 					} else if (type == "start_obs") {
 						logLine(QStringLiteral("a phone asked to start OBS"));
 						if (!obs_process::running()) {
-							if (const int marks = obs_process::clearCrashMarks())
+							if (const int marks = obs_process::clearCrashMarks(g_obsExe))
 								logLine(QStringLiteral("OBS didn't shut down cleanly last time - "
 										       "starting it without the Safe Mode question (%1)")
 										.arg(marks));
 							QString error;
-							if (!obs_process::start(&error))
+							if (!obs_process::start(g_obsExe, &error))
 								logLine(QStringLiteral("starting OBS failed: %1").arg(error));
 						}
 					} else if (type == "log") {
@@ -235,14 +238,24 @@ int main(int argc, char **argv)
 	logLine(QStringLiteral("started (core %1)").arg(QString::fromUtf8(obb_version())));
 
 	/// The OBS watcher: whether OBS runs tells "closed" from "WebSocket
-	/// server off" for the app's messages
+	/// server off" for the app's messages; where it runs from finds a
+	/// portable install's settings and starts it again
 	int lastRunning = -1;
 	auto checkObs = [&lastRunning, startObs] {
 		const bool running = obs_process::running();
 		startObs->setEnabled(!running);
 		if (int(running) != lastRunning) {
 			lastRunning = int(running);
-			send(QJsonObject{{"cmd", "obs_running"}, {"value", running}});
+			QJsonObject command{{"cmd", "obs_running"}, {"value", running}};
+			if (running) {
+				const QString exe = obs_process::runningExe();
+				if (!exe.isEmpty()) {
+					command["exe"] = exe;
+					if (exe != g_obsExe)
+						logLine(QStringLiteral("OBS runs from %1").arg(QDir::toNativeSeparators(exe)));
+				}
+			}
+			send(command);
 		}
 	};
 	QTimer watcher;

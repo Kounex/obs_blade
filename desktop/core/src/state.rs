@@ -19,6 +19,9 @@ pub struct Stored {
     /// Manual override when OBS runs with --websocket_port/--websocket_password.
     pub obs_port: Option<u16>,
     pub obs_password: Option<String>,
+    /// Standalone: the OBS executable last seen running (portable installs:
+    /// its config folder, starting it, its crash marks)
+    pub obs_exe: Option<String>,
     /// This bridge's X25519 static key pair (base64), for end-to-end
     /// encryption (`e2e.rs`). Made once; the phones pin the public key.
     pub e2e_private: Option<String>,
@@ -50,6 +53,7 @@ impl Default for Stored {
             preview_jpeg_quality: 60,
             obs_port: None,
             obs_password: None,
+            obs_exe: None,
             e2e_private: None,
             e2e_public: None,
             app_keys: Vec::new(),
