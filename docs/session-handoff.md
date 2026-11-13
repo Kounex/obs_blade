@@ -61,6 +61,16 @@ event reached the VPS relay).
 **In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
 the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop side since 2026-11-09).
+- **Release day (the app version that ships remote access) - do all of
+  these together, not before** (user decision 2026-11-13):
+  1. Tag `v0.4.0` in Kounex/obs-blade-remote (CI publishes the five
+     downloads; `release-notes/0.4.0.md` is written). Tested: Windows
+     installers, macOS notarized, AppImage on SteamOS with Flatpak OBS.
+  2. Deploy the site branch `remote-access` in `~/agent/obs-blade-site`
+     (`/remote` download page - the sheet links it - privacy policy
+     section for the relay, the remote guide no longer saying "no cloud
+     relay", landing page Pro + privacy). Merge to `main`, `./deploy.sh`.
+  3. Check `obs-blade.kounex.com/remote` downloads all five files.
 - **End-to-end encrypted since 2026-11-08** (relay 0.0.5, bridge
   0.3.1 - 0.0.5 adds the bridge keepalive pong: websocket pings don't
   cross the Cloudflare tunnel): the relay can't read sessions; keys are exchanged through OBS

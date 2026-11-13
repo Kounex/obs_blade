@@ -18,6 +18,7 @@ import '../../../../utils/overlay_handler.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/dashboard.dart';
 import '../../../../stores/views/remote_access.dart';
+import '../../../../utils/legal_links.dart';
 import '../../../../utils/relative_time.dart';
 import '../../../../utils/remote/remote_relay_client.dart';
 
@@ -204,6 +205,45 @@ TextStyle _secondary(BuildContext context) =>
       color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
     );
 
+/// Where the PC side is downloaded - a short address on purpose: it is read
+/// here and typed on the PC. The page links the latest GitHub release of
+/// Kounex/obs-blade-remote.
+final Uri kRemoteDownloadUri = Uri.parse('https://obs-blade.kounex.com/remote');
+
+class _DownloadLink extends StatelessWidget {
+  const _DownloadLink();
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color =
+        (Theme.of(context).extension<AppTextColors>() ?? AppTextColors.standard)
+            .highlightText;
+    return Semantics(
+      link: true,
+      child: InkWell(
+        onTap: () => openLegalPage(context, kRemoteDownloadUri),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.arrow_down_circle, size: 16.0, color: color),
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  '${kRemoteDownloadUri.host}${kRemoteDownloadUri.path}',
+                  semanticsLabel: 'Download OBS Blade Remote',
+                  style: _secondary(context).copyWith(color: color),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// What the relay can't see (spec "End-to-end encryption", 2026-11-08)
 class _EndToEndNote extends StatelessWidget {
   const _EndToEndNote();
@@ -286,7 +326,8 @@ class _SetUp extends StatelessWidget {
           'you\'re connected to OBS like right now.',
           style: _secondary(context),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const _DownloadLink(),
+        const SizedBox(height: AppSpacing.md),
         SizedBox(
           width: double.infinity,
           child: BaseButton(text: this.buttonText, onPressed: this.onPressed),
@@ -399,6 +440,9 @@ class _Failed extends StatelessWidget {
         Text('Not set up', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.xs),
         Text(text, style: _secondary(context)),
+        if (this.failure == RemotePairingFailure.noBridge ||
+            this.failure == RemotePairingFailure.noConfirmation)
+          const _DownloadLink(),
         const SizedBox(height: AppSpacing.lg),
         SizedBox(
           width: double.infinity,

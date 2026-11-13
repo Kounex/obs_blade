@@ -4,6 +4,17 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - Remote access sheet: where to download the PC side
+
+- The sheet's setup step and the "didn't answer" / "didn't confirm"
+  failures link `obs-blade.kounex.com/remote` (a site page with the
+  latest downloads from Kounex/obs-blade-remote) - short, because it's
+  read on the phone and typed on the PC. The page goes live with the app
+  release that ships remote access, together with the `v0.4.0` tag
+  (handoff "Release day").
+- AppImage tested on SteamOS 3.9 with Flatpak OBS 33.0.1, end to end
+  through the relay (obs-blade-remote `core/tests/flatpak_start.py`).
+
 ## 2026-11-09 - OBS Blade Remote moved to its own repo
 
 - User decision: the desktop side doesn't belong in the mobile app's repo.
