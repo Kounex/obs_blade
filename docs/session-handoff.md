@@ -71,6 +71,10 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
      section for the relay, the remote guide no longer saying "no cloud
      relay", landing page Pro + privacy). Merge to `main`, `./deploy.sh`.
   3. Check `obs-blade.kounex.com/remote` downloads all five files.
+  4. Before submitting that app version: check the App Store privacy
+     labels and Play's Data safety form against the relay's data (site
+     branch `remote-access`, privacy policy `#remote`: device name, the
+     RevenueCat anonymous ID, OBS status; end-to-end encrypted sessions).
 - **End-to-end encrypted since 2026-11-08** (relay 0.0.5, bridge
   0.3.1 - 0.0.5 adds the bridge keepalive pong: websocket pings don't
   cross the Cloudflare tunnel): the relay can't read sessions; keys are exchanged through OBS
