@@ -53,6 +53,60 @@ location in a comment where the fake models a non-obvious behavior.
 - Settings changes send **no event** - re-read on profile switch and
   stream start.
 
+## Stream targets (verified from source 2026-11-12: OBS 33.0.1, obs-websocket master, Aitum Multistream 1.0.9, obs-multi-rtmp 0.7.4.5; not yet probed live)
+
+- **OBS has one stream service per profile** (`service.json` next to
+  `basic.ini`, `frontend/widgets/OBSBasic_Service.cpp`). There is no list
+  of targets and no native multi-destination streaming; Enhanced
+  Broadcasting is several tracks to the same service.
+- `GetStreamServiceSettings` answers the **current** profile's service
+  only: `rtmp_common` (`service` preset name, `server`, `key`),
+  `rtmp_custom` (`server`, `key`, `use_auth`, `username`, `password`) or
+  `whip_custom` (`server`, `bearer_token`). Key and password come in clear
+  text. No account name in it. Presets exist for Twitch, YouTube,
+  Facebook, Restream.io, Trovo - **not** TikTok or Kick (custom servers).
+- The linked account's name is in the profile config:
+  `GetProfileParameter` `Auth` / `Type` (`Twitch`, `YouTube - RTMP`,
+  ...), `Twitch` / `Name`, `YouTube` / `ChannelName`
+  (`frontend/oauth/TwitchAuth.cpp`, `YoutubeAuth.cpp`). The same sections
+  hold `Token` / `RefreshToken` - never read those.
+- `SetStreamServiceSettings` is refused while the main stream is active,
+  merges into the current service when the type is the same (else creates
+  a new one) and **saves it into the profile** - it replaces what the user
+  set up in OBS. It does not touch the linked account (`auth`).
+- **YouTube-linked OBS:** `StartStream` is acked with success (the start
+  is only queued, `obs_frontend_streaming_start`), but without a prepared
+  broadcast OBS opens a modal "No Broadcast Configured" box on the desktop
+  and nothing starts (`OBSBasic::StartStreaming`). OBS' broadcast picker
+  ("Manage Broadcast": create new / select existing, auto-start,
+  auto-stop) is not reachable through obs-websocket. Picking one writes
+  `key`, `broadcast_id`, `stream_id` into the service settings and sets
+  `broadcastReady` / `autoStartBroadcast` **in memory only**
+  (`OBSBasic::YouTubeActionDialogOk`) - writing the same fields with
+  `SetStreamServiceSettings` does not make a linked OBS start.
+- **Other outputs:** `GetOutputList` lists every libobs output with
+  `outputActive`; `GetOutputStatus` by name gives duration, bytes,
+  congestion, reconnecting. Only the main stream / record / replay /
+  virtual cam have state events - poll plugin outputs.
+- **Aitum Multistream** (vendor `aitum-multistream`, `multistream.cpp`):
+  `get_outputs` -> `outputs: [{name, vertical}]` (the user's label, no
+  server, no active state; config is per profile), `start_output` /
+  `stop_output` `{name}`, vendor events `output_started` /
+  `output_stopped` with the **libobs** name `aitum_multi_output_<name>`.
+  The output only exists while running. `start_output` clicks the dock
+  button queued and answers `success: true` when the name exists - not
+  when it started. An output on the main encoder (the default) started
+  while the main stream is off opens a modal box in OBS.
+- **obs-multi-rtmp** has no vendor requests. Frontend hotkeys
+  `obs-multi-rtmp.start_all` / `.stop_all` / `.start.<target id>` /
+  `.stop.<target id>` (ids, `GetHotkeyList` has no labels). All its
+  outputs are named `multi-output`, so only a count of active ones can be
+  read, no per-target status.
+- OBS disables its profile menu while an output is active
+  (`OBSBasic::OnActivate`); obs-websocket's `SetCurrentProfile` triggers
+  the menu action without checking - unverified what happens live, don't
+  send it while anything is on air.
+
 ## Aitum Vertical (vendor `aitum-vertical-canvas`)
 
 - Source: `Aitum/obs-vertical-canvas`, `vertical-canvas.cpp`

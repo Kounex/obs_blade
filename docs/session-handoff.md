@@ -70,7 +70,7 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   1. Dogfood on Kounex iOS, then `release-beta`. If `release bump` picks
      another build number, rename the F-Droid changelog
      `fastlane/metadata/android/en-US/changelogs/2026111301.txt` to it.
-  2. **Before `release-promote` (App Review needs it):** tag `v0.4.0` in
+  2. **Before `release-promote` (App Review needs it; user OK 2026-11-13):** tag `v0.4.0` in
      Kounex/obs-blade-remote (CI publishes the five downloads;
      `release-notes/0.4.0.md`; tested: Windows installers, macOS notarized,
      AppImage on SteamOS + Flatpak OBS) and deploy the site branch
