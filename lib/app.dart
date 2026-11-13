@@ -172,9 +172,7 @@ class App extends StatelessWidget {
             return base.copyWith(color: AppStatusColors.standard.destructive);
           }
           if (states.contains(WidgetState.focused)) {
-            return base.copyWith(
-              color: highlight,
-            );
+            return base.copyWith(color: highlight);
           }
           return base;
         });
@@ -187,9 +185,7 @@ class App extends StatelessWidget {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
 
-      textSelectionTheme: TextSelectionThemeData(
-        selectionColor: highlight,
-      ),
+      textSelectionTheme: TextSelectionThemeData(selectionColor: highlight),
 
       dividerTheme: DividerThemeData(
         color: dividerColor ?? StylingHelper.light_divider_color,
@@ -254,7 +250,12 @@ class App extends StatelessWidget {
       extensions: [
         AppStatusColors.standard,
         appTextColors,
-        AppGlass.forBar(appBarColor ?? StylingHelper.liquid_bar_color),
+        AppGlass.forBar(
+          appBarColor ?? StylingHelper.liquid_bar_color,
+          style: SurfaceStyle.fromSetting(
+            settingsBox.get(SettingsKeys.SurfaceStyle.name),
+          ),
+        ),
       ],
 
       /// Sub-themes which used to leak stock colors - derived from the
@@ -407,6 +408,7 @@ class App extends StatelessWidget {
         SettingsKeys.CustomTheme,
         SettingsKeys.ActiveCustomThemeUUID,
         SettingsKeys.ForceNonNativeElements,
+        SettingsKeys.SurfaceStyle,
       ],
       builder: (context, Box settingsBox, child) => HiveBuilder<CustomTheme>(
         hiveKey: HiveKeys.CustomTheme,

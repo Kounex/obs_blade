@@ -25,6 +25,11 @@ class BlockEntry extends StatelessWidget {
   /// appear/disappear with an AnimatedSize when this flips
   final bool visible;
 
+  /// A full-width control on its own line under the title (a segmented
+  /// control doesn't fit next to the title on a 320 pt phone) - the row
+  /// then has no [trailing] / [onTap] / [navigateTo]
+  final Widget? below;
+
   const BlockEntry({
     super.key,
     this.leading,
@@ -38,11 +43,14 @@ class BlockEntry extends StatelessWidget {
     this.rootNavigation = false,
     this.navigateToResult,
     this.visible = true,
+    this.below,
   }) : assert(
-         (trailing == null &&
-                 ((navigateTo != null && onTap == null) ||
-                     (navigateTo == null && onTap != null)) ||
-             (trailing != null && (navigateTo == null && onTap == null))),
+         below == null
+             ? (trailing == null &&
+                       ((navigateTo != null && onTap == null) ||
+                           (navigateTo == null && onTap != null)) ||
+                   (trailing != null && (navigateTo == null && onTap == null)))
+             : (trailing == null && navigateTo == null && onTap == null),
        ),
        super();
 
@@ -65,83 +73,97 @@ class BlockEntry extends StatelessWidget {
       onTap: onPressed,
       child: Container(
         color: Theme.of(context).cardColor,
-        height: kblockEntryHeight,
         width: MediaQuery.sizeOf(context).width,
-        child: Padding(
-          padding: const EdgeInsets.only(
-            left: kblockEntryPadding,
-            right: kblockEntryPadding,
-          ),
-          child: Row(
-            children: [
-              if (this.leading != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: kblockEntryPadding),
-                  child: Hero(
-                    tag: this.title!,
-                    placeholderBuilder: this.heroPlaceholder != null
-                        ? (context, heroSize, child) =>
-                              Icon(this.heroPlaceholder)
-                        : null,
-                    child: DecorativeIconTile(
-                      icon: this.leading!,
-                      size: kblockEntryIconSize,
-                      iconSize: this.leadingSize * 0.66,
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        this.title!,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: Theme.of(context).textTheme.titleMedium,
-                        // .copyWith(fontSize: 15.0),
+        padding: const EdgeInsets.only(
+          left: kblockEntryPadding,
+          right: kblockEntryPadding,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: kblockEntryHeight,
+              child: Row(
+                children: [
+                  if (this.leading != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: kblockEntryPadding),
+                      child: Hero(
+                        tag: this.title!,
+                        placeholderBuilder: this.heroPlaceholder != null
+                            ? (context, heroSize, child) =>
+                                  Icon(this.heroPlaceholder)
+                            : null,
+                        child: DecorativeIconTile(
+                          icon: this.leading!,
+                          size: kblockEntryIconSize,
+                          iconSize: this.leadingSize * 0.66,
+                        ),
                       ),
                     ),
-                    if (this.help != null)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12.0, right: 12.0),
-                        child: QuestionMarkTooltip(message: this.help!),
-                      ),
-                  ],
-                ),
-              ),
-              this.navigateTo != null || this.onTap != null
-                  ? Row(
+                  Expanded(
+                    child: Row(
                       children: [
-                        if (this.navigateToResult != null)
+                        Flexible(
+                          child: Text(
+                            this.title!,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: Theme.of(context).textTheme.titleMedium,
+                            // .copyWith(fontSize: 15.0),
+                          ),
+                        ),
+                        if (this.help != null)
                           Padding(
                             padding: const EdgeInsets.only(
-                              right: AppSpacing.xs,
+                              left: 12.0,
+                              right: 12.0,
                             ),
-                            child: DefaultTextStyle(
-                              /// Settings row values sit one emphasis
-                              /// level down (token-delta §2.1)
-                              style: Theme.of(context).textTheme.bodySmall!
-                                  .copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).extension<AppTextColors>()!.textSecondary,
-                                  ),
-                              child: this.navigateToResult!,
-                            ),
+                            child: QuestionMarkTooltip(message: this.help!),
                           ),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 20.0,
-                          color: Theme.of(
-                            context,
-                          ).extension<AppTextColors>()!.textTertiary,
-                        ),
                       ],
-                    )
-                  : this.trailing!,
-            ],
-          ),
+                    ),
+                  ),
+                  this.navigateTo != null || this.onTap != null
+                      ? Row(
+                          children: [
+                            if (this.navigateToResult != null)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  right: AppSpacing.xs,
+                                ),
+                                child: DefaultTextStyle(
+                                  /// Settings row values sit one emphasis
+                                  /// level down (token-delta §2.1)
+                                  style: Theme.of(context).textTheme.bodySmall!
+                                      .copyWith(
+                                        color: Theme.of(context)
+                                            .extension<AppTextColors>()!
+                                            .textSecondary,
+                                      ),
+                                  child: this.navigateToResult!,
+                                ),
+                              ),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 20.0,
+                              color: Theme.of(
+                                context,
+                              ).extension<AppTextColors>()!.textTertiary,
+                            ),
+                          ],
+                        )
+                      : this.trailing ?? const SizedBox.shrink(),
+                ],
+              ),
+            ),
+            if (this.below != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: this.below,
+              ),
+          ],
         ),
       ),
     );

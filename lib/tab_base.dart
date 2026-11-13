@@ -137,14 +137,12 @@ class _TabBaseState extends State<TabBase> {
         builder: (context) => GlassBar(
           contentEdge: GlassBarEdge.top,
           color: CupertinoTheme.of(context).barBackgroundColor,
-          child: CupertinoTabBar(
-            /// The glass surface (color, blur, top-edge specular) is
-            /// painted by the surrounding [GlassBar] - the bar itself
-            /// stays transparent, and the specular line replaces the old
-            /// hairline border
-            backgroundColor: Colors.transparent,
-            border: const Border(),
 
+          /// The glass surface (color, blur, top-edge specular) is painted
+          /// by the surrounding [GlassBar] - the bar itself stays
+          /// transparent and borderless (the specular line replaces the old
+          /// hairline) and doesn't blur a second time
+          child: GlassCupertinoTabBar(
             /// Grammar rule 2: active tab ink = accent - accent as text/
             /// glyph spends the accentText variant (token-delta §2.3)
             activeColor: Theme.of(

@@ -1,5 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'app_glass.dart';
@@ -60,21 +61,23 @@ class GlassBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppGlass glass = appGlassOf(context);
-    final Color barColor = this.color ?? glass.barColor;
+    final Color barColor = glass.surface(this.color ?? glass.barColor);
 
     return Stack(
       fit: StackFit.passthrough,
       children: [
         Positioned.fill(
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: glass.sigma,
-                sigmaY: glass.sigma,
-              ),
-              child: ColoredBox(color: barColor),
-            ),
-          ),
+          child: glass.blurs
+              ? ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: glass.sigma,
+                      sigmaY: glass.sigma,
+                    ),
+                    child: ColoredBox(color: barColor),
+                  ),
+                )
+              : ColoredBox(color: barColor),
         ),
         this.child,
         Positioned(
@@ -103,4 +106,29 @@ class GlassBar extends StatelessWidget {
       ],
     );
   }
+}
+
+/// [CupertinoTabBar] for inside a [GlassBar]: the bar paints the surface,
+/// so the tab bar stays transparent - and must not blur on its own.
+/// [CupertinoTabBar] blurs whenever its background isn't fully opaque
+/// (`opaque` -> `BackdropFilter`, sigma 10), which stacked a second blur
+/// under every tab bar frame. Reporting opaque skips it; `opaque` is only
+/// read by that blur and by [CupertinoTabScaffold] (not used here - the
+/// tab bar sits in a Material [Scaffold] with `extendBody`).
+class GlassCupertinoTabBar extends CupertinoTabBar {
+  const GlassCupertinoTabBar({
+    super.key,
+    required super.items,
+    super.onTap,
+    super.currentIndex,
+    super.backgroundColor = Colors.transparent,
+    super.activeColor,
+    super.inactiveColor,
+    super.iconSize,
+    super.height,
+    super.border = const Border(),
+  });
+
+  @override
+  bool opaque(BuildContext context) => true;
 }

@@ -362,10 +362,13 @@ void main() {
     }
   });
 
-  testWidgets('frosted glass on iOS, solid card on Android', (tester) async {
+  /// Glass (the default Bars & Sheets style) blurs on every platform -
+  /// Android sheets were solid before 2026-11-13; Clear / Solid are in
+  /// test/shared/design/surface_style_test.dart
+  testWidgets('frosted glass on iOS and Android by default', (tester) async {
     for (final (platform, glass) in [
       (TargetPlatform.iOS, true),
-      (TargetPlatform.android, false),
+      (TargetPlatform.android, true),
     ]) {
       await tester.pumpWidget(
         opener(

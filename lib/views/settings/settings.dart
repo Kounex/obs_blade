@@ -317,6 +317,29 @@ class SettingsView extends StatelessWidget {
                         ),
                       ),
                       BlockEntry(
+                        leading: CupertinoIcons.rectangle_stack_fill,
+                        title: 'Bars & Sheets',
+                        help:
+                            'How the top bars, the tab bar, sheets and pop-ups are drawn.\n\nGlass blurs what\'s behind them. Clear and Solid skip the blur, which can make scrolling smoother on some Android phones - Clear stays slightly see-through, Solid is fully opaque.',
+                        below: CupertinoSlidingSegmentedControl<SurfaceStyle>(
+                          groupValue: SurfaceStyle.fromSetting(
+                            settingsBox.get(SettingsKeys.SurfaceStyle.name),
+                          ),
+                          children: const {
+                            SurfaceStyle.glass: Text('Glass'),
+                            SurfaceStyle.clear: Text('Clear'),
+                            SurfaceStyle.solid: Text('Solid'),
+                          },
+                          onValueChanged: (style) {
+                            if (style == null) return;
+                            settingsBox.put(
+                              SettingsKeys.SurfaceStyle.name,
+                              style.name,
+                            );
+                          },
+                        ),
+                      ),
+                      BlockEntry(
                         leading: CupertinoIcons.wand_stars,
                         leadingSize: 30.0,
                         title: 'Force non native UI',

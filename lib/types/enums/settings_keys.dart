@@ -289,6 +289,11 @@ enum SettingsKeys {
   /// (won't be shown anywhere else if disabled)
   ExposeStudioControls,
 
+  /// [String]: How nav bars, the tab bar, sheets and toasts are drawn - a
+  /// [SurfaceStyle] name: 'glass' (blur, default), 'clear' (no blur, mostly
+  /// opaque) or 'solid' (opaque)
+  SurfaceStyle,
+
   /// [bool]: Studio Mode - a quick second tap on a scene tile transitions
   /// it to program (the first tap puts it in preview; on by default)
   StudioDoubleTapTransition,
@@ -628,6 +633,7 @@ enum SettingsKeys {
     SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
     SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
     SettingsKeys.StudioDoubleTapTransition: 'studio-double-tap-transition',
+    SettingsKeys.SurfaceStyle: 'surface-style',
     SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
     SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
     SettingsKeys.AnimatePreviewTransitions: 'animate-preview-transitions',

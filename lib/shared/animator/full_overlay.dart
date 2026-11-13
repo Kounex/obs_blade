@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 
 import '../design/app_motion.dart';
 import '../design/app_radius.dart';
+import '../design/app_glass.dart';
 import '../design/app_spacing.dart';
+import '../design/glass_bar.dart';
 
 class FullOverlay extends StatefulWidget {
   final Widget content;
@@ -102,42 +104,52 @@ class FullOverlayState extends State<FullOverlay>
             animation: _controller,
             child: this.widget.content,
             builder: (context, child) {
-              Widget surface = BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: _blur.value,
-                  sigmaY: _blur.value,
-                ),
-                // Fixed width + shrink-wrapped height (min 150).
-                // heightFactor/widthFactor keep Center from filling the screen.
-                child: SizedBox(
-                  width: width,
-                  child: Material(
-                    /// Near-opaque card slot (token-delta §4 toast rule) -
-                    /// the alpha keeps the animated backdrop blur visible
-                    color: Theme.of(context).cardColor.withValues(alpha: 0.87),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(AppRadius.md),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: _kMinSize),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.md,
-                          AppSpacing.lg,
-                          AppSpacing.lg,
-                        ),
-                        child: Center(
-                          widthFactor: 1.0,
-                          heightFactor: 1.0,
-                          child: child,
-                        ),
+              /// Settings -> Theme -> Bars & Sheets: clear / solid drop the
+              /// animated backdrop blur (the scrim stays)
+              final AppGlass glass = appGlassOf(context);
+
+              // Fixed width + shrink-wrapped height (min 150).
+              // heightFactor/widthFactor keep Center from filling the screen.
+              Widget surface = SizedBox(
+                width: width,
+                child: Material(
+                  /// Near-opaque card slot (token-delta §4 toast rule) -
+                  /// the alpha keeps the animated backdrop blur visible
+                  color: glass.surface(
+                    Theme.of(context).cardColor.withValues(alpha: 0.87),
+                  ),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppRadius.md),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: _kMinSize),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.md,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                      ),
+                      child: Center(
+                        widthFactor: 1.0,
+                        heightFactor: 1.0,
+                        child: child,
                       ),
                     ),
                   ),
                 ),
               );
+
+              if (glass.blurs) {
+                surface = BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: _blur.value,
+                    sigmaY: _blur.value,
+                  ),
+                  child: surface,
+                );
+              }
 
               if (!reduce) {
                 surface = ScaleTransition(scale: _scale, child: surface);

@@ -10,7 +10,6 @@ import '../shared/design/design.dart';
 import '../shared/general/base/card.dart';
 import '../shared/general/base/sheet.dart';
 import '../shared/general/base/icon_button.dart';
-import 'styling_helper.dart';
 
 /// Sheet callers pick a height / read the width without a second import
 export '../shared/general/base/sheet.dart'
@@ -108,7 +107,6 @@ class ModalHandler {
     ),
     builder: (context) => _bottomSheetWrapper(
       context: context,
-      blurryBackground: StylingHelper.isApple(context),
       modalWidget: _ModalSheetBody(child: builder(context)),
       maxHeight: MediaQuery.sizeOf(context).height * height.fraction,
     ),
@@ -118,17 +116,20 @@ class ModalHandler {
     required BuildContext context,
     required Widget modalWidget,
     required double maxHeight,
-    required bool blurryBackground,
   }) {
-    final AppGlass? glass = Theme.of(context).extension<AppGlass>();
+    /// Settings -> Theme -> Bars & Sheets: glass blurs on every platform
+    /// (user decision 2026-11-13; Android sheets were opaque before),
+    /// clear / solid draw the card color without a blur
+    final AppGlass glass = appGlassOf(context);
+    final bool blurryBackground = glass.blurs;
     const BorderRadius radius = BorderRadius.vertical(
       top: Radius.circular(kBaseCardBorderRadius),
     );
 
     Widget child = Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withValues(
-          alpha: blurryBackground ? AppGlass.barAlpha : 1.0,
+        color: glass.surface(
+          Theme.of(context).cardColor.withValues(alpha: AppGlass.barAlpha),
         ),
         borderRadius: radius,
       ),
@@ -144,10 +145,7 @@ class ModalHandler {
       child = ClipRRect(
         borderRadius: radius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: glass?.sigma ?? StylingHelper.sigma_blurry,
-            sigmaY: glass?.sigma ?? StylingHelper.sigma_blurry,
-          ),
+          filter: ImageFilter.blur(sigmaX: glass.sigma, sigmaY: glass.sigma),
           child: child,
         ),
       );
