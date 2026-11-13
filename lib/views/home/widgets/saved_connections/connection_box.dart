@@ -60,8 +60,11 @@ class ConnectionBox extends StatelessWidget {
         this.connection.lastConnectedMs = DateTime.now().millisecondsSinceEpoch;
         this.connection.save();
       }
+      /// 4901 comes from a PC side that is up while OBS isn't - the app,
+      /// never the plugin (it goes down with OBS). Not the kind stored at
+      /// pairing: a plugin user who adds the app keeps the same bridge
+      /// (review 2026-11-13); a refusal ends in "OBS didn't start"
       if (closeCode == WebSocketCloseCode.RemoteObsNotRunning &&
-          this.connection.relayBridgeKind == 'standalone' &&
           context.mounted) {
         this._offerStartObs(context);
       }
@@ -357,9 +360,7 @@ class ConnectionBox extends StatelessWidget {
                         this.connection.reachable == true ||
                         (viaRemoteToo &&
                             (reach == null ||
-                                (reach == RemoteReach.obsNotRunning &&
-                                    this.connection.relayBridgeKind ==
-                                        'standalone')));
+                                reach == RemoteReach.obsNotRunning));
 
                     /// Connect prominence follows reachability (user
                     /// directive 2026-09-20): online cards get the filled
