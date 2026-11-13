@@ -30,7 +30,7 @@ void main() {
           ],
         ),
       ),
-      size: const Size(390, 1500),
+      size: const Size(390, 1800),
     );
   });
 

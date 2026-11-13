@@ -105,7 +105,7 @@ class ProHero extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'Native Twitch, Kick and YouTube chat - plus every supporter in one feed and your chat read out loud.',
+          'Native Twitch, Kick and YouTube chat, every supporter in one feed - and your OBS from anywhere.',
           textAlign: TextAlign.center,
 
           /// The value line is the pitch headline (token-delta §5):

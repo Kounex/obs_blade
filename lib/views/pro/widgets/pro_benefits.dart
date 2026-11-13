@@ -11,7 +11,7 @@ import 'pro_palette.dart';
 
 /// The Pro feature groups - one paywall card each, the same names on the
 /// locked panes, the website's Pro list and the store listings.
-enum ProFeature { chat, activity, speech, moderation, themes }
+enum ProFeature { chat, remote, activity, speech, moderation, themes }
 
 /// One browsable Pro benefit. Copy rule (monetization strategy):
 /// honest, no dates promised for unreleased features.
@@ -37,8 +37,9 @@ class ProBenefit {
   });
 }
 
-/// The Pro story in five groups (was eight single-feature cards, then
-/// six). Order = importance; the locked panes list the titles in this
+/// The Pro story in six groups (was eight single-feature cards, then
+/// six, then five; remote access joined second in 4.3 - chat stays the
+/// lead). Order = importance; the locked panes list the titles in this
 /// order.
 const List<ProBenefit> kProBenefits = [
   ProBenefit(
@@ -49,6 +50,14 @@ const List<ProBenefit> kProBenefits = [
         'Native Twitch, Kick and YouTube chat - on their own or merged into one timeline, with saved combos and who\'s live. Plus 7TV, BTTV and FFZ emotes, an emote picker, badges, highlights and chat search.',
     color: ProPalette.twitch,
     showPlatforms: true,
+  ),
+  ProBenefit(
+    feature: ProFeature.remote,
+    icon: CupertinoIcons.globe,
+    title: 'Control OBS From Anywhere',
+    body:
+        'Away from home, OBS Blade reaches your OBS through our relay - end-to-end encrypted, no port forwarding, no VPN. Set it up once with the free OBS Blade Remote on your PC, which can even start OBS for you.',
+    color: ProPalette.remote,
   ),
   ProBenefit(
     feature: ProFeature.activity,

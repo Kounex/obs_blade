@@ -1,13 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:obs_blade/views/pro/widgets/pro_benefits.dart';
 
-/// One Pro story: five groups on the paywall, the same names in the same
+/// One Pro story: six groups on the paywall, the same names in the same
 /// order on the locked panes (minus the pane's own feature).
 void main() {
-  test('five groups, one per feature, activity and TTS included', () {
+  test('six groups, one per feature, remote access second', () {
     expect(kProBenefits.map((b) => b.feature), ProFeature.values);
     expect(kProBenefits.map((b) => b.title), [
       'Every Chat, One Place',
+      'Control OBS From Anywhere',
       'Never Miss a Supporter',
       'Hear Your Chat',
       'Moderate From Your Pocket',
@@ -15,18 +16,18 @@ void main() {
     ]);
   });
 
-  test('locked panes: the other four groups, in order', () {
+  test('locked panes: the first four other groups, in order', () {
     expect(proBenefitTaste(except: ProFeature.chat).map((b) => b.feature), [
+      ProFeature.remote,
       ProFeature.activity,
       ProFeature.speech,
       ProFeature.moderation,
-      ProFeature.themes,
     ]);
     expect(proBenefitTaste(except: ProFeature.activity).map((b) => b.feature), [
       ProFeature.chat,
+      ProFeature.remote,
       ProFeature.speech,
       ProFeature.moderation,
-      ProFeature.themes,
     ]);
     expect(proBenefitTaste(), hasLength(4));
   });

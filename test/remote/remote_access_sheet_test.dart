@@ -30,7 +30,12 @@ class _UnusedSocket implements WebSocketChannel {
 }
 
 /// Bridge info like tool/remote_relay/relay.py answers it
-http.Client _relay({List<String>? renames}) => MockClient((request) async {
+http.Client _relay({
+  List<String>? renames,
+  String kind = 'plugin',
+  bool online = true,
+  String obs = 'running',
+}) => MockClient((request) async {
   if (request.method == 'PATCH' && request.url.path == '/v1/devices/d_me') {
     renames?.add(jsonDecode(request.body)['name'] as String);
     return http.Response('', 204);
@@ -40,11 +45,11 @@ http.Client _relay({List<String>? renames}) => MockClient((request) async {
       jsonEncode({
         'id': 'b_1',
         'name': 'GAMING-PC',
-        'kind': 'plugin',
+        'kind': kind,
         'version': '0.2.0',
-        'online': true,
+        'online': online,
         'last_seen': 1794000000,
-        'obs': 'running',
+        'obs': obs,
         'update_required': false,
         'devices': [
           {
@@ -167,6 +172,43 @@ void main() {
     expect(find.text('Checking'), findsNothing);
     expect(storesCreated, 1);
   });
+
+  /// The plugin goes down with OBS; only the app can start OBS from the
+  /// phone - so a plugin PC whose OBS was closed points to the app
+  for (final kind in ['plugin', 'standalone']) {
+    testWidgets('OBS closed on a $kind PC: app hint only for the plugin', (
+      tester,
+    ) async {
+      GeneralActions.createRemoteAccessStore = () => RemoteAccessStore(
+        relay: RemoteRelayClient(
+          client: _relay(kind: kind, online: false, obs: 'closed'),
+        ),
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: App.buildTheme(Hive.box(HiveKeys.Settings.name)),
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => GeneralActions.openRemoteAccess(context),
+                child: const Text('globe'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('globe'));
+      await _settle(tester);
+
+      expect(find.text('Offline'), findsOneWidget);
+      final hint = find.textContaining('use the OBS Blade Remote app');
+      expect(hint, kind == 'plugin' ? findsOneWidget : findsNothing);
+      expect(
+        find.text('obs-blade.kounex.com/remote'),
+        kind == 'plugin' ? findsOneWidget : findsNothing,
+      );
+    });
+  }
 
   /// Dogfood 2026-11-09: two phones both listed as "iPhone" on the PC
   testWidgets('this device: Rename (sent to the relay); others: Remove', (

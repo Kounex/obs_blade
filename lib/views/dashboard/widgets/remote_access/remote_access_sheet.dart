@@ -23,7 +23,7 @@ import '../../../../utils/relative_time.dart';
 import '../../../../utils/remote/remote_relay_client.dart';
 
 /// Remote access (Pro): pair this device with OBS Blade Remote on the PC
-/// (the OBS plugin or the standalone app) while connected on the same
+/// (the standalone app - recommended, it can start OBS - or the OBS plugin) while connected on the same
 /// network, then reach OBS from anywhere through the relay. Spec:
 /// `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
 class RemoteAccessSheet extends StatefulWidget {
@@ -321,9 +321,10 @@ class _SetUp extends StatelessWidget {
         Text('On the PC running OBS', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Install OBS Blade Remote - the OBS plugin (runs with OBS), or the '
-          'app if you\'d rather not add plugins. Then set it up here while '
-          'you\'re connected to OBS like right now.',
+          'Install the OBS Blade Remote app - it runs next to OBS and can '
+          'start OBS for you from here. Or the OBS plugin, if you\'d rather '
+          'have nothing extra running. Then set it up here while you\'re '
+          'connected to OBS like right now.',
           style: _secondary(context),
         ),
         const _DownloadLink(),
@@ -633,6 +634,21 @@ class _Paired extends StatelessWidget {
               : '$kind · checking…',
           style: _secondary(context),
         ),
+
+        /// The plugin goes down with OBS - only the app can start OBS
+        /// from here (relay `start-obs` 409 not_supported for plugins)
+        if (info != null &&
+            info.kind == 'plugin' &&
+            !online &&
+            info.obsState == 'closed') ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'To start OBS from here, use the OBS Blade Remote app on this PC '
+            'instead of the plugin.',
+            style: _secondary(context),
+          ),
+          const _DownloadLink(),
+        ],
         if (info != null && info.devices.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.lg),
           Text('Paired devices', style: theme.textTheme.titleMedium),
