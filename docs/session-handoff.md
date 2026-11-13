@@ -67,9 +67,10 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   with the remote slide 5 of 8 - real relay captures, see
   `tool/store_screenshots/README.md` "Remote access (Pro) shots").
   Order (user decision 2026-11-13: public downloads + site with the app):
-  1. Dogfood on Kounex iOS, then `release-beta`. If `release bump` picks
-     another build number, rename the F-Droid changelog
-     `fastlane/metadata/android/en-US/changelogs/2026111301.txt` to it.
+  1. **Done 2026-11-13:** dogfood OK (user), `release-beta` uploaded
+     4.3.0 (2026111301): TestFlight internal (VALID) + Play internal.
+     Next: user tests the beta, then `release-promote` this exact build
+     (after 3 + 4 below).
   2. **Done 2026-11-13 (user: out now, so dogfood and App Review work):**
      `v0.4.0` tagged in Kounex/obs-blade-remote (release with the five
      downloads) and the site deployed: `/remote`, privacy policy
