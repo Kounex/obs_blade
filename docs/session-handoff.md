@@ -74,8 +74,16 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
      and fixes the double tab bar blur; notes / TestFlight checklist / F-Droid
      changelog `2026111302.txt` updated. Uploaded 2026-11-13 (user asked
      to skip the dogfood install): TestFlight internal (VALID) + Play
-     internal. Next: user tests build 2, then `release-promote` it
-     (after 3 + 4 below).
+     internal. **Superseded by build 4 (2026111304, user 2026-11-13,
+     no dogfood install):** build 3 = `/code-review high` fixes over
+     `4.2.0..HEAD` (relay keeps the saved password, Wi-Fi back never ends
+     a working relay session, Turn Off confirms, deleting a paired
+     connection removes it on the relay); build 4 = relay -> LAN check
+     every 30 s on Wi-Fi (`_retryLan`). Both uploaded to TestFlight
+     internal + Play internal. Next: user tests build 4 (TestFlight
+     checklist), then `release-promote` it (after 3 + 4 below).
+     Open device question: does iOS briefly report cellular-only while
+     roaming between mesh APs (would hop a LAN session to the relay)?
   2. **Done 2026-11-13 (user: out now, so dogfood and App Review work):**
      `v0.4.0` tagged in Kounex/obs-blade-remote (release with the five
      downloads) and the site deployed: `/remote`, privacy policy
