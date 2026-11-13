@@ -72,8 +72,10 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
      **Superseded by build 2 (2026111302, user 2026-11-13):** adds 120 Hz
      on Android (#106) + Settings -> Bars & Sheets (Glass / Clear / Solid)
      and fixes the double tab bar blur; notes / TestFlight checklist / F-Droid
-     changelog `2026111302.txt` updated. Dogfood on Kounex iOS, then
-     `release-beta` for build 2, then `release-promote` (after 3 + 4 below).
+     changelog `2026111302.txt` updated. Uploaded 2026-11-13 (user asked
+     to skip the dogfood install): TestFlight internal (VALID) + Play
+     internal. Next: user tests build 2, then `release-promote` it
+     (after 3 + 4 below).
   2. **Done 2026-11-13 (user: out now, so dogfood and App Review work):**
      `v0.4.0` tagged in Kounex/obs-blade-remote (release with the five
      downloads) and the site deployed: `/remote`, privacy policy
