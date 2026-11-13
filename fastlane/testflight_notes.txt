@@ -1,57 +1,21 @@
-4.2.0 test build 5.
+4.3.0 test build 1.
 
-SCENE PREVIEW TRANSITIONS
-- Switch scenes (in the app and in OBS): the preview plays the OBS transition - Fade, Fade to Color, Swipe / Slide (direction), Luma Wipe, Stinger (cuts at its transition point), Cut
-- Per-scene transition override and a changed duration are picked up
-- Studio mode: the T-bar / Transition button; a cancelled T-bar drag must not move the scene tiles
-- Tap two scenes quickly one after the other: the dashboard stays on the second (no jump back)
-- Studio mode with Expose Studio Controls on: Transition, then pick the old scene as preview right away - the preview cuts, no animation
-- Settings -> Dashboard -> Preview Transitions off = instant cut again; Reduce Motion also cuts
-- A switch made in OBS moves the scene tiles + Scene Items at the start of the transition (was: at its end)
+REMOTE ACCESS (PRO, NEW)
+- On the PC: install OBS Blade Remote (the app is the recommended one; the plugin works too) from obs-blade.kounex.com/remote - OBS's WebSocket server on
+- In the app, connected to that OBS on your Wi-Fi: the globe in the dashboard bar -> Set Up Remote Access -> paired within a few seconds, the PC shows this device
+- Turn Wi-Fi off (mobile data): the app switches to the relay on its own, a toast names the route; scenes, audio, preview and stats work as on the LAN
+- Back on Wi-Fi: it moves back to the local network
+- Close OBS on the PC while away: the saved card / sheet say OBS isn't running; with the app on the PC, Start OBS starts it (no Safe Mode question after a crash)
+- Plugin only on the PC + OBS closed: the sheet points to the app for starting OBS
+- Sheet: Rename this device, Remove another; Unpair This PC in OBS Blade Remote removes access on the phone
+- Without Pro: the globe shows the pitch with Unlock Pro; the paywall lists "Control OBS From Anywhere" second
 
-SOURCE COLORS (OBS 32+)
-- In OBS: Sources dock -> right-click -> Set Color (presets + custom) -> Scene Items rows are tinted the same
-- Group rows and their children; locked / hidden rows still readable
-- A color changed in OBS while connected shows with the next item list read (scene switch) - OBS sends no event
-- Tap between scenes quickly: no row may flash another scene's color, and eye / lock taps during a switch act on that row's own source
-- Older OBS: rows untinted, nothing else changes
+PRO PAGE
+- Paywall: six cards (phone carousel, tablet grid), hero line names remote access; after buying, Welcome to Pro names it too
 
-EDIT VISIBILITY + ICONS
-- Edit Visibility (Scene Items + Audio): the pane is a Visible / Hidden pill, no splash on tap; check a 320pt-wide phone and tablet
-- Eye / lock: white when on, grey when off; audio mute uses the new speaker icon
-- VoiceOver / TalkBack on the Edit Visibility pill: reads the source name, visible / hidden and what a tap does
+SHEETS + SAVED CONNECTIONS
+- Every sheet: handle only, glass on iOS, 640 pt wide on tablets; stays below the status bar with the keyboard up
+- Saved connection cards are bigger; '...' opens the edit dialog (Delete is in there)
 
-SEARCH ON START (new)
-- Settings -> General -> Search on Start, on by default: the home screen still finds OBS on its own
-- Off: close and reopen the app - Autodiscover shows a Search button instead of searching; Search and pull-to-refresh both find OBS
-- Off, then connect and disconnect: back on the home screen the Search button shows again (no search on its own)
-
-QR SCANNER
-- Hold the phone in landscape, then open Quick Connect -> Scan: the camera picture is upright (was upside down on iPhone / iPad); rotate while it is open - still upright; scanning works in both orientations
-- Android: same check, landscape before opening
-
-YOUTUBE CHAT (reads over streamList now - one call ~10 s, 5 units)
-- Live stream with chat: messages arrive within a second or two, viewer count updates every ~30 s
-- Quiet chat for a few minutes, then a message: it still shows, no "reconnecting"
-- Airplane mode / dead zone for 30 s, then back: "reconnecting", then the chat catches up without duplicates
-- Background the app for a minute, then return: the chat picks up where it left
-- End the stream: the chat shows it ended
-- Google Cloud console -> YouTube Data API v3 -> Quotas: roughly 1,700 units an hour for one chat (was 3,750-9,000)
-- Activity feed (own channel) still updates (30 s poll)
-- After a chat session, background the app: Settings -> Logs has a "YouTube API: ≈… units in … min (app in background)" line for that session
-
-KICK CHAT (Kick moved its chat to a new Pusher app on 2026-10-20 - 4.1.0 can't connect)
-- Native Kick chat and the combined chat with Kick: connects, new messages arrive
-- Background the app for a few minutes, come back: Kick reconnects on its own; Settings -> Logs has no "Kick chat socket refused" line
-
-CHAT AFTER A CONNECTION DROP (new in build 4)
-- Kick or Twitch chat open, busy channel: airplane mode for ~90 s (or walk out of Wi-Fi), then back: the chat reconnects on its own (Settings -> Logs may show "socket stalled"), the messages sent meanwhile appear in order, and a "Some messages while away are missing" divider shows if more were sent than the history reaches back
-- Same in combined chat with Kick + Twitch
-- YouTube channel entry with no connection: the chat says "Couldn't check whether the channel is live - retrying shortly." (no error code / web address), and connects once you're back online
-
-COMBINED CHAT SAVE (new in build 5)
-- New combined chat: pick two channels, tap Save once - the sheet closes right away and the chats show "Connecting..."; the combo is in the list once (was: no feedback, extra taps saved it again and ended on a black screen)
-- Edit a combined chat -> Delete combined chat -> Delete: the sheet closes right away, the chat falls back to "My chats"
-
-ALSO
-- Updating over the store version (4.1.0) keeps saved connections, settings and hidden items
+OBS 33
+- Audio Settings sheet: monitoring is Off / On

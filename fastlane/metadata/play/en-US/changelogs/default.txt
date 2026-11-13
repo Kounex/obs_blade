@@ -1,11 +1,8 @@
-4.2: your scene preview now moves like OBS does:
+4.3: control OBS from anywhere with Pro:
 
-- Scene transitions play in the preview as set in OBS: fades, swipes, wipes, stingers
-- Scene items show the colors you set in OBS 32
-- Scene items follow OBS switches as transitions start
-- Clearer Edit Visibility buttons and on / off icons
-- Settings → General → Search on Start: skip the network search on launch
-- YouTube chat uses much less of your daily API quota
-- Kick chat connects again (Kick changed servers)
+- Remote access: away from home, OBS Blade reaches your OBS through our relay - end-to-end encrypted, no port forwarding, no VPN. Get the free OBS Blade Remote app for your PC at obs-blade.kounex.com/remote
+- Sheets have a fresh look: glass on iPhone and iPad, roomier on tablets
+- Bigger saved connection cards
+- OBS 33: audio monitoring is a simple Off / On
 
 Keep it coming on GitHub!

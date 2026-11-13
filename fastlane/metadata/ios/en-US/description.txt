@@ -2,7 +2,7 @@ DISCLAIMER: This app is not in any way affiliated with OBS (Open Broadcaster Sof
 
 OBS Blade is your stream companion. Connect to OBS over your network and run your whole show from your phone or tablet - no need to jump back to your PC mid-stream.
 
-Built for phone and tablet alike - and new in 4.1: vertical canvases for OBS 32.1, plus an activity feed and chat read out loud with Pro.
+Built for phone and tablet alike - and new in 4.3: with Pro, control OBS from anywhere, not only on your Wi-Fi.
 
 EVERYTHING YOU NEED - FREE, FOREVER
 
@@ -20,9 +20,10 @@ EVERYTHING YOU NEED - FREE, FOREVER
 
 OBS BLADE PRO
 
-Chat is where your stream lives, so Pro makes it native - and makes sure no supporter gets missed:
+Pro makes your chat native, makes sure no supporter gets missed - and takes your OBS with you wherever you are:
 
 - Every chat, one place: native Twitch, Kick and YouTube chat, on their own or merged into one live timeline where replies land on the right platform. Every channel you mod or follow, saved combos and who's live at a glance - plus 7TV, BTTV and FFZ emotes, an emote picker, autocomplete, role badges, highlights, mute words and chat search
+- Control OBS from anywhere: away from home, OBS Blade reaches your OBS through our relay - end-to-end encrypted, no port forwarding, no VPN. Set it up once with the free OBS Blade Remote app on your PC (obs-blade.kounex.com/remote), which can even start OBS for you
 - Never miss a supporter: an activity feed for your own channels - follows, subs, raids, cheers, Super Chats and KICKs in one list, with a to-thank queue for your shout-outs
 - Hear your chat: read out loud while you play, in each message's own language if you like
 - Moderate from your pocket: delete, timeout and ban on every platform, plus AutoMod, unban requests and chat modes on Twitch

@@ -1,13 +1,8 @@
-4.2: your scene preview now moves like OBS does:
+4.3: control OBS from anywhere with Pro:
 
-- Scene transitions play in the preview: fades, swipes, slides, luma wipes and stingers, as set in OBS (turn off in Settings → Dashboard)
-- Scene items show the colors you set in OBS 32 (right-click → Set Color)
-- Scene items follow a switch made in OBS as soon as the transition starts
-- Edit Visibility has clearer Visible / Hidden buttons
-- Visibility, lock and mute icons show on and off at a glance
-- Turn off the automatic network search when the app opens: Settings → General → Search on Start
-- The QR scanner camera no longer shows upside down in landscape on iPhone and iPad
-- YouTube chat uses much less of your API key's daily quota
-- Kick chat connects again after Kick's server change
+- Remote access: away from home, OBS Blade reaches your OBS through our relay - end-to-end encrypted, no port forwarding, no VPN. Get the free OBS Blade Remote app for your PC at obs-blade.kounex.com/remote
+- Sheets have a fresh look: glass on iPhone and iPad, roomier on tablets
+- Bigger saved connection cards
+- OBS 33: audio monitoring is a simple Off / On
 
 Keep it coming on GitHub!

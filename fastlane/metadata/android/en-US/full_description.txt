@@ -17,7 +17,7 @@ Built for phone and tablet alike. Needs OBS Studio 28 or newer (OBS WebSocket 5 
 - Arrange the dashboard your way
 - Quick Connect: scan the QR code from OBS' WebSocket settings
 
-This is the open source build: no in-app purchases, no tracking. The App Store / Google Play version additionally sells "Pro" extras (native chat engines, activity feed, chat read aloud, custom themes) - those aren't part of this build.
+This is the open source build: no in-app purchases, no tracking. The App Store / Google Play version additionally sells "Pro" extras (native chat engines, remote access from anywhere, activity feed, chat read aloud, custom themes) - those aren't part of this build.
 
 Got a bug, an idea or a feature request? Get in touch - on GitHub or at contact@kounex.com
 
