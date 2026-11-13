@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Display
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
@@ -30,6 +31,41 @@ class MainActivity: FlutterActivity() {
       this,
       MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.kounex.obsBlade/tts"),
     )
+  }
+
+  override fun onResume() {
+    super.onResume()
+    requestHighRefreshRate()
+  }
+
+  /**
+   * Flutter never asks Android for a frame rate (the engine only follows
+   * the display's current one), and several OEM skins keep apps that
+   * don't ask at 60 Hz on 120 Hz screens - Nothing, Xiaomi, OnePlus, ...
+   * (flutter/flutter#160952). Prefer the display's fastest mode at the
+   * current resolution; the system still lowers it in battery saver.
+   * Again on every resume: the resolution can change in the settings.
+   */
+  private fun requestHighRefreshRate() {
+    try {
+      val display: Display = (
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) this.display
+        else @Suppress("DEPRECATION") windowManager.defaultDisplay
+      ) ?: return
+      val current = display.mode
+      val fastest = display.supportedModes
+        .filter {
+          it.physicalWidth == current.physicalWidth &&
+            it.physicalHeight == current.physicalHeight
+        }
+        .maxByOrNull { it.refreshRate } ?: return
+      val attributes = window.attributes
+      if (attributes.preferredDisplayModeId == fastest.modeId) return
+      attributes.preferredDisplayModeId = fastest.modeId
+      window.attributes = attributes
+    } catch (e: Exception) {
+      // Never worth a crash - the app just keeps the system's choice
+    }
   }
 
   override fun onDestroy() {

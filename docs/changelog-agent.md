@@ -4,6 +4,32 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - Android: 120 Hz on high refresh rate screens
+
+- Issue #106 (Nothing Phone 4a: "jittery and sluggish" everywhere, even
+  offline). Flutter never asks Android for a frame rate - the engine only
+  follows the display's current one (`VsyncWaiter.java`, Flutter 3.47.2) -
+  and several OEM skins keep apps that don't ask at 60 Hz on 120 Hz
+  screens; flutter/flutter#160952 (open, P2) names Nothing 2a / CMF,
+  Xiaomi, Redmi, Infinix, with `flutter_displaymode`
+  (`preferredDisplayModeId`) fixing it on Nothing.
+- `MainActivity` prefers the display's fastest mode at the current
+  resolution on every resume (what `flutter_displaymode`'s
+  `setHighRefreshRate` does, no plugin); battery saver still lowers it.
+- Manifest `android:appCategory="productivity"`: HyperOS classifies apps
+  without a category that render graphics as games and caps them at 60 Hz
+  below anything the app can request (same issue, decompiled system
+  services); other skins may do the same.
+- iOS: nothing to do - `CADisableMinimumFrameDurationOnPhone` has been in
+  Info.plist since 2021 (the engine reads it; iPad ProMotion needs no key).
+- Verified on the Pixel 7 API 36 emulator: window attrs carry
+  `preferredDisplayMode`, APK manifest `appCategory=7` (productivity), no
+  crash. The emulator has a single 60 Hz mode - the actual 60 -> 120 switch
+  needs a real 120 Hz Android phone (Developer options -> Show refresh
+  rate). Still open from #106: the cost of the two glass bar blurs on
+  mid-range Android, never profiled on hardware - measure together with
+  120 Hz (half the frame budget).
+
 ## 2026-11-13 - Studio Mode: double tap a scene to transition
 
 - User report "double-tap scene transition no longer works in 4.2.0". Not
