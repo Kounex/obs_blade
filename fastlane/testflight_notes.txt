@@ -1,4 +1,12 @@
-4.3.0 test build 2 - adds 120 Hz on Android and the Bars & Sheets setting; everything from build 1 below still applies.
+4.3.0 test build 3 - remote access fixes from a code review; everything from builds 1 and 2 below still applies.
+
+REMOTE ACCESS FIXES (BUILD 3)
+- Saved connection with an OBS password, on the relay (mobile data): ... -> Edit Connection, rename it, save. Back on Wi-Fi it connects on the LAN without asking for the password again
+- On the relay, then walk in at home while OBS on the PC has a different password than the one saved: the session stays on the relay (no 'reconnecting' loop, no drop to Home)
+- Globe sheet -> Turn Off on This Device now asks first (on the relay it says the session ends)
+- Delete a paired saved connection (edit dialog -> Delete): OBS Blade Remote on the PC no longer lists this device
+
+Build 2: adds 120 Hz on Android and the Bars & Sheets setting; everything from build 1 below still applies.
 
 BARS & SHEETS (NEW)
 - Settings -> Theme -> Bars & Sheets: Glass / Clear / Solid, Glass by default

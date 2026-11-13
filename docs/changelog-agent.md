@@ -4,6 +4,25 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - Remote access: review fixes (4.3.0 build 3)
+
+- `/code-review high` over `4.2.0..HEAD`, four findings, all in remote
+  access (unreleased, so no store note):
+- Edit Connection over the relay cleared the saved OBS password: the
+  bridge strips `authentication` from OBS's Hello (`split_hello`), so
+  `challenge == null` said nothing. Only cleared on LAN sessions now.
+- Relay -> LAN on Wi-Fi back: a LAN refusal that isn't "unreachable"
+  (auth, stall) ran the full reconnect loop (5 tries, forever with
+  Unlimited Reconnects) and then closed the working relay session.
+  `_reconnect(keepOnFailure: true)`: one try, then the relay session
+  stays (NetworkStore's pump re-attached, stats + preview resumed).
+  Test in `test/remote/route_switch_test.dart` (fails without the fix).
+- 'Turn Off on This Device' confirms first (ends a live relay session;
+  pairing again needs the home network).
+- Deleting a paired connection (edit dialog, Data Management delete-all)
+  now removes the device on the relay too, best effort
+  (`releaseRemoteDevice`) - the PC listed a phantom device before.
+
 ## 2026-11-13 - Settings: Bars & Sheets (Glass / Clear / Solid)
 
 - Issue #106 follow-up (user request): one setting for every floating
