@@ -4,6 +4,25 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - 4.3.0 prepared: remote access in the Pro story
+
+- Paywall: sixth card "Control OBS From Anywhere" (teal, globe) second
+  after chat (user: chat stays the lead); hero line and Welcome to Pro
+  name it; locked panes list it. Same name and place in the store
+  descriptions, the promo text, the site's Pro list and the FAQ.
+- The OBS Blade Remote **app** is the recommended PC side (it can start
+  OBS; the plugin goes down with OBS): the sheet leads with it, a plugin
+  PC whose OBS was closed points to it.
+- Store screenshots: slide 5/8 "Your OBS. Anywhere." from real captures -
+  the capture test pairs through the live relay with a demo bridge
+  (`obb --name STREAM-PC`) and reconnects with the LAN port refused. The
+  same capture is the landing page's new remote row (site branch).
+- 4.3.0 version, notes (both stores, 429 chars), TestFlight checklist,
+  F-Droid changelog without Pro. Release order in the handoff.
+- Seen while capturing, not fixed (pre-existing, debug-only assertion):
+  "The Scrollbar's ScrollController has no ScrollPosition attached" when
+  the dashboard opens.
+
 ## 2026-11-13 - Remote access sheet: where to download the PC side
 
 - The sheet's setup step and the "didn't answer" / "didn't confirm"

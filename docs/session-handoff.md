@@ -61,20 +61,36 @@ event reached the VPS relay).
 **In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
 the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop side since 2026-11-09).
-- **Release day (the app version that ships remote access) - do all of
-  these together, not before** (user decision 2026-11-13):
-  1. Tag `v0.4.0` in Kounex/obs-blade-remote (CI publishes the five
-     downloads; `release-notes/0.4.0.md` is written). Tested: Windows
-     installers, macOS notarized, AppImage on SteamOS with Flatpak OBS.
-  2. Deploy the site branch `remote-access` in `~/agent/obs-blade-site`
-     (`/remote` download page - the sheet links it - privacy policy
-     section for the relay, the remote guide no longer saying "no cloud
-     relay", landing page Pro + privacy). Merge to `main`, `./deploy.sh`.
-  3. Check `obs-blade.kounex.com/remote` downloads all five files.
-  4. Before submitting that app version: check the App Store privacy
-     labels and Play's Data safety form against the relay's data (site
-     branch `remote-access`, privacy policy `#remote`: device name, the
-     RevenueCat anonymous ID, OBS status; end-to-end encrypted sessions).
+- **4.3.0 = the remote access release, prepared 2026-11-13** (version
+  `4.3.0+2026111301`, store notes + TestFlight checklist, listings,
+  paywall card "Control OBS From Anywhere" second, FAQ, store screenshots
+  with the remote slide 5 of 8 - real relay captures, see
+  `tool/store_screenshots/README.md` "Remote access (Pro) shots").
+  Order (user decision 2026-11-13: public downloads + site with the app):
+  1. Dogfood on Kounex iOS, then `release-beta`. If `release bump` picks
+     another build number, rename the F-Droid changelog
+     `fastlane/metadata/android/en-US/changelogs/2026111301.txt` to it.
+  2. **Before `release-promote` (App Review needs it):** tag `v0.4.0` in
+     Kounex/obs-blade-remote (CI publishes the five downloads;
+     `release-notes/0.4.0.md`; tested: Windows installers, macOS notarized,
+     AppImage on SteamOS + Flatpak OBS) and deploy the site branch
+     `remote-access` in `~/agent/obs-blade-site` (merge to `main`,
+     `./deploy.sh`): `/remote` downloads (the sheet links it), privacy
+     policy `#remote`, remote guide, landing row + Pro section, What's new
+     4.3 (dated "November 2026" - adjust if it ships later). Check
+     `obs-blade.kounex.com/remote` serves all five files.
+  3. App Store privacy labels + Play Data safety against the relay's data
+     (policy `#remote`: device name, RevenueCat anonymous ID, OBS status;
+     sessions end-to-end encrypted).
+  4. App Review notes (App Store Connect → App Review Information), e.g.:
+     "Remote access (Pro, new in 4.3) reaches OBS Studio on a computer
+     through our relay when the phone isn't on the same network. It needs
+     OBS Studio plus our free companion app OBS Blade Remote
+     (obs-blade.kounex.com/remote) on that computer; setup runs once while
+     the phone is connected to OBS on the local network (globe on the
+     dashboard -> Set Up Remote Access). Sessions are end-to-end encrypted;
+     the relay can't read them. Everything else works without the
+     companion app." Attach a screen recording if review asks.
 - **End-to-end encrypted since 2026-11-08** (relay 0.0.5, bridge
   0.3.1 - 0.0.5 adds the bridge keepalive pong: websocket pings don't
   cross the Cloudflare tunnel): the relay can't read sessions; keys are exchanged through OBS
