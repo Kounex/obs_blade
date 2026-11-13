@@ -212,6 +212,65 @@ void main() {
     expect(network.obsTerminated, isFalse);
   });
 
+  group('periodic LAN check on a relay session', () {
+    /// Relay only at the start (OBS not on the LAN then, e.g. the PC still
+    /// asleep at Wi-Fi back) - no network change follows
+    Future<Session> onRelay() async {
+      onLocalNetwork = false;
+      expect(
+        await network.setOBSWebSocket(await paired()),
+        WebSocketCloseCode.DontClose,
+      );
+      dashboard.handleStream();
+      onLocalNetwork = true;
+      return network.activeSession!;
+    }
+
+    test('on Wi-Fi, OBS answers on the LAN now: switches to it', () async {
+      final Session relaySession = await onRelay();
+      expect(relaySession.viaRemote, isTrue);
+      dashboard.networkNow = () async => [ConnectivityResult.wifi];
+
+      await dashboard.retryLanNow();
+
+      expect(network.activeSession!.viaRemote, isFalse);
+      expect(dashboard.routeSwitch, RouteSwitch.toLan);
+      await waitFor(
+        () => relay.sockets.single.closeCode != null,
+        'relay session closed',
+      );
+    });
+
+    test('on mobile data: no LAN attempt', () async {
+      final Session relaySession = await onRelay();
+      dashboard.networkNow = () async => [ConnectivityResult.mobile];
+
+      await dashboard.retryLanNow();
+
+      expect(identical(network.activeSession, relaySession), isTrue);
+      expect(lan.sockets, isEmpty);
+    });
+
+    test('OBS refused the session on the LAN: no more tries until the network '
+        'changes', () async {
+      final Session relaySession = await onRelay();
+      dashboard.networkNow = () async => [ConnectivityResult.wifi];
+      lan.identify = false;
+      await dashboard.retryLanNow();
+      expect(identical(network.activeSession, relaySession), isTrue);
+
+      /// Fixed on the PC - the next tick still leaves OBS alone
+      lan.identify = true;
+      await dashboard.retryLanNow();
+      expect(identical(network.activeSession, relaySession), isTrue);
+      expect(dashboard.reconnecting, isFalse);
+
+      /// A network change lifts it
+      await dashboard.onNetworkChanged([ConnectivityResult.wifi]);
+      expect(network.activeSession!.viaRemote, isFalse);
+    });
+  });
+
   test('not paired, or no Pro: a network change switches nothing', () async {
     await connectOnLan(lan.connection);
     final Session before = network.activeSession!;

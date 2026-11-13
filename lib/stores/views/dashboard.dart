@@ -434,6 +434,25 @@ abstract class _DashboardStore with Store {
   Timer? _checkConnectionTimer;
   Timer? _getStatsTimer;
 
+  /// Relay session while on Wi-Fi: OBS may answer on the LAN later than
+  /// the Wi-Fi-back event (PC still waking, Wi-Fi up before the LAN
+  /// routes) - checked again every [lanRetryInterval]
+  Timer? _lanRetryTimer;
+  bool _lanRetryInFlight = false;
+
+  /// A switch reached OBS on the LAN and it refused the session (wrong
+  /// saved password, OBS stalled): no more tries until the network changes
+  /// - each one pauses the dashboard for the handshake, and OBS logs every
+  /// failed login
+  bool _lanRetryBlocked = false;
+
+  @visibleForTesting
+  Duration lanRetryInterval = const Duration(seconds: 30);
+
+  /// The network right now (injectable for tests)
+  @visibleForTesting
+  Future<List<ConnectivityResult>> Function() networkNow = settledConnectivity;
+
   /// Will be used internally while switching scene collections.
   /// Since this operation takes time and "random" events are coming
   /// in while we dont even have all the new information from the
@@ -1593,6 +1612,7 @@ abstract class _DashboardStore with Store {
   void stopTimers() {
     _getStatsTimer?.cancel();
     _checkConnectionTimer?.cancel();
+    _lanRetryTimer?.cancel();
     _previewRetry?.cancel();
     _previewHoldTimer?.cancel();
     _previewSceneOverrideTimer?.cancel();
@@ -1665,6 +1685,61 @@ abstract class _DashboardStore with Store {
     );
 
     _periodicStatsRequest();
+    _startLanRetry();
+  }
+
+  void _startLanRetry() {
+    _lanRetryTimer?.cancel();
+    _lanRetryTimer = Timer.periodic(this.lanRetryInterval, (_) => _retryLan());
+  }
+
+  /// Pro, paired, and the saved host only works on the home network
+  static bool _canSwitchRoute(Connection connection) =>
+      !kFoss &&
+      connection.hasRemote &&
+      GetIt.instance.isRegistered<ProStore>() &&
+      GetIt.instance<ProStore>().isPro &&
+      !(connection.isDomain ?? false) &&
+      hostIsLanOnly(connection.host);
+
+  static bool _onLocalNetwork(List<ConnectivityResult> results) =>
+      results.contains(ConnectivityResult.wifi) ||
+      results.contains(ConnectivityResult.ethernet);
+
+  @visibleForTesting
+  Future<void> retryLanNow() => _retryLan();
+
+  /// The periodic relay -> LAN check (see [_lanRetryTimer])
+  Future<void> _retryLan() async {
+    final NetworkStore network = GetIt.instance<NetworkStore>();
+    final Session? session = network.activeSession;
+    if (_lanRetryInFlight ||
+        _lanRetryBlocked ||
+        this.reconnecting ||
+        session == null ||
+        !session.viaRemote ||
+        network.obsTerminated ||
+        !_canSwitchRoute(session.connection)) {
+      return;
+    }
+    _lanRetryInFlight = true;
+    try {
+      if (!_onLocalNetwork(await this.networkNow()) ||
+          !await _lanAnswers(session.connection) ||
+          this.reconnecting ||
+          _lanRetryBlocked ||
+          !identical(network.activeSession, session)) {
+        return;
+      }
+      GeneralHelper.advLog(
+        'OBS answers on the local network now - switching from the remote '
+        'relay to the local connection',
+        includeInLogs: true,
+      );
+      await _reconnect(force: true, keepOnFailure: true);
+    } finally {
+      _lanRetryInFlight = false;
+    }
   }
 
   /// Loads the per-input audio settings the inputs batch doesn't carry
@@ -1861,20 +1936,14 @@ abstract class _DashboardStore with Store {
   Future<void> onNetworkChanged(List<ConnectivityResult> results) async {
     final NetworkStore network = GetIt.instance<NetworkStore>();
     final Session? session = network.activeSession;
+
+    /// A new network: a LAN that refused the session may take it now
+    _lanRetryBlocked = false;
     if (this.reconnecting || session == null || network.obsTerminated) return;
     final Connection connection = session.connection;
-    final bool remoteAccess =
-        !kFoss &&
-        connection.hasRemote &&
-        GetIt.instance.isRegistered<ProStore>() &&
-        GetIt.instance<ProStore>().isPro;
-    final bool lanOnlyHost =
-        !(connection.isDomain ?? false) && hostIsLanOnly(connection.host);
+    final bool canSwitch = _canSwitchRoute(connection);
 
-    if (remoteAccess &&
-        !session.viaRemote &&
-        lanOnlyHost &&
-        mobileDataOnly(results)) {
+    if (canSwitch && !session.viaRemote && mobileDataOnly(results)) {
       GeneralHelper.advLog(
         'Wi-Fi gone - the local connection to OBS can\'t last, switching '
         'to the remote relay',
@@ -1882,11 +1951,9 @@ abstract class _DashboardStore with Store {
       );
       return _reconnect(force: true);
     }
-    if (remoteAccess &&
+    if (canSwitch &&
         session.viaRemote &&
-        lanOnlyHost &&
-        (results.contains(ConnectivityResult.wifi) ||
-            results.contains(ConnectivityResult.ethernet)) &&
+        _onLocalNetwork(results) &&
         await _lanAnswers(connection)) {
       if (this.reconnecting || !identical(network.activeSession, session)) {
         return;
@@ -1965,7 +2032,10 @@ abstract class _DashboardStore with Store {
         identical(network.activeSession, before) &&
         before.socket.closeCode == null) {
       /// The relay session is still up: the attempt only detached
-      /// NetworkStore's pump - re-attach it and carry on as before
+      /// NetworkStore's pump - re-attach it and carry on as before.
+      /// OBS answered on the LAN and refused: don't ask it again on this
+      /// network ([_retryLan])
+      _lanRetryBlocked = true;
       GeneralHelper.advLog(
         'Local connection to OBS failed (${closeCode?.message}) - staying '
         'on the remote relay',
@@ -1997,6 +2067,10 @@ abstract class _DashboardStore with Store {
       );
 
       final Session after = network.activeSession!;
+
+      /// The LAN didn't take it (unreachable after all), the relay leg
+      /// did: a new relay session - don't hop relay -> relay every tick
+      if (keepOnFailure && after.viaRemote) _lanRetryBlocked = true;
       if (!identical(before, after)) {
         /// A forced switch leaves the old socket open otherwise (the relay
         /// session would linger on the bridge)
