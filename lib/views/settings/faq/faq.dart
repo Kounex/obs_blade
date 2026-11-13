@@ -106,6 +106,13 @@ class FAQView extends StatelessWidget {
                   ),
                   SizedBox(height: AppSpacing.xxl),
                   FAQBlock(
+                    heading: 'Can I control OBS when I\'m not at home?',
+                    text: kFoss
+                        ? 'Yes, with a VPN that puts your phone and your PC on the same private network, like Tailscale or WireGuard. Connect to the PC\'s VPN address as you would at home. Please don\'t forward the WebSocket port on your router: it\'s unencrypted and only protected by its password.'
+                        : 'Yes. With OBS Blade Pro, install the free OBS Blade Remote app on the PC running OBS (obs-blade.kounex.com/remote), connect to OBS on your Wi-Fi once and tap the globe on the dashboard. After that, OBS Blade reaches your OBS through our relay whenever you\'re away - end-to-end encrypted, no port forwarding. Without Pro, a VPN like Tailscale works too. Please don\'t forward the WebSocket port on your router: it\'s unencrypted and only protected by its password.',
+                  ),
+                  SizedBox(height: AppSpacing.xxl),
+                  FAQBlock(
                     heading: 'Is there a faster way to connect?',
                     text:
                         'Yes - Quick Connect. In OBS, open Tools → WebSocket Server Settings → Show Connect Info. Then tap Scan in OBS Blade\'s connect box and point the camera at the QR code: host, port and password are filled in for you.',
@@ -136,7 +143,7 @@ class FAQView extends StatelessWidget {
                     FAQBlock(
                       heading: 'What does OBS Blade Pro unlock?',
                       text:
-                          'Every chat in one place - native Twitch, Kick and YouTube chat, on its own or combined, with emotes, badges and smarter chat tools. Never miss a supporter - an activity feed for your follows, subs, cheers, Super Chats and KICKs. Hear your chat read out loud, moderate from your pocket and design your own themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
+                          'Every chat in one place - native Twitch, Kick and YouTube chat, on its own or combined, with emotes, badges and smarter chat tools. Control OBS from anywhere - remote access through our end-to-end encrypted relay, with the free OBS Blade Remote app on your PC. Never miss a supporter - an activity feed for your follows, subs, cheers, Super Chats and KICKs. Hear your chat read out loud, moderate from your pocket and design your own themes. Controlling OBS - scenes, sources, audio, stream, recording, stats - and the web chats stay free, forever. Pro is monthly, yearly or a one-time lifetime unlock (Settings → OBS Blade Pro), and you can cancel anytime in your store account.',
                     ),
                   SizedBox(height: AppSpacing.xxl),
                   FAQBlock(
