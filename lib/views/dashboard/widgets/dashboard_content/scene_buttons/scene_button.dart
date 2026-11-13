@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 import 'package:obs_blade/shared/animator/selectable_box.dart';
@@ -37,7 +38,10 @@ class SceneButton extends StatelessWidget {
 
     return HiveBuilder<dynamic>(
       hiveKey: HiveKeys.Settings,
-      rebuildKeys: const [SettingsKeys.ExposeStudioControls],
+      rebuildKeys: const [
+        SettingsKeys.ExposeStudioControls,
+        SettingsKeys.StudioDoubleTapTransition,
+      ],
       builder: (context, settingsBox, child) => Observer(
         builder: (context) {
           final bool studioMode =
@@ -46,6 +50,13 @@ class SceneButton extends StatelessWidget {
                 defaultValue: false,
               ) &&
               dashboardStore.studioMode;
+          final bool doubleTapTransition =
+              studioMode &&
+              !dashboardStore.editSceneVisibility &&
+              settingsBox.get(
+                SettingsKeys.StudioDoubleTapTransition.name,
+                defaultValue: true,
+              );
 
           /// Broadcast tally language for studio mode: the scene currently
           /// on program gets a red PGM tag, the one sitting in preview a
@@ -92,6 +103,18 @@ class SceneButton extends StatelessWidget {
                   ? 'Sends to preview'
                   : 'Switches to this scene live',
               excludeSemantics: true,
+
+              /// A screen reader's double tap activates (= Preview), so
+              /// the quick second tap is a custom action there
+              customSemanticsActions: doubleTapTransition
+                  ? {
+                      const CustomSemanticsAction(
+                        label: 'Transition to program',
+                      ): () => dashboardStore.studioSceneToProgram(
+                        this.scene.sceneName,
+                      ),
+                    }
+                  : null,
               child: Pressable(
                 haptic: true,
                 onTap: () {
@@ -99,14 +122,8 @@ class SceneButton extends StatelessWidget {
                     this.onVisibilityTap();
                   } else {
                     if (studioMode) {
-                      dashboardStore.setStudioModePreviewSceneName(
-                        this.scene.sceneName,
-                      );
-                      dashboardStore.sendMutation(
-                        RequestType.SetCurrentPreviewScene,
-                        fields: {'sceneName': this.scene.sceneName},
-                        label: 'Preview scene switch',
-                      );
+                      /// Preview now; a quick second tap transitions
+                      dashboardStore.studioSceneTapped(this.scene.sceneName);
                     } else {
                       dashboardStore.setActiveSceneName(this.scene.sceneName);
                       dashboardStore.sendMutation(

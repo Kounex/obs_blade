@@ -124,6 +124,10 @@ enum _AudioField { volume, mute }
 
 class DashboardStore = _DashboardStore with _$DashboardStore;
 
+/// How quickly a second tap on a Studio Mode scene tile has to follow the
+/// first to transition it ([DashboardStore.studioSceneTapped])
+const Duration kStudioDoubleTapWindow = Duration(milliseconds: 400);
+
 abstract class _DashboardStore with Store {
   @observable
   bool isLive = false;
@@ -2046,6 +2050,67 @@ abstract class _DashboardStore with Store {
   @action
   void setStudioModePreviewSceneName(String studioModePreviewSceneName) =>
       this.studioModePreviewSceneName = studioModePreviewSceneName;
+
+  /// The last Studio Mode scene tile tap - a second tap on the same tile
+  /// within [kStudioDoubleTapWindow] transitions it
+  ({String scene, DateTime at})? _lastStudioSceneTap;
+
+  /// A scene tile tapped while Studio Mode is shown: the scene goes to
+  /// Preview right away (no waiting for a possible second tap - this is
+  /// used live). A second tap on the same tile within
+  /// [kStudioDoubleTapWindow] sends it to Program like the Transition
+  /// button, with OBS' transition and duration (Settings -> Studio Mode ->
+  /// Double Tap to Transition, on by default). OBS' own "Transition to
+  /// scene when double-clicked" lives in its user config, which
+  /// obs-websocket doesn't expose - so the app has its own setting.
+  void studioSceneTapped(String sceneName, {DateTime? now}) {
+    final DateTime at = now ?? DateTime.now();
+    final last = _lastStudioSceneTap;
+    final bool doubleTap =
+        last != null &&
+        last.scene == sceneName &&
+        at.difference(last.at) <= kStudioDoubleTapWindow &&
+        Hive.box(
+          HiveKeys.Settings.name,
+        ).get(SettingsKeys.StudioDoubleTapTransition.name, defaultValue: true);
+    if (doubleTap) {
+      _lastStudioSceneTap = null;
+      this.transitionStudioMode();
+      return;
+    }
+    _lastStudioSceneTap = (scene: sceneName, at: at);
+    this.setStudioModePreviewSceneName(sceneName);
+    this.sendMutation(
+      RequestType.SetCurrentPreviewScene,
+      fields: {'sceneName': sceneName},
+      label: 'Preview scene switch',
+    );
+  }
+
+  /// Screen readers: their double tap activates, so a scene tile offers
+  /// this as a custom action instead - preview, then transition
+  void studioSceneToProgram(String sceneName) {
+    _lastStudioSceneTap = null;
+    this.setStudioModePreviewSceneName(sceneName);
+    this.sendMutation(
+      RequestType.SetCurrentPreviewScene,
+      fields: {'sceneName': sceneName},
+      label: 'Preview scene switch',
+    );
+    this.transitionStudioMode();
+  }
+
+  /// Studio Mode: Preview to Program with OBS' transition (the Transition
+  /// button, a double tap on a scene tile). OBS swaps program/preview and
+  /// confirms via events; on failure the store re-reads GetSceneList
+  void transitionStudioMode() {
+    final String? preview = this.studioModePreviewSceneName;
+    if (preview != null) this.setActiveSceneName(preview);
+    this.sendMutation(
+      RequestType.TriggerStudioModeTransition,
+      label: 'Studio transition',
+    );
+  }
 
   @action
   Future<void> _handleEvent(BaseEvent event) async {

@@ -4,6 +4,26 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - Studio Mode: double tap a scene to transition
+
+- User report "double-tap scene transition no longer works in 4.2.0". Not
+  a regression: no OBS Blade version had it - a Studio Mode tap always sent
+  only `SetCurrentPreviewScene` (checked back to 2024) - and OBS'
+  "Transition to scene when double-clicked" (`BasicWindow`
+  `TransitionOnDoubleClick` in OBS' user config, off by default) is wired
+  only to a double-click in its own scene list
+  (`OBSBasic::on_scenes_itemDoubleClicked`); a repeated preview request
+  changes nothing (`OBSBasic::SetCurrentScene`). obs-websocket can't read
+  that option, so the app has its own.
+- New (user decisions): the tap stays instant (Preview), a second tap on
+  the same tile within 400 ms sends `TriggerStudioModeTransition` (OBS'
+  transition + duration, Studio Mode stays on) - no double-tap recognizer,
+  which would delay every single tap. Settings -> Studio Mode -> Double Tap
+  to Transition, on by default. Screen readers get a "Transition to
+  program" custom action. `DashboardStore.studioSceneTapped`, the
+  Transition button shares `transitionStudioMode`. Tests:
+  `test/websocket/studio_double_tap_test.dart` (fake OBS).
+
 ## 2026-11-13 - 4.3.0 prepared: remote access in the Pro story
 
 - Paywall: sixth card "Control OBS From Anywhere" (teal, globe) second

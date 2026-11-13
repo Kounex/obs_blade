@@ -170,6 +170,29 @@ class SettingsView extends StatelessWidget {
                           },
                         ),
                       ),
+                      if (settingsBox.get(
+                        SettingsKeys.ExposeStudioControls.name,
+                        defaultValue: false,
+                      ))
+                        BlockEntry(
+                          leading: CupertinoIcons.hand_point_right_fill,
+                          leadingSize: 26.0,
+                          title: 'Double Tap to Transition',
+                          help:
+                              'Studio Mode: a tap puts a scene in Preview right away, a quick second tap on the same scene sends it to Program with your OBS transition - like the Transition button.',
+                          trailing: BaseAdaptiveSwitch(
+                            value: settingsBox.get(
+                              SettingsKeys.StudioDoubleTapTransition.name,
+                              defaultValue: true,
+                            ),
+                            onChanged: (doubleTap) {
+                              settingsBox.put(
+                                SettingsKeys.StudioDoubleTapTransition.name,
+                                doubleTap,
+                              );
+                            },
+                          ),
+                        ),
                       BlockEntry(
                         leading:
                             CupertinoIcons.arrow_right_arrow_left_square_fill,

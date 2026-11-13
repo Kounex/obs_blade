@@ -1,1 +1,1 @@
-4.3.0: sheets have a fresh look and are roomier on tablets, saved connection cards are bigger, and with OBS 33 audio monitoring is a simple Off / On.
+4.3.0: in Studio Mode, double-tap a scene to send it live; sheets have a fresh look and are roomier on tablets, saved connection cards are bigger, and with OBS 33 audio monitoring is a simple Off / On.

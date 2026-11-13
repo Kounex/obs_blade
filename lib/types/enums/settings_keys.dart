@@ -289,6 +289,10 @@ enum SettingsKeys {
   /// (won't be shown anywhere else if disabled)
   ExposeStudioControls,
 
+  /// [bool]: Studio Mode - a quick second tap on a scene tile transitions
+  /// it to program (the first tap puts it in preview; on by default)
+  StudioDoubleTapTransition,
+
   /// [bool]: If the streaming controls (start / stop) should be shown in the dashboard
   /// instead of in the menu action list of the app bar
   ExposeStreamingControls,
@@ -623,6 +627,7 @@ enum SettingsKeys {
     SettingsKeys.StreamingMode: 'streaming-mode',
     SettingsKeys.ExposeRecordingControls: 'expose-recording-controls',
     SettingsKeys.ExposeStudioControls: 'expose-studio-controls',
+    SettingsKeys.StudioDoubleTapTransition: 'studio-double-tap-transition',
     SettingsKeys.ExposeStreamingControls: 'expose-streaming-controls',
     SettingsKeys.ExposeScenePreview: 'expose-scene-preview',
     SettingsKeys.AnimatePreviewTransitions: 'animate-preview-transitions',
