@@ -13,6 +13,7 @@
 // seeding is shared with store_video_test.dart (store_capture_support.dart).
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -25,7 +26,9 @@ import 'package:obs_blade/main.dart' as app;
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/models/enums/chat_type.dart';
 import 'package:obs_blade/models/past_stream_data.dart';
+import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/stores/views/remote_access.dart';
 import 'package:obs_blade/stores/views/combined_chat.dart';
 import 'package:obs_blade/stores/views/dashboard.dart';
 import 'package:obs_blade/stores/views/home.dart';
@@ -33,7 +36,9 @@ import 'package:obs_blade/stores/views/twitch_chat.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/routing_helper.dart';
+import 'package:obs_blade/utils/remote/device_label.dart';
 import 'package:obs_blade/views/dashboard/dashboard.dart';
+import 'package:obs_blade/views/dashboard/widgets/status_app_bar/general_actions.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/scene_content/audio_inputs/audio_inputs.dart';
 import 'package:obs_blade/views/intro/intro.dart';
 import 'package:obs_blade/views/statistics/statistic_detail/statistic_detail.dart';
@@ -45,6 +50,20 @@ import 'store_capture_support.dart';
 const String kOnly = String.fromEnvironment('STORE_SHOTS_ONLY');
 
 late CaptureAcks _acks;
+
+/// Remote access (Pro) captures: a real pairing through the live relay
+/// with a demo bridge next to the demo OBS (`obb --name STREAM-PC`, own
+/// state file). This app user id must be in the relay's
+/// `RELAY_PRO_ALLOW` for the run - the relay checks Pro with RevenueCat,
+/// and a fresh install's anonymous id has no purchase. Empty: skipped.
+const String kRemoteUser = String.fromEnvironment('STORE_SHOTS_REMOTE_USER');
+
+/// A ProStore that reports [kRemoteUser] to the relay; Pro itself comes
+/// from the seeded debug override like everywhere else in this test
+class _DemoProStore extends ProStore {
+  @override
+  Future<String?> appUserId() async => kRemoteUser;
+}
 
 bool _wanted(String name) =>
     kOnly.isEmpty || kOnly.split(',').map((s) => s.trim()).contains(name);
@@ -120,6 +139,22 @@ void main() {
     final Connection connection = await seedConnection();
     await seedChatAuth();
     installFakeChatStores();
+    if (kRemoteUser.isNotEmpty) {
+      // Swapped with the chat stores, before the tab shell binds to it
+      GetIt.instance.unregister<ProStore>();
+      GetIt.instance.registerSingleton<ProStore>(_DemoProStore()..init());
+      // Emulators carry no real model name ("sdk_gphone64_arm64"): name
+      // them after the AVD's hardware profile
+      GeneralActions.createRemoteAccessStore = () => RemoteAccessStore(
+        deviceLabel: () async => Platform.isAndroid
+            ? (tester.view.physicalSize.shortestSide /
+                          tester.view.devicePixelRatio >=
+                      600
+                  ? 'Pixel Tablet'
+                  : 'Pixel 7')
+            : currentDeviceLabel(),
+      );
+    }
     await settingsBox.put(
       SettingsKeys.SelectedChatType.name,
       ChatType.Combined,
@@ -358,7 +393,137 @@ void main() {
     await settingsBox.put(SettingsKeys.StreamingMode.name, false);
     await pumpMs(tester, 1200);
 
+    // ======================= REMOTE ACCESS ========================
+    if (kRemoteUser.isNotEmpty) {
+      await _remoteAccess(tester, connection);
+    }
+
     await _acks.close();
     storeLog('STORE-SHOTS: done');
   });
+}
+
+/// Pairs through the relay for real, then reconnects with the LAN address
+/// refused, so the session really runs through the relay, and captures the
+/// dashboard and the remote access sheet in that state.
+Future<void> _remoteAccess(WidgetTester tester, Connection connection) async {
+  final Finder globe = find.byIcon(CupertinoIcons.globe).hitTestable();
+  if (globe.evaluate().isEmpty) {
+    storeLog('ERROR: remote access - no globe in the dashboard bar');
+    return;
+  }
+  await tester.tap(globe.first);
+  await pumpMs(tester, 1500);
+  if (find.text('Paired devices').evaluate().isEmpty) {
+    final Finder setUp = find.text('Set Up Remote Access').hitTestable();
+    if (setUp.evaluate().isEmpty) {
+      storeLog('ERROR: remote access - no Set Up Remote Access button');
+      return;
+    }
+    await tester.tap(setUp.first);
+  }
+  final bool paired = await waitUntil(
+    tester,
+    () => find.text('Paired devices').evaluate().isNotEmpty,
+    timeoutMs: 45000,
+  );
+  if (!paired) {
+    storeLog(
+      'ERROR: remote access - not paired (bridge running? user allowed?)',
+    );
+    await _shot(tester, 'error_remote', settleMs: 500);
+    return;
+  }
+  storeLog('STATE-INFO: remote paired, bridge ${connection.relayBridgeName}');
+  await _closeSheet(tester);
+
+  // Away from home: the LAN address refuses, the relay leg takes over
+  final int? port = connection.port;
+  connection.port = 4999;
+  final NetworkStore network = GetIt.instance<NetworkStore>();
+  // Leave like a user does (Close pops the dashboard and stops its stats
+  // timer - a closeSession() under an open dashboard leaves it polling a
+  // null session)
+  final Finder close = find.text('Close').hitTestable();
+  if (close.evaluate().isEmpty) {
+    storeLog('ERROR: remote access - no Close on the dashboard');
+    connection.port = port;
+    return;
+  }
+  await tester.tap(close.first);
+  await pumpMs(tester, 1200);
+  final Finder yes = find.text('Yes').hitTestable();
+  if (yes.evaluate().isNotEmpty) await tester.tap(yes.first);
+  await waitUntil(
+    tester,
+    () => find.byType(DashboardView).evaluate().isEmpty,
+    timeoutMs: 10000,
+  );
+  await pumpMs(tester, 1500);
+  unawaited(network.setOBSWebSocket(connection));
+  final bool viaRelay = await waitUntil(
+    tester,
+    () =>
+        find.byType(DashboardView).evaluate().isNotEmpty &&
+        network.activeSession != null,
+    timeoutMs: 45000,
+  );
+  if (!viaRelay) {
+    storeLog('ERROR: remote access - no session through the relay');
+    await _shot(tester, 'error_remote', settleMs: 500);
+    connection.port = port;
+    return;
+  }
+  await pumpMs(tester, 4000);
+  await waitUntil(
+    tester,
+    () => GetIt.instance<DashboardStore>().scenePreviewImageBytes != null,
+    timeoutMs: 15000,
+  );
+  await _shot(tester, 'remote_dashboard', settleMs: 2500);
+
+  storeLog(
+    'STATE-INFO: remote via relay=${network.activeSession?.viaRemote} '
+    'dashboards=${find.byType(DashboardView).evaluate().length} '
+    'globes=${find.byIcon(CupertinoIcons.globe).evaluate().length}/'
+    '${find.byIcon(CupertinoIcons.globe).hitTestable().evaluate().length}',
+  );
+  // What the globe does (GeneralActions.openRemoteAccess)
+  GeneralActions.openRemoteAccess(
+    tester.element(find.byType(DashboardView).last),
+  );
+  await waitUntil(
+    tester,
+    () =>
+        find.text('Connected through the relay').evaluate().isNotEmpty &&
+        find.text('Online').evaluate().isNotEmpty,
+    timeoutMs: 20000,
+  );
+  await _shot(
+    tester,
+    'remote_access',
+    settleMs: 2500,
+    crops: {
+      'route': [
+        find.text('Connected through the relay'),
+        find.text('End-to-end encrypted'),
+      ],
+      'pc': [
+        find.text('Connected through the relay'),
+        find.text('STREAM-PC'),
+        find.textContaining('OBS running'),
+      ],
+    },
+  );
+  await _closeSheet(tester);
+  connection.port = port;
+}
+
+Future<void> _closeSheet(WidgetTester tester) async {
+  final NavigatorState navigator = Navigator.of(
+    tester.element(find.text('Remote Access').first),
+    rootNavigator: true,
+  );
+  navigator.pop();
+  await pumpMs(tester, 1200);
 }

@@ -6,7 +6,8 @@
 #   tool/store_screenshots/capture.sh ios     <sim-udid>        <out-dir>
 #   tool/store_screenshots/capture.sh android <emulator-serial> <out-dir>
 #
-# Env: STORE_SHOTS_ONLY=a,b (re-take only these), KEEP_OBS=1 (skip the OBS
+# Env: STORE_SHOTS_ONLY=a,b (re-take only these), STORE_SHOTS_REMOTE_USER=<id>
+# (remote access shots - README "Remote access"), KEEP_OBS=1 (skip the OBS
 # teardown, e.g. between two devices), ORIENTATION=landscape (iOS: rotates
 # the simulator through the Simulator app's Device menu - the shell needs
 # macOS Accessibility access - and turns the captures upright; Android
@@ -71,6 +72,7 @@ flutter test integration_test/store_screenshots_test.dart -d "$DEVICE" \
   --dart-define=OBS_HOST="$OBS_HOST" \
   --dart-define=OBS_WS_PASSWORD="$OBS_WS_PASSWORD" \
   --dart-define=STORE_SHOTS_ONLY="${STORE_SHOTS_ONLY:-}" \
+  --dart-define=STORE_SHOTS_REMOTE_USER="${STORE_SHOTS_REMOTE_USER:-}" \
   >> "$LOG" 2>&1 &
 TEST_PID=$!
 wait "$TEST_PID"

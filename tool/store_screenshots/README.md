@@ -47,6 +47,36 @@ KEEP_OBS=1 tool/store_screenshots/capture.sh android <phone-serial>    build/sto
   stores while the intro is still the root route, before the tab shell
   (built eagerly) binds to them.
 
+## Remote access (Pro) shots
+
+`remote_dashboard` and `remote_access` are real: the app pairs through the
+live relay with a demo bridge next to the demo OBS and then reconnects
+with its LAN port refused, so the session really runs through the relay.
+Only with `STORE_SHOTS_REMOTE_USER` set (otherwise skipped):
+
+1. Nothing else may answer OBS's pairing code: quit OBS Blade Remote and
+   move `obs-blade-remote.plugin` out of OBS's plugins folder (restart
+   OBS); put both back afterwards.
+2. The demo bridge - fictional name, its own identity, commands from a
+   file (it stops when its stdin closes):
+   ```bash
+   : > cmd.txt; nohup sh -c "tail -f cmd.txt | obb --kind standalone --name STREAM-PC \
+     --state ./bridge.json --obs-running true" > obb.log 2>&1 &
+   # a phone from an earlier run: {"cmd":"remove_device","id":"d_..."} >> cmd.txt
+   ```
+   (`obb` from Kounex/obs-blade-remote `core/`, `cargo build --release --bin obb`).
+3. A made-up app user id in the relay's `RELAY_PRO_ALLOW` for the run
+   (the relay checks Pro with RevenueCat; a fresh install has no
+   purchase) - **remove it right after**.
+4. `STORE_SHOTS_REMOTE_USER=<that id> STORE_SHOTS_ONLY=remote_dashboard,remote_access capture.sh ...`
+   per device; iOS phone, then iPad (its sheet then lists the iPhone too),
+   clear the phones before the Android pair. Emulators are named after
+   their AVD profile (Pixel 7 / Pixel Tablet).
+
+The captures land in a separate out dir: copy the PNGs and the two
+`CROP: remote_access` lines into store-shots' `captures/<device>/` by hand
+- `pull_captures.sh` mirrors whole folders (`--delete`).
+
 ## OBS safety
 
 The demo runs on the machine's real OBS, next to the user's own profile
