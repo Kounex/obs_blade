@@ -70,15 +70,13 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   1. Dogfood on Kounex iOS, then `release-beta`. If `release bump` picks
      another build number, rename the F-Droid changelog
      `fastlane/metadata/android/en-US/changelogs/2026111301.txt` to it.
-  2. **Before `release-promote` (App Review needs it; user OK 2026-11-13):** tag `v0.4.0` in
-     Kounex/obs-blade-remote (CI publishes the five downloads;
-     `release-notes/0.4.0.md`; tested: Windows installers, macOS notarized,
-     AppImage on SteamOS + Flatpak OBS) and deploy the site branch
-     `remote-access` in `~/agent/obs-blade-site` (merge to `main`,
-     `./deploy.sh`): `/remote` downloads (the sheet links it), privacy
-     policy `#remote`, remote guide, landing row + Pro section, What's new
-     4.3 (dated "November 2026" - adjust if it ships later). Check
-     `obs-blade.kounex.com/remote` serves all five files.
+  2. **Done 2026-11-13 (user: out now, so dogfood and App Review work):**
+     `v0.4.0` tagged in Kounex/obs-blade-remote (release with the five
+     downloads) and the site deployed: `/remote`, privacy policy
+     `#remote`, remote guide, landing row + Pro section. **Left for
+     publish day:** the What's new 4.3 tab - branch `whats-new-4-3` in
+     `~/agent/obs-blade-site` has it (dated "November 2026"; merge,
+     adjust the month if needed, `./deploy.sh`).
   3. App Store privacy labels + Play Data safety against the relay's data
      (policy `#remote`: device name, RevenueCat anonymous ID, OBS status;
      sessions end-to-end encrypted).
