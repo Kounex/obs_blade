@@ -1896,7 +1896,7 @@ abstract class _DashboardStore with Store {
         'the local connection',
         includeInLogs: true,
       );
-      return _reconnect(force: true);
+      return _reconnect(force: true, keepOnFailure: true);
     }
     this.checkConnectionNow();
   }
@@ -1919,8 +1919,14 @@ abstract class _DashboardStore with Store {
 
   /// The reconnect loop. [force]: the current socket still looks open but
   /// is known to be the wrong route - replaced (and closed) right away.
+  /// [keepOnFailure]: the current session still works (relay -> LAN) - one
+  /// try only, and if the LAN doesn't take it (wrong saved password, OBS
+  /// busy), stay on the current session instead of retrying and ending it.
   @action
-  Future<void> _reconnect({bool force = false}) async {
+  Future<void> _reconnect({
+    bool force = false,
+    bool keepOnFailure = false,
+  }) async {
     final NetworkStore network = GetIt.instance<NetworkStore>();
     final Session? before = network.activeSession;
     if (before == null) return;
@@ -1938,6 +1944,7 @@ abstract class _DashboardStore with Store {
               HiveKeys.Settings.name,
             ).get(SettingsKeys.UnlimitedReconnects.name, defaultValue: false) ||
             tries < 5) &&
+        !(keepOnFailure && tries > 0) &&
         (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
       /// First attempt right away - a WLAN blip is usually over by the
       /// time the drop is detected; back off between retries only
@@ -1953,7 +1960,28 @@ abstract class _DashboardStore with Store {
         includeInLogs: true,
       );
     }
-    if (closeCode == null || closeCode != WebSocketCloseCode.DontClose) {
+    if (closeCode != WebSocketCloseCode.DontClose &&
+        keepOnFailure &&
+        identical(network.activeSession, before) &&
+        before.socket.closeCode == null) {
+      /// The relay session is still up: the attempt only detached
+      /// NetworkStore's pump - re-attach it and carry on as before
+      GeneralHelper.advLog(
+        'Local connection to OBS failed (${closeCode?.message}) - staying '
+        'on the remote relay',
+        level: LogLevel.Warning,
+        includeInLogs: true,
+      );
+      network.handleStream();
+      this.reconnecting = false;
+      _periodicStatsRequest();
+      if (this.shouldRequestPreviewImage) _requestPreviewImage();
+      _checkConnectionTimer?.cancel();
+      _checkConnectionTimer = Timer(
+        const Duration(seconds: 3),
+        () => _checkOBSConnection(),
+      );
+    } else if (closeCode == null || closeCode != WebSocketCloseCode.DontClose) {
       GeneralHelper.advLog(
         'Not able to reconnect to OBS, initiating termination process!',
         level: LogLevel.Warning,

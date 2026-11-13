@@ -75,8 +75,11 @@ class SaveEditConnectionDialog extends StatelessWidget {
 
         /// If the challenge (or salt) is null, we didn't have to connect with a password.
         /// a user might still enter a password, we don't want this password to be
-        /// saved, thats why we set it to null explicitly if thats the case
-        if (networkStore.activeSession!.connection.challenge == null) {
+        /// saved, thats why we set it to null explicitly if thats the case.
+        /// Not over the relay: the bridge answers OBS's auth itself and
+        /// hides the challenge, so a null one says nothing about the LAN
+        if (!networkStore.activeSession!.viaRemote &&
+            networkStore.activeSession!.connection.challenge == null) {
           networkStore.activeSession!.connection.pw = null;
         }
         networkStore.activeSession!.connection.name = name;

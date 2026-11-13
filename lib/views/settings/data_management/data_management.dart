@@ -19,6 +19,7 @@ import '../../../shared/design/design.dart';
 import '../../../shared/general/transculent_cupertino_navbar_wrapper.dart';
 import '../../../stores/shared/tabs.dart';
 import '../../../stores/views/activity.dart';
+import '../../../stores/views/remote_access.dart';
 import '../../../types/enums/hive_keys.dart';
 import '../../../types/enums/settings_keys.dart';
 import '../../../utils/routing_helper.dart';
@@ -34,7 +35,11 @@ import 'widgets/data_entry.dart';
 /// on a restart since purchases get restored from the store on startup
 /// (blacksmith: App Store check; pro: once-per-install cold-start restore).
 Future<void> deleteAllUserDataPreservingEntitlements() async {
-  await Hive.box<Connection>(HiveKeys.SavedConnections.name).clear();
+  final Box<Connection> connections = Hive.box<Connection>(
+    HiveKeys.SavedConnections.name,
+  );
+  connections.values.forEach(releaseRemoteDevice);
+  await connections.clear();
   await Hive.box<PastStreamData>(HiveKeys.PastStreamData.name).clear();
   await Hive.box<PastRecordData>(HiveKeys.PastRecordData.name).clear();
   await Hive.box<HiddenScene>(HiveKeys.HiddenScene.name).clear();

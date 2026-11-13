@@ -13,6 +13,7 @@ import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/general/base/adaptive_text_field.dart';
 import '../../../../shared/general/connect_host_input.dart';
 import '../../../../shared/general/keyboard_number_header.dart';
+import '../../../../stores/views/remote_access.dart';
 import '../../../../types/enums/hive_keys.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/validation_helper.dart';
@@ -122,6 +123,7 @@ class _EditConnectionDialogState extends State<EditConnectionDialog> {
                   isYesDestructive: true,
                   onOk: (_) {
                     Navigator.of(context).pop();
+                    releaseRemoteDevice(this.widget.connection);
                     this.widget.connection.delete();
                   },
                 ),

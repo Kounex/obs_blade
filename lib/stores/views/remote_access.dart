@@ -48,6 +48,18 @@ typedef RemotePairAck = ({String code, String bridgeKey});
 /// The acks arriving on the OBS connection while pairing.
 typedef RemotePairAcks = Stream<RemotePairAck> Function();
 
+/// A paired [connection] is being deleted on this device: remove its device
+/// on the relay too (best effort, offline it stays until the relay's 180-day
+/// prune), so the PC doesn't keep listing a device nobody can remove.
+void releaseRemoteDevice(Connection connection) {
+  final String? deviceId = connection.relayDeviceId;
+  final String? token = connection.relayAppToken;
+  if (!connection.hasRemote || deviceId == null || token == null) return;
+  unawaited(
+    RemoteRelayClient().removeDevice(deviceId, token).catchError((_) {}),
+  );
+}
+
 /// Remote access (Pro) for the dashboard's sheet: pairing this device with
 /// the bridge next to OBS while connected on the LAN, and the paired
 /// bridge's state / devices. Protocol: `tool/remote_relay/README.md`.

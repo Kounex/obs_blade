@@ -866,8 +866,10 @@ mixin _$DashboardStore on _DashboardStore, Store {
   );
 
   @override
-  Future<void> _reconnect({bool force = false}) {
-    return _$_reconnectAsyncAction.run(() => super._reconnect(force: force));
+  Future<void> _reconnect({bool force = false, bool keepOnFailure = false}) {
+    return _$_reconnectAsyncAction.run(
+      () => super._reconnect(force: force, keepOnFailure: keepOnFailure),
+    );
   }
 
   late final _$_handleEventAsyncAction = AsyncAction(

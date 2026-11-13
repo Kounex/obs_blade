@@ -185,6 +185,33 @@ void main() {
     },
   );
 
+  test('Wi-Fi back, OBS on the LAN refuses the session (wrong saved password): '
+      'one try, the relay session stays and keeps working', () async {
+    /// Unlimited Reconnects used to keep the forced switch retrying
+    /// forever; then the working relay session was closed
+    await Hive.box(
+      HiveKeys.Settings.name,
+    ).put(SettingsKeys.UnlimitedReconnects.name, true);
+    final Connection connection = await paired();
+    onLocalNetwork = false;
+    expect(
+      await network.setOBSWebSocket(connection),
+      WebSocketCloseCode.DontClose,
+    );
+    final Session relaySession = network.activeSession!;
+    dashboard.handleStream();
+    lan.identify = false;
+
+    onLocalNetwork = true;
+    await dashboard.onNetworkChanged([ConnectivityResult.wifi]);
+
+    expect(identical(network.activeSession, relaySession), isTrue);
+    expect(relaySession.socket.closeCode, isNull);
+    expect(dashboard.reconnecting, isFalse);
+    expect(dashboard.routeSwitch, isNull);
+    expect(network.obsTerminated, isFalse);
+  });
+
   test('not paired, or no Pro: a network change switches nothing', () async {
     await connectOnLan(lan.connection);
     final Session before = network.activeSession!;
@@ -200,6 +227,10 @@ void main() {
     await waitFor(() => !pro.isPro, 'Pro gone');
     await dashboard.onNetworkChanged([ConnectivityResult.mobile]);
     expect(identical(network.activeSession, pairedSession), isTrue);
-    expect(relay.upgrades, isEmpty, reason: relay.upgrades.map((u) => '${u.path} ${u.query}').join(', '));
+    expect(
+      relay.upgrades,
+      isEmpty,
+      reason: relay.upgrades.map((u) => '${u.path} ${u.query}').join(', '),
+    );
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../../models/connection.dart';
+import '../../../../shared/dialogs/confirmation.dart';
 import '../../../../shared/dialogs/input.dart';
 import '../../../../shared/animator/status_dot.dart';
 import '../../../../shared/design/design.dart';
@@ -139,12 +140,25 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
               },
             ),
           ),
-          onTurnOff: () async {
-            if (!await store.forget(this.widget.connection) &&
-                context.mounted) {
-              _relayProblem(context);
-            }
-          },
+          onTurnOff: () => ModalHandler.showBaseDialog(
+            context: context,
+            dialogWidget: ConfirmationDialog(
+              title: 'Turn Off Remote Access',
+              body:
+                  '${viaRemote ? 'This ends the current remote session. ' : ''}'
+                  'Setting it up again needs this device on the same network '
+                  'as ${this.widget.connection.relayBridgeName ?? 'your PC'}.',
+              okText: 'Turn Off',
+              noText: 'Cancel',
+              isYesDestructive: true,
+              onOk: (_) async {
+                if (!await store.forget(this.widget.connection) &&
+                    context.mounted) {
+                  _relayProblem(context);
+                }
+              },
+            ),
+          ),
         );
       }
       return switch (store.phase) {
