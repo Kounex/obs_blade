@@ -2,8 +2,9 @@
 
 - Remote access: away from home, OBS Blade reaches your OBS through our relay - end-to-end encrypted, no port forwarding, no VPN. Get the free OBS Blade Remote app for your PC at obs-blade.kounex.com/remote
 - Studio Mode: double-tap a scene to send it live
-- Sheets have a fresh look: glass on iPhone and iPad, roomier on tablets
-- Bigger saved connection cards
+- Android: 120 Hz on supported screens
+- Glass, Clear or Solid bars and sheets
+- Fresh sheets, bigger saved connection cards
 - OBS 33: audio monitoring is a simple Off / On
 
 Keep it coming on GitHub!

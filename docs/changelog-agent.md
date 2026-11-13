@@ -4,6 +4,32 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - Settings: Bars & Sheets (Glass / Clear / Solid)
+
+- Issue #106 follow-up (user request): one setting for every floating
+  surface the app draws - Settings -> Theme -> Bars & Sheets, a segmented
+  control under the title (`BlockEntry.below`: it doesn't fit next to the
+  title on 320 pt). `SettingsKeys.SurfaceStyle` ('surface-style', enum
+  name, default glass on every platform) -> `AppGlass.style` (built in
+  `App.buildTheme`; `blurs`, `surface(color)`).
+- Glass = blur + glass alpha (as before); Clear = no blur, alpha floor 0.9
+  (the pre-4.0 Android bars); Solid = no blur, opaque.
+- Covered: `GlassBar` (all top bars, tab bar, the chat pill / banners that
+  use it), sheets (`ModalHandler` - Glass now blurs on Android too, user
+  decision; Android sheets were solid), toasts (`FullOverlay`). Left out:
+  iOS system components with a built-in blur Flutter can't switch off
+  (`CupertinoActionSheet` for the iOS '...' menu, `CupertinoAlertDialog`
+  via `AlertDialog.adaptive`) - they keep the native look.
+- Found on the way: the tab bar blurred twice on every platform -
+  `CupertinoTabBar` adds its own `BackdropFilter` whenever its background
+  isn't opaque, under the `GlassBar`'s. `GlassCupertinoTabBar` reports
+  opaque (only read by that blur and `CupertinoTabScaffold`, not used).
+- Tests: `test/shared/design/surface_style_test.dart` (blur count per
+  style for tab bar incl. the old double blur, sheets on iOS + Android,
+  toasts), `app_glass_test.dart`, `test/settings/surface_style_entry_test.dart`;
+  shots `tool/widget_shots/surface_style_shots_test.dart`. Fresh-context
+  review: no findings.
+
 ## 2026-11-13 - Android: 120 Hz on high refresh rate screens
 
 - Issue #106 (Nothing Phone 4a: "jittery and sluggish" everywhere, even

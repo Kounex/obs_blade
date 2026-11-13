@@ -1,4 +1,15 @@
-4.3.0 test build 1.
+4.3.0 test build 2 - adds 120 Hz on Android and the Bars & Sheets setting; everything from build 1 below still applies.
+
+BARS & SHEETS (NEW)
+- Settings -> Theme -> Bars & Sheets: Glass / Clear / Solid, Glass by default
+- Glass: top bars, tab bar, sheets and toasts blur what's behind them - now on Android too for sheets
+- Clear: no blur, slightly see-through; Solid: fully opaque - switch and check the dashboard, a sheet (audio settings) and a toast
+- The setting sticks after restarting the app
+- iOS: the '...' menu and alert dialogs keep the native iOS look in every mode
+
+ANDROID: 120 HZ (NEW)
+- On a 120 Hz phone: Developer options -> Show refresh rate, scroll Home / Settings / dashboard - it should read 120 (was 60 on Nothing, Xiaomi and others)
+- Battery saver may still lower it
 
 REMOTE ACCESS (PRO, NEW)
 - On the PC: install OBS Blade Remote (the app is the recommended one; the plugin works too) from obs-blade.kounex.com/remote - OBS's WebSocket server on
