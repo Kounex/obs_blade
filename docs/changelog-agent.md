@@ -4,6 +4,21 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-13 - Relay -> LAN: periodic check (4.3.0 build 4)
+
+- User question after build 3: Wi-Fi back fired one switch attempt, and
+  nothing else ever moved a relay session back (no timer) - a PC still
+  waking or Wi-Fi up before the LAN routes kept the whole session on the
+  relay. `DashboardStore._retryLan` every 30 s (`lanRetryInterval`,
+  started in `init`, cancelled in `stopTimers`): relay session, Pro +
+  paired, LAN-only host, on Wi-Fi / ethernet (`settledConnectivity`),
+  OBS's port answers -> `_reconnect(force: true, keepOnFailure: true)`.
+- `_lanRetryBlocked`: set when OBS answered on the LAN and refused the
+  session (or the relay leg won again), cleared by any network change -
+  no failed login every 30 s with a wrong saved password.
+- Tests: `test/remote/route_switch_test.dart` group "periodic LAN check"
+  (the block test fails without the block).
+
 ## 2026-11-13 - Remote access: review fixes (4.3.0 build 3)
 
 - `/code-review high` over `4.2.0..HEAD`, four findings, all in remote

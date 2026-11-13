@@ -1,4 +1,8 @@
-4.3.0 test build 3 - remote access fixes from a code review; everything from builds 1 and 2 below still applies.
+4.3.0 test build 4 - the relay hands back to your home network on its own; everything from builds 1-3 below still applies.
+
+BACK TO THE LOCAL NETWORK (BUILD 4)
+- On the relay (mobile data), PC asleep or OBS closed: come home, Wi-Fi joins, the session stays on the relay. Wake the PC / start OBS: within about 30 s the toast says it moved to the local network
+- Wrong saved OBS password: it tries once, stays on the relay, and doesn't try again until Wi-Fi changes (no repeated 'reconnecting')
 
 REMOTE ACCESS FIXES (BUILD 3)
 - Saved connection with an OBS password, on the relay (mobile data): ... -> Edit Connection, rename it, save. Back on Wi-Fi it connects on the LAN without asking for the password again
