@@ -1,7 +1,7 @@
 # VPS database backups
 
 The relay services on the Hetzner VPS keep their state in SQLite on the VPS
-disk only. `pull-vps-backups.sh` copies it to the NAS once a night.
+disk only. `pull-vps-backups.sh` copies it to the NAS every 6 hours.
 
 | Service | Database on the VPS | Why it matters |
 |---|---|---|
@@ -12,20 +12,37 @@ disk only. `pull-vps-backups.sh` copies it to the NAS once a night.
 
 ## How it runs
 
-- NAS systemd **user** timer `obs-blade-vps-backups.timer`, 04:30 (+ up to
-  5 min). Units in `systemd/`, installed by copying them to
-  `~/.config/systemd/user/` and `systemctl --user enable --now
-  obs-blade-vps-backups.timer`.
+- NAS systemd **user** timer `obs-blade-vps-backups.timer`, every 6 hours
+  (00:30, 06:30, 12:30, 18:30, + up to 5 min). Units in `systemd/`,
+  installed by copying them to `~/.config/systemd/user/` and
+  `systemctl --user enable --now obs-blade-vps-backups.timer`.
 - `snapshot-remote.sh` is piped to the VPS over `ssh hetzner-vps` and takes
   the copy with SQLite's backup API while the service keeps running. It
   runs as the database owner's uid, so it never leaves root-owned
-  `-wal`/`-shm` files behind.
+  `-wal`/`-shm` files behind, and refuses when `/var/tmp` lacks room for
+  the copy plus 256 MB (it can't fill the disk the services write to).
 - The NAS checks each copy (`PRAGMA integrity_check`, the main table can be
   read) before keeping it as
-  `/volume1/docker/obs-blade-backups/<service>/<service>-<date>.db.gz`
-  (`700`), 30 days. A failed copy pushes an ntfy alert.
+  `/volume1/docker/obs-blade-backups/<service>/<service>-<YYYY-MM-DD_HHMM>.db.gz`
+  (`700`).
 - Run it by hand: `systemctl --user start obs-blade-vps-backups.service`,
   log in `journalctl --user -u obs-blade-vps-backups`.
+
+## Retention and limits
+
+| Service | Every copy | Newest per day | per week | per month | At most |
+|---|---|---|---|---|---|
+| `remote-relay` | 48 h | 14 days | 8 weeks | 12 months | ~42 copies |
+| `kick-events` | 48 h | 7 days | 4 weeks | - | ~19 copies |
+
+kick-events keeps only 7 days of events itself, so old copies of it are
+worth little. The newest copy is never pruned (a long outage can't leave
+nothing). `prune.py` does it, `python3 -m unittest test_prune` tests it.
+Copies were 4 KB and 28 KB in November 2026.
+
+ntfy alerts (`OBS Blade backups`): a copy failed; a copy is over
+`MAX_COPY_MB` (200 MB; kept, but something grows); `/volume1` has less
+than `MIN_FREE_GB` (20 GB) free - then nothing is copied.
 
 ## Restore
 
@@ -34,7 +51,7 @@ up remote access again. Example for `remote-relay` (kick-events: uid 65531,
 `/var/lib/kick-events`):
 
 ```bash
-gunzip -c /volume1/docker/obs-blade-backups/remote-relay/remote-relay-<date>.db.gz \
+gunzip -c /volume1/docker/obs-blade-backups/remote-relay/remote-relay-<YYYY-MM-DD_HHMM>.db.gz \
   | ssh hetzner-vps 'cat > /var/tmp/relay-restore.db'
 ssh hetzner-vps '
   set -e

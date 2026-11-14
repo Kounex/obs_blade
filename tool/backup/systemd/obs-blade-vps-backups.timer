@@ -1,8 +1,8 @@
 [Unit]
-Description=Back up the OBS Blade relay databases nightly
+Description=Back up the OBS Blade relay databases every 6 hours
 
 [Timer]
-OnCalendar=*-*-* 04:30:00
+OnCalendar=*-*-* 00,06,12,18:30:00
 Persistent=true
 RandomizedDelaySec=300
 
