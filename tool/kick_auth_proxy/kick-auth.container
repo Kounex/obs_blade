@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/kounex/kick-auth:1.0.3
+Image=ghcr.io/kounex/kick-auth:1.0.4
 ContainerName=kick-auth
 Network=host
 EnvironmentFile=/etc/kick-auth.env

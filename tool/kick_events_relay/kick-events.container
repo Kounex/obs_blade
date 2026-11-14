@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/kounex/kick-events:1.0.4
+Image=ghcr.io/kounex/kick-events:1.0.5
 ContainerName=kick-events
 Network=host
 # Same Kick app as kick-auth: client credentials for the app token.
