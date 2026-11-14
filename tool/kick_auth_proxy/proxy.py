@@ -17,6 +17,7 @@ import json
 import os
 import subprocess
 import tempfile
+import signal
 import threading
 import time
 from collections import defaultdict, deque
@@ -417,7 +418,19 @@ def main() -> None:
     server = ThreadingHTTPServer(
         (LISTEN_HOST, LISTEN_PORT), make_handler(forward_with_curl)
     )
-    server.serve_forever()
+    # PID 1 in the container gets no default SIGTERM action: `podman stop`
+    # waited 10 s and killed it (2026-11-15). Stop accepting on SIGTERM and
+    # let exchanges in flight finish (non-daemon threads, joined by
+    # server_close; Podman's 10 s kill stays the backstop).
+    server.daemon_threads = False
+    signal.signal(
+        signal.SIGTERM,
+        lambda *_: threading.Thread(target=server.shutdown, daemon=True).start(),
+    )
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()
 
 
 if __name__ == "__main__":

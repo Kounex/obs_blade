@@ -122,6 +122,10 @@ class Hub:
     def count(self) -> int:
         return sum(len(queues) for queues in self._queues.values())
 
+    def close_all(self) -> None:
+        for user_id in list(self._queues):
+            self.close_channel(user_id)
+
 
 def _client_ip(request: web.Request) -> str:
     forwarded = request.headers.get("CF-Connecting-IP", "").strip()
@@ -391,6 +395,13 @@ async def handle_stream(request: web.Request) -> web.StreamResponse:
     return socket
 
 
+async def _close_streams(app: web.Application) -> None:
+    """Shutdown: end every app stream (the app reconnects in 2 s and
+    catches up by cursor). Open streams kept aiohttp waiting until
+    `podman stop` killed it after 10 s (2026-11-15)."""
+    app[KEY_HUB].close_all()
+
+
 async def handle_health(request: web.Request) -> web.Response:
     return _json(200, {"status": "ok"})
 
@@ -529,6 +540,7 @@ def build_app(
     app.router.add_get("/v1/events", handle_events)
     app.router.add_get("/v1/stream", handle_stream)
     app.router.add_get("/health", handle_health)
+    app.on_shutdown.append(_close_streams)
     if jobs:
         app.on_startup.append(_start_jobs)
         app.on_cleanup.append(_stop_jobs)

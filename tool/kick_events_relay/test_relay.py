@@ -11,6 +11,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 
+import aiohttp
 from aiohttp.test_utils import AioHTTPTestCase
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
@@ -360,6 +361,17 @@ class StreamTest(RelayTestBase):
         status = await socket.receive_json(timeout=5)
         self.assertEqual(status, {"type": "status", "subscribed": True})
         await socket.close()
+
+    async def test_shutdown_ends_open_streams(self):
+        session = (await self.register())["session_token"]
+        socket = await self.client.ws_connect(
+            "/v1/stream", headers={"Authorization": f"Bearer {session}"}
+        )
+        await socket.receive_json(timeout=5)  # hello
+        await socket.receive_json(timeout=5)  # synced
+        await relay._close_streams(self.app)
+        message = await socket.receive(timeout=3)
+        self.assertEqual(message.type, aiohttp.WSMsgType.CLOSE)
 
     async def test_stream_resumes_after_cursor(self):
         session = (await self.register())["session_token"]

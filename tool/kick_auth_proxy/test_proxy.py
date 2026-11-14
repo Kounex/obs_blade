@@ -158,3 +158,39 @@ class RedirectHostTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ShutdownTest(unittest.TestCase):
+    """`podman stop` sends SIGTERM to PID 1 - it must exit, not wait for the
+    10 s kill (each update / reboot was ~12 s of downtime)."""
+
+    def test_sigterm_stops_the_server(self):
+        import signal
+        import socket
+        import subprocess
+        import sys
+        import time
+        import urllib.request
+
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            port = probe.getsockname()[1]
+        env = dict(os.environ, KICK_AUTH_LISTEN="127.0.0.1", KICK_AUTH_PORT=str(port))
+        server = subprocess.Popen(
+            [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "proxy.py")],
+            env=env,
+        )
+        try:
+            deadline = time.monotonic() + 10
+            while True:
+                try:
+                    urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=1)
+                    break
+                except OSError:
+                    self.assertLess(time.monotonic(), deadline, "never came up")
+                    time.sleep(0.05)
+            server.send_signal(signal.SIGTERM)
+            self.assertEqual(server.wait(timeout=3), 0)
+        finally:
+            if server.poll() is None:
+                server.kill()
