@@ -108,8 +108,14 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   safety: User IDs, Purchase history, Other user-generated content,
   Diagnostics, Device or other IDs - collected, not shared, App
   functionality (purchase history + device IDs required, rest optional).
-  Still open before promote: build 4 device test, `/code-review high` on
-  `54c885a2`, Play "Sign-in details" remote access note (if not added).
+  Play "Sign-in details": second entry "Remote access (Pro, new in 4.3)"
+  added by the user. **Promoted 2026-11-14** (user: build 4 tested OK):
+  `metadata android`, `submit ios` (4.3.0 WAITING_FOR_REVIEW, manual
+  release, submission `53cf2eec-…`), `promote android --rollout 1.0`
+  (production 4.3.0 [2026111304], managed publishing holds it). Next:
+  both approved -> `release-publish` (also merge `whats-new-4-3` in the
+  site). `/code-review high` on `54c885a2` (30 s relay -> LAN retry) was
+  not run before submitting (user's call).
   Not blocking: rotate the RevenueCat v2 key + check its dashboard has no
   ad / attribution integrations.
   4. ~~App Review notes~~ (done, text as below), e.g.:
