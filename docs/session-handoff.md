@@ -100,8 +100,18 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   access paragraph below, `release metadata ios --yes` (notes + 16
   screenshots), iPhone App Preview carried over (COMPLETE). Play listing
   changed since 4.2.0 -> `release metadata android` at promote time.
-  Privacy forms (3.) are the user's (no API for Apple; Play's dataSafety
-  API overwrites the whole form) - answers in the 2026-11-14 session.
+  Privacy forms (3.) **done by the user 2026-11-14**. Apple: User ID,
+  Device ID (relay device id), Purchase History, Other Data (device
+  name / platform / added + last used), Other User Content (Kick events
+  relay) - all linked; Other Diagnostic Data (relay session logs, random
+  session id) not linked; App Functionality only, no tracking. Play Data
+  safety: User IDs, Purchase history, Other user-generated content,
+  Diagnostics, Device or other IDs - collected, not shared, App
+  functionality (purchase history + device IDs required, rest optional).
+  Still open before promote: build 4 device test, `/code-review high` on
+  `54c885a2`, Play "Sign-in details" remote access note (if not added).
+  Not blocking: rotate the RevenueCat v2 key + check its dashboard has no
+  ad / attribution integrations.
   4. ~~App Review notes~~ (done, text as below), e.g.:
      "Remote access (Pro, new in 4.3) reaches OBS Studio on a computer
      through our relay when the phone isn't on the same network. It needs
