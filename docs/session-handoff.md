@@ -143,13 +143,13 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   (every 6 h) copies `remote-relay` and `kick-events` `relay.db` from the
   VPS to `/volume1/docker/obs-blade-backups/` (48 h of copies, then
   daily/weekly/monthly, integrity-checked, space guards on both ends,
-  ntfy on failure). Restore: `tool/backup/README.md`. Before that the
-  pairings lived only on the VPS disk. Next (agreed 2026-11-15): graceful
-  restarts (relay closes with 1012 on SIGTERM so bridge and app reconnect
-  at once, pull before restart, Quadlet health check + rollback,
-  kick-auth sign-ins surviving a restart); later, if wanted, session
-  resume so a relay restart is invisible. No k3s: one host gains nothing
-  from it.
+  ntfy on failure). Restore: `tool/backup/README.md`.
+- **Restarts (2026-11-15):** relay 0.0.9 holds a phone until its bridge
+  is back (6 s from last_seen); kick-auth / kick-events stop on SIGTERM
+  (were killed after 10 s); Quadlet health checks on all three. Pending
+  release: bridge quick retries (obs-blade-remote PR 1, CI green) and
+  app quick retries (master, next app version). Details: changelog
+  2026-11-15. No k3s: one host gains nothing from it.
 - **End to end through Cloudflare: green** (2026-11-08, relay 0.0.4,
   OBS 32.2.2 on the MacBook, `obb` 0.3.0 as bridge, `noiseprotocol` as
   the phone): key exchange via OBS, encrypted session, 640 px preview,

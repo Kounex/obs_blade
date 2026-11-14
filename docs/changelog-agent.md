@@ -18,10 +18,12 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   once - 4.3.0 retries 5x 3 s apart). Shutdown marks connected bridges
   seen. No protocol change: 4.3.0 works unchanged (hold < its 10 s
   handshake timeout), it just doesn't get faster.
-- **Kick services** (kick-auth 1.0.4, kick-events 1.0.5, deployed): stop
-  on SIGTERM (kick-auth: handler, in-flight exchanges finish; kick-events:
-  shutdown ends app streams - the app reconnects in 2 s by cursor).
-  Restart now 3.5 s.
+- **Kick services** (kick-auth 1.0.5, kick-events 1.0.5, deployed): stop
+  on SIGTERM (kick-auth: handler, in-flight exchanges finish, and
+  `Connection: close` + 5 s socket timeout - review found cloudflared's
+  idle keep-alives (90 s) still held the stop; kick-events: shutdown ends
+  app streams - the app reconnects in 2 s by cursor). Restart now
+  ~3.5 s, also right after tunnel traffic (checked live).
 - **Quadlets**: `/health` every 30 s (busybox `wget`; a nested-quote
   Python probe got mangled by the Quadlet generator), 3 misses kill the
   container, `Restart=on-failure` brings it back.
@@ -32,6 +34,8 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   1006 / 4908 gets 3 quick retries 1 s apart before the usual 3 s ones
   (not counted in the 5 tries; `relayQuickRetryDelay`,
   `kRelayQuickRetries`). Target with all three: ~2 s per relay restart.
+  Cost: a PC that really went away mid-session shows "PC offline" ~3 s
+  later than without them (the quick tries get 4900 at once).
   Tests: `route_switch_test.dart` group "relay restart" (2 of 3 fail
   without the change).
 - **Backups**: `tool/backup/` (NAS timer every 6 h, retention 48 h /
