@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/kounex/remote-relay:0.0.7
+Image=ghcr.io/kounex/remote-relay:0.0.8
 ContainerName=remote-relay
 Network=host
 # RC_PROJECT_ID, RC_API_KEY (RevenueCat v2 secret key, read-only customer
@@ -13,6 +13,17 @@ Network=host
 EnvironmentFile=/etc/remote-relay.env
 Volume=/var/lib/remote-relay:/var/lib/remote-relay:Z
 Exec=python3 /app/relay.py
+
+# /health every 30 s; three misses in a row (90 s unresponsive) kill the
+# container and Restart=on-failure starts it again. The fleet board's
+# updater also waits for "healthy" before it keeps a new image. busybox
+# wget (Alpine base): no nested quotes for Quadlet to mangle.
+HealthCmd=wget -q -T 4 -O /dev/null http://127.0.0.1:8426/health
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=3
+HealthStartPeriod=15s
+HealthOnFailure=kill
 
 [Service]
 Restart=on-failure

@@ -4,12 +4,23 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=ghcr.io/kounex/kick-auth:1.0.2
+Image=ghcr.io/kounex/kick-auth:1.0.3
 ContainerName=kick-auth
 Network=host
 EnvironmentFile=/etc/kick-auth.env
 # curl's TLS fingerprint is what Kick's Cloudflare accepts. Python's is not.
 Exec=python3 /app/proxy.py
+
+# /health every 30 s; three misses in a row (90 s unresponsive) kill the
+# container and Restart=on-failure starts it again. The fleet board's
+# updater also waits for "healthy" before it keeps a new image. busybox
+# wget (Alpine base): no nested quotes for Quadlet to mangle.
+HealthCmd=wget -q -T 4 -O /dev/null http://127.0.0.1:8422/health
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=3
+HealthStartPeriod=15s
+HealthOnFailure=kill
 
 [Service]
 Restart=on-failure

@@ -48,6 +48,15 @@ HEARTBEAT = 30.0
 PRO_RECHECK_SECONDS = 30 * 60
 PURGE_SECONDS = 3600
 TOO_SLOW = 1013
+# A phone that connects while its bridge is away, but the bridge was there
+# moments ago (a relay restart, a short drop on the PC's line): wait until
+# BRIDGE_GRACE_SECONDS after the bridge was last seen for it to come back,
+# instead of answering BRIDGE_OFFLINE at once. The bridge reconnects within
+# ~2 s of a relay restart; the phone's handshake timeout is 10 s
+# (kObsHandshakeTimeout in the app). Measured from last_seen, not per
+# attempt, so a PC that really went away costs a retrying phone (4.3.0
+# retries 5x, 3 s apart) these seconds once, not on every attempt.
+BRIDGE_GRACE_SECONDS = 6.0
 
 # (limit, window seconds) per client IP
 LIMITS = {
@@ -65,6 +74,7 @@ KEY_LIMITS = web.AppKey("limits", object)
 KEY_TASKS = web.AppKey("tasks", list)
 KEY_HTTP = web.AppKey("http", object)
 KEY_MIN_VERSION = web.AppKey("min_version", str)
+KEY_GRACE = web.AppKey("bridge_grace", float)
 
 
 def version_tuple(text: str) -> tuple[int, int, int]:
@@ -221,6 +231,30 @@ class Hub:
     def __init__(self):
         self.bridges: dict[str, BridgeLink] = {}
         self.by_device: dict[str, AppSession] = {}
+        self._waiting: dict[str, set[asyncio.Future]] = defaultdict(set)
+
+    async def wait_for_bridge(self, bridge_id: str, timeout: float) -> BridgeLink | None:
+        """The bridge's link once it (re)connects, None after [timeout]."""
+        link = self.bridges.get(bridge_id)
+        if link is not None or timeout <= 0:
+            return link
+        waiter = asyncio.get_running_loop().create_future()
+        self._waiting[bridge_id].add(waiter)
+        try:
+            return await asyncio.wait_for(waiter, timeout)
+        except asyncio.TimeoutError:
+            return self.bridges.get(bridge_id)
+        finally:
+            waiting = self._waiting.get(bridge_id)
+            if waiting is not None:
+                waiting.discard(waiter)
+                if not waiting:
+                    self._waiting.pop(bridge_id, None)
+
+    def bridge_ready(self, link: BridgeLink) -> None:
+        for waiter in list(self._waiting.get(link.bridge_id, ())):
+            if not waiter.done():
+                waiter.set_result(link)
 
     def sessions(self) -> list[AppSession]:
         return list(self.by_device.values())
@@ -511,7 +545,11 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
         bridge = store.bridge(bridge_id)
         if bridge is not None and _outdated(app, bridge.version):
             return await refuse(protocol.BRIDGE_OUTDATED, "bridge outdated")
-        return await refuse(protocol.BRIDGE_OFFLINE, "bridge offline")
+        if bridge is not None:
+            hold = app[KEY_GRACE] - (store.now() - bridge.last_seen)
+            link = await hub.wait_for_bridge(bridge_id, hold)
+        if link is None:
+            return await refuse(protocol.BRIDGE_OFFLINE, "bridge offline")
     previous = hub.by_device.get(device.id)
     if previous is not None:
         previous.end(protocol.SESSION_REPLACED, "replaced", drain=False)
@@ -709,6 +747,8 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
             "devices": _devices_payload(store, bridge.id, hub),
         }
     )
+    # After the welcome: phones held for this bridge open their sessions now
+    hub.bridge_ready(link)
     try:
         async for message in ws:
             if message.type == aiohttp.WSMsgType.BINARY:
@@ -800,6 +840,9 @@ async def _stop(app: web.Application) -> None:
     for session in hub.sessions():
         session.end(1001, "relay restarting", drain=False)
     for link in list(hub.bridges.values()):
+        # Seen just now: the next relay holds phones for these bridges
+        # while they reconnect (BRIDGE_GRACE_SECONDS)
+        app[KEY_STORE].bridge_seen(link.bridge_id)
         link.alive = False
         await link.ws.close(code=1001, message=b"relay restarting")
     if app.get(KEY_HTTP) is not None:
@@ -811,6 +854,7 @@ def build_app(
     ent: Entitlements,
     jobs: bool = True,
     min_version: str = MIN_BRIDGE_VERSION,
+    bridge_grace: float = BRIDGE_GRACE_SECONDS,
 ) -> web.Application:
     app = web.Application(client_max_size=64 * 1024)
     app[KEY_STORE] = store
@@ -818,6 +862,7 @@ def build_app(
     app[KEY_HUB] = Hub()
     app[KEY_LIMITS] = RateLimiter()
     app[KEY_MIN_VERSION] = min_version
+    app[KEY_GRACE] = bridge_grace
     app.router.add_post("/v1/pairings", handle_create_pairing)
     app.router.add_post("/v1/pairings/redeem", handle_redeem)
     app.router.add_post("/v1/pairings/collect", handle_collect)

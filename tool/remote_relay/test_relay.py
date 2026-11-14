@@ -67,13 +67,17 @@ class FakeRevenueCat:
 
 
 class RelayCase(AioHTTPTestCase):
+    bridge_grace = relay.BRIDGE_GRACE_SECONDS
+
     async def get_application(self):
         self.clock = Clock()
         self.tmp = tempfile.TemporaryDirectory()
         self.store = Store(os.path.join(self.tmp.name, "relay.db"), clock=self.clock)
         self.rc = FakeRevenueCat(self.clock)
         self.ent = Entitlements(self.rc, "proj1", clock=self.clock)
-        return relay.build_app(self.store, self.ent, jobs=False, min_version="0.3.0")
+        return relay.build_app(
+            self.store, self.ent, jobs=False, min_version="0.3.0", bridge_grace=self.bridge_grace
+        )
 
     async def asyncTearDown(self):
         await super().asyncTearDown()
@@ -290,8 +294,12 @@ class SessionTests(RelayCase):
 
     async def test_bridge_offline(self):
         bridge_id, _, _, app_token = await self.pair()
+        # Long gone (not a restart or a blip): answered right away
+        self.clock.now += relay.BRIDGE_GRACE_SECONDS + 1
+        started = asyncio.get_running_loop().time()
         p = await self.phone(bridge_id, app_token)
         self.assertEqual(await self.closed_with(p), protocol.BRIDGE_OFFLINE)
+        self.assertLess(asyncio.get_running_loop().time() - started, 1.0)
 
     async def test_bridge_drop_ends_sessions(self):
         *_, b, p, sid = await self.session()
@@ -584,3 +592,71 @@ class StoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BridgeHoldTests(RelayCase):
+    """A relay restart drops every bridge and phone at once; the phones
+    usually reconnect before their bridge. Held instead of BRIDGE_OFFLINE."""
+
+    bridge_grace = 1.0
+
+    async def test_phone_waits_for_a_bridge_seen_moments_ago(self):
+        bridge_id, bridge_token, device_id, app_token = await self.pair()
+        b = await self.bridge(bridge_token)
+        await b.close()
+        await asyncio.sleep(0.05)
+        p = await self.phone(bridge_id, app_token)
+        await asyncio.sleep(0.2)
+        b = await self.bridge(bridge_token)
+        kind, sid, payload = await self.next_frame(b)
+        self.assertEqual(kind, protocol.OPEN)
+        self.assertEqual(json.loads(payload)["device"], device_id)
+        await b.send_bytes(protocol.pack(protocol.DATA, sid, b"hello"))
+        msg = await p.receive(timeout=3)
+        self.assertEqual(msg.data, b"hello")
+        await p.close()
+        await b.close()
+
+    async def test_bridge_that_stays_away_is_offline_after_the_hold(self):
+        bridge_id, bridge_token, _, app_token = await self.pair()
+        b = await self.bridge(bridge_token)
+        await b.close()
+        await asyncio.sleep(0.05)
+        started = asyncio.get_running_loop().time()
+        p = await self.phone(bridge_id, app_token)
+        self.assertEqual(await self.closed_with(p), protocol.BRIDGE_OFFLINE)
+        waited = asyncio.get_running_loop().time() - started
+        self.assertGreaterEqual(waited, self.bridge_grace - 0.1)
+        self.assertFalse(self.app[relay.KEY_HUB]._waiting)
+
+    async def test_two_phones_held_for_the_same_bridge(self):
+        bridge_id, bridge_token, _, first = await self.pair()
+        second = (await self.pair(bridge_token=bridge_token))[3]
+        phones = [await self.phone(bridge_id, first), await self.phone(bridge_id, second)]
+        await asyncio.sleep(0.1)
+        b = await self.bridge(bridge_token)
+        frames = [await self.next_frame(b), await self.next_frame(b)]
+        self.assertEqual([f[0] for f in frames], [protocol.OPEN, protocol.OPEN])
+        self.assertNotEqual(frames[0][1], frames[1][1])
+        for p in phones:
+            await p.close()
+        await b.close()
+
+    async def test_hold_ends_grace_seconds_after_last_seen(self):
+        bridge_id, bridge_token, _, app_token = await self.pair()
+        b = await self.bridge(bridge_token)
+        await b.close()
+        await asyncio.sleep(0.05)
+        # A retrying phone, 0.8 s into the 1 s grace: waits only the rest
+        self.clock.now += 0.8
+        started = asyncio.get_running_loop().time()
+        p = await self.phone(bridge_id, app_token)
+        self.assertEqual(await self.closed_with(p), protocol.BRIDGE_OFFLINE)
+        self.assertLess(asyncio.get_running_loop().time() - started, 0.6)
+
+    async def test_shutdown_marks_connected_bridges_seen(self):
+        bridge_id, bridge_token, _, app_token, b, p, _ = await self.session()
+        self.clock.now += 3600  # connected an hour ago, nothing since
+        await relay._stop(self.app)
+        self.assertEqual(self.store.bridge(bridge_id).last_seen, self.clock.now)
+        self.assertEqual(await self.closed_with(p), 1001)
