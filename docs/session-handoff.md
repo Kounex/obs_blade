@@ -94,7 +94,15 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   3. App Store privacy labels + Play Data safety against the relay's data
      (policy `#remote`: device name, RevenueCat anonymous ID, OBS status;
      sessions end-to-end encrypted).
-  4. App Review notes (App Store Connect → App Review Information), e.g.:
+  **Done 2026-11-14 (prep for `release-promote`):** App Store version
+  4.3.0 created via the API (`f68d4bd2-…`, releaseType MANUAL like
+  4.2.0; contact copied by ASC), review notes = 4.2.0's + the remote
+  access paragraph below, `release metadata ios --yes` (notes + 16
+  screenshots), iPhone App Preview carried over (COMPLETE). Play listing
+  changed since 4.2.0 -> `release metadata android` at promote time.
+  Privacy forms (3.) are the user's (no API for Apple; Play's dataSafety
+  API overwrites the whole form) - answers in the 2026-11-14 session.
+  4. ~~App Review notes~~ (done, text as below), e.g.:
      "Remote access (Pro, new in 4.3) reaches OBS Studio on a computer
      through our relay when the phone isn't on the same network. It needs
      OBS Studio plus our free companion app OBS Blade Remote
