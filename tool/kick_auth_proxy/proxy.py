@@ -286,6 +286,11 @@ def take_result(state: str, poll_token: str, now: float | None = None):
 def make_handler(forward):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
+        # One request per connection: cloudflared keeps idle keep-alive
+        # connections up to 90 s, and server_close() on SIGTERM joins every
+        # handler thread - an idle one held the stop until Podman's kill.
+        # The timeout covers a client that connects and never sends.
+        timeout = 5
 
         def log_message(self, fmt, *args):
             # Status line only. BaseHTTPRequestHandler would include the path,
@@ -297,6 +302,7 @@ def make_handler(forward):
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(payload)))
             self.send_header("Cache-Control", "no-store")
+            self.send_header("Connection", "close")
             self.end_headers()
             self.wfile.write(payload)
 
@@ -365,6 +371,7 @@ def make_handler(forward):
             self.send_header("Location", "/oauth/done")
             self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Length", "0")
+            self.send_header("Connection", "close")
             self.end_headers()
 
         def do_POST(self):

@@ -189,8 +189,17 @@ class ShutdownTest(unittest.TestCase):
                 except OSError:
                     self.assertLess(time.monotonic(), deadline, "never came up")
                     time.sleep(0.05)
+            # cloudflared's way: HTTP/1.1, connection kept open afterwards
+            import http.client
+
+            kept = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+            kept.request("GET", "/health")
+            response = kept.getresponse()
+            response.read()
+            self.assertEqual(response.getheader("Connection"), "close")
             server.send_signal(signal.SIGTERM)
             self.assertEqual(server.wait(timeout=3), 0)
+            kept.close()
         finally:
             if server.poll() is None:
                 server.kill()
