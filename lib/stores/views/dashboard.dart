@@ -122,6 +122,9 @@ enum _SceneField { program, preview, studioMode }
 /// stale mute reads
 enum _AudioField { volume, mute }
 
+/// Quick retries after a relay drop ([DashboardStore.relayQuickRetryDelay])
+const int kRelayQuickRetries = 3;
+
 class DashboardStore = _DashboardStore with _$DashboardStore;
 
 /// How quickly a second tap on a Studio Mode scene tile has to follow the
@@ -448,6 +451,26 @@ abstract class _DashboardStore with Store {
 
   @visibleForTesting
   Duration lanRetryInterval = const Duration(seconds: 30);
+
+  /// Between reconnect attempts
+  @visibleForTesting
+  Duration reconnectDelay = const Duration(seconds: 3);
+
+  /// A relay session that dropped the way a relay restart drops it: the
+  /// relay is back after ~1.5 s and holds the connect until the bridge is
+  /// back too (tool/remote_relay `BRIDGE_GRACE_SECONDS`) - try again every
+  /// [relayQuickRetryDelay], up to [kRelayQuickRetries] times, before the
+  /// usual [reconnectDelay]. These don't count towards the 5 tries.
+  @visibleForTesting
+  Duration relayQuickRetryDelay = const Duration(seconds: 1);
+
+  /// 1001 relay restarting (tool/remote_relay `_stop`), 1006 a line that
+  /// dropped (Cloudflare tunnel), 4908 the bridge dropped mid-session
+  static final Set<int> _relayMayBeBackSoon = {
+    1001,
+    1006,
+    WebSocketCloseCode.RemoteBridgeGone.identifier,
+  };
 
   /// The network right now (injectable for tests)
   @visibleForTesting
@@ -1880,6 +1903,10 @@ abstract class _DashboardStore with Store {
     );
   }
 
+  /// The closed-socket check, now (tests: the periodic timer isn't running)
+  @visibleForTesting
+  Future<void> checkConnection() => _checkOBSConnection();
+
   /// Runs the connection check right away instead of waiting for the next
   /// periodic tick - called when the app comes back to the foreground or
   /// the device regains network, so a dropped socket starts reconnecting
@@ -2006,23 +2033,36 @@ abstract class _DashboardStore with Store {
     _pauseStatsPolling();
     WebSocketCloseCode? closeCode;
     int tries = 0;
+    int attempts = 0;
+    int quickLeft =
+        !force &&
+            before.viaRemote &&
+            _relayMayBeBackSoon.contains(before.socket.closeCode)
+        ? kRelayQuickRetries
+        : 0;
 
     while ((Hive.box(
               HiveKeys.Settings.name,
             ).get(SettingsKeys.UnlimitedReconnects.name, defaultValue: false) ||
             tries < 5) &&
-        !(keepOnFailure && tries > 0) &&
+        !(keepOnFailure && attempts > 0) &&
         (closeCode == null || closeCode != WebSocketCloseCode.DontClose)) {
       /// First attempt right away - a WLAN blip is usually over by the
       /// time the drop is detected; back off between retries only
-      if (tries > 0) await Future.delayed(const Duration(seconds: 3));
+      bool quick = false;
+      if (attempts > 0) {
+        quick = quickLeft > 0;
+        if (quick) quickLeft--;
+        await Future.delayed(quick ? relayQuickRetryDelay : reconnectDelay);
+      }
       closeCode = await network.setOBSWebSocket(
         network.activeSession!.connection,
         reconnect: true,
       );
-      tries++;
+      attempts++;
+      if (!quick) tries++;
       GeneralHelper.advLog(
-        '$tries. attempt to reconnect...',
+        '$attempts. attempt to reconnect${quick ? ' (relay, quick)' : ''}...',
         level: LogLevel.Warning,
         includeInLogs: true,
       );

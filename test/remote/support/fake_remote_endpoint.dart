@@ -61,6 +61,11 @@ class FakeRemoteEndpoint {
         return;
       }
       _sockets.add(socket);
+      if (this.refuseNext > 0) {
+        this.refuseNext--;
+        await socket.close(this.closeCode, 'refused');
+        return;
+      }
       switch (this.mode) {
         case FakeEndpointMode.closeAtOnce:
           await socket.close(this.closeCode, 'refused');
@@ -190,6 +195,11 @@ class FakeRemoteEndpoint {
   List<WebSocket> get sockets => List.unmodifiable(_sockets);
   final List<FakeUpgrade> upgrades = [];
   int closeCode = 4000;
+
+  /// The next this-many upgrades close at once with [closeCode], whatever
+  /// the [mode] - e.g. 4900 while the bridge is still away after a relay
+  /// restart.
+  int refuseNext = 0;
 
   int get port => _server.port;
   String get baseUrl => 'http://127.0.0.1:${_server.port}';

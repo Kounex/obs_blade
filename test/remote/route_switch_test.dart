@@ -271,6 +271,89 @@ void main() {
     });
   });
 
+  group('relay restart', () {
+    /// A relay session away from home (only the relay leg)
+    Future<Session> awayOnRelay() async {
+      onLocalNetwork = false;
+      expect(
+        await network.setOBSWebSocket(await paired()),
+        WebSocketCloseCode.DontClose,
+      );
+      dashboard.handleStream();
+      return network.activeSession!;
+    }
+
+    Future<void> relayDrops(Session session, int code) async {
+      await relay.sockets.last.close(code, 'relay restarting');
+      await waitFor(() => session.socket.closeCode != null, 'drop seen');
+      expect(session.socket.closeCode, code);
+    }
+
+    test(
+      'back on a quick retry once the bridge is (1001 relay restarting)',
+      () async {
+        final Session before = await awayOnRelay();
+        dashboard.reconnectDelay = const Duration(seconds: 5);
+        dashboard.relayQuickRetryDelay = const Duration(milliseconds: 50);
+        final int upgrades = relay.upgrades.length;
+
+        /// Relay back, the bridge not yet: refused twice (4900)
+        relay.closeCode = 4900;
+        relay.refuseNext = 2;
+        await relayDrops(before, 1001);
+        final watch = Stopwatch()..start();
+        await dashboard.checkConnection();
+
+        expect(network.obsTerminated, isFalse);
+        expect(dashboard.reconnecting, isFalse);
+        expect(identical(network.activeSession, before), isFalse);
+        expect(network.activeSession!.viaRemote, isTrue);
+        expect(relay.upgrades.length - upgrades, 3);
+        expect(
+          watch.elapsed,
+          lessThan(const Duration(seconds: 2)),
+          reason: 'quick retries, not the ${dashboard.reconnectDelay} wait',
+        );
+      },
+    );
+
+    test(
+      'relay stays away: the quick retries come on top of the 5 tries',
+      () async {
+        final Session before = await awayOnRelay();
+        dashboard.reconnectDelay = const Duration(milliseconds: 20);
+        dashboard.relayQuickRetryDelay = const Duration(milliseconds: 20);
+        final int upgrades = relay.upgrades.length;
+        relay.closeCode = 4900;
+        relay.refuseNext = 100;
+        await relayDrops(before, 1001);
+        await dashboard.checkConnection();
+
+        expect(network.obsTerminated, isTrue);
+        expect(relay.upgrades.length - upgrades, 5 + kRelayQuickRetries);
+      },
+    );
+
+    test(
+      'a session the relay ended for good reason: no quick retries',
+      () async {
+        final Session before = await awayOnRelay();
+        dashboard.reconnectDelay = const Duration(milliseconds: 20);
+        dashboard.relayQuickRetryDelay = const Duration(seconds: 5);
+        final int upgrades = relay.upgrades.length;
+        relay.closeCode = 4900;
+        relay.refuseNext = 100;
+
+        /// 4906: this phone connected again elsewhere
+        await relayDrops(before, 4906);
+        await dashboard.checkConnection();
+
+        expect(network.obsTerminated, isTrue);
+        expect(relay.upgrades.length - upgrades, 5);
+      },
+    );
+  });
+
   test('not paired, or no Pro: a network change switches nothing', () async {
     await connectOnLan(lan.connection);
     final Session before = network.activeSession!;

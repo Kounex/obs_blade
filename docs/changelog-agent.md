@@ -4,6 +4,39 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-15 - Backend: backups, restarts users barely notice (after 4.3.0)
+
+- Measured (VPS): a relay restart = ~1.5 s with no relay; the bridge came
+  back after its 2 s backoff (4 s, 8 s if that try was early); the app
+  noticed the drop at once (`onDone`), tried once into the restarting
+  relay, then waited 3 s: ~3.5 s of "reconnecting", worse when the bridge
+  backed off further. Kick services ignored SIGTERM (Podman killed them
+  after 10 s: ~13 s down per update / reboot).
+- **Relay 0.0.9** (deployed): a phone whose bridge was seen in the last
+  6 s is held until the bridge is back (`BRIDGE_GRACE_SECONDS`, from
+  `last_seen`, so a PC that really went away costs a retrying phone ~6 s
+  once - 4.3.0 retries 5x 3 s apart). Shutdown marks connected bridges
+  seen. No protocol change: 4.3.0 works unchanged (hold < its 10 s
+  handshake timeout), it just doesn't get faster.
+- **Kick services** (kick-auth 1.0.4, kick-events 1.0.5, deployed): stop
+  on SIGTERM (kick-auth: handler, in-flight exchanges finish; kick-events:
+  shutdown ends app streams - the app reconnects in 2 s by cursor).
+  Restart now 3.5 s.
+- **Quadlets**: `/health` every 30 s (busybox `wget`; a nested-quote
+  Python probe got mangled by the Quadlet generator), 3 misses kill the
+  container, `Restart=on-failure` brings it back.
+- **Bridge** (Kounex/obs-blade-remote PR 1, next bridge release): a link
+  that held over 60 s and dropped retries every 0.5-1.5 s for 15 s, then
+  the old backoff.
+- **App** (next app version): a relay session that ended with 1001 /
+  1006 / 4908 gets 3 quick retries 1 s apart before the usual 3 s ones
+  (not counted in the 5 tries; `relayQuickRetryDelay`,
+  `kRelayQuickRetries`). Target with all three: ~2 s per relay restart.
+  Tests: `route_switch_test.dart` group "relay restart" (2 of 3 fail
+  without the change).
+- **Backups**: `tool/backup/` (NAS timer every 6 h, retention 48 h /
+  daily / weekly / monthly, space guards). See its README.
+
 ## 2026-11-13 - Relay -> LAN: periodic check (4.3.0 build 4)
 
 - User question after build 3: Wi-Fi back fired one switch attempt, and
