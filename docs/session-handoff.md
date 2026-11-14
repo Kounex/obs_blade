@@ -139,6 +139,16 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
   4904 reaches the phone. **The key was pasted in chat once (2026-11-07):
   rotate it** (new v2 key, replace both copies, `systemctl restart
   remote-relay`, revoke the old one).
+- **Backups since 2026-11-15:** NAS user timer `obs-blade-vps-backups`
+  (04:30) copies `remote-relay` and `kick-events` `relay.db` from the VPS
+  to `/volume1/docker/obs-blade-backups/` (30 days, integrity-checked,
+  ntfy on failure). Restore: `tool/backup/README.md`. Before that the
+  pairings lived only on the VPS disk. Next (agreed 2026-11-15): graceful
+  restarts (relay closes with 1012 on SIGTERM so bridge and app reconnect
+  at once, pull before restart, Quadlet health check + rollback,
+  kick-auth sign-ins surviving a restart); later, if wanted, session
+  resume so a relay restart is invisible. No k3s: one host gains nothing
+  from it.
 - **End to end through Cloudflare: green** (2026-11-08, relay 0.0.4,
   OBS 32.2.2 on the MacBook, `obb` 0.3.0 as bridge, `noiseprotocol` as
   the phone): key exchange via OBS, encrypted session, 640 px preview,

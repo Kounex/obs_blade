@@ -1,0 +1,8 @@
+[Unit]
+Description=Copy the OBS Blade relay databases from the Hetzner VPS to the NAS
+After=network-online.target
+
+[Service]
+Type=oneshot
+TimeoutStartSec=10min
+ExecStart=/home/kounex/agent/obs-blade/tool/backup/pull-vps-backups.sh
