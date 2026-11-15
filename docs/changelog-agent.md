@@ -27,7 +27,7 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
 - **Quadlets**: `/health` every 30 s (busybox `wget`; a nested-quote
   Python probe got mangled by the Quadlet generator), 3 misses kill the
   container, `Restart=on-failure` brings it back.
-- **Bridge** (Kounex/obs-blade-remote PR 1, next bridge release): a link
+- **Bridge** (OBS Blade Remote 0.4.1, released 2026-11-15): a link
   that held over 60 s and dropped retries every 0.5-1.5 s for 15 s, then
   the old backoff.
 - **App** (next app version): a relay session that ended with 1001 /

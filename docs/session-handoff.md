@@ -147,8 +147,8 @@ the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop s
 - **Restarts (2026-11-15):** relay 0.0.9 holds a phone until its bridge
   is back (6 s from last_seen); kick-auth / kick-events stop on SIGTERM
   (were killed after 10 s); Quadlet health checks on all three. Pending
-  release: bridge quick retries (obs-blade-remote PR 1, CI green) and
-  app quick retries (master, next app version). Details: changelog
+  release: app quick retries (master, next app version - not worth a
+  4.3.1 alone). Bridge quick retries released as OBS Blade Remote 0.4.1. Details: changelog
   2026-11-15. No k3s: one host gains nothing from it.
 - **End to end through Cloudflare: green** (2026-11-08, relay 0.0.4,
   OBS 32.2.2 on the MacBook, `obb` 0.3.0 as bridge, `noiseprotocol` as
