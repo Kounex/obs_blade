@@ -90,7 +90,14 @@ identical).
   release to production and sends it to review; after approval nothing goes
   live until the user presses **Publish** in the Play Console (Publishing
   overview). There is no API for that step.
-- `release status` shows both stores at any point.
+- `metadata android` re-uploads every image in
+  `fastlane/metadata/play/en-US/images/`, so Publishing overview lists the
+  app icon / feature graphic as changed even when the files are identical
+  (4.3.0: byte-identical to 4.2.0's). Harmless; `git diff <last tag> --
+  fastlane/metadata/play` tells whether anything really changed.
+- `release status` shows both stores at any point. It can't tell a Play
+  release held by managed publishing from a published one (both read
+  `completed`) - the user's Publish is the confirmation.
 - `metadata ios` also re-uploads the committed screenshot set
   (`fastlane/screenshots`). App Previews are not part of it - check the new
   version still has one (ASC copies media into a new version) and use
