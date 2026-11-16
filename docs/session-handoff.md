@@ -2,208 +2,85 @@
 
 **Reset this file at every handoff — see "Handoff hygiene" below before editing it.**
 
-Read this first after `AGENTS.md`. Last reset: **2026-10-21** (4.2.0
+Read this first after `AGENTS.md`. Last reset: **2026-11-16** (4.3.0
 released).
 
-**Live:** 4.2.0 (build 2026102003, tag `4.2.0`) on both stores since
-2026-10-21 (App Store `READY_FOR_SALE`, Play production 100 %). Branch `master`. Releases run through
-**store-release** (`release.yaml`).
+**Live:** 4.3.0 (build 2026111304, tag `4.3.0` on `279887d8`) on both
+stores since 2026-11-16 (App Store `READY_FOR_SALE`, Play production
+100 %). FOSS `foss-4.3.0` (`3bd0cefc`, the lockfile fix after the release
+commit) is Latest on GitHub Releases. Branch `master`. Releases run through
+**store-release** (`release.yaml`); `release metadata ios` does not create
+App Store versions (one `POST v1/appStoreVersions` via the tool's
+`HttpApiClient`, as for 4.2.0 / 4.3.0). The MacBook is reachable away from
+home: `ssh macbook` from the NAS falls back to Tailscale (it-env
+`docs/machines/macbook.md`).
 
-App Store versions: `release metadata ios` does **not** create a
-version (the tool says "create version x in App Store Connect first").
-4.2.0 was created with one `POST v1/appStoreVersions` through the tool's
-`HttpApiClient` (one-off script, removed); the iPhone App Preview was
-copied over by App Store Connect.
+**Unreleased on master (next app version, not worth a 4.3.1 alone):**
+`f8534538` quick retries after a relay restart. History: changelog
+2026-11-15.
 
-Release env on the MacBook: `release-env.sh` puts mise's Ruby 3.4.2
-first (fastlane lives there; Homebrew Ruby is 4.0 without it; was rbenv
-until 2026-10-27) and
-`release()` is store-release - runbook updated.
+**Watch (4.3.0 = first public remote access):** crash reports + reviews;
+relay load and logs on the VPS (`journalctl -u remote-relay`); Pro
+conversions; Android 120 Hz and Bars & Sheets (build 2 had no dogfood
+install, build 4 was tested by the user). Kick's web client prefers
+Centrifugo - if Pusher stops being offered, that's the next transport
+(`kick-chat-audit.md` § Native read).
 
-Dogfood (Kounex iOS, `31139f46`): YouTube streaming confirmed in the log
-("reads over the stream"), Kick connects again. Still to see on the
-device: the hourly "YouTube API: ≈… units" line (~1,700 per chat-hour).
-Not verified: whether streamed answers repeat `activePollItem` (needs a
-chat with a running poll).
+**Open, remote access / backend:**
+- **Rotate the RevenueCat v2 key** (pasted in chat 2026-11-07): new v2 key
+  into `/etc/remote-relay.env` on the VPS + `systemctl restart
+  remote-relay`, and `~/.config/obs-blade/revenuecat-v2.key` on the NAS;
+  revoke the old one. Also check the RevenueCat dashboard has no ad /
+  attribution integrations.
+- **`/code-review high` not run yet** on the backend restart work
+  (`336562a8..fa2ca8fe`), the bridge quick retries (obs-blade-remote
+  `c9bdcec`, released as 0.4.1) and the 30 s relay -> LAN retry
+  (`54c885a2`, in 4.3.0).
+- **Bridge state file, two processes:** plugin and standalone ship since
+  OBS Blade Remote 0.4.0, and `Shared::update` (`core/src/shared.rs`)
+  still saves its in-memory copy without reloading `bridge.json` first.
+  With both running on one PC, one can write stale `app_keys` / key pair
+  over the other's (phone then gets 4904 / 4911). Fix: reload inside
+  `update`.
+- Device checks of the restart work (relay restart on mobile data, PC
+  offline after quitting the bridge, Kick sign-in, activity catch-up after
+  a kick-events restart) once a master build is on the dogfood device.
+- Backup restore (`tool/backup/README.md`) not drilled live.
+- Optional: Hetzner Cloud server backups (~20 %); relay session resume
+  for invisible restarts.
 
-**GitHub (2026-10-21, in the user's voice):** #100, #96, #93 answered +
-closed. #95 answered (iOS fix in 4.2, asked which platform + to retest) -
-close only if they confirm or don't answer. Email from an Android volleyball streamer (instant-replay.lua
-hotkey): answer drafted in the 2026-10-17 session; the user sends it.
-The Pro customer who ran out of YouTube quota: no mail from us (user's
-call); 4.2 cuts their chat to ~1,700 units/h.
+**Backend facts:** relay `https://relay.obs-blade.com` (VPS Quadlet
+`remote-relay` 0.0.9, `/etc/remote-relay.env`, RevenueCat project
+`proja0a254d6`, `pro` = `entl2dd6e8fb75`); kick-auth 1.0.5 / kick-events
+1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
+backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer
+`obs-blade-vps-backups`). Bridge = Kounex/obs-blade-remote
+(`~/agent/obs-blade-remote`), 0.4.1 live. Sessions end-to-end encrypted
+(Noise IK) since relay 0.0.5. Spec:
+`docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
 
-**FOSS build (2026-10-22, `docs/foss-build.md`):** master builds the
-GitHub APK + F-Droid (`kFoss`, `tool/foss/prepare.sh`, Pro left out).
-**`foss-4.2.0` is live on GitHub Releases** (Latest; tag on `e0edf45c`
-- moved once before anything was published: the first tag build ran out
-of Gradle heap, fixed by 4G). F-Droid: **fdroiddata MR !53709**
-(branch `obs-blade-4.2.0` on the user's fork, made via the Commits API
-with `start_project` - the fork's master is from 2023 and GitLab's
-sync-fork doesn't apply a 54k-commit gap). MR pipeline **green**:
-F-Droid's build reproduced our GitHub APK byte for byte ("compared built
-binary to supplied reference binary successfully"). Review round 1
-(licaon-kter) done: `--enforce-lockfile` -> committed `pubspec-foss.lock`
-(`prepare.sh lock`, CI `lock --check`), `commit:` is now the hash
-`9722799a` (one commit after the tag, APK byte-identical `13ee8eb4`, tag
-NOT moved), 3.2.0 `disable`d, old key dropped. Next: further review
-replies in the user's voice; after merge + publish, check the F-Droid
-page. Old 3.2.0 users must uninstall first (key lost) - the F-Droid
-client won't offer the update across signers, so the note is in the
-listing description, not only the changelog. Not done: on-device
-check on a real Android phone (emulator only).
+**F-Droid:** fdroiddata MR !53709 (4.2.0, user's fork, pipeline green after
+review round 1). checkupdates picks `foss-4.3.0` up only once the app is in
+fdroiddata - check the MR state; review replies go out in the user's voice.
+Old 3.2.0 users must uninstall first (key lost).
 
-**Kick services run on the Hetzner VPS since 2026-11-07** (moved
-unattended 07:00-07:16 UTC, no rollback; Hetzner leftovers removed by
-`kick-hetzner-cleanup.timer` on the NAS on 2026-11-14 once a real Kick
-event reached the VPS relay).
-
-**In progress: Remote relay (Pro, reach OBS from anywhere)** - spec
-`docs/superpowers/specs/2026-11-07-remote-relay-design.md`, map
-the README of Kounex/obs-blade-remote (`~/agent/obs-blade-remote`, the desktop side since 2026-11-09).
-- **4.3.0 = the remote access release, prepared 2026-11-13** (version
-  `4.3.0+2026111301`, store notes + TestFlight checklist, listings,
-  paywall card "Control OBS From Anywhere" second, FAQ, store screenshots
-  with the remote slide 5 of 8 - real relay captures, see
-  `tool/store_screenshots/README.md` "Remote access (Pro) shots").
-  Order (user decision 2026-11-13: public downloads + site with the app):
-  1. **Done 2026-11-13:** dogfood OK (user), `release-beta` uploaded
-     4.3.0 (2026111301): TestFlight internal (VALID) + Play internal.
-     **Superseded by build 2 (2026111302, user 2026-11-13):** adds 120 Hz
-     on Android (#106) + Settings -> Bars & Sheets (Glass / Clear / Solid)
-     and fixes the double tab bar blur; notes / TestFlight checklist / F-Droid
-     changelog `2026111302.txt` updated. Uploaded 2026-11-13 (user asked
-     to skip the dogfood install): TestFlight internal (VALID) + Play
-     internal. **Superseded by build 4 (2026111304, user 2026-11-13,
-     no dogfood install):** build 3 = `/code-review high` fixes over
-     `4.2.0..HEAD` (relay keeps the saved password, Wi-Fi back never ends
-     a working relay session, Turn Off confirms, deleting a paired
-     connection removes it on the relay); build 4 = relay -> LAN check
-     every 30 s on Wi-Fi (`_retryLan`). Both uploaded to TestFlight
-     internal + Play internal. Next: user tests build 4 (TestFlight
-     checklist), then `release-promote` it (after 3 + 4 below).
-     Open device question: does iOS briefly report cellular-only while
-     roaming between mesh APs (would hop a LAN session to the relay)?
-  2. **Done 2026-11-13 (user: out now, so dogfood and App Review work):**
-     `v0.4.0` tagged in Kounex/obs-blade-remote (release with the five
-     downloads) and the site deployed: `/remote`, privacy policy
-     `#remote`, remote guide, landing row + Pro section. **Left for
-     publish day:** the What's new 4.3 tab - branch `whats-new-4-3` in
-     `~/agent/obs-blade-site` has it (dated "November 2026"; merge,
-     adjust the month if needed, `./deploy.sh`).
-  3. App Store privacy labels + Play Data safety against the relay's data
-     (policy `#remote`: device name, RevenueCat anonymous ID, OBS status;
-     sessions end-to-end encrypted).
-  **Done 2026-11-14 (prep for `release-promote`):** App Store version
-  4.3.0 created via the API (`f68d4bd2-…`, releaseType MANUAL like
-  4.2.0; contact copied by ASC), review notes = 4.2.0's + the remote
-  access paragraph below, `release metadata ios --yes` (notes + 16
-  screenshots), iPhone App Preview carried over (COMPLETE). Play listing
-  changed since 4.2.0 -> `release metadata android` at promote time.
-  Privacy forms (3.) **done by the user 2026-11-14**. Apple: User ID,
-  Device ID (relay device id), Purchase History, Other Data (device
-  name / platform / added + last used), Other User Content (Kick events
-  relay) - all linked; Other Diagnostic Data (relay session logs, random
-  session id) not linked; App Functionality only, no tracking. Play Data
-  safety: User IDs, Purchase history, Other user-generated content,
-  Diagnostics, Device or other IDs - collected, not shared, App
-  functionality (purchase history + device IDs required, rest optional).
-  Play "Sign-in details": second entry "Remote access (Pro, new in 4.3)"
-  added by the user. **Promoted 2026-11-14** (user: build 4 tested OK):
-  `metadata android`, `submit ios` (4.3.0 WAITING_FOR_REVIEW, manual
-  release, submission `53cf2eec-…`), `promote android --rollout 1.0`
-  (production 4.3.0 [2026111304], managed publishing holds it). Next:
-  both approved -> `release-publish` (also merge `whats-new-4-3` in the
-  site). `/code-review high` on `54c885a2` (30 s relay -> LAN retry) was
-  not run before submitting (user's call).
-  Not blocking: rotate the RevenueCat v2 key + check its dashboard has no
-  ad / attribution integrations.
-  4. ~~App Review notes~~ (done, text as below), e.g.:
-     "Remote access (Pro, new in 4.3) reaches OBS Studio on a computer
-     through our relay when the phone isn't on the same network. It needs
-     OBS Studio plus our free companion app OBS Blade Remote
-     (obs-blade.kounex.com/remote) on that computer; setup runs once while
-     the phone is connected to OBS on the local network (globe on the
-     dashboard -> Set Up Remote Access). Sessions are end-to-end encrypted;
-     the relay can't read them. Everything else works without the
-     companion app." Attach a screen recording if review asks.
-- **End-to-end encrypted since 2026-11-08** (relay 0.0.5, bridge
-  0.3.1 - 0.0.5 adds the bridge keepalive pong: websocket pings don't
-  cross the Cloudflare tunnel): the relay can't read sessions; keys are exchanged through OBS
-  when pairing. Pairings from before have no keys and count as unpaired.
-- **Relay live** at `https://relay.obs-blade.com` (VPS, Quadlet
-  `remote-relay`, image 0.0.5, `/etc/remote-relay.env` with the RevenueCat
-  v2 key - NAS copy `~/.config/obs-blade/revenuecat-v2.key`, project
-  `proja0a254d6`, `pro` = `entl2dd6e8fb75`). Live checks through
-  Cloudflare passed: non-Pro pairing 403, bad bridge token 401, close code
-  4904 reaches the phone. **The key was pasted in chat once (2026-11-07):
-  rotate it** (new v2 key, replace both copies, `systemctl restart
-  remote-relay`, revoke the old one).
-- **Backups since 2026-11-15:** NAS user timer `obs-blade-vps-backups`
-  (every 6 h) copies `remote-relay` and `kick-events` `relay.db` from the
-  VPS to `/volume1/docker/obs-blade-backups/` (48 h of copies, then
-  daily/weekly/monthly, integrity-checked, space guards on both ends,
-  ntfy on failure). Restore: `tool/backup/README.md`.
-- **Restarts (2026-11-15):** relay 0.0.9 holds a phone until its bridge
-  is back (6 s from last_seen); kick-auth / kick-events stop on SIGTERM
-  (were killed after 10 s); Quadlet health checks on all three. Pending
-  release: app quick retries (master, next app version - not worth a
-  4.3.1 alone). Bridge quick retries released as OBS Blade Remote 0.4.1. Details: changelog
-  2026-11-15. No k3s: one host gains nothing from it.
-- **End to end through Cloudflare: green** (2026-11-08, relay 0.0.4,
-  OBS 32.2.2 on the MacBook, `obb` 0.3.0 as bridge, `noiseprotocol` as
-  the phone): key exchange via OBS, encrypted session, 640 px preview,
-  195 KB message over 4 frames, meters, status snapshot, 1003 for
-  plaintext, 4904 for an unknown key, 4901 after OBS quit. 0.0.3 fixed relay-ended sessions arriving as 1006 through
-  cloudflared (close only from the socket's handler).
-- **Bridge core** `core/` in Kounex/obs-blade-remote (Rust, 20 tests; e2e green against OBS
-  32.2.2 on the MacBook with and without OBS auth, local relay).
-- **App** (commits e33643b0..02260328): relay routing in `NetworkStore`
-  (smart fallback), close codes 4900-4910 with copy, pairing store +
-  dashboard sheet (globe in the dashboard bar), card line, Start OBS
-  offer. Tests `test/remote/`, shots `tool/widget_shots/remote_access_shots_test.dart`.
-- **Dogfood path before the plugin exists:** run `obb` (the core's CLI) on
-  the MacBook next to OBS as the bridge (`~/agent-build/obb_dogfood.py`
-  wraps it: OBS watcher + Start OBS, log `~/agent-build/obb-dogfood.log`); the dogfood device's RevenueCat
-  app user id must have Pro (or sit in `RELAY_PRO_ALLOW`).
-- **Before a second bridge process (plugin + standalone) ships:**
-  `Shared::update` saves its in-memory copy without reloading
-  `bridge.json` first (`set_enabled` / `set_preview` /
-  `set_obs_override`) - one process could write back stale `app_keys` or
-  key pair over the other's (phone then gets 4904 / 4911). Reload inside
-  `update` (review 2026-11-08; not reachable while `obb` is the only one).
-- Next: plugin shell (C++, vendor `obs-blade-bridge`/`Pair`), Qt panel +
-  standalone tray/watcher, packaging (macOS notarized, Windows unsigned
-  for now, Linux). MacBook has rustup + cmake (Homebrew); build scratch
-  `~/agent-build/`.
-
-**Watch:** crash reports + reviews for 4.2.0 (new: preview
-transitions, combined chat Save / Delete - build 5 had no device check;
-Kick chat complaints should stop). Kick's web client prefers Centrifugo now - if
-Pusher stops being offered, that's the next transport (`kick-chat-audit.md`
-§ Native read). Open follow-ups:
-
-1. **Creative assets**: v1 header + search images are live (4.1.0 en-US).
-   In review: **v2 header + v3 search images** (2026-10-11, submission
-   `1ec1788c-…`) and the same compositions as **15 s "live image" videos**
-   (assets `eec00005-…` header / `2cc00005-…` search, submission
-   `58711c06-…`; store-shots cuts `appstore-header` / `appstore-search`,
-   never committed). **When approved:** `release attach ios` (dry run,
-   then --yes); then ask for phone screenshots / a recording of how iOS
-   plays them.
-2. Upload key A6:24:44 still "in review" → after it resolves, delete
+**Other follow-ups:**
+1. **Creative assets**: v2 header + v3 search images and the 15 s "live
+   image" videos (submissions `1ec1788c-…`, `58711c06-…`) - when approved:
+   `release attach ios` (dry run, then --yes).
+2. Upload key A6:24:44 "in review" -> after it resolves, delete
    `android/app/src/main/assets/adi-registration.properties` and discard
    Play internal-track draft `3.3.0 (2026090701)`.
+3. GitHub #95: close only if the reporter confirms or doesn't answer.
 
-**Store/Pro state:** 4.2.0 live; products approved on both stores
-($4.99/mo, $49.99/yr, $99.99 lifetime); RevenueCat live (`pro`); Play
-RTDN test received. Open: Apple Small Business Program enrollment.
+**Store/Pro state:** products approved on both stores ($4.99/mo,
+$49.99/yr, $99.99 lifetime); RevenueCat live (`pro`). Open: Apple Small
+Business Program enrollment.
 
 **Backlog threads (pick up as agreed):** Chatterino "medium" items
-(`chatterino-comparison.md`); activity feed next: StreamElements /
-Streamlabs once API access is approved; Kick Centrifugo transport (see
-Watch); intro v2 tablet/landscape check; media hub VLC mapping unprobed;
-Astra follow-ups.
+(`chatterino-comparison.md`); activity feed: StreamElements / Streamlabs
+once API access is approved; Kick Centrifugo transport; intro v2
+tablet/landscape check; media hub VLC mapping unprobed; Astra follow-ups.
 
 ## Handoff hygiene (read before editing this file)
 
@@ -239,7 +116,7 @@ Astra follow-ups.
 | Branch | **`master`** (everything lands here; `feature/preview-transitions` merged 2026-10-07) |
 | Users | 500k+ live — persistence + release paths are sensitive |
 | Form factors | First-party **phone and tablet** — see `AGENTS.md` + `redesign/design-system.md` § Responsive layouts |
-| Live version | **4.2.0** (build 2026102003, tag `4.2.0`) on both stores since 2026-10-21 |
+| Live version | **4.3.0** (build 2026111304, tag `4.3.0`) on both stores since 2026-11-16 |
 
 ### Machines
 

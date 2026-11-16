@@ -4,6 +4,30 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-16 - 4.3.0 released (build 2026111304)
+
+- **iOS:** approved, `release publish ios` -> `READY_FOR_SALE` (manual
+  release, everyone at once).
+- **Play:** production 100 % under managed publishing; the user pressed
+  Publish the same day. Play listed the app icon / feature graphic as
+  changed: `release metadata android` (2026-11-14, new screenshots +
+  description) re-uploads every image, the files are byte-identical to
+  4.2.0's.
+- Tag `4.3.0` on `279887d8` (the build commit; master already had the
+  unreleased quick retries `f8534538`).
+- **FOSS:** the CI `foss` job had been red since `6d829759` (2026-11-09):
+  `device_info_plus` was added without regenerating `pubspec-foss.lock`.
+  Regenerated (`3bd0cefc`, + `device_info_plus`, its platform interface,
+  `win32_registry`); `foss-4.3.0` tagged there, GitHub release
+  `obs-blade-foss-4.3.0.apk` published. Remote access is out of the FOSS
+  build: the globe (only way to pair) is hidden, `ProStore.isPro` is
+  always false and every relay path needs Pro + a pairing.
+- **Website:** What's new 4.3 merged + deployed; it gained the build 2
+  items it was missing (120 Hz on Android, Settings -> Theme -> Bars &
+  Sheets). Branch `whats-new-4-3` deleted.
+- The MacBook was away from home: the NAS joined the tailnet (node
+  `june`) and `ssh macbook` falls back to Tailscale (it-env).
+
 ## 2026-11-15 - Backend: backups, restarts users barely notice (after 4.3.0)
 
 - Measured (VPS): a relay restart = ~1.5 s with no relay; the bridge came
