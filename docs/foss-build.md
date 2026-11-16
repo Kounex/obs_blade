@@ -81,6 +81,14 @@ Without the define those tests skip.
 6. F-Droid's checkupdates picks the `foss-*` tag up on its own (writing
    the tag's commit hash into the new build entry), builds it from source
    and publishes our APK if the builds match.
+7. Follow it with `tool/foss/fdroid-status.sh` (bot MR -> merged -> build
+   -> live; exit 2 = stuck, with the MR / build log link). The bot runs
+   daily around 06:00 UTC and its MRs get merged within hours; F-Droid's
+   build + publish takes 1-3 days more. Before relying on it, a
+   `workflow_dispatch` run of FOSS release on the tag must give the same
+   SHA-256 as the released APK (a non-deterministic build never matches
+   F-Droid's). Maintainers on the NAS: one-off checks with a push,
+   `systemd-run --user --on-calendar="<day> 13:00" --setenv=FDROID_VERSION=<name>+<code> tool/foss/fdroid-status.sh --notify`.
 
 A manual run of the workflow (Actions → FOSS release → Run) builds and
 verifies without releasing; the APK is a workflow artifact.

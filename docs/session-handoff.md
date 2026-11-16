@@ -59,10 +59,15 @@ backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer
 (Noise IK) since relay 0.0.5. Spec:
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
 
-**F-Droid:** fdroiddata MR !53709 (4.2.0, user's fork, pipeline green after
-review round 1). checkupdates picks `foss-4.3.0` up only once the app is in
-fdroiddata - check the MR state; review replies go out in the user's voice.
-Old 3.2.0 users must uninstall first (key lost).
+**F-Droid:** 4.2.0 live there (MR !53709 merged 2026-10-23). 4.3.0 goes
+automatically: `UpdateCheckMode: Tags ^foss-` + `AutoUpdateMode: Version`,
+the bot's next daily run (~06:00 UTC 2026-11-17) opens the MR, F-Droid
+builds and must reproduce our APK. Checked 2026-11-16: signing cert =
+`AllowedAPKSigningKeys`, a CI rebuild of `foss-4.3.0` is byte-identical
+(SHA-256 `6207f9f1…`), same NDK / AGP / Flutter submodule as 4.2.0. NAS
+timers `fdroid-check-4-3-0-*` (2026-11-17 / 19 / 21, 13:00) push
+`tool/foss/fdroid-status.sh` results; exit 2 = stuck. Old 3.2.0 users must
+uninstall first (key lost).
 
 **Other follow-ups:**
 1. **Creative assets**: v2 header + v3 search images and the 15 s "live
