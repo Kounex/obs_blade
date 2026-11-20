@@ -166,6 +166,19 @@ class RelayCase(AioHTTPTestCase):
 
 
 class PairingTests(RelayCase):
+    async def test_expired_pairing_is_logged(self):
+        r = await self.client.post(
+            "/v1/pairings", json={"app_user_id": PRO, "device_name": "iPhone", "platform": "ios"}
+        )
+        self.assertEqual(r.status, 201)
+        self.clock.now += 3600
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            await relay.purge(self.app)
+        self.assertTrue(
+            any("pairing from ios expired: no bridge redeemed the code" in line for line in logs.output),
+            logs.output,
+        )
+
     async def test_full_pairing_creates_bridge_and_device(self):
         r = await self.client.post("/v1/pairings", json={"app_user_id": PRO, "device_name": "iPhone"})
         created = await r.json()
@@ -346,6 +359,25 @@ class SessionTests(RelayCase):
         self.assertEqual(await self.closed_with(b), protocol.SESSION_REPLACED)
         self.assertEqual(await self.closed_with(p), protocol.BRIDGE_GONE)
         await b2.close()
+
+    async def test_bridge_end_is_logged(self):
+        _, bridge_token, _, _, b, p, _ = await self.session()
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            b2 = await self.bridge(bridge_token)
+            await self.closed_with(b)
+            await self.closed_with(p)
+            await b2.close(code=4000)
+            for _ in range(50):  # the handler logs once it saw the close
+                if sum(":remote-relay:bridge " in line for line in logs.output) == 2:
+                    break
+                await asyncio.sleep(0.01)
+        ends = [line for line in logs.output if ":remote-relay:bridge " in line]
+        self.assertEqual(len(ends), 2, logs.output)
+        self.assertIn("replaced by a newer connection | quiet", ends[0])
+        self.assertIn("sessions dropped 1", ends[0])
+        self.assertIn("closed 4000 | quiet", ends[1])
+        self.assertIn("sessions dropped 0", ends[1])
+        self.assertNotIn(bridge_token, "".join(logs.output))
 
     async def test_slow_phone_is_dropped_and_bridge_told(self):
         *_, b, p, sid = await self.session()
@@ -578,6 +610,24 @@ class StoreTests(unittest.TestCase):
             clock.now += 181 * 24 * 3600
             self.assertEqual(store.purge(), [device.id])
             self.assertIsNone(store.bridge(bridge_id))
+            store.close()
+
+    def test_expire_pairings(self):
+        clock = Clock()
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(os.path.join(tmp, "db"), clock=clock)
+            store.create_pairing(PRO, "iPhone", "ios")  # no bridge ever
+            _, code = store.create_pairing(PRO, "Pixel", "android")
+            store.redeem_pairing(code, None, "PC", "plugin", "1")  # never collected
+            store.create_pairing(PRO, "iPad", "ios")
+            self.assertEqual(store.expire_pairings(), [])
+            clock.now += 3600
+            store.create_pairing(PRO, "iPhone", "ios")  # drops the expired ones on the way
+            self.assertEqual(
+                sorted((platform, redeemed) for platform, _, redeemed in store.expire_pairings()),
+                [("android", True), ("ios", False), ("ios", False)],
+            )
+            self.assertEqual(store.expire_pairings(), [])
             store.close()
 
     def test_open_pairings_capped_per_user(self):

@@ -143,6 +143,8 @@ class Store:
         if "device_id" not in columns:  # databases from before 0.0.4
             self._db.execute("ALTER TABLE pairings ADD COLUMN device_id TEXT")
         self._now = clock
+        # Expired pairings dropped since the last expire_pairings() call
+        self._expired: list[tuple[str, float, bool]] = []
 
     def close(self) -> None:
         self._db.close()
@@ -158,7 +160,7 @@ class Store:
         """Returns (pairing_id, code). The pairing id is the app's secret
         to collect the result; only its hash is stored."""
         now = self._now()
-        self._db.execute("DELETE FROM pairings WHERE expires_at < ?", (now,))
+        self._drop_expired_pairings(now)
         open_count = self._db.execute(
             "SELECT COUNT(*) FROM pairings WHERE app_user_id = ? AND bridge_id IS NULL",
             (app_user_id,),
@@ -398,11 +400,31 @@ class Store:
 
     # --- housekeeping -------------------------------------------------
 
+    def _drop_expired_pairings(self, now: float) -> None:
+        self._expired.extend(
+            (row[0], row[1], row[2] is not None)
+            for row in self._db.execute(
+                "SELECT platform, created_at, bridge_id FROM pairings"
+                " WHERE expires_at < ? ORDER BY created_at",
+                (now,),
+            )
+        )
+        self._db.execute("DELETE FROM pairings WHERE expires_at < ?", (now,))
+
+    def expire_pairings(self) -> list[tuple[str, float, bool]]:
+        """Drops expired pairings. Returns (platform, created_at, redeemed)
+        for each one dropped since the last call (creating a pairing drops
+        them too): not redeemed = no bridge took the code, redeemed = the
+        app never collected it."""
+        self._drop_expired_pairings(self._now())
+        expired, self._expired = self._expired, []
+        return expired
+
     def purge(self) -> list[str]:
         """Drops expired pairings, devices idle for 180 days and bridges
         with no devices left for 30 days. Returns removed device ids."""
         now = self._now()
-        self._db.execute("DELETE FROM pairings WHERE expires_at < ?", (now,))
+        self._drop_expired_pairings(now)
         stale = [
             row[0]
             for row in self._db.execute(

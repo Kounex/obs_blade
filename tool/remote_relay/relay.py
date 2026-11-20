@@ -198,6 +198,10 @@ class BridgeLink:
     last_status: float = 0.0
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
     alive: bool = True
+    # For the end-of-link log line
+    started: float = field(default_factory=time.monotonic)
+    last_frame: float = field(default_factory=time.monotonic)
+    sessions_dropped: int = 0
 
     def allocate(self) -> int:
         sid = self.next_sid
@@ -749,8 +753,10 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
     )
     # After the welcome: phones held for this bridge open their sessions now
     hub.bridge_ready(link)
+    ended = ""
     try:
         async for message in ws:
+            link.last_frame = time.monotonic()
             if message.type == aiohttp.WSMsgType.BINARY:
                 try:
                     frame_kind, sid, payload = protocol.unpack(message.data)
@@ -767,20 +773,50 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
                     session.end(code, reason)
             elif message.type == aiohttp.WSMsgType.TEXT:
                 if not await _bridge_control(app, link, message.data):
+                    ended = "unpaired"
                     break
             elif message.type == aiohttp.WSMsgType.ERROR:
-                break
+                # aiohttp's heartbeat timing out lands here too
+                break  # named below from ws.exception()
     finally:
-        if hub.bridges.get(bridge.id) is link:
+        replaced = hub.bridges.get(bridge.id) is not link
+        stopping = not replaced and not link.alive  # _stop got here first
+        if not replaced:
             hub.bridges.pop(bridge.id, None)
             _drop_link(hub, link, protocol.BRIDGE_GONE)
         if store.bridge(bridge.id) is not None:
             store.bridge_seen(bridge.id)
+        # Why bridges reconnect: who ended the link (the bridge's close code,
+        # 1006 = the line dropped without one), how long it held and how
+        # quiet it was before. No ids beyond the bridge's prefix.
+        now = time.monotonic()
+        error = ws.exception()
+        if not ended:
+            ended = (
+                "replaced by a newer connection"
+                if replaced
+                else "relay stopping"
+                if stopping
+                else f"error {type(error).__name__}"
+                if error is not None
+                else f"closed {ws.close_code}"
+            )
+        log.info(
+            "bridge %s (%s %s) end after %.0fs: %s | quiet %.0fs, sessions dropped %d",
+            bridge.id[:10],
+            kind,
+            version or "?",
+            now - link.started,
+            ended,
+            now - link.last_frame,
+            link.sessions_dropped,
+        )
     return ws
 
 
 def _drop_link(hub: Hub, link: BridgeLink, code: int) -> None:
     link.alive = False
+    link.sessions_dropped += len(link.sessions)
     for session in list(link.sessions.values()):
         session.end(code, "bridge gone", drain=False)
     link.sessions.clear()
@@ -810,6 +846,15 @@ async def recheck_pro(app: web.Application) -> None:
 
 async def purge(app: web.Application) -> None:
     hub: Hub = app[KEY_HUB]
+    # Pairings that went nowhere: how often a code never reaches a PC
+    # (nothing installed / not running) or the app gave up before collecting
+    for platform, created_at, redeemed in app[KEY_STORE].expire_pairings():
+        log.info(
+            "pairing from %s expired: %s (created %s UTC)",
+            platform or "?",
+            "app never collected it" if redeemed else "no bridge redeemed the code",
+            time.strftime("%Y-%m-%d %H:%M", time.gmtime(created_at)),
+        )
     for device_id in app[KEY_STORE].purge():
         hub.end_device(device_id, protocol.UNPAIRED, "expired")
     app[KEY_ENT].forget_expired()
