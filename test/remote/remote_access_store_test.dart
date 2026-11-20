@@ -250,7 +250,8 @@ void main() {
     }
 
     test('a quick pairing never shows one', () async {
-      final s = store();
+      // Real time: a margin a busy CI machine can't eat
+      final s = store(hintAfter: const Duration(seconds: 1));
       final seen = await hints(
         s,
         () => s.pair(

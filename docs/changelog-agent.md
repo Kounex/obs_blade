@@ -4,6 +4,25 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-20 - Pairing: early hint while the PC doesn't answer (next app version)
+
+- Relay data: all 13 real pairings were redeemed within 1 s; two Pro
+  users on 11-17 waited out / closed a pairing no PC took, and only the
+  2-minute expiry ever said why (closing the sheet cancels silently).
+- `RemoteAccessStore.waitHint` (`615b25df`): 5 s (`kRemotePairHintAfter`)
+  without a redeem -> `noBridge` ("Nothing on your PC has answered yet.
+  OBS Blade Remote needs to be installed and running on the PC with OBS -
+  the app, or the OBS plugin." + download link); 5 s after a redeem
+  without the bridge's key -> `noConfirmation` (update hint). The wait
+  still runs to expiry; the hint clears when the PC answers, on cancel /
+  failure, and stays off while collects fail on the network (not the
+  PC's fault). User's choices: 5 s, both hints, the longer copy.
+- MobX atom for `waitHint` written by hand in `remote_access.g.dart`
+  (same shape as `failure`; no build_runner run on the NAS).
+- Shots `remote_waiting_hint_{noBridge,noConfirmation}` (phone / narrow /
+  tablet); store tests for each transition, a sheet test for the copy +
+  link.
+
 ## 2026-11-20 - Relay 0.0.11: why bridges reconnect, pairings that went nowhere
 
 - Checked relay use since 4.3.0 (11-16 -> 11-20): no phone session, no
@@ -30,7 +49,7 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   1 s of the code being created.
 - App: the pairing failure copy exists ("OBS Blade Remote didn't answer
   ..." + download link) but only after the code's full 2 min; nothing
-  during the wait. Proposed an earlier hint, not built yet.
+  during the wait. Built right after (entry above).
 
 ## 2026-11-16 - 4.3.0 released (build 2026111304)
 
