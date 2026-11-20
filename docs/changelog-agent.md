@@ -21,7 +21,12 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   (same shape as `failure`; no build_runner run on the NAS).
 - Shots `remote_waiting_hint_{noBridge,noConfirmation}` (phone / narrow /
   tablet); store tests for each transition, a sheet test for the copy +
-  link.
+  link. Fresh-context review: no findings.
+- Device check (dogfood): on the LAN, quit OBS Blade Remote on the PC,
+  Set Up Remote Access -> hint + link at ~6 s, Cancel still there; start
+  OBS Blade Remote while waiting -> hint goes, pairs; Turn Off, set up
+  again with it running -> pairs with no hint flashing; tap the link ->
+  page opens, pairing keeps waiting behind it.
 
 ## 2026-11-20 - Relay 0.0.11: why bridges reconnect, pairings that went nowhere
 

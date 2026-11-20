@@ -16,8 +16,10 @@ home: `ssh macbook` from the NAS falls back to Tailscale (it-env
 `docs/machines/macbook.md`).
 
 **Unreleased on master (next app version, not worth a 4.3.1 alone):**
-`f8534538` quick retries after a relay restart. History: changelog
-2026-11-15.
+`f8534538` quick retries after a relay restart (changelog 2026-11-15);
+`615b25df` pairing wait hint after 5 s (changelog 2026-11-20) - **not on
+the dogfood device yet** (MacBook unreachable over Tailscale 2026-11-20),
+device check list in that entry.
 
 **Watch (4.3.0 = first public remote access):** crash reports + reviews;
 relay traffic (`tool/remote_relay/relay-report.sh`; NAS timers
