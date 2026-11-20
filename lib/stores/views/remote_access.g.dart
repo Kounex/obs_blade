@@ -45,6 +45,24 @@ mixin _$RemoteAccessStore on _RemoteAccessStore, Store {
     });
   }
 
+  late final _$waitHintAtom = Atom(
+    name: '_RemoteAccessStore.waitHint',
+    context: context,
+  );
+
+  @override
+  RemotePairingFailure? get waitHint {
+    _$waitHintAtom.reportRead();
+    return super.waitHint;
+  }
+
+  @override
+  set waitHint(RemotePairingFailure? value) {
+    _$waitHintAtom.reportWrite(value, super.waitHint, () {
+      super.waitHint = value;
+    });
+  }
+
   late final _$codeAtom = Atom(
     name: '_RemoteAccessStore.code',
     context: context,
@@ -201,6 +219,7 @@ mixin _$RemoteAccessStore on _RemoteAccessStore, Store {
     return '''
 phase: ${phase},
 failure: ${failure},
+waitHint: ${waitHint},
 code: ${code},
 info: ${info},
 infoLoading: ${infoLoading},

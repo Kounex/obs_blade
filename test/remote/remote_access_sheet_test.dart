@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/app.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/stores/pro_store.dart';
@@ -17,6 +18,7 @@ import 'package:obs_blade/types/enums/hive_keys.dart';
 import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/utils/remote/remote_relay_client.dart';
+import 'package:obs_blade/views/dashboard/widgets/remote_access/remote_access_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/status_app_bar/general_actions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -262,5 +264,56 @@ void main() {
     await _settle(tester);
     expect(renames, ['Work iPhone']);
     expect(find.text('Rename Device'), findsNothing);
+  });
+
+  /// Relay log 2026-11-17: Pro users waited out (or closed) a pairing no PC
+  /// took, the spinner never said why. The hint shows while still waiting.
+  testWidgets('a slow pairing says what is missing, with the download link', (
+    tester,
+  ) async {
+    final store = RemoteAccessStore(relay: RemoteRelayClient(client: _relay()));
+    runInAction(() {
+      store.phase = RemotePairingPhase.waitingForBridge;
+      store.code = 'K7F3Q9XM';
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: App.buildTheme(Hive.box(HiveKeys.Settings.name)),
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RemoteAccessSheet(
+              connection: Connection('192.168.1.20', 4455),
+              saved: true,
+              isPro: true,
+              viaRemote: false,
+              store: store,
+              deviceName: 'iPhone',
+              platform: 'ios',
+              onGetPro: () {},
+              onSaveConnection: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await _settle(tester);
+    final Finder link = find.bySemanticsLabel('Download OBS Blade Remote');
+    expect(find.text('Waiting for OBS Blade Remote on your PC…'), findsOne);
+    expect(link, findsNothing, reason: 'no hint before it took too long');
+
+    for (final hint in [
+      RemotePairingFailure.noBridge,
+      RemotePairingFailure.noConfirmation,
+    ]) {
+      runInAction(() => store.waitHint = hint);
+      await _settle(tester);
+      expect(find.text(remotePairingWaitHintCopy(hint)!), findsOne);
+      expect(link, findsOne);
+      expect(find.text('Cancel'), findsOne, reason: 'still waiting');
+    }
+
+    runInAction(() => store.waitHint = null);
+    await _settle(tester);
+    expect(link, findsNothing);
   });
 }

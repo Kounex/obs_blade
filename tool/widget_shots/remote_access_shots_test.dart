@@ -203,6 +203,23 @@ void main() {
     });
   });
 
+  testWidgets('waiting too long: what is missing on the PC', (tester) async {
+    for (final hint in [
+      RemotePairingFailure.noBridge,
+      RemotePairingFailure.noConfirmation,
+    ]) {
+      await all(tester, 'remote_waiting_hint_${hint.name}', () {
+        final s = store();
+        runInAction(() {
+          s.phase = RemotePairingPhase.waitingForBridge;
+          s.code = 'K7F3Q9XM';
+          s.waitHint = hint;
+        });
+        return sheet(s, connection());
+      });
+    }
+  });
+
   testWidgets('failures', (tester) async {
     for (final failure in [
       RemotePairingFailure.noBridge,

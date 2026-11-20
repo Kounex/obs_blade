@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive_ce/hive.dart';
 import 'package:http/testing.dart';
+import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/stores/views/remote_access.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -22,6 +23,9 @@ class FakeRelay {
   int? createStatus;
   String? createError;
   bool collectGone = false;
+
+  /// Collects fail like a phone without internet (the client throws)
+  bool collectNetworkDown = false;
   int collects = 0;
   final List<String> deleted = [];
   final List<(String, String)> renamed = [];
@@ -52,6 +56,7 @@ class FakeRelay {
     }
     if (path == '/v1/pairings/collect') {
       collects++;
+      if (collectNetworkDown) throw http.ClientException('offline');
       if (collectGone || collected)
         return answer(404, {'error': 'unknown_pairing'});
       if (collects <= redeemAfterPolls)
@@ -140,8 +145,10 @@ void main() {
   RemoteAccessStore store({
     String? appUserId = r'$RCAnonymousID:me',
     String? deviceLabel,
+    Duration hintAfter = const Duration(milliseconds: 40),
   }) => RemoteAccessStore(
     deviceLabel: () async => deviceLabel,
+    hintAfter: hintAfter,
     relay: RemoteRelayClient(
       baseUrl: 'https://relay.example',
       client: relay.client,
@@ -227,6 +234,131 @@ void main() {
     expect(relay.deleted, [
       'd_me',
     ], reason: 'the orphan device is removed at the relay');
+  });
+
+  group('wait hint (a real pairing finishes within a second)', () {
+    /// Every value [RemoteAccessStore.waitHint] took during [run]
+    Future<List<RemotePairingFailure?>> hints(
+      RemoteAccessStore s,
+      Future<void> Function() run,
+    ) async {
+      final seen = <RemotePairingFailure?>[];
+      final dispose = reaction((_) => s.waitHint, seen.add);
+      await run();
+      dispose();
+      return seen;
+    }
+
+    test('a quick pairing never shows one', () async {
+      final s = store();
+      final seen = await hints(
+        s,
+        () => s.pair(
+          Connection('h', 4455),
+          deviceName: 'iPhone',
+          platform: 'ios',
+        ),
+      );
+      expect(s.phase, RemotePairingPhase.paired);
+      expect(seen, isEmpty);
+    });
+
+    test('nothing on the PC takes the code: noBridge while still waiting, '
+        'then the failure', () async {
+      relay
+        ..redeemAfterPolls = 1 << 30
+        ..expiresIn = 1;
+      final s = store();
+      RemotePairingPhase? phaseAtHint;
+      final dispose = reaction((_) => s.waitHint, (hint) {
+        if (hint != null) phaseAtHint = s.phase;
+      });
+      final seen = await hints(
+        s,
+        () => s.pair(
+          Connection('h', 4455),
+          deviceName: 'iPhone',
+          platform: 'ios',
+        ),
+      );
+      dispose();
+      expect(seen, [RemotePairingFailure.noBridge, null]);
+      expect(phaseAtHint, RemotePairingPhase.waitingForBridge);
+      expect(s.failure, RemotePairingFailure.noBridge);
+      expect(s.waitHint, isNull);
+    });
+
+    test('the PC app started late: the hint goes away and it pairs', () async {
+      relay.redeemAfterPolls = 1 << 30;
+      final s = store();
+      final connection = Connection('h', 4455);
+      final seen = <RemotePairingFailure?>[];
+      final dispose = reaction((_) => s.waitHint, (hint) {
+        seen.add(hint);
+        // The user starts OBS Blade Remote after reading the hint
+        if (hint == RemotePairingFailure.noBridge) {
+          relay.redeemAfterPolls = relay.collects;
+        }
+      });
+      await s.pair(connection, deviceName: 'iPhone', platform: 'ios');
+      dispose();
+      expect(seen, [RemotePairingFailure.noBridge, null]);
+      expect(s.phase, RemotePairingPhase.paired);
+      expect(connection.hasRemote, isTrue);
+    });
+
+    test('redeemed but no key back: noConfirmation, counted from the '
+        'redeem', () async {
+      ackAfterSends = null;
+      relay
+        ..redeemAfterPolls = 0
+        ..expiresIn = 1;
+      final s = store();
+      final seen = await hints(
+        s,
+        () => s.pair(
+          Connection('h', 4455),
+          deviceName: 'iPhone',
+          platform: 'ios',
+        ),
+      );
+      expect(seen, [RemotePairingFailure.noConfirmation, null]);
+      expect(s.failure, RemotePairingFailure.noConfirmation);
+    });
+
+    test('relay unreachable: no PC hint (it is not the PC)', () async {
+      relay
+        ..collectNetworkDown = true
+        ..expiresIn = 1;
+      final s = store();
+      final seen = await hints(
+        s,
+        () => s.pair(
+          Connection('h', 4455),
+          deviceName: 'iPhone',
+          platform: 'ios',
+        ),
+      );
+      expect(seen, isEmpty);
+      expect(relay.collects, greaterThan(3));
+    });
+
+    test('cancel clears it', () async {
+      relay.redeemAfterPolls = 1 << 30;
+      final s = store();
+      final running = s.pair(
+        Connection('h', 4455),
+        deviceName: 'iPhone',
+        platform: 'ios',
+      );
+      while (s.waitHint == null) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      s.cancel();
+      await running;
+      expect(s.waitHint, isNull);
+      expect(s.phase, RemotePairingPhase.idle);
+    });
   });
 
   test('refusals map to their failure', () async {

@@ -162,8 +162,12 @@ class _RemoteAccessSheetState extends State<RemoteAccessSheet> {
         );
       }
       return switch (store.phase) {
-        RemotePairingPhase.starting || RemotePairingPhase.waitingForBridge =>
-          _Waiting(code: store.code, onCancel: store.cancel),
+        RemotePairingPhase.starting ||
+        RemotePairingPhase.waitingForBridge => _Waiting(
+          code: store.code,
+          hint: store.waitHint,
+          onCancel: store.cancel,
+        ),
         RemotePairingPhase.failed => _Failed(
           failure: store.failure!,
           onRetry: this._pair,
@@ -354,9 +358,17 @@ class _SetUp extends StatelessWidget {
 
 class _Waiting extends StatelessWidget {
   final String? code;
+
+  /// What's probably missing on the PC, once the wait took longer than a
+  /// real pairing does ([RemoteAccessStore.waitHint])
+  final RemotePairingFailure? hint;
   final VoidCallback onCancel;
 
-  const _Waiting({required this.code, required this.onCancel});
+  const _Waiting({
+    required this.code,
+    required this.hint,
+    required this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -384,6 +396,15 @@ class _Waiting extends StatelessWidget {
                     'it goes to the PC through OBS, nothing to type.',
           style: _secondary(context),
         ),
+        // Grows in instead of pushing Cancel away under a finger
+        AnimatedSize(
+          duration: AppMotion.medium,
+          curve: AppMotion.standard,
+          alignment: Alignment.topCenter,
+          child: this.hint == null
+              ? const SizedBox(width: double.infinity)
+              : _WaitHint(hint: this.hint!),
+        ),
         const SizedBox(height: AppSpacing.lg),
         SizedBox(
           width: double.infinity,
@@ -394,6 +415,62 @@ class _Waiting extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Copy while a pairing still waits but takes longer than a real one
+/// ([RemoteAccessStore.waitHint]); null for anything else.
+String? remotePairingWaitHintCopy(RemotePairingFailure hint) => switch (hint) {
+  RemotePairingFailure.noBridge =>
+    'Nothing on your PC has answered yet. OBS Blade Remote needs to be '
+        'installed and running on the PC with OBS - the app, or the OBS '
+        'plugin.',
+  RemotePairingFailure.noConfirmation =>
+    'Your PC answered but hasn\'t confirmed yet. If it stays like this, '
+        'update OBS Blade Remote on the PC to the latest version.',
+  _ => null,
+};
+
+class _WaitHint extends StatelessWidget {
+  final RemotePairingFailure hint;
+
+  const _WaitHint({required this.hint});
+
+  @override
+  Widget build(BuildContext context) {
+    final String? text = remotePairingWaitHintCopy(this.hint);
+    if (text == null) return const SizedBox(width: double.infinity);
+    final TextStyle style = _secondary(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Announced when it appears: the screen changes without a tap
+          Semantics(
+            liveRegion: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 2.0),
+                  child: Icon(
+                    CupertinoIcons.exclamationmark_triangle_fill,
+                    size: 16.0,
+                    color: Theme.of(
+                      context,
+                    ).extension<AppStatusColors>()!.warning,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: Text(text, style: style)),
+              ],
+            ),
+          ),
+          const _DownloadLink(),
+        ],
+      ),
     );
   }
 }

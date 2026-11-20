@@ -38,6 +38,11 @@ enum RemotePairingFailure {
   noConfirmation,
 }
 
+/// How long a pairing waits for the PC before [RemoteAccessStore.waitHint]
+/// says what's probably missing (the wait itself goes on until the code
+/// expires: a PC app still starting can take it late).
+const Duration kRemotePairHintAfter = Duration(seconds: 5);
+
 /// Hands the pairing code and this device's end-to-end key (base64) to the
 /// bridge through OBS - repeated until the bridge's ack arrives.
 typedef RemoteCodeSender = Future<void> Function(String code, String appKey);
@@ -72,6 +77,7 @@ abstract class _RemoteAccessStore with Store {
   final RemotePairAcks _acks;
   final Duration _pollInterval;
   final Duration _resendInterval;
+  final Duration _hintAfter;
 
   /// The model / device name sent at pairing (null: the sheet's generic
   /// label)
@@ -87,6 +93,7 @@ abstract class _RemoteAccessStore with Store {
     RemotePairAcks? acks,
     Duration pollInterval = const Duration(seconds: 2),
     Duration resendInterval = const Duration(seconds: 2),
+    Duration hintAfter = kRemotePairHintAfter,
     Future<String?> Function()? deviceLabel,
   }) : _deviceLabel = deviceLabel ?? currentDeviceLabel,
        _relay = relay ?? RemoteRelayClient(),
@@ -94,13 +101,21 @@ abstract class _RemoteAccessStore with Store {
        _sendCode = sendCode ?? sendPairCodeThroughObs,
        _acks = acks ?? pairAcksThroughObs,
        _pollInterval = pollInterval,
-       _resendInterval = resendInterval;
+       _resendInterval = resendInterval,
+       _hintAfter = hintAfter;
 
   @observable
   RemotePairingPhase phase = RemotePairingPhase.idle;
 
   @observable
   RemotePairingFailure? failure;
+
+  /// While still waiting: what is probably missing, before the code runs
+  /// out - [RemotePairingFailure.noBridge] (nothing on the PC took the
+  /// code) or [RemotePairingFailure.noConfirmation] (it did, its key
+  /// didn't come back). Null otherwise.
+  @observable
+  RemotePairingFailure? waitHint;
 
   /// Shown while waiting, so the user can match it with the PC's log
   @observable
@@ -121,6 +136,7 @@ abstract class _RemoteAccessStore with Store {
   @action
   void cancel() {
     _generation++;
+    this.waitHint = null;
     if (this.phase == RemotePairingPhase.starting ||
         this.phase == RemotePairingPhase.waitingForBridge) {
       this.phase = RemotePairingPhase.idle;
@@ -139,6 +155,7 @@ abstract class _RemoteAccessStore with Store {
     final int generation = ++_generation;
     this.phase = RemotePairingPhase.starting;
     this.failure = null;
+    this.waitHint = null;
     this.code = null;
 
     final String? appUserId = await _appUserId();
@@ -178,8 +195,11 @@ abstract class _RemoteAccessStore with Store {
       }
     });
 
-    final DateTime deadline = DateTime.now().add(ticket.expiresIn);
+    final DateTime waitStarted = DateTime.now();
+    final DateTime deadline = waitStarted.add(ticket.expiresIn);
     RemotePairing? collected;
+    DateTime? collectedAt;
+    bool collectFailed = false;
     DateTime? lastSent;
     try {
       while (generation == _generation && DateTime.now().isBefore(deadline)) {
@@ -196,8 +216,11 @@ abstract class _RemoteAccessStore with Store {
         if (collected == null) {
           try {
             collected = await _relay.collectPairing(ticket.pairingId);
+            collectFailed = false;
+            if (collected != null) collectedAt = DateTime.now();
           } on RemoteRelayException catch (e) {
             if (generation != _generation) return;
+            collectFailed = e.isNetwork;
             if (!e.isNetwork) {
               // Expired (404) or refused: no point in polling on
               GeneralHelper.logFailure('Remote access: pairing ended', e);
@@ -214,7 +237,10 @@ abstract class _RemoteAccessStore with Store {
         final String? key = bridgeKey;
         if (pairing != null && key != null) {
           _store(connection, pairing, base64Encode(appKey.privateKey), key);
-          runInAction(() => this.phase = RemotePairingPhase.paired);
+          runInAction(() {
+            this.waitHint = null;
+            this.phase = RemotePairingPhase.paired;
+          });
           GeneralHelper.advLog(
             'Remote access: paired with ${pairing.bridgeName} '
             '(${pairing.bridgeKind}), end-to-end encrypted',
@@ -223,6 +249,13 @@ abstract class _RemoteAccessStore with Store {
           unawaited(this.refresh(connection));
           return;
         }
+        final RemotePairingFailure? hint = _waitHint(
+          now: DateTime.now(),
+          waitStarted: waitStarted,
+          collectedAt: collectedAt,
+          collectFailed: collectFailed,
+        );
+        if (hint != this.waitHint) runInAction(() => this.waitHint = hint);
         await Future<void>.delayed(_pollInterval);
       }
     } finally {
@@ -249,6 +282,27 @@ abstract class _RemoteAccessStore with Store {
       'no bridge redeemed the code before it expired',
     );
     _fail(RemotePairingFailure.noBridge);
+  }
+
+  /// Real pairings finish within a second (redeem 0-1 s after the code,
+  /// relay log 2026-11-13..20; the ack follows the redeem), so a few
+  /// seconds without either means something is missing on the PC. Not
+  /// while the relay itself can't be reached: that's not the PC.
+  RemotePairingFailure? _waitHint({
+    required DateTime now,
+    required DateTime waitStarted,
+    required DateTime? collectedAt,
+    required bool collectFailed,
+  }) {
+    if (collectedAt != null) {
+      return now.difference(collectedAt) >= _hintAfter
+          ? RemotePairingFailure.noConfirmation
+          : null;
+    }
+    if (collectFailed) return null;
+    return now.difference(waitStarted) >= _hintAfter
+        ? RemotePairingFailure.noBridge
+        : null;
   }
 
   static String _normalizedCode(String code) =>
@@ -285,6 +339,7 @@ abstract class _RemoteAccessStore with Store {
   @action
   void _fail(RemotePairingFailure failure) {
     this.failure = failure;
+    this.waitHint = null;
     this.phase = RemotePairingPhase.failed;
     this.code = null;
   }
