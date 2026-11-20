@@ -147,4 +147,12 @@ quadlet; `/etc/remote-relay.env` (root, 0600) holds `RC_PROJECT_ID`,
 `RC_API_KEY` (RevenueCat v2 secret key with read access to customer
 information and project configuration), optionally
 `RC_PRO_ENTITLEMENT_ID`, `RELAY_PRO_ALLOW`, `RELAY_MIN_BRIDGE_VERSION`;
-data in `/var/lib/remote-relay` owned by uid 65532.
+data in `/var/lib/remote-relay` owned by uid 65532. New images roll out
+through the fleet board's updater (patches on its own, or "Update").
+
+Traffic: `./relay-report.sh [--since "YYYY-MM-DD HH:MM"] [--notify]` (from
+the NAS, read-only over `ssh hetzner-vps`) sums up the journal: bridge link
+ends by reason / how long they held / minute past the hour, phone sessions
+and their end codes, pairings and the ones that expired without a bridge.
+The log has no tokens and no traffic content; bridge ids appear as a
+10-character prefix.

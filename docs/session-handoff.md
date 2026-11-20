@@ -20,7 +20,9 @@ home: `ssh macbook` from the NAS falls back to Tailscale (it-env
 2026-11-15.
 
 **Watch (4.3.0 = first public remote access):** crash reports + reviews;
-relay load and logs on the VPS (`journalctl -u remote-relay`); Pro
+relay traffic (`tool/remote_relay/relay-report.sh`; NAS timers
+`relay-report-2026-11-22` / `-27` push it at 13:00 - first real use and
+why the only live bridge, the user's PC, reconnects 30-100x a day); Pro
 conversions; Android 120 Hz and Bars & Sheets (build 2 had no dogfood
 install, build 4 was tested by the user). Kick's web client prefers
 Centrifugo - if Pusher stops being offered, that's the next transport

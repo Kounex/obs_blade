@@ -4,6 +4,25 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-20 - Relay 0.0.11: why bridges reconnect, pairings that went nowhere
+
+- Checked relay use since 4.3.0 (11-16 -> 11-20): no phone session, no
+  new bridge. Two pairings from Pro users on 11-17, neither code reached a
+  PC (no redeem): one polled the full 2 min, one stopped after ~10 s
+  (closing the sheet cancels silently). The only live bridge (the user's
+  PC, standalone 0.4.0) reconnected 30-100x a day, often around :03, and
+  the relay didn't log why.
+- **Relay 0.0.11** (deployed through the fleet board's updater): one line
+  per bridge link end (close code / replaced / unpaired / aiohttp error,
+  how long it held, seconds quiet before, sessions dropped) and one per
+  expired pairing (no bridge redeemed / app never collected; also the ones
+  `create_pairing` cleans up inline). 0.0.10 was Dependabot's Python bump.
+- `tool/remote_relay/relay-report.sh` sums the journal up; NAS transient
+  timers `relay-report-2026-11-22` and `-27` (13:00) push it via ntfy.
+- App: the pairing failure copy exists ("OBS Blade Remote didn't answer
+  ..." + download link) but only after the code's full 2 min; nothing
+  during the wait. Proposed an earlier hint, not built yet.
+
 ## 2026-11-16 - 4.3.0 released (build 2026111304)
 
 - **iOS:** approved, `release publish ios` -> `READY_FOR_SALE` (manual
