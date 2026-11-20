@@ -35,7 +35,8 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   revoke the old one. Also check the RevenueCat dashboard has no ad /
   attribution integrations.
 - **`/code-review high` not run yet** on the backend restart work
-  (`336562a8..fa2ca8fe`), the bridge quick retries (obs-blade-remote
+  (`336562a8..fa2ca8fe`), the relay link-end / pairing-expiry log
+  (`dd18aa11`, relay 0.0.11), the bridge quick retries (obs-blade-remote
   `c9bdcec`, released as 0.4.1) and the 30 s relay -> LAN retry
   (`54c885a2`, in 4.3.0).
 - **Bridge state file, two processes:** plugin and standalone ship since
@@ -52,7 +53,7 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   for invisible restarts.
 
 **Backend facts:** relay `https://relay.obs-blade.com` (VPS Quadlet
-`remote-relay` 0.0.9, `/etc/remote-relay.env`, RevenueCat project
+`remote-relay` 0.0.11 (0.0.12 = same code, the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat project
 `proja0a254d6`, `pro` = `entl2dd6e8fb75`); kick-auth 1.0.5 / kick-events
 1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
 backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer

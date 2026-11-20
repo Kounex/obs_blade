@@ -19,6 +19,15 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   `create_pairing` cleans up inline). 0.0.10 was Dependabot's Python bump.
 - `tool/remote_relay/relay-report.sh` sums the journal up; NAS transient
   timers `relay-report-2026-11-22` and `-27` (13:00) push it via ntfy.
+  Deploy went through the updater's inbox (check, then update to 0.0.11);
+  no bridge was connected at the restart, so the new lines aren't seen
+  live yet.
+- **0.0.12** is the same relay code: the script sat in the image folder
+  and triggered a build; its tag push was refused (the workflow commit
+  that now ignores `*.sh` landed on master mid-build), tag
+  `remote-relay-v0.0.12` pushed by hand on `004a2703`.
+- Measured: all 13 successful pairings since 11-13 were redeemed within
+  1 s of the code being created.
 - App: the pairing failure copy exists ("OBS Blade Remote didn't answer
   ..." + download link) but only after the code's full 2 min; nothing
   during the wait. Proposed an earlier hint, not built yet.
