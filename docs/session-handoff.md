@@ -27,7 +27,10 @@ dogfood device either.
 relay traffic (`tool/remote_relay/relay-report.sh`; NAS timer
 `relay-report-2026-11-27` pushes it at 13:00). First external bridge
 since 11-20: 5 connects, all "OBS not running", no relay session yet -
-relay 0.0.13's new lines say whether Start OBS works for it. The 30-100
+relay 0.0.14's new lines say whether Start OBS works for it and whether
+its 4901s come with the bridge reporting OBS running (then the
+standalone's process check misses that OBS: obs-blade-remote
+`standalone/src/obs_process.cpp`, `core/src/session.rs` refuses on it). The 30-100
 reconnects a day are the maintainer's MacBook (likely sleep wakes), not the PC;
 keepalive timeouts' "quiet 0s" is still unexplained (changelog
 2026-11-22); Pro
@@ -45,8 +48,9 @@ Centrifugo - if Pusher stops being offered, that's the next transport
 - **`/code-review high` not run yet** on the backend restart work
   (`336562a8..fa2ca8fe`), the relay link-end / pairing-expiry log
   (`dd18aa11`, relay 0.0.11), the bridge quick retries (obs-blade-remote
-  `c9bdcec`, released as 0.4.1) and the 30 s relay -> LAN retry
-  (`54c885a2`, in 4.3.0).
+  `c9bdcec`, released as 0.4.1), the 30 s relay -> LAN retry
+  (`54c885a2`, in 4.3.0), and relay 0.0.13/0.0.14 + the Start OBS wait
+  (`1bee9a99..`, 2026-11-22).
 - **Bridge state file, two processes:** plugin and standalone ship since
   OBS Blade Remote 0.4.0, and `Shared::update` (`core/src/shared.rs`)
   still saves its in-memory copy without reloading `bridge.json` first.
@@ -61,7 +65,7 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   for invisible restarts.
 
 **Backend facts:** relay `https://relay.obs-blade.com` (VPS Quadlet
-`remote-relay` 0.0.12 live, 0.0.13 published 2026-11-22 (diagnostic log lines; the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat project
+`remote-relay` 0.0.12 live, 0.0.14 published 2026-11-22 (diagnostic log lines; the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat project
 `proja0a254d6`, `pro` = `entl2dd6e8fb75`); kick-auth 1.0.5 / kick-events
 1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
 backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer

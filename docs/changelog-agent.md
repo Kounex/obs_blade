@@ -4,15 +4,22 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
-## 2026-11-22 - Relay traffic 11-20 -> 11-22: Start OBS wait, relay 0.0.13, report fixes
+## 2026-11-22 - Relay traffic 11-20 -> 11-22: Start OBS wait, relay 0.0.13/0.0.14, report fixes
 
 - Report reading: the first external bridge (standalone 0.4.1, paired
   from iOS 11-20) had 5 relay connects, all 4901 (OBS not running) after
   0 s, each followed by Start OBS -> 202, and no relay session since.
   After each Start OBS the app read the bridge once at +2 s, then nothing,
-  in 3 of 5 one more read minutes later: the wait's timers paused with
-  the app hidden, and the first read after the return ended it ("OBS
-  didn't start" as the user came back). Whether OBS really started wasn't
+  in 3 of 5 one more read minutes later - consistent with the wait's
+  timers pausing while the app was hidden and the first read after the
+  return ending it. Not proven: the 03:05 attempt read twice and then the
+  phone reconnected 11 s later (got 4901 again), which also fits the
+  wait returning true. A second candidate is on the bridge: a standalone
+  answers 4901 from its OS process check (`obs_process::running()`,
+  `obs64.exe` / `pgrep -ix obs`) without trying OBS, while the relay's
+  "running" comes from its OBS websocket - if the check misses this
+  user's OBS, every connect is 4901 although OBS runs (pairing on the LAN
+  worked 9 min before the first 4901). Whether OBS really started isn't
   in the log. The other bridge, the maintainer's MacBook (0.4.0), made 18
   of 20 link ends: 46-47 s / 71-72 s links about hourly, keepalive
   timeouts (30 s without a frame + 15 s for the pong) - looks like sleep
@@ -22,17 +29,21 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   toward its 60 s, doesn't poll while hidden, and checks at once on
   return (`AppVisibility`, injectable; default `AppLifecycleListener`
   onHide / onShow). The progress overlay stays until the wait ends instead
-  of its own 60 s timer; failure copy "Couldn't confirm OBS started on
-  <PC>." (the PC got the request; OBS may still load). Peer consult
+  of its own 60 s timer and closes on every exit (an unexpected error
+  too); failure copy "Couldn't confirm OBS started on <PC>." (OBS may
+  still load, or wait on a dialog on the PC). Peer consult
   (Codex, Threadwell) picked the lifecycle-scoped wait over a poll-gap
   heuristic. Store tests: foreground success / timeout, hidden (no reads,
   no time used) -> back -> failed read + still loading -> running,
   refused request.
-- **Relay 0.0.13** (published, rolls out with the fleet board's 04:00
-  patch run): logs each bridge's OBS state changes (real changes only,
-  also across reconnects), Start OBS asked / "running N s after" / "not
-  running 120 s later", phones refused before a session with their code,
-  and the last frame's kind on every link end. Open question it answers:
+- **Relay 0.0.13 + 0.0.14** (0.0.14 adds the session-end OBS state;
+  published, rolls out with the fleet board's 04:00 patch run): logs each
+  bridge's OBS state changes (real changes only, also across reconnects),
+  Start OBS asked / "running N s after" / "no OBS start seen 120 s
+  later", phones refused before a session with their code,
+  the last frame's kind on every link end, and each session end with the
+  bridge's own OBS state (the report counts "4901 while the bridge says
+  running" - the process-check candidate above). Open question it answers:
   every keepalive timeout so far said "quiet 0s", which can't be (aiohttp
   3.14 restarts the keepalive on any frame) and doesn't reproduce in
   tests - the next report shows quiet + last frame for them.
