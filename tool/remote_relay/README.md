@@ -151,8 +151,12 @@ data in `/var/lib/remote-relay` owned by uid 65532. New images roll out
 through the fleet board's updater (patches at its 04:00 run, or "Update").
 
 Traffic: `./relay-report.sh [--since "YYYY-MM-DD HH:MM"] [--notify]` (from
-the NAS, read-only over `ssh hetzner-vps`) sums up the journal: bridge link
-ends by reason / how long they held / minute past the hour, phone sessions
-and their end codes, pairings and the ones that expired without a bridge.
+the NAS, read-only over `ssh hetzner-vps`) sums up the journal: relay
+restarts, bridge link ends by reason / how long they held / how quiet and
+after which frame / minute past the hour, each bridge's OBS state changes
+and Start OBS outcomes (how long OBS took, or still not running after
+2 min), phone sessions and their end codes, phones refused before a
+session (bridge offline, unpaired, ...), pairings and the ones that
+expired without a bridge.
 The log has no tokens and no traffic content (the access log does carry
 full bridge / device ids in request paths).
