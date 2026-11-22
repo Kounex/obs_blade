@@ -47,6 +47,12 @@ Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-ag
   every keepalive timeout so far said "quiet 0s", which can't be (aiohttp
   3.14 restarts the keepalive on any frame) and doesn't reproduce in
   tests - the next report shows quiet + last frame for them.
+- **Bridge 0.4.2** (obs-blade-remote PR 2, its `docs/changelog.md`):
+  the process-check candidate fixed on the bridge side - no early 4901
+  while the bridge's own OBS connection is identified, a warning in the
+  bridge log when the two disagree, no second OBS start for a phone's
+  Start OBS. CI green on all three platforms; not tried on a device (all
+  dev machines unreachable). Helps only once that user installs it.
 - `relay-report.sh`: routes keep their shape with `{id}` (Start OBS was
   "POST /v1/bridges 202"), new sections for OBS / Start OBS / refused
   phones, relay (re)starts from the podman journal.

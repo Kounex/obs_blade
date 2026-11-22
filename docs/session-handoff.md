@@ -29,8 +29,11 @@ relay traffic (`tool/remote_relay/relay-report.sh`; NAS timer
 since 11-20: 5 connects, all "OBS not running", no relay session yet -
 relay 0.0.14's new lines say whether Start OBS works for it and whether
 its 4901s come with the bridge reporting OBS running (then the
-standalone's process check misses that OBS: obs-blade-remote
-`standalone/src/obs_process.cpp`, `core/src/session.rs` refuses on it). The 30-100
+standalone's process check misses that OBS - fixed in obs-blade-remote
+0.4.2, released 2026-11-22: a bridge trusts its live OBS connection; the
+count only fires for bridges on 0.4.1 or older, so that user needs the
+update; a 0.4.2 bridge logs "OBS answers on its WebSocket, but its process
+wasn't found" instead). The 30-100
 reconnects a day are the maintainer's MacBook (likely sleep wakes), not the PC;
 keepalive timeouts' "quiet 0s" is still unexplained (changelog
 2026-11-22); Pro
