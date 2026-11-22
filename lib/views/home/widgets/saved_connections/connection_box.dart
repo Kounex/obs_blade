@@ -19,6 +19,7 @@ import '../../../../stores/pro_store.dart';
 import '../../../../stores/shared/network.dart';
 import '../../../../stores/views/remote_access.dart';
 import '../../../../utils/build_flavor.dart';
+import '../../../../utils/general_helper.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/relative_time.dart';
 import 'edit_dialog.dart';
@@ -103,9 +104,15 @@ class ConnectionBox extends StatelessWidget {
             showDuration: const Duration(hours: 1),
             content: BaseProgressIndicator(text: 'Starting OBS on $pc…'),
           );
-          final bool started = await RemoteAccessStore().startObsAndWait(
-            this.connection,
-          );
+          bool started = false;
+          try {
+            started = await RemoteAccessStore().startObsAndWait(
+              this.connection,
+            );
+          } catch (e) {
+            /// Anything the wait didn't expect still ends the overlay
+            GeneralHelper.logFailure('Remote access: Start OBS wait failed', e);
+          }
           if (started || !context.mounted) {
             await OverlayHandler.closeAnyOverlay();
           }

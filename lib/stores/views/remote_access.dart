@@ -518,8 +518,8 @@ abstract class _RemoteAccessStore with Store {
   /// [timeout] of waiting the user could see: a hidden app (gone to the PC,
   /// phone locked - iOS pauses it) neither polls nor uses the time up, and
   /// checks at once when it's back. The relay log (2026-11-22) showed waits
-  /// that polled once, then nothing until a single late poll that ended
-  /// them - the failure shown right as the user returned.
+  /// that polled once, then nothing until a single late poll - consistent
+  /// with a paused app ending the wait as the user returned (not proven).
   Future<bool> startObsAndWait(
     Connection connection, {
     Duration timeout = const Duration(seconds: 60),
