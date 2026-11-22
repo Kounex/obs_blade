@@ -68,6 +68,7 @@ class FakeRevenueCat:
 
 class RelayCase(AioHTTPTestCase):
     bridge_grace = relay.BRIDGE_GRACE_SECONDS
+    start_obs_watch = relay.START_OBS_WATCH_SECONDS
 
     async def get_application(self):
         self.clock = Clock()
@@ -76,7 +77,12 @@ class RelayCase(AioHTTPTestCase):
         self.rc = FakeRevenueCat(self.clock)
         self.ent = Entitlements(self.rc, "proj1", clock=self.clock)
         return relay.build_app(
-            self.store, self.ent, jobs=False, min_version="0.3.0", bridge_grace=self.bridge_grace
+            self.store,
+            self.ent,
+            jobs=False,
+            min_version="0.3.0",
+            bridge_grace=self.bridge_grace,
+            start_obs_watch=self.start_obs_watch,
         )
 
     async def asyncTearDown(self):
@@ -374,6 +380,7 @@ class SessionTests(RelayCase):
         ends = [line for line in logs.output if ":remote-relay:bridge " in line]
         self.assertEqual(len(ends), 2, logs.output)
         self.assertIn("replaced by a newer connection | quiet", ends[0])
+        self.assertIn("s after hello,", ends[0])
         self.assertIn("sessions dropped 1", ends[0])
         self.assertIn("closed 4000 | quiet", ends[1])
         self.assertIn("sessions dropped 0", ends[1])
@@ -640,9 +647,6 @@ class StoreTests(unittest.TestCase):
             store.close()
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class BridgeHoldTests(RelayCase):
     """A relay restart drops every bridge and phone at once; the phones
@@ -710,3 +714,110 @@ class BridgeHoldTests(RelayCase):
         await relay._stop(self.app)
         self.assertEqual(self.store.bridge(bridge_id).last_seen, self.clock.now)
         self.assertEqual(await self.closed_with(p), 1001)
+
+
+class DiagnosticLogTests(RelayCase):
+    """What the traffic report reads: OBS state changes, Start OBS outcomes,
+    phones turned away, and how quiet a link was before it ended."""
+
+    bridge_grace = 0.0
+    start_obs_watch = 0.3
+
+    async def logged(self, logs, needle, count=1, tries=100):
+        for _ in range(tries):
+            if sum(needle in line for line in logs.output) >= count:
+                return [line for line in logs.output if needle in line]
+            await asyncio.sleep(0.01)
+        self.fail(f"no {needle!r} in {logs.output}")
+
+    async def obs(self, ws, state):
+        await ws.send_str(json.dumps({"type": "obs", "state": state}))
+        await ws.send_str(json.dumps({"type": "devices"}))  # round trip: handled
+        await self.next_json(ws)
+
+    async def test_obs_changes_are_logged_once_across_reconnects(self):
+        bridge_id, bridge_token, _, _ = await self.pair()
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            b = await self.bridge(bridge_token)  # hello: running
+            await self.obs(b, "running")
+            await b.close()
+            b = await self.bridge(bridge_token)  # still running: no line
+            await self.obs(b, "closed")
+            await b.close()
+        lines = [line for line in logs.output if " obs " in line]
+        self.assertEqual(len(lines), 2, logs.output)
+        self.assertIn(f"bridge {bridge_id[:10]} obs ? -> running", lines[0])
+        self.assertIn("obs running -> closed", lines[1])
+
+    async def test_start_obs_logs_how_long_obs_took(self):
+        bridge_id, bridge_token, _, app_token = await self.pair()
+        b = await self.bridge(bridge_token)
+        await self.obs(b, "closed")
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            r = await self.client.post(
+                f"/v1/bridges/{bridge_id}/start-obs", headers={"Authorization": f"Bearer {app_token}"}
+            )
+            self.assertEqual(r.status, 202)
+            self.assertEqual((await self.next_json(b))["type"], "start_obs")
+            await self.obs(b, "running")
+            await asyncio.sleep(self.start_obs_watch + 0.1)
+        self.assertTrue(any(f"bridge {bridge_id[:10]} start_obs asked | obs closed" in line for line in logs.output))
+        self.assertTrue(any("obs closed -> running | 0s after start_obs" in line for line in logs.output), logs.output)
+        self.assertFalse(any("OBS not running" in line for line in logs.output), logs.output)
+        await b.close()
+
+    async def test_start_obs_that_never_runs_is_logged(self):
+        bridge_id, bridge_token, _, app_token = await self.pair()
+        b = await self.bridge(bridge_token)
+        await self.obs(b, "closed")
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            r = await self.client.post(
+                f"/v1/bridges/{bridge_id}/start-obs", headers={"Authorization": f"Bearer {app_token}"}
+            )
+            self.assertEqual(r.status, 202)
+            line = (await self.logged(logs, "start_obs: OBS not running"))[0]
+        self.assertIn(f"bridge {bridge_id[:10]} start_obs: OBS not running 0s later | obs closed", line)
+        self.assertEqual(self.app[relay.KEY_HUB].start_asked, {})
+        await b.close()
+
+    async def test_refused_phones_are_logged(self):
+        bridge_id, _, _, app_token = await self.pair()
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            p = await self.phone(bridge_id, app_token)
+            self.assertEqual(await self.closed_with(p), protocol.BRIDGE_OFFLINE)
+            p = await self.phone(bridge_id, "not-a-token")
+            self.assertEqual(await self.closed_with(p), protocol.UNPAIRED)
+        lines = [line for line in logs.output if "app refused" in line]
+        self.assertIn(f"app refused for bridge {bridge_id[:10]}: {protocol.BRIDGE_OFFLINE} bridge offline", lines[0])
+        self.assertIn(f"app refused for bridge ?: {protocol.UNPAIRED} unpaired", lines[1])
+        self.assertNotIn(app_token, "".join(logs.output))
+
+    async def test_keepalive_timeout_says_how_quiet_and_after_what(self):
+        """A bridge that stops answering: the end line carries the silence
+        before it and the last frame (production said "quiet 0s" on every
+        keepalive timeout, which needs 30 s of silence - this tells which)."""
+        _, bridge_token, _, _ = await self.pair()
+        heartbeat, relay.HEARTBEAT = relay.HEARTBEAT, 1.0
+        try:
+            with self.assertLogs("remote-relay", "INFO") as logs:
+                ws = await self.client.ws_connect(
+                    "/v1/bridge",
+                    autoping=False,  # never answers the relay's ping
+                    headers={
+                        "Authorization": f"Bearer {bridge_token}",
+                        "X-Bridge-Version": "0.3.0",
+                        "X-Bridge-Kind": "standalone",
+                    },
+                )
+                await self.next_json(ws)
+                await ws.send_str(json.dumps({"type": "ping"}))
+                line = (await self.logged(logs, "error TimeoutError", tries=400))[0]
+        finally:
+            relay.HEARTBEAT = heartbeat
+        quiet = int(line.split("| quiet ")[1].split("s after")[0])
+        self.assertGreaterEqual(quiet, 1, line)
+        self.assertIn("s after ping, sessions dropped 0", line)
+        await ws.close()
+
+if __name__ == "__main__":
+    unittest.main()

@@ -57,6 +57,9 @@ TOO_SLOW = 1013
 # attempt, so a PC that really went away costs a retrying phone (4.3.0
 # retries 5x, 3 s apart) these seconds once, not on every attempt.
 BRIDGE_GRACE_SECONDS = 6.0
+# After a phone's Start OBS: how long until the log says OBS still isn't
+# running (the app itself waits 60 s; OBS with many plugins can take 30+)
+START_OBS_WATCH_SECONDS = 120.0
 
 # (limit, window seconds) per client IP
 LIMITS = {
@@ -75,6 +78,7 @@ KEY_TASKS = web.AppKey("tasks", list)
 KEY_HTTP = web.AppKey("http", object)
 KEY_MIN_VERSION = web.AppKey("min_version", str)
 KEY_GRACE = web.AppKey("bridge_grace", float)
+KEY_START_WATCH = web.AppKey("start_obs_watch", float)
 
 
 def version_tuple(text: str) -> tuple[int, int, int]:
@@ -193,6 +197,9 @@ class BridgeLink:
     version: str
     ws: web.WebSocketResponse
     obs_state: str = ""
+    # The last OBS state written to the log (from the store at connect):
+    # a reconnect only logs a state that really changed
+    obs_logged: str = ""
     sessions: dict[int, AppSession] = field(default_factory=dict)
     next_sid: int = 1
     last_status: float = 0.0
@@ -201,6 +208,9 @@ class BridgeLink:
     # For the end-of-link log line
     started: float = field(default_factory=time.monotonic)
     last_frame: float = field(default_factory=time.monotonic)
+    # What that frame was ("data", or a control type like "ping"): checks
+    # "quiet 0s" on keepalive timeouts, which need 30 s of silence
+    last_kind: str = "nothing"
     sessions_dropped: int = 0
 
     def allocate(self) -> int:
@@ -236,6 +246,9 @@ class Hub:
         self.bridges: dict[str, BridgeLink] = {}
         self.by_device: dict[str, AppSession] = {}
         self._waiting: dict[str, set[asyncio.Future]] = defaultdict(set)
+        # bridge id -> when a phone last asked it to start OBS (monotonic),
+        # until OBS runs or the watch gives up
+        self.start_asked: dict[str, float] = {}
 
     async def wait_for_bridge(self, bridge_id: str, timeout: float) -> BridgeLink | None:
         """The bridge's link once it (re)connects, None after [timeout]."""
@@ -509,7 +522,44 @@ async def handle_start_obs(request: web.Request) -> web.Response:
         return _json(409, {"error": "not_supported"})
     if not await link.send_json({"type": "start_obs", "device": device.id}):
         return _json(409, {"error": "bridge_offline"})
+    # Did it work? The bridge reports OBS "running" once it reached OBS's
+    # websocket: logged with the time it took, or a line after the watch.
+    asked = time.monotonic()
+    hub: Hub = request.app[KEY_HUB]
+    hub.start_asked[bridge_id] = asked
+    log.info("bridge %s start_obs asked | obs %s", bridge_id[:10], link.obs_state or "?")
+    _spawn(_watch_start_obs(request.app, bridge_id, asked))
     return _json(202, {"state": "requested"})
+
+
+async def _watch_start_obs(app: web.Application, bridge_id: str, asked: float) -> None:
+    await asyncio.sleep(app[KEY_START_WATCH])
+    hub: Hub = app[KEY_HUB]
+    if hub.start_asked.get(bridge_id) != asked:
+        return  # OBS came up, or a newer request watches now
+    hub.start_asked.pop(bridge_id, None)
+    link = hub.bridges.get(bridge_id)
+    log.info(
+        "bridge %s start_obs: OBS not running %.0fs later | obs %s",
+        bridge_id[:10],
+        time.monotonic() - asked,
+        (link.obs_state or "?") if link else "bridge offline",
+    )
+
+
+def _set_obs(app: web.Application, link: BridgeLink, state: str) -> None:
+    """The bridge's OBS state: kept for the app, logged when it changed."""
+    state = state[:16]
+    link.obs_state = state
+    app[KEY_STORE].set_obs_state(link.bridge_id, state)
+    if state == link.obs_logged:
+        return
+    previous, link.obs_logged = link.obs_logged, state
+    hub: Hub = app[KEY_HUB]
+    note = ""
+    if state == "running" and link.bridge_id in hub.start_asked:
+        note = f" | {time.monotonic() - hub.start_asked.pop(link.bridge_id):.0f}s after start_obs"
+    log.info("bridge %s obs %s -> %s%s", link.bridge_id[:10], previous or "?", state, note)
 
 
 # --- sockets ----------------------------------------------------------------
@@ -527,13 +577,17 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
     await ws.prepare(request)
 
     async def refuse(code: int, reason: str) -> web.WebSocketResponse:
+        # Phones turned away never get a session line: say why here.
+        known = device is not None and device.bridge_id == bridge_id
+        log.info("app refused for bridge %s: %d %s", bridge_id[:10] if known else "?", code, reason)
         await ws.close(code=code, message=reason.encode())
         return ws
 
+    device = None
+    bridge_id = request.query.get("bridge", "")
     if _limited(request, "app"):
         return await refuse(protocol.RATE_LIMITED, "rate limited")
     device = _device_for(request)
-    bridge_id = request.query.get("bridge", "")
     if device is None or device.bridge_id != bridge_id:
         return await refuse(protocol.UNPAIRED, "unpaired")
     app_user_id = request.headers.get("X-RC-App-User-Id", "").strip()[:128] or device.app_user_id
@@ -668,13 +722,11 @@ async def _bridge_control(app: web.Application, link: BridgeLink, text: str) -> 
         )
         obs = message.get("obs")
         if isinstance(obs, str):
-            link.obs_state = obs[:16]
-            store.set_obs_state(link.bridge_id, link.obs_state)
+            _set_obs(app, link, obs)
     elif kind == "obs":
         state = message.get("state")
         if isinstance(state, str):
-            link.obs_state = state[:16]
-            store.set_obs_state(link.bridge_id, link.obs_state)
+            _set_obs(app, link, state)
     elif kind == "status":
         now = time.monotonic()
         status = message.get("status")
@@ -688,8 +740,7 @@ async def _bridge_control(app: web.Application, link: BridgeLink, text: str) -> 
     elif kind == "bye":
         reason = message.get("reason")
         if reason == "obs_exit":
-            link.obs_state = "closed"
-            store.set_obs_state(link.bridge_id, "closed")
+            _set_obs(app, link, "closed")
     elif kind == "ping":
         # The bridge's keepalive: websocket pings don't make it through the
         # Cloudflare tunnel, so it can only tell a live link by an answer
@@ -737,7 +788,7 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
         return ws
 
     previous = hub.bridges.get(bridge.id)
-    link = BridgeLink(bridge.id, kind, version, ws)
+    link = BridgeLink(bridge.id, kind, version, ws, obs_logged=bridge.obs_state)
     hub.bridges[bridge.id] = link
     if previous is not None:
         _drop_link(hub, previous, protocol.BRIDGE_GONE)
@@ -756,7 +807,10 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
     ended = ""
     try:
         async for message in ws:
-            link.last_frame = time.monotonic()
+            if message.type in (aiohttp.WSMsgType.BINARY, aiohttp.WSMsgType.TEXT):
+                # Frames only: an ERROR is how a link ends, not traffic
+                link.last_frame = time.monotonic()
+                link.last_kind = "data" if message.type == aiohttp.WSMsgType.BINARY else _control_kind(message.data)
             if message.type == aiohttp.WSMsgType.BINARY:
                 try:
                     frame_kind, sid, payload = protocol.unpack(message.data)
@@ -802,16 +856,25 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
                 else f"closed {ws.close_code}"
             )
         log.info(
-            "bridge %s (%s %s) end after %.0fs: %s | quiet %.0fs, sessions dropped %d",
+            "bridge %s (%s %s) end after %.0fs: %s | quiet %.0fs after %s, sessions dropped %d",
             bridge.id[:10],
             kind,
             version or "?",
             now - link.started,
             ended,
             now - link.last_frame,
+            link.last_kind,
             link.sessions_dropped,
         )
     return ws
+
+
+def _control_kind(text: str) -> str:
+    try:
+        kind = json.loads(text).get("type")
+    except (ValueError, AttributeError):
+        return "text"
+    return kind[:16] if isinstance(kind, str) else "text"
 
 
 def _drop_link(hub: Hub, link: BridgeLink, code: int) -> None:
@@ -900,6 +963,7 @@ def build_app(
     jobs: bool = True,
     min_version: str = MIN_BRIDGE_VERSION,
     bridge_grace: float = BRIDGE_GRACE_SECONDS,
+    start_obs_watch: float = START_OBS_WATCH_SECONDS,
 ) -> web.Application:
     app = web.Application(client_max_size=64 * 1024)
     app[KEY_STORE] = store
@@ -908,6 +972,7 @@ def build_app(
     app[KEY_LIMITS] = RateLimiter()
     app[KEY_MIN_VERSION] = min_version
     app[KEY_GRACE] = bridge_grace
+    app[KEY_START_WATCH] = start_obs_watch
     app.router.add_post("/v1/pairings", handle_create_pairing)
     app.router.add_post("/v1/pairings/redeem", handle_redeem)
     app.router.add_post("/v1/pairings/collect", handle_collect)
@@ -949,6 +1014,7 @@ def main() -> None:
             allow,
         )
         app = build_app(Store(DB_PATH), ent)
+        log.info("relay %s starting", SERVER_VERSION)
         app[KEY_HTTP] = http
         app.middlewares.append(_access_log)
         return app
