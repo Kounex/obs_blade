@@ -154,8 +154,9 @@ Traffic: `./relay-report.sh [--since "YYYY-MM-DD HH:MM"] [--notify]` (from
 the NAS, read-only over `ssh hetzner-vps`) sums up the journal: relay
 restarts, bridge link ends by reason / how long they held / how quiet and
 after which frame / minute past the hour, each bridge's OBS state changes
-and Start OBS outcomes (how long OBS took, or still not running after
-2 min), phone sessions and their end codes, phones refused before a
+and Start OBS outcomes (how long OBS took, or no start seen after 2 min),
+phone sessions told "OBS not running" while the bridge itself reports OBS
+running, phone sessions and their end codes, phones refused before a
 session (bridge offline, unpaired, ...), pairings and the ones that
 expired without a bridge.
 The log has no tokens and no traffic content (the access log does carry

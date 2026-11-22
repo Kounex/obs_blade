@@ -523,7 +523,8 @@ async def handle_start_obs(request: web.Request) -> web.Response:
     if not await link.send_json({"type": "start_obs", "device": device.id}):
         return _json(409, {"error": "bridge_offline"})
     # Did it work? The bridge reports OBS "running" once it reached OBS's
-    # websocket: logged with the time it took, or a line after the watch.
+    # websocket: logged with the time it took, or a line after the watch
+    # (also when the bridge said "running" all along: nothing changed).
     asked = time.monotonic()
     hub: Hub = request.app[KEY_HUB]
     hub.start_asked[bridge_id] = asked
@@ -540,7 +541,7 @@ async def _watch_start_obs(app: web.Application, bridge_id: str, asked: float) -
     hub.start_asked.pop(bridge_id, None)
     link = hub.bridges.get(bridge_id)
     log.info(
-        "bridge %s start_obs: OBS not running %.0fs later | obs %s",
+        "bridge %s start_obs: no OBS start seen %.0fs later | obs %s",
         bridge_id[:10],
         time.monotonic() - asked,
         (link.obs_state or "?") if link else "bridge offline",
@@ -679,14 +680,20 @@ async def handle_app_socket(request: web.Request) -> web.WebSocketResponse:
         # Who ended it and how it went: a phone's close code (1001 = its
         # ping timed out, 4998 = its data watchdog, 1006 = the line
         # dropped) or the relay's reason. No content - frame sizes only.
+        # The bridge's own OBS state next to its answer: "obs not running"
+        # while it reports OBS running means its process check and its
+        # OBS connection disagree (a standalone refuses on the first)
         log.info(
-            "session %s end after %.0fs: %s | down %d KB, up %d KB, peak queue %d KB",
+            "session %s end after %.0fs: %s | down %d KB, up %d KB, peak queue %d KB"
+            " | bridge %s obs %s",
             session.sid,
             time.monotonic() - session.started,
             session.end_reason or f"phone {ws.close_code}",
             session.bytes_down // 1024,
             session.bytes_up // 1024,
             session.peak_queued // 1024,
+            link.bridge_id[:10],
+            link.obs_state or "?",
         )
     return ws
 

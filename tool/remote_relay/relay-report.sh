@@ -8,7 +8,7 @@
 # --notify pushes the summary (NAS ntfy helper). The bridge-end and expired-
 # pairing lines exist since relay 0.0.11; OBS state changes, Start OBS
 # outcomes, refused phones and the last frame before a link end since
-# 0.0.13; the rest since 0.0.7.
+# 0.0.13 (the session-end OBS state since 0.0.14); the rest since 0.0.7.
 set -euo pipefail
 
 since="2026-11-20 00:49:30"
@@ -33,9 +33,9 @@ lines = sys.stdin.read().splitlines()
 bridge_re = re.compile(r"bridge (\S+) \((\S+) (\S+)\) end after (\d+)s: (.*?) \| quiet (\d+)s(?: after (\S+))?, sessions dropped (\d+)")
 obs_re = re.compile(r"bridge (\S+) obs (\S+) -> (\S+)(?: \| (\d+)s after start_obs)?$")
 asked_re = re.compile(r"bridge (\S+) start_obs asked \| obs (\S+)$")
-gave_up_re = re.compile(r"bridge (\S+) start_obs: OBS not running (\d+)s later \| obs (.*)$")
+gave_up_re = re.compile(r"bridge (\S+) start_obs: no OBS start seen (\d+)s later \| obs (.*)$")
 refused_re = re.compile(r"app refused for bridge (\S+): (\d+) (.*)$")
-session_re = re.compile(r"session \d+ end after (\d+)s: (.*?) \| down (\d+) KB, up (\d+) KB")
+session_re = re.compile(r"session \d+ end after (\d+)s: (.*?) \| down (\d+) KB, up (\d+) KB.*?(?:\| bridge (\S+) obs (\S+))?$")
 expired_re = re.compile(r"pairing from (\S+) expired: (.*?) \(created")
 started_re = re.compile(r"container start .*image=ghcr\.io/kounex/remote-relay:([^,]+),")
 access_re = re.compile(r"INFO (GET|POST|PATCH|DELETE) (/v1/\S+) (\d{3})$")
@@ -45,6 +45,7 @@ versions = {}
 obs_changes, starts = defaultdict(list), defaultdict(list)
 sessions, expired, refused, restarts, problems = [], [], [], [], []
 calls = Counter()
+mismatch = Counter()
 for line in lines:
     if m := bridge_re.search(line):
         bridges[m[1]].append((int(m[4]), m[5], int(m[6]), m[7], int(m[8]), line[11:16]))
@@ -56,11 +57,14 @@ for line in lines:
     elif m := asked_re.search(line):
         starts[m[1]].append(f"asked (obs {m[2]})")
     elif m := gave_up_re.search(line):
-        starts[m[1]].append(f"not running {m[2]}s later (obs {m[3]})")
+        starts[m[1]].append(f"no OBS start seen {m[2]}s later (obs {m[3]})")
     elif m := refused_re.search(line):
         refused.append(f"{m[2]} {m[3]}")
     elif m := session_re.search(line):
         sessions.append((int(m[1]), m[2], int(m[3]), int(m[4])))
+        if m[5] and "obs not running" in m[2] and m[6] == "running":
+            # its process check said no while its OBS connection is up
+            mismatch[m[5]] += 1
     elif m := expired_re.search(line):
         expired.append((m[1], m[2]))
     elif m := started_re.search(line):
@@ -89,7 +93,7 @@ since = os.environ["SINCE"]
 out = [f"Relay since {since} UTC"]
 if restarts:
     out.append(f"Relay (re)starts: {len(restarts)} (" + "; ".join(restarts) + ")")
-ids = sorted(set(bridges) | set(obs_changes) | set(starts), key=lambda b: -len(bridges.get(b, [])))
+ids = sorted(set(bridges) | set(obs_changes) | set(starts) | set(mismatch), key=lambda b: -len(bridges.get(b, [])))
 if not ids:
     out.append("Bridges: no link ended")
 for bid in ids:
@@ -113,6 +117,8 @@ for bid in ids:
         out.append("  OBS: " + counted(obs_changes[bid]))
     if starts.get(bid):
         out.append("  Start OBS: " + "; ".join(starts[bid]))
+    if mismatch.get(bid):
+        out.append(f"  phones told OBS not running while the bridge reports it running: {mismatch[bid]}")
 out.append(f"Phone sessions: {len(sessions)}" + (
     f", total {span(sum(s[0] for s in sessions))}, down {sum(s[2] for s in sessions) // 1024} MB, up {sum(s[3] for s in sessions) // 1024} MB; ends: "
     + ", ".join(f"{r} x{n}" for r, n in Counter(s[1] for s in sessions).most_common(5)) if sessions else ""))

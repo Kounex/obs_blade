@@ -763,7 +763,7 @@ class DiagnosticLogTests(RelayCase):
             await asyncio.sleep(self.start_obs_watch + 0.1)
         self.assertTrue(any(f"bridge {bridge_id[:10]} start_obs asked | obs closed" in line for line in logs.output))
         self.assertTrue(any("obs closed -> running | 0s after start_obs" in line for line in logs.output), logs.output)
-        self.assertFalse(any("OBS not running" in line for line in logs.output), logs.output)
+        self.assertFalse(any("no OBS start seen" in line for line in logs.output), logs.output)
         await b.close()
 
     async def test_start_obs_that_never_runs_is_logged(self):
@@ -775,8 +775,8 @@ class DiagnosticLogTests(RelayCase):
                 f"/v1/bridges/{bridge_id}/start-obs", headers={"Authorization": f"Bearer {app_token}"}
             )
             self.assertEqual(r.status, 202)
-            line = (await self.logged(logs, "start_obs: OBS not running"))[0]
-        self.assertIn(f"bridge {bridge_id[:10]} start_obs: OBS not running 0s later | obs closed", line)
+            line = (await self.logged(logs, "start_obs: no OBS start seen"))[0]
+        self.assertIn(f"bridge {bridge_id[:10]} start_obs: no OBS start seen 0s later | obs closed", line)
         self.assertEqual(self.app[relay.KEY_HUB].start_asked, {})
         await b.close()
 
@@ -791,6 +791,25 @@ class DiagnosticLogTests(RelayCase):
         self.assertIn(f"app refused for bridge {bridge_id[:10]}: {protocol.BRIDGE_OFFLINE} bridge offline", lines[0])
         self.assertIn(f"app refused for bridge ?: {protocol.UNPAIRED} unpaired", lines[1])
         self.assertNotIn(app_token, "".join(logs.output))
+
+    async def test_session_end_carries_the_bridges_obs_state(self):
+        """4901 while the bridge itself reports OBS running: its process
+        check and its OBS connection disagree - the line shows both."""
+        *_, b, p, sid = await self.session()  # hello said running
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            await b.send_bytes(
+                protocol.pack(
+                    protocol.CLOSE,
+                    sid,
+                    json.dumps({"code": protocol.OBS_NOT_RUNNING, "reason": "obs not running"}).encode(),
+                )
+            )
+            self.assertEqual(await self.closed_with(p), protocol.OBS_NOT_RUNNING)
+            line = (await self.logged(logs, "session "))[0]
+        bridge_id = next(iter(self.app[relay.KEY_HUB].bridges))
+        self.assertIn("obs not running | down 0 KB", line)
+        self.assertTrue(line.endswith(f"| bridge {bridge_id[:10]} obs running"), line)
+        await b.close()
 
     async def test_keepalive_timeout_says_how_quiet_and_after_what(self):
         """A bridge that stops answering: the end line carries the silence
