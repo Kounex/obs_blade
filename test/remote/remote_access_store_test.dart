@@ -35,6 +35,17 @@ class FakeRelay {
   /// This device's name in the bridge info (renames change it)
   String selfName = 'iPhone';
   int infoStatus = 200;
+
+  /// Start OBS: the relay's answer, how often it was asked
+  int startObsStatus = 202;
+  int startObsCalls = 0;
+
+  /// OBS as the bridge reports it: one state per info read, then
+  /// [obsAfter]; [infoFailures] reads fail like a phone without internet
+  final List<String> obsStates = [];
+  String obsAfter = 'running';
+  int infoFailures = 0;
+  int infoReads = 0;
   bool collected = false;
 
   late final http.Client client = MockClient((request) async {
@@ -80,7 +91,19 @@ class FakeRelay {
       deleted.add(path.split('/').last);
       return answer(204);
     }
+    if (path.endsWith('/start-obs')) {
+      startObsCalls++;
+      if (startObsStatus != 202) {
+        return answer(startObsStatus, {'error': 'bridge_offline'});
+      }
+      return answer(202, {'state': 'requested'});
+    }
     if (path.startsWith('/v1/bridges/')) {
+      infoReads++;
+      if (infoFailures > 0) {
+        infoFailures--;
+        throw http.ClientException('offline');
+      }
       if (infoStatus != 200) return answer(infoStatus, {'error': 'unpaired'});
       return answer(200, {
         'id': 'b_1',
@@ -89,7 +112,7 @@ class FakeRelay {
         'version': '0.2.0',
         'online': true,
         'last_seen': 1794000000,
-        'obs': 'running',
+        'obs': obsStates.isNotEmpty ? obsStates.removeAt(0) : obsAfter,
         'update_required': false,
         'devices': [
           {
@@ -146,8 +169,10 @@ void main() {
     String? appUserId = r'$RCAnonymousID:me',
     String? deviceLabel,
     Duration hintAfter = const Duration(milliseconds: 40),
+    AppVisibility? visibility,
   }) => RemoteAccessStore(
     deviceLabel: () async => deviceLabel,
+    visibility: visibility,
     hintAfter: hintAfter,
     relay: RemoteRelayClient(
       baseUrl: 'https://relay.example',
@@ -567,4 +592,104 @@ void main() {
       expect(connection.hasRemote, isFalse);
     });
   });
+
+  group(
+    'Start OBS (relay log 2026-11-22: waits ended as the user returned)',
+    () {
+      /// The app's visibility, driven by the test
+      late void Function() hide;
+      late void Function() show;
+      late int watching;
+
+      AppVisibility visibility() {
+        watching = 0;
+        return ({required onHide, required onShow}) {
+          hide = onHide;
+          show = onShow;
+          watching++;
+          return () => watching--;
+        };
+      }
+
+      Future<Connection> paired(RemoteAccessStore s) async {
+        final connection = Connection('h', 4455);
+        await s.pair(connection, deviceName: 'iPhone', platform: 'ios');
+        // The pairing's own follow-up reads settle first
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return connection;
+      }
+
+      Future<void> until(bool Function() done) async {
+        for (int i = 0; i < 200 && !done(); i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 2));
+        }
+        expect(done(), isTrue);
+      }
+
+      test('OBS comes up while the app is open: true, asked once', () async {
+        final s = store(visibility: visibility());
+        final connection = await paired(s);
+        relay.obsStates.addAll(['closed', 'closed']);
+        final int reads = relay.infoReads;
+        expect(await s.startObsAndWait(connection), isTrue);
+        expect((relay.startObsCalls, relay.infoReads - reads), (1, 3));
+        expect(watching, 0);
+      });
+
+      test('OBS never comes up while the app is open: false after the '
+          'timeout', () async {
+        final s = store(visibility: visibility());
+        final connection = await paired(s);
+        relay.obsAfter = 'closed';
+        final bool started = await s.startObsAndWait(
+          connection,
+          timeout: const Duration(milliseconds: 40),
+        );
+        expect(started, isFalse);
+        expect(relay.startObsCalls, 1);
+        expect(watching, 0);
+      });
+
+      test('hidden: no polls and no time used up; back: checks at once, rides '
+          'out a failed read and a still loading OBS, then connects', () async {
+        final s = store(visibility: visibility());
+        final connection = await paired(s);
+        relay.obsAfter = 'closed';
+        bool? result;
+        final wait = s
+            .startObsAndWait(
+              connection,
+              timeout: const Duration(milliseconds: 60),
+            )
+            .then((started) => result = started);
+        final int readsBefore = relay.infoReads;
+        await until(() => relay.infoReads > readsBefore);
+        hide();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        final int readsWhenHidden = relay.infoReads;
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        expect(relay.infoReads, readsWhenHidden);
+        expect(result, isNull);
+
+        relay.infoFailures = 1;
+        relay.obsStates.add('closed');
+        relay.obsAfter = 'running';
+        show();
+        await wait;
+        expect(result, isTrue);
+        expect(relay.infoReads, readsWhenHidden + 3);
+        expect(relay.startObsCalls, 1);
+        expect(watching, 0);
+      });
+
+      test('a refused request: false without polling', () async {
+        final s = store(visibility: visibility());
+        final connection = await paired(s);
+        relay.startObsStatus = 409;
+        final int reads = relay.infoReads;
+        expect(await s.startObsAndWait(connection), isFalse);
+        expect(relay.infoReads, reads);
+      });
+    },
+  );
 }

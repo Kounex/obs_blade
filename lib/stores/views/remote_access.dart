@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:get_it/get_it.dart';
 import 'package:mobx/mobx.dart';
 
@@ -43,6 +44,29 @@ enum RemotePairingFailure {
 /// expires: a PC app still starting can take it late).
 const Duration kRemotePairHintAfter = Duration(seconds: 5);
 
+/// Calls [onHide] when the app goes out of sight and [onShow] when it is
+/// back; returns what stops listening. For waits that should only use up
+/// time someone can see: iOS pauses a hidden app's timers.
+typedef AppVisibility =
+    void Function() Function({
+      required void Function() onHide,
+      required void Function() onShow,
+    });
+
+/// [AppVisibility] from the app's lifecycle.
+void Function() watchAppVisibility({
+  required void Function() onHide,
+  required void Function() onShow,
+}) {
+  try {
+    return AppLifecycleListener(onHide: onHide, onShow: onShow).dispose;
+  } catch (e) {
+    /// No widgets binding (headless tests): counts as always visible
+    GeneralHelper.advLog('Remote access: no lifecycle - $e');
+    return () {};
+  }
+}
+
 /// Hands the pairing code and this device's end-to-end key (base64) to the
 /// bridge through OBS - repeated until the bridge's ack arrives.
 typedef RemoteCodeSender = Future<void> Function(String code, String appKey);
@@ -78,6 +102,7 @@ abstract class _RemoteAccessStore with Store {
   final Duration _pollInterval;
   final Duration _resendInterval;
   final Duration _hintAfter;
+  final AppVisibility _visibility;
 
   /// The model / device name sent at pairing (null: the sheet's generic
   /// label)
@@ -95,7 +120,9 @@ abstract class _RemoteAccessStore with Store {
     Duration resendInterval = const Duration(seconds: 2),
     Duration hintAfter = kRemotePairHintAfter,
     Future<String?> Function()? deviceLabel,
+    AppVisibility? visibility,
   }) : _deviceLabel = deviceLabel ?? currentDeviceLabel,
+       _visibility = visibility ?? watchAppVisibility,
        _relay = relay ?? RemoteRelayClient(),
        _appUserId = appUserId ?? (() => GetIt.instance<ProStore>().appUserId()),
        _sendCode = sendCode ?? sendPairCodeThroughObs,
@@ -487,23 +514,51 @@ abstract class _RemoteAccessStore with Store {
   }
 
   /// Start OBS on a standalone bridge and wait until the relay reports it
-  /// running (OBS needs a few seconds to load). False on refusal / timeout.
+  /// running (OBS needs a few seconds to load). False on refusal, or after
+  /// [timeout] of waiting the user could see: a hidden app (gone to the PC,
+  /// phone locked - iOS pauses it) neither polls nor uses the time up, and
+  /// checks at once when it's back. The relay log (2026-11-22) showed waits
+  /// that polled once, then nothing until a single late poll that ended
+  /// them - the failure shown right as the user returned.
   Future<bool> startObsAndWait(
     Connection connection, {
     Duration timeout = const Duration(seconds: 60),
   }) async {
     if (!await this.startObs(connection)) return false;
-    final DateTime deadline = DateTime.now().add(timeout);
-    while (DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(_pollInterval);
-      await this.refresh(connection);
-      final RemoteBridgeInfo? info = this.info;
-      if (info != null && info.online && info.obsState == 'running') {
-        return true;
+    final Stopwatch visible = Stopwatch()..start();
+    bool hidden = false;
+    Completer<void> back = Completer<void>();
+    final void Function() stopWatching = _visibility(
+      onHide: () {
+        hidden = true;
+        visible.stop();
+      },
+      onShow: () {
+        if (!hidden) return;
+        hidden = false;
+        visible.start();
+        if (!back.isCompleted) back.complete();
+      },
+    );
+    try {
+      while (true) {
+        if (hidden) {
+          await back.future;
+        } else {
+          await Future.any([Future<void>.delayed(_pollInterval), back.future]);
+        }
+        if (back.isCompleted) back = Completer<void>();
+        await this.refresh(connection);
+        final RemoteBridgeInfo? info = this.info;
+        if (info != null && info.online && info.obsState == 'running') {
+          return true;
+        }
+        if (!connection.hasRemote) return false;
+        if (!hidden && visible.elapsed >= timeout) return false;
       }
-      if (!connection.hasRemote) return false;
+    } finally {
+      stopWatching();
     }
-    return false;
   }
 
   @action

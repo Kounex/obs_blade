@@ -60,10 +60,11 @@ class ConnectionBox extends StatelessWidget {
         this.connection.lastConnectedMs = DateTime.now().millisecondsSinceEpoch;
         this.connection.save();
       }
+
       /// 4901 comes from a PC side that is up while OBS isn't - the app,
       /// never the plugin (it goes down with OBS). Not the kind stored at
       /// pairing: a plugin user who adds the app keeps the same bridge
-      /// (review 2026-11-13); a refusal ends in "OBS didn't start"
+      /// (review 2026-11-13); a refusal ends in "Couldn't confirm OBS started"
       if (closeCode == WebSocketCloseCode.RemoteObsNotRunning &&
           context.mounted) {
         this._offerStartObs(context);
@@ -95,24 +96,31 @@ class ConnectionBox extends StatelessWidget {
         noText: 'Cancel',
         okText: 'Start OBS',
         onOk: (_) async {
+          /// Up for as long as the wait runs (it pauses while the app is
+          /// hidden), closed by its outcome - not on a timer of its own
           OverlayHandler.showStatusOverlay(
             context: context,
-            showDuration: const Duration(seconds: 60),
+            showDuration: const Duration(hours: 1),
             content: BaseProgressIndicator(text: 'Starting OBS on $pc…'),
           );
           final bool started = await RemoteAccessStore().startObsAndWait(
             this.connection,
           );
+          if (started || !context.mounted) {
+            await OverlayHandler.closeAnyOverlay();
+          }
           if (!context.mounted) return;
           if (started) {
             this._connect(context);
           } else {
+            /// Not "didn't start": OBS may still be loading, or wait on a
+            /// dialog on the PC (also a refused request lands here)
             OverlayHandler.showStatusOverlay(
               context: context,
               replaceIfActive: true,
               content: BaseResult(
                 icon: BaseResultIcon.Negative,
-                text: 'OBS didn\'t start on $pc.',
+                text: 'Couldn\'t confirm OBS started on $pc.',
               ),
             );
           }
