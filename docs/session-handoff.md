@@ -19,12 +19,18 @@ home: `ssh macbook` from the NAS falls back to Tailscale (it-env
 `f8534538` quick retries after a relay restart (changelog 2026-11-15);
 `615b25df` pairing wait hint after 5 s (changelog 2026-11-20) - **not on
 the dogfood device yet** (MacBook unreachable over Tailscale 2026-11-20),
-device check list in that entry.
+device check list in that entry; Start OBS wait that survives the app
+being hidden (changelog 2026-11-22, device check list there) - not on the
+dogfood device either.
 
 **Watch (4.3.0 = first public remote access):** crash reports + reviews;
-relay traffic (`tool/remote_relay/relay-report.sh`; NAS timers
-`relay-report-2026-11-22` / `-27` push it at 13:00 - first real use and
-why the only live bridge, the user's PC, reconnects 30-100x a day); Pro
+relay traffic (`tool/remote_relay/relay-report.sh`; NAS timer
+`relay-report-2026-11-27` pushes it at 13:00). First external bridge
+since 11-20: 5 connects, all "OBS not running", no relay session yet -
+relay 0.0.13's new lines say whether Start OBS works for it. The 30-100
+reconnects a day are the maintainer's MacBook (likely sleep wakes), not the PC;
+keepalive timeouts' "quiet 0s" is still unexplained (changelog
+2026-11-22); Pro
 conversions; Android 120 Hz and Bars & Sheets (build 2 had no dogfood
 install, build 4 was tested by the user). Kick's web client prefers
 Centrifugo - if Pusher stops being offered, that's the next transport
@@ -55,7 +61,7 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   for invisible restarts.
 
 **Backend facts:** relay `https://relay.obs-blade.com` (VPS Quadlet
-`remote-relay` 0.0.11 (0.0.12 = same code, the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat project
+`remote-relay` 0.0.12 live, 0.0.13 published 2026-11-22 (diagnostic log lines; the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat project
 `proja0a254d6`, `pro` = `entl2dd6e8fb75`); kick-auth 1.0.5 / kick-events
 1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
 backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer

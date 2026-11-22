@@ -4,6 +4,48 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-22 - Relay traffic 11-20 -> 11-22: Start OBS wait, relay 0.0.13, report fixes
+
+- Report reading: the first external bridge (standalone 0.4.1, paired
+  from iOS 11-20) had 5 relay connects, all 4901 (OBS not running) after
+  0 s, each followed by Start OBS -> 202, and no relay session since.
+  After each Start OBS the app read the bridge once at +2 s, then nothing,
+  in 3 of 5 one more read minutes later: the wait's timers paused with
+  the app hidden, and the first read after the return ended it ("OBS
+  didn't start" as the user came back). Whether OBS really started wasn't
+  in the log. The other bridge, the maintainer's MacBook (0.4.0), made 18
+  of 20 link ends: 46-47 s / 71-72 s links about hourly, keepalive
+  timeouts (30 s without a frame + 15 s for the pong) - looks like sleep
+  with periodic wakes (not confirmed, the Mac didn't answer SSH). Those
+  are the "30-100 reconnects a day", not the PC.
+- **App (next version):** `startObsAndWait` counts only visible time
+  toward its 60 s, doesn't poll while hidden, and checks at once on
+  return (`AppVisibility`, injectable; default `AppLifecycleListener`
+  onHide / onShow). The progress overlay stays until the wait ends instead
+  of its own 60 s timer; failure copy "Couldn't confirm OBS started on
+  <PC>." (the PC got the request; OBS may still load). Peer consult
+  (Codex, Threadwell) picked the lifecycle-scoped wait over a poll-gap
+  heuristic. Store tests: foreground success / timeout, hidden (no reads,
+  no time used) -> back -> failed read + still loading -> running,
+  refused request.
+- **Relay 0.0.13** (published, rolls out with the fleet board's 04:00
+  patch run): logs each bridge's OBS state changes (real changes only,
+  also across reconnects), Start OBS asked / "running N s after" / "not
+  running 120 s later", phones refused before a session with their code,
+  and the last frame's kind on every link end. Open question it answers:
+  every keepalive timeout so far said "quiet 0s", which can't be (aiohttp
+  3.14 restarts the keepalive on any frame) and doesn't reproduce in
+  tests - the next report shows quiet + last frame for them.
+- `relay-report.sh`: routes keep their shape with `{id}` (Start OBS was
+  "POST /v1/bridges 202"), new sections for OBS / Start OBS / refused
+  phones, relay (re)starts from the podman journal.
+- Device check (dogfood, next master build): remote-only (mobile data),
+  quit OBS on the PC, connect -> "OBS isn't running" -> Start OBS, lock
+  the phone right away for ~1 min, unlock -> connects (or the overlay is
+  still up and connects once OBS is ready); with OBS Blade Remote quit
+  on the PC -> "Couldn't confirm OBS started"; Start OBS with the app
+  open the whole time still connects.
+
 ## 2026-11-20 - Pairing: early hint while the PC doesn't answer (next app version)
 
 - Relay data: all 13 real pairings were redeemed within 1 s; two Pro
