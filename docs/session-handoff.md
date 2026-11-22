@@ -52,8 +52,9 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   (`336562a8..fa2ca8fe`), the relay link-end / pairing-expiry log
   (`dd18aa11`, relay 0.0.11), the bridge quick retries (obs-blade-remote
   `c9bdcec`, released as 0.4.1), the 30 s relay -> LAN retry
-  (`54c885a2`, in 4.3.0), and relay 0.0.13/0.0.14 + the Start OBS wait
-  (`1bee9a99..`, 2026-11-22).
+  (`54c885a2`, in 4.3.0), relay 0.0.13/0.0.14 + the Start OBS wait
+  (`1bee9a99..`, 2026-11-22), and the bridge's OBS-answering check
+  (obs-blade-remote `be0fb6c`, released as 0.4.2 without a device test).
 - **Bridge state file, two processes:** plugin and standalone ship since
   OBS Blade Remote 0.4.0, and `Shared::update` (`core/src/shared.rs`)
   still saves its in-memory copy without reloading `bridge.json` first.
@@ -73,7 +74,9 @@ Centrifugo - if Pusher stops being offered, that's the next transport
 1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
 backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer
 `obs-blade-vps-backups`). Bridge = Kounex/obs-blade-remote
-(`~/agent/obs-blade-remote`), 0.4.1 live. Sessions end-to-end encrypted
+(`~/agent/obs-blade-remote`), 0.4.2 live (2026-11-22). No update hint
+short of the relay's hard `min_version` (blocks older bridges), so users
+only get it by downloading it again. Sessions end-to-end encrypted
 (Noise IK) since relay 0.0.5. Spec:
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
 
