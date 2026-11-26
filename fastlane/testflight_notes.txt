@@ -1,51 +1,24 @@
-4.3.0 test build 4 - the relay hands back to your home network on its own; everything from builds 1-3 below still applies.
+4.3.1 test build 1 - remote access polish. Needs a Pro device paired with a PC (OBS Blade Remote app on the PC).
 
-BACK TO THE LOCAL NETWORK (BUILD 4)
-- On the relay (mobile data), PC asleep or OBS closed: come home, Wi-Fi joins, the session stays on the relay. Wake the PC / start OBS: within about 30 s the toast says it moved to the local network
-- Wrong saved OBS password: it tries once, stays on the relay, and doesn't try again until Wi-Fi changes (no repeated 'reconnecting')
+OBS BLADE REMOTE UPDATE (NEW)
+- PC on an older OBS Blade Remote than the latest (0.4.3 today; e.g. keep 0.4.2 installed): connect -> once the dashboard is up, an "Update OBS Blade Remote" dialog with both versions, Share Link / Later
+- Later, disconnect, connect again: no dialog this time; the globe in the dashboard bar has a small dot
+- Globe -> the Remote Access sheet shows an "Update available" card under the PC with "Share Link to Your PC" and the page link
+- Share Link: the share sheet opens with obs-blade.kounex.com/remote (AirDrop it to the Mac / send it to yourself); iPad: the popover is anchored
+- Update the PC to the latest: dot and card are gone after the next connect / opening the sheet
+- PC already on the latest: none of this shows
 
-REMOTE ACCESS FIXES (BUILD 3)
-- Saved connection with an OBS password, on the relay (mobile data): ... -> Edit Connection, rename it, save. Back on Wi-Fi it connects on the LAN without asking for the password again
-- On the relay, then walk in at home while OBS on the PC has a different password than the one saved: the session stays on the relay (no 'reconnecting' loop, no drop to Home)
-- Globe sheet -> Turn Off on This Device now asks first (on the relay it says the session ends)
-- Delete a paired saved connection (edit dialog -> Delete): OBS Blade Remote on the PC no longer lists this device
+START OBS
+- On mobile data, quit OBS on the PC, connect -> "OBS isn't running" -> Start OBS, lock the phone right away for ~1 min, unlock -> it connects (or the overlay is still up and connects once OBS is ready)
+- With OBS Blade Remote quit on the PC: "Couldn't confirm OBS started"
+- Start OBS with the app open the whole time still connects
+- PC on an older OBS Blade Remote: the "OBS isn't running" dialog also names the update
 
-Build 2: adds 120 Hz on Android and the Bars & Sheets setting; everything from build 1 below still applies.
+PAIRING HINT
+- On the Wi-Fi, quit OBS Blade Remote on the PC, globe -> Set Up Remote Access: after ~6 s a hint says what's missing on the PC, with the download link; Cancel still there
+- Start OBS Blade Remote while it waits: the hint goes and it pairs
 
-BARS & SHEETS (NEW)
-- Settings -> Theme -> Bars & Sheets: Glass / Clear / Solid, Glass by default
-- Glass: top bars, tab bar, sheets and toasts blur what's behind them - now on Android too for sheets
-- Clear: no blur, slightly see-through; Solid: fully opaque - switch and check the dashboard, a sheet (audio settings) and a toast
-- The setting sticks after restarting the app
-- iOS: the '...' menu and alert dialogs keep the native iOS look in every mode
+RELAY RESTART
+- Connected through the relay while the relay updates (rare, at night around 04:00): back within a few seconds instead of a long reconnect
 
-ANDROID: 120 HZ (NEW)
-- On a 120 Hz phone: Developer options -> Show refresh rate, scroll Home / Settings / dashboard - it should read 120 (was 60 on Nothing, Xiaomi and others)
-- Battery saver may still lower it
-
-REMOTE ACCESS (PRO, NEW)
-- On the PC: install OBS Blade Remote (the app is the recommended one; the plugin works too) from obs-blade.kounex.com/remote - OBS's WebSocket server on
-- In the app, connected to that OBS on your Wi-Fi: the globe in the dashboard bar -> Set Up Remote Access -> paired within a few seconds, the PC shows this device
-- Turn Wi-Fi off (mobile data): the app switches to the relay on its own, a toast names the route; scenes, audio, preview and stats work as on the LAN
-- Back on Wi-Fi: it moves back to the local network
-- Close OBS on the PC while away: the saved card / sheet say OBS isn't running; with the app on the PC, Start OBS starts it (no Safe Mode question after a crash)
-- Plugin only on the PC + OBS closed: the sheet points to the app for starting OBS
-- Sheet: Rename this device, Remove another; Unpair This PC in OBS Blade Remote removes access on the phone
-- Without Pro: the globe shows the pitch with Unlock Pro; the paywall lists "Control OBS From Anywhere" second
-
-STUDIO MODE: DOUBLE TAP (NEW)
-- Settings -> Studio Mode on: a new "Double Tap to Transition" switch below it, on by default
-- Dashboard in Studio Mode: one tap puts a scene in Preview at once (no delay); a quick second tap on the same tile sends it to Program with OBS' transition + duration, Studio Mode stays on
-- Two quick taps on different tiles: only previews; a slow second tap: only a preview
-- Switch off: a quick second tap is just another preview pick
-- VoiceOver / TalkBack: the scene tile offers "Transition to program" as an action
-
-PRO PAGE
-- Paywall: six cards (phone carousel, tablet grid), hero line names remote access; after buying, Welcome to Pro names it too
-
-SHEETS + SAVED CONNECTIONS
-- Every sheet: handle only, glass on iOS, 640 pt wide on tablets; stays below the status bar with the keyboard up
-- Saved connection cards are bigger; '...' opens the edit dialog (Delete is in there)
-
-OBS 33
-- Audio Settings sheet: monitoring is Off / On
+Also: upgrade over the store version keeps saved connections, pairing and settings.
