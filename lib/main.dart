@@ -30,6 +30,7 @@ import 'models/twitch_auth.dart';
 import 'models/youtube_auth.dart';
 import 'purchase_base.dart';
 import 'stores/shared/network.dart';
+import 'stores/shared/remote_bridge_updates.dart';
 import 'stores/shared/tabs.dart';
 import 'stores/views/dashboard.dart';
 import 'stores/views/home.dart';
@@ -143,6 +144,12 @@ void _initializeStores() {
   /// Shared stores used app-wide
   GetIt.instance.registerLazySingleton<NetworkStore>(() => NetworkStore());
   GetIt.instance.registerLazySingleton<TabsStore>(() => TabsStore());
+
+  /// Each paired PC's last bridge info: the globe, the Remote Access sheet
+  /// and the connect prompt all show a pending OBS Blade Remote update
+  GetIt.instance.registerLazySingleton<RemoteBridgeUpdates>(
+    () => RemoteBridgeUpdates(),
+  );
   GetIt.instance.registerLazySingleton<ProStore>(
     /// Fire-and-forget [init] — cold-start restore must not
     /// block store creation.

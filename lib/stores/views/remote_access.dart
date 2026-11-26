@@ -16,6 +16,7 @@ import '../../utils/remote/noise_ik.dart';
 import '../../utils/remote/remote_relay_client.dart';
 import '../pro_store.dart';
 import '../shared/network.dart';
+import '../shared/remote_bridge_updates.dart';
 
 part 'remote_access.g.dart';
 
@@ -399,6 +400,9 @@ abstract class _RemoteAccessStore with Store {
         connection.relayBridgeId!,
         connection.relayAppToken!,
       );
+      if (GetIt.instance.isRegistered<RemoteBridgeUpdates>()) {
+        GetIt.instance<RemoteBridgeUpdates>().record(info);
+      }
       runInAction(() {
         this.info = info;
         this.infoError = null;

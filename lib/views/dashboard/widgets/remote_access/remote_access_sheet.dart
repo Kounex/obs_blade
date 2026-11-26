@@ -22,6 +22,8 @@ import '../../../../stores/views/remote_access.dart';
 import '../../../../utils/legal_links.dart';
 import '../../../../utils/relative_time.dart';
 import '../../../../utils/remote/remote_relay_client.dart';
+import '../../../../stores/shared/remote_bridge_updates.dart';
+import 'remote_update.dart';
 
 /// Remote access (Pro): pair this device with OBS Blade Remote on the PC
 /// (the standalone app - recommended, it can start OBS - or the OBS plugin) while connected on the same
@@ -223,11 +225,6 @@ TextStyle _secondary(BuildContext context) =>
       color: Theme.of(context).extension<AppTextColors>()!.textSecondary,
     );
 
-/// Where the PC side is downloaded - a short address on purpose: it is read
-/// here and typed on the PC. The page links the latest GitHub release of
-/// Kounex/obs-blade-remote.
-final Uri kRemoteDownloadUri = Uri.parse('https://obs-blade.kounex.com/remote');
-
 class _DownloadLink extends StatelessWidget {
   const _DownloadLink();
 
@@ -249,7 +246,7 @@ class _DownloadLink extends StatelessWidget {
               const SizedBox(width: AppSpacing.xs),
               Flexible(
                 child: Text(
-                  '${kRemoteDownloadUri.host}${kRemoteDownloadUri.path}',
+                  kRemoteDownloadAddress,
                   semanticsLabel: 'Download OBS Blade Remote',
                   style: _secondary(context).copyWith(color: color),
                 ),
@@ -547,19 +544,6 @@ class _Failed extends StatelessWidget {
   }
 }
 
-/// A newer OBS Blade Remote for this PC (relay `update_available`); null
-/// when there's none, or when [RemoteBridgeInfo.updateRequired] already
-/// says so more strongly.
-String? remoteBridgeUpdateCopy(RemoteBridgeInfo info) {
-  if (!info.updateAvailable || info.updateRequired) return null;
-  if (info.latestVersion.isEmpty) return null;
-  final String what = info.isStandalone
-      ? 'OBS Blade Remote'
-      : 'The OBS Blade Remote plugin';
-  return '$what ${info.latestVersion} is available - this PC has '
-      '${info.version}.';
-}
-
 /// One line on the PC's state from the relay's view.
 String remoteBridgeStatusLine(RemoteBridgeInfo info, {DateTime? now}) {
   if (info.updateRequired) return 'Update OBS Blade Remote on this PC';
@@ -738,10 +722,9 @@ class _Paired extends StatelessWidget {
               : '$kind · checking…',
           style: _secondary(context),
         ),
-        if (info != null && remoteBridgeUpdateCopy(info) != null) ...[
-          const SizedBox(height: AppSpacing.xs),
-          Text(remoteBridgeUpdateCopy(info)!, style: _secondary(context)),
-          const _DownloadLink(),
+        if (info != null && RemoteBridgeUpdate.of(info) != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          _UpdateCard(update: RemoteBridgeUpdate.of(info)!),
         ],
 
         /// The plugin goes down with OBS - only the app can start OBS
@@ -820,6 +803,80 @@ class _Paired extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A pending OBS Blade Remote update for the paired PC: what's out, what
+/// the PC has, and the way to it - the link shared to the PC (the
+/// installers are for the PC, not the phone) or the page itself.
+class _UpdateCard extends StatelessWidget {
+  final RemoteBridgeUpdate update;
+
+  const _UpdateCard({required this.update});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color color = this.update.required
+        ? theme.extension<AppStatusColors>()!.warning
+        : theme.extension<AppTextColors>()!.highlightText;
+    return Semantics(
+      container: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.45)),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  CupertinoIcons.arrow_down_circle_fill,
+                  color: color,
+                  size: 22.0,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        remoteUpdateTitle(this.update),
+                        style: theme.textTheme.bodyMedium!.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2.0),
+                      Text(
+                        remoteUpdateLine(this.update),
+                        style: _secondary(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: BaseButton(
+                text: 'Share Link to Your PC',
+                color: color,
+                icon: const Icon(CupertinoIcons.share, size: 16.0),
+                onPressed: () => shareRemoteDownloadLink(context),
+              ),
+            ),
+            const _DownloadLink(),
+          ],
+        ),
+      ),
     );
   }
 }

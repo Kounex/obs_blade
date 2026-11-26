@@ -12,6 +12,7 @@ import 'package:obs_blade/views/dashboard/screenshot_preview.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content.dart';
 import 'package:obs_blade/views/dashboard/widgets/dashboard_content/dashboard_content_streaming.dart';
 
+import '../../models/connection.dart';
 import '../../shared/dialogs/confirmation.dart';
 import '../../stores/shared/network.dart';
 import '../../stores/views/canvas_view.dart';
@@ -24,6 +25,7 @@ import '../../utils/styling_helper.dart';
 import 'widgets/dialogs/save_edit_connection.dart';
 import 'widgets/command_failure_toast.dart';
 import 'widgets/reconnect_toast.dart';
+import 'widgets/remote_access/remote_update.dart';
 import 'widgets/status_app_bar/status_app_bar.dart';
 
 /// InheritedWidget [DashBoardScroll] is used to expose the ScrollController
@@ -92,30 +94,19 @@ class _DashboardViewState extends State<DashboardView>
     when(
       (_) =>
           GetIt.instance<NetworkStore>().activeSession!.connection.name == null,
-      () {
-        /// Don't fire the dialog mid route transition - wait until the
-        /// push animation has completed (fall back to the next frame if
-        /// there is no route animation at all)
-        void showSaveDialog() => SchedulerBinding.instance.addPostFrameCallback(
-          (_) => _saveConnectionDialog(context),
-        );
-
-        Animation<double>? routeAnimation = ModalRoute.of(context)?.animation;
-        if (routeAnimation == null ||
-            routeAnimation.status == AnimationStatus.completed) {
-          showSaveDialog();
-        } else {
-          void listener(AnimationStatus status) {
-            if (status == AnimationStatus.completed) {
-              routeAnimation.removeStatusListener(listener);
-              showSaveDialog();
-            }
-          }
-
-          routeAnimation.addStatusListener(listener);
-        }
-      },
+      () => this._afterRouteSettles(() => _saveConnectionDialog(context)),
     );
+
+    /// A paired PC with an older OBS Blade Remote: told once per release,
+    /// after the dashboard is up (an unsaved connection is never paired,
+    /// so this doesn't meet the save dialog)
+    final Connection connection =
+        GetIt.instance<NetworkStore>().activeSession!.connection;
+    if (connection.hasRemote) {
+      this._afterRouteSettles(
+        () => promptRemoteBridgeUpdate(context, connection),
+      );
+    }
 
     when(
       (_) => GetIt.instance<NetworkStore>().obsTerminated,
@@ -139,6 +130,32 @@ class _DashboardViewState extends State<DashboardView>
         ),
       ),
     );
+  }
+
+  /// Don't fire a dialog mid route transition - wait until the push
+  /// animation has completed (fall back to the next frame if there is no
+  /// route animation at all)
+  void _afterRouteSettles(void Function() action) {
+    void run() => SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (this.mounted) action();
+    });
+
+    final Animation<double>? routeAnimation = ModalRoute.of(
+      this.context,
+    )?.animation;
+    if (routeAnimation == null ||
+        routeAnimation.status == AnimationStatus.completed) {
+      run();
+    } else {
+      void listener(AnimationStatus status) {
+        if (status == AnimationStatus.completed) {
+          routeAnimation.removeStatusListener(listener);
+          run();
+        }
+      }
+
+      routeAnimation.addStatusListener(listener);
+    }
   }
 
   @override

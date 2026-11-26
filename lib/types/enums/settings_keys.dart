@@ -557,7 +557,13 @@ enum SettingsKeys {
   ActivityKickRelay,
 
   /// [String]: Chat tab segment last shown - 'chat' or 'activity'
-  ActivityChatTabSegment;
+  ActivityChatTabSegment,
+
+  /// [Map<String, String>]: per paired PC (relay bridge id), the OBS Blade
+  /// Remote release the "update available" prompt was shown for - once
+  /// per release; the sheet and the globe keep showing it. Not a
+  /// "dont-show" key: the data reset of those mustn't bring it back
+  RemoteUpdatePrompted;
 
   String get name => const {
     // SettingsKeys.HasUserSeenIntro: 'has-user-seen-intro',
@@ -692,6 +698,7 @@ enum SettingsKeys {
     SettingsKeys.ChatTtsSpeed: 'chat-tts-speed',
     SettingsKeys.ChatTtsSkipStale: 'chat-tts-skip-stale',
     SettingsKeys.HasUserSeenChatTtsHint: 'has-user-seen-chat-tts-hint-bubble',
+    SettingsKeys.RemoteUpdatePrompted: 'remote-update-prompted',
     SettingsKeys.ChatTtsLanguage: 'chat-tts-language',
     SettingsKeys.ChatTtsDetectLanguage: 'chat-tts-detect-language',
     SettingsKeys.ChatTtsVolume: 'chat-tts-volume',

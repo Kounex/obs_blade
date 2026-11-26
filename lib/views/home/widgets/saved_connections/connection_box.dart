@@ -22,7 +22,9 @@ import '../../../../utils/build_flavor.dart';
 import '../../../../utils/general_helper.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/relative_time.dart';
+import '../../../../stores/shared/remote_bridge_updates.dart';
 import '../../../../utils/remote/remote_relay_client.dart';
+import '../../../dashboard/widgets/remote_access/remote_update.dart';
 import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
@@ -95,8 +97,28 @@ class ConnectionBox extends StatelessWidget {
     /// whose OBS the app's process check missed answered 4901 although
     /// OBS ran - Start OBS then "worked" and the next connect failed again
     /// (relay log 2026-11-20..22). A slow relay doesn't hold the dialog up.
-    final String update = await this._updateNote(pc);
+    final RemoteBridgeInfo? info = await this._freshInfo();
     if (!context.mounted) return;
+    final RemoteBridgeUpdate? newer = info == null
+        ? null
+        : RemoteBridgeUpdate.of(info);
+    if (newer != null &&
+        info!.obsState == 'running' &&
+        remoteVersionBelow(newer.current, kRemoteObsCheckFixed)) {
+      /// The relay says OBS runs: Start OBS can't help, the update can
+      showRemoteUpdateDialog(
+        context,
+        newer,
+        pc: pc,
+        reason:
+            'OBS is running on $pc, but OBS Blade Remote ${newer.current} '
+            'there doesn\'t see it - an update fixes that.',
+      );
+      return;
+    }
+    final String update = info == null
+        ? ''
+        : remoteStartObsUpdateNote(info, pc);
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: ConfirmationDialog(
@@ -144,18 +166,22 @@ class ConnectionBox extends StatelessWidget {
     );
   }
 
-  /// [remoteStartObsUpdateNote] for this PC, from fresh bridge info.
-  Future<String> _updateNote(String pc) async {
-    final RemoteAccessStore store = RemoteAccessStore();
+  /// This PC's bridge info, fresh from the relay (recorded for the globe
+  /// and the sheet); null when it's slow (3 s) or fails.
+  Future<RemoteBridgeInfo?> _freshInfo() async {
+    if (!this.connection.hasRemote) return null;
     try {
-      await store.refresh(this.connection).timeout(const Duration(seconds: 3));
+      final RemoteBridgeInfo info = await RemoteRelayClient()
+          .bridgeInfo(
+            this.connection.relayBridgeId!,
+            this.connection.relayAppToken!,
+          )
+          .timeout(const Duration(seconds: 3));
+      recordRemoteBridgeInfo(info);
+      return info;
     } catch (_) {
-      // Slow (3 s) or failed: the dialog goes on without the note
-      return '';
+      return null;
     }
-    final RemoteBridgeInfo? info = store.info;
-    if (info == null || info.id != this.connection.relayBridgeId) return '';
-    return remoteStartObsUpdateNote(info, pc);
   }
 
   void _edit(BuildContext context) {

@@ -12,6 +12,7 @@ import 'package:obs_blade/app.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/stores/pro_store.dart';
 import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/stores/shared/remote_bridge_updates.dart';
 import 'package:obs_blade/stores/views/remote_access.dart';
 import 'package:obs_blade/types/classes/session.dart';
 import 'package:obs_blade/types/enums/hive_keys.dart';
@@ -20,6 +21,7 @@ import 'package:obs_blade/utils/pro_purchase_service.dart';
 import 'package:obs_blade/utils/remote/remote_relay_client.dart';
 import 'package:obs_blade/views/dashboard/widgets/remote_access/remote_access_sheet.dart';
 import 'package:obs_blade/views/dashboard/widgets/status_app_bar/general_actions.dart';
+import 'package:obs_blade/views/dashboard/widgets/status_app_bar/remote_access_button.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../persistence/support/hive_test_harness.dart';
@@ -218,18 +220,40 @@ void main() {
     });
   }
 
-  /// Relay `update_available` (2026-11-26): the PC side is told, with
-  /// the download link - not when the update is required (the status line
-  /// says that) or the relay knows nothing newer
-  for (final (kind, available, required, shown) in [
-    ('standalone', true, false, 'OBS Blade Remote 0.4.3 is available'),
-    ('plugin', true, false, 'The OBS Blade Remote plugin 0.4.3 is available'),
-    ('standalone', false, false, null),
-    ('standalone', true, true, null),
+  /// Relay `update_available` / `update_required` (2026-11-26): a card
+  /// under the PC with both versions, Share Link and the page; the globe
+  /// behind the sheet gets its dot from the same read
+  for (final (kind, available, required, title, line) in [
+    (
+      'standalone',
+      true,
+      false,
+      'Update available',
+      'OBS Blade Remote 0.4.3 is out - this PC has 0.4.1.',
+    ),
+    (
+      'plugin',
+      true,
+      false,
+      'Update available',
+      'The OBS Blade Remote plugin 0.4.3 is out - this PC has 0.4.1.',
+    ),
+    (
+      'standalone',
+      false,
+      true,
+      'Update required',
+      'This PC has OBS Blade Remote 0.4.1, too old for remote access - '
+          '0.4.3 is out.',
+    ),
+    ('standalone', false, false, null, null),
   ]) {
     testWidgets(
       'update on a $kind PC (available: $available, required: $required)',
       (tester) async {
+        GetIt.instance.registerSingleton<RemoteBridgeUpdates>(
+          RemoteBridgeUpdates(),
+        );
         GeneralActions.createRemoteAccessStore = () => RemoteAccessStore(
           relay: RemoteRelayClient(
             client: _relay(
@@ -244,25 +268,24 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: App.buildTheme(Hive.box(HiveKeys.Settings.name)),
-            home: Scaffold(
-              body: Builder(
-                builder: (context) => TextButton(
-                  onPressed: () => GeneralActions.openRemoteAccess(context),
-                  child: const Text('globe'),
-                ),
-              ),
-            ),
+            home: const Scaffold(body: Center(child: RemoteAccessButton())),
           ),
         );
-        await tester.tap(find.text('globe'));
+        expect(find.byKey(const ValueKey('remote-update-dot')), findsNothing);
+        await tester.tap(find.byType(RemoteAccessButton));
         await _settle(tester);
 
-        if (shown == null) {
-          expect(find.textContaining('is available'), findsNothing);
-          expect(find.text('obs-blade.kounex.com/remote'), findsNothing);
+        final dot = find.byKey(const ValueKey('remote-update-dot'));
+        if (title == null) {
+          expect(find.textContaining('Update '), findsNothing);
+          expect(find.text('Share Link to Your PC'), findsNothing);
+          expect(dot, findsNothing);
         } else {
-          expect(find.text('$shown - this PC has 0.4.1.'), findsOneWidget);
+          expect(find.text(title), findsOneWidget);
+          expect(find.text(line!), findsOneWidget);
+          expect(find.text('Share Link to Your PC'), findsOneWidget);
           expect(find.text('obs-blade.kounex.com/remote'), findsOneWidget);
+          expect(dot, findsOneWidget);
         }
       },
     );

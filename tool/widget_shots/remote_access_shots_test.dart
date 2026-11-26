@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:obs_blade/utils/modal_handler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -9,9 +10,13 @@ import 'package:http/testing.dart';
 import 'package:mobx/mobx.dart';
 import 'package:obs_blade/models/connection.dart';
 import 'package:obs_blade/stores/shared/network.dart';
+import 'package:obs_blade/stores/shared/remote_bridge_updates.dart';
+import 'package:obs_blade/types/enums/hive_keys.dart';
+import 'package:obs_blade/types/enums/settings_keys.dart';
 import 'package:obs_blade/stores/views/remote_access.dart';
 import 'package:obs_blade/utils/remote/remote_relay_client.dart';
 import 'package:obs_blade/views/dashboard/widgets/remote_access/remote_access_sheet.dart';
+import 'package:obs_blade/views/dashboard/widgets/remote_access/remote_update.dart';
 import 'package:obs_blade/views/home/widgets/saved_connections/connection_box.dart';
 
 import 'support/shots_harness.dart';
@@ -40,15 +45,20 @@ void main() {
     String obs = 'running',
     String kind = 'plugin',
     bool update = false,
+    String version = '0.2.0',
+    String? latest,
+    bool available = false,
   }) => {
     'id': 'b_1',
     'name': 'GAMING-PC',
     'kind': kind,
-    'version': '0.2.0',
+    'version': version,
     'online': online,
     'last_seen': now - 2 * 3600,
     'obs': obs,
     'update_required': update,
+    'latest_version': latest,
+    'update_available': available,
     'devices': [
       {
         'id': 'd_me',
@@ -289,6 +299,97 @@ void main() {
       sheet(store(info(obs: 'ws_off')), connection(paired: true)),
     );
   });
+
+  /// 2026-11-26: a newer OBS Blade Remote for the PC - card in the sheet
+  /// (light too: the tint is a status color), and the connect prompt
+  /// Real async: a Hive write never finishes in the test's fake async
+  Future<void> lightTheme(WidgetTester tester) => tester.runAsync(() async {
+    final Box settings = Hive.box(HiveKeys.Settings.name);
+    await settings.put(SettingsKeys.CustomTheme.name, true);
+    await settings.put(
+      SettingsKeys.ActiveCustomThemeUUID.name,
+      '4c6b99aa-4d4d-45a6-ba25-53dd181c36cd', // Bright Star
+    );
+  });
+
+  final Map<String, Map<String, dynamic>> updates = {
+    'available': info(
+      kind: 'standalone',
+      version: '0.4.1',
+      latest: '0.4.3',
+      available: true,
+    ),
+    'available_plugin': info(
+      version: '0.4.1',
+      latest: '0.4.3',
+      available: true,
+    ),
+    'required': info(
+      kind: 'standalone',
+      version: '0.2.0',
+      latest: '0.4.3',
+      update: true,
+    ),
+  };
+
+  for (final light in [false, true]) {
+    testWidgets('paired: OBS Blade Remote update (light: $light)', (
+      tester,
+    ) async {
+      if (light) await lightTheme(tester);
+      final String suffix = light ? '_light' : '';
+      for (final MapEntry(key: name, value: bridge) in updates.entries) {
+        await harness.shot(
+          tester,
+          'remote_update_$name$suffix',
+          sheet(
+            store(bridge),
+            connection(paired: true, kind: bridge['kind'] as String),
+          ),
+        );
+      }
+      await harness.shot(
+        tester,
+        'remote_update_card_narrow$suffix',
+        sheet(
+          store(updates['available']),
+          connection(paired: true, kind: 'standalone'),
+        ),
+        size: const Size(320, 640),
+      );
+      for (final (name, bridge, reason) in [
+        ('available', updates['available']!, null),
+        ('required', updates['required']!, null),
+        (
+          'obs_check',
+          updates['available']!,
+          'OBS is running on GAMING-PC, but OBS Blade Remote 0.4.1 there '
+              'doesn\'t see it - an update fixes that.',
+        ),
+      ]) {
+        final RemoteBridgeUpdate update = RemoteBridgeUpdate(
+          kind: bridge['kind'] as String,
+          current: bridge['version'] as String,
+          latest: bridge['latest_version'] as String,
+          required: bridge['update_required'] as bool,
+        );
+        await harness.shot(
+          tester,
+          'remote_update_dialog_$name$suffix',
+          Builder(
+            builder: (context) => Center(
+              child: remoteUpdateDialog(
+                context,
+                update,
+                pc: 'GAMING-PC',
+                reason: reason,
+              ),
+            ),
+          ),
+        );
+      }
+    });
+  }
 
   testWidgets('paired: relay unreachable', (tester) async {
     await harness.shot(
