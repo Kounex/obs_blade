@@ -15,7 +15,10 @@ App Store versions (one `POST v1/appStoreVersions` via the tool's
 home: `ssh macbook` from the NAS falls back to Tailscale (it-env
 `docs/machines/macbook.md`).
 
-**Unreleased on master (next app version, not worth a 4.3.1 alone):**
+**4.3.1 build 2026112601 on TestFlight + Play internal (2026-11-26)** -
+not submitted; `release-promote` takes this build to the stores. The
+update prompts need relay 0.0.15 (live after the 04:00 run 11-27).
+Contents (were unreleased on master):
 `f8534538` quick retries after a relay restart (changelog 2026-11-15);
 `615b25df` pairing wait hint after 5 s (changelog 2026-11-20) - **not on
 the dogfood device yet** (MacBook unreachable over Tailscale 2026-11-20),
