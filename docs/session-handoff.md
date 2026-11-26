@@ -21,8 +21,10 @@ home: `ssh macbook` from the NAS falls back to Tailscale (it-env
 the dogfood device yet** (MacBook unreachable over Tailscale 2026-11-20),
 device check list in that entry; Start OBS wait that survives the app
 being hidden (changelog 2026-11-22, device check list there) - not on the
-dogfood device either; the bridge update note in the Remote Access sheet
-and the Start OBS dialog (`1c4eba6d`, changelog 2026-11-26). MacBook clone
+dogfood device either; OBS Blade Remote update experience: sheet card,
+globe dot, once-per-release prompt after connecting, update dialog
+instead of Start OBS for a pre-0.4.2 PC (`1c4eba6d`, `8c1b524b`,
+changelog 2026-11-26, device check list there). MacBook clone
 pulled 2026-11-26 (up to `c51873ba`), nothing installed on a phone.
 
 **Watch (4.3.0 = first public remote access):** crash reports + reviews;
@@ -58,7 +60,7 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   (`1bee9a99..`, 2026-11-22), and the bridge's OBS-answering check
   (obs-blade-remote `be0fb6c`, released as 0.4.2; e2e green on the
   MacBook 2026-11-26), and the update hint (relay `af8fa5af`, app
-  `1c4eba6d`, obs-blade-remote `5ce6d04` = 0.4.3).
+  `1c4eba6d`, `8c1b524b`, obs-blade-remote `5ce6d04` = 0.4.3).
 - **Bridge state file, two processes:** plugin and standalone ship since
   OBS Blade Remote 0.4.0, and `Shared::update` (`core/src/shared.rs`)
   still saves its in-memory copy without reloading `bridge.json` first.

@@ -4,6 +4,44 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-26 - App: the update experience for a paired PC
+
+User: the app should show an OBS Blade Remote update on the paired PC in
+the Remote Access sheet, and when connecting to a PC with an older
+version a modal or similar - "come up with a good experience".
+
+- `RemoteBridgeUpdates` (GetIt, app-wide): the last bridge info per
+  bridge id - the sheet's store dies with the sheet. Filled by every read
+  (sheet refresh, the connect prompt, the Start OBS path).
+- Sheet: a card under the PC ("Update available" blue / "Update
+  required" amber, both versions, plugin or app named), "Share Link to
+  Your PC" + the page link. Share first: the installers are for the PC.
+- Globe: a warning dot while an update is pending (+ semantics label) -
+  the reminder after the prompt was dismissed.
+- Connect prompt: dashboard, after the route animation, LAN or relay
+  (on the LAN is where a PC stuck on an old version still connects).
+  Once per PC and release: Settings `remote-update-prompted` {bridge id:
+  release}; deliberately not a "dont-show" key (the data reset would
+  bring it back). Share Link / Later. Never holds the connect up, silent
+  when the relay can't be read, Pro + paired only, not in FOSS.
+- "OBS isn't running" (4901): when the relay says OBS runs and the PC is
+  before 0.4.2, the update dialog replaces Start OBS (which looped there
+  for the external user); otherwise Start OBS keeps the update note.
+- Not done: the Home list's saved connections (would need a relay read
+  per saved PC on the home screen).
+- Tests: `test/remote/remote_update_test.dart` (update model, version
+  compare, once-per-release, copy, holder, the prompt with a fake relay:
+  shown / remembered / shown for the next release / silent), sheet card
+  + globe dot per state. Gates: remote + home 125, chat/websocket/
+  persistence 1881 clean. Shots (`remote_access_shots_test.dart`,
+  `remote_update_*`, dark + light + narrow) looked at: first layout put a
+  red accent button beside the link (address wrapped in four lines) -
+  now a full-width button in the card's color, link below.
+- Device check list (next app build, paired with a PC on an older
+  release): the dialog after connecting once, not again on reconnect;
+  globe dot; sheet card; Share Link opens the share sheet (iPad: anchored
+  popover); a current PC shows none of it.
+
 ## 2026-11-26 - Telling people about a newer OBS Blade Remote
 
 User: people need to hear about a new bridge version - in the bridge and
