@@ -77,8 +77,12 @@ snapshot (control messages). Implementations: `core/src/e2e.rs` (Kounex/obs-blad
 
 - `GET /v1/bridges/{bridge_id}` (Bearer app token) → `{"id", "name",
   "kind", "version", "online", "last_seen", "obs", "update_required",
-  "status", "status_at", "devices": [{"id", "name", "platform",
-  "created_at", "last_used", "connected", "self"?}]}`.
+  "latest_version", "update_available", "status", "status_at",
+  "devices": [{"id", "name", "platform", "created_at", "last_used",
+  "connected", "self"?}]}`. `latest_version`: the newest bridge release
+  (null while unknown); `update_available`: this bridge's version is a
+  plain release below it (works for every bridge version - the app's way
+  to tell people on bridges older than 0.4.3).
 - `POST /v1/bridges/{bridge_id}/start-obs` (Bearer app token) → `202`;
   `409 bridge_offline` / `409 not_supported` (plugin bridges die with OBS).
 - `DELETE /v1/devices/{device_id}` (Bearer app token; any device of the
@@ -112,7 +116,10 @@ snapshot (control messages). Implementations: `core/src/e2e.rs` (Kounex/obs-blad
   - relay → bridge: `welcome {"bridge_id", "server_version", "devices"}`,
     `devices {"devices"}` (after a pairing or removal),
     `start_obs {"device"}` (standalone), `update_required {"min_version"}`
-    (then close 4905), `unpaired` (then close 4904).
+    (then close 4905), `update_available {"version"}` (a newer release:
+    after the welcome, or when one comes out while connected; only to a
+    bridge behind it - bridges before 0.4.3 ignore it), `unpaired` (then
+    close 4904).
   - bridge → relay: `hello {"name", "obs"}` right after connecting,
     `obs {"state"}` on change (`running`, `closed`, `crashed`, `ws_off`,
     `auth_failed`), `status {"status": {...}}` every 20 s (≤ 8 KB, at most
@@ -146,7 +153,10 @@ push touching this folder. Host: the Hetzner VPS (it-env
 quadlet; `/etc/remote-relay.env` (root, 0600) holds `RC_PROJECT_ID`,
 `RC_API_KEY` (RevenueCat v2 secret key with read access to customer
 information and project configuration), optionally
-`RC_PRO_ENTITLEMENT_ID`, `RELAY_PRO_ALLOW`, `RELAY_MIN_BRIDGE_VERSION`;
+`RC_PRO_ENTITLEMENT_ID`, `RELAY_PRO_ALLOW`, `RELAY_MIN_BRIDGE_VERSION`,
+`RELAY_LATEST_BRIDGE_VERSION` (a fixed latest release, for local tests;
+without it the relay reads Kounex/obs-blade-remote's latest GitHub
+release every 6 h, starting 5 s after it starts);
 data in `/var/lib/remote-relay` owned by uid 65532. New images roll out
 through the fleet board's updater (patches at its 04:00 run, or "Update").
 

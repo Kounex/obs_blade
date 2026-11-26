@@ -69,6 +69,7 @@ class FakeRevenueCat:
 class RelayCase(AioHTTPTestCase):
     bridge_grace = relay.BRIDGE_GRACE_SECONDS
     start_obs_watch = relay.START_OBS_WATCH_SECONDS
+    latest_bridge = ""
 
     async def get_application(self):
         self.clock = Clock()
@@ -83,6 +84,8 @@ class RelayCase(AioHTTPTestCase):
             min_version="0.3.0",
             bridge_grace=self.bridge_grace,
             start_obs_watch=self.start_obs_watch,
+            latest_bridge=self.latest_bridge,
+            latest_bridge_url="",  # never the real GitHub
         )
 
     async def asyncTearDown(self):
@@ -837,6 +840,113 @@ class DiagnosticLogTests(RelayCase):
         self.assertGreaterEqual(quiet, 1, line)
         self.assertIn("s after ping, sessions dropped 0", line)
         await ws.close()
+
+class FakeGitHub:
+    """Stands in for the relay's aiohttp session: one canned answer."""
+
+    def __init__(self, status=200, body=None):
+        self.status = status
+        self.body = body
+        self.urls = []
+
+    def get(self, url, **kwargs):
+        self.urls.append(url)
+        fake = self
+
+        class Answer:
+            status = fake.status
+
+            async def json(self):
+                return fake.body
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+        return Answer()
+
+
+class LatestBridgeTests(RelayCase):
+    """A newer bridge release: bridges behind it hear `update_available`,
+    the app reads it in the bridge info."""
+
+    latest_bridge = "0.4.2"
+
+    async def info(self, bridge_id, app_token):
+        r = await self.client.get(f"/v1/bridges/{bridge_id}", headers={"Authorization": f"Bearer {app_token}"})
+        self.assertEqual(r.status, 200)
+        return await r.json()
+
+    async def next_is_devices(self, ws):
+        """Nothing else was queued: a devices round trip comes back first."""
+        await ws.send_str(json.dumps({"type": "devices"}))
+        self.assertEqual((await self.next_json(ws))["type"], "devices")
+
+    def test_release_version_reads_only_plain_releases(self):
+        self.assertEqual(relay.release_version("v0.4.2"), "0.4.2")
+        self.assertEqual(relay.release_version(" 0.10.0 "), "0.10.0")
+        for text in ("", "?", "0.4", "v0.4.3-beta1", "0.4.2.1", None, 42):
+            self.assertEqual(relay.release_version(text), "", text)
+
+    async def test_a_bridge_behind_hears_it_right_after_the_welcome(self):
+        _, bridge_token, _, _ = await self.pair()
+        b = await self.bridge(bridge_token, version="0.4.1")
+        self.assertEqual(await self.next_json(b), {"type": "update_available", "version": "0.4.2"})
+        await b.close()
+
+    async def test_a_current_or_unreadable_bridge_hears_nothing(self):
+        _, bridge_token, _, _ = await self.pair()
+        for version in ("0.4.2", "0.5.0", "0.4.1-dev"):  # "" is under min_version
+            b = await self.bridge(bridge_token, version=version)
+            await self.next_is_devices(b)
+            await b.close()
+
+    async def test_the_app_sees_the_latest_version_in_the_bridge_info(self):
+        bridge_id, bridge_token, _, app_token = await self.pair()
+        b = await self.bridge(bridge_token, version="0.4.1")
+        await self.next_json(b)
+        info = await self.info(bridge_id, app_token)
+        self.assertEqual((info["version"], info["latest_version"], info["update_available"]), ("0.4.1", "0.4.2", True))
+        self.assertFalse(info["update_required"])
+        await b.close()
+        b = await self.bridge(bridge_token, version="0.4.2")
+        info = await self.info(bridge_id, app_token)
+        self.assertEqual((info["latest_version"], info["update_available"]), ("0.4.2", False))
+        await b.close()
+
+    async def test_a_new_release_reaches_connected_bridges_behind_it(self):
+        _, token_old, _, _ = await self.pair(name="OLD-PC")
+        _, token_new, _, _ = await self.pair(name="NEW-PC")
+        old = await self.bridge(token_old, version="0.4.2")
+        new = await self.bridge(token_new, version="0.4.3")
+        with self.assertLogs("remote-relay", "INFO") as logs:
+            await relay.set_latest_bridge(self.app, "v0.4.3")
+            await relay.set_latest_bridge(self.app, "v0.4.3")  # same again: nothing
+        self.assertEqual(await self.next_json(old), {"type": "update_available", "version": "0.4.3"})
+        await self.next_is_devices(old)
+        await self.next_is_devices(new)
+        lines = [line for line in logs.output if "latest bridge release" in line]
+        self.assertEqual(len(lines), 1, logs.output)
+        self.assertIn("latest bridge release 0.4.3 | 1 connected bridge(s) told to update", lines[0])
+        await old.close()
+        await new.close()
+
+    async def test_the_github_check_takes_the_release_tag(self):
+        self.app[relay.KEY_LATEST]["url"] = "https://example.invalid/latest"
+        github = FakeGitHub(body={"tag_name": "v0.5.0"})
+        await relay.check_latest_bridge(self.app, github)
+        self.assertEqual(self.app[relay.KEY_LATEST]["version"], "0.5.0")
+        self.assertEqual(github.urls, ["https://example.invalid/latest"])
+
+    async def test_a_failed_or_odd_github_answer_keeps_the_known_version(self):
+        self.app[relay.KEY_LATEST]["url"] = "https://example.invalid/latest"
+        for fake in (FakeGitHub(status=403), FakeGitHub(body={"tag_name": "nightly"}), FakeGitHub(body=[])):
+            with self.assertLogs("remote-relay", "WARNING"):
+                await relay.check_latest_bridge(self.app, fake)
+            self.assertEqual(self.app[relay.KEY_LATEST]["version"], "0.4.2")
+
 
 if __name__ == "__main__":
     unittest.main()

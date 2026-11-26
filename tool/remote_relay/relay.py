@@ -13,6 +13,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -33,6 +34,12 @@ DB_PATH = os.environ.get("RELAY_DB", "/var/lib/remote-relay/relay.db")
 # 0.3.0: end-to-end encryption (older bridges send readable frames).
 MIN_BRIDGE_VERSION = os.environ.get("RELAY_MIN_BRIDGE_VERSION", "0.3.0")
 SERVER_VERSION = os.environ.get("RELAY_VERSION", "dev")
+# The newest bridge release: bridges behind it get `update_available`, the
+# app sees it in the bridge info. Set by hand (local tests) or polled from
+# the bridge's latest GitHub release.
+LATEST_BRIDGE_VERSION = os.environ.get("RELAY_LATEST_BRIDGE_VERSION", "")
+LATEST_BRIDGE_URL = "https://api.github.com/repos/Kounex/obs-blade-remote/releases/latest"
+LATEST_BRIDGE_SECONDS = 6 * 3600
 
 MAX_SESSIONS_PER_BRIDGE = 4
 # One OBS frame. Screenshots are the big ones; the bridge shrinks preview
@@ -79,6 +86,7 @@ KEY_HTTP = web.AppKey("http", object)
 KEY_MIN_VERSION = web.AppKey("min_version", str)
 KEY_GRACE = web.AppKey("bridge_grace", float)
 KEY_START_WATCH = web.AppKey("start_obs_watch", float)
+KEY_LATEST = web.AppKey("latest_bridge", dict)
 
 
 def version_tuple(text: str) -> tuple[int, int, int]:
@@ -90,6 +98,16 @@ def version_tuple(text: str) -> tuple[int, int, int]:
     while len(numbers) < 3:
         numbers.append(0)
     return tuple(numbers)  # type: ignore[return-value]
+
+
+_RELEASE = re.compile(r"v?(\d{1,4})\.(\d{1,4})\.(\d{1,4})")
+
+
+def release_version(text: object) -> str:
+    """"0.4.2" from a release tag / bridge version like "v0.4.2"; "" for
+    anything else (a pre-release, an empty or garbled version)."""
+    match = _RELEASE.fullmatch(text.strip()) if isinstance(text, str) else None
+    return ".".join(str(int(n)) for n in match.groups()) if match else ""
 
 
 class RateLimiter:
@@ -326,6 +344,14 @@ def _outdated(app: web.Application, version: str) -> bool:
     return version_tuple(version) < version_tuple(app[KEY_MIN_VERSION])
 
 
+def _update_available(app: web.Application, version: str) -> bool:
+    """A newer bridge release exists - only for a version that reads
+    clearly (an unknown one isn't told to update)."""
+    latest = app[KEY_LATEST]["version"]
+    mine = release_version(version)
+    return bool(latest and mine) and version_tuple(mine) < version_tuple(latest)
+
+
 def _devices_payload(store: Store, bridge_id: str, hub: Hub, me: str = "") -> list[dict]:
     return [
         {
@@ -466,6 +492,8 @@ async def handle_bridge_info(request: web.Request) -> web.Response:
             "last_seen": int(bridge.last_seen),
             "obs": link.obs_state if link else bridge.obs_state,
             "update_required": _outdated(request.app, bridge.version),
+            "latest_version": request.app[KEY_LATEST]["version"] or None,
+            "update_available": _update_available(request.app, bridge.version),
             "status": bridge.status,
             "status_at": int(bridge.status_at),
             "devices": _devices_payload(store, bridge_id, hub, me=device.id),
@@ -809,6 +837,8 @@ async def handle_bridge_socket(request: web.Request) -> web.StreamResponse:
             "devices": _devices_payload(store, bridge.id, hub),
         }
     )
+    if _update_available(app, version):
+        await link.send_json({"type": "update_available", "version": app[KEY_LATEST]["version"]})
     # After the welcome: phones held for this bridge open their sessions now
     hub.bridge_ready(link)
     ended = ""
@@ -941,11 +971,47 @@ async def _every(seconds: float, job, app: web.Application, first_delay: float):
         await asyncio.sleep(seconds)
 
 
+async def set_latest_bridge(app: web.Application, version: str) -> None:
+    """A new latest bridge release: logged once, and every connected bridge
+    behind it hears about it now (the others at their next welcome)."""
+    version = release_version(version)
+    if not version or version == app[KEY_LATEST]["version"]:
+        return
+    app[KEY_LATEST]["version"] = version
+    told = 0
+    for link in list(app[KEY_HUB].bridges.values()):
+        if _update_available(app, link.version):
+            told += await link.send_json({"type": "update_available", "version": version})
+    log.info("latest bridge release %s | %d connected bridge(s) told to update", version, told)
+
+
+async def check_latest_bridge(app: web.Application, http=None) -> None:
+    http = http or app.get(KEY_HTTP)
+    if http is None:
+        return
+    async with http.get(
+        app[KEY_LATEST]["url"],
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "obs-blade-relay"},
+        timeout=aiohttp.ClientTimeout(total=15),
+    ) as response:
+        if response.status != 200:
+            log.warning("latest bridge release: HTTP %d", response.status)
+            return
+        body = await response.json()
+    tag = body.get("tag_name") if isinstance(body, dict) else None
+    if not release_version(tag):
+        log.warning("latest bridge release: unexpected tag %r", tag)
+        return
+    await set_latest_bridge(app, tag)
+
+
 async def _start_jobs(app: web.Application) -> None:
     app[KEY_TASKS] = [
         asyncio.create_task(_every(PRO_RECHECK_SECONDS, recheck_pro, app, PRO_RECHECK_SECONDS)),
         asyncio.create_task(_every(PURGE_SECONDS, purge, app, 60)),
     ]
+    if app[KEY_LATEST]["url"]:
+        app[KEY_TASKS].append(asyncio.create_task(_every(LATEST_BRIDGE_SECONDS, check_latest_bridge, app, 5)))
 
 
 async def _stop(app: web.Application) -> None:
@@ -971,6 +1037,8 @@ def build_app(
     min_version: str = MIN_BRIDGE_VERSION,
     bridge_grace: float = BRIDGE_GRACE_SECONDS,
     start_obs_watch: float = START_OBS_WATCH_SECONDS,
+    latest_bridge: str = LATEST_BRIDGE_VERSION,
+    latest_bridge_url: str | None = None,
 ) -> web.Application:
     app = web.Application(client_max_size=64 * 1024)
     app[KEY_STORE] = store
@@ -980,6 +1048,10 @@ def build_app(
     app[KEY_MIN_VERSION] = min_version
     app[KEY_GRACE] = bridge_grace
     app[KEY_START_WATCH] = start_obs_watch
+    # A fixed version (env / tests) isn't polled
+    fixed = release_version(latest_bridge)
+    url = latest_bridge_url if latest_bridge_url is not None else ("" if fixed else LATEST_BRIDGE_URL)
+    app[KEY_LATEST] = {"version": fixed, "url": url}
     app.router.add_post("/v1/pairings", handle_create_pairing)
     app.router.add_post("/v1/pairings/redeem", handle_redeem)
     app.router.add_post("/v1/pairings/collect", handle_collect)
