@@ -199,8 +199,8 @@ enforces it). Details: [`docs/foss-build.md`](docs/foss-build.md).
 | [`docs/release-playbook.md`](docs/release-playbook.md) | Store releases — versioning, release notes, TestFlight/Play internal → review → publish; entry points are the `release-beta` / `release-promote` / `release-direct` / `release-publish` skills in `.claude/skills/` |
 | [`docs/changelog-agent.md`](docs/changelog-agent.md) | History of agent changes (not the handoff doc — that's current-state only) |
 | [`docs/local-obs-e2e.md`](docs/local-obs-e2e.md) | Local OBS ↔ simulator E2E loop (macOS) |
-| [`docs/superpowers/plan-defect-checklist.md`](docs/superpowers/plan-defect-checklist.md) | Running an SDD wave — pre-dispatch plan-verification pass, codegen checklist, named defect probes |
-| [`docs/superpowers/visual-companion-gotchas.md`](docs/superpowers/visual-companion-gotchas.md) | Brainstorm companion server — framing ban, session keys, real-browser verification |
+| [`docs/superpowers/plan-defect-checklist.md`](docs/superpowers/plan-defect-checklist.md) | Before a risky or multi-day plan (§0 sets how much process; see Process below) — plan-verification pass, codegen checklist, named defect probes. Written for the earlier subagent-driven (SDD) waves, which are no longer the workflow |
+| [`docs/superpowers/visual-companion-gotchas.md`](docs/superpowers/visual-companion-gotchas.md) | Historical: the 4.0 mockup phase's brainstorm companion server (no longer part of the workflow) — framing ban, session keys, real-browser verification |
 | [`docs/superpowers/specs/2026-09-24-combined-chat-design.md`](docs/superpowers/specs/2026-09-24-combined-chat-design.md) | Combined chat design (living spec; wave plans in `docs/archive/plans/`) |
 | [`docs/redesign/`](docs/redesign/) | "On Air" redesign (shipped as 4.0) — living: `design-system.md` + `2026-iteration/` (`state-and-plan.md`, `token-delta.md`); process docs archived |
 | [`docs/redesign-astra-audit.md`](docs/redesign-astra-audit.md) | Astra first-principles redesign (branch `redesign-astra`): audit + ratified progressive-adoption verdict, verified master defects, harvest list |
@@ -309,5 +309,5 @@ enforces it). Details: [`docs/foss-build.md`](docs/foss-build.md).
 ## Related
 
 - `Kounex/obs-blade-remote` — the desktop bridge for remote access (OBS plugin + standalone app, installers and releases); moved out of `desktop/` on 2026-11-09
-- `Kounex/obs_blade_page` — marketing site
-- `Kounex/obs_station_server` — separate Twitch-era backend (historical)
+- `Kounex/obs-blade-site` (private) — marketing site + privacy policy, live at `obs-blade.kounex.com`; `Kounex/obs_blade_page` is the old site (last change 2021)
+- `Kounex/obs_station_server` — separate Twitch-era backend (historical; no longer on GitHub)
