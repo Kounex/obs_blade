@@ -4,6 +4,13 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-26 - Maintainer-only items out of the public handoff
+
+- The RevenueCat project / entitlement IDs and one open maintainer action
+  moved from `docs/session-handoff.md` into `docs/private/`
+  (`backend-architecture.md`, `maintainer-workflow.md` → "Open maintainer
+  items"); the handoff points there. The old text stays in git history.
+
 ## 2026-11-26 - App: the update experience for a paired PC
 
 User: the app should show an OBS Blade Remote update on the paired PC in

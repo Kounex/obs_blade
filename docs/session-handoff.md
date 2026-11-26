@@ -50,11 +50,8 @@ Centrifugo - if Pusher stops being offered, that's the next transport
 (`kick-chat-audit.md` § Native read).
 
 **Open, remote access / backend:**
-- **Rotate the RevenueCat v2 key** (pasted in chat 2026-11-07): new v2 key
-  into `/etc/remote-relay.env` on the VPS + `systemctl restart
-  remote-relay`, and `~/.config/obs-blade/revenuecat-v2.key` on the NAS;
-  revoke the old one. Also check the RevenueCat dashboard has no ad /
-  attribution integrations.
+- **One maintainer-only item:** `docs/private/maintainer-workflow.md` →
+  "Open maintainer items".
 - **`/code-review high` not run yet** on the backend restart work
   (`336562a8..fa2ca8fe`), the relay link-end / pairing-expiry log
   (`dd18aa11`, relay 0.0.11), the bridge quick retries (obs-blade-remote
@@ -78,8 +75,8 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   for invisible restarts.
 
 **Backend facts:** relay `https://relay.obs-blade.com` (VPS Quadlet
-`remote-relay` 0.0.12 live, 0.0.14 published 2026-11-22 (diagnostic log lines; the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat project
-`proja0a254d6`, `pro` = `entl2dd6e8fb75`); kick-auth 1.0.5 / kick-events
+`remote-relay` 0.0.12 live, 0.0.14 published 2026-11-22 (diagnostic log lines; the fleet board's 04:00 patch run picks it up), `/etc/remote-relay.env`, RevenueCat
+project / entitlement IDs: `docs/private/backend-architecture.md`); kick-auth 1.0.5 / kick-events
 1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
 backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer
 `obs-blade-vps-backups`). Bridge = Kounex/obs-blade-remote
