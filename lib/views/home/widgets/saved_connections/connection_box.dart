@@ -22,6 +22,7 @@ import '../../../../utils/build_flavor.dart';
 import '../../../../utils/general_helper.dart';
 import '../../../../utils/modal_handler.dart';
 import '../../../../utils/relative_time.dart';
+import '../../../../utils/remote/remote_relay_client.dart';
 import 'edit_dialog.dart';
 
 class ConnectionBox extends StatelessWidget {
@@ -89,11 +90,18 @@ class ConnectionBox extends StatelessWidget {
     await OverlayHandler.closeAnyOverlay(immediately: true);
     if (!context.mounted) return;
     final String pc = this.connection.relayBridgeName ?? 'your PC';
+
+    /// A newer OBS Blade Remote is worth a word here: before 0.4.2 a PC
+    /// whose OBS the app's process check missed answered 4901 although
+    /// OBS ran - Start OBS then "worked" and the next connect failed again
+    /// (relay log 2026-11-20..22). A slow relay doesn't hold the dialog up.
+    final String update = await this._updateNote(pc);
+    if (!context.mounted) return;
     ModalHandler.showBaseDialog(
       context: context,
       dialogWidget: ConfirmationDialog(
         title: 'OBS Isn\'t Running',
-        body: 'OBS isn\'t running on $pc. Start it from here?',
+        body: 'OBS isn\'t running on $pc. Start it from here?$update',
         noText: 'Cancel',
         okText: 'Start OBS',
         onOk: (_) async {
@@ -127,13 +135,27 @@ class ConnectionBox extends StatelessWidget {
               replaceIfActive: true,
               content: BaseResult(
                 icon: BaseResultIcon.Negative,
-                text: 'Couldn\'t confirm OBS started on $pc.',
+                text: 'Couldn\'t confirm OBS started on $pc.$update',
               ),
             );
           }
         },
       ),
     );
+  }
+
+  /// [remoteStartObsUpdateNote] for this PC, from fresh bridge info.
+  Future<String> _updateNote(String pc) async {
+    final RemoteAccessStore store = RemoteAccessStore();
+    try {
+      await store.refresh(this.connection).timeout(const Duration(seconds: 3));
+    } catch (_) {
+      // Slow (3 s) or failed: the dialog goes on without the note
+      return '';
+    }
+    final RemoteBridgeInfo? info = store.info;
+    if (info == null || info.id != this.connection.relayBridgeId) return '';
+    return remoteStartObsUpdateNote(info, pc);
   }
 
   void _edit(BuildContext context) {
@@ -485,4 +507,12 @@ class _ReachabilityPill extends StatelessWidget {
       },
     );
   }
+}
+
+/// What the Start OBS dialog and its failure add when the relay knows a
+/// newer OBS Blade Remote for this PC; '' otherwise.
+String remoteStartObsUpdateNote(RemoteBridgeInfo info, String pc) {
+  if (!info.updateAvailable || info.latestVersion.isEmpty) return '';
+  return '\n\nOBS Blade Remote ${info.latestVersion} is available for $pc '
+      '(it has ${info.version}) - get it at obs-blade.kounex.com/remote.';
 }

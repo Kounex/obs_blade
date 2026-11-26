@@ -547,6 +547,19 @@ class _Failed extends StatelessWidget {
   }
 }
 
+/// A newer OBS Blade Remote for this PC (relay `update_available`); null
+/// when there's none, or when [RemoteBridgeInfo.updateRequired] already
+/// says so more strongly.
+String? remoteBridgeUpdateCopy(RemoteBridgeInfo info) {
+  if (!info.updateAvailable || info.updateRequired) return null;
+  if (info.latestVersion.isEmpty) return null;
+  final String what = info.isStandalone
+      ? 'OBS Blade Remote'
+      : 'The OBS Blade Remote plugin';
+  return '$what ${info.latestVersion} is available - this PC has '
+      '${info.version}.';
+}
+
 /// One line on the PC's state from the relay's view.
 String remoteBridgeStatusLine(RemoteBridgeInfo info, {DateTime? now}) {
   if (info.updateRequired) return 'Update OBS Blade Remote on this PC';
@@ -725,6 +738,11 @@ class _Paired extends StatelessWidget {
               : '$kind · checking…',
           style: _secondary(context),
         ),
+        if (info != null && remoteBridgeUpdateCopy(info) != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(remoteBridgeUpdateCopy(info)!, style: _secondary(context)),
+          const _DownloadLink(),
+        ],
 
         /// The plugin goes down with OBS - only the app can start OBS
         /// from here (relay `start-obs` 409 not_supported for plugins)

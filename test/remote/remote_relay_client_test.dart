@@ -135,6 +135,8 @@ void main() {
         'last_seen': 1794000000,
         'obs': 'closed',
         'update_required': false,
+        'latest_version': '0.4.3',
+        'update_available': true,
         'status': {},
         'status_at': 0,
         'devices': [
@@ -164,6 +166,7 @@ void main() {
       (info.online, info.obsState, info.isStandalone),
       (false, 'closed', false),
     );
+    expect((info.latestVersion, info.updateAvailable), ('0.4.3', true));
     expect(
       info.lastSeen,
       DateTime.fromMillisecondsSinceEpoch(1794000000 * 1000),

@@ -37,6 +37,10 @@ http.Client _relay({
   String kind = 'plugin',
   bool online = true,
   String obs = 'running',
+  String version = '0.2.0',
+  String? latest,
+  bool updateAvailable = false,
+  bool updateRequired = false,
 }) => MockClient((request) async {
   if (request.method == 'PATCH' && request.url.path == '/v1/devices/d_me') {
     renames?.add(jsonDecode(request.body)['name'] as String);
@@ -48,11 +52,13 @@ http.Client _relay({
         'id': 'b_1',
         'name': 'GAMING-PC',
         'kind': kind,
-        'version': '0.2.0',
+        'version': version,
         'online': online,
         'last_seen': 1794000000,
         'obs': obs,
-        'update_required': false,
+        'update_required': updateRequired,
+        'latest_version': latest,
+        'update_available': updateAvailable,
         'devices': [
           {
             'id': 'd_me',
@@ -210,6 +216,56 @@ void main() {
         kind == 'plugin' ? findsOneWidget : findsNothing,
       );
     });
+  }
+
+  /// Relay `update_available` (2026-11-26): the PC side is told, with
+  /// the download link - not when the update is required (the status line
+  /// says that) or the relay knows nothing newer
+  for (final (kind, available, required, shown) in [
+    ('standalone', true, false, 'OBS Blade Remote 0.4.3 is available'),
+    ('plugin', true, false, 'The OBS Blade Remote plugin 0.4.3 is available'),
+    ('standalone', false, false, null),
+    ('standalone', true, true, null),
+  ]) {
+    testWidgets(
+      'update on a $kind PC (available: $available, required: $required)',
+      (tester) async {
+        GeneralActions.createRemoteAccessStore = () => RemoteAccessStore(
+          relay: RemoteRelayClient(
+            client: _relay(
+              kind: kind,
+              version: '0.4.1',
+              latest: '0.4.3',
+              updateAvailable: available,
+              updateRequired: required,
+            ),
+          ),
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: App.buildTheme(Hive.box(HiveKeys.Settings.name)),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => GeneralActions.openRemoteAccess(context),
+                  child: const Text('globe'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('globe'));
+        await _settle(tester);
+
+        if (shown == null) {
+          expect(find.textContaining('is available'), findsNothing);
+          expect(find.text('obs-blade.kounex.com/remote'), findsNothing);
+        } else {
+          expect(find.text('$shown - this PC has 0.4.1.'), findsOneWidget);
+          expect(find.text('obs-blade.kounex.com/remote'), findsOneWidget);
+        }
+      },
+    );
   }
 
   /// Dogfood 2026-11-09: two phones both listed as "iPhone" on the PC

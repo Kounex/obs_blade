@@ -100,6 +100,12 @@ class RemoteBridgeInfo {
   /// `running`, `closed`, `crashed`, `ws_off`, `auth_failed` or empty
   final String obsState;
   final bool updateRequired;
+
+  /// The newest OBS Blade Remote release the relay knows ('' while it
+  /// doesn't); [updateAvailable]: this PC's version is older (the relay
+  /// compares - it works for every bridge version)
+  final String latestVersion;
+  final bool updateAvailable;
   final List<RemoteDevice> devices;
 
   const RemoteBridgeInfo({
@@ -111,6 +117,8 @@ class RemoteBridgeInfo {
     required this.lastSeen,
     required this.obsState,
     required this.updateRequired,
+    this.latestVersion = '',
+    this.updateAvailable = false,
     required this.devices,
   });
 
@@ -261,6 +269,8 @@ class RemoteRelayClient {
       lastSeen: _epoch(body['last_seen']),
       obsState: (body['obs'] as String?) ?? '',
       updateRequired: body['update_required'] == true,
+      latestVersion: (body['latest_version'] as String?) ?? '',
+      updateAvailable: body['update_available'] == true,
       devices: devices,
     );
   }
