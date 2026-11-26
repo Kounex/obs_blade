@@ -21,7 +21,9 @@ home: `ssh macbook` from the NAS falls back to Tailscale (it-env
 the dogfood device yet** (MacBook unreachable over Tailscale 2026-11-20),
 device check list in that entry; Start OBS wait that survives the app
 being hidden (changelog 2026-11-22, device check list there) - not on the
-dogfood device either.
+dogfood device either; the bridge update note in the Remote Access sheet
+and the Start OBS dialog (`1c4eba6d`, changelog 2026-11-26). MacBook clone
+pulled 2026-11-26 (up to `c51873ba`), nothing installed on a phone.
 
 **Watch (4.3.0 = first public remote access):** crash reports + reviews;
 relay traffic (`tool/remote_relay/relay-report.sh`; NAS timer
@@ -54,7 +56,9 @@ Centrifugo - if Pusher stops being offered, that's the next transport
   `c9bdcec`, released as 0.4.1), the 30 s relay -> LAN retry
   (`54c885a2`, in 4.3.0), relay 0.0.13/0.0.14 + the Start OBS wait
   (`1bee9a99..`, 2026-11-22), and the bridge's OBS-answering check
-  (obs-blade-remote `be0fb6c`, released as 0.4.2 without a device test).
+  (obs-blade-remote `be0fb6c`, released as 0.4.2; e2e green on the
+  MacBook 2026-11-26), and the update hint (relay `af8fa5af`, app
+  `1c4eba6d`, obs-blade-remote `5ce6d04` = 0.4.3).
 - **Bridge state file, two processes:** plugin and standalone ship since
   OBS Blade Remote 0.4.0, and `Shared::update` (`core/src/shared.rs`)
   still saves its in-memory copy without reloading `bridge.json` first.
@@ -74,9 +78,10 @@ Centrifugo - if Pusher stops being offered, that's the next transport
 1.0.5 on the VPS since 2026-11-07; Quadlet health checks on all three;
 backups every 6 h to `/volume1/docker/obs-blade-backups/` (NAS timer
 `obs-blade-vps-backups`). Bridge = Kounex/obs-blade-remote
-(`~/agent/obs-blade-remote`), 0.4.2 live (2026-11-22). No update hint
-short of the relay's hard `min_version` (blocks older bridges), so users
-only get it by downloading it again. Sessions end-to-end encrypted
+(`~/agent/obs-blade-remote`), 0.4.3 live (2026-11-26). Update hint:
+the relay reads the latest GitHub release every 6 h and tells bridges
+behind it (`update_available`, shown from 0.4.3 on) and the app (bridge
+info, any bridge version - after the next app release). Sessions end-to-end encrypted
 (Noise IK) since relay 0.0.5. Spec:
 `docs/superpowers/specs/2026-11-07-remote-relay-design.md`.
 

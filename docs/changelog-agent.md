@@ -4,6 +4,41 @@ Running log of upgrade/migration work. Not store release notes.
 
 Entries before the 4.0 merge (2026-07-25 → 2026-09-21): [`archive/changelog-agent-pre-4.0.md`](archive/changelog-agent-pre-4.0.md).
 
+## 2026-11-26 - Telling people about a newer OBS Blade Remote
+
+User: people need to hear about a new bridge version - in the bridge and
+in the app when pairing. 0.4.2 (the process-check fix) only helps the
+external user once they install it, and nothing told them.
+
+- **Relay** (`af8fa5af`): reads Kounex/obs-blade-remote's latest GitHub
+  release every 6 h (first 5 s after start; `RELAY_LATEST_BRIDGE_VERSION`
+  fixes it for local tests). Bridge info gets `latest_version` +
+  `update_available` (only for a plain release version below it); a
+  bridge behind it gets `update_available {version}` after its welcome
+  and when a release comes out while it's connected. Log line "latest
+  bridge release X | N connected bridge(s) told to update". 59 tests
+  (MacBook venv). GitHub's API answers from the VPS (checked).
+- **Bridge 0.4.3** (obs-blade-remote PR 3): panel hint with the download
+  link, standalone tray item "Download OBS Blade Remote X...". Bridges
+  before 0.4.3 ignore the message - they're reached through the app only.
+- **App** (`1c4eba6d`): the Remote Access sheet says "OBS Blade Remote X
+  is available - this PC has Y" + download link (also right after
+  pairing - the store refreshes then); the Start OBS dialog and its
+  "Couldn't confirm" result add the update with the address. That's the
+  path the external user hit: a pre-0.4.2 standalone answers 4901 while
+  the relay says OBS runs, so the Start OBS wait succeeds at once and the
+  next connect fails again. Failed pairings unchanged (`noConfirmation`
+  already says "update", `noBridge` has no version to compare).
+- **Device**: MacBook reachable again. OBS 32.2.2 (plugin moved out of
+  OBS's plugins folder for the run, put back): `e2e_relay.py` plain and
+  with `--obs-running-false --latest-bridge 9.9.9 --stop-obs-cmd` all
+  green - 0.4.2's fix verified on a device, and the offer reaches the
+  bridge info and the bridge's state. App: sheet / dialog copy covered by
+  widget and unit tests, not seen on a phone.
+- Device check list (next app build): paired with a bridge older than the
+  latest release, the sheet shows the update line + link; the Start OBS
+  dialog shows the note; a current bridge shows neither.
+
 ## 2026-11-22 - Relay traffic 11-20 -> 11-22: Start OBS wait, relay 0.0.13/0.0.14, report fixes
 
 - Report reading: the first external bridge (standalone 0.4.1, paired
