@@ -218,8 +218,8 @@ enforces it). Details: [`docs/foss-build.md`](docs/foss-build.md).
 
 - **Flutter:** plain `flutter` from PATH (machine-local install; make
   sure `flutter` is on PATH on every machine — e.g. add `~/flutter/bin`
-  where the SDK isn't PATH-installed). The current Flutter version per
-  machine is tracked in `docs/upgrade-plan.md`.
+  where the SDK isn't PATH-installed). Read the version with `flutter --version`;
+  both maintainer machines must run the same one (`docs/upgrade-plan.md`).
 - **Format:** the tree is `dart format`-clean on the SDK tall style since
   2026-09-10 (one-time 404-file migration) — format changed files freely;
   `tool/*` standalone packages are excluded from that pass.
